@@ -1,0 +1,9 @@
+#summary Various DXT compression tricks.
+
+= Higher Quality Compression =
+
+= Pure Greys =
+
+= Normal Maps =
+
+
