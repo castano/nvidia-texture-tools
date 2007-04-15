@@ -1,2 +1,35 @@
 #summary Frequently Asked Questions
 #labels Featured
+
+=== Why is feature XYZ not supported? ===
+In order to keep the code small and reduce maintenance costs we have limited the 
+features available in our new texture tools. For this reason, we have also open sourced the code, so that people can modify it and add their own custom features.
+
+=== Do the NVIDIA Texture Tools work on OSX? ===
+It currently compiles and runs properly, but it has not been tested extensively.
+In particular there may be endiannes errors on PowerPC systems.
+
+=== Do the NVIDIA Texture Tools work on Linux? ===
+Yes.
+
+=== Do the NVIDIA Texture Tools work on Windows Vista? ===
+Yes, but note that CUDA is not supported on Vista yet, so the tool is not hardware 
+accellerated.
+
+=== Is CUDA required? ===
+No. The Visual Studio solution file contains a configuration that allows you
+to compile the texture tools without CUDA support. The cmake scripts automatically
+detect the CUDA installation and use it only when available.
+
+=== Where can I get CUDA? ===
+At [http://developer.nvidia.com/object/cuda.html]
+
+=== Can I use the NVIDIA Texture Tools in my commercial application? ===
+Yes, the NVIDIA Texture Tools are licensed under the MIT license.
+
+=== Can I use the NVIDIA Texture Tools in my GPL application? ===
+Yes, the MIT license is compatible with the GPL and LGPL licenses.
+
+
+
+
