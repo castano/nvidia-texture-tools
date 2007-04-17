@@ -1,8 +1,15 @@
 #summary Various DXT compression tricks.
 
+TODO
+
 === Higher Quality Compression ===
+
+YCoCg ...
 
 === Pure Greys ===
 
+JPEG-LS ...
+
 === Normal Maps ===
 
+DXT5n & BC5
