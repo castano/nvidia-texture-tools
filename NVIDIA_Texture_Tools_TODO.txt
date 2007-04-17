@@ -1,14 +1,13 @@
 
 Short term:
- - Improve quality of fast compressors.
+ - support for DXT1a format.
  - More accellerated compressors.
  - Accellerate mipmap generation.
+ - Improve quality of fast compressors.
  - Generic RGB pixel format conversion.
  - Do not assume that alpha is used for transparency.
 
 Longer term:
- - support non power of two textures.
- - support for DXT1a format.
  - support for correct cubemap filtering.
  - support for correct cubemap borders and atlas borders. (Crytek request)
  - support for 3d textures & 3d compression.
