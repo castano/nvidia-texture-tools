@@ -1,0 +1,24 @@
+PROJECT(nvmath)
+
+SET(MATH_SRCS
+	nvmath.h
+	Vector.h
+	Matrix.h
+	Box.h
+	Color.h
+	Eigen.h Eigen.cpp
+	Fitting.h Fitting.cpp)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+# targets
+ADD_DEFINITIONS(-DNVMATH_EXPORTS)
+
+IF(NVMATH_SHARED)
+	ADD_LIBRARY(nvmath SHARED ${MATH_SRCS})
+ELSE(NVMATH_SHARED)
+	ADD_LIBRARY(nvmath ${MATH_SRCS})
+ENDIF(NVMATH_SHARED)
+
+TARGET_LINK_LIBRARIES(nvmath ${LIBS} nvcore)
+

@@ -1,0 +1,21 @@
+
+Short term:
+ - Improve quality of fast compressors.
+ - More accellerated compressors.
+ - Accellerate mipmap generation.
+ - Generic RGB pixel format conversion.
+ - Do not assume that alpha is used for transparency.
+
+Longer term:
+ - support non power of two textures.
+ - support for DXT1a format.
+ - support for correct cubemap filtering.
+ - support for correct cubemap borders and atlas borders. (Crytek request)
+ - support for 3d textures & 3d compression.
+ - Add support for occlusion map, horizon map & bent normal map generation.
+ - Add support for accurate normal map mipmap computation. Using lighting integrals.
+ - Add support for YCoCg and JPEG-LS color transforms. Add high quality DXT5-RGB compression.
+ - Add full support for mirror wrap mode.
+ - Generation of cone maps for relief mapping.
+ - Add min/max box mipmap filters.
+

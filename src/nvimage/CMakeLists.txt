@@ -1,0 +1,54 @@
+PROJECT(nvimage)
+
+SUBDIRS(nvtt)
+
+SET(IMAGE_SRCS	
+	nvimage.h
+	FloatImage.h
+	FloatImage.cpp
+	Filter.h
+	Filter.cpp
+	Image.h
+	Image.cpp
+	ImageIO.h
+	ImageIO.cpp
+	ColorBlock.h
+	ColorBlock.cpp
+	HoleFilling.h
+	HoleFilling.cpp
+	DirectDrawSurface.h
+	DirectDrawSurface.cpp
+	Quantize.h
+	Quantize.cpp
+	NormalMap.h
+	NormalMap.cpp)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+IF(PNG_FOUND)
+	SET(LIBS ${LIBS} ${PNG_LIBRARIES})
+	INCLUDE_DIRECTORIES(${PNG_INCLUDE_DIR})
+ENDIF(PNG_FOUND)
+
+IF(JPEG_FOUND)
+	SET(LIBS ${LIBS} ${JPEG_LIBRARIES})
+	INCLUDE_DIRECTORIES(${JPEG_INCLUDE_DIR})
+ENDIF(JPEG_FOUND)
+
+IF(TIFF_FOUND)
+	SET(LIBS ${LIBS} ${TIFF_LIBRARIES})
+	INCLUDE_DIRECTORIES(${TIFF_INCLUDE_DIR})
+ENDIF(TIFF_FOUND)
+
+# targets
+ADD_DEFINITIONS(-DNVIMAGE_EXPORTS)
+
+IF(NVIMAGE_SHARED)	
+	ADD_LIBRARY(nvimage SHARED ${IMAGE_SRCS})
+ELSE(NVIMAGE_SHARED)
+	ADD_LIBRARY(nvimage ${IMAGE_SRCS})
+ENDIF(NVIMAGE_SHARED)
+
+TARGET_LINK_LIBRARIES(nvimage ${LIBS} nvcore nvmath posh)
+
+
