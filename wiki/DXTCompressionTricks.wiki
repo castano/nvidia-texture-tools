@@ -1,14 +1,67 @@
 #summary Various DXT compression tricks.
 
-TODO
+=== Pure Greys ===
+
+A typical problem when using DXT compression is that it's not possible to obtain pure greys. This is usually a problem when compressing lightmaps, since white light produces results in colored patches. That can be avoided using the YCoCg-R color space:
+
+{{{
+Co = R-B;
+t = B + (Co/2);
+Cg = G-t;
+Y = t + (Cg/2);
+
+s = Y - (Cg / 2);
+G = Cg + s;
+B = s - (Co / 2);
+R = B + Co;
+}}}
+
+An even cheaper alternative is to use the JPEG-LS transform:
+
+{{{
+(R-G, G, B-G)
+}}}
+
+It might not be obvious why that works, but with the following code
+you can easily test that pure greys remain pure greys after the
+transform:
+
+{{{
+for(int i = 0; i < 256; i++)
+{
+       int R = i;
+       int G = i;
+       int B = i;
+
+       int a = R - G;
+       int b = G;
+       int c = B - G;
+
+       // Quantize/bitexpand colors.
+       a = ((a >> 3) << 3) | (a >> 5);
+       b = ((b >> 2) << 2) | (b >> 6);
+       c = ((c >> 3) << 3) | (c >> 5);
+
+       R = a + b;
+       G = b;
+       B = c + b;
+
+       printf("%d: %d %d %d\n", i, R, G, B);
+}
+}}}
+
+In order to obtain better results you should adjust the color weights used to measure the error, so that you get higher accuracy in the luminance component.
 
 === Higher Quality Compression ===
 
-YCoCg ...
+A simple way of obtaining higher quality compression is using the YCoCg color space and DXT5 to encode the Y in the alpha channel and the CoCg components in the RGB channels.
 
-=== Pure Greys ===
+http://www.intel.com/cd/ids/developer/asmo-na/eng/dc/index.htm
 
-JPEG-LS ...
+Emil Person (aka Humus) also has a demo that implements the same idea, but using YCbCr color space instead:
+
+http://www.humus.ca/index.php?page=3D&ID=68
+
 
 === Normal Maps ===
 
