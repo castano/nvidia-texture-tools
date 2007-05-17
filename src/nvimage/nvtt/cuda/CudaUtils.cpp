@@ -73,8 +73,12 @@ static bool isWow32()
 bool nv::cuda::isHardwarePresent()
 {
 #if defined HAVE_CUDA
+#if NV_OS_WIN32
 	return !isWindowsVista() && deviceCount() > 0;
 	//return !isWindowsVista() && isWow32() && deviceCount() > 0;
+#else
+	return deviceCount() > 0;
+#endif
 #else
 	return false;
 #endif

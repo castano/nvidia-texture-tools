@@ -22,10 +22,9 @@ Image::~Image()
 
 void Image::allocate(uint w, uint h)
 {
-	free();
 	m_width = w;
 	m_height = h;
-	m_data = new Color32[w*h];
+	m_data = (Color32 *)realloc(m_data, w * h * sizeof(Color32));
 }
 
 bool Image::load(const char * name)
@@ -63,7 +62,7 @@ void Image::unwrap()
 
 void Image::free()
 {
-	delete m_data;
+	::free(m_data);
 	m_data = NULL;
 }
 

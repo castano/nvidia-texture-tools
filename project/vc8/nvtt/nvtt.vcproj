@@ -64,10 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib ATI_Compress_MT_VC8.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH)"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH);C:\cygwin\home\icastano\src\pi\branches\nv\src\nvimage\nvtt\atitc\Debug"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
@@ -225,11 +225,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib ATI_Compress_MT_VC8.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH)"
-				GenerateDebugInformation="false"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;;C:\cygwin\home\icastano\src\pi\branches\nv\src\nvimage\nvtt\atitc\Release"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -551,7 +551,7 @@
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;"
-				GenerateDebugInformation="false"
+				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -672,10 +672,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\BlockDXT.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvimage\nvtt\CompressDXT.cpp"
 				>
 			</File>
@@ -691,7 +687,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -701,7 +697,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -734,6 +730,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvimage\nvtt\cuda\ConvolveKernel.cu"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CudaCompressDXT.cpp"
 				>
 			</File>
@@ -763,10 +763,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\BlockDXT.h"
-				>
-			</File>
 			<File
 				RelativePath="..\..\..\src\nvimage\nvtt\CompressDXT.h"
 				>

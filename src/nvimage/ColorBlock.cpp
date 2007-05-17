@@ -53,7 +53,7 @@ void ColorBlock::init(const Image * img, uint x, uint y)
 	nvDebugCheck(bw != 0);
 	nvDebugCheck(bh != 0);
 
-	int remainder[] = {
+	static int remainder[] = {
 		0, 0, 0, 0,
 		0, 1, 0, 1,
 		0, 1, 2, 0,
@@ -61,7 +61,7 @@ void ColorBlock::init(const Image * img, uint x, uint y)
 	};
 
 	// Blocks that are smaller than 4x4 are handled by repeating the pixels.
-	// @@ Thats only correct when block size is 1, 2 or 4, but not with 3.
+	// @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
 
 	for(uint i = 0; i < 4; i++) {
 		//const int by = i % bh;
@@ -80,7 +80,7 @@ void ColorBlock::swizzleDXT5n()
 	for(int i = 0; i < 16; i++)
 	{
 		Color32 c = m_color[i];
-		m_color[i] = Color32(0, c.r, 0, c.g);
+		m_color[i] = Color32(0, c.g, 0, c.r);
 	}
 }
 

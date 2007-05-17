@@ -1,3 +1,9 @@
+// This code is in the public domain -- castanyo@yahoo.es
+
+#ifndef NV_CORE_PREFETCH_H
+#define NV_CORE_PREFETCH_H
+
+#include <nvcore/nvcore.h>
 
 // nvPrefetch
 #if NV_CC_GNUC
@@ -22,3 +28,4 @@ __forceinline void nvPrefetch(const void * mem)
 
 #endif // NV_CC_MSVC
 
+#endif // NV_CORE_PREFETCH_H

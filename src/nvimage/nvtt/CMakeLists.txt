@@ -10,8 +10,6 @@ SET(NVTT_SRCS
 	CompressRGB.cpp
 	FastCompressDXT.h
 	FastCompressDXT.cpp
-	BlockDXT.h
-	BlockDXT.cpp
 	dxtlib.cpp
 	dxtlib_compat.h
 	CompressionOptions.h
@@ -28,7 +26,7 @@ IF(CUDA_FOUND)
 	ADD_DEFINITIONS(-DHAVE_CUDA)
 	WRAP_CUDA(CUDA_SRCS cuda/CompressKernel.cu)
 	SET(NVTT_SRCS ${NVTT_SRCS} ${CUDA_SRCS})
-	SET(LIBS ${LIBS} ${CUDA_LIBRARY})
+	SET(LIBS ${LIBS} ${CUDA_LIBRARIES})
 	INCLUDE_DIRECTORIES(${CUDA_INCLUDE_PATH})
 ENDIF(CUDA_FOUND)
 
@@ -46,7 +44,7 @@ TARGET_LINK_LIBRARIES(nvtt ${LIBS} nvcore nvmath nvimage squish)
 
 
 # test executables
-ADD_EXECUTABLE(nvcompress compress.cpp)
+ADD_EXECUTABLE(nvcompress tools/compress.cpp)
 TARGET_LINK_LIBRARIES(nvcompress nvcore nvmath nvimage nvtt)
 
 INSTALL(TARGETS nvcompress DESTINATION bin)

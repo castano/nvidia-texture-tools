@@ -13,28 +13,26 @@
 #define NV_ABORT_IGNORE		2
 #define NV_ABORT_EXIT		3
 
-#if NV_CC_MSVC
-#define nvNoAssert	__noop
-#else
-#define nvNoAssert(exp)
-#endif
-
+#define nvNoAssert(exp) \
+	do { \
+		(void)sizeof(exp); \
+	} while(0)
 
 #if NV_NO_ASSERT
 
-#	define nvAssert(exp) nvNoAssert()
-#	define nvCheck(exp) nvNoAssert()
-#	define nvDebugAssert(exp) nvNoAssert()
-#	define nvDebugCheck(exp) nvNoAssert()
-#	define nvDebugBreak()
+#	define nvAssert(exp) nvNoAssert(exp)
+#	define nvCheck(exp) nvNoAssert(exp)
+#	define nvDebugAssert(exp) nvNoAssert(exp)
+#	define nvDebugCheck(exp) nvNoAssert(exp)
+#	define nvDebugBreak() nvNoAssert(0)
 
 #else // NV_NO_ASSERT
 
-#	if NV_CC_MSVC && NV_CPU_X86 && 0
-#		define nvDebugBreak()		__asm int 3
-#	elif NV_CC_MSVC	// this is only on recent versions...
-		// Do I have to include <intrin.h> ?
+#	if NV_CC_MSVC
+		// @@ Does this work in msvc-6 and earlier?
+		// @@ Do I have to include <intrin.h> ?
 #		define nvDebugBreak()		__debugbreak()
+		// define nvDebugBreak()		__asm int 3
 #	elif NV_CC_GNUC && NV_CPU_PPC && NV_OS_DARWIN
 #		define nvDebugBreak()		__asm__ volatile ("trap");
 #	elif NV_CC_GNUC && NV_CPU_X86 && NV_OS_DARWIN
@@ -43,7 +41,8 @@
 #		define nvDebugBreak()		__asm__ ( "int %0" : :"I"(3) )
 #	else
 #		include <signal.h>
-#		define nvDebugBreak()		raise(SIGTRAP); //*((int *)(0)) = 0
+#		define nvDebugBreak()		raise(SIGTRAP); 
+		// define nvDebugBreak() 		*((int *)(0)) = 0
 #	endif
 
 #	define nvAssertMacro(exp) \
@@ -85,11 +84,11 @@
 
 
 #if PI_CC_MSVC
-// I'm not sure it's a good idea to use the default static assert.
-#define nvStaticCheck(x) _STATIC_ASSERT(x)
+// @@ I'm not sure it's a good idea to use the default static assert.
+#	define nvStaticCheck(x) _STATIC_ASSERT(x)
 #else
-#define nvStaticCheck(x) typedef char NV_DO_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
-//#define nvStaticCheck(x) switch(0) { case 0: case x:; }
+#	define nvStaticCheck(x) typedef char NV_DO_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
+// 	define nvStaticCheck(x) switch(0) { case 0: case x:; }
 #endif
 
 NVCORE_API int nvAbort(const char *exp, const char *file, int line, const char * func = 0);

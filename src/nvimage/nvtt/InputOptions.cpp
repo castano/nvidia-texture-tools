@@ -95,17 +95,17 @@ void InputOptions::reset()
 
 
 // Setup the input image.
-void InputOptions::setTextureLayout(TextureType type, int w, int h, int d /*= 1*/)
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/)
 {
 	// Validate arguments.
-	nvCheck(w >= 0);
-	nvCheck(h >= 0);
-	nvCheck(d >= 0);
+	nvCheck(width >= 0);
+	nvCheck(height >= 0);
+	nvCheck(depth >= 0);
 
 	// Correct arguments.
-	if (w == 0) w = 1;
-	if (h == 0) h = 1;
-	if (d == 0) d = 1;
+	if (width == 0) width = 1;
+	if (height == 0) height = 1;
+	if (depth == 0) depth = 1;
 
 	// Delete previous images.
 	resetTextureLayout();
@@ -113,7 +113,7 @@ void InputOptions::setTextureLayout(TextureType type, int w, int h, int d /*= 1*
 	m.textureType = type;
 	
 	// Allocate images.
-	m.mipmapCount = countMipmaps(w, h, d);
+	m.mipmapCount = countMipmaps(width, height, depth);
 	m.faceCount = (type == TextureType_Cube) ? 6 : 1;
 	m.imageCount = m.mipmapCount * m.faceCount;
 	
@@ -121,6 +121,10 @@ void InputOptions::setTextureLayout(TextureType type, int w, int h, int d /*= 1*
 	
 	for(int f = 0; f < m.faceCount; f++)
 	{
+		int w = width;
+		int h = height;
+		int d = depth;
+
 		for (int mipLevel = 0; mipLevel < m.mipmapCount; mipLevel++)
 		{
 			Private::Image & img = m.images[f * m.mipmapCount + mipLevel];

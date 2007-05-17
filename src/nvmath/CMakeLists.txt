@@ -7,7 +7,10 @@ SET(MATH_SRCS
 	Box.h
 	Color.h
 	Eigen.h Eigen.cpp
-	Fitting.h Fitting.cpp)
+	Fitting.h Fitting.cpp
+	Montecarlo.h Montecarlo.cpp
+	Random.h Random.cpp
+	SphericalHarmonic.h SphericalHarmonic.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

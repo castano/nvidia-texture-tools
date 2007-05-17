@@ -23,7 +23,8 @@
 
 #include <nvmath/Color.h>
 #include <nvimage/ColorBlock.h>
-#include "BlockDXT.h"
+#include <nvimage/BlockDXT.h>
+
 #include "FastCompressDXT.h"
 
 #if defined(__SSE2__)
@@ -811,6 +812,94 @@ void nv::refineSolution_1dSearch(const ColorBlock & rgba, BlockDXT1 * block)
 	
 	block->indices = computeIndices(rgba, palette);
 }
+
+static uint computeGreenError(const ColorBlock & rgba, const BlockDXT1 * block)
+{
+	Color32 colors[4];
+	block->evaluatePalette4(colors);
+
+	uint totalError = 0;
+
+	for (uint i = 0; i < 16; i++)
+	{
+		uint8 green = rgba.color(i).g;
+		
+		uint besterror = 256*256;
+		uint best;
+		for(uint p = 0; p < 4; p++)
+		{
+			int d = colors[p].g - green;
+			uint error = d * d;
+			
+			if (error < besterror)
+			{
+				besterror = error;
+				best = p;
+			}
+		}
+		
+		totalError += besterror;
+	}
+
+	return totalError;
+}
+
+// Brute force compressor for DXT5n
+void nv::compressGreenBlock_BruteForce(const ColorBlock & rgba, BlockDXT1 * block)
+{
+	nvDebugCheck(block != NULL);
+	
+	uint8 ming = 63;
+	uint8 maxg = 0;
+	
+	// Get min/max green.
+	for (uint i = 0; i < 16; i++)
+	{
+		uint8 green = rgba.color(i).g >> 2;
+		ming = min(ming, green);
+		maxg = max(maxg, green);
+	}
+
+	block->col0.u = 0;
+	block->col1.u = 0;
+	block->col0.g = maxg;
+	block->col1.g = ming;
+
+	if (maxg - ming > 4)
+	{
+		int besterror = computeGreenError(rgba, block);
+		int bestg0 = maxg;
+		int bestg1 = ming;
+		
+		for (int g0 = ming+5; g0 < maxg; g0++)
+		{
+			for (int g1 = ming; g1 < g0-8; g1++)
+			{
+				if ((maxg-g0) + (g1-ming) > besterror)
+					continue;
+				
+				block->col0.g = g0;
+				block->col1.g = g1;
+				int error = computeGreenError(rgba, block);
+				
+				if (error < besterror)
+				{
+					besterror = error;
+					bestg0 = g0;
+					bestg1 = g1;
+				}
+			}
+		}
+		
+		block->col0.g = bestg0;
+		block->col1.g = bestg1;
+	}
+	
+	Color32 palette[4];
+	block->evaluatePalette(palette);
+	block->indices = computeIndices(rgba, palette);
+}
+
 
 
 uint nv::blockError(const ColorBlock & rgba, const BlockDXT1 & block)

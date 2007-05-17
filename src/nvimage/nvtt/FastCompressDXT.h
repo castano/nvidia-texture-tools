@@ -61,6 +61,9 @@ namespace nv
 	void refineSolution_3dSearch(const ColorBlock & rgba, BlockDXT1 * block);
 	void refineSolution_6dSearch(const ColorBlock & rgba, BlockDXT1 * block);
 	
+	// Brute force compressor for DXT5n
+	void compressGreenBlock_BruteForce(const ColorBlock & rgba, BlockDXT1 * block);
+
 	// Minimize error of the endpoints.
 	void optimizeEndPoints(const ColorBlock & rgba, BlockDXT1 * block);
 	
