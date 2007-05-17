@@ -281,22 +281,29 @@ void BlockDXT3::decodeBlock(ColorBlock * block) const
 	color.decodeBlock(block);
 	
 	// Decode alpha.
-	block->color(0x0).a = (alpha.alpha0 << 4) | alpha.alpha0;
-	block->color(0x1).a = (alpha.alpha1 << 4) | alpha.alpha1;
-	block->color(0x2).a = (alpha.alpha2 << 4) | alpha.alpha2;
-	block->color(0x3).a = (alpha.alpha3 << 4) | alpha.alpha3;
-	block->color(0x4).a = (alpha.alpha4 << 4) | alpha.alpha4;
-	block->color(0x5).a = (alpha.alpha5 << 4) | alpha.alpha5;
-	block->color(0x6).a = (alpha.alpha6 << 4) | alpha.alpha6;
-	block->color(0x7).a = (alpha.alpha7 << 4) | alpha.alpha7;
-	block->color(0x8).a = (alpha.alpha8 << 4) | alpha.alpha8;
-	block->color(0x9).a = (alpha.alpha9 << 4) | alpha.alpha9;
-	block->color(0xA).a = (alpha.alphaA << 4) | alpha.alphaA;
-	block->color(0xB).a = (alpha.alphaB << 4) | alpha.alphaB;
-	block->color(0xC).a = (alpha.alphaC << 4) | alpha.alphaC;
-	block->color(0xD).a = (alpha.alphaD << 4) | alpha.alphaD;
-	block->color(0xE).a = (alpha.alphaE << 4) | alpha.alphaE;
-	block->color(0xF).a = (alpha.alphaF << 4) | alpha.alphaF;
+	alpha.decodeBlock(block);
+}
+
+void AlphaBlockDXT3::decodeBlock(ColorBlock * block) const
+{
+	nvDebugCheck(block != NULL);
+
+	block->color(0x0).a = (alpha0 << 4) | alpha0;
+	block->color(0x1).a = (alpha1 << 4) | alpha1;
+	block->color(0x2).a = (alpha2 << 4) | alpha2;
+	block->color(0x3).a = (alpha3 << 4) | alpha3;
+	block->color(0x4).a = (alpha4 << 4) | alpha4;
+	block->color(0x5).a = (alpha5 << 4) | alpha5;
+	block->color(0x6).a = (alpha6 << 4) | alpha6;
+	block->color(0x7).a = (alpha7 << 4) | alpha7;
+	block->color(0x8).a = (alpha8 << 4) | alpha8;
+	block->color(0x9).a = (alpha9 << 4) | alpha9;
+	block->color(0xA).a = (alphaA << 4) | alphaA;
+	block->color(0xB).a = (alphaB << 4) | alphaB;
+	block->color(0xC).a = (alphaC << 4) | alphaC;
+	block->color(0xD).a = (alphaD << 4) | alphaD;
+	block->color(0xE).a = (alphaE << 4) | alphaE;
+	block->color(0xF).a = (alphaF << 4) | alphaF;
 }
 
 /// Flip DXT3 alpha block vertically.
@@ -387,21 +394,6 @@ void AlphaBlockDXT5::indices(uint8 index_array[16]) const
 	index_array[0xD] = bitsD;
 	index_array[0xE] = bitsE;
 	index_array[0xF] = bitsF;
-	
-	/*
-	// @@ missaligned reads might be very expensive on some hardware.		
-	uint b = (uint &) bits[0];
-	for(int i = 0; i < 8; i++) {
-		index_array[i] = uint8(b & 0x07); 
-		b >>= 3;
-	}
-	
-	b = (uint &) bits[3];
-	for(int i = 0; i < 8; i++) {
-		index_array[8+i] = uint8(b & 0x07); 
-		b >>= 3;
-	}
-	*/
 }
 
 uint AlphaBlockDXT5::index(uint index) const
@@ -410,25 +402,6 @@ uint AlphaBlockDXT5::index(uint index) const
 
 	int offset = (3 * index + 16);
 	return (this->u >> offset) & 0x7;
-/*
-	if (index == 0x0) return bits0;
-	else if (index == 0x1) return bits1;
-	else if (index == 0x2) return bits2;
-	else if (index == 0x3) return bits3;
-	else if (index == 0x4) return bits4;
-	else if (index == 0x5) return bits5;
-	else if (index == 0x6) return bits6;
-	else if (index == 0x7) return bits7;
-	else if (index == 0x8) return bits8;
-	else if (index == 0x9) return bits9;
-	else if (index == 0xA) return bitsA;
-	else if (index == 0xB) return bitsB;
-	else if (index == 0xC) return bitsC;
-	else if (index == 0xD) return bitsD;
-	else if (index == 0xE) return bitsE;
-	else if (index == 0xF) return bitsF;
-	return 0;
-*/
 }
 
 void AlphaBlockDXT5::setIndex(uint index, uint value)
@@ -439,26 +412,21 @@ void AlphaBlockDXT5::setIndex(uint index, uint value)
 	int offset = (3 * index + 16);
 	uint64 mask = uint64(0x7) << offset;
 	this->u = (this->u & ~mask) | (uint64(value) << offset);
+}
 
-/*
-	// @@ Really bad code...
-	if (index == 0x0) bits0 = value;
-	else if (index == 0x1) bits1 = value;
-	else if (index == 0x2) bits2 = value;
-	else if (index == 0x3) bits3 = value;
-	else if (index == 0x4) bits4 = value;
-	else if (index == 0x5) bits5 = value;
-	else if (index == 0x6) bits6 = value;
-	else if (index == 0x7) bits7 = value;
-	else if (index == 0x8) bits8 = value;
-	else if (index == 0x9) bits9 = value;
-	else if (index == 0xA) bitsA = value;
-	else if (index == 0xB) bitsB = value;
-	else if (index == 0xC) bitsC = value;
-	else if (index == 0xD) bitsD = value;
-	else if (index == 0xE) bitsE = value;
-	else if (index == 0xF) bitsF = value;
-*/
+void AlphaBlockDXT5::decodeBlock(ColorBlock * block) const
+{
+	nvDebugCheck(block != NULL);
+	
+	uint8 alpha_array[8];
+	evaluatePalette(alpha_array);
+	
+	uint8 index_array[16];
+	indices(index_array);
+	
+	for(uint i = 0; i < 16; i++) {
+		block->color(i).a = alpha_array[index_array[i]];
+	}
 }
 
 void AlphaBlockDXT5::flip4()
@@ -495,15 +463,8 @@ void BlockDXT5::decodeBlock(ColorBlock * block) const
 	color.decodeBlock(block);
 	
 	// Decode alpha.
-	uint8 alpha_array[8];
-	alpha.evaluatePalette(alpha_array);
-	
-	uint8 index_array[16];
-	alpha.indices(index_array);
-	
-	for(uint i = 0; i < 16; i++) {
-		block->color(i).a = alpha_array[index_array[i]];
-	}
+	alpha.decodeBlock(block);
+
 }
 
 /// Flip DXT5 block vertically.
