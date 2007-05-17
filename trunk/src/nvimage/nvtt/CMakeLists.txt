@@ -11,7 +11,6 @@ SET(NVTT_SRCS
 	FastCompressDXT.h
 	FastCompressDXT.cpp
 	dxtlib.cpp
-	dxtlib_compat.h
 	CompressionOptions.h
 	CompressionOptions.cpp
 	InputOptions.h

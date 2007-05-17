@@ -112,9 +112,9 @@ namespace nv
 		
 		uint offset(uint f, uint m);
 		
-		void readLinearImage(Stream * stream, Image * img);
-		void readBlockImage(Stream * stream, Image * img);
-		void readBlock(Stream * stream, ColorBlock * rgba);
+		void readLinearImage(Image * img);
+		void readBlockImage(Image * img);
+		void readBlock(ColorBlock * rgba);
 		
 		
 	private:

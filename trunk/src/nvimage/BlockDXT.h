@@ -89,6 +89,8 @@ namespace nv
 			uint16 row[4];
 		};
 		
+		void decodeBlock(ColorBlock * block) const;
+		
 		void flip4();
 		void flip2();
 	};
@@ -141,6 +143,8 @@ namespace nv
 
 		uint index(uint index) const;
 		void setIndex(uint index, uint value);
+		
+		void decodeBlock(ColorBlock * block) const;
 		
 		void flip4();
 		void flip2();

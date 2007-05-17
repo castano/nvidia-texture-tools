@@ -52,7 +52,6 @@ namespace
 	static const uint FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B');
 	static const uint FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
 	static const uint FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
-	static const uint FOURCC_BC3N = MAKEFOURCC('B', 'C', '3', 'N');
 
 	static const uint DDSD_CAPS = 0x00000001U;
 	static const uint DDSD_PIXELFORMAT = 0x00001000U;
@@ -368,8 +367,7 @@ bool DirectDrawSurface::isSupported() const
 		    header.pf.fourcc != FOURCC_DXT5 &&
 		    header.pf.fourcc != FOURCC_RXGB &&
 		    header.pf.fourcc != FOURCC_ATI1 &&
-		    header.pf.fourcc != FOURCC_ATI2 &&
-			header.pf.fourcc != FOURCC_BC3N)
+		    header.pf.fourcc != FOURCC_ATI2)
 		{
 			// Unknown fourcc code.
 			return false;
@@ -480,20 +478,24 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 }
 
 
-void DirectDrawSurface::readLinearImage(Stream * stream, Image * img)
+void DirectDrawSurface::readLinearImage(Image * img)
 {
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(img != NULL);
 	
+	// @@ Read linear RGB images.
 }
 
-void DirectDrawSurface::readBlockImage(Stream * stream, Image * img)
+void DirectDrawSurface::readBlockImage(Image * img)
 {
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(img != NULL);
 	
-	const uint bw = (img->width() + 3) / 4;
-	const uint bh = (img->height() + 3) / 4;
+	const uint w = img->width();
+	const uint h = img->height();
+	
+	const uint bw = (w + 3) / 4;
+	const uint bh = (h + 3) / 4;
 	
 	for (uint by = 0; by < bh; by++)
 	{
@@ -502,63 +504,95 @@ void DirectDrawSurface::readBlockImage(Stream * stream, Image * img)
 			ColorBlock block;
 			
 			// Read color block.
-			readBlock(stream, &block);
+			readBlock(&block);
 			
 			// Write color block.
-			
+			for (uint y = 0; y < min(4U, 4*bh-h); y++)
+			{
+				for (uint x = 0; x < min(4U, 4*bw-w); x++)
+				{
+					img->pixel(4*bx+x, 4*by+y) = block.color(x, y);
+				}
+			}
 		}
 	}
 }
 
-void DirectDrawSurface::readBlock(Stream * stream, ColorBlock * rgba)
+void DirectDrawSurface::readBlock(ColorBlock * rgba)
 {
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(rgba != NULL);
 	
-	if (header.pf.fourcc == FOURCC_DXT1 ||
-		header.pf.fourcc == FOURCC_DXT2 ||
-	    header.pf.fourcc == FOURCC_DXT3 ||
-	    header.pf.fourcc == FOURCC_DXT4 ||
-	    header.pf.fourcc == FOURCC_DXT5 ||
-	    header.pf.fourcc == FOURCC_RXGB ||
-		header.pf.fourcc != FOURCC_BC3N)
+	/*if (header.pf.fourcc == FOURCC_DXT1)
 	{
-		// Read DXT1 block.
 		BlockDXT1 block;
-		
-		if (header.pf.fourcc == FOURCC_BC3N)
-		{
-			// Write G only
-		}
-		else
-		{
-			// Write RGB.
-		}
+		*stream << block;
+		block.decodeBlock(rgba);
 	}
-	
-	if (header.pf.fourcc == FOURCC_ATI2)
-	{
-		// Read DXT5 alpha block.
-		// Write R.
-	}
-	
-	if (header.pf.fourcc == FOURCC_DXT2 ||
+	else if (header.pf.fourcc == FOURCC_DXT2 ||
 	    header.pf.fourcc == FOURCC_DXT3)
 	{
-		// Read DXT3 alpha block.
+		BlockDXT3 block;
+		*stream << block;
+		block.decodeBlock(rgba);
 	}
-	
-	if (header.pf.fourcc == FOURCC_DXT4 ||
+	else if (header.pf.fourcc == FOURCC_DXT4 ||
 	    header.pf.fourcc == FOURCC_DXT5 ||
-		header.pf.fourcc == FOURCC_RXGB)
+	    header.pf.fourcc == FOURCC_RXGB)
 	{
-		// Read DXT5 alpha block.
+		BlockDXT5 block;
+		*stream << block;
+		block.decodeBlock(rgba);
+		
+		if (header.pf.fourcc == FOURCC_RXGB)
+		{
+			// Swap R & A.
+			for (int i = 0; i < 16; i++)
+			{
+				Color32 & c = rgba->color(i);
+				uint tmp = c.r;
+				c.r = c.a;
+				c.a = tmp;
+			}
+		}
 	}
+	else if (header.pf.fourcc == FOURCC_ATI1)
+	{
+		AlphaBlockDXT5 block;
+		*stream << block;
+		block.decodeBlock(rgba);
+		
+		for (int i = 0; i < 16; i++)
+		{
+			Color32 & c = rgba->color(i);
+			c.r = c.a;
+			c.a = 255;
+		}
+	}
+	else if (header.pf.fourcc == FOURCC_ATI2)
+	{
+		AlphaBlockDXT5 block;
+		*stream << block;
+		block.decodeBlock(rgba);
+		
+		for (int i = 0; i < 16; i++)
+		{
+			Color32 & c = rgba->color(i);
+			c.r = c.a;
+		}
+		
+		*stream << block;
+		block.decodeBlock(rgba);
+		
+		for (int i = 0; i < 16; i++)
+		{
+			Color32 & c = rgba->color(i);
+			c.g = c.a;
+		}
+	}*/
 	
-	if (header.pf.fourcc == FOURCC_RXGB)
-	{
-		// swap G & A
-	}
+	// If normal map flag set, conver to normal.
+	
 }
 
 
@@ -575,7 +609,6 @@ uint DirectDrawSurface::blockSize() const
 		case FOURCC_DXT5:
 		case FOURCC_RXGB:
 		case FOURCC_ATI2:
-		case FOURCC_BC3N:
 			return 16;
 	};
 
