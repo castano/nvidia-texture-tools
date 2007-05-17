@@ -26,6 +26,7 @@
 
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/ColorBlock.h>
+#include <nvimage/BlockDXT.h>
 #include <nvimage/Image.h>
 #include <nvimage/FloatImage.h>
 #include <nvimage/Filter.h>
@@ -35,7 +36,6 @@
 #include "CompressDXT.h"
 #include "FastCompressDXT.h"
 #include "CompressRGB.h"
-#include "BlockDXT.h"
 #include "InputOptions.h"
 #include "CompressionOptions.h"
 #include "cuda/CudaUtils.h"
@@ -95,9 +95,6 @@ static void outputHeader(const InputOptions::Private & inputOptions, const Outpu
 	{
 		DDSHeader header;
 		
-		// Only 1 face and 2d textures supported.
-		nvCheck(inputOptions.faceCount == 1);
-		
 		InputOptions::Private::Image * img = inputOptions.images;
 		nvCheck(img != NULL);
 		
@@ -139,13 +136,15 @@ static void outputHeader(const InputOptions::Private & inputOptions, const Outpu
 				header.setFourCC('D', 'X', 'T', '5');
 			}
 			else if (compressionOptions.format == Format_DXT5n) {
-				header.setFourCC('R', 'X', 'G', 'B');
+				header.setFourCC('D', 'X', 'T', '5');
+				header.setNormalFlag(true);
 			}
 			else if (compressionOptions.format == Format_BC4) {
 				header.setFourCC('A', 'T', 'I', '1');
 			}
 			else if (compressionOptions.format == Format_BC5) {
 				header.setFourCC('A', 'T', 'I', '2');
+				header.setNormalFlag(true);
 			}
 		}
 		

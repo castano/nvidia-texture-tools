@@ -22,7 +22,7 @@ namespace nv
 			Spline,
 			Lanczos,
 			Mitchell,
-			Kaiser,
+			Kaiser,		// Kaiser-windowed sinc filter
 			Num
 		};
 

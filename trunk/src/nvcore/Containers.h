@@ -336,6 +336,14 @@ namespace nv
 			return m_buffer[0];
 		}
 		
+		/// Check if the given element is contained in the array.
+		bool contains(const T & e) const
+		{
+			for (uint i = 0; i < m_size; i++) {
+				if (m_buffer[i] == e) return true;
+			}
+			return false;
+		}
 		
 		/// Remove the element at the given index. This is an expensive operation!
 		void removeAt( uint index )
@@ -422,7 +430,7 @@ namespace nv
 			if( m_size == 0 ) {
 				//Allocate(0);	// Don't shrink automatically.
 			}
-			else if( m_size <= m_buffer_size && m_size > m_buffer_size >> 1) {
+			else if( m_size <= m_buffer_size/* && m_size > m_buffer_size >> 1*/) {
 				// don't compact yet.
 				nvDebugCheck(m_buffer != NULL);
 			}

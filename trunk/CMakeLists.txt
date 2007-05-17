@@ -40,6 +40,11 @@ IF(MSVC)
 ENDIF(MSVC)
 
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium4")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=powerpc")
+
+# ibook G4:
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=7450 -mtune=7450 -maltivec -mabi=altivec")
+
 
 ADD_SUBDIRECTORY(src)
 

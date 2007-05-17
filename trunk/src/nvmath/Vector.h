@@ -74,6 +74,8 @@ public:
 	void operator+=(Vector3::Arg v);
 	void operator-=(Vector3::Arg v);
 	void operator*=(scalar s);
+	inline void operator/=(scalar s)
+    { m_x /= s; m_y /= s; m_z /= s; }
 	void operator*=(Vector3::Arg v);
 
 	friend bool operator==(Vector3::Arg a, Vector3::Arg b);

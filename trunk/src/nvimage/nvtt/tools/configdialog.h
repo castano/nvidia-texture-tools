@@ -21,20 +21,23 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_CUDACOMPRESSDXT_H
-#define NV_TT_CUDACOMPRESSDXT_H
+#ifndef CONFIGDIALOG_H
+#define CONFIGDIALOG_H
 
-#include <nvimage/nvimage.h>
-#include <nvimage/nvtt/nvtt.h>
+#include <QtGui/QDialog>
 
-namespace nv
+#include "ui_nvdxtdialog.h"
+
+
+class ConfigDialog : public QDialog
 {
-	class Image;
+	Q_OBJECT
+	public:
+		ConfigDialog(QWidget *parent = 0);
+		
+	private:
+		Ui::ConfigDialog ui;
+};
 
-	void cudaCompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void cudaCompressDXT1_2(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 
-} // nv namespace
-
-
-#endif // NV_TT_CUDAUTILS_H
+#endif // CONFIGDIALOG_H

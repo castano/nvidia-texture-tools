@@ -26,6 +26,9 @@
 
 #include <nvcore/nvcore.h>
 
+//#define HAVE_S3QUANT
+//#define HAVE_ATITC
+
 // Function linkage
 #if NVTT_SHARED
 #ifdef NVTT_EXPORTS
@@ -151,7 +154,7 @@ namespace nvtt
 		NVTT_API void resetTextureLayout();
 
 		// Set mipmap data. Copies the data.
-		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);		
+		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);
 
 		// Describe the format of the input.
 		NVTT_API void setFormat(InputFormat fmt, bool alphaTransparency);

@@ -111,3 +111,4 @@ void CompressionOptions::setExternalCompressor(const char * name)
 {
 	m.externalCompressor = name;
 }
+

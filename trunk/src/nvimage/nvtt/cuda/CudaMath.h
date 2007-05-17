@@ -111,7 +111,7 @@ inline __device__ __host__ float3 clamp(float3 v, float3 a, float3 b)
 
 inline __device__ __host__ float3 normalize(float3 v)
 {
-    float len = 1.0f / dot(v, v);
+    float len = 1.0f / sqrtf(dot(v, v));
     return make_float3(v.x * len, v.y * len, v.z * len);
 }
 

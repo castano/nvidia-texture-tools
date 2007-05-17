@@ -14,6 +14,8 @@ SET(IMAGE_SRCS
 	ImageIO.cpp
 	ColorBlock.h
 	ColorBlock.cpp
+	BlockDXT.h
+	BlockDXT.cpp
 	HoleFilling.h
 	HoleFilling.cpp
 	DirectDrawSurface.h
@@ -21,7 +23,9 @@ SET(IMAGE_SRCS
 	Quantize.h
 	Quantize.cpp
 	NormalMap.h
-	NormalMap.cpp)
+	NormalMap.cpp
+	NormalMipmap.h
+	NormalMipmap.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

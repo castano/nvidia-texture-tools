@@ -28,6 +28,9 @@
 
 namespace nv
 {
+	class Image;
+	class Stream;
+	struct ColorBlock;
 
 	struct DDSPixelFormat {
 		uint size;
@@ -61,24 +64,63 @@ namespace nv
 		DDSPixelFormat pf;
 		DDSCaps caps;
 		uint notused;
-
+		
 		// Helper methods.
 		DDSHeader();
+		
 		void setWidth(uint w);
 		void setHeight(uint h);
 		void setDepth(uint d);
 		void setMipmapCount(uint count);
+		void setTexture2D();
+		void setTexture3D();
+		void setTextureCube();
 		void setLinearSize(uint size);
 		void setPitch(uint pitch);
 		void setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
 		void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
-		void setTexture2D();
-		void setTexture3D();
-		void setTextureCube();
+		void setNormalFlag(bool b);
 		
 		void swapBytes();
 	};
 
+	/// DirectDraw Surface. (DDS)
+	class DirectDrawSurface
+	{
+	public:
+		DirectDrawSurface(const char * file);
+		~DirectDrawSurface();
+		
+		bool isValid() const;
+		bool isSupported() const;
+		
+		uint mipmapCount() const;
+		uint width() const;
+		uint height() const;
+		uint depth() const;
+		bool isTexture2D() const;
+		bool isTexture3D() const;
+		bool isTextureCube() const;
+		
+		void mipmap(Image * img, uint f, uint m);
+		
+	private:
+		
+		uint blockSize() const;
+		uint faceSize() const;
+		uint mipmapSize(uint m) const;
+		
+		uint offset(uint f, uint m);
+		
+		void readLinearImage(Stream * stream, Image * img);
+		void readBlockImage(Stream * stream, Image * img);
+		void readBlock(Stream * stream, ColorBlock * rgba);
+		
+		
+	private:
+		Stream * const stream;
+		DDSHeader header;
+	};
 
 } // nv namespace
 

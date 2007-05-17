@@ -33,11 +33,12 @@ public:
 	Vector4 row(uint i) const;
 	Vector4 column(uint i) const;
 	
-	
-	void scale(scalar s);
+	void scale(double s);
 	void scale(Vector3::Arg s);
 	void translate(Vector3::Arg t);
 	void rotate(scalar theta, scalar v0, scalar v1, scalar v2);
+    Matrix inverse();
+    double determinant();
 	
 	void apply(Matrix::Arg m);
 
@@ -109,11 +110,12 @@ inline Vector4 Matrix::column(uint i) const
 }
 
 /// Apply scale.
-inline void Matrix::scale(scalar s)
+inline void Matrix::scale(double s)
 {
 	m_data[0] *= s; m_data[1] *= s; m_data[2] *= s; m_data[3] *= s;
 	m_data[4] *= s; m_data[5] *= s; m_data[6] *= s; m_data[7] *= s;
 	m_data[8] *= s; m_data[9] *= s; m_data[10] *= s; m_data[11] *= s;
+    m_data[12] *= s; m_data[13] *= s; m_data[14] *= s; m_data[15] *= s;
 }
 
 /// Apply scale.
@@ -303,24 +305,42 @@ inline Matrix perspective(scalar fovy, scalar aspect, scalar zNear)
 }
 
 /// Get matrix determinant.
-inline scalar determinant(Matrix::Arg m)
+inline double Matrix::determinant()
 {
-	// @@ not sure this is correct.
-	return 	m(0,0) * m(1,1) * m(2,2) * m(3,3) - 
-			m(1,0) * m(2,1) * m(3,2) * m(0,3) +
-			m(2,0) * m(3,1) * m(0,2) * m(1,3) -
-			m(3,0) * m(0,1) * m(1,2) * m(2,3) -
-			m(3,0) * m(2,1) * m(1,2) * m(0,3) +
-			m(2,0) * m(1,1) * m(0,2) * m(3,3) -
-			m(1,0) * m(0,1) * m(3,2) * m(2,3) +
-			m(0,0) * m(3,1) * m(2,2) * m(1,3);
+   return m_data[3] * m_data[6] * m_data[9] * m_data[12]-m_data[2] * m_data[7] * m_data[9] * m_data[12]-m_data[3] * m_data[5] * m_data[10] * m_data[12]+m_data[1] * m_data[7]    * m_data[10] * m_data[12]+
+   m_data[2] * m_data[5] * m_data[11] * m_data[12]-m_data[1] * m_data[6] * m_data[11] * m_data[12]-m_data[3] * m_data[6] * m_data[8] * m_data[13]+m_data[2] * m_data[7]    * m_data[8] * m_data[13]+
+   m_data[3] * m_data[4] * m_data[10] * m_data[13]-m_data[0] * m_data[7] * m_data[10] * m_data[13]-m_data[2] * m_data[4] * m_data[11] * m_data[13]+m_data[0] * m_data[6]    * m_data[11] * m_data[13]+
+   m_data[3] * m_data[5] * m_data[8] * m_data[14]-m_data[1] * m_data[7] * m_data[8] * m_data[14]-m_data[3] * m_data[4] * m_data[9] * m_data[14]+m_data[0] * m_data[7]    * m_data[9] * m_data[14]+
+   m_data[1] * m_data[4] * m_data[11] * m_data[14]-m_data[0] * m_data[5] * m_data[11] * m_data[14]-m_data[2] * m_data[5] * m_data[8] * m_data[15]+m_data[1] * m_data[6]    * m_data[8] * m_data[15]+
+   m_data[2] * m_data[4] * m_data[9] * m_data[15]-m_data[0] * m_data[6] * m_data[9] * m_data[15]-m_data[1] * m_data[4] * m_data[10] * m_data[15]+m_data[0] * m_data[5]    * m_data[10] * m_data[15];
 }
 
 //inline Matrix transpose(Matrix::Arg m)
 //{
 //}
+inline Matrix Matrix::inverse()
+{
+   Matrix r;
+   r.m_data[ 0] = m_data[6]*m_data[11]*m_data[13] - m_data[7]*m_data[10]*m_data[13] + m_data[7]*m_data[9]*m_data[14] - m_data[5]*m_data[11]*m_data[14] - m_data[6]*m_data[9]*m_data[15] + m_data[5]*m_data[10]*m_data[15];
+   r.m_data[ 1] = m_data[3]*m_data[10]*m_data[13] - m_data[2]*m_data[11]*m_data[13] - m_data[3]*m_data[9]*m_data[14] + m_data[1]*m_data[11]*m_data[14] + m_data[2]*m_data[9]*m_data[15] - m_data[1]*m_data[10]*m_data[15];
+   r.m_data[ 2] = m_data[2]*m_data[7]*m_data[13] - m_data[3]*m_data[6]*m_data[13] + m_data[3]*m_data[5]*m_data[14] - m_data[1]*m_data[7]*m_data[14] - m_data[2]*m_data[5]*m_data[15] + m_data[1]*m_data[6]*m_data[15];
+   r.m_data[ 3] = m_data[3]*m_data[6]*m_data[9] - m_data[2]*m_data[7]*m_data[9] - m_data[3]*m_data[5]*m_data[10] + m_data[1]*m_data[7]*m_data[10] + m_data[2]*m_data[5]*m_data[11] - m_data[1]*m_data[6]*m_data[11];
+   r.m_data[ 4] = m_data[7]*m_data[10]*m_data[12] - m_data[6]*m_data[11]*m_data[12] - m_data[7]*m_data[8]*m_data[14] + m_data[4]*m_data[11]*m_data[14] + m_data[6]*m_data[8]*m_data[15] - m_data[4]*m_data[10]*m_data[15];
+   r.m_data[ 5] = m_data[2]*m_data[11]*m_data[12] - m_data[3]*m_data[10]*m_data[12] + m_data[3]*m_data[8]*m_data[14] - m_data[0]*m_data[11]*m_data[14] - m_data[2]*m_data[8]*m_data[15] + m_data[0]*m_data[10]*m_data[15];
+   r.m_data[ 6] = m_data[3]*m_data[6]*m_data[12] - m_data[2]*m_data[7]*m_data[12] - m_data[3]*m_data[4]*m_data[14] + m_data[0]*m_data[7]*m_data[14] + m_data[2]*m_data[4]*m_data[15] - m_data[0]*m_data[6]*m_data[15];
+   r.m_data[ 7] = m_data[2]*m_data[7]*m_data[8] - m_data[3]*m_data[6]*m_data[8] + m_data[3]*m_data[4]*m_data[10] - m_data[0]*m_data[7]*m_data[10] - m_data[2]*m_data[4]*m_data[11] + m_data[0]*m_data[6]*m_data[11];
+   r.m_data[ 8] = m_data[5]*m_data[11]*m_data[12] - m_data[7]*m_data[9]*m_data[12] + m_data[7]*m_data[8]*m_data[13] - m_data[4]*m_data[11]*m_data[13] - m_data[5]*m_data[8]*m_data[15] + m_data[4]*m_data[9]*m_data[15];
+   r.m_data[ 9] = m_data[3]*m_data[9]*m_data[12] - m_data[1]*m_data[11]*m_data[12] - m_data[3]*m_data[8]*m_data[13] + m_data[0]*m_data[11]*m_data[13] + m_data[1]*m_data[8]*m_data[15] - m_data[0]*m_data[9]*m_data[15];
+   r.m_data[10] = m_data[1]*m_data[7]*m_data[12] - m_data[3]*m_data[5]*m_data[12] + m_data[3]*m_data[4]*m_data[13] - m_data[0]*m_data[7]*m_data[13] - m_data[1]*m_data[4]*m_data[15] + m_data[0]*m_data[5]*m_data[15];
+   r.m_data[11] = m_data[3]*m_data[5]*m_data[8] - m_data[1]*m_data[7]*m_data[8] - m_data[3]*m_data[4]*m_data[9] + m_data[0]*m_data[7]*m_data[9] + m_data[1]*m_data[4]*m_data[11] - m_data[0]*m_data[5]*m_data[11];
+   r.m_data[12] = m_data[6]*m_data[9]*m_data[12] - m_data[5]*m_data[10]*m_data[12] - m_data[6]*m_data[8]*m_data[13] + m_data[4]*m_data[10]*m_data[13] + m_data[5]*m_data[8]*m_data[14] - m_data[4]*m_data[9]*m_data[14];
+   r.m_data[13] = m_data[1]*m_data[10]*m_data[12] - m_data[2]*m_data[9]*m_data[12] + m_data[2]*m_data[8]*m_data[13] - m_data[0]*m_data[10]*m_data[13] - m_data[1]*m_data[8]*m_data[14] + m_data[0]*m_data[9]*m_data[14];
+   r.m_data[14] = m_data[2]*m_data[5]*m_data[12] - m_data[1]*m_data[6]*m_data[12] - m_data[2]*m_data[4]*m_data[13] + m_data[0]*m_data[6]*m_data[13] + m_data[1]*m_data[4]*m_data[14] - m_data[0]*m_data[5]*m_data[14];
+   r.m_data[15] = m_data[1]*m_data[6]*m_data[8] - m_data[2]*m_data[5]*m_data[8] + m_data[2]*m_data[4]*m_data[9] - m_data[0]*m_data[6]*m_data[9] - m_data[1]*m_data[4]*m_data[10] + m_data[0]*m_data[5]*m_data[10];
+   r.scale(1./determinant());
+   return r;
+}
 
-//Matrix inverse(Matrix::Arg m);
 //Matrix isometryInverse(Matrix::Arg m);
 //Matrix affineInverse(Matrix::Arg m);
 

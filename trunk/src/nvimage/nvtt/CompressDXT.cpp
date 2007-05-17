@@ -25,11 +25,11 @@
 
 #include <nvimage/Image.h>
 #include <nvimage/ColorBlock.h>
+#include <nvimage/BlockDXT.h>
 
 #include "nvtt.h"
 #include "CompressDXT.h"
 #include "FastCompressDXT.h"
-#include "BlockDXT.h"
 #include "CompressionOptions.h"
 
 // squish
@@ -133,8 +133,8 @@ void nv::fastCompressDXT5n(const Image * image, const nvtt::OutputOptions & outp
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
 			
-			// copy X coordinate to green channel and Y coordinate to alpha channel.
-			rgba.swizzleDXT5n();			
+			// copy X coordinate to alpha channel and Y coordinate to green channel.
+			rgba.swizzleDXT5n();
 			
 			compressBlock_BoundsRange(rgba, &block);
 			
@@ -290,18 +290,15 @@ void nv::compressDXT5n(const Image * image, const OutputOptions & outputOptions,
 			// copy X coordinate to green channel and Y coordinate to alpha channel.
 			rgba.swizzleDXT5n();			
 			
-			// Compress Y.
+			// Compress X.
 			uint error = compressBlock_Iterative(rgba, &block.alpha);
 			if (compressionOptions.quality == Quality_Highest)
 			{
 				error = compressBlock_BruteForce(rgba, &block.alpha);
 			}
 			
-			// Compress X.
-			squish::ColourSet colours((uint8 *)rgba.colors(), 0);
-			squish::FastClusterFit fit(&colours, 0);
-			fit.setMetric(0, 1, 0);
-			fit.Compress(&block.color);
+			// Compress Y.
+ 			compressGreenBlock_BruteForce(rgba, &block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
