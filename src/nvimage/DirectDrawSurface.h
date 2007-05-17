@@ -104,6 +104,8 @@ namespace nv
 		
 		void mipmap(Image * img, uint f, uint m);
 		
+		void printInfo() const;
+
 	private:
 		
 		uint blockSize() const;
