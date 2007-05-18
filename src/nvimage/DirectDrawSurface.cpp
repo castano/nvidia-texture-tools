@@ -368,7 +368,7 @@ bool DirectDrawSurface::isSupported() const
 	
 	if (header.pf.flags & DDPF_FOURCC)
 	{
-		if (header.pf.fourcc != FOURCC_DXT1 && 
+		if (header.pf.fourcc != FOURCC_DXT1 &&
 		    header.pf.fourcc != FOURCC_DXT2 &&
 		    header.pf.fourcc != FOURCC_DXT3 &&
 		    header.pf.fourcc != FOURCC_DXT4 &&
@@ -385,9 +385,11 @@ bool DirectDrawSurface::isSupported() const
 	{
 		if (header.pf.bitcount == 24)
 		{
+			return false;
 		}
-		else if (header.pf.bitcount == 24)
+		else if (header.pf.bitcount == 32)
 		{
+			return false;
 		}
 		else
 		{
@@ -412,7 +414,7 @@ bool DirectDrawSurface::isSupported() const
 		return false;
 	}
 	
-	return false;
+	return true;
 }
 
 
