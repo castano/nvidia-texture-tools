@@ -64,6 +64,7 @@ namespace nvtt
 		MipmapFilter mipmapFilter;
 		
 		// Normal map options.
+		bool normalMap;
 		bool normalizeMipmaps;
 		bool convertToNormalMap;
 		nv::Vector4 heightFactors;

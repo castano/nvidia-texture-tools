@@ -181,7 +181,7 @@ void FloatImage::packNormals(uint base_component)
 
 void FloatImage::expandNormals(uint base_component)
 {
-	scaleBias(base_component, 3, 2, 0.5);
+	scaleBias(base_component, 3, 2, -0.5);
 }
 
 void FloatImage::scaleBias(uint base_component, uint num, float scale, float bias)
