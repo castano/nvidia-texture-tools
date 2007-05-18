@@ -76,10 +76,18 @@ namespace
 	static const uint DDSCAPS2_CUBEMAP_NEGATIVEZ = 0x00008000U;
 	static const uint DDSCAPS2_CUBEMAP_ALL_FACES = 0x0000FC00U;
 
-	static const uint DDPF_RGB = 0x00000040U;
-	static const uint DDPF_FOURCC = 0x00000004U;
 	static const uint DDPF_ALPHAPIXELS = 0x00000001U;
-	static const uint DDPF_NORMAL = 0x80000000U;	// @@ Custom flag.
+	static const uint DDPF_ALPHA = 0x00000002U;
+	static const uint DDPF_FOURCC = 0x00000004U;
+	static const uint DDPF_RGB = 0x00000040U;
+	static const uint DDPF_PALETTEINDEXED1 = 0x00000800U;
+	static const uint DDPF_PALETTEINDEXED2 = 0x00001000U;
+	static const uint DDPF_PALETTEINDEXED4 = 0x00000008U;
+	static const uint DDPF_PALETTEINDEXED8 = 0x00000020U;
+
+	static const uint DDPF_ALPHAPREMULT = 0x00008000U;
+	
+	static const uint DDPF_NORMAL = 0x80000000U;	// @@ Custom nv flag.
 
 } // namespace
 
@@ -523,7 +531,7 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(rgba != NULL);
 	
-	/*if (header.pf.fourcc == FOURCC_DXT1)
+	if (header.pf.fourcc == FOURCC_DXT1)
 	{
 		BlockDXT1 block;
 		*stream << block;
@@ -565,7 +573,7 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 		for (int i = 0; i < 16; i++)
 		{
 			Color32 & c = rgba->color(i);
-			c.r = c.a;
+			c.r = c.g = c.b = c.a;
 			c.a = 255;
 		}
 	}
@@ -588,10 +596,12 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 		{
 			Color32 & c = rgba->color(i);
 			c.g = c.a;
+			c.b = 0;
+			c.a = 255;
 		}
-	}*/
+	}
 	
-	// If normal map flag set, conver to normal.
+	// @@ If normal map flag set, convert to normal.
 	
 }
 
@@ -706,8 +716,14 @@ void DirectDrawSurface::printInfo() const
 	if (header.pf.flags & DDPF_RGB) printf("\t\tDDPF_RGB\n");
 	if (header.pf.flags & DDPF_FOURCC) printf("\t\tDDPF_FOURCC\n");
 	if (header.pf.flags & DDPF_ALPHAPIXELS) printf("\t\tDDPF_ALPHAPIXELS\n");
+	if (header.pf.flags & DDPF_ALPHA) printf("\t\tDDPF_ALPHA\n");
+	if (header.pf.flags & DDPF_PALETTEINDEXED1) printf("\t\tDDPF_PALETTEINDEXED1\n");
+	if (header.pf.flags & DDPF_PALETTEINDEXED2) printf("\t\tDDPF_PALETTEINDEXED2\n");
+	if (header.pf.flags & DDPF_PALETTEINDEXED4) printf("\t\tDDPF_PALETTEINDEXED4\n");
+	if (header.pf.flags & DDPF_PALETTEINDEXED8) printf("\t\tDDPF_PALETTEINDEXED8\n");
+	if (header.pf.flags & DDPF_ALPHAPREMULT) printf("\t\tDDPF_ALPHAPREMULT\n");
 	if (header.pf.flags & DDPF_NORMAL) printf("\t\tDDPF_NORMAL\n");
-
+	
 	printf("\tFourCC: '%c%c%c%c'\n", ((header.pf.fourcc >> 0) & 0xFF), ((header.pf.fourcc >> 8) & 0xFF), ((header.pf.fourcc >> 16) & 0xFF), ((header.pf.fourcc >> 24) & 0xFF));
 	printf("\tBit count: %d\n", header.pf.bitcount);
 	printf("\tRed mask: 0x%.8X\n", header.pf.rmask);

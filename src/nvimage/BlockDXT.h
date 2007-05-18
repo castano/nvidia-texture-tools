@@ -26,9 +26,12 @@
 
 #include <nvmath/Color.h>
 
+#include <nvimage.h>
+
 namespace nv
 {
 	struct ColorBlock;
+	class Stream;
 
 	/// DXT1 block.
 	struct BlockDXT1
@@ -61,9 +64,7 @@ namespace nv
 		return col0.u >= col1.u;	// @@ > or >= ?
 	}
 	
-	
-	
-	
+
 	/// DXT3 alpha block with explicit alpha.
 	struct AlphaBlockDXT3
 	{
@@ -149,6 +150,7 @@ namespace nv
 		void flip4();
 		void flip2();
 	};
+
 	
 	/// DXT5 block.
 	struct BlockDXT5
@@ -161,6 +163,7 @@ namespace nv
 		void flip4();
 		void flip2();
 	};
+
 	
 	/// 3DC block.
 	struct Block3DC
@@ -173,6 +176,14 @@ namespace nv
 		void flip4();
 		void flip2();
 	};
+
+	// Serialization functions.
+	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT1 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, AlphaBlockDXT3 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT3 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, AlphaBlockDXT5 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT5 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, Block3DC & block);
 
 } // nv namespace
 

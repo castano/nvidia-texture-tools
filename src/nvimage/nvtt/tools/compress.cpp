@@ -274,8 +274,6 @@ int main(int argc, char *argv[])
 	if (nv::strCaseCmp(input.extension(), ".dds") == 0)
 	{
 		// Load surface.
-		printf("The file '%s' is not a supported image type.\n", input.str());
-		
 		nv::DirectDrawSurface dds(input);
 		if (!dds.isValid())
 		{

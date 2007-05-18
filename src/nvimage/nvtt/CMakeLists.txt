@@ -48,7 +48,11 @@ TARGET_LINK_LIBRARIES(nvcompress nvcore nvmath nvimage nvtt)
 
 INSTALL(TARGETS nvcompress DESTINATION bin)
 
-#ADD_EXECUTABLE(nvtextool nvdxt.cpp configdialog.cpp)
+ADD_EXECUTABLE(nvddsinfo tools/ddsinfo.cpp)
+TARGET_LINK_LIBRARIES(nvddsinfo nvcore nvmath nvimage)
+
+INSTALL(TARGETS nvcompress nvddsinfo DESTINATION bin)
+
 
 
 
