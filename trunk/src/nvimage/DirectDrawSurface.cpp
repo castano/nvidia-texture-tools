@@ -483,8 +483,14 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 	
 	img->allocate(w, h);
 	
-	//	readLinearImage(stream, img);
-	//	readBlockImage(stream, img);
+	if (header.pf.flags & DDPF_RGB) 
+	{
+		readLinearImage(img);
+	}
+	else if (header.pf.flags & DDPF_FOURCC)
+	{
+		readBlockImage(img);
+	}
 }
 
 
@@ -517,9 +523,9 @@ void DirectDrawSurface::readBlockImage(Image * img)
 			readBlock(&block);
 			
 			// Write color block.
-			for (uint y = 0; y < min(4U, 4*bh-h); y++)
+			for (uint y = 0; y < min(4U, h-4*bx); y++)
 			{
-				for (uint x = 0; x < min(4U, 4*bw-w); x++)
+				for (uint x = 0; x < min(4U, w-4*by); x++)
 				{
 					img->pixel(4*bx+x, 4*by+y) = block.color(x, y);
 				}
@@ -624,8 +630,7 @@ uint DirectDrawSurface::blockSize() const
 			return 16;
 	};
 
-	// This should never happen.
-	nvDebugCheck(false);
+	// Not a block image.
 	return 0;
 }
 
