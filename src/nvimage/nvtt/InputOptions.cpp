@@ -226,6 +226,12 @@ void InputOptions::setQuantization(bool colorDithering, bool alphaDithering, boo
 }
 
 
+/// Indicate whether input is a normal map or not.
+void InputOptions::setNormalMap(bool b)
+{
+	m.normalMap = b;
+}
+
 /// Enable normal map conversion.
 void InputOptions::setConvertToNormalMap(bool convert)
 {

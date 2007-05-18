@@ -172,6 +172,7 @@ namespace nvtt
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 
 		// Set normal map options.
+		NVTT_API void setNormalMap(bool b);
 		NVTT_API void setConvertToNormalMap(bool convert);
 		NVTT_API void setHeightEvaluation(float redScale, float greenScale, float blueScale, float alphaScale);
 		NVTT_API void setNormalFilter(float small, float medium, float big, float large);

@@ -255,8 +255,14 @@ static FloatImage * toFloatImage(const Image * image, const InputOptions::Privat
 
 	FloatImage * floatImage = new FloatImage(image);
 
-	// Convert to linear space.
-	if (inputOptions.inputGamma != 1.0f) {
+	if (inputOptions.normalMap)
+	{
+		// Expand normals. to [-1, 1] range.
+	//	floatImage->expandNormals(0);
+	}
+	else if (inputOptions.inputGamma != 1.0f)
+	{
+		// Convert to linear space.
 		floatImage->toLinear(0, 3, inputOptions.inputGamma);
 	}
 

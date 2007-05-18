@@ -98,6 +98,7 @@ struct MyErrorHandler : public nvtt::ErrorHandler
 // Set color to normal map conversion options.
 void setColorToNormalMap(nvtt::InputOptions & inputOptions)
 {
+	inputOptions.setNormalMap(false);
 	inputOptions.setConvertToNormalMap(true);
 	inputOptions.setHeightEvaluation(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f, 0.0f);
 	//inputOptions.setNormalFilter(1.0f, 0, 0, 0);
@@ -109,6 +110,7 @@ void setColorToNormalMap(nvtt::InputOptions & inputOptions)
 // Set options for normal maps.
 void setNormalMap(nvtt::InputOptions & inputOptions)
 {
+	inputOptions.setNormalMap(true);
 	inputOptions.setConvertToNormalMap(false);
 	inputOptions.setGamma(1.0f, 1.0f);
 	inputOptions.setNormalizeMipmaps(true);
@@ -117,6 +119,7 @@ void setNormalMap(nvtt::InputOptions & inputOptions)
 // Set options for color maps.
 void setColorMap(nvtt::InputOptions & inputOptions)
 {
+	inputOptions.setNormalMap(false);
 	inputOptions.setConvertToNormalMap(false);
 	inputOptions.setGamma(2.2f, 2.2f);
 	inputOptions.setNormalizeMipmaps(false);
@@ -333,7 +336,8 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		inputOptions.setMipmapping(true, nvtt::MipmapFilter_Kaiser);
+		inputOptions.setMipmapping(true, nvtt::MipmapFilter_Box);
+		//inputOptions.setMipmapping(true, nvtt::MipmapFilter_Kaiser);
 	}
 
 	if (wrapRepeat)
