@@ -26,7 +26,7 @@
 
 #include <nvmath/Color.h>
 
-#include <nvimage.h>
+#include <nvimage/nvimage.h>
 
 namespace nv
 {
