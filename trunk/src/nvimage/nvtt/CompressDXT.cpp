@@ -356,8 +356,7 @@ void nv::compressBC4(const Image * image, const nvtt::OutputOptions & outputOpti
 	// 128: 4.67 - 0.79
 	// 256: 4.92 - 0.20
 	// inf: 4.98 - 0.09
-
-	printf("Alpha error: %f\n", float(totalError) / (w*h));
+	//printf("Alpha error: %f\n", float(totalError) / (w*h));
 }
 
 

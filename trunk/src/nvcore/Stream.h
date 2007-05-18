@@ -99,48 +99,40 @@ public:
 	}
 	friend Stream & operator<<( Stream & s, uint16 & c ) {
 		nvStaticCheck(sizeof(uint16) == 2);
-		s.byteOrderSerialize( &c, 2 );
-		return s;
+		return s.byteOrderSerialize( &c, 2 );
 	}
 	friend Stream & operator<<( Stream & s, int16 & c ) {
 		nvStaticCheck(sizeof(int16) == 2);
-		s.byteOrderSerialize( &c, 2 );
-		return s;
+		return s.byteOrderSerialize( &c, 2 );
 	}
 	friend Stream & operator<<( Stream & s, uint32 & c ) {
 		nvStaticCheck(sizeof(uint32) == 4);
-		s.byteOrderSerialize( &c, 4 );
-		return s;
+		return s.byteOrderSerialize( &c, 4 );
 	}
 	friend Stream & operator<<( Stream & s, int32 & c ) {
 		nvStaticCheck(sizeof(int32) == 4);
-		s.byteOrderSerialize( &c, 4 );
-		return s;
+		return s.byteOrderSerialize( &c, 4 );
 	}
 	friend Stream & operator<<( Stream & s, uint64 & c ) {
 		nvStaticCheck(sizeof(uint64) == 8);
-		s.byteOrderSerialize( &c, 8 );
-		return s;
+		return s.byteOrderSerialize( &c, 8 );
 	}
 	friend Stream & operator<<( Stream & s, int64 & c ) {
 		nvStaticCheck(sizeof(int64) == 8);
-		s.byteOrderSerialize( &c, 8 );
-		return s;
+		return s.byteOrderSerialize( &c, 8 );
 	}
 	friend Stream & operator<<( Stream & s, float & c ) {
 		nvStaticCheck(sizeof(float) == 4);
-		s.byteOrderSerialize( &c, 4 );
-		return s;
+		return s.byteOrderSerialize( &c, 4 );
 	}
 	friend Stream & operator<<( Stream & s, double & c ) {
 		nvStaticCheck(sizeof(double) == 8);
-		s.byteOrderSerialize( &c, 8 );
-		return s;
+		return s.byteOrderSerialize( &c, 8 );
 	}
 
 protected:
 
-	/** Serialize in the stream byte order. */
+	/// Serialize in the stream byte order.
 	Stream & byteOrderSerialize( void * v, int len ) {
 		if( m_byteOrder == getSystemByteOrder() ) {
 			serialize( v, len );

@@ -21,6 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include <nvcore/Stream.h>
+
 #include "ColorBlock.h"
 #include "BlockDXT.h"
 
@@ -505,6 +507,37 @@ void Block3DC::flip2()
 
 
 
+Stream & nv::operator<<(Stream & stream, BlockDXT1 & block)
+{
+	return stream << block.col0.u << block.col1.u << block.indices;
+}
+
+Stream & nv::operator<<(Stream & stream, AlphaBlockDXT3 & block)
+{
+	stream.serialize(&block, sizeof(block));
+	return stream;
+}
+
+Stream & nv::operator<<(Stream & stream, BlockDXT3 & block)
+{
+	return stream << block.alpha << block.color;
+}
+
+Stream & nv::operator<<(Stream & stream, AlphaBlockDXT5 & block)
+{
+	stream.serialize(&block, sizeof(block));
+	return stream;
+}
+
+Stream & nv::operator<<(Stream & stream, BlockDXT5 & block)
+{
+	return stream << block.alpha << block.color;
+}
+
+Stream & nv::operator<<(Stream & stream, Block3DC & block)
+{
+	return stream << block.x << block.y;
+}
 
 	
 
