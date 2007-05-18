@@ -53,6 +53,14 @@ namespace
 	static const uint FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
 	static const uint FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
 
+	static const uint D3DFMT_A16B16G16R16;
+	static const uint D3DFMT_R16F;
+	static const uint D3DFMT_G16R16F;
+	static const uint D3DFMT_A16B16G16R16F;
+	static const uint D3DFMT_R32F;
+	static const uint D3DFMT_G32R32F;
+	static const uint D3DFMT_A32B32G32R32F;
+
 	static const uint DDSD_CAPS = 0x00000001U;
 	static const uint DDSD_PIXELFORMAT = 0x00001000U;
 	static const uint DDSD_WIDTH = 0x00000004U;
@@ -84,9 +92,8 @@ namespace
 	static const uint DDPF_PALETTEINDEXED2 = 0x00001000U;
 	static const uint DDPF_PALETTEINDEXED4 = 0x00000008U;
 	static const uint DDPF_PALETTEINDEXED8 = 0x00000020U;
-
+	static const uint DDPF_LUMINANCE = 0x00020000U;
 	static const uint DDPF_ALPHAPREMULT = 0x00008000U;
-	
 	static const uint DDPF_NORMAL = 0x80000000U;	// @@ Custom nv flag.
 
 } // namespace
