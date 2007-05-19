@@ -1,14 +1,14 @@
 #summary Normalmap compression strategies.
 
-== DXT5nm ==
+=== DXT5nm ===
 
 This format was introduced in the original nvdxt library and since them it has become quite popular. It uses a DXT5 block to represent normals, storing the X component in the Alpha and the Y component in the Green channel.
 
-== RXGB ==
+=== RXGB ===
 
 The DOOM 3 engine and its derivates use the so called RXGB format, that is just like DXT5, but with the Red and Alpha components swapped, which means that the normal is given by the (a, g, b) components. Surprisingly, the error of this method is usually lower than BC3n.
 
-== BC5 ==
+=== BC5 ===
 
 BC5 is a two component block compression format, where each component is represented with a DXT5 alpha block. It was originally called 3Dc by ATI and its main purpose was to encode normals storing only the X and Y components.
 
@@ -17,7 +17,7 @@ In DirectX 10 the 3Dc format was standarized and renamed to BC5.
 BC5 can be loaded in OpenGL as LATC or RGTC. The LATC format is particularly convenient, because you can use the same swizzle that is used for DXT5nm, that's because the luminance is replicated in the RGB components.
 
 
-== Alternative Projections ==
+=== Alternative Projections ===
 
 Usually 3D normals are stored using only two components and the normal is reconstructed using an orthogonal projection:
 
