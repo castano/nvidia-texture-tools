@@ -53,14 +53,42 @@ namespace
 	static const uint FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
 	static const uint FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
 
-	static const uint D3DFMT_A16B16G16R16;
-	static const uint D3DFMT_R16F;
-	static const uint D3DFMT_G16R16F;
-	static const uint D3DFMT_A16B16G16R16F;
-	static const uint D3DFMT_R32F;
-	static const uint D3DFMT_G32R32F;
-	static const uint D3DFMT_A32B32G32R32F;
+	// RGB formats.
+	static const uint D3DFMT_R8G8B8 = 20;
+	static const uint D3DFMT_A8R8G8B8 = 21;
+	static const uint D3DFMT_X8R8G8B8 = 22;
+	static const uint D3DFMT_R5G6B5 = 23;
+	static const uint D3DFMT_X1R5G5B5 = 24;
+	static const uint D3DFMT_A1R5G5B5 = 25;
+	static const uint D3DFMT_A4R4G4B4 = 26;
+	static const uint D3DFMT_R3G3B2 = 27;
+	static const uint D3DFMT_A8 = 28;
+	static const uint D3DFMT_A8R3G3B2 = 29;
+	static const uint D3DFMT_X4R4G4B4 = 30;
+	static const uint D3DFMT_A2B10G10R10 = 31;
+	static const uint D3DFMT_A8B8G8R8 = 32;
+	static const uint D3DFMT_X8B8G8R8 = 33;
+	static const uint D3DFMT_G16R16 = 34;
+	static const uint D3DFMT_A2R10G10B10 = 35;
+	static const uint D3DFMT_A16B16G16R16 = 36;
 
+	// Palette formats.
+	static const uint D3DFMT_A8P8 = 40;
+	static const uint D3DFMT_P8 = 41;
+	
+	// Luminance formats.
+	static const uint D3DFMT_L8 = 50;
+	static const uint D3DFMT_A8L8 = 51;
+	static const uint D3DFMT_A4L4 = 52;
+
+	// Floating point formats
+	static const uint D3DFMT_R16F = 111;
+	static const uint D3DFMT_G16R16F = 112;
+	static const uint D3DFMT_A16B16G16R16F = 113;
+	static const uint D3DFMT_R32F = 114;
+	static const uint D3DFMT_G32R32F = 115;
+	static const uint D3DFMT_A32B32G32R32F = 116;
+	
 	static const uint DDSD_CAPS = 0x00000001U;
 	static const uint DDSD_PIXELFORMAT = 0x00001000U;
 	static const uint DDSD_WIDTH = 0x00000004U;
@@ -541,6 +569,17 @@ void DirectDrawSurface::readBlockImage(Image * img)
 	}
 }
 
+static Color32 buildNormal(uint8 x, uint8 y)
+{
+	float nx = 2 * (x / 255) - 1;
+	float ny = 2 * (x / 255) - 1;
+	float nz = sqrtf(1 - nx*nx - ny*ny);
+	uint8 z = clamp(int(255 * (nz + 1) / 2), 0, 255);
+	
+	return Color32(x, y, z);
+}
+
+
 void DirectDrawSurface::readBlock(ColorBlock * rgba)
 {
 	nvDebugCheck(stream != NULL);
@@ -581,43 +620,37 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 	}
 	else if (header.pf.fourcc == FOURCC_ATI1)
 	{
-		AlphaBlockDXT5 block;
+		BlockATI1 block;
 		*stream << block;
 		block.decodeBlock(rgba);
-		
-		for (int i = 0; i < 16; i++)
-		{
-			Color32 & c = rgba->color(i);
-			c.r = c.g = c.b = c.a;
-			c.a = 255;
-		}
 	}
 	else if (header.pf.fourcc == FOURCC_ATI2)
 	{
-		AlphaBlockDXT5 block;
+		BlockATI2 block;
 		*stream << block;
 		block.decodeBlock(rgba);
-		
-		for (int i = 0; i < 16; i++)
-		{
-			Color32 & c = rgba->color(i);
-			c.r = c.a;
-		}
-		
-		*stream << block;
-		block.decodeBlock(rgba);
-		
-		for (int i = 0; i < 16; i++)
-		{
-			Color32 & c = rgba->color(i);
-			c.g = c.a;
-			c.b = 0;
-			c.a = 255;
-		}
 	}
 	
-	// @@ If normal map flag set, convert to normal.
-	
+	// If normal flag set, convert to normal.
+	if (header.pf.flags & DDPF_NORMAL)
+	{
+		if (header.pf.fourcc == FOURCC_ATI2)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				Color32 & c = rgba->color(i);
+				c = buildNormal(c.r, c.g);
+			}
+		}
+		else if (header.pf.fourcc == FOURCC_DXT5)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				Color32 & c = rgba->color(i);
+				c = buildNormal(c.g, c.a);
+			}
+		}
+	}
 }
 
 

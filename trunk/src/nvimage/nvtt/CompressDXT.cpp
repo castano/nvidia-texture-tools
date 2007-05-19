@@ -368,7 +368,7 @@ void nv::compressBC5(const Image * image, const nvtt::OutputOptions & outputOpti
 	ColorBlock xcolor;
 	ColorBlock ycolor;
 
-	Block3DC block;
+	BlockATI2 block;
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {

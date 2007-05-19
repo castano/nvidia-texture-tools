@@ -103,6 +103,7 @@ namespace nv
 		bool isTextureCube() const;
 		
 		void mipmap(Image * img, uint f, uint m);
+		//	void mipmap(FloatImage * img, uint f, uint m);
 		
 		void printInfo() const;
 
