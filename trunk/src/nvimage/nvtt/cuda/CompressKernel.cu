@@ -235,7 +235,7 @@ static __device__ float evalPermutation3(const float3 * colors, const float * we
 ////////////////////////////////////////////////////////////////////////////////
 // Sort colors
 ////////////////////////////////////////////////////////////////////////////////
-__device__ void sortColors(float * values, float3 * colors, int * cmp)
+__device__ void sortColors(float * values, int * cmp)
 {
 	int tid = threadIdx.x;
 
@@ -272,53 +272,6 @@ __device__ void sortColors(float * values, float3 * colors, int * cmp)
 	if (tid > 12 && cmp[tid] == cmp[12]) ++cmp[tid];
 	if (tid > 13 && cmp[tid] == cmp[13]) ++cmp[tid];
 	if (tid > 14 && cmp[tid] == cmp[14]) ++cmp[tid];
-
-	float3 tmp = colors[tid];
-	colors[cmp[tid]] = tmp;
-}
-
-__device__ void sortColors(float * values, float3 * colors, float * weights, int * cmp)
-{
-	int tid = threadIdx.x;
-
-	cmp[tid] = (values[0] < values[tid]);
-	cmp[tid] += (values[1] < values[tid]);
-	cmp[tid] += (values[2] < values[tid]);
-	cmp[tid] += (values[3] < values[tid]);
-	cmp[tid] += (values[4] < values[tid]);
-	cmp[tid] += (values[5] < values[tid]);
-	cmp[tid] += (values[6] < values[tid]);
-	cmp[tid] += (values[7] < values[tid]);
-	cmp[tid] += (values[8] < values[tid]);
-	cmp[tid] += (values[9] < values[tid]);
-	cmp[tid] += (values[10] < values[tid]);
-	cmp[tid] += (values[11] < values[tid]);
-	cmp[tid] += (values[12] < values[tid]);
-	cmp[tid] += (values[13] < values[tid]);
-	cmp[tid] += (values[14] < values[tid]);
-	cmp[tid] += (values[15] < values[tid]);
-	
-	// Resolve elements with the same index.
-	if (tid > 0 && cmp[tid] == cmp[0]) ++cmp[tid];
-	if (tid > 1 && cmp[tid] == cmp[1]) ++cmp[tid];
-	if (tid > 2 && cmp[tid] == cmp[2]) ++cmp[tid];
-	if (tid > 3 && cmp[tid] == cmp[3]) ++cmp[tid];
-	if (tid > 4 && cmp[tid] == cmp[4]) ++cmp[tid];
-	if (tid > 5 && cmp[tid] == cmp[5]) ++cmp[tid];
-	if (tid > 6 && cmp[tid] == cmp[6]) ++cmp[tid];
-	if (tid > 7 && cmp[tid] == cmp[7]) ++cmp[tid];
-	if (tid > 8 && cmp[tid] == cmp[8]) ++cmp[tid];
-	if (tid > 9 && cmp[tid] == cmp[9]) ++cmp[tid];
-	if (tid > 10 && cmp[tid] == cmp[10]) ++cmp[tid];
-	if (tid > 11 && cmp[tid] == cmp[11]) ++cmp[tid];
-	if (tid > 12 && cmp[tid] == cmp[12]) ++cmp[tid];
-	if (tid > 13 && cmp[tid] == cmp[13]) ++cmp[tid];
-	if (tid > 14 && cmp[tid] == cmp[14]) ++cmp[tid];
-
-	float3 tmp = colors[tid];
-	colors[cmp[tid]] = tmp;
-
-	weights[cmp[tid]] = weights[tid];
 }
 
 
@@ -330,11 +283,10 @@ __device__ void minimizeError(float * errors, int * indices)
 	const int idx = threadIdx.x;
 
 #if __DEVICE_EMULATION__
-
 	for(int d = NUM_THREADS/2; d > 0; d >>= 1)
 	{
 		__syncthreads();
-
+		
 		if (idx < d)
 		{
 			float err0 = errors[idx];
@@ -348,16 +300,15 @@ __device__ void minimizeError(float * errors, int * indices)
 	}
 
 #else
-
 	for(int d = NUM_THREADS/2; d > 32; d >>= 1)
 	{
 		__syncthreads();
-
+		
 		if (idx < d)
 		{
 			float err0 = errors[idx];
 			float err1 = errors[idx + d];
-
+			
 			if (err1 < err0) {
 				errors[idx] = err1;
 				indices[idx] = indices[idx + d];
@@ -365,7 +316,7 @@ __device__ void minimizeError(float * errors, int * indices)
 		}
 	}
 
-	// unroll last 6 steps 
+	// unroll last 6 iterations
 	if (idx <= 32)
 	{
 		if (errors[idx + 32] < errors[idx]) {
@@ -398,17 +349,15 @@ __device__ void minimizeError(float * errors, int * indices)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Compress color block
+// Load color block to shared mem
 ////////////////////////////////////////////////////////////////////////////////
-__global__ void compress(const uint * permutations, const uint * image, uint2 * result)
+__device__ void loadColorBlock(const uint * image, float3 colors[16], int xrefs[16])
 {
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
-	
-	__shared__ float3 colors[16];
+
 	__shared__ float dps[16];
-	__shared__ int xrefs[16];
-	
+
 	if (idx < 16)
 	{
 		// Read color and copy to shared mem.
@@ -432,8 +381,93 @@ __global__ void compress(const uint * permutations, const uint * image, uint2 * 
 		} __debugsync(); if (idx < 16) {
 #endif
 		
-		sortColors(dps, colors, xrefs);
+		sortColors(dps, xrefs);
+		
+		float3 tmp = colors[idx];
+		colors[xrefs[idx]] = tmp;
 	}
+}
+
+__device__ void loadColorBlock(const uint * image, float3 colors[16], float weights[16], int xrefs[16])
+{
+	const int bid = blockIdx.x;
+	const int idx = threadIdx.x;
+
+	__shared__ float dps[16];
+
+	if (idx < 16)
+	{
+		// Read color and copy to shared mem.
+		uint c = image[(bid) * 16 + idx];
+		
+		colors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
+		colors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
+		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
+		weights[idx] = ((c >> 24) & 0xFF) * (1.0f / 255.0f);
+		
+		// No need to synchronize, 16 < warp size.
+#if __DEVICE_EMULATION__
+		} __debugsync(); if (idx < 16) {
+#endif
+
+		// Sort colors along the best fit line.
+		float3 axis = bestFitLine(colors);
+		
+		dps[idx] = dot(colors[idx], axis);
+		
+#if __DEVICE_EMULATION__
+		} __debugsync(); if (idx < 16) {
+#endif
+		
+		sortColors(dps, xrefs);
+		
+		float3 tmp = colors[idx];
+		colors[xrefs[idx]] = tmp;
+		
+		float w = weights[idx];
+		weights[xrefs[idx]] = tmp;
+	}
+}
+
+
+__device__ void saveBlockDXT1(ushort start, ushort end, uint permutation, int xrefs[16])
+{
+	const int bid = blockIdx.x;
+	const int idx = threadIdx.x;
+
+	if (start == end)
+	{
+		permutation = 0;
+	}
+	
+	// Reorder permutation.
+	uint indices = 0;
+	for(int i = 0; i < 16; i++)
+	{
+		int ref = xrefs[i];
+		indices |= ((permutation >> (2 * ref)) & 3) << (2 * i);
+	}
+	
+	// Write endpoints.
+	result[bid].x = (end << 16) | start;
+	
+	// Write palette indices.
+	result[bid].y = indices;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Compress color block
+////////////////////////////////////////////////////////////////////////////////
+__global__ void compress(const uint * permutations, const uint * image, uint2 * result)
+{
+	const int bid = blockIdx.x;
+	const int idx = threadIdx.x;
+	
+	__shared__ float3 colors[16];
+	__shared__ int xrefs[16];
+	
+	loadColorBlock(image, colors, xrefs);
 	
 	ushort bestStart, bestEnd;
 	uint bestPermutation;
@@ -495,7 +529,7 @@ __global__ void compress(const uint * permutations, const uint * image, uint2 * 
 		{
 			pidx = idx + NUM_THREADS * 2;
 		}
-
+		
 		ushort start, end;
 		uint permutation = permutations[pidx];
 		float error = evalPermutation4(colors, permutation, &start, &end);
@@ -552,7 +586,7 @@ __global__ void compress(const uint * permutations, const uint * image, uint2 * 
                 bestPermutation ^= (~bestPermutation >> 1) & 0x55555555;    // Flip indices.
             }
         }
-
+		
         error = evalPermutation4(colors, permutation, &start, &end);
         
         if (error < bestError)
@@ -561,7 +595,7 @@ __global__ void compress(const uint * permutations, const uint * image, uint2 * 
             bestPermutation = permutation;
             bestStart = start;
             bestEnd = end;
-
+			
 			if (bestStart < bestEnd)
 			{
 				swap(bestEnd, bestStart);
@@ -587,24 +621,7 @@ __global__ void compress(const uint * permutations, const uint * image, uint2 * 
 	// Only write the result of the winner thread.
 	if (idx == indices[0])
 	{
-		if (bestStart == bestEnd)
-		{
-			bestPermutation = 0;
-		}
-	
-		// Reorder permutation.
-		uint perm = 0;
-		for(int i = 0; i < 16; i++)
-		{
-			int ref = xrefs[i];
-			perm |= ((bestPermutation >> (2 * ref)) & 3) << (2 * i);
-		}
-		
-		// Write endpoints. (bestStart, bestEnd)
-		result[bid].x = (bestEnd << 16) | bestStart;
-		
-		// Write palette indices (permutation).
-		result[bid].y = perm;
+		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs);
 	}
 }
 
@@ -616,36 +633,10 @@ __global__ void compressWeighted(const uint * permutations, const uint * image, 
 	
 	__shared__ float3 colors[16];
 	__shared__ float weights[16];
-	__shared__ float dps[16];
 	__shared__ int xrefs[16];
 	
-	if (idx < 16)
-	{
-		// Read color and copy to shared mem.
-		uint c = image[(bid) * 16 + idx];
-		
-		colors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
-		colors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
-		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
-		weights[idx] = ((c >> 24) & 0xFF) * (1.0f / 255.0f);
-		
-		// No need to synchronize, 16 < warp size.
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
-		
-		// Sort colors along the best fit line.
-		float3 axis = bestFitLine(colors);
-		
-		dps[idx] = dot(colors[idx], axis);
-		
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
-		
-		sortColors(dps, colors, weights, xrefs);
-	}
-	
+	loadColorBlock(image, colors, weights, xrefs);
+
 	ushort bestStart, bestEnd;
 	uint bestPermutation;
 	float bestError = FLT_MAX;
