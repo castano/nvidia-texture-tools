@@ -33,6 +33,7 @@ namespace nv
 	struct ColorBlock;
 	class Stream;
 
+
 	/// DXT1 block.
 	struct BlockDXT1
 	{
@@ -164,12 +165,22 @@ namespace nv
 		void flip2();
 	};
 
-	
-	/// 3DC block.
-	struct Block3DC
+	/// ATI1 block.
+	struct BlockATI1
 	{
-		AlphaBlockDXT5 y;
+		AlphaBlockDXT5 alpha;
+		
+		void decodeBlock(ColorBlock * block) const;
+		
+		void flip4();
+		void flip2();
+	};
+	
+	/// ATI2 block.
+	struct BlockATI2
+	{
 		AlphaBlockDXT5 x;
+		AlphaBlockDXT5 y;
 		
 		void decodeBlock(ColorBlock * block) const;
 		
@@ -183,7 +194,8 @@ namespace nv
 	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT3 & block);
 	NVIMAGE_API Stream & operator<<(Stream & stream, AlphaBlockDXT5 & block);
 	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT5 & block);
-	NVIMAGE_API Stream & operator<<(Stream & stream, Block3DC & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI1 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI2 & block);
 
 } // nv namespace
 

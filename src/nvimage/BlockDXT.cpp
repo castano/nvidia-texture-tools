@@ -484,24 +484,72 @@ void BlockDXT5::flip2()
 }
 
 
-/// Decode 3DC block.
-void Block3DC::decodeBlock(ColorBlock * block) const
+/// Decode ATI1 block.
+void BlockATI1::decodeBlock(ColorBlock * block) const
 {
-	// @@ TBD
+	uint8 alpha_array[8];
+	alpha.evaluatePalette(alpha_array);
+	
+	uint8 index_array[16];
+	alpha.indices(index_array);
+	
+	for(uint i = 0; i < 16; i++) {
+		Color32 & c = block->color(i);
+		c.b = c.g = c.r = alpha_array[index_array[i]];
+		c.a = 255;
+	}
 }
 
-/// Flip 3DC block vertically.
-void Block3DC::flip4()
+/// Flip ATI1 block vertically.
+void BlockATI1::flip4()
 {
-	y.flip4();
+	alpha.flip4();
+}
+
+/// Flip half ATI1 block vertically.
+void BlockATI1::flip2()
+{
+	alpha.flip2();
+}
+
+
+/// Decode ATI2 block.
+void BlockATI2::decodeBlock(ColorBlock * block) const
+{
+	uint8 alpha_array[8];
+	uint8 index_array[16];
+	
+	x.evaluatePalette(alpha_array);
+	x.indices(index_array);
+	
+	for(uint i = 0; i < 16; i++) {
+		Color32 & c = block->color(i);
+		c.r = alpha_array[index_array[i]];
+	}
+
+	y.evaluatePalette(alpha_array);
+	y.indices(index_array);
+	
+	for(uint i = 0; i < 16; i++) {
+		Color32 & c = block->color(i);
+		c.g = alpha_array[index_array[i]];
+		c.b = 0;
+		c.a = 255;
+	}
+}
+
+/// Flip ATI2 block vertically.
+void BlockATI2::flip4()
+{
 	x.flip4();
+	y.flip4();
 }
 
-/// Flip half 3DC block vertically.
-void Block3DC::flip2()
+/// Flip half ATI2 block vertically.
+void BlockATI2::flip2()
 {
-	y.flip2();
 	x.flip2();
+	y.flip2();
 }
 
 
@@ -534,14 +582,13 @@ Stream & nv::operator<<(Stream & stream, BlockDXT5 & block)
 	return stream << block.alpha << block.color;
 }
 
-Stream & nv::operator<<(Stream & stream, Block3DC & block)
+Stream & nv::operator<<(Stream & stream, BlockATI1 & block)
+{
+	return stream << block.alpha;
+}
+
+Stream & nv::operator<<(Stream & stream, BlockATI2 & block)
 {
 	return stream << block.x << block.y;
 }
-
-	
-
-
-
-
 
