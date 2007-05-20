@@ -873,7 +873,7 @@ void nv::compressGreenBlock_BruteForce(const ColorBlock & rgba, BlockDXT1 * bloc
 		
 		for (int g0 = ming+5; g0 < maxg; g0++)
 		{
-			for (int g1 = ming; g1 < g0-8; g1++)
+			for (int g1 = ming; g1 < g0-4; g1++)
 			{
 				if ((maxg-g0) + (g1-ming) > besterror)
 					continue;
@@ -1184,7 +1184,7 @@ uint nv::compressBlock_BruteForce(const ColorBlock & rgba, AlphaBlockDXT5 * bloc
 	block->alpha0 = maxa;
 	block->alpha1 = mina;
 
-	int centroidDist = 256;
+	/*int centroidDist = 256;
 	int centroid;
 
 	// Get the closest to the centroid.
@@ -1197,7 +1197,7 @@ uint nv::compressBlock_BruteForce(const ColorBlock & rgba, AlphaBlockDXT5 * bloc
 			centroidDist = dist;
 			centroid = alpha;
 		}
-	}
+	}*/
 
 	if (maxa - mina > 8)
 	{
