@@ -28,8 +28,15 @@
 
 #include "CudaMath.h"
 
-#define THREAD_COUNT 		256
+#define TW 16
+#define TH 16
+
+#define THREAD_COUNT 		(TW * TH)
+
 #define MAX_KERNEL_WIDTH	32
+
+#define KW 4
+
 
 
 #if __DEVICE_EMULATION__
@@ -39,17 +46,130 @@
 #endif
 
 
+__constant__ float inputGamma, outputInverseGamma;
 __constant__ float kernel[MAX_KERNEL_WIDTH];
+
+// Use texture to access input?
+// That's the most simple approach.
+
+texture<> image;
+
+////////////////////////////////////////////////////////////////////////////////
+// Combined convolution filter
+////////////////////////////////////////////////////////////////////////////////
+
+__global__ void convolve(float4 * output)
+{
+	// @@ Use morton order to assing threads.
+	int x = threadIdx.x;
+	int y = threadIdx.y;
+	
+	float4 color = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+	
+	// texture coordinate.
+	int2 t;
+	t.x = 2 * (blockIdx.x * TW + x) - HW;
+	t.y = blockIdx.y * TH + y;
+	
+	// @@ We might want to loop and process strips, to reuse the results of the horizontal convolutions.
+	
+	// Horizontal convolution. @@ Unroll loops.
+	for (int e = HW; e > 0; e--)
+	{
+		t.x++;
+		float w = kernel[e-1];
+		color += w * tex2D(image, tc);
+	}
+	
+	for (int e = 0; e < HW; e++)
+	{
+		t.x++;
+		float w = kernel[e];
+		color += w * tex2D(image, tc);
+	}
+	
+	// Write color to shared memory.
+	__shared__ float tile[4 * THREAD_COUNT];
+
+	int tileIdx = y * TW + x;
+	tile[tileIdx + 0 * THREAD_COUNT] = color.x;
+	tile[tileIdx + 1 * THREAD_COUNT] = color.y;
+	tile[tileIdx + 2 * THREAD_COUNT] = color.z;
+	tile[tileIdx + 3 * THREAD_COUNT] = color.w;
+
+	__syncthreads();
+	
+	// tile coordinate.
+	t.x = x;
+	t.y = y - HW;
+	
+	// Vertical convolution. @@ Unroll loops.
+	for (int i = HW; i > 0; i--)
+	{
+		float w = kernel[i-1];
+		
+		t.y++;
+		int idx = t.y * TW + t.x;
+		
+		color.x += w * tile[idx + 0 * THREAD_COUNT];
+		color.y += w * tile[idx + 1 * THREAD_COUNT];
+		color.z += w * tile[idx + 2 * THREAD_COUNT];
+		color.w += w * tile[idx + 3 * THREAD_COUNT];
+	}
+	
+	for (int i = 0; i < HW; i++)
+	{
+		float w = kernel[i];
+		
+		t.y++;
+		int idx = t.y * TW + t.x;
+		
+		color.x += w * tile[idx + 0 * THREAD_COUNT];
+		color.y += w * tile[idx + 1 * THREAD_COUNT];
+		color.z += w * tile[idx + 2 * THREAD_COUNT];
+		color.w += w * tile[idx + 3 * THREAD_COUNT];
+	}	
+	
+	it (x < w && y < h)
+	{
+		// @@ Prevent unaligned writes.
+		
+		output[y * w + h] = color;
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Monophase X convolution filter
 ////////////////////////////////////////////////////////////////////////////////
 
+__device__ void convolveY()
+{
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
-// Monophase Y convolution filter
+// Mipmap convolution filter
 ////////////////////////////////////////////////////////////////////////////////
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Gamma correction
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+__device__ float toLinear(float f, float gamma = 2.2f)
+{
+	return __pow(f, gamma);
+}
+
+__device__ float toGamma(float f, float gamma = 2.2f)
+{
+	return pow(f, 1.0f / gamma);
+}
+*/
 
 
 
