@@ -121,7 +121,7 @@ namespace
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
 
-#elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) // NV_OS_LINUX || NV_OS_OSX
+#elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) // NV_OS_LINUX || NV_OS_DARWIN
 
 #if defined(HAVE_EXECINFO_H) // NV_OS_LINUX
 
@@ -161,16 +161,64 @@ namespace
 
 #endif // defined(HAVE_EXECINFO_H)
 
+	static void * callerAddress(void * secret)
+	{
+#	if NV_OS_DARWIN && NV_CPU_PPC
+		return NULL;
+#	elif NV_OS_DARWIN && NV_CPU_X86
+		return NULL;
+#	elif NV_CPU_X86_64
+		ucontext_t * uc = (ucontext_t *)secret;
+		return (void *)uc->uc_mcontext.gregs[REG_RIP];
+#	elif NV_CPU_X86
+		ucontext_t * uc = (ucontext_t *)secret;
+		return (void *)uc->uc_mcontext.gregs[REG_EIP];
+#	elif NV_CPU_PPC
+		ucontext_t* uc = (ucontext_t*) secret;
+		return (void*) uc->uc_mcontext.regs->nip;
+#else
+		return NULL;
+#endif
+		
+		// From http://www.miriamruiz.es/weblog/?p=14
+
+		//	#elif defined(__hppa__)
+		//		ucontext_t* uc = (ucontext_t*) secret;
+		//		pnt = (void*) uc->uc_mcontext.sc_iaoq[0] & ~0×3UL ;
+		// 	#elif defined(__sparc__)
+		// 		struct sigcontext* sc = (struct sigcontext*) secret;
+		//		#if __WORDSIZE == 64
+		//			pnt = (void*) scp->sigc_regs.tpc ;
+		//		#else
+		//			pnt = (void*) scp->si_regs.pc ;
+		//		#endif
+		
+		// potentially correct for other archs:
+		// alpha: ucp->m_context.sc_pc
+		// arm: ucp->m_context.ctx.arm_pc
+		// ia64: ucp->m_context.sc_ip & ~0×3UL
+		// mips: ucp->m_context.sc_pc
+		// s390: ucp->m_context.sregs->regs.psw.addr
+		
+		// #ifndef EIP
+		// #define EIP     14
+		// #endif
+
+		// #if (defined (__x86_64__))
+		// #ifndef REG_RIP
+		// #define REG_RIP REG_INDEX(rip) /* seems to be 16 */
+		// #endif
+		// #endif		
+	}
+	
 	static void nvSigHandler(int sig, siginfo_t *info, void *secret)
 	{
+		void * pnt = callerAddress(secret);
+		
 		// Do something useful with siginfo_t
 		if (sig == SIGSEGV) {
-#		if NV_CPU_X86
-			ucontext_t * uc = (ucontext_t *)secret;
-			nvDebug("Got signal %d, faulty address is %p, from %p\n", sig, info->si_addr, (void *)uc->uc_mcontext.gregs[REG_EIP]);
-#		else
-			nvDebug("Got signal %d, faulty address is %p\n", sig, info->si_addr);
-#		endif
+			if (pnt != NULL) nvDebug("Got signal %d, faulty address is %p, from %p\n", sig, info->si_addr, pnt);
+			else nvDebug("Got signal %d, faulty address is %p\n", sig, info->si_addr);
 		}
 		else if(sig == SIGTRAP) {
 			nvDebug("Breakpoint hit.\n");
@@ -184,11 +232,11 @@ namespace
 		void * trace[64];
 		int size = backtrace(trace, 64);
 		
-#	if NV_CPU_X86
-		// Overwrite sigaction with caller's address.
-		ucontext_t * uc = (ucontext_t *)secret;
-		trace[1] = (void *) uc->uc_mcontext.gregs[REG_EIP];
-#	endif // NV_CPU_X86
+		if (pnt != NULL) {
+			// Overwrite sigaction with caller's address.
+			ucontext_t * uc = (ucontext_t *)secret;
+			trace[1] = (void *) uc->uc_mcontext.gregs[REG_EIP];
+		}
 		
 		nvPrintStackTrace(trace, size, 1);
 		
