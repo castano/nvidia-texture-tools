@@ -38,6 +38,7 @@
 #	include <unistd.h>	// getpid
 #	include <sys/types.h>
 #	include <sys/sysctl.h>	// sysctl
+#	include <ucontext.h>
 #endif
 
 #include <stdexcept> // std::runtime_error
@@ -179,9 +180,9 @@ namespace
 #	elif NV_CPU_PPC
 		ucontext_t * ucp = (ucontext_t *)secret;
 		return (void *) ucp->uc_mcontext.regs->nip;
-#else
+#	else
 		return NULL;
-#endif
+#	endif
 		
 		// How to obtain the instruction pointers in different platforms, from mlton's source code.
 		// http://mlton.org/
