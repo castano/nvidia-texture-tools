@@ -164,51 +164,48 @@ namespace
 	static void * callerAddress(void * secret)
 	{
 #	if NV_OS_DARWIN && NV_CPU_PPC
-		return NULL;
+		ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext->ss.srr0;
 #	elif NV_OS_DARWIN && NV_CPU_X86
-		return NULL;
+		ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext->ss.eip;
 #	elif NV_CPU_X86_64
-		ucontext_t * uc = (ucontext_t *)secret;
-		return (void *)uc->uc_mcontext.gregs[REG_RIP];
+		// #define REG_RIP REG_INDEX(rip) // seems to be 16
+		ucontext_t * ucp = (ucontext_t *)secret;
+		return (void *)ucp->uc_mcontext.gregs[REG_RIP];
 #	elif NV_CPU_X86
-		ucontext_t * uc = (ucontext_t *)secret;
-		return (void *)uc->uc_mcontext.gregs[REG_EIP];
+		ucontext_t * ucp = (ucontext_t *)secret;
+		return (void *)ucp->uc_mcontext.gregs[REG_EIP];	// 14
 #	elif NV_CPU_PPC
-		ucontext_t* uc = (ucontext_t*) secret;
-		return (void*) uc->uc_mcontext.regs->nip;
+		ucontext_t * ucp = (ucontext_t *)secret;
+		return (void *) ucp->uc_mcontext.regs->nip;
 #else
 		return NULL;
 #endif
 		
-		// From http://www.miriamruiz.es/weblog/?p=14
-
-		//	#elif defined(__hppa__)
-		//		ucontext_t* uc = (ucontext_t*) secret;
-		//		pnt = (void*) uc->uc_mcontext.sc_iaoq[0] & ~0×3UL ;
-		// 	#elif defined(__sparc__)
-		// 		struct sigcontext* sc = (struct sigcontext*) secret;
-		//		#if __WORDSIZE == 64
-		//			pnt = (void*) scp->sigc_regs.tpc ;
-		//		#else
-		//			pnt = (void*) scp->si_regs.pc ;
-		//		#endif
-		
+		// How to obtain the instruction pointers in different platforms, from mlton's source code.
+		// http://mlton.org/
+		// OpenBSD && NetBSD
+		// ucp->sc_eip
+		// FreeBSD:
+		// ucp->uc_mcontext.mc_eip
+		// HPUX:
+		// ucp->uc_link
+		// Solaris:
+		// ucp->uc_mcontext.gregs[REG_PC]
+		// Linux hppa:
+		// uc->uc_mcontext.sc_iaoq[0] & ~0×3UL
+		// Linux sparc:
+		// ((struct sigcontext*) secret)->sigc_regs.tpc
+		// Linux sparc64:
+		// ((struct sigcontext*) secret)->si_regs.pc
+	
 		// potentially correct for other archs:
-		// alpha: ucp->m_context.sc_pc
-		// arm: ucp->m_context.ctx.arm_pc
-		// ia64: ucp->m_context.sc_ip & ~0×3UL
-		// mips: ucp->m_context.sc_pc
-		// s390: ucp->m_context.sregs->regs.psw.addr
-		
-		// #ifndef EIP
-		// #define EIP     14
-		// #endif
-
-		// #if (defined (__x86_64__))
-		// #ifndef REG_RIP
-		// #define REG_RIP REG_INDEX(rip) /* seems to be 16 */
-		// #endif
-		// #endif		
+		// Linux alpha: ucp->m_context.sc_pc
+		// Linux arm: ucp->m_context.ctx.arm_pc
+		// Linux ia64: ucp->m_context.sc_ip & ~0×3UL
+		// Linux mips: ucp->m_context.sc_pc
+		// Linux s390: ucp->m_context.sregs->regs.psw.addr
 	}
 	
 	static void nvSigHandler(int sig, siginfo_t *info, void *secret)
@@ -471,7 +468,7 @@ void debug::enableSigHandler()
 	struct sigaction sa;
 	sa.sa_sigaction = nvSigHandler;
 	sigemptyset (&sa.sa_mask);
-	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+	sa.sa_flags = SA_ONSTACK | SA_RESTART | SA_SIGINFO;
 
 	sigaction(SIGSEGV, &sa, &s_old_sigsegv);
 	sigaction(SIGTRAP, &sa, &s_old_sigtrap);
