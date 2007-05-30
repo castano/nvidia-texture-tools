@@ -420,7 +420,7 @@ void NV_CDECL nvDebug(const char *msg, ...)
 /// Dump debug info.
 void debug::dumpInfo()
 {
-#if defined(HAVE_EXECINFO_H)
+#if !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H)
 	void * trace[64];
 	int size = backtrace(trace, 64);
 	nvPrintStackTrace(trace, size, 1);
