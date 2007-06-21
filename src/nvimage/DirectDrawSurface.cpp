@@ -558,9 +558,9 @@ void DirectDrawSurface::readBlockImage(Image * img)
 			readBlock(&block);
 			
 			// Write color block.
-			for (uint y = 0; y < min(4U, h-4*bx); y++)
+			for (uint y = 0; y < min(4U, h-4*by); y++)
 			{
-				for (uint x = 0; x < min(4U, w-4*by); x++)
+				for (uint x = 0; x < min(4U, w-4*bx); x++)
 				{
 					img->pixel(4*bx+x, 4*by+y) = block.color(x, y);
 				}
