@@ -46,13 +46,12 @@ TARGET_LINK_LIBRARIES(nvtt ${LIBS} nvcore nvmath nvimage squish)
 ADD_EXECUTABLE(nvcompress tools/compress.cpp)
 TARGET_LINK_LIBRARIES(nvcompress nvcore nvmath nvimage nvtt)
 
-INSTALL(TARGETS nvcompress DESTINATION bin)
+ADD_EXECUTABLE(nvdecompress tools/decompress.cpp)
+TARGET_LINK_LIBRARIES(nvdecompress nvcore nvmath nvimage)
 
 ADD_EXECUTABLE(nvddsinfo tools/ddsinfo.cpp)
 TARGET_LINK_LIBRARIES(nvddsinfo nvcore nvmath nvimage)
 
-INSTALL(TARGETS nvcompress nvddsinfo DESTINATION bin)
-
-
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo DESTINATION bin)
 
 
