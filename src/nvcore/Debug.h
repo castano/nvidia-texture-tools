@@ -13,6 +13,8 @@
 #define NV_ABORT_IGNORE		2
 #define NV_ABORT_EXIT		3
 
+#undef assert	// avoid conflicts with assert method.
+
 #define nvNoAssert(exp) \
 	do { \
 		(void)sizeof(exp); \

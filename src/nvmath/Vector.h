@@ -30,6 +30,8 @@ public:
 	scalar x() const;
 	scalar y() const;
 	
+	const scalar * ptr() const;
+
 	void set(scalar x, scalar y);
 	
 	Vector2 operator-() const;
@@ -142,6 +144,11 @@ inline const Vector2 & Vector2::operator=(Vector2::Arg v)
 
 inline scalar Vector2::x() const { return m_x; }
 inline scalar Vector2::y() const { return m_y; }
+
+inline const scalar * Vector2::ptr() const
+{
+	return &m_x;
+}
 
 inline void Vector2::set(scalar x, scalar y)
 {
@@ -397,6 +404,11 @@ inline Vector2 operator*(Vector2::Arg v, scalar s)
 	return scale(v, s);
 }
 
+inline Vector2 operator*(Vector2::Arg v1, Vector2::Arg v2)
+{
+	return Vector2(v1.x()*v2.x(), v1.y()*v2.y());
+}
+
 inline Vector2 operator*(scalar s, Vector2::Arg v)
 {
 	return scale(v, s);
@@ -415,6 +427,11 @@ inline scalar length_squared(Vector2::Arg v)
 inline scalar length(Vector2::Arg v)
 {
 	return sqrtf(length_squared(v));
+}
+
+inline bool equal(Vector2::Arg v1, Vector2::Arg v2, float epsilon = NV_EPSILON)
+{
+	return equal(v1.x(), v2.x(), epsilon) && equal(v1.y(), v2.y(), epsilon);
 }
 
 inline Vector2 min(Vector2::Arg a, Vector2::Arg b)
@@ -532,6 +549,11 @@ inline Vector3 normalizeSafe(Vector3::Arg v, Vector3::Arg fallback, float epsilo
 	return scale(v, 1.0f / l);
 }
 
+inline bool equal(Vector3::Arg v1, Vector3::Arg v2, float epsilon = NV_EPSILON)
+{
+	return equal(v1.x(), v2.x(), epsilon) && equal(v1.y(), v2.y(), epsilon) && equal(v1.z(), v2.z(), epsilon);
+}
+
 inline Vector3 min(Vector3::Arg a, Vector3::Arg b)
 {
 	return Vector3(min(a.x(), b.x()), min(a.y(), b.y()), min(a.z(), b.z()));
@@ -641,6 +663,11 @@ inline Vector4 normalizeSafe(Vector4::Arg v, Vector4::Arg fallback, float epsilo
 		return fallback;
 	}
 	return scale(v, 1.0f / l);
+}
+
+inline bool equal(Vector4::Arg v1, Vector4::Arg v2, float epsilon = NV_EPSILON)
+{
+	return equal(v1.x(), v2.x(), epsilon) && equal(v1.y(), v2.y(), epsilon) && equal(v1.z(), v2.z(), epsilon) && equal(v1.w(), v2.w(), epsilon);
 }
 
 inline Vector4 min(Vector4::Arg a, Vector4::Arg b)

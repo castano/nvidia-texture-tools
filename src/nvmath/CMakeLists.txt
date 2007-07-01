@@ -10,7 +10,8 @@ SET(MATH_SRCS
 	Fitting.h Fitting.cpp
 	Montecarlo.h Montecarlo.cpp
 	Random.h Random.cpp
-	SphericalHarmonic.h SphericalHarmonic.cpp)
+	SphericalHarmonic.h SphericalHarmonic.cpp
+	Basis.h Basis.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -25,3 +26,7 @@ ENDIF(NVMATH_SHARED)
 
 TARGET_LINK_LIBRARIES(nvmath ${LIBS} nvcore)
 
+INSTALL(TARGETS nvmath
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib/static)
