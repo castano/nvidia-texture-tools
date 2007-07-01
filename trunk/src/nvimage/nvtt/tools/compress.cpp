@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (input.empty())
+	if (input.isNull())
 	{
 		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
 		

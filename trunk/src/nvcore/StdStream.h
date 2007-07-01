@@ -13,6 +13,7 @@ namespace nv
 // Portable version of fopen.
 inline FILE * fileOpen(const char * fileName, const char * mode)
 {
+	nvCheck(fileName != NULL);
 #if NV_CC_MSVC && _MSC_VER >= 1400
 	FILE * fp;
 	if (fopen_s(&fp, fileName, mode) == 0) {
@@ -48,6 +49,7 @@ public:
 		virtual void seek( int pos )
 		{
 			nvDebugCheck(m_fp != NULL);
+			nvDebugCheck(pos >= 0 && pos < size());
 			fseek(m_fp, pos, SEEK_SET);
 		}
 		
@@ -59,6 +61,7 @@ public:
 		
 		virtual int size() const
 		{
+			nvDebugCheck(m_fp != NULL);
 			int pos = ftell(m_fp);
 			fseek(m_fp, 0, SEEK_END);
 			int end = ftell(m_fp);

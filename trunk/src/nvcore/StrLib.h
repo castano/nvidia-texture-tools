@@ -44,6 +44,7 @@ namespace nv
 	
 		NVCORE_API StringBuilder();
 		NVCORE_API explicit StringBuilder( int size_hint );
+		NVCORE_API StringBuilder( const char * str );
 		NVCORE_API StringBuilder( const StringBuilder & );
 		NVCORE_API StringBuilder( int size_hint, const StringBuilder & );	
 		NVCORE_API StringBuilder( const char * format, ... ) __attribute__((format (printf, 2, 3)));
@@ -69,7 +70,7 @@ namespace nv
 		NVCORE_API StringBuilder & toUpper();
 		
 		NVCORE_API void reset();
-		NVCORE_API bool empty() const { return m_size == 0; }
+		NVCORE_API bool isNull() const { return m_size == 0; }
 	
 		// const char * accessors
 		operator const char * () const { return m_str; }
@@ -81,22 +82,27 @@ namespace nv
 		StringBuilder & operator=( const StringBuilder & s ) {
 			return copy(s);
 		}
-	
+
+		/// Implement value semantics.
+		StringBuilder & operator=( const char * s ) {
+			return copy(s);
+		}
+
 		/// Equal operator.
 		bool operator==( const StringBuilder & s ) const {
-			nvCheck(m_str != NULL);
-			nvCheck(s.m_str != NULL);
-			return strcmp(s.m_str, m_str) != 0;
+			if (s.isNull()) return isNull();
+			else if (isNull()) return false;
+			else return strcmp(s.m_str, m_str) != 0;
 		}
 		
 		/// Return the exact length.
-		uint length() const { nvCheck(m_str != NULL); return uint(strlen(m_str)); }
+		uint length() const { return isNull() ? 0 : uint(strlen(m_str)); }
 	
 		/// Return the size of the string container.
-		uint capacity() const { nvCheck(m_str != NULL); return m_size; }
+		uint capacity() const { return m_size; }
 	
 		/// Return the hash of the string.
-		uint hash() const { nvCheck(m_str != NULL); return strHash(m_str); }
+		uint hash() const { return isNull() ? 0 : strHash(m_str); }
 	
 		///	Swap strings.
 		friend void swap(StringBuilder & a, StringBuilder & b) {
@@ -104,8 +110,6 @@ namespace nv
 			nv::swap(a.m_str, b.m_str);
 		}
 	
-		static char separator();
-		
 	protected:
 		
 		/// Size of the string container.

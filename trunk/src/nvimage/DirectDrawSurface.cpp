@@ -528,6 +528,13 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 	}
 }
 
+static uint8 bitExpand(uint8 c, uint bits)
+{
+	int shifts = 0;
+	uint8 output = c;
+	// @@ TODO!!!
+	
+}
 
 void DirectDrawSurface::readLinearImage(Image * img)
 {
