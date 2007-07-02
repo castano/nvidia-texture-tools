@@ -11,6 +11,7 @@
 #include "Image.h"
 #include "FloatImage.h"
 #include "TgaFile.h"
+#include "PsdFile.h"
 
 // Extern
 #if defined(HAVE_JPEG)
@@ -85,6 +86,7 @@ Image * nv::ImageIO::load(const char * name, Stream & s)
 Image * nv::ImageIO::loadTGA(Stream & s)
 {
 	nvCheck(!s.isError());
+	nvCheck(s.isLoading());
 	
 	TgaHeader tga;
 	s << tga;
@@ -315,6 +317,153 @@ bool nv::ImageIO::saveTGA(Stream & s, const Image * img)
 	return true;
 }
 
+/// Load PSD image.
+Image * nv::ImageIO::loadPSD(Stream & s)
+{
+	nvCheck(!s.isError());
+	nvCheck(s.isLoading());
+	
+	PsdHeader header;
+	s << header;
+	
+	if (!header.isValid())
+	{
+		return NULL;
+	}
+	
+	if (!header.isSupported())
+	{
+		return NULL;
+	}
+	
+	int tmp;
+	
+	// Skip mode data.
+	s << tmp;
+	s.seek(s.tell() + tmp);
+
+	// Skip image resources.
+	s << tmp;
+	s.seek(s.tell() + tmp);
+	
+	// Skip the reserved data.
+	s << tmp;
+	s.seek(s.tell() + tmp);
+	
+	// Find out if the data is compressed.
+	// Known values:
+	//   0: no compression
+	//   1: RLE compressed
+	uint16 compression;
+	s << compression;
+	
+	if (compression > 1) {
+		// Unknown compression type.
+		return NULL;
+	}
+	
+	uint channel_num = header.channel_count;
+	
+	AutoPtr<Image> img(new Image());
+	img->allocate(header.width, header.height);
+	
+	if (channel_num < 4)
+	{
+		// Clear the image.
+		img->fill(Color32(0, 0, 0, 0xFF));
+	}
+	else
+	{
+		// Enable alpha.
+		img->setFormat(Image::Format_ARGB);
+		
+		// Ignore remaining channels.
+		channel_num = 4;
+	}
+	
+	
+	const uint pixel_count = header.height * header.width;
+	
+	static const uint components[4] = {2, 1, 0, 3};
+	
+	if (compression)
+	{
+		s.seek(s.tell() + header.height * header.channel_count * sizeof(uint16));
+		
+		// Read RLE data.						
+		for (uint channel = 0; channel < channel_num; channel++)
+		{
+			uint8 * ptr = (uint8 *)img->pixels() + components[channel];
+			
+			uint count = 0;
+			while( count < pixel_count )
+			{
+				if (s.isAtEnd()) return NULL;
+				
+				uint8 c;
+				s << c;
+				
+				uint len = c;
+				if (len < 128)
+				{
+					// Copy next len+1 bytes literally.
+					len++;
+					count += len;
+					if (count > pixel_count) return NULL;
+	
+					while (len != 0)
+					{
+						s << *ptr;
+						ptr += 4;
+						len--;
+					}
+				} 
+				else if (len > 128)
+				{
+					// Next -len+1 bytes in the dest are replicated from next source byte.
+					// (Interpret len as a negative 8-bit int.)
+					len ^= 0xFF;
+					len += 2;
+					count += len;
+					if (s.isAtEnd() || count > pixel_count) return NULL;
+					
+					uint8 val;
+					s << val;
+					while( len != 0 ) {
+						*ptr = val;
+						ptr += 4;
+						len--;
+					}
+				}
+				else if( len == 128 ) {
+					// No-op.
+				}
+			}
+		}
+	}
+	else
+	{
+		// We're at the raw image data. It's each channel in order (Red, Green, Blue, Alpha, ...)
+		// where each channel consists of an 8-bit value for each pixel in the image.
+		
+		// Read the data by channel.
+		for (uint channel = 0; channel < channel_num; channel++)
+		{
+			uint8 * ptr = (uint8 *)img->pixels() + components[channel];
+			
+			// Read the data.
+			uint count = pixel_count;
+			while (count != 0)
+			{
+				s << *ptr;
+				ptr += 4;
+				count--;
+			}
+		}
+	}
+
+	return img.release();
+}
 
 #if defined(HAVE_PNG)
 

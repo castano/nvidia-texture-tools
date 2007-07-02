@@ -48,6 +48,8 @@ namespace nv
 		NVIMAGE_API Format format() const;
 		NVIMAGE_API void setFormat(Format f);
 		
+		NVIMAGE_API void fill(Color32 c);
+
 	private:
 		void free();
 		
