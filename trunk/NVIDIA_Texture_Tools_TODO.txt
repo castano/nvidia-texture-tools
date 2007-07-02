@@ -1,8 +1,8 @@
 
 Short term:
  - Improve quality of fast compressors.
- - More accellerated compressors.
- - Accellerate mipmap generation.
+ - More accelerated compressors.
+ - Accelerate mipmap generation.
  - Generic RGB pixel format conversion.
  - Do not assume that alpha is used for transparency.
 
