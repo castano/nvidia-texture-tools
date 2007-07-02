@@ -82,8 +82,8 @@ The usage of the commandline tool is the following:
 
 $ nvcompress [options] infile [outfile]
 
-where 'infile' is and TGA, PNG or JPG file, 'outfile' is a DDS file and 
-'options' is one or more of the following:
+where 'infile' is and TGA, PNG, PSD, DDS or JPG file, 'outfile' is a DDS file
+and 'options' is one or more of the following:
 
 Input options:
   -color   	The input image is a color map (default).
@@ -131,7 +131,7 @@ Yes.
 
 - Do the NVIDIA Texture Tools work on Vista?
 Yes, but note that CUDA is not supported on Vista yet, so the tool is not hardware 
-accellerated.
+accelerated.
 
 
 - Is CUDA required?
