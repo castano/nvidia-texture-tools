@@ -122,3 +122,12 @@ void Image::setFormat(Image::Format f)
 	m_format = f;
 }
 
+void Image::fill(Color32 c)
+{
+	const uint size = m_width * m_height;
+	for (uint i = 0; i < size; ++i)
+	{
+		m_data[i] = c;
+	}
+}
+

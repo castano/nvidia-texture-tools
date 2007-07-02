@@ -19,6 +19,8 @@ namespace nv
 		NVIMAGE_API Image * loadTGA(Stream & s);
 		NVIMAGE_API bool saveTGA(Stream & s, const Image * img);
 
+		NVIMAGE_API Image * loadPSD(Stream & s);
+
 #if defined(HAVE_PNG)
 		NVIMAGE_API Image * loadPNG(Stream & s);
 		NVIMAGE_API FloatImage * loadFloatPNG(Stream & s);
