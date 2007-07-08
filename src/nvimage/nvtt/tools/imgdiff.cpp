@@ -110,8 +110,8 @@ int main(int argc, char *argv[])
 	MyAssertHandler assertHandler;
 	MyMessageHandler messageHandler;
 
-	bool normal = false;
-	bool alpha = false;
+	bool compareNormal = false;
+	bool compareAlpha = false;
 
 	nv::Path input0;
 	nv::Path input1;
@@ -123,11 +123,11 @@ int main(int argc, char *argv[])
 		// Input options.
 		if (strcmp("-normal", argv[i]) == 0)
 		{
-			normal = true;
+			compareNormal = true;
 		}
 		if (strcmp("-alpha", argv[i]) == 0)
 		{
-			alpha = true;
+			compareAlpha = true;
 		}
 
 		else if (argv[i][0] != '-')
@@ -146,11 +146,11 @@ int main(int argc, char *argv[])
 	{
 		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
 		
-		printf("usage: nvimgdiff [options] inputA inputB [output]\n\n");
+		printf("usage: nvimgdiff [options] original_file updated_file [output]\n\n");
 		
 		printf("Diff options:\n");
 		printf("  -normal \tCompare images as if they were normal maps.\n");
-		printf("  -alpha  \tCompare alpha channels.\n");
+		printf("  -alpha  \tCompare alpha weighted images.\n");
 
 		return 1;
 	}
@@ -189,10 +189,19 @@ int main(int argc, char *argv[])
 			error_g.addSample(g);
 			error_b.addSample(b);
 			error_a.addSample(a);
-			
-			error_total.addSample(r);
-			error_total.addSample(g);
-			error_total.addSample(b);
+
+			if (compareAlpha)
+			{
+				error_total.addSample(r * c0.a / 255.0f);
+				error_total.addSample(g * c0.a / 255.0f);
+				error_total.addSample(b * c0.a / 255.0f);
+			}
+			else
+			{
+				error_total.addSample(r);
+				error_total.addSample(g);
+				error_total.addSample(b);
+			}
 		}
 	}
 
@@ -208,7 +217,14 @@ int main(int argc, char *argv[])
 	}
 	printf("Total pixels: %d\n", w*h);
 
+	printf("Color:\n");
 	error_total.print();
+
+	if (compareAlpha)
+	{
+		printf("Alpha:\n");
+		error_a.print();
+	}
 
 	// @@ Write image difference.
 	
