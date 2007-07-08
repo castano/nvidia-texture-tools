@@ -31,8 +31,9 @@ namespace nv
 #endif
 		
 #if defined(HAVE_TIFF)
-		// Hack!
+		// Hacks!
 		NVIMAGE_API FloatImage * loadFloatTIFF(const char * fileName);
+		NVIMAGE_API bool saveFloatTIFF(const char * fileName, FloatImage *fimage);
 
 		NVIMAGE_API FloatImage * loadFloatTIFF(Stream & s);
 #endif

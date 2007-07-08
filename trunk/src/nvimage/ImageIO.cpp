@@ -752,44 +752,57 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName)
 		return NULL;
 	}
 	
-	::uint16 spp, bpp;
+	::uint16 spp, bpp, format;
 	::uint32 width, height;
 	TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
 	TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
 	TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bpp);
 	TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
+	TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &format);
 	
-	if (spp != 1 || (bpp != 8 && bpp != 16 && bpp != 32)) {
+	if (bpp != 8 && bpp != 16 && bpp != 32) {
 		nvDebug("Can't load '%s', only 1 sample per pixel supported\n", fileName);
 		TIFFClose(tif);
 		return NULL;
 	}
 	
-	FloatImage * fimage = new FloatImage();
+	AutoPtr<FloatImage> fimage(new FloatImage());
 	fimage->allocate(spp, width, height);
 	
 	int linesize = TIFFScanlineSize(tif);
 	tdata_t buf = (::uint8 *)nv::mem::malloc(linesize);
 	
-	for (uint y = 0; y < height; y++) {
+	for (uint y = 0; y < height; y++) 
+	{
 		TIFFReadScanline(tif, buf, y, 0);
-		
-		float * dst = fimage->scanline(y, 0);
-		
-		if (bpp == 8) {
-			for(uint x = 0; x < width; x++) {
-				dst[x] = float(((::uint8 *)buf)[x]) / float(0xFF);
-			}
-		}
-		else if (bpp == 16) {
-			for(uint x = 0; x < width; x++) {
-				dst[x] = float(((::uint16 *)buf)[x]) / float(0xFFFF);
-			}
-		}
-		else /*if (bpp == 32)*/ {
-			// Mantissa has only 24 bits, so drop 8 bits.
-			for(uint x = 0; x < width; x++) {
-				dst[x] = float(((::uint32 *)buf)[x] >> 8) / float(0xFFFFFF);
+
+		for (uint c=0; c<spp; c++ ) 
+		{
+			float * dst = fimage->scanline(y, c);
+
+			for(uint x = 0; x < width; x++) 
+			{
+				if (bpp == 8)
+				{
+					dst[x] = float(((::uint8 *)buf)[x*spp+c]) / float(0xFF);
+				}
+				else if (bpp == 16)
+				{
+					dst[x] = float(((::uint16 *)buf)[x*spp+c]) / float(0xFFFF);
+				}
+				else if (bpp == 32)
+				{
+					if (format==SAMPLEFORMAT_IEEEFP)
+					{
+						dst[x] = float(((float *)buf)[x*spp+c]);
+					}
+					else
+					{
+						dst[x] = float(((::uint32 *)buf)[x*spp+c] >> 8) / float(0xFFFFFF);
+					}
+
+				}
+
 			}
 		}
 	}
@@ -798,8 +811,62 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName)
 	
 	TIFFClose(tif);
 	
-	return fimage;
+	return fimage.release();
 }
+
+
+bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage)
+{
+	int iW=fimage->width();
+	int iH=fimage->height();
+	int iC=fimage->componentNum();
+
+	TIFF * image = TIFFOpen(fileName, "w");
+
+	// Open the TIFF file
+	if (image == NULL)
+	{
+		nvDebug("Could not open '%s' for writing\n", fileName);
+		return false;
+	}
+
+	TIFFSetField(image, TIFFTAG_IMAGEWIDTH,  iW);
+	TIFFSetField(image, TIFFTAG_IMAGELENGTH, iH);
+	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, iC);
+	TIFFSetField(image, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, 32);
+	
+	uint32 rowsperstrip = TIFFDefaultStripSize(image, -1); 
+
+	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
+	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_PACKBITS); 
+	TIFFSetField(image, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, -1L);
+
+	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+
+	float *scanline = new float[iW * iC];
+	for (int y=0; y<iH; y++)
+	{
+		for (int c=0; c<iC; c++) 
+		{
+			float *src = fimage->scanline(y, c);
+			for (int x=0; x<iW; x++) scanline[x*iC+c]=src[x];
+		}
+		if (TIFFWriteScanline(image, scanline, y, 0)==-1)
+		{
+			nvDebug("Error writing scanline %d\n", y);
+			return -1;
+		}
+	}
+	delete [] scanline;
+
+	// Close the file
+	TIFFClose(image);
+	return true;
+}
+
+
 
 #endif
 

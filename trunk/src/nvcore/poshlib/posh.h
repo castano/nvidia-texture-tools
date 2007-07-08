@@ -1,6 +1,7 @@
 /**
 @file posh.h
 @author Brian Hook
+@version 1.3.001
 
 Header file for POSH, the Portable Open Source Harness project.
 
@@ -55,6 +56,16 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+REVISION:
+
+I've been lax about revision histories, so this starts at, um, 1.3.001.
+Sorry for any inconveniences.
+
+1.3.001 - 2/23/2006 - Incorporated fix for bug reported by Bill Cary,
+                      where I was not detecting Visual Studio
+                      compilation on x86-64 systems.  Added check for
+                      _M_X64 which should fix that.
 
 */
 /*
@@ -135,6 +146,7 @@ Microsoft Visual Studio predefines the following:
    - _MSC_VER
    - _WIN32: on Win32
    - _M_IX6 (on x86 systems)
+   - _M_X64: on x86-64 systems
    - _M_ALPHA (on DEC AXP systems)
    - _SH3: WinCE, Hitachi SH-3
    - _MIPS: WinCE, MIPS
@@ -192,9 +204,6 @@ Metrowerks:
    - __POWERPC__
 
 */
-
-#ifndef HAVE_POSH_H
-#define HAVE_POSH_H
 
 /*
 ** ----------------------------------------------------------------------------
@@ -289,6 +298,12 @@ Metrowerks:
 #  define POSH_OS_STRING "Cygwin"
 #endif
 
+#if defined GEKKO
+#  define POSH_OS_GAMECUBE
+#  define __powerpc__
+#  define POSH_OS_STRING "GameCube"
+#endif
+
 #if defined __MINGW32__
 #  define POSH_OS_MINGW 1
 #  define POSH_OS_STRING "MinGW"
@@ -369,14 +384,10 @@ Metrowerks:
 #  define POSH_OS_STRING "Windows CE"
 #endif
 
-#if defined _XBOX_VER == 200
-#  define POSH_OS_XBOX360 1
-#  define POSH_OS_STRING "XBOX-360"
-#elif defined _XBOX
+#if defined _XBOX
 #  define POSH_OS_XBOX 1
 #  define POSH_OS_STRING "XBOX"
 #endif
-
 
 #if defined _WIN32 || defined WIN32 || defined __NT__ || defined __WIN32__
 #  define POSH_OS_WIN32 1
@@ -407,6 +418,12 @@ Metrowerks:
 ** Determine target CPU
 ** -----------------------------------------------------------------------------
 */
+
+#if defined GEKKO
+#  define POSH_CPU_PPC750 1
+#  define POSH_CPU_STRING "IBM PowerPC 750 (NGC)"
+#endif
+
 #if defined mc68000 || defined m68k || defined __MC68K__ || defined m68000
 #  define POSH_CPU_68K 1
 #  define POSH_CPU_STRING "MC68000"
@@ -414,10 +431,12 @@ Metrowerks:
 
 #if defined __PPC__ || defined __POWERPC__  || defined powerpc || defined _POWER || defined __ppc__ || defined __powerpc__
 #  define POSH_CPU_PPC 1
-#  if defined __powerpc64__
-#     define POSH_CPU_STRING "PowerPC64"
-#  else
-#     define POSH_CPU_STRING "PowerPC"
+#  if !defined POSH_CPU_STRING
+#    if defined __powerpc64__
+#       define POSH_CPU_STRING "PowerPC64"
+#    else
+#       define POSH_CPU_STRING "PowerPC"
+#    endif
 #  endif
 #endif
 
@@ -682,12 +701,12 @@ typedef unsigned long long posh_u64_t;
 
 /* hack */
 #ifdef __MINGW32__
-#  undef POSH_I64
-#  undef POSH_U64
-#  undef POSH_I64_PRINTF_PREFIX
-#  define POSH_U64( x ) ((posh_u64_t)(x##LL))
-#  define POSH_I64( x ) ((posh_i64_t)(x##LL))
-#  define POSH_I64_PRINTF_PREFIX "I64"
+#undef POSH_I64
+#undef POSH_U64
+#undef POSH_I64_PRINTF_PREFIX
+#define POSH_I64( x ) ((posh_i64_t)x)
+#define POSH_U64( x ) ((posh_u64_t)x)
+#define POSH_I64_PRINTF_PREFIX "I64"
 #endif
 
 #ifdef FORCE_DOXYGEN
@@ -893,7 +912,6 @@ double      POSH_ReadDoubleFromBig( const void *src );
 #  undef  POSH_NO_FLOAT
 #endif
 
-
 extern posh_u16_t  POSH_SwapU16( posh_u16_t u );
 extern posh_i16_t  POSH_SwapI16( posh_i16_t u );
 extern posh_u32_t  POSH_SwapU32( posh_u32_t u );
@@ -986,4 +1004,4 @@ extern posh_i64_t  POSH_ReadI64FromBig( const void *src );
 }
 #endif
 
-#endif /* HAVE_POSH_H */
+

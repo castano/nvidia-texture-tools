@@ -281,6 +281,7 @@ POSH_GetArchString( void )
 /** 
  * Byte swaps a 16-bit unsigned value
  *
+   @ingroup ByteSwapFunctions
    @param v [in] unsigned 16-bit input value to swap
    @returns a byte swapped version of v
  */
@@ -298,6 +299,7 @@ POSH_SwapU16( posh_u16_t v )
 /** 
  * Byte swaps a 16-bit signed value
  *
+   @ingroup ByteSwapFunctions
    @param v [in] signed 16-bit input value to swap
    @returns a byte swapped version of v
    @remarks This just calls back to the unsigned version, since byte swapping 
@@ -313,6 +315,7 @@ POSH_SwapI16( posh_i16_t v )
 /** 
  * Byte swaps a 32-bit unsigned value
  *
+   @ingroup ByteSwapFunctions
    @param v [in] unsigned 32-bit input value to swap
    @returns a byte swapped version of v
  */
@@ -332,6 +335,7 @@ POSH_SwapU32( posh_u32_t v )
 /** 
  * Byte swaps a 32-bit signed value
  *
+   @ingroup ByteSwapFunctions
    @param v [in] signed 32-bit input value to swap
    @returns a byte swapped version of v
    @remarks This just calls back to the unsigned version, since byte swapping 
@@ -393,7 +397,8 @@ POSH_SwapI64( posh_i64_t v )
 /**
  * Writes an unsigned 16-bit value to a little endian buffer
 
- @param dst [out] pointer to the destination buffer, may not be NULL
+ @ingroup MemoryBuffer
+ @param dst [out] pointer to the destination buffer, may not be NULL.  Alignment doesn't matter.
  @param value [in] host-endian unsigned 16-bit value
  @returns a pointer to the location two bytes after dst
  @remarks does no validation of the inputs
@@ -401,9 +406,11 @@ POSH_SwapI64( posh_i64_t v )
 posh_u16_t *
 POSH_WriteU16ToLittle( void *dst, posh_u16_t value )
 {
-   posh_u16_t *p16 = ( posh_u16_t * ) dst;
+   posh_u16_t  *p16 = ( posh_u16_t * ) dst;
+   posh_byte_t *p   = ( posh_byte_t * ) dst;
 
-   *p16 = POSH_LittleU16(value);
+   p[ 0 ] = value & 0xFF;
+   p[ 1 ] = ( value & 0xFF00) >> 8;
 
    return p16 + 1;
 }
@@ -411,6 +418,7 @@ POSH_WriteU16ToLittle( void *dst, posh_u16_t value )
 /**
  * Writes a signed 16-bit value to a little endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian signed 16-bit value
  @returns a pointer to the location two bytes after dst
@@ -426,6 +434,7 @@ POSH_WriteI16ToLittle( void *dst, posh_i16_t value )
 /**
  * Writes an unsigned 32-bit value to a little endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian signed 32-bit value
  @returns a pointer to the location four bytes after dst
@@ -434,9 +443,13 @@ POSH_WriteI16ToLittle( void *dst, posh_i16_t value )
 posh_u32_t *
 POSH_WriteU32ToLittle( void *dst, posh_u32_t value )
 {
-   posh_u32_t *p32 = ( posh_u32_t * ) dst;
+   posh_u32_t  *p32   = ( posh_u32_t * ) dst;
+   posh_byte_t *p     = ( posh_byte_t * ) dst;
 
-   *p32 = POSH_LittleU32(value);
+   p[ 0 ] = ( value & 0xFF );
+   p[ 1 ] = ( value & 0xFF00 ) >> 8;
+   p[ 2 ] = ( value & 0xFF0000 ) >> 16;
+   p[ 3 ] = ( value & 0xFF000000 ) >> 24;
 
    return p32 + 1;
 }
@@ -444,6 +457,7 @@ POSH_WriteU32ToLittle( void *dst, posh_u32_t value )
 /**
  * Writes a signed 32-bit value to a little endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian signed 32-bit value
  @returns a pointer to the location four bytes after dst
@@ -459,6 +473,7 @@ POSH_WriteI32ToLittle( void *dst, posh_i32_t value )
 /**
  * Writes an unsigned 16-bit value to a big endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian unsigned 16-bit value
  @returns a pointer to the location two bytes after dst
@@ -468,8 +483,10 @@ posh_u16_t *
 POSH_WriteU16ToBig( void *dst, posh_u16_t value )
 {
    posh_u16_t *p16 = ( posh_u16_t * ) dst;
+   posh_byte_t *p  = ( posh_byte_t * ) dst;
 
-   *p16 = POSH_BigU16(value);
+   p[ 1 ] = ( value & 0xFF );
+   p[ 0 ] = ( value & 0xFF00 ) >> 8;
 
    return p16 + 1;
 }
@@ -477,6 +494,7 @@ POSH_WriteU16ToBig( void *dst, posh_u16_t value )
 /**
  * Writes a signed 16-bit value to a big endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian signed 16-bit value
  @returns a pointer to the location two bytes after dst
@@ -492,6 +510,7 @@ POSH_WriteI16ToBig( void *dst, posh_i16_t value )
 /**
  * Writes an unsigned 32-bit value to a big endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian unsigned 32-bit value
  @returns a pointer to the location four bytes after dst
@@ -501,8 +520,12 @@ posh_u32_t *
 POSH_WriteU32ToBig( void *dst, posh_u32_t value )
 {
    posh_u32_t *p32 = ( posh_u32_t * ) dst;
+   posh_byte_t *p  = ( posh_byte_t * ) dst;
 
-   *p32 = POSH_BigU32(value);
+   p[ 3 ] = ( value & 0xFF );
+   p[ 2 ] = ( value & 0xFF00 ) >> 8;
+   p[ 1 ] = ( value & 0xFF0000 ) >> 16;
+   p[ 0 ] = ( value & 0xFF000000 ) >> 24;
 
    return p32 + 1;
 }
@@ -510,6 +533,7 @@ POSH_WriteU32ToBig( void *dst, posh_u32_t value )
 /**
  * Writes a signed 32-bit value to a big endian buffer
 
+ @ingroup MemoryBuffer
  @param dst [out] pointer to the destination buffer, may not be NULL
  @param value [in] host-endian signed 32-bit value
  @returns a pointer to the location four bytes after dst
@@ -536,8 +560,13 @@ posh_u64_t *
 POSH_WriteU64ToLittle( void *dst, posh_u64_t value )
 {
    posh_u64_t *p64 = ( posh_u64_t * ) dst;
+   posh_byte_t *p  = ( posh_byte_t * ) dst;
+   int i;
 
-   *p64 = POSH_LittleU64(value);
+   for ( i = 0; i < 8; i++, value >>= 8 )
+   {
+       p[ i ] = ( posh_byte_t ) ( value & 0xFF );
+   }
 
    return p64 + 1;
 }
@@ -570,8 +599,13 @@ posh_u64_t *
 POSH_WriteU64ToBig( void *dst, posh_u64_t value )
 {
    posh_u64_t *p64 = ( posh_u64_t * ) dst;
+   posh_byte_t *p  = ( posh_byte_t * ) dst;
+   int i;
 
-   *p64 = POSH_BigU64(value);
+   for ( i = 0; i < 8; i++, value >>= 8 )
+   {
+       p[ 7-i ] = ( posh_byte_t ) ( value & 0xFF );
+   }
 
    return p64 + 8;
 }
@@ -599,84 +633,120 @@ POSH_WriteI64ToBig( void *dst, posh_i64_t value )
 
 /** 
  * Reads an unsigned 16-bit value from a little-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 16-bit value
 */
 posh_u16_t  
 POSH_ReadU16FromLittle( const void *src )
 {
-   return POSH_LittleU16( (*(const posh_u16_t*)src) );
+    posh_u16_t   v = 0;
+    posh_byte_t *p = ( posh_byte_t * ) src;
+
+    v |= p[ 0 ];
+    v |= ( ( posh_u16_t ) p[ 1 ] ) << 8;
+
+    return v;
 }
 
 /** 
  * Reads a signed 16-bit value from a little-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 16-bit value
 */
 posh_i16_t  
 POSH_ReadI16FromLittle( const void *src )
 {
-   return POSH_LittleI16( (*(const posh_i16_t*)src) );
+   return ( posh_i16_t ) POSH_ReadU16FromLittle( src );
 }
 
 /** 
  * Reads an unsigned 32-bit value from a little-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 32-bit value
 */
 posh_u32_t  
 POSH_ReadU32FromLittle( const void *src )
 {
-   return POSH_LittleU32( (*(const posh_u32_t*)src) );
+    posh_u32_t v = 0;
+    posh_byte_t *p = ( posh_byte_t * ) src;
+
+    v |= p[ 0 ];
+    v |= ( ( posh_u32_t ) p[ 1 ] ) << 8;
+    v |= ( ( posh_u32_t ) p[ 2 ] ) << 16;
+    v |= ( ( posh_u32_t ) p[ 3 ] ) << 24;
+
+    return v;
 }
 
 /** 
  * Reads a signed 32-bit value from a little-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 32-bit value
 */
 posh_i32_t  
 POSH_ReadI32FromLittle( const void *src )
 {
-   return POSH_LittleI32( (*(const posh_i32_t*)src) );
+   return ( posh_i32_t ) POSH_ReadU32FromLittle( src );
 }
 
 
 /** 
  * Reads an unsigned 16-bit value from a big-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 16-bit value
 */
 posh_u16_t  
 POSH_ReadU16FromBig( const void *src )
 {
-   return POSH_BigU16( (*(const posh_u16_t*)src) );
+    posh_u16_t   v = 0;
+    posh_byte_t *p = ( posh_byte_t * ) src;
+
+    v |= p[ 1 ];
+    v |= ( ( posh_u16_t ) p[ 0 ] ) << 8;
+
+    return v;
 }
 
 /** 
  * Reads a signed 16-bit value from a big-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 16-bit value
 */
 posh_i16_t  
 POSH_ReadI16FromBig( const void *src )
 {
-   return POSH_BigI16( (*(const posh_i16_t*)src));
+   return ( posh_i16_t ) POSH_ReadU16FromBig( src );
 }
 
 /** 
  * Reads an unsigned 32-bit value from a big-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian unsigned 32-bit value
 */
 posh_u32_t  
 POSH_ReadU32FromBig( const void *src )
 {
-   return POSH_BigU32( (*(const posh_u32_t*)src) );
+    posh_u32_t   v = 0;
+    posh_byte_t *p = ( posh_byte_t * ) src;
+
+    v |= p[ 3 ];
+    v |= ( ( posh_u32_t ) p[ 2 ] ) << 8;
+    v |= ( ( posh_u32_t ) p[ 1 ] ) << 16;
+    v |= ( ( posh_u32_t ) p[ 0 ] ) << 24;
+
+    return v;
 }
 
 /** 
  * Reads a signed 32-bit value from a big-endian buffer
+ @ingroup MemoryBuffer
  @param src [in] source buffer
  @returns host-endian signed 32-bit value
 */
@@ -696,7 +766,16 @@ POSH_ReadI32FromBig( const void *src )
 posh_u64_t  
 POSH_ReadU64FromLittle( const void *src )
 {
-   return POSH_LittleU64( (*(const posh_u64_t*)src) );
+    posh_u64_t v = 0;
+    posh_byte_t *p = ( posh_byte_t * ) src;
+    int i;
+
+    for ( i = 0; i < 8; i++ )
+    {
+        v |= ( ( posh_u64_t ) p[ i ] ) << (i*8);
+    }
+
+    return v;
 }
 
 /** 
@@ -707,7 +786,7 @@ POSH_ReadU64FromLittle( const void *src )
 posh_i64_t  
 POSH_ReadI64FromLittle( const void *src )
 {
-   return POSH_LittleI64( (*(const posh_i64_t*)src) );
+   return ( posh_i64_t ) POSH_ReadU64FromLittle( src );
 }
 
 /** 
@@ -718,7 +797,16 @@ POSH_ReadI64FromLittle( const void *src )
 posh_u64_t
 POSH_ReadU64FromBig( const void *src )
 {
-   return POSH_BigU64( (*(const posh_u64_t*)src) );
+    posh_u64_t v = 0;
+    posh_byte_t *p = ( posh_byte_t * ) src;
+    int i;
+
+    for ( i = 0; i < 8; i++ )
+    {
+        v |= ( ( posh_u64_t ) p[ 7-i ] ) << (i*8);
+    }
+
+    return v;
 }
 
 /** 
@@ -729,7 +817,7 @@ POSH_ReadU64FromBig( const void *src )
 posh_i64_t
 POSH_ReadI64FromBig( const void *src )
 {
-   return POSH_BigI64( (*(const posh_i64_t*)src) );
+   return ( posh_i64_t ) POSH_ReadU64FromBig( src );
 }
 
 #endif /* POSH_64BIT_INTEGER */
@@ -755,11 +843,7 @@ POSH_LittleFloatBits( float f )
 
    u.f32 = f;
 
-#if defined POSH_LITTLE_ENDIAN
-   return u.u32;
-#else
-   return POSH_SwapU32( u.u32 );
-#endif
+   return POSH_LittleU32( u.u32 );
 }
 
 /** 
@@ -780,11 +864,7 @@ POSH_BigFloatBits( float f )
 
    u.f32 = f;
 
-#if defined POSH_LITTLE_ENDIAN
-   return POSH_SwapU32( u.u32 );
-#else
-   return u.u32;
-#endif
+   return POSH_BigU32( u.u32 );
 }
 
 /** 

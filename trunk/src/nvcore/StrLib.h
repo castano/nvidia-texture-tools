@@ -32,6 +32,7 @@ namespace nv
 	NVCORE_API int strCaseCmp(const char * s1, const char * s2) NV_PURE;
 	NVCORE_API int strCmp(const char * s1, const char * s2) NV_PURE;
 	NVCORE_API void strCpy(char * dst, int size, const char * src);
+	NVCORE_API void strCpy(char * dst, int size, const char * src, int len);
 	NVCORE_API void strCat(char * dst, int size, const char * src);
 
 	NVCORE_API bool strMatch(const char * str, const char * pat) NV_PURE;
@@ -327,7 +328,10 @@ namespace nv
 			setRefCount( 0 );
 			
 			// Copy string.
-			strCpy(const_cast<char *>(data), len + 1, str);
+			strCpy(const_cast<char *>(data), len+1, str, len);
+
+			// Add terminating character.
+			const_cast<char *>(data)[len] = '\0';
 		}
 	
 		NVCORE_API void setString(const char * str);
