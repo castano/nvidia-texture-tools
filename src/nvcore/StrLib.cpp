@@ -102,6 +102,18 @@ void nv::strCpy(char * dst, int size, const char * src)
 #endif
 }
 
+void nv::strCpy(char * dst, int size, const char * src, int len)
+{
+	nvDebugCheck(dst != NULL);
+	nvDebugCheck(src != NULL);
+#if NV_CC_MSVC && _MSC_VER >= 1400
+	strncpy_s(dst, size, src, len);
+#else
+	NV_UNUSED(size);
+	strncpy(dst, src, len);
+#endif
+}
+
 void nv::strCat(char * dst, int size, const char * src)
 {
 	nvDebugCheck(dst != NULL);

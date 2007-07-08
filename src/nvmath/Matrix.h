@@ -25,6 +25,8 @@ public:
 	Matrix(identity_t);
 	Matrix(const Matrix & m);
 
+	scalar data(uint idx) const;
+	scalar & data(uint idx);
 	scalar get(uint row, uint col) const;
 	scalar operator()(uint row, uint col) const;
 	scalar & operator()(uint row, uint col);
@@ -37,8 +39,7 @@ public:
 	void scale(Vector3::Arg s);
 	void translate(Vector3::Arg t);
 	void rotate(scalar theta, scalar v0, scalar v1, scalar v2);
-    Matrix inverse();
-    scalar determinant();
+    scalar determinant() const;
 	
 	void apply(Matrix::Arg m);
 
@@ -76,6 +77,16 @@ inline Matrix::Matrix(const Matrix & m)
 
 
 // Accessors
+inline scalar Matrix::data(uint idx) const
+{
+	nvDebugCheck(idx < 16);
+	return m_data[idx];
+}
+inline scalar & Matrix::data(uint idx)
+{
+	nvDebugCheck(idx < 16);
+	return m_data[idx];
+}
 inline scalar Matrix::get(uint row, uint col) const
 {
 	nvDebugCheck(row < 4 && col < 4);
@@ -305,14 +316,15 @@ inline Matrix perspective(scalar fovy, scalar aspect, scalar zNear)
 }
 
 /// Get matrix determinant.
-inline scalar Matrix::determinant()
+inline scalar Matrix::determinant() const
 {
-   return m_data[3] * m_data[6] * m_data[9] * m_data[12]-m_data[2] * m_data[7] * m_data[9] * m_data[12]-m_data[3] * m_data[5] * m_data[10] * m_data[12]+m_data[1] * m_data[7]    * m_data[10] * m_data[12]+
-   m_data[2] * m_data[5] * m_data[11] * m_data[12]-m_data[1] * m_data[6] * m_data[11] * m_data[12]-m_data[3] * m_data[6] * m_data[8] * m_data[13]+m_data[2] * m_data[7]    * m_data[8] * m_data[13]+
-   m_data[3] * m_data[4] * m_data[10] * m_data[13]-m_data[0] * m_data[7] * m_data[10] * m_data[13]-m_data[2] * m_data[4] * m_data[11] * m_data[13]+m_data[0] * m_data[6]    * m_data[11] * m_data[13]+
-   m_data[3] * m_data[5] * m_data[8] * m_data[14]-m_data[1] * m_data[7] * m_data[8] * m_data[14]-m_data[3] * m_data[4] * m_data[9] * m_data[14]+m_data[0] * m_data[7]    * m_data[9] * m_data[14]+
-   m_data[1] * m_data[4] * m_data[11] * m_data[14]-m_data[0] * m_data[5] * m_data[11] * m_data[14]-m_data[2] * m_data[5] * m_data[8] * m_data[15]+m_data[1] * m_data[6]    * m_data[8] * m_data[15]+
-   m_data[2] * m_data[4] * m_data[9] * m_data[15]-m_data[0] * m_data[6] * m_data[9] * m_data[15]-m_data[1] * m_data[4] * m_data[10] * m_data[15]+m_data[0] * m_data[5]    * m_data[10] * m_data[15];
+	return 
+		m_data[3] * m_data[6] * m_data[ 9] * m_data[12] - m_data[2] * m_data[7] * m_data[ 9] * m_data[12] - m_data[3] * m_data[5] * m_data[10] * m_data[12] + m_data[1] * m_data[7] * m_data[10] * m_data[12] +
+		m_data[2] * m_data[5] * m_data[11] * m_data[12] - m_data[1] * m_data[6] * m_data[11] * m_data[12] - m_data[3] * m_data[6] * m_data[ 8] * m_data[13] + m_data[2] * m_data[7] * m_data[ 8] * m_data[13] +
+		m_data[3] * m_data[4] * m_data[10] * m_data[13] - m_data[0] * m_data[7] * m_data[10] * m_data[13] - m_data[2] * m_data[4] * m_data[11] * m_data[13] + m_data[0] * m_data[6] * m_data[11] * m_data[13] +
+		m_data[3] * m_data[5] * m_data[ 8] * m_data[14] - m_data[1] * m_data[7] * m_data[ 8] * m_data[14] - m_data[3] * m_data[4] * m_data[ 9] * m_data[14] + m_data[0] * m_data[7] * m_data[ 9] * m_data[14] +
+		m_data[1] * m_data[4] * m_data[11] * m_data[14] - m_data[0] * m_data[5] * m_data[11] * m_data[14] - m_data[2] * m_data[5] * m_data[ 8] * m_data[15] + m_data[1] * m_data[6] * m_data[ 8] * m_data[15] +
+		m_data[2] * m_data[4] * m_data[ 9] * m_data[15] - m_data[0] * m_data[6] * m_data[ 9] * m_data[15] - m_data[1] * m_data[4] * m_data[10] * m_data[15] + m_data[0] * m_data[5] * m_data[10] * m_data[15];
 }
 
 inline Matrix transpose(Matrix::Arg m)
@@ -328,26 +340,26 @@ inline Matrix transpose(Matrix::Arg m)
 	return r;
 }
 
-inline Matrix Matrix::inverse()
+inline Matrix inverse(Matrix::Arg m)
 {
    Matrix r;
-   r.m_data[ 0] = m_data[6]*m_data[11]*m_data[13] - m_data[7]*m_data[10]*m_data[13] + m_data[7]*m_data[9]*m_data[14] - m_data[5]*m_data[11]*m_data[14] - m_data[6]*m_data[9]*m_data[15] + m_data[5]*m_data[10]*m_data[15];
-   r.m_data[ 1] = m_data[3]*m_data[10]*m_data[13] - m_data[2]*m_data[11]*m_data[13] - m_data[3]*m_data[9]*m_data[14] + m_data[1]*m_data[11]*m_data[14] + m_data[2]*m_data[9]*m_data[15] - m_data[1]*m_data[10]*m_data[15];
-   r.m_data[ 2] = m_data[2]*m_data[7]*m_data[13] - m_data[3]*m_data[6]*m_data[13] + m_data[3]*m_data[5]*m_data[14] - m_data[1]*m_data[7]*m_data[14] - m_data[2]*m_data[5]*m_data[15] + m_data[1]*m_data[6]*m_data[15];
-   r.m_data[ 3] = m_data[3]*m_data[6]*m_data[9] - m_data[2]*m_data[7]*m_data[9] - m_data[3]*m_data[5]*m_data[10] + m_data[1]*m_data[7]*m_data[10] + m_data[2]*m_data[5]*m_data[11] - m_data[1]*m_data[6]*m_data[11];
-   r.m_data[ 4] = m_data[7]*m_data[10]*m_data[12] - m_data[6]*m_data[11]*m_data[12] - m_data[7]*m_data[8]*m_data[14] + m_data[4]*m_data[11]*m_data[14] + m_data[6]*m_data[8]*m_data[15] - m_data[4]*m_data[10]*m_data[15];
-   r.m_data[ 5] = m_data[2]*m_data[11]*m_data[12] - m_data[3]*m_data[10]*m_data[12] + m_data[3]*m_data[8]*m_data[14] - m_data[0]*m_data[11]*m_data[14] - m_data[2]*m_data[8]*m_data[15] + m_data[0]*m_data[10]*m_data[15];
-   r.m_data[ 6] = m_data[3]*m_data[6]*m_data[12] - m_data[2]*m_data[7]*m_data[12] - m_data[3]*m_data[4]*m_data[14] + m_data[0]*m_data[7]*m_data[14] + m_data[2]*m_data[4]*m_data[15] - m_data[0]*m_data[6]*m_data[15];
-   r.m_data[ 7] = m_data[2]*m_data[7]*m_data[8] - m_data[3]*m_data[6]*m_data[8] + m_data[3]*m_data[4]*m_data[10] - m_data[0]*m_data[7]*m_data[10] - m_data[2]*m_data[4]*m_data[11] + m_data[0]*m_data[6]*m_data[11];
-   r.m_data[ 8] = m_data[5]*m_data[11]*m_data[12] - m_data[7]*m_data[9]*m_data[12] + m_data[7]*m_data[8]*m_data[13] - m_data[4]*m_data[11]*m_data[13] - m_data[5]*m_data[8]*m_data[15] + m_data[4]*m_data[9]*m_data[15];
-   r.m_data[ 9] = m_data[3]*m_data[9]*m_data[12] - m_data[1]*m_data[11]*m_data[12] - m_data[3]*m_data[8]*m_data[13] + m_data[0]*m_data[11]*m_data[13] + m_data[1]*m_data[8]*m_data[15] - m_data[0]*m_data[9]*m_data[15];
-   r.m_data[10] = m_data[1]*m_data[7]*m_data[12] - m_data[3]*m_data[5]*m_data[12] + m_data[3]*m_data[4]*m_data[13] - m_data[0]*m_data[7]*m_data[13] - m_data[1]*m_data[4]*m_data[15] + m_data[0]*m_data[5]*m_data[15];
-   r.m_data[11] = m_data[3]*m_data[5]*m_data[8] - m_data[1]*m_data[7]*m_data[8] - m_data[3]*m_data[4]*m_data[9] + m_data[0]*m_data[7]*m_data[9] + m_data[1]*m_data[4]*m_data[11] - m_data[0]*m_data[5]*m_data[11];
-   r.m_data[12] = m_data[6]*m_data[9]*m_data[12] - m_data[5]*m_data[10]*m_data[12] - m_data[6]*m_data[8]*m_data[13] + m_data[4]*m_data[10]*m_data[13] + m_data[5]*m_data[8]*m_data[14] - m_data[4]*m_data[9]*m_data[14];
-   r.m_data[13] = m_data[1]*m_data[10]*m_data[12] - m_data[2]*m_data[9]*m_data[12] + m_data[2]*m_data[8]*m_data[13] - m_data[0]*m_data[10]*m_data[13] - m_data[1]*m_data[8]*m_data[14] + m_data[0]*m_data[9]*m_data[14];
-   r.m_data[14] = m_data[2]*m_data[5]*m_data[12] - m_data[1]*m_data[6]*m_data[12] - m_data[2]*m_data[4]*m_data[13] + m_data[0]*m_data[6]*m_data[13] + m_data[1]*m_data[4]*m_data[14] - m_data[0]*m_data[5]*m_data[14];
-   r.m_data[15] = m_data[1]*m_data[6]*m_data[8] - m_data[2]*m_data[5]*m_data[8] + m_data[2]*m_data[4]*m_data[9] - m_data[0]*m_data[6]*m_data[9] - m_data[1]*m_data[4]*m_data[10] + m_data[0]*m_data[5]*m_data[10];
-   r.scale(1./determinant());
+   r.data( 0) = m.data(6)*m.data(11)*m.data(13) - m.data(7)*m.data(10)*m.data(13) + m.data(7)*m.data(9)*m.data(14) - m.data(5)*m.data(11)*m.data(14) - m.data(6)*m.data(9)*m.data(15) + m.data(5)*m.data(10)*m.data(15);
+   r.data( 1) = m.data(3)*m.data(10)*m.data(13) - m.data(2)*m.data(11)*m.data(13) - m.data(3)*m.data(9)*m.data(14) + m.data(1)*m.data(11)*m.data(14) + m.data(2)*m.data(9)*m.data(15) - m.data(1)*m.data(10)*m.data(15);
+   r.data( 2) = m.data(2)*m.data( 7)*m.data(13) - m.data(3)*m.data( 6)*m.data(13) + m.data(3)*m.data(5)*m.data(14) - m.data(1)*m.data( 7)*m.data(14) - m.data(2)*m.data(5)*m.data(15) + m.data(1)*m.data( 6)*m.data(15);
+   r.data( 3) = m.data(3)*m.data( 6)*m.data( 9) - m.data(2)*m.data( 7)*m.data( 9) - m.data(3)*m.data(5)*m.data(10) + m.data(1)*m.data( 7)*m.data(10) + m.data(2)*m.data(5)*m.data(11) - m.data(1)*m.data( 6)*m.data(11);
+   r.data( 4) = m.data(7)*m.data(10)*m.data(12) - m.data(6)*m.data(11)*m.data(12) - m.data(7)*m.data(8)*m.data(14) + m.data(4)*m.data(11)*m.data(14) + m.data(6)*m.data(8)*m.data(15) - m.data(4)*m.data(10)*m.data(15);
+   r.data( 5) = m.data(2)*m.data(11)*m.data(12) - m.data(3)*m.data(10)*m.data(12) + m.data(3)*m.data(8)*m.data(14) - m.data(0)*m.data(11)*m.data(14) - m.data(2)*m.data(8)*m.data(15) + m.data(0)*m.data(10)*m.data(15);
+   r.data( 6) = m.data(3)*m.data( 6)*m.data(12) - m.data(2)*m.data( 7)*m.data(12) - m.data(3)*m.data(4)*m.data(14) + m.data(0)*m.data( 7)*m.data(14) + m.data(2)*m.data(4)*m.data(15) - m.data(0)*m.data( 6)*m.data(15);
+   r.data( 7) = m.data(2)*m.data( 7)*m.data( 8) - m.data(3)*m.data( 6)*m.data( 8) + m.data(3)*m.data(4)*m.data(10) - m.data(0)*m.data( 7)*m.data(10) - m.data(2)*m.data(4)*m.data(11) + m.data(0)*m.data( 6)*m.data(11);
+   r.data( 8) = m.data(5)*m.data(11)*m.data(12) - m.data(7)*m.data( 9)*m.data(12) + m.data(7)*m.data(8)*m.data(13) - m.data(4)*m.data(11)*m.data(13) - m.data(5)*m.data(8)*m.data(15) + m.data(4)*m.data( 9)*m.data(15);
+   r.data( 9) = m.data(3)*m.data( 9)*m.data(12) - m.data(1)*m.data(11)*m.data(12) - m.data(3)*m.data(8)*m.data(13) + m.data(0)*m.data(11)*m.data(13) + m.data(1)*m.data(8)*m.data(15) - m.data(0)*m.data( 9)*m.data(15);
+   r.data(10) = m.data(1)*m.data( 7)*m.data(12) - m.data(3)*m.data( 5)*m.data(12) + m.data(3)*m.data(4)*m.data(13) - m.data(0)*m.data( 7)*m.data(13) - m.data(1)*m.data(4)*m.data(15) + m.data(0)*m.data( 5)*m.data(15);
+   r.data(11) = m.data(3)*m.data( 5)*m.data( 8) - m.data(1)*m.data( 7)*m.data( 8) - m.data(3)*m.data(4)*m.data( 9) + m.data(0)*m.data( 7)*m.data( 9) + m.data(1)*m.data(4)*m.data(11) - m.data(0)*m.data( 5)*m.data(11);
+   r.data(12) = m.data(6)*m.data( 9)*m.data(12) - m.data(5)*m.data(10)*m.data(12) - m.data(6)*m.data(8)*m.data(13) + m.data(4)*m.data(10)*m.data(13) + m.data(5)*m.data(8)*m.data(14) - m.data(4)*m.data( 9)*m.data(14);
+   r.data(13) = m.data(1)*m.data(10)*m.data(12) - m.data(2)*m.data( 9)*m.data(12) + m.data(2)*m.data(8)*m.data(13) - m.data(0)*m.data(10)*m.data(13) - m.data(1)*m.data(8)*m.data(14) + m.data(0)*m.data( 9)*m.data(14);
+   r.data(14) = m.data(2)*m.data( 5)*m.data(12) - m.data(1)*m.data( 6)*m.data(12) - m.data(2)*m.data(4)*m.data(13) + m.data(0)*m.data( 6)*m.data(13) + m.data(1)*m.data(4)*m.data(14) - m.data(0)*m.data( 5)*m.data(14);
+   r.data(15) = m.data(1)*m.data( 6)*m.data( 8) - m.data(2)*m.data( 5)*m.data( 8) + m.data(2)*m.data(4)*m.data( 9) - m.data(0)*m.data( 6)*m.data( 9) - m.data(1)*m.data(4)*m.data(10) + m.data(0)*m.data( 5)*m.data(10);
+   r.scale(1.0f / m.determinant());
    return r;
 }
 

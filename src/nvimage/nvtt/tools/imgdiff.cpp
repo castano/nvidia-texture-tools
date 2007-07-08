@@ -35,7 +35,6 @@
 
 #include "cmdline.h"
 
-
 static bool loadImage(nv::Image & image, const char * fileName)
 {
 	if (nv::strCaseCmp(nv::Path::extension(fileName), ".dds") == 0)
@@ -77,7 +76,7 @@ struct Error
 	{
 		samples++;
 		mabse += fabs(e);
-		maxabse = nv::max(maxabse, fabs(e));
+		maxabse = nv::max(maxabse, fabsf(e));
 		mse += e * e;
 	}
 

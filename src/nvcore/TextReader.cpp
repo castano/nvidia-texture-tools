@@ -27,12 +27,13 @@ char TextReader::read()
 {
 	nvDebugCheck(m_stream != NULL);
 	
+	char c;
+	m_stream->serialize(&c, 1);
+
 	if( m_stream->isAtEnd() ) {
 		return 0;
 	}
-
-	char c;
-	m_stream->serialize(&c, 1);
+	
 	return c;
 }
 

@@ -34,10 +34,10 @@ Do not use memmove in insert & remove, use copy ctors instead.
 
 #define NV_FOREACH(i, container) \
 	typedef typeof(container) NV_STRING_JOIN2(cont,__LINE__); \
-	for(NV_STRING_JOIN2(cont,__LINE__)::PseudoIndex i((container).start()); (container).isDone(i); (container).advance(i))
+	for(NV_STRING_JOIN2(cont,__LINE__)::PseudoIndex i((container).start()); !(container).isDone(i); (container).advance(i))
 /*
 #define NV_FOREACH(i, container) \
-	for(typename typeof(container)::PseudoIndex i((container).start()); (container).isDone(i); (container).advance(i))
+	for(typename typeof(container)::PseudoIndex i((container).start()); !(container).isDone(i); (container).advance(i))
 */
 
 #else // If typeof not available:
@@ -61,7 +61,7 @@ struct PseudoIndexWrapper {
 };
 
 #define NV_FOREACH(i, container) \
-	for(PseudoIndexWrapper i(container); (container).isDone(i(&(container))); (container).advance(i(&(container))))
+	for(PseudoIndexWrapper i(container); !(container).isDone(i(&(container))); (container).advance(i(&(container))))
 
 #endif
 
@@ -145,7 +145,7 @@ namespace nv
 	template <typename T>
 	void deleteAll(T & container)
 	{
-		for(typename T::PseudoIndex i = container.start(); container.isDone(i); container.advance(i))
+		for(typename T::PseudoIndex i = container.start(); !container.isDone(i); container.advance(i))
 		{
 			delete container[i];
 		}
@@ -272,14 +272,19 @@ namespace nv
 		/// Push an element at the end of the vector.
 		void push_back( const T & val )
 		{
-			// DO NOT pass elements of your own vector into
-			// push_back()!  Since we're using references,
-			// resize() may munge the element storage!
-			nvDebugCheck( &val < &m_buffer[0] || &val > &m_buffer[m_size] );
-			
-			int	new_size = m_size + 1;
-			resize( new_size );
-			m_buffer[new_size-1] = val;
+			uint new_size = m_size + 1;
+
+			if (new_size > m_buffer_size)
+			{
+				const T copy(val);	// create a copy in case value is inside of this array.
+				resize(new_size);
+				m_buffer[new_size-1] = copy;
+			}
+			else
+			{
+				m_size = new_size;
+				m_buffer[new_size-1] = val;
+			}
 		}
 		void pushBack( const T & val )
 		{
@@ -364,7 +369,7 @@ namespace nv
 		/// Remove the first instance of the given element.
 		void remove(const T & element)
 		{
-			for(PseudoIndex i = start(); isDone(i); advance(i)) {
+			for(PseudoIndex i = start(); !isDone(i); advance(i)) {
 				removeAt(i);
 				break;
 			}
@@ -560,8 +565,8 @@ namespace nv
 		typedef uint PseudoIndex;
 		
 		PseudoIndex start() const { return 0; }
-		bool isDone(const PseudoIndex & i) const { return i < this->m_size; };
-		void advance(PseudoIndex & i) const { i++; }
+		bool isDone(const PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); return i == this->m_size; };
+		void advance(PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); i++; }
 		
 	#if NV_CC_MSVC
 		T & operator[]( const PseudoIndexWrapper & i ) {
@@ -642,7 +647,7 @@ namespace nv
 		~HashMap() { clear(); }
 	
 	
-		/** Set a new or existing value under the key, to the value. */
+		/// Set a new or existing value under the key, to the value.
 		void set(const T& key, const U& value)
 		{
 			int	index = findIndex(key);
@@ -657,7 +662,7 @@ namespace nv
 		}
 		
 	
-		/** Add a new value to the hash table, under the specified key.	*/
+		/// Add a new value to the hash table, under the specified key.
 		void add(const T& key, const U& value)
 		{
 			nvCheck(findIndex(key) == -1);
@@ -732,7 +737,7 @@ namespace nv
 		}
 	
 	
-		/** Remove the first value under the specified key. */
+		/// Remove the first value under the specified key.
 		bool remove(const T& key)
 		{
 			if (table == NULL)
@@ -767,7 +772,7 @@ namespace nv
 		}
 		
 	
-		/** Remove all entries from the hash table. */
+		/// Remove all entries from the hash table.
 		void clear()
 		{
 			if (table != NULL)
@@ -789,25 +794,24 @@ namespace nv
 		}
 	
 		
-		/** Returns true if the hash is empty. */
+		/// Returns true if the hash is empty.
 		bool isEmpty() const
 		{
 			return table == NULL || entry_count == 0;
 		}
 	
 	
-		/**
-		* Retrieve the value under the given key.
-		*
-		* If there's no value under the key, then return false and leave
-		* *value alone.
-		*
-		* If there is a value, return true, and set *value to the entry's
-		* value.
-		*
-		* If value == NULL, return true or false according to the
-		* presence of the key, but don't touch *value.
-		*/
+		/** Retrieve the value under the given key.
+		 *
+		 * If there's no value under the key, then return false and leave
+		 * *value alone.
+		 *
+		 * If there is a value, return true, and set *value to the entry's
+		 * value.
+		 *
+		 * If value == NULL, return true or false according to the
+		 * presence of the key, but don't touch *value.
+		 */
 		bool get(const T& key, U* value = NULL) const
 		{
 			int	index = findIndex(key);
@@ -821,6 +825,7 @@ namespace nv
 			return false;
 		}
 		
+		/// Determine if the given key is contained in the hash.
 		bool contains(const T & key) const
 		{
 			return get(key);
@@ -856,7 +861,7 @@ namespace nv
 		}
 	
 	
-		/** Hint the bucket count to >= n. */
+		/// Hint the bucket count to >= n.
 		void resize(int n)
 		{
 			// Not really sure what this means in relation to
@@ -881,7 +886,7 @@ namespace nv
 			setRawCapacity(new_raw_size);
 		}
 	
-		/** Behaves much like std::pair. */
+		/// Behaves much like std::pair.
 		struct Entry
 		{
 			int	next_in_chain;	// internal chaining for collisions
@@ -910,11 +915,11 @@ namespace nv
 		};
 	
 		
-		/** HashMap enumerator. */
+		// HashMap enumerator.
 		typedef int PseudoIndex;
 		PseudoIndex start() const { PseudoIndex i = 0; findNext(i); return i; }
-		bool isDone(const PseudoIndex & i) const { return i <= size_mask; };
-		void advance(PseudoIndex & i) const { i++; findNext(i); }
+		bool isDone(const PseudoIndex & i) const { nvDebugCheck(i <= size_mask+1); return i == size_mask+1; };
+		void advance(PseudoIndex & i) const { nvDebugCheck(i <= size_mask+1); i++; findNext(i); }
 		
 	#if NV_CC_GNUC
 		Entry & operator[]( const PseudoIndex & i ) {
@@ -936,7 +941,7 @@ namespace nv
 		
 	private:
 	
-		/** Find the index of the matching entry. If no match, then return -1. */
+		// Find the index of the matching entry. If no match, then return -1.
 		int	findIndex(const T& key) const
 		{
 			if (table == NULL) return -1;
@@ -987,11 +992,11 @@ namespace nv
 	
 		
 		/**
-		* Resize the hash table to the given size (Rehash the
-		* contents of the current table).  The arg is the number of
-		* hash table entries, not the number of elements we should
-		* actually contain (which will be less than this).
-		*/
+		 * Resize the hash table to the given size (Rehash the
+		 * contents of the current table).  The arg is the number of
+		 * hash table entries, not the number of elements we should
+		 * actually contain (which will be less than this).
+		 */
 		void setRawCapacity(int new_size)
 		{
 			if (new_size <= 0) {
@@ -1041,7 +1046,7 @@ namespace nv
 			new_hash.table = NULL;
 		}
 	
-		/** Move the enumerator to the next valid element. */
+		// Move the enumerator to the next valid element.
 		void findNext(PseudoIndex & i) const {
 			while (i <= size_mask && E(i).isEmpty()) {
 				i++;
