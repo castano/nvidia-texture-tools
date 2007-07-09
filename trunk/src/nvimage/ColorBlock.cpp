@@ -28,6 +28,14 @@ ColorBlock::ColorBlock()
 {
 }
 
+/// Init the color block from an array of colors.
+ColorBlock::ColorBlock(const uint * linearImage)
+{
+	for(uint i = 0; i < 16; i++) {
+		color(i) = Color32(linearImage[i]);
+	}
+}
+
 /// Init the color block with the contents of the given block.
 ColorBlock::ColorBlock(const ColorBlock & block)
 {
