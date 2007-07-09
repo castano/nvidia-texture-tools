@@ -32,6 +32,9 @@ namespace nv
 	class Image;
 
 	void cudaCompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void cudaCompressDXT3(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void cudaCompressDXT5(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+
 	void cudaCompressDXT1_2(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 
 } // nv namespace
