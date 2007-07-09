@@ -141,6 +141,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
 
+	__shared__ float3 rawColors[16];
 	__shared__ float dps[16];
 
 	if (idx < 16)
@@ -148,10 +149,13 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		// Read color and copy to shared mem.
 		uint c = image[(bid) * 16 + idx];
 		
-		colors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
-		colors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
-		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
-		weights[idx] = ((c >> 24) & 0xFF) * (1.0f / 255.0f);
+		rawColors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
+		rawColors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
+		rawColors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
+		weights[idx] = (((c >> 24) & 0xFF) + 1) * (1.0f / 256.0f);
+		
+		colors[idx] = rawColors[idx] * weights[idx];
+
 		
 		// No need to synchronize, 16 < warp size.
 #if __DEVICE_EMULATION__
@@ -162,7 +166,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		colorSums(colors, sums);
 		float3 axis = bestFitLine(colors, sums[0]);
 
-		dps[idx] = dot(colors[idx], axis);
+		dps[idx] = dot(rawColors[idx], axis);
 		
 #if __DEVICE_EMULATION__
 		} __debugsync(); if (idx < 16) {
@@ -283,7 +287,7 @@ __constant__ float alphaTable3[4] = { 4.0f, 0.0f, 2.0f, 2.0f };
 __constant__ const uint prods4[4] = { 0x090000,0x000900,0x040102,0x010402 };
 __constant__ const uint prods3[4] = { 0x040000,0x000400,0x040101,0x010401 };
 
-__device__ float evalPermutation4(const float3 * colors, uint permutation, ushort * start, ushort * end, float3 color_sum)
+__device__ float evalPermutation4(const float3 * colors, float3 color_sum, uint permutation, ushort * start, ushort * end)
 {
     // Compute endpoints using least squares.
     float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
@@ -318,7 +322,7 @@ __device__ float evalPermutation4(const float3 * colors, uint permutation, ushor
     return (1.0f / 9.0f) * dot(e, kColorMetric);
 }
 
-__device__ float evalPermutation3(const float3 * colors, uint permutation, ushort * start, ushort * end, float3 color_sum)
+__device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint permutation, ushort * start, ushort * end)
 {
     // Compute endpoints using least squares.
     float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
@@ -353,14 +357,13 @@ __device__ float evalPermutation3(const float3 * colors, uint permutation, ushor
     return (1.0f / 4.0f) * dot(e, kColorMetric);
 }
 
-__device__ float evalPermutation4(const float3 * colors, const float * weights, uint permutation, ushort * start, ushort * end)
+__device__ float evalPermutation4(const float3 * colors, const float * weights, float3 color_sum, uint permutation, ushort * start, ushort * end)
 {
     // Compute endpoints using least squares.
     float alpha2_sum = 0.0f;
     float beta2_sum = 0.0f;
     float alphabeta_sum = 0.0f;
     float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
-    float3 betax_sum = make_float3(0.0f, 0.0f, 0.0f);
 
     // Compute alpha & beta for this permutation.
     for (int i = 0; i < 16; i++)
@@ -374,9 +377,10 @@ __device__ float evalPermutation4(const float3 * colors, const float * weights, 
 		alpha2_sum += alpha * alpha * weights[i];
         beta2_sum += beta * beta * weights[i];
         alphabeta_sum += alpha * beta * weights[i];
-        alphax_sum += alpha * colors[i] * weights[i];
-        betax_sum += beta * colors[i] * weights[i];
+        alphax_sum += alpha * colors[i];
     }
+
+	float3 betax_sum = color_sum - alphax_sum;
 
     const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
@@ -393,45 +397,47 @@ __device__ float evalPermutation4(const float3 * colors, const float * weights, 
     return dot(e, kColorMetric);
 }
 
+/*
 __device__ float evalPermutation3(const float3 * colors, const float * weights, uint permutation, ushort * start, ushort * end)
 {
-    // Compute endpoints using least squares.
-    float alpha2_sum = 0.0f;
-    float beta2_sum = 0.0f;
-    float alphabeta_sum = 0.0f;
-    float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
-    float3 betax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	// Compute endpoints using least squares.
+	float alpha2_sum = 0.0f;
+	float beta2_sum = 0.0f;
+	float alphabeta_sum = 0.0f;
+	float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
 
-    // Compute alpha & beta for this permutation.
-    for (int i = 0; i < 16; i++)
-    {
-        const uint bits = permutation >> (2*i);
+	// Compute alpha & beta for this permutation.
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
 
-        float beta = (bits & 1);
-        if (bits & 2) beta = 0.5f;
-        float alpha = 1.0f - beta;
-    
-        alpha2_sum += alpha * alpha * weights[i];
-        beta2_sum += beta * beta * weights[i];
-        alphabeta_sum += alpha * beta * weights[i];
-        alphax_sum += alpha * colors[i] * weights[i];
-        betax_sum += beta * colors[i] * weights[i];
-    }
+		float beta = (bits & 1);
+		if (bits & 2) beta = 0.5f;
+		float alpha = 1.0f - beta;
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+		alpha2_sum += alpha * alpha * weights[i];
+		beta2_sum += beta * beta * weights[i];
+		alphabeta_sum += alpha * beta * weights[i];
+		alphax_sum += alpha * colors[i];
+	}
 
-    float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-    float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-    
-    // Round a, b to the closest 5-6-5 color and expand...
-    a = roundAndExpand(a, start);
-    b = roundAndExpand(b, end);
+	float3 betax_sum = color_sum - alphax_sum;
 
-    // compute the error
-    float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    return dot(e, kColorMetric);
+	float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+
+	// Round a, b to the closest 5-6-5 color and expand...
+	a = roundAndExpand(a, start);
+	b = roundAndExpand(b, end);
+
+	// compute the error
+	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+
+	return dot(e, kColorMetric);
 }
+*/
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -454,7 +460,7 @@ __device__ void evalAllPermutations(const float3 * colors, float3 colorSum, cons
         uint permutation = permutations[pidx];
         if (pidx < 160) s_permutations[pidx] = permutation;
                 
-        float error = evalPermutation4(colors, permutation, &start, &end, colorSum);
+        float error = evalPermutation4(colors, colorSum, permutation, &start, &end);
         
         if (error < bestError)
         {
@@ -478,7 +484,7 @@ __device__ void evalAllPermutations(const float3 * colors, float3 colorSum, cons
         
         ushort start, end;
         uint permutation = s_permutations[pidx];
-        float error = evalPermutation3(colors, permutation, &start, &end, colorSum);
+        float error = evalPermutation3(colors, colorSum, permutation, &start, &end);
         
         if (error < bestError)
         {
@@ -498,6 +504,7 @@ __device__ void evalAllPermutations(const float3 * colors, float3 colorSum, cons
 	errors[idx] = bestError;
 }
 
+/*
 __device__ void evalAllPermutations(const float3 * colors, const float * weights, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
 {
 	const int idx = threadIdx.x;
@@ -558,9 +565,9 @@ __device__ void evalAllPermutations(const float3 * colors, const float * weights
 
 	errors[idx] = bestError;
 }
+*/
 
-
-__device__ void evalLevel4Permutations(const float3 * colors, const float * weights, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
+__device__ void evalLevel4Permutations(const float3 * colors, const float * weights, float3 colorSum, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
 {
 	const int idx = threadIdx.x;
 	
@@ -574,7 +581,7 @@ __device__ void evalLevel4Permutations(const float3 * colors, const float * weig
         ushort start, end;
         uint permutation = permutations[pidx];
 
-        float error = evalPermutation4(colors, weights, permutation, &start, &end);
+        float error = evalPermutation4(colors, weights, colorSum, permutation, &start, &end);
         
         if (error < bestError)
         {
@@ -755,7 +762,7 @@ __global__ void compressWeighted(const uint * permutations, const uint * image, 
 
 	__shared__ float errors[NUM_THREADS];
 	
-	evalLevel4Permutations(colors, weights, permutations, bestStart, bestEnd, bestPermutation, errors);
+	evalLevel4Permutations(colors, weights, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
 	
 	// Use a parallel reduction to find minimum error.
 	int minIdx = findMinError(errors);
@@ -768,6 +775,7 @@ __global__ void compressWeighted(const uint * permutations, const uint * image, 
 }
 
 
+/*
 __device__ float computeError(const float weights[16], uchar a0, uchar a1)
 {
 	float palette[6];
@@ -803,7 +811,7 @@ inline __device__ uchar roundAndExpand(float a)
 {
     return rintf(__saturatef(a) * 255.0f);
 }
-
+*/
 /*
 __device__ void optimizeAlpha8(const float alphas[16], uchar & a0, uchar & a1)
 {
@@ -838,7 +846,7 @@ __device__ void optimizeAlpha8(const float alphas[16], uchar & a0, uchar & a1)
 	a1 = roundAndExpand(b);
 }
 */
-
+/*
 __device__ void compressAlpha(const float alphas[16], uint4 * result)
 {
 	const int tid = threadIdx.x;
@@ -932,7 +940,7 @@ __global__ void compressDXT5(const uint * permutations, const uint * image, uint
 
 	__shared__ float errors[NUM_THREADS];
 	
-	evalLevel4Permutations(colors, weights, permutations, bestStart, bestEnd, bestPermutation, errors);
+	evalLevel4Permutations(colors, weights, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
 	
 	// Use a parallel reduction to find minimum error.
 	int minIdx = findMinError(errors);
@@ -943,7 +951,7 @@ __global__ void compressDXT5(const uint * permutations, const uint * image, uint
 		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, (uint2 *)result);
 	}
 }
-
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // Setup kernel
