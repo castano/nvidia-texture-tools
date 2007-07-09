@@ -14,6 +14,7 @@ namespace nv
 	struct ColorBlock
 	{
 		ColorBlock();
+		ColorBlock(const uint * linearImage);
 		ColorBlock(const ColorBlock & block);
 		ColorBlock(const Image * img, uint x, uint y);
 		
