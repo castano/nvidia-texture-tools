@@ -186,15 +186,15 @@ static bool compressMipmap(const Image * image, const OutputOptions & outputOpti
 		}
 		else
 #endif
-		if (compressionOptions.useCuda && nv::cuda::isHardwarePresent())
+		if (compressionOptions.quality == Quality_Fastest)
 		{
-			cudaCompressDXT1(image, outputOptions, compressionOptions);
+			fastCompressDXT1(image, outputOptions);
 		}
 		else
 		{
-			if (compressionOptions.quality == Quality_Fastest)
+			if (compressionOptions.useCuda && nv::cuda::isHardwarePresent())
 			{
-				fastCompressDXT1(image, outputOptions);
+				cudaCompressDXT1(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -210,7 +210,14 @@ static bool compressMipmap(const Image * image, const OutputOptions & outputOpti
 		}
 		else
 		{
-			compressDXT3(image, outputOptions, compressionOptions);
+			if (compressionOptions.useCuda && nv::cuda::isHardwarePresent())
+			{
+				cudaCompressDXT3(image, outputOptions, compressionOptions);
+			}
+			else
+			{
+				compressDXT3(image, outputOptions, compressionOptions);
+			}
 		}
 	}
 	else if (compressionOptions.format == Format_DXT5)
@@ -221,7 +228,14 @@ static bool compressMipmap(const Image * image, const OutputOptions & outputOpti
 		}
 		else
 		{
-			compressDXT5(image, outputOptions, compressionOptions);
+			if (compressionOptions.useCuda && nv::cuda::isHardwarePresent())
+			{
+				cudaCompressDXT5(image, outputOptions, compressionOptions);
+			}
+			else
+			{
+				compressDXT5(image, outputOptions, compressionOptions);
+			}
 		}
 	}
 	else if (compressionOptions.format == Format_DXT5n)
