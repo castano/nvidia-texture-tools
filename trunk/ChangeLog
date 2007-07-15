@@ -8,8 +8,20 @@ NVIDIA Texture Tools version 0.9.2
  * Improved alpha compression.
  * Improved fast DXT1 compression.
  * Documentation and release notes.
- 
+
 NVIDIA Texture Tools version 0.9.3
  * Fix non power of two textures.
  * Fix estimateSize with rgb format.
  * Fix error in cuda compressor block limit.
+
+NVIDIA Texture Tools version 0.9.4
+ * Added support for input DDS files, including cube maps.
+ * Added support for input PSD files.
+ * Added nvdecompress tool.
+ * Added nvimgdiff tool.
+ * Added nvddsinfo tool.
+ * CUDA decompressor 22% faster.
+ * DXT3 & DXT5 CUDA compressors.
+ * Faster DXT5n CPU compressor.
+ * Many bug fixes.
+
