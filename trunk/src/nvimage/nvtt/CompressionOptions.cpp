@@ -99,6 +99,15 @@ void CompressionOptions::enableHardwareCompression(bool enable)
 /// Set color mask to describe the RGB/RGBA format.
 void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 {
+	// Validate arguments.
+	nvCheck(bitcount == 8 || bitcount == 16 || bitcount == 24 || bitcount == 32);
+	nvCheck((rmask & gmask) == 0);
+	nvCheck((rmask & bmask) == 0);
+	nvCheck((rmask & amask) == 0);
+	nvCheck((gmask & bmask) == 0);
+	nvCheck((gmask & amask) == 0);
+	nvCheck((bmask & amask) == 0);
+
 	m.bitcount = bitcount;
 	m.rmask = rmask;
 	m.gmask = gmask;
