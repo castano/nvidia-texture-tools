@@ -72,13 +72,13 @@ namespace
 	{
 		*shift = 0;
 		while((mask & 1) == 0) {
-			*shift++;
+			++(*shift);
 			mask >>= 1;
 		}
 		
 		*size = 0;
 		while((mask & 1) == 1) {
-			*size++;
+			++(*size);
 			mask >>= 1;
 		}
 	}
@@ -120,7 +120,7 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 	// Determine pitch.
 	uint pitch = computePitch(w, compressionOptions.bitcount);
 
-	void * dst = mem::malloc(pitch);
+	uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
 
 	for (uint y = 0; y < h; y++)
 	{
@@ -145,10 +145,7 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 				c |= convert(src[x].b, 8, bsize) << bshift;
 				c |= convert(src[x].a, 8, asize) << ashift;
 				
-				*(uint *)dst = c;
-				
-				++src;
-				dst = (uint8 *)dst + byteCount;
+				*(uint *)(dst + x * byteCount) = c;
 			}
 		}
 

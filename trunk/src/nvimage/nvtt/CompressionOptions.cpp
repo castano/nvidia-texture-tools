@@ -108,6 +108,15 @@ void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, u
 	nvCheck((gmask & amask) == 0);
 	nvCheck((bmask & amask) == 0);
 
+	if (bitcount != 32)
+	{
+		uint maxMask = (1 << bitcount);
+		nvCheck(maxMask > rmask);
+		nvCheck(maxMask > gmask);
+		nvCheck(maxMask > bmask);
+		nvCheck(maxMask > amask);
+	}
+
 	m.bitcount = bitcount;
 	m.rmask = rmask;
 	m.gmask = gmask;

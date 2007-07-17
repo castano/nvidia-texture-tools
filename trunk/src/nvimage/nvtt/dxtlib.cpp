@@ -67,11 +67,19 @@ namespace
 		}
 		return 0;
 	}
-	
-	static int computeImageSize(int w, int h, Format format)
+
+	inline uint computePitch(uint w, uint bitsize)
+	{
+		uint p = w * ((bitsize + 7) / 8);
+
+		// Align to 32 bits.
+		return ((p + 3) / 4) * 4;
+	}
+
+	static int computeImageSize(uint w, uint h, uint bitCount, Format format)
 	{
 		if (format == Format_RGBA) {
-			return w * h * sizeof(Color32);
+			return h * computePitch(w, bitCount);
 		}
 		else {
 			return ((w + 3) / 4) * ((h + 3) / 4) * blockSize(format);
@@ -124,7 +132,7 @@ static void outputHeader(const InputOptions::Private & inputOptions, const Outpu
 		}
 		else
 		{
-			header.setLinearSize(computeImageSize(img->width, img->height, compressionOptions.format));
+			header.setLinearSize(computeImageSize(img->width, img->height, compressionOptions.bitcount, compressionOptions.format));
 			
 			if (compressionOptions.format == Format_DXT1 /*|| compressionOptions.format == Format_DXT1a*/) {
 				header.setFourCC('D', 'X', 'T', '1');
@@ -376,6 +384,7 @@ bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & out
 	outputHeader(inputOptions.m, outputOptions, compressionOptions.m);
 
 	Format format = compressionOptions.m.format;
+	const uint bitCount = compressionOptions.m.bitcount;
 
 	for (int f = 0; f < inputOptions.m.faceCount; f++)
 	{
@@ -389,7 +398,7 @@ bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & out
 			
 			if (outputOptions.outputHandler)
 			{
-				int size = computeImageSize(mipmap.width, mipmap.height, format);
+				int size = computeImageSize(mipmap.width, mipmap.height, bitCount, format);
 				outputOptions.outputHandler->mipmap(size, mipmap.width, mipmap.height, mipmap.depth, mipmap.face, mipmap.mipLevel);
 			}
 			
@@ -460,6 +469,7 @@ bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & out
 int nvtt::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions)
 {
 	Format format = compressionOptions.m.format;
+	const uint bitCount = compressionOptions.m.bitcount;
 
 	int size = 0;
 	
@@ -470,7 +480,7 @@ int nvtt::estimateSize(const InputOptions & inputOptions, const CompressionOptio
 			int idx = f * inputOptions.m.mipmapCount + m;
 			const InputOptions::Private::Image & img = inputOptions.m.images[idx];
 			
-			size += computeImageSize(img.width, img.height, format);
+			size += computeImageSize(img.width, img.height, bitCount, format);
 			
 			if (!inputOptions.m.generateMipmaps || (inputOptions.m.maxLevel >= 0 && m >= inputOptions.m.maxLevel)) {
 				// continue with next face.
