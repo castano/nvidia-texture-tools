@@ -11,8 +11,8 @@ J.M.P. van Waveren was the first one to describe a [http://www.intel.com/cd/ids/
 The same algorithm described by Waveren can also be adapted easily to the GPU. This is what Simon Green did in [http://developer.download.nvidia.com/SDK/10/opengl/samples.html#compress_DXT this OpenGL SDK example]. The performance on the GPU is much more impressive:
 
 || *GPU* || *DXT1* || *DXT5* ||
-|| GeForce 8800 GTX || 1,547 MP/s || - ||
-|| GeForce 8600 GTS || 461 MP/s || - ||
+|| !GeForce 8800 GTX || 1,547 MP/s || - ||
+|| !GeForce 8600 GTS || 461 MP/s || - ||
 
 
 
