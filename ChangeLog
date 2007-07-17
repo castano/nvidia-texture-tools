@@ -25,3 +25,5 @@ NVIDIA Texture Tools version 0.9.4
  * Faster DXT5n CPU compressor.
  * Many bug fixes.
 
+NVIDIA Texture Tools version 0.9.5
+ * Fixed PSNR formula.
