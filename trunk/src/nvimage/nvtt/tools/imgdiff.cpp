@@ -85,7 +85,7 @@ struct Error
 		mabse /= samples;
 		mse /= samples;
 		rmse = sqrt(mse);
-		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(32767.0 / rmse);
+		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0 / rmse);
 	}
 
 	void print()
