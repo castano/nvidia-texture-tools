@@ -21,9 +21,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <string.h>
 #include <nvcore/Debug.h>
+
 #include <nvimage/Image.h>
+#include <nvmath/Color.h>
 
 #include "CompressRGB.h"
 #include "CompressionOptions.h"
@@ -43,42 +44,41 @@ namespace
 		return ((p + 3) / 4) * 4;
 	}
 
-	static void convert_to_rgba8888(void * src, void * dst, uint w)
-	{
-		// @@ TODO
-	}
-
-	static void convert_to_bgra8888(const void * src, void * dst, uint w)
+	static void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
 	{
 		memcpy(dst, src, 4 * w);
 	}
 
-	static void convert_to_rgb888(const void * src, void * dst, uint w)
+	static void convert_to_x8r8g8b8(const void * src, void * dst, uint w)
 	{
-		// @@ TODO
+		memcpy(dst, src, 4 * w);
 	}
 
-	static uint truncate(uint c, uint inbits, uint outbits)
+	static uint convert(uint c, uint inbits, uint outbits)
 	{
-		nvDebugCheck(inbits > outbits);	
-		c >>= inbits - outbits;
+		if (inbits <= outbits) 
+		{
+			// truncate
+			return c >> (inbits - outbits);
+		}
+		else
+		{
+			// bitexpand
+			return (c << (outbits - inbits)) | convert(c, inbits, outbits - inbits);
+		}
 	}
 
-	static uint bitexpand(uint c, uint inbits, uint outbits)
+	static void maskShiftAndSize(uint mask, uint * shift, uint * size)
 	{
-		// @@ TODO
-	}
-	
-	static void maskShiftAndSize(uint mask, uint & shift, uint & size)
-	{
-		shift = 0;
+		*shift = 0;
 		while((mask & 1) == 0) {
-			shift++;
+			*shift++;
 			mask >>= 1;
 		}
 		
+		*size = 0;
 		while((mask & 1) == 1) {
-			size++;
+			*size++;
 			mask >>= 1;
 		}
 	}
@@ -94,52 +94,63 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 	const uint w = image->width();
 	const uint h = image->height();
 
-	uint rshift, rsize;
-	maskShiftAndSize(compressionOptions.rmask, rshift, rsize);
-	
-	uint gshift, gsize;
-	maskShiftAndSize(compressionOptions.gmask, gshift, gsize);
-	
-	uint bshift, bsize;
-	maskShiftAndSize(compressionOptions.bmask, bshift, bsize);
-	
-	uint ashift, asize;
-	maskShiftAndSize(compressionOptions.amask, ashift, asize);
+	const uint bitCount = compressionOptions.bitcount;
+	nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
 
+	const uint byteCount = bitCount / 8;
+
+	const uint rmask = compressionOptions.rmask;
+	uint rshift, rsize;
+	maskShiftAndSize(rmask, &rshift, &rsize);
+	
+	const uint gmask = compressionOptions.gmask;
+	uint gshift, gsize;
+	maskShiftAndSize(gmask, &gshift, &gsize);
+	
+	const uint bmask = compressionOptions.bmask;
+	uint bshift, bsize;
+	maskShiftAndSize(bmask, &bshift, &bsize);
+	
+	const uint amask = compressionOptions.amask;
+	uint ashift, asize;
+	maskShiftAndSize(amask, &ashift, &asize);
+
+	// @@ Perform error diffusion dithering.
 
 	// Determine pitch.
 	uint pitch = computePitch(w, compressionOptions.bitcount);
 
-	void * dst = malloc(pitch);
+	void * dst = mem::malloc(pitch);
 
 	for (uint y = 0; y < h; y++)
 	{
 		const Color32 * src = image->scanline(y);
 
-		convert_to_bgra8888(src, dst, w);
-
-		if (false)
+		if (bitCount == 32 && rmask == 0xFF0000 && gmask == 0xFF00 && bmask == 0xFF && amask == 0xFF000000)
 		{
-		//	uint c = 0;
-		//	c |= (src[i].r >> (8 - rsize)) << rshift;
-		//	c |= (src[i].g >> (8 - gsize)) << gshift;
-		//	c |= (src[i].b >> (8 - bsize)) << bshift;
+			convert_to_a8r8g8b8(src, dst, w);
 		}
-
-		/*
-		if (rmask == 0xFF000000 && gmask == 0xFF0000 && bmask == 0xFF00 && amask == 0xFF)
+		else if (bitCount == 32 && rmask == 0xFF0000 && gmask == 0xFF00 && bmask == 0xFF && amask == 0)
 		{
-			convert_to_rgba8888(src, dst, w);
-		}
-		else if (rmask == 0xFF0000 && gmask == 0xFF00 && bmask == 0xFF && amask == 0)
-		{
-			convert_to_rgb888(src, dst, w);
+			convert_to_x8r8g8b8(src, dst, w);
 		}
 		else
 		{
-			// @@ Not supported.
+			// Generic pixel format conversion.
+			for (uint x = 0; x < w; x++)
+			{
+				uint c = 0;
+				c |= convert(src[x].r, 8, rsize) << rshift;
+				c |= convert(src[x].g, 8, gsize) << gshift;
+				c |= convert(src[x].b, 8, bsize) << bshift;
+				c |= convert(src[x].a, 8, asize) << ashift;
+				
+				*(uint *)dst = c;
+				
+				++src;
+				dst = (uint8 *)dst + byteCount;
+			}
 		}
-		*/
 
 		if (outputOptions.outputHandler != NULL)
 		{
@@ -147,7 +158,6 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 		}
 	}
 
-	free(dst);
+	mem::free(dst);
 }
-
 
