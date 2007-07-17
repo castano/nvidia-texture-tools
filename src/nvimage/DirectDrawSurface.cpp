@@ -373,7 +373,7 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 	else if (bitcount < 24) bitcount = 24;
 	else bitcount = 32;
 
-	this->pf.fourcc = findD3DFormat(bitcount, rmask, gmask, bmask, amask);
+	this->pf.fourcc = 0; //findD3DFormat(bitcount, rmask, gmask, bmask, amask);
 	this->pf.bitcount = bitcount;
 	this->pf.rmask = rmask;
 	this->pf.gmask = gmask;
