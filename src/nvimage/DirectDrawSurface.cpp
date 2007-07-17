@@ -53,7 +53,7 @@ namespace
 	static const uint FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
 	static const uint FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
 
-	// RGB formats.
+	// 32 bit RGB formats.
 	static const uint D3DFMT_R8G8B8 = 20;
 	static const uint D3DFMT_A8R8G8B8 = 21;
 	static const uint D3DFMT_X8R8G8B8 = 22;
@@ -70,6 +70,7 @@ namespace
 	static const uint D3DFMT_X8B8G8R8 = 33;
 	static const uint D3DFMT_G16R16 = 34;
 	static const uint D3DFMT_A2R10G10B10 = 35;
+
 	static const uint D3DFMT_A16B16G16R16 = 36;
 
 	// Palette formats.
@@ -80,6 +81,7 @@ namespace
 	static const uint D3DFMT_L8 = 50;
 	static const uint D3DFMT_A8L8 = 51;
 	static const uint D3DFMT_A4L4 = 52;
+	static const uint D3DFMT_L16 = 81;
 
 	// Floating point formats
 	static const uint D3DFMT_R16F = 111;
@@ -167,7 +169,61 @@ namespace nv
 		s << header.notused;
 		return s;
 	}
+
+	struct FormatDescriptor
+	{
+		uint format;
+		uint bitcount;
+		uint rmask;
+		uint gmask;
+		uint bmask;
+		uint amask;
+	};
+
+	FormatDescriptor s_d3dFormats[] =
+	{
+		{ D3DFMT_R8G8B8,		24, 0xFF0000, 0xFF00, 0xFF, 0 },
+		{ D3DFMT_A8R8G8B8,		32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000 },		// DXGI_FORMAT_B8G8R8A8_UNORM
+		{ D3DFMT_X8R8G8B8,		32, 0xFF0000, 0xFF00, 0xFF, 0 },				// DXGI_FORMAT_B8G8R8X8_UNORM
+		{ D3DFMT_R5G6B5,		16, 0xF800, 0x7E0, 0x1F, 0 },					// DXGI_FORMAT_B5G6R5_UNORM
+		{ D3DFMT_X1R5G5B5,		16, 0x7C00, 0x3E0, 0x1F, 0 },
+		{ D3DFMT_A1R5G5B5,		16, 0x7C00, 0x3E0, 0x1F, 0x8000 },				// DXGI_FORMAT_B5G5R5A1_UNORM
+		{ D3DFMT_A4R4G4B4,		16, 0xF00, 0xF0, 0xF, 0xF000 },
+		{ D3DFMT_R3G3B2,		8, 0xE0, 0x1C, 0x3, 0 },
+		{ D3DFMT_A8,			8, 0, 0, 0, 8 },								// DXGI_FORMAT_A8_UNORM
+		{ D3DFMT_A8R3G3B2,		16, 0xE0, 0x1C, 0x3, 0xFF00 },
+		{ D3DFMT_X4R4G4B4,		16, 0xF00, 0xF0, 0xF, 0 },
+		{ D3DFMT_A2B10G10R10,	32, 0x3FF, 0xFFC00, 0x3FF00000, 0xC0000000 },	// DXGI_FORMAT_R10G10B10A2
+		{ D3DFMT_A8B8G8R8,		32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000 },		// DXGI_FORMAT_R8G8B8A8_UNORM
+		{ D3DFMT_X8B8G8R8,		32, 0xFF, 0xFF00, 0xFF0000, 0 },
+		{ D3DFMT_G16R16,		32, 0xFFFF, 0xFFFF0000, 0, 0 },					// DXGI_FORMAT_R16G16_UNORM
+		{ D3DFMT_A2R10G10B10,	32, 0x3FF00000, 0xFFC00, 0x3FF, 0xC0000000 },
+
+		{ D3DFMT_L8,			8, 8, 0, 0, 0 },								// DXGI_FORMAT_R8_UNORM 
+		{ D3DFMT_L16,			16, 16, 0, 0, 0 },								// DXGI_FORMAT_R16_UNORM
+	};
+
+	const uint s_d3dFormatCount = sizeof(s_d3dFormats) / sizeof(s_d3dFormats[0]);
+
+	static uint findD3DFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+	{
+		for (int i = 0; i < s_d3dFormatCount; i++)
+		{
+			if (s_d3dFormats[i].bitcount == bitcount &&
+				s_d3dFormats[i].rmask == rmask &&
+				s_d3dFormats[i].gmask == gmask &&
+				s_d3dFormats[i].bmask == bmask &&
+				s_d3dFormats[i].amask == amask)
+			{
+				return s_d3dFormats[i].format;
+			}
+		}
+
+		return 0;
+	}
+
 }
+
 
 DDSHeader::DDSHeader()
 {
@@ -307,10 +363,17 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 			bitcount++;
 			total >>= 1;
 		}
-		// @@ Align to 8?
 	}
 
-	this->pf.fourcc = 0;
+	nvCheck(bitcount > 0 && bitcount <= 32);
+
+	// Align to 8.
+	if (bitcount < 8) bitcount = 8;
+	else if (bitcount < 16) bitcount = 16;
+	else if (bitcount < 24) bitcount = 24;
+	else bitcount = 32;
+
+	this->pf.fourcc = findD3DFormat(bitcount, rmask, gmask, bmask, amask);
 	this->pf.bitcount = bitcount;
 	this->pf.rmask = rmask;
 	this->pf.gmask = gmask;
