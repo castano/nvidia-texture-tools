@@ -27,3 +27,5 @@ NVIDIA Texture Tools version 0.9.4
 
 NVIDIA Texture Tools version 0.9.5
  * Fixed PSNR formula.
+ * Added support for arbitrary RGB formats.
+

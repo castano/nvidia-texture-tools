@@ -71,4 +71,4 @@ private:
 
 } // namespace squish
 
-#endif // ndef SQUISH_CLUSTERFIT_H
+#endif // ndef SQUISH_FASTCLUSTERFIT_H
