@@ -553,6 +553,70 @@ void BlockATI2::flip2()
 }
 
 
+void BlockCTX1::evaluatePalette(Color32 color_array[4]) const
+{
+	// Does bit expansion before interpolation.
+	color_array[0].b = 0x00;
+	color_array[0].g = col0[1];
+	color_array[0].r = col0[0];
+	color_array[0].a = 0xFF;
+	
+	color_array[1].r = 0x00;
+	color_array[1].g = col0[1];
+	color_array[1].b = col1[0];
+	color_array[1].a = 0xFF;
+	
+	color_array[2].r = 0x00;
+	color_array[2].g = (2 * color_array[0].g + color_array[1].g) / 3;
+	color_array[2].b = (2 * color_array[0].b + color_array[1].b) / 3;
+	color_array[2].a = 0xFF;
+		
+	color_array[3].r = 0x00;
+	color_array[3].g = (2 * color_array[1].g + color_array[0].g) / 3;
+	color_array[3].b = (2 * color_array[1].b + color_array[0].b) / 3;
+	color_array[3].a = 0xFF;
+}
+
+void BlockCTX1::decodeBlock(ColorBlock * block) const
+{
+	nvDebugCheck(block != NULL);
+	
+	// Decode color block.
+	Color32 color_array[4];
+	evaluatePalette(color_array);
+	
+	// Write color block.
+	for( uint j = 0; j < 4; j++ ) {
+		for( uint i = 0; i < 4; i++ ) {
+			uint idx = (row[j] >> (2 * i)) & 3;
+			block->color(i, j) = color_array[idx];
+		}
+	}	
+}
+
+void BlockCTX1::setIndices(int * idx)
+{
+	indices = 0;
+	for(uint i = 0; i < 16; i++) {
+		indices |= (idx[i] & 3) << (2 * i);
+	}
+}
+
+
+/// Flip CTX1 block vertically.
+inline void BlockCTX1::flip4()
+{
+	swap(row[0], row[3]);
+	swap(row[1], row[2]);
+}
+
+/// Flip half CTX1 block vertically.
+inline void BlockCTX1::flip2()
+{
+	swap(row[0], row[1]);
+}
+
+
 
 
 Stream & nv::operator<<(Stream & stream, BlockDXT1 & block)
@@ -590,5 +654,11 @@ Stream & nv::operator<<(Stream & stream, BlockATI1 & block)
 Stream & nv::operator<<(Stream & stream, BlockATI2 & block)
 {
 	return stream << block.x << block.y;
+}
+
+Stream & nv::operator<<(Stream & stream, BlockCTX1 & block)
+{
+	stream.serialize(&block, sizeof(block));
+	return stream;
 }
 

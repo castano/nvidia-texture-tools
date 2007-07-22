@@ -175,7 +175,7 @@ namespace nv
 		void flip4();
 		void flip2();
 	};
-	
+
 	/// ATI2 block.
 	struct BlockATI2
 	{
@@ -188,6 +188,26 @@ namespace nv
 		void flip2();
 	};
 
+	/// CTX1 block.
+	struct BlockCTX1
+	{
+		uint8 col0[2];
+		uint8 col1[2];
+		union {
+			uint8 row[4];
+			uint indices;
+		};
+
+		void evaluatePalette(Color32 color_array[4]) const;
+		void setIndices(int * idx);
+
+		void decodeBlock(ColorBlock * block) const;
+		
+		void flip4();
+		void flip2();
+	};
+
+
 	// Serialization functions.
 	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT1 & block);
 	NVIMAGE_API Stream & operator<<(Stream & stream, AlphaBlockDXT3 & block);
@@ -196,6 +216,7 @@ namespace nv
 	NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT5 & block);
 	NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI1 & block);
 	NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI2 & block);
+	NVIMAGE_API Stream & operator<<(Stream & stream, BlockCTX1 & block);
 
 } // nv namespace
 

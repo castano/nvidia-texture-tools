@@ -118,7 +118,13 @@ public:
 		Vec3 copy( left );
 		return copy += right;
 	}
-	
+
+	friend Vec3 operator+( Arg left, float right )
+	{
+		Vec3 copy( left );
+		return copy += Vec3(right);
+	}
+
 	friend Vec3 operator-( Arg left, Arg right )
 	{
 		Vec3 copy( left );
