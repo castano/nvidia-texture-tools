@@ -76,6 +76,9 @@ Image * nv::ImageIO::load(const char * name, Stream & s)
 		return loadPNG(s);
 	}
 #endif
+	if (strCaseCmp(extension, ".psd") == 0) {
+		return loadPSD(s);
+	}
 	// @@ use image plugins?
 
 	return NULL;
@@ -323,16 +326,20 @@ Image * nv::ImageIO::loadPSD(Stream & s)
 	nvCheck(!s.isError());
 	nvCheck(s.isLoading());
 	
+	s.setByteOrder(Stream::BigEndian);
+	
 	PsdHeader header;
 	s << header;
 	
 	if (!header.isValid())
 	{
+		printf("invalid header!\n");
 		return NULL;
 	}
 	
 	if (!header.isSupported())
 	{
+		printf("unsupported file!\n");
 		return NULL;
 	}
 	

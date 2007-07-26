@@ -33,12 +33,13 @@ namespace nv
 		
 		bool isValid() const
 		{
-			return signature == 0x38425053;	// '8BPS'
+			return signature == 0x38425053; // 38425053;	// '8BPS'
 		}
 		
 		bool isSupported() const
 		{
 			if (version != 1) {
+				printf("*** bad version number %u\n", version);
 				return false;
 			}
 			if (channel_count > 4) {
