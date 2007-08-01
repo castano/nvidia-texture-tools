@@ -30,6 +30,7 @@ Yes, the NVIDIA Texture Tools are licensed under the MIT license.
 === Can I use the NVIDIA Texture Tools in my GPL application? ===
 Yes, the MIT license is compatible with the GPL and LGPL licenses.
 
+=== Can I use the NVIDIA Texture Tools in the US? Do I have to obtain a license of the S3TC patent (US patent 5,956,431)? ===
 
-
+NVIDIA has a license of the S3TC patent that covers all our products, including our Texture Tools. You don't have to obtain a license of the S3TC patent to use any of NVIDIA's products, but certain uses of NVIDIA Texture Tools source code cannot be considered NVIDIA products anymore. Keep in mind that the NVIDIA Texture Tools are licensed under the MIT license and thus are provided without warranty of any kind.
 
