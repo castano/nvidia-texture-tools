@@ -29,10 +29,11 @@ class AutoPtr
 	NV_FORBID_HEAPALLOC();
 public:
 	
-	/** Ctor. */
-	explicit AutoPtr( T * p ) {
-		m_ptr = p;
-	}
+	/// Default ctor.
+	AutoPtr() : m_ptr(NULL) { }
+	
+	/// Ctor.
+	explicit AutoPtr( T * p ) : m_ptr(p) { }
 	
 	/** Dtor. Deletes owned pointer. */
 	~AutoPtr() {
@@ -69,13 +70,23 @@ public:
 	}
 	
 	/** Const pointer equal comparation. */
-	bool operator == (const T * const p) const {
-		return (m_ptr == p);
+	friend bool operator == (const AutoPtr<T> & ap, const T * const p) {
+		return (ap.ptr() == p);
 	}
 
 	/** Const pointer nequal comparation. */
-	bool operator != (const T * const p) const {
-		return (m_ptr != p);
+	friend bool operator != (const AutoPtr<T> & ap, const T * const p) {
+		return (ap.ptr() != p);
+	}
+
+	/** Const pointer equal comparation. */
+	friend bool operator == (const T * const p, const AutoPtr<T> & ap) {
+		return (ap.ptr() == p);
+	}
+
+	/** Const pointer nequal comparation. */
+	friend bool operator != (const T * const p, const AutoPtr<T> & ap) {
+		return (ap.ptr() != p);
 	}
 
 private:

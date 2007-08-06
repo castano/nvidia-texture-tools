@@ -409,11 +409,11 @@ bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & out
 				// Convert to normal map.
 				if (inputOptions.m.convertToNormalMap)
 				{
-					floatImage = createNormalMap(mipmap.data, (FloatImage::WrapMode)inputOptions.m.wrapMode, inputOptions.m.heightFactors, inputOptions.m.bumpFrequencyScale);
+					floatImage = createNormalMap(mipmap.data.ptr(), (FloatImage::WrapMode)inputOptions.m.wrapMode, inputOptions.m.heightFactors, inputOptions.m.bumpFrequencyScale);
 				}
 				else
 				{
-					lastImage = img = mipmap.data;
+					lastImage = img = mipmap.data.ptr();
 					
 					// Delete float image.
 					floatImage = NULL;
