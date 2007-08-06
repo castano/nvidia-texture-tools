@@ -24,6 +24,7 @@
 #ifndef NV_TT_INPUTOPTIONS_H
 #define NV_TT_INPUTOPTIONS_H
 
+#include <nvcore/Ptr.h>
 #include <nvmath/Vector.h>
 #include <nvimage/Image.h>
 #include "nvtt.h"
@@ -75,7 +76,6 @@ namespace nvtt
 	struct InputOptions::Private::Image
 	{
 		Image() {}
-		~Image() { delete data; }
 		
 		int mipLevel;
 		int face;
@@ -84,7 +84,7 @@ namespace nvtt
 		int height;
 		int depth;
 		
-		nv::Image * data;
+		nv::AutoPtr<nv::Image> data;
 	};
 
 } // nvtt namespace

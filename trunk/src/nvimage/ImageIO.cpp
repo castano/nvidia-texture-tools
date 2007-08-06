@@ -843,12 +843,11 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage)
 	TIFFSetField(image, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
 	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, 32);
 	
-	uint32 rowsperstrip = TIFFDefaultStripSize(image, -1); 
+	uint32 rowsperstrip = TIFFDefaultStripSize(image, (uint32)-1); 
 
 	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
 	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_PACKBITS); 
 	TIFFSetField(image, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, -1L);
 
 	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
