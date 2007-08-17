@@ -17,6 +17,5 @@ The same algorithm described by Waveren can also be adapted easily to the GPU. T
 
 
 Other links:
-
-https://mollyrocket.com/forums/viewtopic.php?t=392&start=0&postdays=0&postorder=asc&highlight= 
-http://www.evl.uic.edu/cavern/fastdxt/
+ * https://mollyrocket.com/forums/viewtopic.php?t=392&start=0&postdays=0&postorder=asc&highlight= 
+ * http://www.evl.uic.edu/cavern/fastdxt/
