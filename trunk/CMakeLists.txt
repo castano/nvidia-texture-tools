@@ -39,11 +39,17 @@ IF(MSVC)
 	ADD_DEFINITIONS(-D__SSE2__ -D__SSE__ -D__MMX__)
 ENDIF(MSVC)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium4")
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=powerpc")
+# Set custom gcc options for your system:
+IF(CMAKE_COMPILER_IS_GNUCXX)
+	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse -mtune=i686 -msse3")
+	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium4")
 
-# ibook G4:
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=7450 -mtune=7450 -maltivec -mabi=altivec")
+	# ibook G4:
+	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=7450 -mtune=7450 -maltivec -mabi=altivec")
+
+	# powerpc:
+	#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=powerpc")
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 
 ADD_SUBDIRECTORY(src)
