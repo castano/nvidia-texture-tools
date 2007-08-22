@@ -114,7 +114,13 @@ http://go.microsoft.com/fwlink/?linkid=65127&clcid=0x409
 V.   Known Issues
 --------------------------------------------------------------------------------
 
-None so far. Please send suggestions and bug reports to: TextureTools@nvidia.com.
+None so far. Please send suggestions and bug reports to:
+
+TextureTools@nvidia.com
+
+or report them at:
+
+http://code.google.com/p/nvidia-texture-tools/issues/list
 
 
 VI.  Frequently Asked Questions
