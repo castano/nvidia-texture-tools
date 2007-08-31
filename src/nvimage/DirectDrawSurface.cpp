@@ -76,7 +76,7 @@ namespace
 	// Palette formats.
 	static const uint D3DFMT_A8P8 = 40;
 	static const uint D3DFMT_P8 = 41;
-	
+
 	// Luminance formats.
 	static const uint D3DFMT_L8 = 50;
 	static const uint D3DFMT_A8L8 = 51;
@@ -90,7 +90,7 @@ namespace
 	static const uint D3DFMT_R32F = 114;
 	static const uint D3DFMT_G32R32F = 115;
 	static const uint D3DFMT_A32B32G32R32F = 116;
-	
+
 	static const uint DDSD_CAPS = 0x00000001U;
 	static const uint DDSD_PIXELFORMAT = 0x00001000U;
 	static const uint DDSD_WIDTH = 0x00000004U;
@@ -99,7 +99,7 @@ namespace
 	static const uint DDSD_MIPMAPCOUNT = 0x00020000U;
 	static const uint DDSD_LINEARSIZE = 0x00080000U;
 	static const uint DDSD_DEPTH = 0x00800000U;
-		
+
 	static const uint DDSCAPS_COMPLEX = 0x00000008U;
 	static const uint DDSCAPS_TEXTURE = 0x00001000U;
 	static const uint DDSCAPS_MIPMAP = 0x00400000U;
@@ -126,12 +126,139 @@ namespace
 	static const uint DDPF_ALPHAPREMULT = 0x00008000U;
 	static const uint DDPF_NORMAL = 0x80000000U;	// @@ Custom nv flag.
 
+	// DX10 formats.
+	enum DXGI_FORMAT
+	{
+		DXGI_FORMAT_UNKNOWN = 0,
+		
+		DXGI_FORMAT_R32G32B32A32_TYPELESS = 1,
+		DXGI_FORMAT_R32G32B32A32_FLOAT = 2,
+		DXGI_FORMAT_R32G32B32A32_UINT = 3,
+		DXGI_FORMAT_R32G32B32A32_SINT = 4,
+		
+		DXGI_FORMAT_R32G32B32_TYPELESS = 5,
+		DXGI_FORMAT_R32G32B32_FLOAT = 6,
+		DXGI_FORMAT_R32G32B32_UINT = 7,
+		DXGI_FORMAT_R32G32B32_SINT = 8,
+		
+		DXGI_FORMAT_R16G16B16A16_TYPELESS = 9,
+		DXGI_FORMAT_R16G16B16A16_FLOAT = 10,
+		DXGI_FORMAT_R16G16B16A16_UNORM = 11,
+		DXGI_FORMAT_R16G16B16A16_UINT = 12,
+		DXGI_FORMAT_R16G16B16A16_SNORM = 13,
+		DXGI_FORMAT_R16G16B16A16_SINT = 14,
+		
+		DXGI_FORMAT_R32G32_TYPELESS = 15,
+		DXGI_FORMAT_R32G32_FLOAT = 16,
+		DXGI_FORMAT_R32G32_UINT = 17,
+		DXGI_FORMAT_R32G32_SINT = 18,
+		
+		DXGI_FORMAT_R32G8X24_TYPELESS = 19,
+		DXGI_FORMAT_D32_FLOAT_S8X24_UINT = 20,
+		DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS = 21,
+		DXGI_FORMAT_X32_TYPELESS_G8X24_UINT = 22,
+		
+		DXGI_FORMAT_R10G10B10A2_TYPELESS = 23,
+		DXGI_FORMAT_R10G10B10A2_UNORM = 24,
+		DXGI_FORMAT_R10G10B10A2_UINT = 25,
+		
+		DXGI_FORMAT_R11G11B10_FLOAT = 26,
+		
+		DXGI_FORMAT_R8G8B8A8_TYPELESS = 27,
+		DXGI_FORMAT_R8G8B8A8_UNORM = 28,
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB = 29,
+		DXGI_FORMAT_R8G8B8A8_UINT = 30,
+		DXGI_FORMAT_R8G8B8A8_SNORM = 31,
+		DXGI_FORMAT_R8G8B8A8_SINT = 32,
+		
+		DXGI_FORMAT_R16G16_TYPELESS = 33,
+		DXGI_FORMAT_R16G16_FLOAT = 34,
+		DXGI_FORMAT_R16G16_UNORM = 35,
+		DXGI_FORMAT_R16G16_UINT = 36,
+		DXGI_FORMAT_R16G16_SNORM = 37,
+		DXGI_FORMAT_R16G16_SINT = 38,
+		
+		DXGI_FORMAT_R32_TYPELESS = 39,
+		DXGI_FORMAT_D32_FLOAT = 40,
+		DXGI_FORMAT_R32_FLOAT = 41,
+		DXGI_FORMAT_R32_UINT = 42,
+		DXGI_FORMAT_R32_SINT = 43,
+		
+		DXGI_FORMAT_R24G8_TYPELESS = 44,
+		DXGI_FORMAT_D24_UNORM_S8_UINT = 45,
+		DXGI_FORMAT_R24_UNORM_X8_TYPELESS = 46,
+		DXGI_FORMAT_X24_TYPELESS_G8_UINT = 47,
+		
+		DXGI_FORMAT_R8G8_TYPELESS = 48,
+		DXGI_FORMAT_R8G8_UNORM = 49,
+		DXGI_FORMAT_R8G8_UINT = 50,
+		DXGI_FORMAT_R8G8_SNORM = 51,
+		DXGI_FORMAT_R8G8_SINT = 52,
+		
+		DXGI_FORMAT_R16_TYPELESS = 53,
+		DXGI_FORMAT_R16_FLOAT = 54,
+		DXGI_FORMAT_D16_UNORM = 55,
+		DXGI_FORMAT_R16_UNORM = 56,
+		DXGI_FORMAT_R16_UINT = 57,
+		DXGI_FORMAT_R16_SNORM = 58,
+		DXGI_FORMAT_R16_SINT = 59,
+		
+		DXGI_FORMAT_R8_TYPELESS = 60,
+		DXGI_FORMAT_R8_UNORM = 61,
+		DXGI_FORMAT_R8_UINT = 62,
+		DXGI_FORMAT_R8_SNORM = 63,
+		DXGI_FORMAT_R8_SINT = 64,
+		DXGI_FORMAT_A8_UNORM = 65,
+		
+		DXGI_FORMAT_R1_UNORM = 66,
+		
+		DXGI_FORMAT_R9G9B9E5_SHAREDEXP = 67,
+		
+		DXGI_FORMAT_R8G8_B8G8_UNORM = 68,
+		DXGI_FORMAT_G8R8_G8B8_UNORM = 69,
+		
+		DXGI_FORMAT_BC1_TYPELESS = 70,
+		DXGI_FORMAT_BC1_UNORM = 71,
+		DXGI_FORMAT_BC1_UNORM_SRGB = 72,
+		
+		DXGI_FORMAT_BC2_TYPELESS = 73,
+		DXGI_FORMAT_BC2_UNORM = 74,
+		DXGI_FORMAT_BC2_UNORM_SRGB = 75,
+		
+		DXGI_FORMAT_BC3_TYPELESS = 76,
+		DXGI_FORMAT_BC3_UNORM = 77,
+		DXGI_FORMAT_BC3_UNORM_SRGB = 78,
+		
+		DXGI_FORMAT_BC4_TYPELESS = 79,
+		DXGI_FORMAT_BC4_UNORM = 80,
+		DXGI_FORMAT_BC4_SNORM = 81,
+		
+		DXGI_FORMAT_BC5_TYPELESS = 82,
+		DXGI_FORMAT_BC5_UNORM = 83,
+		DXGI_FORMAT_BC5_SNORM = 84,
+		
+		DXGI_FORMAT_B5G6R5_UNORM = 85,
+		DXGI_FORMAT_B5G5R5A1_UNORM = 86,
+		DXGI_FORMAT_B8G8R8A8_UNORM = 87,
+		DXGI_FORMAT_B8G8R8X8_UNORM = 88,
+	};
+
+	enum D3D10_RESOURCE_DIMENSION
+	{
+		D3D10_RESOURCE_DIMENSION_UNKNOWN = 0,
+		D3D10_RESOURCE_DIMENSION_BUFFER = 1,
+		D3D10_RESOURCE_DIMENSION_TEXTURE1D = 2,
+		D3D10_RESOURCE_DIMENSION_TEXTURE2D = 3,
+		D3D10_RESOURCE_DIMENSION_TEXTURE3D = 4,
+	};
+
 } // namespace
 
 namespace nv
 {
 	static Stream & operator<< (Stream & s, DDSPixelFormat & pf)
 	{
+		nvStaticCheck(sizeof(DDSPixelFormat) == 32);
 		s << pf.size;
 		s << pf.flags;
 		s << pf.fourcc;
@@ -145,6 +272,7 @@ namespace nv
 
 	static Stream & operator<< (Stream & s, DDSCaps & caps)
 	{
+		nvStaticCheck(sizeof(DDSCaps) == 16);
 		s << caps.caps1;
 		s << caps.caps2;
 		s << caps.caps3;
@@ -152,9 +280,20 @@ namespace nv
 		return s;
 	}
 
+	static Stream & operator<< (Stream & s, DDSHeader10 & header)
+	{
+		nvStaticCheck(sizeof(DDSHeader10) == 20);
+		s << header.dxgiFormat;
+		s << header.resourceDimension;
+		s << header.miscFlag;
+		s << header.arraySize;
+		s << header.reserved;
+		return s;
+	}
+
 	static Stream & operator<< (Stream & s, DDSHeader & header)
 	{
-		nvStaticCheck(sizeof(DDSHeader) == 128);
+		nvStaticCheck(sizeof(DDSHeader) == 148);
 		s << header.fourcc;
 		s << header.size;
 		s << header.flags;
@@ -167,8 +306,15 @@ namespace nv
 		s << header.pf;
 		s << header.caps;
 		s << header.notused;
+		
+		if (header.pf.flags == 0)
+		{
+			s << header.header10;
+		}
+		
 		return s;
 	}
+
 
 	struct FormatDescriptor
 	{
@@ -182,30 +328,30 @@ namespace nv
 
 	FormatDescriptor s_d3dFormats[] =
 	{
-		{ D3DFMT_R8G8B8,		24, 0xFF0000, 0xFF00, 0xFF, 0 },
-		{ D3DFMT_A8R8G8B8,		32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000 },		// DXGI_FORMAT_B8G8R8A8_UNORM
-		{ D3DFMT_X8R8G8B8,		32, 0xFF0000, 0xFF00, 0xFF, 0 },				// DXGI_FORMAT_B8G8R8X8_UNORM
-		{ D3DFMT_R5G6B5,		16, 0xF800, 0x7E0, 0x1F, 0 },					// DXGI_FORMAT_B5G6R5_UNORM
-		{ D3DFMT_X1R5G5B5,		16, 0x7C00, 0x3E0, 0x1F, 0 },
-		{ D3DFMT_A1R5G5B5,		16, 0x7C00, 0x3E0, 0x1F, 0x8000 },				// DXGI_FORMAT_B5G5R5A1_UNORM
-		{ D3DFMT_A4R4G4B4,		16, 0xF00, 0xF0, 0xF, 0xF000 },
-		{ D3DFMT_R3G3B2,		8, 0xE0, 0x1C, 0x3, 0 },
-		{ D3DFMT_A8,			8, 0, 0, 0, 8 },								// DXGI_FORMAT_A8_UNORM
-		{ D3DFMT_A8R3G3B2,		16, 0xE0, 0x1C, 0x3, 0xFF00 },
-		{ D3DFMT_X4R4G4B4,		16, 0xF00, 0xF0, 0xF, 0 },
-		{ D3DFMT_A2B10G10R10,	32, 0x3FF, 0xFFC00, 0x3FF00000, 0xC0000000 },	// DXGI_FORMAT_R10G10B10A2
-		{ D3DFMT_A8B8G8R8,		32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000 },		// DXGI_FORMAT_R8G8B8A8_UNORM
-		{ D3DFMT_X8B8G8R8,		32, 0xFF, 0xFF00, 0xFF0000, 0 },
-		{ D3DFMT_G16R16,		32, 0xFFFF, 0xFFFF0000, 0, 0 },					// DXGI_FORMAT_R16G16_UNORM
-		{ D3DFMT_A2R10G10B10,	32, 0x3FF00000, 0xFFC00, 0x3FF, 0xC0000000 },
+		{ D3DFMT_R8G8B8,		24, 0xFF0000,   0xFF00,	    0xFF,       0 },
+		{ D3DFMT_A8R8G8B8,		32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 },  // DXGI_FORMAT_B8G8R8A8_UNORM
+		{ D3DFMT_X8R8G8B8,		32, 0xFF0000,   0xFF00,     0xFF,       0 },           // DXGI_FORMAT_B8G8R8X8_UNORM
+		{ D3DFMT_R5G6B5,		16,	0xF800,     0x7E0,      0x1F,       0 },           // DXGI_FORMAT_B5G6R5_UNORM
+		{ D3DFMT_X1R5G5B5,		16, 0x7C00,     0x3E0,      0x1F,       0 },
+		{ D3DFMT_A1R5G5B5,		16, 0x7C00,     0x3E0,      0x1F,       0x8000 },      // DXGI_FORMAT_B5G5R5A1_UNORM
+		{ D3DFMT_A4R4G4B4,		16, 0xF00,      0xF0,       0xF,        0xF000 },
+		{ D3DFMT_R3G3B2,		8,  0xE0,       0x1C,       0x3,	    0 },
+		{ D3DFMT_A8,			8,  0,          0,          0,		    8 },           // DXGI_FORMAT_A8_UNORM
+		{ D3DFMT_A8R3G3B2,		16, 0xE0,       0x1C,       0x3,        0xFF00 },
+		{ D3DFMT_X4R4G4B4,		16, 0xF00,      0xF0,       0xF,        0 },
+		{ D3DFMT_A2B10G10R10,	32, 0x3FF,      0xFFC00,    0x3FF00000, 0xC0000000 },  // DXGI_FORMAT_R10G10B10A2
+		{ D3DFMT_A8B8G8R8,		32, 0xFF,       0xFF00,     0xFF0000,   0xFF000000 },  // DXGI_FORMAT_R8G8B8A8_UNORM
+		{ D3DFMT_X8B8G8R8,		32, 0xFF,       0xFF00,     0xFF0000,   0 },
+		{ D3DFMT_G16R16,		32, 0xFFFF,     0xFFFF0000, 0,          0 },           // DXGI_FORMAT_R16G16_UNORM
+		{ D3DFMT_A2R10G10B10,	32, 0x3FF00000, 0xFFC00,    0x3FF,      0xC0000000 },
 
-		{ D3DFMT_L8,			8, 8, 0, 0, 0 },								// DXGI_FORMAT_R8_UNORM 
-		{ D3DFMT_L16,			16, 16, 0, 0, 0 },								// DXGI_FORMAT_R16_UNORM
+		{ D3DFMT_L8,			8,  8,          0,          0,          0 },           // DXGI_FORMAT_R8_UNORM 
+		{ D3DFMT_L16,			16, 16,         0,          0,          0 },           // DXGI_FORMAT_R16_UNORM
 	};
 
 	const uint s_d3dFormatCount = sizeof(s_d3dFormats) / sizeof(s_d3dFormats[0]);
 
-	static uint findD3DFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+	static uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 	{
 		for (int i = 0; i < s_d3dFormatCount; i++)
 		{
@@ -239,7 +385,7 @@ DDSHeader::DDSHeader()
 
 	// Store version information on the reserved header attributes.
 	this->reserved[9] = MAKEFOURCC('N', 'V', 'T', 'T');
-	this->reserved[10] = (0 << 16) | (9 << 8) | (3);	// major.minor.revision
+	this->reserved[10] = (0 << 16) | (9 << 8) | (5);	// major.minor.revision
 
 	this->pf.size = 32;
 	this->pf.flags = 0;
@@ -254,6 +400,12 @@ DDSHeader::DDSHeader()
 	this->caps.caps3 = 0;
 	this->caps.caps4 = 0;
 	this->notused = 0;
+	
+	this->header10.dxgiFormat = DXGI_FORMAT_UNKNOWN;
+	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_UNKNOWN;
+	this->header10.miscFlag = 0;
+	this->header10.arraySize = 0;
+	this->header10.reserved = 0;
 }
 
 void DDSHeader::setWidth(uint w)
@@ -299,18 +451,23 @@ void DDSHeader::setMipmapCount(uint count)
 
 void DDSHeader::setTexture2D()
 {
-	// nothing to do here.
+	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
 }
 
 void DDSHeader::setTexture3D()
 {
 	this->caps.caps2 = DDSCAPS2_VOLUME;
+	
+	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
 }
 
 void DDSHeader::setTextureCube()
 {
 	this->caps.caps1 |= DDSCAPS_COMPLEX;
 	this->caps.caps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALL_FACES;
+	
+	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+	this->header10.arraySize = 6;
 }
 
 void DDSHeader::setLinearSize(uint size)
@@ -373,12 +530,18 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 	else if (bitcount < 24) bitcount = 24;
 	else bitcount = 32;
 
-	this->pf.fourcc = 0; //findD3DFormat(bitcount, rmask, gmask, bmask, amask);
+	this->pf.fourcc = 0; //findD3D9Format(bitcount, rmask, gmask, bmask, amask);
 	this->pf.bitcount = bitcount;
 	this->pf.rmask = rmask;
 	this->pf.gmask = gmask;
 	this->pf.bmask = bmask;
 	this->pf.amask = amask;
+}
+
+void DDSHeader::setDX10Format(uint format)
+{
+	this->pf.flags = 0;
+	this->header10.dxgiFormat = format;
 }
 
 void DDSHeader::setNormalFlag(bool b)
@@ -415,6 +578,12 @@ void DDSHeader::swapBytes()
 	this->caps.caps3 = POSH_LittleU32(this->caps.caps3);
 	this->caps.caps4 = POSH_LittleU32(this->caps.caps4);
 	this->notused = POSH_LittleU32(this->notused);
+
+	this->header10.dxgiFormat = POSH_LittleU32(this->header10.dxgiFormat);
+	this->header10.resourceDimension = POSH_LittleU32(this->header10.resourceDimension);
+	this->header10.miscFlag = POSH_LittleU32(this->header10.miscFlag);
+	this->header10.arraySize = POSH_LittleU32(this->header10.arraySize);
+	this->header10.reserved = POSH_LittleU32(this->header10.reserved);
 }
 
 
@@ -873,6 +1042,15 @@ void DirectDrawSurface::printInfo() const
 	printf("\tCaps 3: 0x%.8X\n", header.caps.caps3);
 	printf("\tCaps 4: 0x%.8X\n", header.caps.caps4);
 
+	if (header.pf.flags == 0)
+	{
+		printf("DX10 Header:\n");
+		printf("\tDXGI Format: %u\n", header.header10.dxgiFormat);
+		printf("\tResource dimension: %u\n", header.header10.resourceDimension);
+		printf("\tMisc flag: %u\n", header.header10.miscFlag);
+		printf("\tArray size: %u\n", header.header10.arraySize);
+	}
+	
 	if (header.reserved[9] == MAKEFOURCC('N', 'V', 'T', 'T'))
 	{
 		int major = (header.reserved[10] >> 16) & 0xFF;

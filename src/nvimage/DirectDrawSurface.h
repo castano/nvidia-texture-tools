@@ -32,7 +32,8 @@ namespace nv
 	class Stream;
 	struct ColorBlock;
 
-	struct DDSPixelFormat {
+	struct DDSPixelFormat
+	{
 		uint size;
 		uint flags;
 		uint fourcc;
@@ -43,15 +44,27 @@ namespace nv
 		uint amask;
 	};
 
-	struct DDSCaps {
+	struct DDSCaps
+	{
 		uint caps1;
 		uint caps2;
 		uint caps3;
 		uint caps4;
 	};
 
+	/// DDS file header for DX10.
+	struct DDSHeader10
+	{
+	    uint dxgiFormat;
+	    uint resourceDimension;
+	    uint miscFlag;
+	    uint arraySize;
+	    uint reserved;
+	};
+
 	/// DDS file header.
-	struct DDSHeader {
+	struct DDSHeader
+	{
 		uint fourcc;
 		uint size;
 		uint flags;
@@ -64,6 +77,8 @@ namespace nv
 		DDSPixelFormat pf;
 		DDSCaps caps;
 		uint notused;
+		DDSHeader10 header10;
+		
 		
 		// Helper methods.
 		DDSHeader();
@@ -79,10 +94,14 @@ namespace nv
 		void setPitch(uint pitch);
 		void setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
 		void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+		void setDX10Format(uint format);
 		void setNormalFlag(bool b);
 		
 		void swapBytes();
+		
 	};
+
+
 
 	/// DirectDraw Surface. (DDS)
 	class DirectDrawSurface
@@ -123,6 +142,7 @@ namespace nv
 	private:
 		Stream * const stream;
 		DDSHeader header;
+		DDSHeader10 header10;
 	};
 
 } // nv namespace
