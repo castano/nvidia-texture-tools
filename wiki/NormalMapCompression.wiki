@@ -6,7 +6,7 @@ This format was introduced in the original nvdxt library and since then it has b
 
 === RXGB ===
 
-The DOOM 3 engine and its derivates use the so called RXGB format, that is just like DXT5, but with the Red and Alpha components swapped, which means that the normal is given by the (a, g, b) components. Surprisingly, the error of this method is usually lower than BC3n.
+The DOOM 3 engine and its derivates use the so called RXGB format, that is just like DXT5, but with the Red and Alpha components swapped, which means that the normal is given by the (a, g, b) components. Surprisingly, the error of this method is usually lower than DXT5nm.
 
 === BC5 ===
 
@@ -15,6 +15,14 @@ BC5 is a two component block compression format, where each component is represe
 In DirectX 10 the 3Dc format was standarized and renamed to BC5.
 
 BC5 can be loaded in OpenGL as LATC or RGTC. The LATC format is particularly convenient, because you can use the same swizzle that is used for DXT5nm, that's because the luminance is replicated in the RGB components.
+
+=== Capcon's DXT trick ===
+
+As described by [http://realtimecollisiondetection.net/blog/?page_id=2 Christer Ericson] in [http://realtimecollisiondetection.net/blog/?p=28 his blog]:
+
+ One clever thing they do (as mentioned on these two slides) is to encode their normal maps so that you can feed either a DXT1 or DXT5 encoded normal map to a shader, and the shader doesn’t have to know. This is neat because it cuts down on shader permutations for very little shader cost. Their trick is for DXT1 to encode X in R and Y in G, with alpha set to 1. For DXT5 they encode X in alpha, Y in G, and set R to 1. Then in the shader, regardless of texture encoding format, they reconstruct the normal as `X = R * alpha`, `Y = G`, `Z = Sqrt(1 - X^2 - Y^2)`.
+
+ A DXT5-encoded normal map has much better quality than a DXT1-encoded one, because the alpha component of DXT5 is 8 bits whereas the red component of DXT1 is just 5 bits, but more so because the alpha component of a DXT5 texture is compressed independently from the RGB components (the three of which are compressed dependently for both DXT1 and DXT5) so with DXT5 we avoid co-compression artifacts. Of course, the cost is that the DXT5 texture takes twice the memory of a DXT1 texture (plus, on the PS3, DXT1 has some other benefits over DXT5 that I don’t think I can talk about).
 
 
 === Alternative Projections ===
@@ -28,3 +36,7 @@ This is easy to compute on your shaders and has the advantage of providing more 
 The main disadvantage is that the reconstruction is done after interpolation and unfortunately lines in 2D do not map to great circles when using this projection, and that can potentially cause interpolation artifacts.
 
 Another approach is to use a stereographic projection. This projection has a slightly better behavior under interpolation and is only slightly more expensive. The distribution of normals is also more uniform, although it's not clear whether that's good or not.
+
+
+
+
