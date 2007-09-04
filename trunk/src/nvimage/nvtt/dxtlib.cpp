@@ -159,8 +159,15 @@ static void outputHeader(const InputOptions::Private & inputOptions, const Outpu
 		// Swap bytes if necessary.
 		header.swapBytes();
 		
-		nvStaticCheck(sizeof(DDSHeader) == 128);
-		outputOptions.outputHandler->writeData(&header, 128);
+		nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
+		if (header.hasDX10Header())
+		{
+			outputOptions.outputHandler->writeData(&header, 128 + 20);
+		}
+		else
+		{
+			outputOptions.outputHandler->writeData(&header, 128);
+		}
 		
 		// Revert swap.
 		header.swapBytes();
@@ -416,6 +423,10 @@ bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & out
 				{
 					floatImage = createNormalMap(mipmap.data.ptr(), (FloatImage::WrapMode)inputOptions.m.wrapMode, inputOptions.m.heightFactors, inputOptions.m.bumpFrequencyScale);
 				}
+				/*else if (inputOptions.m.convertToConeMap)
+				{
+					floatImage = createConeMap(mipmap.data, inputOptions.m.heightFactors);
+				}*/
 				else
 				{
 					lastImage = img = mipmap.data.ptr();
@@ -512,9 +523,8 @@ const char * nvtt::errorString(Error e)
 		case Error_CudaError:
 			return "CUDA error";
 		case Error_Unknown:
+		default:
 			return "Unknown error";
 	}
-
-	return NULL;
 }
 

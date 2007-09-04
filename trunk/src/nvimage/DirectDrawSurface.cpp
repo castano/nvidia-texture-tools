@@ -307,7 +307,7 @@ namespace nv
 		s << header.caps;
 		s << header.notused;
 		
-		if (header.pf.flags == 0)
+		if (header.hasDX10Header())
 		{
 			s << header.header10;
 		}
@@ -584,6 +584,11 @@ void DDSHeader::swapBytes()
 	this->header10.miscFlag = POSH_LittleU32(this->header10.miscFlag);
 	this->header10.arraySize = POSH_LittleU32(this->header10.arraySize);
 	this->header10.reserved = POSH_LittleU32(this->header10.reserved);
+}
+
+bool DDSHeader::hasDX10Header() const
+{
+	return this->pf.flags == 0;
 }
 
 
