@@ -99,6 +99,7 @@ namespace nv
 		
 		void swapBytes();
 		
+		bool hasDX10Header() const;
 	};
 
 

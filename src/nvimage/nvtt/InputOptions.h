@@ -68,8 +68,11 @@ namespace nvtt
 		bool normalMap;
 		bool normalizeMipmaps;
 		bool convertToNormalMap;
-		nv::Vector4 heightFactors;
+		nv::Vector4 heightFactors;		// Used for cone mapping too.
 		nv::Vector4 bumpFrequencyScale;
+
+		// Cone map options.
+		bool convertToConeMap;
 	};
 
 	// Internal image structure.
