@@ -91,7 +91,7 @@ inline uint colorDistance(__m64 a, __m64 b)
 		__m64 v;
 		uint16 part[4];
 	} s;
-			
+	
 	s.v = absoluteDifference(a, b);
 		
 	// @@ This is very slow!
@@ -129,6 +129,16 @@ typedef Color32 VectorColor;
 inline static Color32 loadColor(Color32 c)
 {
 	return c;
+}
+
+inline static Color32 premultiplyAlpha(Color32 c)
+{
+	Color32 pm;
+	pm.r = (c.r * c.a) >> 8;
+	pm.g = (c.g * c.a) >> 8;
+	pm.b = (c.b * c.a) >> 8;
+	pm.a = c.a;
+	return pm;
 }
 
 inline static uint sqr(uint s)
@@ -192,35 +202,6 @@ inline static uint computeIndices(const ColorBlock & rgba, const Color32 palette
 		uint d2 = colorDistance(vcolor2, vcolor);
 		uint d3 = colorDistance(vcolor3, vcolor);
 		
-		/*if (d0 < d1 && d0 < d2 && d0 < d3) {
-			indices |= 0 << (2 * i);
-		}
-		else if (d1 < d2 && d1 < d3) {
-			indices |= 1 << (2 * i);
-		}
-		else if (d2 < d3) {
-			indices |= 2 << (2 * i);
-		}
-		else {
-			indices |= 3 << (2 * i);
-		}*/
-		
-		/*
-		uint b0 = d0 > d2;
-		uint b1 = d1 > d3;
-		uint b2 = d0 > d3;
-		uint b3 = d1 > d2;
-		uint b4 = d0 > d1;
-		uint b5 = d2 > d3;
-		
-		uint x0 = b1 & b2;
-		uint x1 = b0 & b3;
-		uint x2 = b2 & b5;
-		uint x3 = !b3 & b4;
-		
-		indices |= ((x3 | x2) | ((x1 | x0) << 1)) << (2 * i);
-		*/
-
 		uint b0 = d0 > d3;
 		uint b1 = d1 > d2;
 		uint b2 = d0 > d2;
@@ -237,6 +218,40 @@ inline static uint computeIndices(const ColorBlock & rgba, const Color32 palette
 	vectorEnd();
 	return indices;
 }
+
+inline static uint computeIndicesAlpha(const ColorBlock & rgba, const Color32 palette[4])
+{
+	const VectorColor vcolor0 = loadColor(palette[0]);
+	const VectorColor vcolor1 = loadColor(palette[1]);
+	const VectorColor vcolor2 = loadColor(palette[2]);
+	const VectorColor vcolor3 = loadColor(palette[3]);
+	
+	uint indices = 0;
+	for(int i = 0; i < 16; i++) {
+		const VectorColor vcolor = premultiplyAlpha(loadColor(rgba.color(i)));
+		
+		uint d0 = colorDistance(vcolor0, vcolor);
+		uint d1 = colorDistance(vcolor1, vcolor);
+		uint d2 = colorDistance(vcolor2, vcolor);
+		uint d3 = colorDistance(vcolor3, vcolor);
+		
+		uint b0 = d0 > d3;
+		uint b1 = d1 > d2;
+		uint b2 = d0 > d2;
+		uint b3 = d1 > d3;
+		uint b4 = d2 > d3;
+		
+		uint x0 = b1 & b2;
+		uint x1 = b0 & b3;
+		uint x2 = b0 & b4;
+		
+		indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
+	}
+
+	vectorEnd();
+	return indices;
+}
+
 
 inline static Color16 saturate16(int r, int g, int b)
 {
@@ -299,7 +314,7 @@ void nv::compressBlock_BoundsRange(const ColorBlock & rgba, BlockDXT1 * block)
 	block->col0 = toColor16(c0);
 	block->col1 = toColor16(c1);
 	
-	nvDebugCheck(block->col0.u >= block->col1.u);
+	nvDebugCheck(block->col0.u > block->col1.u);
 	
 	// Use 4 color mode only.
 	//if (block->col0.u < block->col1.u) {
@@ -310,6 +325,29 @@ void nv::compressBlock_BoundsRange(const ColorBlock & rgba, BlockDXT1 * block)
 	block->evaluatePalette4(palette);
 	
 	block->indices = computeIndices(rgba, palette);
+}
+
+// Compressor that uses bounding box and takes alpha into account.
+void nv::compressBlock_BoundsRangeAlpha(const ColorBlock & rgba, BlockDXT1 * block)
+{
+	Color32 c0, c1;
+	rgba.boundsRange(&c1, &c0);
+	
+	if (rgba.hasAlpha())
+	{
+		block->col0 = toColor16(c1);
+		block->col1 = toColor16(c0);
+	}
+	else
+	{
+		block->col0 = toColor16(c0);
+		block->col1 = toColor16(c1);
+	}
+	
+	Color32 palette[4];
+	block->evaluatePalette(palette);
+	
+	block->indices = computeIndicesAlpha(rgba, palette);
 }
 
 
@@ -325,6 +363,9 @@ void nv::compressBlock_BestFitAxis(const ColorBlock & rgba, BlockDXT1 * block)
 	// Use 4 color mode only.
 	if (block->col0.u < block->col1.u) {
 		swap(block->col0.u, block->col1.u);
+	}
+	else if (block->col0.u == block->col1.u) {
+		block->col0.u++;
 	}
 	
 	Color32 palette[4];
@@ -1114,7 +1155,7 @@ void nv::compressBlock_BoundsRange(const ColorBlock & rgba, BlockDXT5 * block)
 	block->color.col0 = toColor16(c0);
 	block->color.col1 = toColor16(c1);
 	
-	nvDebugCheck(block->color.col0.u >= block->color.col1.u);
+	nvDebugCheck(block->color.col0.u > block->color.col1.u);
 	
 	Color32 palette[4];
 	block->color.evaluatePalette4(palette);

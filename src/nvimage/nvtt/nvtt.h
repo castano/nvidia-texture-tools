@@ -55,13 +55,14 @@ namespace nvtt
 
 		// DX9 formats.
 		Format_DXT1,
-	//	Format_DXT1a,	// DXT1 with binary alpha.
+		Format_DXT1a,	// DXT1 with binary alpha.
 		Format_DXT3,
 		Format_DXT5,
 		Format_DXT5n,	// Compressed HILO: R=0, G=x, B=0, A=y
 		
 		// DX10 formats.
 		Format_BC1 = Format_DXT1,
+		Format_BC1a = Format_DXT1a,
 		Format_BC2 = Format_DXT3,
 		Format_BC3 = Format_DXT5,
 		Format_BC3n = Format_DXT5n,

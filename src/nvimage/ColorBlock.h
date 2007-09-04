@@ -26,6 +26,7 @@ namespace nv
 		
 		uint countUniqueColors() const;
 		Color32 averageColor() const;
+		bool hasAlpha() const;
 		
 		void diameterRange(Color32 * start, Color32 * end) const;
 		void luminanceRange(Color32 * start, Color32 * end) const;

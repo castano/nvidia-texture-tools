@@ -10,6 +10,8 @@ SET(NVTT_SRCS
 	CompressRGB.cpp
 	FastCompressDXT.h
 	FastCompressDXT.cpp
+	QuickCompressDXT.h
+	QuickCompressDXT.cpp
 	dxtlib.cpp
 	CompressionOptions.h
 	CompressionOptions.cpp

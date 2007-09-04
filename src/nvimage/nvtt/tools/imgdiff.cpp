@@ -68,14 +68,14 @@ struct Error
 	{
 		samples = 0;
 		mabse = 0.0f;
-		mse = 0.0f;
 		maxabse = 0.0f;
+		mse = 0.0f;
 	}
 
 	void addSample(float e)
 	{
 		samples++;
-		mabse += fabs(e);
+		mabse += fabsf(e);
 		maxabse = nv::max(maxabse, fabsf(e));
 		mse += e * e;
 	}

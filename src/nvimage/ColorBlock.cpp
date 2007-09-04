@@ -150,6 +150,16 @@ Color32 ColorBlock::averageColor() const
 	return Color32(uint8(r / 16), uint8(g / 16), uint8(b / 16), uint8(a / 16));
 }
 
+/// Return true if the block is not fully opaque.
+bool ColorBlock::hasAlpha() const
+{
+	for (uint i = 0; i < 16; i++)
+	{
+		if (m_color[i].a != 255) return true;
+	}
+	return false;
+}
+
 
 /// Get diameter color range.
 void ColorBlock::diameterRange(Color32 * start, Color32 * end) const

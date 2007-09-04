@@ -190,6 +190,10 @@ int main(int argc, char *argv[])
 		{
 			format = nvtt::Format_BC1;
 		}
+		else if (strcmp("-bc1a", argv[i]) == 0)
+		{
+			format = nvtt::Format_BC1a;
+		}
 		else if (strcmp("-bc2", argv[i]) == 0)
 		{
 			format = nvtt::Format_BC2;
@@ -257,6 +261,7 @@ int main(int argc, char *argv[])
 		printf("  -nocuda  \tDo not use cuda compressor.\n");
 		printf("  -rgb     \tRGBA format\n");
 		printf("  -bc1     \tBC1 format (DXT1)\n");
+		printf("  -bc1a    \tBC1 format with binary alpha (DXT1a)\n");
 		printf("  -bc2     \tBC2 format (DXT3)\n");
 		printf("  -bc3     \tBC3 format (DXT5)\n");
 		printf("  -bc3n    \tBC3 normal map format (DXT5nm)\n");

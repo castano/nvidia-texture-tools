@@ -50,7 +50,7 @@ namespace
 	
 	static int blockSize(Format format)
 	{
-		if (format == Format_DXT1 /*|| format == Format_DXT1a*/) {
+		if (format == Format_DXT1 || format == Format_DXT1a) {
 			return 8;
 		}
 		else if (format == Format_DXT3) {
@@ -134,7 +134,7 @@ static void outputHeader(const InputOptions::Private & inputOptions, const Outpu
 		{
 			header.setLinearSize(computeImageSize(img->width, img->height, compressionOptions.bitcount, compressionOptions.format));
 			
-			if (compressionOptions.format == Format_DXT1 /*|| compressionOptions.format == Format_DXT1a*/) {
+			if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
 				header.setFourCC('D', 'X', 'T', '1');
 			}
 			else if (compressionOptions.format == Format_DXT3) {
@@ -209,6 +209,11 @@ static bool compressMipmap(const Image * image, const OutputOptions & outputOpti
 				compressDXT1(image, outputOptions, compressionOptions);
 			}
 		}
+	}
+	else if (compressionOptions.format == Format_DXT1a)
+	{
+		// @@ Only fast compression mode for now.
+		fastCompressDXT1a(image, outputOptions);
 	}
 	else if (compressionOptions.format == Format_DXT3)
 	{
@@ -363,10 +368,10 @@ static void quantize(Image * img, const InputOptions::Private & inputOptions, Fo
 			{
 				Quantize::Alpha4(img);
 			}
-			/*else if (format == Format_DXT1a)
+			else if (format == Format_DXT1a)
 			{
 				Quantize::BinaryAlpha(img, inputOptions.alphaThreshold);
-			}*/
+			}
 		}
 	}
 }
