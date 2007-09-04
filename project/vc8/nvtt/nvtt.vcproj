@@ -851,6 +851,10 @@
 				RelativePath="..\..\..\src\nvimage\nvtt\OutputOptions.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\src\nvimage\nvtt\QuickCompressDXT.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -891,6 +895,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvimage\nvtt\nvtt.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvimage\nvtt\QuickCompressDXT.h"
 				>
 			</File>
 			<File

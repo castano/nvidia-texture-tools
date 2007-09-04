@@ -67,9 +67,7 @@ void nv::fastCompressDXT1(const Image * image, const OutputOptions & outputOptio
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
 			
-			//QuickCompress::compressDXT1(rgba, &block);
-			
-			compressBlock_BoundsRange(rgba, &block);
+			QuickCompress::compressDXT1(rgba, &block);
 			
 			optimizeEndPoints(rgba, &block);
 			

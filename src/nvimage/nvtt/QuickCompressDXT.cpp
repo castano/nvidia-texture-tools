@@ -47,7 +47,7 @@ inline static void extractColorBlockRGB(const ColorBlock & rgba, Vector3 block[1
 inline static void findMinMaxColorsBox(Vector3 block[16], Vector3 * __restrict maxColor, Vector3 * __restrict minColor)
 {
     *maxColor = Vector3(0, 0, 0);
-	*minColor = Vector3(1, 1, 1);
+	*minColor = Vector3(255, 255, 255);
     
 	for (int i = 0; i < 16; i++)
 	{
@@ -92,9 +92,9 @@ inline static void insetBBox(Vector3 * __restrict maxColor, Vector3 * __restrict
 
 inline static uint16 roundAndExpand(Vector3 * v)
 {
-	uint r = clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f);
-	uint g = clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f);
-	uint b = clamp(v->z() * (31.0f / 255.0f), 0.0f, 31.0f);
+	uint r = clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f;
+	uint g = clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f;
+	uint b = clamp(v->z() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f;
 	
 	uint16 w = (r << 11) | (g << 5) | b;
 
@@ -154,18 +154,18 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 	Vector3 maxColor, minColor;
 	findMinMaxColorsBox(block, &maxColor, &minColor);
 	
-	//selectDiagonal(block, &maxColor, &minColor);
+	selectDiagonal(block, &maxColor, &minColor);
 	
-	//insetBBox(&minColor, &maxColor);
+	insetBBox(&maxColor, &minColor);
 	
 	uint16 color0 = roundAndExpand(&maxColor);
 	uint16 color1 = roundAndExpand(&minColor);
 
-	/*if (color0 < color1)
+	if (color0 < color1)
 	{
 		swap(maxColor, minColor);
 		swap(color0, color1);
-	}*/
+	}
 
 	// @@ Optimize endpoints.
 	

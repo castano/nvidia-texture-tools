@@ -967,7 +967,7 @@ uint DirectDrawSurface::faceSize() const
 
 uint DirectDrawSurface::offset(const uint face, const uint mipmap)
 {
-	uint size = sizeof(DDSHeader);
+	uint size = 128; //sizeof(DDSHeader);
 	
 	if (face != 0)
 	{
