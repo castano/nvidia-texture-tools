@@ -93,7 +93,6 @@ public:
 	
 	Vector4();
 	explicit Vector4(zero_t);
-	explicit Vector4(identity_t);
 	Vector4(scalar x, scalar y, scalar z, scalar w);
 	Vector4(Vector2::Arg v, scalar z, scalar w);
 	Vector4(Vector3::Arg v, scalar w);
@@ -278,7 +277,6 @@ inline bool operator!=(Vector3::Arg a, Vector3::Arg b)
 
 inline Vector4::Vector4() {}
 inline Vector4::Vector4(zero_t) : m_x(0.0f), m_y(0.0f), m_z(0.0f), m_w(0.0f) {}
-inline Vector4::Vector4(identity_t) : m_x(0.0f), m_y(0.0f), m_z(0.0f), m_w(1.0f) {}
 inline Vector4::Vector4(scalar x, scalar y, scalar z, scalar w) : m_x(x), m_y(y), m_z(z), m_w(w) {}
 inline Vector4::Vector4(Vector2::Arg v, scalar z, scalar w) : m_x(v.x()), m_y(v.y()), m_z(z), m_w(w) {}
 inline Vector4::Vector4(Vector3::Arg v, scalar w) : m_x(v.x()), m_y(v.y()), m_z(v.z()), m_w(w) {}
@@ -387,6 +385,7 @@ inline Vector2 operator-(Vector2::Arg a, Vector2::Arg b)
 	return sub(a, b);
 }
 
+
 inline Vector2 scale(Vector2::Arg v, scalar s)
 {
 	return Vector2(v.x() * s, v.y() * s);
@@ -454,7 +453,15 @@ inline Vector3 add(Vector3::Arg a, Vector3::Arg b)
 {
 	return Vector3(a.x() + b.x(), a.y() + b.y(), a.z() + b.z());
 }
+inline Vector3 add(Vector3::Arg a, float b)
+{
+	return Vector3(a.x() + b, a.y() + b, a.z() + b);
+}
 inline Vector3 operator+(Vector3::Arg a, Vector3::Arg b)
+{
+	return add(a, b);
+}
+inline Vector3 operator+(Vector3::Arg a, float b)
 {
 	return add(a, b);
 }
@@ -463,7 +470,15 @@ inline Vector3 sub(Vector3::Arg a, Vector3::Arg b)
 {
 	return Vector3(a.x() - b.x(), a.y() - b.y(), a.z() - b.z());
 }
+inline Vector3 sub(Vector3::Arg a, float b)
+{
+	return Vector3(a.x() - b, a.y() - b, a.z() - b);
+}
 inline Vector3 operator-(Vector3::Arg a, Vector3::Arg b)
+{
+	return sub(a, b);
+}
+inline Vector3 operator-(Vector3::Arg a, float b)
 {
 	return sub(a, b);
 }
@@ -560,6 +575,11 @@ inline Vector3 min(Vector3::Arg a, Vector3::Arg b)
 inline Vector3 max(Vector3::Arg a, Vector3::Arg b)
 {
 	return Vector3(max(a.x(), b.x()), max(a.y(), b.y()), max(a.z(), b.z()));
+}
+
+inline Vector3 clamp(Vector3::Arg v, float min, float max)
+{
+	return Vector3(clamp(v.x(), min, max), clamp(v.y(), min, max), clamp(v.z(), min, max));
 }
 
 inline bool isValid(Vector3::Arg v)

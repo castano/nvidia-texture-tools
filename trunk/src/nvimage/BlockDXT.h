@@ -62,7 +62,7 @@ namespace nv
 	/// Return true if the block uses four color mode, false otherwise.
 	inline bool BlockDXT1::isFourColorMode() const
 	{
-		return col0.u >= col1.u;	// @@ > or >= ?
+		return col0.u > col1.u;
 	}
 	
 

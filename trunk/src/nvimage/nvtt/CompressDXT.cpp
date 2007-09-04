@@ -30,6 +30,7 @@
 #include "nvtt.h"
 #include "CompressDXT.h"
 #include "FastCompressDXT.h"
+#include "QuickCompressDXT.h"
 #include "CompressionOptions.h"
 
 // squish
@@ -66,10 +67,36 @@ void nv::fastCompressDXT1(const Image * image, const OutputOptions & outputOptio
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
 			
+			//QuickCompress::compressDXT1(rgba, &block);
+			
 			compressBlock_BoundsRange(rgba, &block);
+			
+			optimizeEndPoints(rgba, &block);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
+
+
+void nv::fastCompressDXT1a(const Image * image, const OutputOptions & outputOptions)
+{
+	const uint w = image->width();
+	const uint h = image->height();
+	
+	ColorBlock rgba;
+	BlockDXT1 block;
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			rgba.init(image, x, y);
+			
+			compressBlock_BoundsRangeAlpha(rgba, &block);
 
 			// @@ Use iterative optimization.
-			optimizeEndPoints(rgba, &block);
+			//optimizeEndPoints(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));

@@ -36,6 +36,7 @@ namespace nv
 	
 	// Fast compressors.
 	void fastCompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions);
+	void fastCompressDXT1a(const Image * image, const nvtt::OutputOptions & outputOptions);
 	void fastCompressDXT3(const Image * image, const nvtt::OutputOptions & outputOptions);
 	void fastCompressDXT5(const Image * image, const nvtt::OutputOptions & outputOptions);
 	void fastCompressDXT5n(const Image * image, const nvtt::OutputOptions & outputOptions);
