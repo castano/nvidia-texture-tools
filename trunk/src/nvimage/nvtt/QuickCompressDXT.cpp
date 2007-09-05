@@ -22,24 +22,24 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include <nvmath/Color.h>
+
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
+
 #include "QuickCompressDXT.h"
+
 
 using namespace nv;
 using namespace QuickCompress;
 
 
-inline static Vector3 loadColor(Color32 c)
-{
-	return Vector3(c.r, c.g, c.b);
-}
 
 inline static void extractColorBlockRGB(const ColorBlock & rgba, Vector3 block[16])
 {
 	for (int i = 0; i < 16; i++)
 	{
-		block[i] = loadColor(rgba.color(i));
+		const Color32 c = rgba.color(i);
+		block[i] = Vector3(c.r, c.g, c.b);
 	}
 }
 
@@ -143,6 +143,51 @@ inline static uint computeIndices(Vector3 block[16], Vector3::Arg maxColor, Vect
 	return indices;
 }
 
+static void optimizeEndPoints(Vector3 block[16], BlockDXT1 * dxtBlock)
+{
+	float alpha2_sum = 0.0f;
+	float beta2_sum = 0.0f;
+	float alphabeta_sum = 0.0f;
+	Vector3 alphax_sum(zero);
+	Vector3 betax_sum(zero);
+	
+	for( int i = 0; i < 16; ++i )
+	{
+		const uint bits = dxtBlock->indices >> (2 * i);
+
+		float beta = (bits & 1);
+		if (bits & 2) beta = (1 + beta) / 3.0f;
+		float alpha = 1.0f - beta;
+
+		alpha2_sum += alpha * alpha;
+		beta2_sum += beta * beta;
+		alphabeta_sum += alpha * beta;
+		alphax_sum += alpha * block[i];
+		betax_sum += beta * block[i];
+	}
+
+	float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	
+	Vector3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	Vector3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+
+	a = clamp(a, 0, 255);
+	b = clamp(b, 0, 255);
+	
+	uint16 color0 = roundAndExpand(&a);
+	uint16 color1 = roundAndExpand(&b);
+
+	if (color0 < color1)
+	{
+		swap(a, b);
+		swap(color0, color1);
+	}
+
+	dxtBlock->col0 = Color16(color0);
+	dxtBlock->col1 = Color16(color1);
+	dxtBlock->indices = computeIndices(block, a, b);
+}
+
 
 void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 {
@@ -167,11 +212,11 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		swap(color0, color1);
 	}
 
-	// @@ Optimize endpoints.
-	
 	dxtBlock->col0 = Color16(color0);
 	dxtBlock->col1 = Color16(color1);
 	dxtBlock->indices = computeIndices(block, maxColor, minColor);
+
+	optimizeEndPoints(block, dxtBlock);
 }
 
 
