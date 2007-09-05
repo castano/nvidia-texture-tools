@@ -74,7 +74,6 @@ struct Error
 
 	void addSample(float e)
 	{
-		if (fabsf(e) >= 255) nvDebugBreak();
 		samples++;
 		mabse += fabsf(e);
 		maxabse = nv::max(maxabse, fabsf(e));
