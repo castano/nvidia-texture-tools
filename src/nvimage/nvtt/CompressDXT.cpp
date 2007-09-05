@@ -69,8 +69,6 @@ void nv::fastCompressDXT1(const Image * image, const OutputOptions & outputOptio
 			
 			QuickCompress::compressDXT1(rgba, &block);
 			
-			optimizeEndPoints(rgba, &block);
-			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
 			}
