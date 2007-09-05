@@ -89,10 +89,7 @@ void nv::fastCompressDXT1a(const Image * image, const OutputOptions & outputOpti
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
 			
-			compressBlock_BoundsRangeAlpha(rgba, &block);
-
-			// @@ Use iterative optimization.
-			//optimizeEndPoints(rgba, &block);
+			QuickCompress::compressDXT1a(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
