@@ -110,9 +110,9 @@ inline static void insetBBox(Vector3 * __restrict maxColor, Vector3 * __restrict
 
 inline static uint16 roundAndExpand(Vector3 * v)
 {
-	uint r = clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f;
-	uint g = clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f;
-	uint b = clamp(v->z() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f;
+	uint r = uint(clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
+	uint g = uint(clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f);
+	uint b = uint(clamp(v->z() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
 	
 	uint16 w = (r << 11) | (g << 5) | b;
 
