@@ -28,4 +28,7 @@ NVIDIA Texture Tools version 0.9.4
 NVIDIA Texture Tools version 0.9.5
  * Fixed PSNR formula.
  * Added support for arbitrary RGB formats.
+ * Add support for DXT1a.
+ * Refactor and improve compression quality of fast compressors.
+ * Add cmake scripts to detect processor and chose compiler options.
 
