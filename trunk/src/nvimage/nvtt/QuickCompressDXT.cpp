@@ -63,14 +63,14 @@ inline static uint extractColorBlockRGBA(const ColorBlock & rgba, Vector3 block[
 // find minimum and maximum colors based on bounding box in color space
 inline static void findMinMaxColorsBox(const Vector3 * block, uint num, Vector3 * __restrict maxColor, Vector3 * __restrict minColor)
 {
-    *maxColor = Vector3(0, 0, 0);
+	*maxColor = Vector3(0, 0, 0);
 	*minColor = Vector3(255, 255, 255);
-    
+	
 	for (int i = 0; i < num; i++)
 	{
-        *maxColor = max(*maxColor, block[i]);
+		*maxColor = max(*maxColor, block[i]);
 		*minColor = min(*minColor, block[i]);
-    }
+	}
 }
 
 
@@ -132,10 +132,10 @@ inline static float colorDistance(Vector3::Arg c0, Vector3::Arg c1)
 inline static uint computeIndices4(Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
-    palette[0] = maxColor;
-    palette[1] = minColor;
-    palette[2] = lerp(palette[0], palette[1], 1.0f / 3.0f);
-    palette[3] = lerp(palette[0], palette[1], 2.0f / 3.0f);
+	palette[0] = maxColor;
+	palette[1] = minColor;
+	palette[2] = lerp(palette[0], palette[1], 1.0f / 3.0f);
+	palette[3] = lerp(palette[0], palette[1], 2.0f / 3.0f);
 	
 	uint indices = 0;
 	for(int i = 0; i < 16; i++)
@@ -164,8 +164,8 @@ inline static uint computeIndices4(Vector3 block[16], Vector3::Arg maxColor, Vec
 inline static uint computeIndices3(const ColorBlock & rgba, Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
-    palette[0] = minColor;
-    palette[1] = maxColor;
+	palette[0] = minColor;
+	palette[1] = maxColor;
 	palette[2] = (palette[0] + palette[1]) * 0.5f;
 	
 	uint indices = 0;
@@ -251,9 +251,9 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	{
 		const uint bits = dxtBlock->indices >> (2 * i);
 
-        float beta = (bits & 1);
-        if (bits & 2) beta = 0.5f;
-        float alpha = 1.0f - beta;
+		float beta = (bits & 1);
+		if (bits & 2) beta = 0.5f;
+		float alpha = 1.0f - beta;
 
 		alpha2_sum += alpha * alpha;
 		beta2_sum += beta * beta;
