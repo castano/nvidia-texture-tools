@@ -284,7 +284,7 @@ bool nv::ImageIO::saveTGA(Stream & s, const Image * img)
 	tga.head.height = img->height();
 	if(img->format() == Image::Format_ARGB) {
 		tga.head.pixel_size = 32;
-		tga.head.flags = TGA_ORIGIN_UPPER;
+		tga.head.flags = TGA_ORIGIN_UPPER | TGA_HAS_ALPHA;
 	}
 	else {
 		tga.head.pixel_size = 24;

@@ -29,6 +29,8 @@ enum TGAType {
 #define TGA_ORIGIN_LOWER	0x00
 #define TGA_ORIGIN_UPPER	0x20
 
+#define TGA_HAS_ALPHA		0x0F
+
 
 /// Tga Header.
 struct TgaHeader {

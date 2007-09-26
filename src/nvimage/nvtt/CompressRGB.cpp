@@ -145,6 +145,7 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 				c |= convert(src[x].b, 8, bsize) << bshift;
 				c |= convert(src[x].a, 8, asize) << ashift;
 				
+				// @@ This is wrong, this pixels overlaps with the previous one!
 				*(uint *)(dst + x * byteCount) = c;
 			}
 		}

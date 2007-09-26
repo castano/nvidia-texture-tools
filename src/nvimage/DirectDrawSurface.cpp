@@ -765,12 +765,37 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 	}
 }
 
-static uint8 bitExpand(uint8 c, uint bits)
+// @@ Move this code to format conversion!!
+namespace
 {
-	int shifts = 0;
-	uint8 output = c;
-	// @@ TODO!!!
-	
+	static uint convert(uint c, uint inbits, uint outbits)
+	{
+		if (inbits <= outbits) 
+		{
+			// truncate
+			return c >> (inbits - outbits);
+		}
+		else
+		{
+			// bitexpand
+			return (c << (outbits - inbits)) | convert(c, inbits, outbits - inbits);
+		}
+	}
+
+	static void maskShiftAndSize(uint mask, uint * shift, uint * size)
+	{
+		*shift = 0;
+		while((mask & 1) == 0) {
+			++(*shift);
+			mask >>= 1;
+		}
+		
+		*size = 0;
+		while((mask & 1) == 1) {
+			++(*size);
+			mask >>= 1;
+		}
+	}
 }
 
 void DirectDrawSurface::readLinearImage(Image * img)
@@ -778,7 +803,45 @@ void DirectDrawSurface::readLinearImage(Image * img)
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(img != NULL);
 	
-	// @@ Read linear RGB images.
+	const uint w = img->width();
+	const uint h = img->height();
+
+	uint rshift, rsize;
+	maskShiftAndSize(header.pf.rmask, &rshift, &rsize);
+	
+	uint gshift, gsize;
+	maskShiftAndSize(header.pf.gmask, &gshift, &gsize);
+	
+	uint bshift, bsize;
+	maskShiftAndSize(header.pf.bmask, &bshift, &bsize);
+	
+	uint ashift, asize;
+	maskShiftAndSize(header.pf.amask, &ashift, &asize);
+
+	uint byteCount = (header.pf.bitcount + 7) / 8;
+
+	if (header.pf.amask != 0)
+	{
+		img->setFormat(Image::Format_ARGB);
+	}
+
+	// Read linear RGB images.
+	for (uint y = 0; y < h; y++)
+	{
+		for (uint x = 0; x < w; x++)
+		{
+			uint c = 0;
+			stream->serialize(&c, byteCount);
+
+			Color32 pixel(0, 0, 0, 0xFF);
+			pixel.r = convert(c >> rshift, rsize, 8);
+			pixel.g = convert(c >> gshift, gsize, 8);
+			pixel.b = convert(c >> bshift, bsize, 8);
+			pixel.a = convert(c >> ashift, asize, 8);
+
+			img->pixel(x, y) = pixel;
+		}
+	}
 }
 
 void DirectDrawSurface::readBlockImage(Image * img)
