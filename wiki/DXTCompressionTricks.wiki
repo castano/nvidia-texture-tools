@@ -54,7 +54,7 @@ In order to obtain best results you should adjust the color weights used to meas
 
 === Higher Quality Compression ===
 
-A simple way of obtaining higher quality compression is also using the YCoCg color space, but encoding the Y component in the in the alpha channel of a DXT5 block, and the CoCg components in the RGB channels. That was originally suggested in the following document:
+A simple way of obtaining higher quality compression is also using the YCoCg color space, but encoding the Y component in the in the alpha channel of a DXT5 block, and the !CoCg components in the RGB channels. That was originally suggested in the following document:
 
 http://www.intel.com/cd/ids/developer/asmo-na/eng/dc/index.htm
 
