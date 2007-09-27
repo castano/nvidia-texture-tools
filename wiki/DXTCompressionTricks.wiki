@@ -23,8 +23,7 @@ An even cheaper alternative is to use the JPEG-LS transform:
 }}}
 
 It might not be obvious why that works, but with the following code
-you can easily test that pure greys remain pure greys after the
-transform:
+it's easy to test that pure greys remain pure greys after the transform:
 
 {{{
 for(int i = 0; i < 256; i++)
@@ -33,24 +32,25 @@ for(int i = 0; i < 256; i++)
        int G = i;
        int B = i;
 
-       int a = R - G;
+       int a = (R - G + 255) / 2;
        int b = G;
-       int c = B - G;
+       int c = (B - G + 255) / 2;
 
        // Quantize/bitexpand colors.
        a = ((a >> 3) << 3) | (a >> 5);
        b = ((b >> 2) << 2) | (b >> 6);
        c = ((c >> 3) << 3) | (c >> 5);
 
-       R = a + b;
+       R = (2 * (a - 123)) + b;
        G = b;
-       B = c + b;
+       B = (2 * (c - 123)) + b;
 
        printf("%d: %d %d %d\n", i, R, G, B);
 }
 }}}
 
-In order to obtain best results you should adjust the color weights used to measure the error in your compressor, so that you get higher accuracy in the luminance component.
+Note that signed components are packed as unsigned integers, so they need to be scaled and biased. In order to obtain pure greys, the bias that you have to use to reconstruct the color is equal to 255/2 quantized to 5 bits, that's why 123 is used. While this method allows you to obtain pure greys, it introduces more errors in the other components, so it may not always be a good idea to use it.
+
 
 === Higher Quality Compression ===
 
