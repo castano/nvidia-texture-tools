@@ -656,19 +656,7 @@ bool DirectDrawSurface::isSupported() const
 	}
 	else if (header.pf.flags & DDPF_RGB)
 	{
-		if (header.pf.bitcount == 24)
-		{
-			return false;
-		}
-		else if (header.pf.bitcount == 32)
-		{
-			return false;
-		}
-		else
-		{
-			// Unsupported pixel format.
-			return false;
-		}
+		// All RGB formats are supported now.
 	}
 	else
 	{
