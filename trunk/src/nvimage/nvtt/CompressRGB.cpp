@@ -24,6 +24,7 @@
 #include <nvcore/Debug.h>
 
 #include <nvimage/Image.h>
+#include <nvimage/PixelFormat.h>
 #include <nvmath/Color.h>
 
 #include "CompressRGB.h"
@@ -54,35 +55,6 @@ namespace
 		memcpy(dst, src, 4 * w);
 	}
 
-	static uint convert(uint c, uint inbits, uint outbits)
-	{
-		if (inbits <= outbits) 
-		{
-			// truncate
-			return c >> (inbits - outbits);
-		}
-		else
-		{
-			// bitexpand
-			return (c << (outbits - inbits)) | convert(c, inbits, outbits - inbits);
-		}
-	}
-
-	static void maskShiftAndSize(uint mask, uint * shift, uint * size)
-	{
-		*shift = 0;
-		while((mask & 1) == 0) {
-			++(*shift);
-			mask >>= 1;
-		}
-		
-		*size = 0;
-		while((mask & 1) == 1) {
-			++(*size);
-			mask >>= 1;
-		}
-	}
-	
 } // namespace
 
 
@@ -101,21 +73,19 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 
 	const uint rmask = compressionOptions.rmask;
 	uint rshift, rsize;
-	maskShiftAndSize(rmask, &rshift, &rsize);
+	PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
 	
 	const uint gmask = compressionOptions.gmask;
 	uint gshift, gsize;
-	maskShiftAndSize(gmask, &gshift, &gsize);
+	PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
 	
 	const uint bmask = compressionOptions.bmask;
 	uint bshift, bsize;
-	maskShiftAndSize(bmask, &bshift, &bsize);
+	PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
 	
 	const uint amask = compressionOptions.amask;
 	uint ashift, asize;
-	maskShiftAndSize(amask, &ashift, &asize);
-
-	// @@ Perform error diffusion dithering.
+	PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
 
 	// Determine pitch.
 	uint pitch = computePitch(w, compressionOptions.bitcount);
@@ -140,13 +110,16 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 			for (uint x = 0; x < w; x++)
 			{
 				uint c = 0;
-				c |= convert(src[x].r, 8, rsize) << rshift;
-				c |= convert(src[x].g, 8, gsize) << gshift;
-				c |= convert(src[x].b, 8, bsize) << bshift;
-				c |= convert(src[x].a, 8, asize) << ashift;
+				c |= PixelFormat::convert(src[x].r, 8, rsize) << rshift;
+				c |= PixelFormat::convert(src[x].g, 8, gsize) << gshift;
+				c |= PixelFormat::convert(src[x].b, 8, bsize) << bshift;
+				c |= PixelFormat::convert(src[x].a, 8, asize) << ashift;
 				
-				// @@ This is wrong, this pixels overlaps with the previous one!
-				*(uint *)(dst + x * byteCount) = c;
+				// Output one byte at a time. @@ Not tested... Does this work on LE and BE?
+				for (int i = 0; i < byteCount; i++)
+				{
+					*(dst + x * byteCount) = (c >> (i * 8)) & 0xFF;
+				}
 			}
 		}
 
