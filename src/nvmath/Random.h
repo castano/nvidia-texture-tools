@@ -36,6 +36,20 @@ public:
 	}
 
 	/// Random number on [0.0, 1.0] interval.
+	float getFloat()
+	{
+    	union
+		{
+			uint32 i;
+			float f;
+		} pun;
+
+		pun.i = 0x3f800000UL | (get() & 0x007fffffUL);
+		return pun.f - 1.0f;
+	}
+
+	/*
+	/// Random number on [0.0, 1.0] interval.
 	double getReal()
 	{
 		return double(get()) * (1.0/4294967295.0); // 2^32-1
@@ -45,7 +59,8 @@ public:
 	double getRealExclusive()
 	{
 		return double(get()) * (1.0/4294967296.0); // 2^32
-	}	
+	}
+	*/
 
 	/// Get the max value of the random number.
 	uint max() const { return 4294967295U; }
@@ -301,7 +316,7 @@ public:
 	}
 	
 	/** Get a random number. */
-	virtual uint Get() {
+	virtual uint get() {
 		
 		advance();
 

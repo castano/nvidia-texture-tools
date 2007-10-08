@@ -28,8 +28,8 @@ void SampleDistribution::redistributeRandom(const Distribution dist)
 	// This is the worst method possible!
 	for(uint i = 0; i < sampleCount; i++)
 	{
-		float x = m_rand.getReal();
-		float y = m_rand.getReal();
+		float x = m_rand.getFloat();
+		float y = m_rand.getFloat();
 		
 		// Map uniform distribution in the square to the (hemi)sphere.
 		if( dist == Distribution_Uniform ) {
@@ -53,8 +53,8 @@ void SampleDistribution::redistributeStratified(const Distribution dist)
 	// Create a uniform distribution of points on the hemisphere with low variance.
 	for(uint v = 0, i = 0; v < sqrtSampleCount; v++) {
 		for(uint u = 0; u < sqrtSampleCount; u++, i++) {
-			float x = (u + m_rand.getReal()) / float(sqrtSampleCount);
-			float y = (v + m_rand.getReal()) / float(sqrtSampleCount);
+			float x = (u + m_rand.getFloat()) / float(sqrtSampleCount);
+			float y = (v + m_rand.getFloat()) / float(sqrtSampleCount);
 			
 			// Map uniform distribution in the square to the (hemi)sphere.
 			if( dist == Distribution_Uniform ) {
@@ -82,7 +82,7 @@ void SampleDistribution::multiStageNRooks(const int size, int* cells)
 	int size2 = size >> 1;
 
 	if (size & 1) {
-		if (m_rand.getReal() > 0.5) {
+		if (m_rand.getFloat() > 0.5) {
 			size1++;
 		}
 		else {
@@ -138,8 +138,8 @@ void SampleDistribution::redistributeNRook(const Distribution dist)
 
 	for(uint i = 0; i < sampleCount; i++)
 	{
-		float x = (i + m_rand.getReal()) / sampleCount;
-		float y = (cells[i] + m_rand.getReal()) / sampleCount;
+		float x = (i + m_rand.getFloat()) / sampleCount;
+		float y = (cells[i] + m_rand.getFloat()) / sampleCount;
 
 		// Map uniform distribution in the square to the (hemi)sphere.
 		if( dist == Distribution_Uniform ) {
