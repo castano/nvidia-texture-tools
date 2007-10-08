@@ -621,7 +621,9 @@ inline void BlockCTX1::flip2()
 
 Stream & nv::operator<<(Stream & stream, BlockDXT1 & block)
 {
-	return stream << block.col0.u << block.col1.u << block.indices;
+	stream << block.col0.u << block.col1.u;
+	stream.serialize(&block.indices, sizeof(block.indices));
+	return stream;
 }
 
 Stream & nv::operator<<(Stream & stream, AlphaBlockDXT3 & block)
