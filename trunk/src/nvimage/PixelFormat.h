@@ -24,7 +24,6 @@
 #ifndef NV_IMAGE_PIXELFORMAT_H
 #define NV_IMAGE_PIXELFORMAT_H
 
-
 #include <nvimage/nvimage.h>
 
 
@@ -53,7 +52,7 @@ namespace nv
 		}
 
 		// Get pixel component shift and size given its mask.
-		static void maskShiftAndSize(uint mask, uint * shift, uint * size)
+		inline void maskShiftAndSize(uint mask, uint * shift, uint * size)
 		{
 			if (!mask)
 			{

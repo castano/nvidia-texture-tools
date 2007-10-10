@@ -45,12 +45,12 @@ namespace
 		return ((p + 3) / 4) * 4;
 	}
 
-	static void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
+	inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
 	{
 		memcpy(dst, src, 4 * w);
 	}
 
-	static void convert_to_x8r8g8b8(const void * src, void * dst, uint w)
+	inline void convert_to_x8r8g8b8(const void * src, void * dst, uint w)
 	{
 		memcpy(dst, src, 4 * w);
 	}
