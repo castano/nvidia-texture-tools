@@ -25,10 +25,9 @@
 #define NV_IMAGE_PIXELFORMAT_H
 
 
-#include <nvimage.h>
+#include <nvimage/nvimage.h>
 
 
-// @@ Move this code to format conversion!!
 namespace nv
 {
 	namespace PixelFormat

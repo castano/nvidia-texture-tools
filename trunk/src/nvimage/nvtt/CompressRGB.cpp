@@ -116,7 +116,7 @@ void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, c
 				c |= PixelFormat::convert(src[x].a, 8, asize) << ashift;
 				
 				// Output one byte at a time. @@ Not tested... Does this work on LE and BE?
-				for (int i = 0; i < byteCount; i++)
+				for (uint i = 0; i < byteCount; i++)
 				{
 					*(dst + x * byteCount) = (c >> (i * 8)) & 0xFF;
 				}
