@@ -66,7 +66,7 @@ inline static void findMinMaxColorsBox(const Vector3 * block, uint num, Vector3 
 	*maxColor = Vector3(0, 0, 0);
 	*minColor = Vector3(255, 255, 255);
 	
-	for (int i = 0; i < num; i++)
+	for (uint i = 0; i < num; i++)
 	{
 		*maxColor = max(*maxColor, block[i]);
 		*minColor = min(*minColor, block[i]);
@@ -79,7 +79,7 @@ inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * __r
 	Vector3 center = (*maxColor + *minColor) * 0.5;
 
 	Vector2 covariance = Vector2(zero);
-	for (int i = 0; i < num; i++)
+	for (uint i = 0; i < num; i++)
 	{
 		Vector3 t = block[i] - center;
 		covariance += t.xy() * t.z();
