@@ -35,21 +35,11 @@
 //#define WINDOWS_LEAN_AND_MEAN
 //#include <windows.h> // TIMER
 
+
 struct MyOutputHandler : public nvtt::OutputHandler
 {
 	MyOutputHandler(const char * name) : total(0), progress(0), percentage(0), stream(new nv::StdOutputStream(name)) {}
 	virtual ~MyOutputHandler() { delete stream; }
-	
-	bool open(const char * name)
-	{
-		stream = new nv::StdOutputStream(name);
-		percentage = progress = 0;
-		if (stream->isError()) {
-			fprintf(stderr, "Error opening '%s' for writting\n", name);
-			return false;
-		}
-		return true;
-	}
 	
 	virtual void setTotal(int t)
 	{
