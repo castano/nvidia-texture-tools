@@ -37,7 +37,6 @@
 
 struct MyOutputHandler : public nvtt::OutputHandler
 {
-	MyOutputHandler() : total(0), progress(0), percentage(0), stream(NULL) {}
 	MyOutputHandler(const char * name) : total(0), progress(0), percentage(0), stream(new nv::StdOutputStream(name)) {}
 	virtual ~MyOutputHandler() { delete stream; }
 	
@@ -46,7 +45,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 		stream = new nv::StdOutputStream(name);
 		percentage = progress = 0;
 		if (stream->isError()) {
-			printf("Error opening '%s' for writting\n", name);
+			fprintf(stderr, "Error opening '%s' for writting\n", name);
 			return false;
 		}
 		return true;
@@ -55,6 +54,10 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	virtual void setTotal(int t)
 	{
 		total = t;
+	}
+	virtual void setDisplayProgress(bool b)
+	{
+		verbose = b;
 	}
 
 	virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel)
@@ -70,7 +73,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 
 		progress += size;
 		int p = (100 * progress) / total;
-		if (p != percentage)
+		if (verbose && p != percentage)
 		{
 			percentage = p;
 			printf("\r%d%%", percentage);
@@ -81,6 +84,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	int total;
 	int progress;
 	int percentage;
+	bool verbose;
 	nv::StdOutputStream * stream;
 };
 
@@ -138,6 +142,7 @@ int main(int argc, char *argv[])
 	bool noMipmaps = false;
 	bool fast = false;
 	bool nocuda = false;
+	bool silent = false;
 	nvtt::Format format = nvtt::Format_BC1;
 
 	const char * externalCompressor = NULL;
@@ -224,6 +229,12 @@ int main(int argc, char *argv[])
 			}
 		}
 
+		// Misc options
+		else if (strcmp("-silent", argv[i]) == 0)
+		{
+			silent = true;
+		}
+
 		else if (argv[i][0] != '-')
 		{
 			input = argv[i];
@@ -242,10 +253,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
+
 	if (input.isNull())
 	{
-		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
-		
 		printf("usage: nvcompress [options] infile [outfile]\n\n");
 		
 		printf("Input options:\n");
@@ -282,13 +293,13 @@ int main(int argc, char *argv[])
 		nv::DirectDrawSurface dds(input);
 		if (!dds.isValid())
 		{
-			printf("The file '%s' is not a valid DDS file.\n", input.str());
+			fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
 			return 1;
 		}
 		
 		if (!dds.isSupported() || dds.isTexture3D())
 		{
-			printf("The file '%s' is not a supported DDS file.\n", input.str());
+			fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
 			return 1;
 		}
 		
@@ -325,7 +336,7 @@ int main(int argc, char *argv[])
 		nv::Image image;
 		if (!image.load(input))
 		{
-			printf("The file '%s' is not a supported image type.\n", input.str());
+			fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
 			return 1;
 		}
 		
@@ -396,11 +407,12 @@ int main(int argc, char *argv[])
 	MyOutputHandler outputHandler(output);
 	if (outputHandler.stream->isError())
 	{
-		printf("Error opening '%s' for writting\n", output.str());
+		fprintf(stderr, "Error opening '%s' for writting\n", output.str());
 		return 1;
 	}
 	
 	outputHandler.setTotal(nvtt::estimateSize(inputOptions, compressionOptions));
+	outputHandler.setDisplayProgress(!silent);
 
 	nvtt::OutputOptions outputOptions(&outputHandler, &errorHandler);
 	//nvtt::OutputOptions outputOptions(NULL, &errorHandler);
@@ -426,6 +438,7 @@ int main(int argc, char *argv[])
 	float diff_time = (float) (((double) end_time.QuadPart - (double) start_time.QuadPart) / freq);
 	printf("\rtime taken: %.3f seconds\n", diff_time/1000);
 */
+
 	clock_t end = clock();
 	printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 	
