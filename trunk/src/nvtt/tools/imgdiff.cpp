@@ -103,6 +103,40 @@ struct Error
 	float psnr;
 };
 
+struct NormalError
+{
+	NormalError()
+	{
+		samples = 0;
+		ade = 0;
+	}
+
+	void addSample(nv::Color32 o, nv::Color32 c)
+	{
+		float xo = o.r / 255.0f;
+		float yo = o.g / 255.0f;
+		float zo = o.b / 255.0f;
+		float xc = c.r / 255.0f;
+		float yc = c.g / 255.0f;
+		float zc = c.b / 255.0f;
+		ade += acosf(xo * xc + yo * yc + zo * zc);
+		samples++;
+	}
+
+	void done()
+	{
+		ade /= samples;
+	}
+
+	void print()
+	{
+		printf("Angular deviation error: %f\n", ade);
+	}
+
+	int samples;
+	float ade;
+};
+
 
 int main(int argc, char *argv[])
 {
@@ -171,6 +205,7 @@ int main(int argc, char *argv[])
 	Error error_b;
 	Error error_a;
 	Error error_total;
+	NormalError error_normal;
 
 	for (uint i = 0; i < h; i++)
 	{
@@ -188,6 +223,11 @@ int main(int argc, char *argv[])
 			error_g.addSample(g);
 			error_b.addSample(b);
 			error_a.addSample(a);
+			
+			if (compareNormal)
+			{
+				error_normal.addSample(c0, c1);
+			}
 
 			if (compareAlpha)
 			{
@@ -209,6 +249,9 @@ int main(int argc, char *argv[])
 	error_b.done();
 	error_a.done();
 	error_total.done();
+	error_normal.done();
+	
+
 
 	printf("Image size compared: %dx%d\n", w, h);
 	if (w != w0 || w != w1 || h != h0 || h != h1) {

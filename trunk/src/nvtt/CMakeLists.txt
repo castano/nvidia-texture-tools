@@ -4,6 +4,7 @@ ADD_SUBDIRECTORY(squish)
 
 SET(NVTT_SRCS
 	nvtt.h 
+	nvtt.cpp
 	CompressDXT.h
 	CompressDXT.cpp
 	CompressRGB.h
@@ -12,7 +13,6 @@ SET(NVTT_SRCS
 	FastCompressDXT.cpp
 	QuickCompressDXT.h
 	QuickCompressDXT.cpp
-	dxtlib.cpp
 	CompressionOptions.h
 	CompressionOptions.cpp
 	InputOptions.h
