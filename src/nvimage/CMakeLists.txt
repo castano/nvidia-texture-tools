@@ -1,7 +1,5 @@
 PROJECT(nvimage)
 
-SUBDIRS(nvtt)
-
 SET(IMAGE_SRCS	
 	nvimage.h
 	FloatImage.h
