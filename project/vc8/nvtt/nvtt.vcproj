@@ -67,7 +67,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH);C:\cygwin\home\icastano\src\pi\branches\nv\src\nvimage\nvtt\atitc\Debug"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH);C:\cygwin\home\icastano\src\pi\branches\nv\src\nvtt\atitc\Debug"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
@@ -228,7 +228,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;;C:\cygwin\home\icastano\src\pi\branches\nv\src\nvimage\nvtt\atitc\Release"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;;C:\cygwin\home\icastano\src\pi\branches\nv\src\nvtt\atitc\Release"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -670,22 +670,22 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\CompressDXT.cpp"
+				RelativePath="..\..\..\src\nvtt\CompressDXT.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\CompressionOptions.cpp"
+				RelativePath="..\..\..\src\nvtt\CompressionOptions.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CompressKernel.cu"
+				RelativePath="..\..\..\src\nvtt\cuda\CompressKernel.cu"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -703,7 +703,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -722,7 +722,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -741,7 +741,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvimage\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -756,11 +756,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\CompressRGB.cpp"
+				RelativePath="..\..\..\src\nvtt\CompressRGB.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\ConvolveKernel.cu"
+				RelativePath="..\..\..\src\nvtt\cuda\ConvolveKernel.cu"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -828,31 +828,31 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CudaCompressDXT.cpp"
+				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressDXT.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CudaUtils.cpp"
+				RelativePath="..\..\..\src\nvtt\cuda\CudaUtils.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\dxtlib.cpp"
+				RelativePath="..\..\..\src\nvtt\dxtlib.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\FastCompressDXT.cpp"
+				RelativePath="..\..\..\src\nvtt\FastCompressDXT.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\InputOptions.cpp"
+				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\OutputOptions.cpp"
+				RelativePath="..\..\..\src\nvtt\OutputOptions.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\QuickCompressDXT.cpp"
+				RelativePath="..\..\..\src\nvtt\QuickCompressDXT.cpp"
 				>
 			</File>
 		</Filter>
@@ -862,43 +862,43 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\CompressDXT.h"
+				RelativePath="..\..\..\src\nvtt\CompressDXT.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\CompressionOptions.h"
+				RelativePath="..\..\..\src\nvtt\CompressionOptions.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\CompressRGB.h"
+				RelativePath="..\..\..\src\nvtt\CompressRGB.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CudaCompressDXT.h"
+				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressDXT.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CudaMath.h"
+				RelativePath="..\..\..\src\nvtt\cuda\CudaMath.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\cuda\CudaUtils.h"
+				RelativePath="..\..\..\src\cuda\CudaUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\FastCompressDXT.h"
+				RelativePath="..\..\..\src\nvtt\FastCompressDXT.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\InputOptions.h"
+				RelativePath="..\..\..\src\nvtt\InputOptions.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\nvtt.h"
+				RelativePath="..\..\..\src\nvtt\nvtt.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\QuickCompressDXT.h"
+				RelativePath="..\..\..\src\nvtt\QuickCompressDXT.h"
 				>
 			</File>
 			<File
