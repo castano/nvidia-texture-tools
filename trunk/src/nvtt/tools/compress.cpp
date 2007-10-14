@@ -26,7 +26,8 @@
 
 #include <nvimage/Image.h>
 #include <nvimage/DirectDrawSurface.h>
-#include <nvimage/nvtt/nvtt.h>
+
+#include <nvtt/nvtt.h>
 
 #include "cmdline.h"
 

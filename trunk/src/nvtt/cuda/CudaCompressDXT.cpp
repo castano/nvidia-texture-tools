@@ -28,8 +28,8 @@
 #include <nvimage/Image.h>
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
-#include <nvimage/nvtt/CompressionOptions.h>
-#include <nvimage/nvtt/FastCompressDXT.h>
+#include <nvtt/CompressionOptions.h>
+#include <nvtt/FastCompressDXT.h>
 
 #include "CudaCompressDXT.h"
 #include "CudaUtils.h"

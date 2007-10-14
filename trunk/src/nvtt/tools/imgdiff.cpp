@@ -27,7 +27,6 @@
 
 #include <nvimage/Image.h>
 #include <nvimage/DirectDrawSurface.h>
-#include <nvimage/nvtt/nvtt.h>
 
 #include <nvmath/Color.h>
 

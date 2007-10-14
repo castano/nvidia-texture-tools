@@ -26,11 +26,9 @@
 
 #include <nvimage/Image.h>
 #include <nvimage/DirectDrawSurface.h>
-#include <nvimage/nvtt/nvtt.h>
-
-#include <nvimage/ImageIO.h>
 
 #include "cmdline.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -40,7 +38,7 @@ int main(int argc, char *argv[])
 	if (argc != 2)
 	{
 		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
-		printf("usage: nvdecompress 'ddsfile'\n\n");
+		printf("usage: nvddsinfo ddsfile\n\n");
 		return 1;
 	}
 
@@ -52,20 +50,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	nv::Path name(argv[1]);
-	name.stripExtension();
-	name.append(".tga");
-	
-	nv::StdOutputStream stream(name.str());
-	if (stream.isError()) {
-		printf("Error opening '%s' for writting\n", name.str());
-		return 1;
-	}
-	
-	// @@ TODO: Add command line options to output mipmaps, cubemap faces, etc.
-	nv::Image img;
-	dds.mipmap(&img, 0, 0); // get first image
-	nv::ImageIO::saveTGA(stream, &img);
+	dds.printInfo();
 
 	return 0;
 }
