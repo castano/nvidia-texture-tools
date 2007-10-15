@@ -29,6 +29,7 @@
 #include <nvimage/DirectDrawSurface.h>
 
 #include <nvmath/Color.h>
+#include <nvmath/Vector.h>
 
 #include <math.h>
 
@@ -113,13 +114,14 @@ struct NormalError
 
 	void addSample(nv::Color32 o, nv::Color32 c)
 	{
-		float xo = o.r / 255.0f;
-		float yo = o.g / 255.0f;
-		float zo = o.b / 255.0f;
-		float xc = c.r / 255.0f;
-		float yc = c.g / 255.0f;
-		float zc = c.b / 255.0f;
-		ade += acosf(xo * xc + yo * yc + zo * zc);
+		nv::Vector3 vo = nv::Vector3(o.r, o.g, o.b);
+		nv::Vector3 vc = nv::Vector3(c.r, c.g, c.b);
+
+		vo = nv::normalize(2 * (vo / 255.0f) - 1);
+		vc = nv::normalize(2 * (vc / 255.0f) - 1);
+
+		ade += acosf(nv::clamp(dot(vo, vc), -1.0f, 1.0f));
+
 		samples++;
 	}
 
@@ -252,7 +254,6 @@ int main(int argc, char *argv[])
 	error_normal.done();
 	
 
-
 	printf("Image size compared: %dx%d\n", w, h);
 	if (w != w0 || w != w1 || h != h0 || h != h1) {
 		printf("--- NOTE: only the overlap between the 2 images (%d,%d) and (%d,%d) was compared\n", w0, h0, w1, h1);
@@ -261,6 +262,11 @@ int main(int argc, char *argv[])
 
 	printf("Color:\n");
 	error_total.print();
+
+	if (compareNormal)
+	{
+		error_normal.print();
+	}
 
 	if (compareAlpha)
 	{
