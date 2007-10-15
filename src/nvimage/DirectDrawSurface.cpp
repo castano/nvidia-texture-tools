@@ -835,7 +835,7 @@ void DirectDrawSurface::readBlockImage(Image * img)
 static Color32 buildNormal(uint8 x, uint8 y)
 {
 	float nx = 2 * (x / 255.0f) - 1;
-	float ny = 2 * (x / 255.0f) - 1;
+	float ny = 2 * (y / 255.0f) - 1;
 	float nz = sqrtf(1 - nx*nx - ny*ny);
 	uint8 z = clamp(int(255.0f * (nz + 1) / 2.0f), 0, 255);
 	
@@ -910,7 +910,7 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 			for (int i = 0; i < 16; i++)
 			{
 				Color32 & c = rgba->color(i);
-				c = buildNormal(c.g, c.a);
+				c = buildNormal(c.a, c.g);
 			}
 		}
 	}
