@@ -31,4 +31,5 @@ NVIDIA Texture Tools version 0.9.5
  * Add support for DXT1a.
  * Refactor and improve compression quality of fast compressors.
  * Add cmake scripts to detect processor and chose compiler options.
-
+ * Fix normal map decompression.
+ * Evaluate angular deviation error for normal maps in nvimgdiff.
