@@ -29,6 +29,13 @@ extern "C" {
 #	include <tiffio.h>
 #endif
 
+#if defined(HAVE_EXR)
+#	include <ImfRgbaFile.h>
+#	include <ImfInputFile.h>	// ???
+#	include <ImfArray.h>
+using namespace Imf;
+#endif
+
 using namespace nv;
 
 namespace {
@@ -80,6 +87,34 @@ Image * nv::ImageIO::load(const char * name, Stream & s)
 		return loadPSD(s);
 	}
 	// @@ use image plugins?
+	return NULL;
+}
+
+NVIMAGE_API FloatImage * nv::ImageIO::loadFloat(const char * name)
+{
+	StdInputStream stream(name);
+	
+	if (stream.isError()) {
+		return false;
+	}
+	
+	return loadFloat(name, stream);
+}
+
+NVIMAGE_API FloatImage * nv::ImageIO::loadFloat(const char * name, Stream & s)
+{
+	const char * extension = Path::extension(name);
+	
+#if defined(HAVE_TIFF)
+	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
+		return loadFloatTIFF(name, s);
+	}
+#endif
+#if defined(HAVE_EXR)
+	if (strCaseCmp(extension, ".exr") == 0) {
+		return loadFloatEXR(name, s);
+	}
+#endif
 
 	return NULL;
 }
@@ -744,15 +779,73 @@ Image * nv::ImageIO::loadJPG(Stream & s)
 
 #if defined(HAVE_TIFF)
 
-FloatImage * nv::ImageIO::loadFloatTIFF(Stream & s)
+static tsize_t tiffReadWriteProc(thandle_t h, tdata_t ptr, tsize_t size)
 {
-	nvCheck(!s.isError());
-	return NULL;
+	Stream * s = (Stream *)h;
+	nvDebugCheck(s != NULL);
+
+	s->serialize(ptr, size);
+
+	return size;
 }
 
-FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName)
+static toff_t tiffSeekProc(thandle_t h, toff_t offset, int whence)
 {
+	Stream * s = (Stream *)h;
+	nvDebugCheck(s != NULL);
+	
+	if (!s->isSeekable())
+	{
+		return (toff_t)-1;
+	}
+
+	if (whence == SEEK_SET)
+	{
+		s->seek(offset);
+	}
+	else if (whence == SEEK_CUR)
+	{
+		s->seek(s->tell() + offset);
+	}
+	else if (whence == SEEK_END)
+	{
+		s->seek(s->size() + offset);
+	}
+
+	return s->tell();
+}
+
+static int tiffCloseProc(thandle_t)
+{
+	return 0;
+}
+
+static toff_t tiffSizeProc(thandle_t h)
+{
+	Stream * s = (Stream *)h;
+	nvDebugCheck(s != NULL);
+	return s->size();
+}
+
+static int tiffMapFileProc(thandle_t, tdata_t*, toff_t*)
+{
+	// @@ TODO, Implement these functions.
+	return -1;
+}
+
+static void tiffUnmapFileProc(thandle_t, tdata_t, toff_t)
+{
+	// @@ TODO, Implement these functions.
+}
+
+
+FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
+{
+	nvCheck(!s.isError());
+	
 	TIFF * tif = TIFFOpen(fileName, "r");
+	//TIFF * tif = TIFFClientOpen(fileName, "r", &s, tiffReadWriteProc, tiffReadWriteProc, tiffSeekProc, tiffCloseProc, tiffSizeProc, tiffMapFileProc, tiffUnmapFileProc);
+	
 	if (!tif)
 	{
 		nvDebug("Can't open '%s' for reading\n", fileName);
@@ -821,12 +914,11 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName)
 	return fimage.release();
 }
 
-
-bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage)
+bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage, uint base_component, uint num_components)
 {
 	int iW=fimage->width();
 	int iH=fimage->height();
-	int iC=fimage->componentNum();
+	int iC=num_components;
 
 	TIFF * image = TIFFOpen(fileName, "w");
 
@@ -848,7 +940,6 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage)
 	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
 	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_PACKBITS); 
 	TIFFSetField(image, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
-
 	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
 	float *scanline = new float[iW * iC];
@@ -856,7 +947,7 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage)
 	{
 		for (int c=0; c<iC; c++) 
 		{
-			float *src = fimage->scanline(y, c);
+			float *src = fimage->scanline(y, base_component + c);
 			for (int x=0; x<iW; x++) scanline[x*iC+c]=src[x];
 		}
 		if (TIFFWriteScanline(image, scanline, y, 0)==-1)
@@ -872,9 +963,101 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage)
 	return true;
 }
 
-
-
 #endif
+
+#if defined(HAVE_EXR)
+
+namespace
+{
+	class ExrStream : public Imf::IStream
+	{
+	public:
+		ExrStream(Stream & s) : m_stream(s)
+		{
+			nvDebugCheck(s.isLoading());
+		}
+
+		virtual bool read(char c[], int n)
+		{
+			m_stream.serialize(c, n);
+
+			if (m_stream.isError())
+			{
+				throw Iex::InputExc("I/O error.");
+			}
+
+			return m_stream.isAtEnd();
+		}
+
+		virtual Int64 tellg()
+		{
+			return m_stream.tell();
+		}
+
+		virtual void seekg(Int64 pos)
+		{
+			m_stream.seek(pos);
+		}
+
+		virtual void clear()
+		{
+			m_stream.clearError();
+		}
+
+	private:
+		Stream & m_stream;
+	};
+
+} // namespace
+
+FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
+{
+	nvCheck(!s.isError());
+
+	ExrStream stream(s);
+	RgbaInputFile inputFile(stream);
+
+	Box2i box = inputFile.dataWindow();
+
+	int width = box.max.x - box.min.y + 1;
+	int height = box.max.x - box.min.y + 1;
+
+	Array2D<Rgba> pixels;
+	pixels.resizeErase (height, width);
+
+	inputFile.setFrameBuffer (&pixels[0][0] - dw.min.x - dw.min.y * width, 1, width);
+	inputFile.readPixels (box.min.y, box.max.y);
+	
+	AutoPtr<FloatImage> fimage(new FloatImage());
+	fimage->allocate(spp, width, height);
+
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			fimage->setPixel(imagePixel.r, x, y, 0);
+			fimage->setPixel(imagePixel.g, x, y, 1);
+			fimage->setPixel(imagePixel.b, x, y, 2);
+			fimage->setPixel(imagePixel.a, x, y, 3);
+		}
+	}
+
+	return fimage.release();
+}
+
+FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName)
+{
+	StdInputStream stream(name);
+	
+	if (stream.isError()) {
+		return false;
+	}
+	
+	return loadFloatExr(fileName, stream);
+}
+
+#endif // defined(HAVE_EXR)
+
 
 #if 0
 

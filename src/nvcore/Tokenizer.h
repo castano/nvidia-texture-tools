@@ -49,6 +49,10 @@ namespace nv
 		int m_column;
 	};
 	
+	// @@ Use enums instead of bools for clarity!
+	//enum SkipEmptyLines { skipEmptyLines, noSkipEmptyLines };
+	//enum SkipEndOfLine { skipEndOfLine, noSkipEndOfLine };
+
 	/// A simple stream tokenizer.
 	class NVCORE_CLASS Tokenizer
 	{

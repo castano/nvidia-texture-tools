@@ -73,6 +73,12 @@ public:
 		{
 			return m_fp == NULL || ferror( m_fp ) != 0;
 		}
+
+		virtual void clearError()
+		{
+			nvDebugCheck(m_fp != NULL);
+			clearerr(m_fp);
+		}
 		
 		virtual bool isAtEnd() const
 		{
@@ -210,6 +216,11 @@ public:
 			return m_mem == NULL || m_ptr > m_mem + m_size || m_ptr < m_mem;
 		}
 		
+		virtual void clearError()
+		{
+			// Nothing to do.
+		}
+
 		virtual bool isAtEnd() const
 		{
 			return m_ptr == m_mem + m_size;

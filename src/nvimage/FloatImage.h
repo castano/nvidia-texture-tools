@@ -87,6 +87,7 @@ public:
 	float * scanline(uint y, uint c);
 	
 	void setPixel(float f, uint x, uint y, uint c);
+	void addPixel(float f, uint x, uint y, uint c);
 	float pixel(uint x, uint y, uint c) const;
 	
 	void setPixel(float f, uint idx);
@@ -162,6 +163,16 @@ inline void FloatImage::setPixel(float f, uint x, uint y, uint c)
 	nvDebugCheck(y < m_height);
 	nvDebugCheck(c < m_componentNum);
 	m_mem[(c * m_height + y) * m_width + x] = f;
+}
+
+/// Add to pixel component.
+inline void FloatImage::addPixel(float f, uint x, uint y, uint c)
+{
+	nvDebugCheck(m_mem != NULL);
+	nvDebugCheck(x < m_width);
+	nvDebugCheck(y < m_height);
+	nvDebugCheck(c < m_componentNum);
+	m_mem[(c * m_height + y) * m_width + x] += f;
 }
 
 /// Get pixel component.

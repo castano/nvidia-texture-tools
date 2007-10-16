@@ -65,6 +65,17 @@ public:
 		return (m_maxs - m_mins) * 0.5f;
 	}
 
+	/// Return extents of the box.
+	scalar extents(uint axis) const
+	{
+		nvDebugCheck(axis < 3);
+		if (axis == 0) return (m_maxs.x() - m_mins.x()) * 0.5f;
+		if (axis == 1) return (m_maxs.y() - m_mins.y()) * 0.5f;
+		if (axis == 2) return (m_maxs.z() - m_mins.z()) * 0.5f;
+		nvAssume(false);
+		return 0.0f;
+	}
+
 	/// Add a point to this box.
 	void addPointToBounds(Vector3::Arg p)
 	{
