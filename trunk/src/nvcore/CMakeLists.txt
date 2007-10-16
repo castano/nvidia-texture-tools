@@ -3,6 +3,7 @@ ADD_SUBDIRECTORY(poshlib)
 
 SET(CORE_SRCS
 	nvcore.h
+	Ptr.h
 	BitArray.h
 	Memory.h
 	Memory.cpp

@@ -13,8 +13,10 @@ namespace nv
 
 	namespace ImageIO
 	{
-		NVIMAGE_API Image * load(const char * name);
-		NVIMAGE_API Image * load(const char * name, Stream & s);
+		NVIMAGE_API Image * load(const char * fileName);
+		NVIMAGE_API Image * load(const char * fileName, Stream & s);
+		NVIMAGE_API FloatImage * loadFloat(const char * fileName);
+		NVIMAGE_API FloatImage * loadFloat(const char * fileName, Stream & s);
 		
 		NVIMAGE_API Image * loadTGA(Stream & s);
 		NVIMAGE_API bool saveTGA(Stream & s, const Image * img);
@@ -29,13 +31,15 @@ namespace nv
 #if defined(HAVE_JPEG)
 		NVIMAGE_API Image * loadJPG(Stream & s);
 #endif
-		
-#if defined(HAVE_TIFF)
-		// Hacks!
-		NVIMAGE_API FloatImage * loadFloatTIFF(const char * fileName);
-		NVIMAGE_API bool saveFloatTIFF(const char * fileName, FloatImage *fimage);
 
-		NVIMAGE_API FloatImage * loadFloatTIFF(Stream & s);
+#if defined(HAVE_TIFF)
+		NVIMAGE_API FloatImage * loadFloatTIFF(const char * fileName, Stream & s);
+		
+		NVIMAGE_API bool saveFloatTIFF(const char * fileName, FloatImage *fimage, uint base_component, uint num_components);
+#endif
+
+#if defined(HAVE_EXR)
+	NVIMAGE_API FloatImage * loadFloatEXR(const char * fileName, Stream & s);
 #endif
 
 	} // ImageIO namespace

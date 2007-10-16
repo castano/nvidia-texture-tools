@@ -283,7 +283,7 @@ namespace nv
 			else
 			{
 				m_size = new_size;
-				m_buffer[new_size-1] = val;
+				new(m_buffer+new_size-1) T(val);
 			}
 		}
 		void pushBack( const T & val )

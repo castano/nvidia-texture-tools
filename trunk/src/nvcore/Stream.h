@@ -9,7 +9,7 @@
 namespace nv
 {
 
-/** Base stream class. */
+/// Base stream class.
 class Stream {
 public:
 
@@ -41,7 +41,7 @@ public:
 	ByteOrder byteOrder() const { return m_byteOrder; }
 
 	
-	/// Serialize the given data.
+	/// Serialize the given data. @@ Should return bytes serialized?
 	virtual void serialize( void * data, int len ) = 0;
 
 	/// Move to the given position in the archive.
@@ -55,7 +55,10 @@ public:
 
 	/// Determine if there has been any error.
 	virtual bool isError() const = 0;
-	
+
+	/// Clear errors.
+	virtual void clearError() = 0;
+
 	/// Return true if the stream is at the end.
 	virtual bool isAtEnd() const = 0;
 

@@ -22,6 +22,7 @@ public:
 	
 	Vector2();
 	explicit Vector2(zero_t);
+	explicit Vector2(scalar f);
 	Vector2(scalar x, scalar y);
 	Vector2(Vector2::Arg v);
 	
@@ -29,7 +30,9 @@ public:
 	
 	scalar x() const;
 	scalar y() const;
-	
+
+	scalar component(uint idx) const;
+
 	const scalar * ptr() const;
 
 	void set(scalar x, scalar y);
@@ -42,7 +45,7 @@ public:
 
 	friend bool operator==(Vector2::Arg a, Vector2::Arg b);
 	friend bool operator!=(Vector2::Arg a, Vector2::Arg b);
-	
+
 private:
 	scalar m_x, m_y;
 };
@@ -66,7 +69,9 @@ public:
 	scalar z() const;
 
 	const Vector2 & xy() const;
-	
+
+	scalar component(uint idx) const;
+
 	// @@ temporary... should use an explicit method?
 	const scalar * ptr() const;
 
@@ -76,6 +81,7 @@ public:
 	void operator+=(Vector3::Arg v);
 	void operator-=(Vector3::Arg v);
 	void operator*=(scalar s);
+	void operator/=(scalar s);
 	void operator*=(Vector3::Arg v);
 
 	friend bool operator==(Vector3::Arg a, Vector3::Arg b);
@@ -108,7 +114,12 @@ public:
 	
 	const Vector2 & xy() const;
 	const Vector3 & xyz() const;
-	
+
+	scalar component(uint idx) const;
+
+	// @@ temporary... should use an explicit method?
+	const scalar * ptr() const;
+
 	void set(scalar x, scalar y, scalar z, scalar w);
 	
 	Vector4 operator-() const;
@@ -129,6 +140,7 @@ private:
 
 inline Vector2::Vector2() {}
 inline Vector2::Vector2(zero_t) : m_x(0.0f), m_y(0.0f) {}
+inline Vector2::Vector2(scalar f) : m_x(f), m_y(f) {}
 inline Vector2::Vector2(scalar x, scalar y) : m_x(x), m_y(y) {}
 inline Vector2::Vector2(Vector2::Arg v) : m_x(v.x()), m_y(v.y()) {}
 
@@ -141,6 +153,15 @@ inline const Vector2 & Vector2::operator=(Vector2::Arg v)
 
 inline scalar Vector2::x() const { return m_x; }
 inline scalar Vector2::y() const { return m_y; }
+
+inline scalar Vector2::component(uint idx) const
+{
+	nvDebugCheck(idx < 2);
+	if (idx == 0) return x();
+	if (idx == 1) return y();
+	nvAssume(false);
+	return 0.0f;
+}
 
 inline const scalar * Vector2::ptr() const
 {
@@ -216,12 +237,21 @@ inline const Vector2 & Vector3::xy() const
 {
 	return *(Vector2 *)this;
 }
-	
+
+inline scalar Vector3::component(uint idx) const
+{
+	nvDebugCheck(idx < 3);
+	if (idx == 0) return x();
+	if (idx == 1) return y();
+	if (idx == 2) return z();
+	nvAssume(false);
+	return 0.0f;
+}
+
 inline const scalar * Vector3::ptr() const
 {
 	return &m_x;
 }
-
 	
 inline void Vector3::set(scalar x, scalar y, scalar z)
 {
@@ -254,6 +284,14 @@ inline void Vector3::operator*=(scalar s)
 	m_x *= s;
 	m_y *= s;
 	m_z *= s;
+}
+
+inline void Vector3::operator/=(scalar s)
+{
+	float is = 1.0f / s;
+	m_x *= is;
+	m_y *= is;
+	m_z *= is;
 }
 
 inline void Vector3::operator*=(Vector3::Arg v)
@@ -304,6 +342,17 @@ inline const Vector2 & Vector4::xy() const
 inline const Vector3 & Vector4::xyz() const
 {
 	return *(Vector3 *)this;
+}
+
+inline scalar Vector4::component(uint idx) const
+{
+	nvDebugCheck(idx < 4);
+	if (idx == 0) return x();
+	if (idx == 1) return y();
+	if (idx == 2) return z();
+	if (idx == 3) return w();
+	nvAssume(false);
+	return 0.0f;
 }
 
 inline void Vector4::set(scalar x, scalar y, scalar z, scalar w)
@@ -384,7 +433,6 @@ inline Vector2 operator-(Vector2::Arg a, Vector2::Arg b)
 {
 	return sub(a, b);
 }
-
 
 inline Vector2 scale(Vector2::Arg v, scalar s)
 {
@@ -504,6 +552,11 @@ inline Vector3 operator*(Vector3::Arg v, scalar s)
 }
 
 inline Vector3 operator*(scalar s, Vector3::Arg v)
+{
+	return scale(v, s);
+}
+
+inline Vector3 operator*(Vector3::Arg v, Vector3::Arg s)
 {
 	return scale(v, s);
 }

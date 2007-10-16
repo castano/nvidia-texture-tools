@@ -195,7 +195,7 @@ namespace
 		// Solaris:
 		// ucp->uc_mcontext.gregs[REG_PC]
 		// Linux hppa:
-		// uc->uc_mcontext.sc_iaoq[0] & ~0×3UL
+		// uc->uc_mcontext.sc_iaoq[0] & ~0x3UL
 		// Linux sparc:
 		// ((struct sigcontext*) secret)->sigc_regs.tpc
 		// Linux sparc64:
@@ -204,7 +204,7 @@ namespace
 		// potentially correct for other archs:
 		// Linux alpha: ucp->m_context.sc_pc
 		// Linux arm: ucp->m_context.ctx.arm_pc
-		// Linux ia64: ucp->m_context.sc_ip & ~0×3UL
+		// Linux ia64: ucp->m_context.sc_ip & ~0x3UL
 		// Linux mips: ucp->m_context.sc_pc
 		// Linux s390: ucp->m_context.sregs->regs.psw.addr
 	}
@@ -257,7 +257,7 @@ namespace
 		{
 			bool result = false;
 			
-			HINSTANCE kern_lib = LoadLibraryEx( "kernel32.dll", NULL, 0 );
+			HINSTANCE kern_lib = LoadLibraryExA( "kernel32.dll", NULL, 0 );
 			if( kern_lib ) {
 				FARPROC lIsDebuggerPresent = GetProcAddress( kern_lib, "IsDebuggerPresent" );
 				if( lIsDebuggerPresent && lIsDebuggerPresent() ) {
@@ -302,7 +302,7 @@ namespace
 			}
 			
 			flushMessageQueue();
-			int action = MessageBox(NULL, error_string, "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
+			int action = MessageBoxA(NULL, error_string, "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
 			switch( action ) {
 				case IDRETRY:
 					ret = NV_ABORT_DEBUG;
