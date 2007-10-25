@@ -2,7 +2,7 @@
 
 The compressors available in the NVIDIA Texture Tools are not designed for real-time compression. If you need to compress textures in real-time, I'd recommend to look at the following sources:
 
-J.M.P. van Waveren was the first one to describe a [http://www.intel.com/cd/ids/developer/asmo-na/eng/dc/index.htm real-time DXT compressor]. This compressor is part of the of [http://softwarecommunity.intel.com/UserFiles/en-us/Image/1221/Real-Time%20Texture%20Streaming%20&%20Decompression.pdf real-time texture streaming pipeline] used in some [http://www.idsoftware.com Id Software] games. He obtains the following results with his SSE2 optimized implementation:
+[http://mrelusive.com J.M.P. van Waveren] was the first one to describe a [http://www.intel.com/cd/ids/developer/asmo-na/eng/dc/index.htm real-time DXT compressor]. This compressor is part of the of [http://softwarecommunity.intel.com/UserFiles/en-us/Image/1221/Real-Time%20Texture%20Streaming%20&%20Decompression.pdf real-time texture streaming pipeline] used in some [http://www.idsoftware.com id Software] games. He obtains the following results with his SSE2 optimized implementation:
 
 || *CPU* || *DXT1* || *DXT5* ||
 || Intel 2.8 GHz Dual Core Xeon || 112.05 MP/s || 66.43 MP/s ||
@@ -13,6 +13,12 @@ The same algorithm described by Waveren can also be adapted easily to the GPU. T
 || *GPU* || *DXT1* || *DXT5* ||
 || !GeForce 8800 GTX || 1,547 MP/s || - ||
 || !GeForce 8600 GTS || 461 MP/s || - ||
+
+A latter [http://developer.nvidia.com/object/real-time-ycocg-dxt-compression.html whitepaper] by Waveren and [http://castano.ludicon.com Ignacio Castaño] provides even higher results on the GPU:
+
+|| *GPU* || *DXT1* || *YCoCg-DXT5* ||
+|| !GeForce 8800 GTX || 1,690 MP/s || 939 MP/s ||
+|| !GeForce 8600 GTS || 520 MP/s || 279 MP/s ||
 
 
 
