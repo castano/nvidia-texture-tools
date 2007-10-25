@@ -49,7 +49,7 @@ for(int i = 0; i < 256; i++)
 }
 }}}
 
-Note that signed components are packed as unsigned integers, so they need to be scaled and biased. In order to obtain pure greys, the bias that you have to use to reconstruct the color is equal to 255/2 quantized to 5 bits, that's why 123 is used. While this method allows you to obtain pure greys, it introduces more errors in the other components, so it may not always be a good idea to use it.
+Note that signed components are packed as unsigned integers, so they need to be scaled and biased. In order to obtain pure greys, the bias that you have to use to reconstruct the color is equal to 255/2 quantized to 5 bits, that's why 123 is used. While this method allows you to obtain pure greys, it introduces more errors in the colors away from grey. So, it may not always be a good idea to use it.
 
 
 === Higher Quality Compression ===
