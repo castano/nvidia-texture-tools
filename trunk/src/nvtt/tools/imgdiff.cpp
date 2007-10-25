@@ -90,10 +90,10 @@ struct Error
 
 	void print()
 	{
-		printf("Mean absolute error: %f\n", mabse);
-		printf("Max absolute error: %f\n", maxabse);
-		printf("Root mean squared error: %f\n", rmse);
-		printf("Peak signal to noise ratio in dB: %f\n", psnr);
+		printf("  Mean absolute error: %f\n", mabse);
+		printf("  Max absolute error: %f\n", maxabse);
+		printf("  Root mean squared error: %f\n", rmse);
+		printf("  Peak signal to noise ratio in dB: %f\n", psnr);
 	}
 
 	int samples;
@@ -109,7 +109,8 @@ struct NormalError
 	NormalError()
 	{
 		samples = 0;
-		ade = 0;
+		ade = 0.0f;
+		mse = 0.0f;
 	}
 
 	void addSample(nv::Color32 o, nv::Color32 c)
@@ -117,26 +118,36 @@ struct NormalError
 		nv::Vector3 vo = nv::Vector3(o.r, o.g, o.b);
 		nv::Vector3 vc = nv::Vector3(c.r, c.g, c.b);
 
-		vo = nv::normalize(2 * (vo / 255.0f) - 1);
-		vc = nv::normalize(2 * (vc / 255.0f) - 1);
+		// Unpack and normalize.
+		vo = nv::normalize(2.0f * (vo / 255.0f) - 1.0f);
+		vc = nv::normalize(2.0f * (vc / 255.0f) - 1.0f);
 
 		ade += acosf(nv::clamp(dot(vo, vc), -1.0f, 1.0f));
-
+		mse += length_squared((vo - vc) * (255 / 2.0f));
+		
 		samples++;
 	}
 
 	void done()
 	{
 		ade /= samples;
+		mse /= samples * 3;
+		rmse = sqrt(mse);
+		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0 / rmse);
 	}
 
 	void print()
 	{
-		printf("Angular deviation error: %f\n", ade);
+		printf("  Angular deviation error: %f\n", ade);
+		printf("  Root mean squared error: %f\n", rmse);
+		printf("  Peak signal to noise ratio in dB: %f\n", psnr);
 	}
 
 	int samples;
 	float ade;
+	float mse;
+	float rmse;
+	float psnr;
 };
 
 
@@ -265,6 +276,7 @@ int main(int argc, char *argv[])
 
 	if (compareNormal)
 	{
+		printf("Normal:\n");
 		error_normal.print();
 	}
 
