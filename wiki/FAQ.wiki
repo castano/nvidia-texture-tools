@@ -1,7 +1,7 @@
 #summary Frequently Asked Questions
 #labels Featured
 
-=== Where can I ask questions? how can I get support? ===
+=== Where can I ask questions? How can I get support? ===
 You can ask questions about the usage of the Texture Tools at the [http://developer.nvidia.com/forums/index.php?showforum=9 NVIDIA developer forums]. You can report bugs and request new features in our [http://code.google.com/p/nvidia-texture-tools/issues/list issue database]. If you are a developer and have questions about the API or the source code, feel free to drop by the [http://groups.google.com/group/nvidia-texture-tools developer's mailing list]. If you would like to contact us privately, please send an email to [mailto:TextureTools@nvidia.com TextureTools@nvidia.com].
 
 === Why is feature XYZ not supported? ===
