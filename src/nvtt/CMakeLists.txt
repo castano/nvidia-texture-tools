@@ -57,6 +57,9 @@ TARGET_LINK_LIBRARIES(nvddsinfo nvcore nvmath nvimage)
 ADD_EXECUTABLE(nvimgdiff tools/imgdiff.cpp)
 TARGET_LINK_LIBRARIES(nvimgdiff nvcore nvmath nvimage)
 
-INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff DESTINATION bin)
+ADD_EXECUTABLE(nvassemble tools/assemble.cpp)
+TARGET_LINK_LIBRARIES(nvassemble nvcore nvmath nvimage)
+
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble DESTINATION bin)
 
 
