@@ -278,31 +278,31 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\clusterfit.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\clusterfit.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\colourblock.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\colourblock.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\colourfit.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\colourfit.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\colourset.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\colourset.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\fastclusterfit.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\fastclusterfit.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\maths.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\maths.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\weightedclusterfit.cpp"
+				RelativePath="..\..\..\src\nvtt\squish\weightedclusterfit.cpp"
 				>
 			</File>
 		</Filter>
@@ -312,39 +312,39 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\clusterfit.h"
+				RelativePath="..\..\..\src\nvtt\squish\clusterfit.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\colourblock.h"
+				RelativePath="..\..\..\src\nvtt\squish\colourblock.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\colourfit.h"
+				RelativePath="..\..\..\src\nvtt\squish\colourfit.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\colourset.h"
+				RelativePath="..\..\..\src\nvtt\squish\colourset.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\fastclusterfit.h"
+				RelativePath="..\..\..\src\nvtt\squish\fastclusterfit.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\maths.h"
+				RelativePath="..\..\..\src\nvtt\squish\maths.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\simd.h"
+				RelativePath="..\..\..\src\nvtt\squish\simd.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\simd_sse.h"
+				RelativePath="..\..\..\src\nvtt\squish\simd_sse.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\nvtt\squish\weightedclusterfit.h"
+				RelativePath="..\..\..\src\nvtt\squish\weightedclusterfit.h"
 				>
 			</File>
 		</Filter>
