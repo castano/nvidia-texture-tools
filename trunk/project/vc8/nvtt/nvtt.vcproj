@@ -836,15 +836,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\dxtlib.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\FastCompressDXT.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\nvtt.cpp"
 				>
 			</File>
 			<File
