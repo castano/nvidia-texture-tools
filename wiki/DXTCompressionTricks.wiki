@@ -58,7 +58,7 @@ A simple way of obtaining higher quality compression is also using the YCoCg col
 
 [http://www.humus.ca Emil Persson (aka Humus)] also has [http://www.humus.ca/index.php?page=3D&ID=68 a demo] that implements a similar idea, but  using YCbCr color space instead. He is actually using two textures, either one ATI1N (DXT5A) texture to store the luma (Y) and one ATI2N (3Dc) texture to store the chroma (!CbCr), or one DXT1 texture to store the luma and one DXT5 (really DXT5nm) texture to store the chroma. The second texture that stores the chroma is a quarter the size to achieve a compression to 6 bits per pixel, as opposed to 8 bits per pixel for YCoCg DXT5. Although the compression ratio is good, you end up with two texture lookups.
 
-Another alternative is one suggested by Tom Forsyth:
+Another alternative is one suggested by [http://www.eelpi.gotdns.org/ Tom Forsyth]:
 
 One alternative I want to try is using two DXT1 textures with the same mapping and with one of them using the 1-bit alpha that you get for free. Then simply lerp between them. This allows each pixel to be one of three colours from tex0, or if tex0 is the alpha=0 colour, it can be one of 4 colours from tex1. Pixel shader is pretty simple:
 
