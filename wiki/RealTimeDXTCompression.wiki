@@ -14,7 +14,7 @@ The same algorithm described by Waveren can also be adapted easily to the GPU. T
 || !GeForce 8800 GTX || 1,547 MP/s || - ||
 || !GeForce 8600 GTS || 461 MP/s || - ||
 
-A latter [http://developer.nvidia.com/object/real-time-ycocg-dxt-compression.html whitepaper] by Waveren and [http://castano.ludicon.com Ignacio Castaño] provides even higher results on the GPU:
+A later [http://developer.nvidia.com/object/real-time-ycocg-dxt-compression.html whitepaper] by Waveren and [http://castano.ludicon.com Ignacio Castaño] provides even higher results on the GPU:
 
 || *GPU* || *DXT1* || *YCoCg-DXT5* ||
 || !GeForce 8800 GTX || 1,690 MP/s || 939 MP/s ||
