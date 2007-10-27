@@ -6,7 +6,7 @@ This format was introduced in the original nvdxt library and since then it has b
 
 === RXGB ===
 
-The DOOM 3 engine and its derivates use the so called RXGB format, that is just like DXT5, but with the Red and Alpha components swapped, which means that the normal is given by the (a, g, b) components. Not surprisingly the error of this method is usually lower than DXT5nm, since it retains more information from the original.
+The DOOM 3 engine and its derivates use the so called RXGB format, that is just like DXT5, but with the Red and Alpha components swapped, which means that the normal is given by the (a, g, b) components.
 
 === BC5 ===
 
@@ -36,5 +36,3 @@ This is easy to compute on your shaders and has the advantage of providing more 
 The main disadvantage is that the reconstruction is done after interpolation and unfortunately lines in 2D do not map to great circles when using this projection, and that can potentially cause interpolation artifacts.
 
 Another approach is to use a stereographic projection. This projection has a slightly better behavior under interpolation and is only slightly more expensive. The distribution of normals is also more uniform, although it's not clear whether that's good or not.
-
-
