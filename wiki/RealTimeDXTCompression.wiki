@@ -23,5 +23,5 @@ A later [http://developer.nvidia.com/object/real-time-ycocg-dxt-compression.html
 
 
 Other links:
- * https://mollyrocket.com/forums/viewtopic.php?t=392&start=0&postdays=0&postorder=asc&highlight= 
+ * https://mollyrocket.com/forums/viewtopic.php?t=392
  * http://www.evl.uic.edu/cavern/fastdxt/
