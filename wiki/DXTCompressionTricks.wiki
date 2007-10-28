@@ -10,7 +10,9 @@ A simple way of obtaining higher quality compression is also using the YCoCg col
 
 [http://www.humus.ca Emil Persson (aka Humus)] also has [http://www.humus.ca/index.php?page=3D&ID=68 a demo] that implements a similar idea, but  using YCbCr color space instead. He is actually using two textures, either one ATI1N (BC4/DXT5A) texture to store the luma (Y) and one ATI2N (BC5/3Dc) texture to store the chroma (!CbCr), or one DXT1 texture to store the luma and one DXT5 (really DXT5nm) texture to store the chroma. The second texture that stores the chroma is a quarter the size to achieve a compression to 6 bits per pixel, as opposed to 8 bits per pixel for YCoCg DXT5. As shown in the table below, the compression ratio is not as good as YCoCg-DXT5. It also has lower performance, since it requires two texture lookups.
 
-[http://transfer.idsoftware.com/private/jan/publications/Rage/YCoCgDXT/images/humus.png]
+[http://groups.google.com/group/nvidia-texture-tools/web/humus.png]
+
+_Graph courtesy of J.M.P. van Waveren._
 
 === Tom Forsyth's Compression ===
 
