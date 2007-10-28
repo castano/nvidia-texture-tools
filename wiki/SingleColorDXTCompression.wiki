@@ -1,4 +1,4 @@
-#summary Single Color DXT Compression
+#summary How to compress DXT blocks with a single color
 
 [http://www.sjbrown.co.uk/ Simon Brown] describes a [http://www.sjbrown.co.uk/?article=dxt single color compressor] as implemented in the [http://www.sjbrown.co.uk/?code=squish squish library].
 
