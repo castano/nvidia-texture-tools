@@ -51,6 +51,8 @@ extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void compressKernel(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressWeightedKernel(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 
+#include "Bitmaps.h"
+
 static uint * d_bitmaps = NULL;
 
 static void doPrecomputation()
@@ -59,127 +61,9 @@ static void doPrecomputation()
 		return;
 	}
 
-	uint bitmaps[1024];
-
-	int indices[16];
-	int num = 0;
-
-	// Compute bitmaps with 3 clusters:
-
-	// first cluster [0,i) is at the start
-	for( int m = 0; m < 16; ++m )
-	{
-		indices[m] = 0;
-	}
-	const int imax = 15;
-	for( int i = imax; i >= 0; --i )
-	{
-		// second cluster [i,j) is half along
-		for( int m = i; m < 16; ++m )
-		{
-			indices[m] = 2;
-		}
-		const int jmax = ( i == 0 ) ? 15 : 16;
-		for( int j = jmax; j >= i; --j )
-		{
-			// last cluster [j,k) is at the end
-			if( j < 16 )
-			{
-				indices[j] = 1;
-			}
-
-			uint bitmap = 0;
-			
-			for(int p = 0; p < 16; p++) {
-				bitmap |= indices[p] << (p * 2);
-			}
-				
-			bitmaps[num] = bitmap;
-			
-			num++;
-		}
-	}
-	nvDebugCheck(num == 151);
-
-	// Align to 160.
-	for(int i = 0; i < 9; i++)
-	{
-		bitmaps[num] = 0x555AA000;
-		num++;
-	}
-	nvDebugCheck(num == 160);
-
-	// Append bitmaps with 4 clusters:
-
-	// first cluster [0,i) is at the start
-	for( int m = 0; m < 16; ++m )
-	{
-		indices[m] = 0;
-	}
-	for( int i = imax; i >= 0; --i )
-	{
-		// second cluster [i,j) is one third along
-		for( int m = i; m < 16; ++m )
-		{
-			indices[m] = 2;
-		}
-		const int jmax = ( i == 0 ) ? 15 : 16;
-		for( int j = jmax; j >= i; --j )
-		{
-			// third cluster [j,k) is two thirds along
-			for( int m = j; m < 16; ++m )
-			{
-				indices[m] = 3;
-			}
-
-			int kmax = ( j == 0 ) ? 15 : 16;
-			for( int k = kmax; k >= j; --k )
-			{
-				// last cluster [k,n) is at the end
-				if( k < 16 )
-				{
-					indices[k] = 1;
-				}
-				
-				uint bitmap = 0;
-
-				bool hasThree = false;
-				for(int p = 0; p < 16; p++) {
-					bitmap |= indices[p] << (p * 2);
-
-					if (indices[p] == 3) hasThree = true;
-				}
-				
-				if (hasThree) {
-					bitmaps[num] = bitmap;
-					num++;
-				}
-			}
-		}
-	}
-	nvDebugCheck(num == 975);
-	
-	// Align to 1024.
-	for(int i = 0; i < 49; i++)
-	{
-		bitmaps[num] = 0x555AA000;
-		num++;
-	}
-
-	nvDebugCheck(num == 1024);
-
-	/*
-	printf("uint bitmaps[1024] = {\n");
-	for (int i = 0; i < 1024; i++)
-	{
-		printf("\t0x%.8X,\n", bitmaps[i]);
-	}
-	printf("};\n");
-	*/
-
     // Upload bitmaps.
-    cudaMalloc((void**) &d_bitmaps, 1024 * sizeof(uint));
-    cudaMemcpy(d_bitmaps, bitmaps, 1024 * sizeof(uint), cudaMemcpyHostToDevice);
+    cudaMalloc((void**) &d_bitmaps, 992 * sizeof(uint));
+    cudaMemcpy(d_bitmaps, bitmaps, 992 * sizeof(uint), cudaMemcpyHostToDevice);
 
 	// @@ Check for errors.
 
