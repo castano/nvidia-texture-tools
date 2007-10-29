@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
 	MyMessageHandler messageHandler;
 
 	bool assembleCubeMap = true;
-//	bool assembleVolume = false;
-//	bool assembleTextureArray = false;
+	bool assembleVolume = false;
+	bool assembleTextureArray = false;
 	
 	nv::Array<nv::Path> files;
 	
