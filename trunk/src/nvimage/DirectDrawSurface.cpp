@@ -836,7 +836,8 @@ static Color32 buildNormal(uint8 x, uint8 y)
 {
 	float nx = 2 * (x / 255.0f) - 1;
 	float ny = 2 * (y / 255.0f) - 1;
-	float nz = sqrtf(1 - nx*nx - ny*ny);
+	float nz = 0.0f;
+	if (1 - nx*nx - ny*ny > 0) nz = sqrtf(1 - nx*nx - ny*ny);
 	uint8 z = clamp(int(255.0f * (nz + 1) / 2.0f), 0, 255);
 	
 	return Color32(x, y, z);
