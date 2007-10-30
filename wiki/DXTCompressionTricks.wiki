@@ -1,8 +1,8 @@
 #summary DXT Compression Tricks
+#labels Featured
 
  * [HighQualityDXTCompression High Quality DXT Compression]
  * [NormalMapCompression Normal Map DXT Compression]
  * [SingleColorDXTCompression Single Color DXT Compression]
  * [RealTimeDXTCompression Real-Time DXT Compression]
  * [PureGreysDXTCompression Obtaining Pure greys with DXT Compression]
-
