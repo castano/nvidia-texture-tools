@@ -1,4 +1,4 @@
-#summary Normalmap compression strategies.
+#summary Normalmap Compression Strategies
 
 === DXT5nm ===
 
