@@ -25,7 +25,6 @@ namespace nv
 
 #if defined(HAVE_PNG)
 		NVIMAGE_API Image * loadPNG(Stream & s);
-		NVIMAGE_API FloatImage * loadFloatPNG(Stream & s);
 #endif
 
 #if defined(HAVE_JPEG)
@@ -35,11 +34,13 @@ namespace nv
 #if defined(HAVE_TIFF)
 		NVIMAGE_API FloatImage * loadFloatTIFF(const char * fileName, Stream & s);
 		
-		NVIMAGE_API bool saveFloatTIFF(const char * fileName, FloatImage *fimage, uint base_component, uint num_components);
+		NVIMAGE_API bool saveFloatTIFF(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 #endif
 
 #if defined(HAVE_EXR)
-	NVIMAGE_API FloatImage * loadFloatEXR(const char * fileName, Stream & s);
+		NVIMAGE_API FloatImage * loadFloatEXR(const char * fileName, Stream & s);
+		
+		NVIMAGE_API bool saveFloatEXR(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 #endif
 
 	} // ImageIO namespace
