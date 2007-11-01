@@ -659,13 +659,6 @@ Image * nv::ImageIO::loadPNG(Stream & s)
 	return img.release();
 }
 
-
-FloatImage * nv::ImageIO::loadFloatPNG(Stream & s)
-{
-	return NULL;
-}
-
-
 #endif // defined(HAVE_PNG)
 
 #if defined(HAVE_JPEG)
@@ -914,11 +907,15 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 	return fimage.release();
 }
 
-bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage, uint base_component, uint num_components)
+bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
 {
-	int iW=fimage->width();
-	int iH=fimage->height();
-	int iC=num_components;
+	nvCheck(fileName != NULL);
+	nvCheck(fimage != NULL);
+	nvCheck(fimage->componentNum() <= base_component + num_components);
+	
+	const int iW = fimage->width();
+	const int iH = fimage->height();
+	const int iC = num_components;
 
 	TIFF * image = TIFFOpen(fileName, "w");
 
@@ -942,13 +939,13 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, FloatImage *fimage, uint 
 	TIFFSetField(image, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
-	float *scanline = new float[iW * iC];
-	for (int y=0; y<iH; y++)
+	float * scanline = new float[iW * iC];
+	for (int y = 0; y < iH; y++)
 	{
-		for (int c=0; c<iC; c++) 
+		for (int c = 0; c < iC; c++) 
 		{
-			float *src = fimage->scanline(y, base_component + c);
-			for (int x=0; x<iW; x++) scanline[x*iC+c]=src[x];
+			const float * src = fimage->scanline(y, base_component + c);
+			for (int x = 0; x < iW; x++) scanline[x * iC + c] = src[x];
 		}
 		if (TIFFWriteScanline(image, scanline, y, 0)==-1)
 		{
@@ -976,34 +973,34 @@ namespace
 		{
 			nvDebugCheck(s.isLoading());
 		}
-
+		
 		virtual bool read(char c[], int n)
 		{
 			m_stream.serialize(c, n);
-
+			
 			if (m_stream.isError())
 			{
 				throw Iex::InputExc("I/O error.");
 			}
-
+			
 			return m_stream.isAtEnd();
 		}
-
+		
 		virtual Int64 tellg()
 		{
 			return m_stream.tell();
 		}
-
+		
 		virtual void seekg(Int64 pos)
 		{
 			m_stream.seek(pos);
 		}
-
+		
 		virtual void clear()
 		{
 			m_stream.clearError();
 		}
-
+		
 	private:
 		Stream & m_stream;
 	};
@@ -1047,13 +1044,47 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 
 FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName)
 {
-	StdInputStream stream(name);
+	StdInputStream stream(fileName);
 	
 	if (stream.isError()) {
 		return false;
 	}
 	
 	return loadFloatExr(fileName, stream);
+}
+
+bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
+{
+	nvCheck(fileName != NULL);
+	nvCheck(fimage != NULL);
+	nvCheck(fimage->componentNum() <= base_component + num_components);
+	nvCheck(num_components > 0 && num_components <= 4);
+	
+	const int w = fimage->width();
+	const int h = fimage->height();
+	
+	const char * channelNames[] = {"R", "G", "B", "A"};
+	
+    Header header (width, height);
+	
+	for (uint c = 0; c < num_components; c++)
+	{
+	    header.channels().insert(channelNames[c], Channel(FLOAT));
+	}
+	
+    OutputFile file(fileName, header);
+    FrameBuffer frameBuffer;
+    
+	for (uint c = 0; c < num_components; c++)
+	{
+		const char * channel = (char *) fimage->channel(base_component + c);
+		frameBuffer.insert(channelNames[c], Slice(FLOAT, channel, sizeof(float), sizeof(float) * w));
+	}
+	
+	file.setFrameBuffer(frameBuffer);
+	file.writePixels(height);
+	
+	return false;
 }
 
 #endif // defined(HAVE_EXR)
