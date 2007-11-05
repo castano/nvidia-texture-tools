@@ -46,11 +46,7 @@ public:
 	//@{
 	NVIMAGE_API void clear(float f=0.0f);
 
-	//NVIMAGE_API void ComputeMipmaps();
-	//NVIMAGE_API void ComputeNormalMap(const float height_scale = 1.0f);
-	
-	//NVIMAGE_API void Clamp(uint base_component, uint num);
-	//NVIMAGE_API void NormalizeColor(uint base_component);
+	//NVIMAGE_API void clamp(uint base_component, uint num);
 	NVIMAGE_API void normalize(uint base_component);
 	
 	NVIMAGE_API void packNormals(uint base_component);
