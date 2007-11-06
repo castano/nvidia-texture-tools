@@ -1019,26 +1019,31 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	int width = box.max.x - box.min.y + 1;
 	int height = box.max.x - box.min.y + 1;
 
-	Array2D<Rgba> pixels;
-	pixels.resizeErase (height, width);
-
-	inputFile.setFrameBuffer (&pixels[0][0] - dw.min.x - dw.min.y * width, 1, width);
+	const Imf::ChannelList & channels = inputFile.header().channels();
+	
+	// Count channels.
+	uint channelCount= 0;
+	for (ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it)
+	{
+		channelCount++;
+	}
+	
+	// Allocate FloatImage.
+	AutoPtr<FloatImage> fimage(new FloatImage());
+	fimage->allocate(channelCount, width, height);
+	
+	// Describe image's layout with a framebuffer.
+	FrameBuffer frameBuffer;
+	uint i = 0;
+	for (ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it, ++i)
+	{
+		frameBuffer.insert(it.name(), Slice(FLOAT, fimage->channel(i), sizeof(float), sizeof(float) * width));
+	}
+	
+	// Read it.
+	inputFile.setFrameBuffer (frameBuffer);
 	inputFile.readPixels (box.min.y, box.max.y);
 	
-	AutoPtr<FloatImage> fimage(new FloatImage());
-	fimage->allocate(spp, width, height);
-
-	for (int y = 0; y < height; y++)
-	{
-		for (int x = 0; x < width; x++)
-		{
-			fimage->setPixel(imagePixel.r, x, y, 0);
-			fimage->setPixel(imagePixel.g, x, y, 1);
-			fimage->setPixel(imagePixel.b, x, y, 2);
-			fimage->setPixel(imagePixel.a, x, y, 3);
-		}
-	}
-
 	return fimage.release();
 }
 
