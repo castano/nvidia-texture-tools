@@ -7,9 +7,6 @@
 #include <nvcore/Stream.h>
 #include <nvcore/StrLib.h>
 
-// @@ NOT IMPLEMENTED !!!
-
-
 namespace nv
 {
 
@@ -18,16 +15,12 @@ namespace nv
 	{
 	public:
 	
-		/// Ctor.
-		TextWriter(Stream * s) : s(s), str(1024) {
-			nvDebugCheck(s != NULL);
-			nvCheck(s->IsSaving());
-		}
+		TextWriter(Stream * s);
 	
-		void write( const char * str, uint len );
-		void write( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-		void write( const char * format, va_list arg );
-	
+		void writeString(const char * str);
+		void writeString(const char * str, uint len);
+		void write(const char * format, ...) __attribute__((format (printf, 2, 3)));
+		void write(const char * format, va_list arg);
 	
 	private:
 	
@@ -38,7 +31,35 @@ namespace nv
 	
 	};
 
+
+	inline TextWriter & operator<<( TextWriter & tw, int i)
+	{
+		tw.write("%d", i);
+		return tw;
+	}
+
+	inline TextWriter & operator<<( TextWriter & tw, uint i)
+	{
+		tw.write("%u", i);
+		return tw;
+	}
+
+	inline TextWriter & operator<<( TextWriter & tw, float f)
+	{
+		tw.write("%f", f);
+		return tw;
+	}
+
+	inline TextWriter & operator<<( TextWriter & tw, const char * str)
+	{
+		tw.writeString(str);
+		return tw;
+	}
+
 } // nv namespace
+
+
+
 
 
 #endif // NVCORE_TEXTWRITER_H

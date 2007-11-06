@@ -13,7 +13,7 @@
 /********************************************************/
 
 #include <nvmath/Vector.h>
-//#include <nvmath/Triangle.h>
+#include <nvmath/Triangle.h>
 
 using namespace nv;
 
@@ -96,7 +96,7 @@ static bool planeBoxOverlap(Vector3::Arg normal, Vector3::Arg vert, Vector3::Arg
 	if(min>rad || max<-rad) return false;
 
 
-bool triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Vector3 * triverts)
+bool triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Triangle & tri)
 {
 	// use separating axis theorem to test overlap between triangle and box
 	// need to test for overlap in these directions:
@@ -111,9 +111,9 @@ bool triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Vecto
 
 	// This is the fastest branch on Sun.
 	// move everything so that the boxcenter is in (0,0,0)
-	v0 = triverts[0] - boxcenter;
-	v1 = triverts[1] - boxcenter;
-	v2 = triverts[2] - boxcenter;
+	v0 = tri.v[0] - boxcenter;
+	v1 = tri.v[1] - boxcenter;
+	v2 = tri.v[2] - boxcenter;
 
 	// Compute triangle edges.
 	e0 = v1 - v0;	// tri edge 0
@@ -170,7 +170,7 @@ bool triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Vecto
 }
 
 
-bool triBoxOverlapNoBounds(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Vector3 * triverts)
+bool triBoxOverlapNoBounds(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Triangle & tri)
 {
 	// use separating axis theorem to test overlap between triangle and box
 	// need to test for overlap in these directions:
@@ -185,9 +185,9 @@ bool triBoxOverlapNoBounds(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, con
 
 	// This is the fastest branch on Sun.
 	// move everything so that the boxcenter is in (0,0,0)
-	v0 = triverts[0] - boxcenter;
-	v1 = triverts[1] - boxcenter;
-	v2 = triverts[2] - boxcenter;
+	v0 = tri.v[0] - boxcenter;
+	v1 = tri.v[1] - boxcenter;
+	v2 = tri.v[2] - boxcenter;
 
 	// Compute triangle edges.
 	e0 = v1 - v0;	// tri edge 0
