@@ -23,12 +23,6 @@ Do not use memmove in insert & remove, use copy ctors instead.
 #include <string.h>	// memmove
 #include <new>		// for placement new
 
-#ifndef USE_TU_CONTAINERS
-#define USE_TU_CONTAINERS 1
-#endif
-
-
-#if USE_TU_CONTAINERS
 
 #if NV_CC_GNUC // If typeof is available:
 
@@ -57,7 +51,7 @@ struct PseudoIndexWrapper {
 		return *reinterpret_cast<const typename T::PseudoIndex *>(memory);
 	}
 
-	uint8 memory[8];	// Increase the size if we have bigger enumerators.
+	uint8 memory[4];	// Increase the size if we have bigger enumerators.
 };
 
 #define NV_FOREACH(i, container) \
@@ -70,7 +64,6 @@ struct PseudoIndexWrapper {
 #	define foreach NV_FOREACH
 #endif
 
-#endif // USE_TU_CONTAINERS
 
 
 namespace nv 
@@ -193,7 +186,6 @@ namespace nv
 		virtual T current();
 	};
 
-#if USE_TU_CONTAINERS	
 
 	/**
 	* Replacement for std::vector that is easier to debug and provides
@@ -1060,8 +1052,8 @@ namespace nv
 	
 	};
 
-#endif // USE_TU_CONTAINERS	
-	
+
+
 } // nv namespace
 
 #endif // NV_CORE_CONTAINER_H

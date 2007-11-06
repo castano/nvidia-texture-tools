@@ -6,26 +6,23 @@ using namespace nv;
 
 
 /// Tomas Möller, barycentric ray-triangle test.
-bool Triangle::TestRay_Moller(Vector3::Arg orig, Vector3::Arg dir, float * out_t, float * out_u, float * out_v)
+bool rayTest_Moller(const Triangle & t, Vector3::Arg orig, Vector3::Arg dir, float * out_t, float * out_u, float * out_v)
 {
-	Vector3 e1, e2, tvec, pvec, qvec;
-	float det, inv_det;
-
 	// find vectors for two edges sharing vert0 
-	e1 = v[1] - v[0];
-	e2 = v[2] - v[0];
+	Vector3 e1 = t.v[1] - t.v[0];
+	Vector3 e2 = t.v[2] - t.v[0];
 
 	// begin calculating determinant - also used to calculate U parameter
-	pvec = cross(dir, e2);
+	Vector3 pvec = cross(dir, e2);
 	
 	// if determinant is near zero, ray lies in plane of triangle
-	det = dot(e1, pvec);
+	float det = dot(e1, pvec);
 	if (det < -NV_EPSILON) {
 		return false;
 	}
 
 	// calculate distance from vert0 to ray origin
-	tvec = orig - v[0];
+	Vector3 tvec = orig - t.v[0];
 
 	// calculate U parameter and test bounds
 	float u = dot(tvec, pvec);
@@ -34,7 +31,7 @@ bool Triangle::TestRay_Moller(Vector3::Arg orig, Vector3::Arg dir, float * out_t
 	}
 
 	// prepare to test V parameter
-	qvec = cross(tvec, e1);
+	Vector3 qvec = cross(tvec, e1);
 
 	// calculate V parameter and test bounds
 	float v = dot(dir, qvec);
@@ -43,7 +40,7 @@ bool Triangle::TestRay_Moller(Vector3::Arg orig, Vector3::Arg dir, float * out_t
 	}
 
 	// calculate t, scale parameters, ray intersects triangle
-	inv_det = 1.0f / det;
+	float inv_det = 1.0f / det;
 	*out_t = dot(e2, qvec) * inv_det;
 	*out_u = u * inv_det;	// v
 	*out_v = v * inv_det;	// 1-(u+v)

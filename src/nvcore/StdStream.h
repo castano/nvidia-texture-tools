@@ -314,7 +314,12 @@ public:
 		{
 			return m_s->isError();
 		}
-		
+
+		virtual void clearError()
+		{
+			m_s->clearError();
+		}
+
 		virtual bool isAtEnd() const
 		{
 			return m_s->isAtEnd();

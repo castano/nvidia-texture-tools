@@ -76,18 +76,18 @@ namespace nv
 	{
 		return scale(q.asVector(), s);
 	}
-	inline Quaternion operator *(Quaternion::Arg q, Vector4::Arg s)
+	/*inline Quaternion operator *(Quaternion::Arg q, Vector4::Arg s)
 	{
 		return scale(q, s);
 	}
 	inline Quaternion operator *(Vector4::Arg s, Quaternion::Arg q)
 	{
 		return scale(q, s);
-	}
+	}*/
 
 	inline Quaternion conjugate(Quaternion::Arg q)
 	{
-		return q * Vector4(-1, -1, -1, 1);
+		return scale(q, Vector4(-1, -1, -1, 1));
 	}
 
 	inline float length(Quaternion::Arg q)

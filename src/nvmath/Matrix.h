@@ -363,7 +363,25 @@ inline Matrix inverse(Matrix::Arg m)
    return r;
 }
 
-//Matrix isometryInverse(Matrix::Arg m);
+inline Matrix isometryInverse(Matrix::Arg m)
+{
+	Matrix r(identity);
+	
+	// transposed 3x3 upper left matrix
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			r(i, j) = m(j, i);
+		}
+	}
+	
+	// translate by the negative offsets
+	r.translate(-Vector3(m.data(12), m.data(13), m.data(14)));
+
+	return r;
+}
+
 //Matrix affineInverse(Matrix::Arg m);
 
 /// Transform the given 3d point with the given matrix.
@@ -394,6 +412,13 @@ inline Vector4 transform(Matrix::Arg m, Vector4::Arg p)
 		p.x() * m(3,0) + p.y() * m(3,1) + p.z() * m(3,2) + p.w() * m(3,3));
 }
 
+inline Matrix mul(Matrix::Arg a, Matrix::Arg b)
+{
+	// @@ Is this the right order? mul(a, b) = b * a
+	Matrix m = a;
+	m.apply(b);
+	return m;
+}
 
 } // nv namespace
 
