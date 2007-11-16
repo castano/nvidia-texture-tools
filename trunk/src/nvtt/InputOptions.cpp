@@ -83,6 +83,9 @@ void InputOptions::reset()
 	m.inputGamma = 2.2f;
 	m.outputGamma = 2.2f;
 	
+	m.colorTransform = ColorTransform_None;
+	m.linearTransform = Matrix(identity);
+
 	m.generateMipmaps = false;
 	m.maxLevel = -1;
 	m.mipmapFilter = MipmapFilter_Box;
@@ -257,4 +260,19 @@ void InputOptions::setNormalFilter(float small, float medium, float big, float l
 void InputOptions::setNormalizeMipmaps(bool normalize)
 {
 	m.normalizeMipmaps = normalize;
+}
+
+/// Set color transform.
+void InputOptions::setColorTransform(ColorTransform t)
+{
+	m.colorTransform = t;
+}
+
+// Set linear transform for the given channel.
+void InputOptions::setLinearTransfrom(int channel, float w0, float w1, float w2, float w3)
+{
+	nvCheck(channel >= 0 && channel < 4);
+
+	Vector4 w(w0, w1, w2, w3);
+	//m.linearTransform.setRow(channel, w);
 }

@@ -139,7 +139,13 @@ namespace nvtt
 		MipmapFilter_Kaiser,	///< Kaiser-windowed Sinc filter is the best downsampling filter.
 	};
 	
-
+	enum ColorTransform
+	{
+		ColorTransform_None,
+		ColorTransform_Linear,
+		ColorTransform_CoYCg,
+		ColorTransform_CoSCgY,
+	};
 
 	/// Input options. Specify format and layout of the input texture.
 	struct InputOptions
@@ -178,6 +184,10 @@ namespace nvtt
 		NVTT_API void setHeightEvaluation(float redScale, float greenScale, float blueScale, float alphaScale);
 		NVTT_API void setNormalFilter(float small, float medium, float big, float large);
 		NVTT_API void setNormalizeMipmaps(bool b);
+
+		// Set color transforms.
+		NVTT_API void setColorTransform(ColorTransform t);
+		NVTT_API void setLinearTransfrom(int channel, float w0, float w1, float w2, float w3);
 
 	//private:
 		struct Private;

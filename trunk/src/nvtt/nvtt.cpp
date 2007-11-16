@@ -459,6 +459,14 @@ bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & out
 				img = toFixedImage(floatImage.ptr(), inputOptions.m);
 			}
 			
+			// @@ Where to do the color transform?
+			// - Color transform may not be linear, so we cannot do before computing mipmaps.
+			// - Should be done in linear space, that is, after gamma correction.
+
+			// @@ Error! gamma correction is not performed when mipmap data provied.
+
+			// @@ This code is too complicated, too prone to erros, and hard to understand. Must be simplified!
+
 			quantize(img, inputOptions.m, format);
 			
 			compressMipmap(img, outputOptions, compressionOptions.m);
