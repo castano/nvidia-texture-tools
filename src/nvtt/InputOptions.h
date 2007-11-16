@@ -26,6 +26,7 @@
 
 #include <nvcore/Ptr.h>
 #include <nvmath/Vector.h>
+#include <nvmath/Matrix.h>
 #include <nvimage/Image.h>
 #include "nvtt.h"
 
@@ -58,7 +59,11 @@ namespace nvtt
 		// Gamma conversion.
 		float inputGamma;
 		float outputGamma;
-		
+	
+		// Color transform.
+		ColorTransform colorTransform;
+		nv::Matrix linearTransform;
+
 		// Mipmap generation options.
 		bool generateMipmaps;
 		int maxLevel;
@@ -73,6 +78,7 @@ namespace nvtt
 
 		// Cone map options.
 		bool convertToConeMap;
+
 	};
 
 	// Internal image structure.
