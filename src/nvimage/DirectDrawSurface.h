@@ -24,7 +24,7 @@
 #ifndef NV_IMAGE_DIRECTDRAWSURFACE_H
 #define NV_IMAGE_DIRECTDRAWSURFACE_H
 
-#include <nvcore/nvcore.h>
+#include <nvimage/nvimage.h>
 
 namespace nv
 {
@@ -102,10 +102,11 @@ namespace nv
 		bool hasDX10Header() const;
 	};
 
+	NVIMAGE_API Stream & operator<< (Stream & s, DDSHeader & header);
 
 
 	/// DirectDraw Surface. (DDS)
-	class DirectDrawSurface
+	class NVIMAGE_CLASS DirectDrawSurface
 	{
 	public:
 		DirectDrawSurface(const char * file);

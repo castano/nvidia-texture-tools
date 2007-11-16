@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="nvddsinfo"
-	ProjectGUID="{841B73C5-C679-4EEF-A50A-7D6106642B49}"
+	Name="nvassemble"
+	ProjectGUID="{3BC6D760-91E8-4FFB-BD0E-F86F367AD8EA}"
 	>
 	<Platforms>
 		<Platform
@@ -43,6 +43,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
+				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				WarningLevel="3"
@@ -314,7 +315,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvtt\tools\ddsinfo.cpp"
+				RelativePath="..\..\..\src\nvtt\tools\assemble.cpp"
 				>
 			</File>
 		</Filter>
@@ -338,7 +339,7 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\nvddsinfo.rc"
+				RelativePath=".\nvassemble.rc"
 				>
 			</File>
 			<File

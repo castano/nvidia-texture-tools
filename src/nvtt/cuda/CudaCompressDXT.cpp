@@ -109,11 +109,13 @@ void nv::cudaCompressDXT1(const Image * image, const OutputOptions & outputOptio
 
 	uint imageSize = w * h * 16 * sizeof(Color32);
     uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);
+	convertToBlockLinear(image, blockLinearImage);	// @@ Do this on the GPU!
 
 	const uint blockNum = w * h;
 	const uint compressedSize = blockNum * 8;
 	const uint blockMax = 32768; // 49152, 65535
+
+	clock_t start = clock();
 
     // Allocate image in device memory.
     uint * d_data = NULL;
@@ -125,8 +127,6 @@ void nv::cudaCompressDXT1(const Image * image, const OutputOptions & outputOptio
 
 	setupCompressKernel(compressionOptions.colorWeight.ptr());
 	
-	clock_t start = clock();
-
 	// TODO: Add support for multiple GPUs.
 	uint bn = 0;
 	while(bn != blockNum)

@@ -24,17 +24,17 @@
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
 
-#include <nvimage/Image.h>
-#include <nvimage/DirectDrawSurface.h>
+#include <nvmath/Color.h>
 
+#include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>
+#include <nvimage/DirectDrawSurface.h>
 
 #include "cmdline.h"
 
 // @@ Add decent error messages.
 // @@ Add option to resize images.
-// @@ Output DDS header according to surface type.
-// @@ Output images.
+// @@ Add support for reading DDS files with 2D images and possibly mipmaps.
 
 int main(int argc, char *argv[])
 {
@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
 	bool assembleTextureArray = false;
 	
 	nv::Array<nv::Path> files;
+	nv::Path output = "output.dds";
 	
 	// Parse arguments.
 	for (int i = 1; i < argc; i++)
@@ -69,7 +70,14 @@ int main(int argc, char *argv[])
 			assembleVolume = false;
 			assembleTextureArray = true;
 		}*/
-		
+		else if (strcmp("-o", argv[i]) == 0)
+		{
+			i++;
+			if (i < argc && argv[i][0] != '-')
+			{
+				output = argv[i];
+			}
+		}
 		else if (argv[i][0] != '-')
 		{
 			files.append(argv[i]);
@@ -83,7 +91,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	if (assembleCubeMap && files.count() != 0)
+	if (nv::strCaseCmp(output.extension(), ".dds") != 0)
+	{
+		//output.stripExtension();
+		output.append(".dds");
+	}
+
+	if (assembleCubeMap && files.count() != 6)
 	{
 		printf("*** error, 6 files expected, but got %d\n", files.count());
 		return 1;
@@ -96,6 +110,8 @@ int main(int argc, char *argv[])
 	bool hasAlpha = false;
 	
 	const uint imageCount = files.count();
+	images.resize(imageCount);
+
 	for (uint i = 0; i < imageCount; i++)
 	{
 		if (!images[i].load(files[i]))
@@ -130,9 +146,40 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	// @@ Output DDS header.
-	
-	// @@ Output images.
+	// Output DDS header.
+	nv::DDSHeader header;
+	header.setWidth(w);
+	header.setHeight(h);
+
+	if (assembleCubeMap)
+	{
+		header.setTextureCube();
+	}
+	else if (assembleVolume)
+	{
+		header.setTexture3D();
+		header.setDepth(imageCount);
+	}
+	else if (assembleTextureArray)
+	{
+		//header.setTextureArray(imageCount);
+	}
+
+	// @@ It always outputs 32 bpp.
+	header.setPitch(4 * w);
+	header.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, hasAlpha ? 0xFF000000 : 0);
+
+	stream << header;
+
+	// Output images.
+	for (uint i = 0; i < imageCount; i++)
+	{
+		const uint pixelCount = w * h;
+		for (uint p = 0; p < pixelCount; p++)
+		{
+			stream << images[i].pixel(p).b << images[i].pixel(p).g << images[i].pixel(p).r << images[i].pixel(p).a;
+		}
+	}
 
 	return 0;
 }

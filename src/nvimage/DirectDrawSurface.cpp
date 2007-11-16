@@ -292,7 +292,7 @@ namespace nv
 		return s;
 	}
 
-	static Stream & operator<< (Stream & s, DDSHeader & header)
+	Stream & operator<< (Stream & s, DDSHeader & header)
 	{
 		nvStaticCheck(sizeof(DDSHeader) == 148);
 		s << header.fourcc;

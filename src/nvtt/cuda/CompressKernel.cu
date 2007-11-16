@@ -294,6 +294,7 @@ __device__ float evalPermutation4(const float3 * colors, float3 color_sum, uint 
 	uint akku = 0;
 
     // Compute alpha & beta for this permutation.
+	#pragma unroll
     for (int i = 0; i < 16; i++)
     {
 		const uint bits = permutation >> (2*i);
@@ -329,6 +330,7 @@ __device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint 
 	uint akku = 0;
 
     // Compute alpha & beta for this permutation.
+	#pragma unroll
     for (int i = 0; i < 16; i++)
     {
         const uint bits = permutation >> (2*i);
