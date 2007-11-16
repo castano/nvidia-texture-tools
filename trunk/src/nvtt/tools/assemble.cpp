@@ -138,11 +138,9 @@ int main(int argc, char *argv[])
 	}
 	
 	
-	nv::Path name("output.dds");
-	
-	nv::StdOutputStream stream(name);
+	nv::StdOutputStream stream(output);
 	if (stream.isError()) {
-		printf("Error opening '%s' for writting\n", name.str());
+		printf("Error opening '%s' for writting\n", output.str());
 		return 1;
 	}
 	
