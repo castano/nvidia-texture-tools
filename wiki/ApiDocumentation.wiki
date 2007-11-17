@@ -88,10 +88,50 @@ inputOptions.setWrapMode(WrapMode_Repeat);
 === Gamma Correction ===
 
 {{{
-inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
+inputOptions.setGamma(inputGamma, outputGamma);
+}}}
+
+=== Generating Normal Maps ===
+
+{{{
+inputOptions.convertToNormalMap(true);
+}}}
+
+{{{
+inputOptions.setHeightEvaluation(float r, float g, float b, float a);
+}}}
+
+{{{
+inputOptions.setHeightEvaluation(0, 0, 0, 1);
+}}}
+
+{{{
+inputOptions.setHeightEvaluation(1, 1, 1, 0);
 }}}
 
 
+{{{
+inputOptions.setNormalFilter(float small, float medium, float big, float large);
+}}}
+
+Are the mipmaps generated from the heightmap or from the normal map?
+
+
+=== Processing Normal Maps ===
+
+{{{
+inputOptions.setNormalMap(true);
+}}}
+
+{{{
+inputOptions.setNormalizeMipmaps(true);
+}}}
+
+Is this the default when normalMap is true? What if convertToNormalMap is true?
+
+=== Quantization ===
+
+Should this be part of compression options instead?
 
 
 == Compression Options ==
