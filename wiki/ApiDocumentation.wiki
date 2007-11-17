@@ -109,6 +109,14 @@ inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
 
 === Compression Quality ===
 
+It's possible to control the quality of the compressor using the following method:
+
+{{{
+compressionOptions.setQuality(quality);
+}}}
+
+Where quality is one of the following:
+
   * !Quality_Fastest
   * !Quality_Normal
   * !Quality_Production
