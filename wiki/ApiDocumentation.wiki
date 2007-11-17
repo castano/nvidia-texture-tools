@@ -109,10 +109,18 @@ inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
 
 === Compression Quality ===
 
-  * Fastest
-  * Normal
-  * Production
-  * Highest
+  * !Quality_Fastest
+  * !Quality_Normal
+  * !Quality_Production
+  * !Quality_Highest
+
+`Quality_Fastest` will select a quick compressor that produces reasonable results in a very short amount of time. Note that these compressors are not real-time compressors. The code is not highly optimized, but still are generally one order of magnitude faster than the normal compression mode. If you want real-time compression see: RealTimeDXTCompression.
+
+`Quality_Normal` is the default mode and the one you should use in most cases.
+
+`Quality_Production` will generally produce similar results as `Quality_Normal`, but in some cases it will spend some extra time to try to improve the results further.
+
+`Quality_Highest` is a brute force compressor. In some cases, depending on the size of the search space, this compressor will be extremely slow. Use this only for testing purposes, to determine how much room is left for improvement in the regular compressors.
 
 ||      || *Fastest* || *Normal* || *Production* || *Highest* ||
 || BC1  || Yes       || Yes      ||              ||           ||
@@ -122,6 +130,9 @@ inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
 || BC3n || Yes       || Yes      ||              ||           ||
 || BC4  || Yes       || Yes      || Yes          ||           ||
 || BC5  || Yes       || Yes      || Yes          ||           ||
+
+If `Quality_Production` is not available, `Quality_Normal` will be used instead, and if `Quality_Normal` is not available, `Quality_Fastest` will be used. `Quality_Highest` will never be used as a fallback.
+
 
 === GPU Acceleration ===
 
