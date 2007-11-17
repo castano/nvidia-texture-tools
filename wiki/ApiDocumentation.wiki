@@ -122,7 +122,7 @@ Where quality is one of the following:
   * !Quality_Production
   * !Quality_Highest
 
-`Quality_Fastest` will select a quick compressor that produces reasonable results in a very short amount of time. Note that these compressors are not real-time compressors. The code is not highly optimized, but still are generally one order of magnitude faster than the normal compression mode. If you want real-time compression see: RealTimeDXTCompression.
+`Quality_Fastest` will select a quick compressor that produces reasonable results in a very short amount of time. Note that these compressors are not real-time compressors. The code is not highly optimized, but still are generally one order of magnitude faster than the normal compression mode. If you want real-time compression see: [RealTimeDXTCompression].
 
 `Quality_Normal` is the default mode and the one you should use in most cases.
 
