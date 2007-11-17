@@ -1,0 +1,209 @@
+#summary API Documentation
+#labels Phase-Implementation
+
+== Introduction ==
+
+The NVIDIA Texture Tools (NVTT for short) library is a C++ library that allows you to ...
+
+By default NVTT is compiled as a shared library. To use it in your application you only have to link against it. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the *TODO: put path to setting here*.
+
+If you want to use NVTT as a static library things are a bit more complex, since NVTT has multiple dependencies that you will also have to link to. *TODO: Explain that in more detail*.
+
+In order to access the API you only have to include a single header file:
+
+{{{
+#include <nvtt/nvtt.h>
+}}}
+
+All the members of the API are in the `nvtt namespace`. 
+
+The only public 
+
+Only the members of this namespace  of this namespace will 
+
+We will progressively add new features to NVTT, but that will always be done without breaking binary compatibility. That will allow you to upgrate to new versions of NVTT without even having to recompile your code.
+
+
+You can make the namespace local with:
+
+{{{
+using namespace nvtt;
+}}}
+
+but I would not recommend that to prevent collisions with your own symbols, and to make it clear what classes and functions are part of NVTT.
+
+{{{
+nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
+}}}
+
+== Input Options ==
+
+=== Specifying Input Images ===
+
+{{{
+inputOptions.setTextureLayout(type, w, h);
+}}}
+
+where texture `type` is one of the following:
+
+{{{
+TextureType_2D
+TextureType_Cube
+}}}
+
+Note that 3D textures are not supported yet.
+
+Once the layout of the texture has been defined, you can provide the data for each of the images of the texture as follows:
+
+{{{
+inputOptions.setMipmapData(data, w, h, 1, face, mipmap);
+}}}
+
+The fourth argument is the depth of the image, and since 3D textures are not supported, it currently must be set to 1.
+
+You can specify multiple images while keeping the remaining input options unchanged. To do that, you simply call `setTextureLayout` multiple times. Alternatively you can also call `resetTextureLayout` to free the resources allocated for the input texture as soon as they are not needed anymore.
+
+
+
+=== Mipmap Generation ===
+
+downsample the input images...
+
+{{{
+inputOptions.setMipmapping(true, MipmapFilter_Box);
+}}}
+
+You can specify the number of mipmap levels you want with the third argument. For example, the following example will only generate the first 4 levels of the mipmap chain:
+
+{{{
+inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
+}}}
+
+Mipmaps are generated using a convolution filter. When evaluating the color of texels that are near the border the convolution filter usually samples outside of the texture. By default, NVTT assumes the texture is mirrored, because that generally looks good, but better results can be achieved by explicitly specifying the wrapping mode. That can be done as follows:
+
+{{{
+inputOptions.setWrapMode(WrapMode_Repeat);
+}}}
+
+=== Gamma Correction ===
+
+{{{
+inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
+}}}
+
+
+
+
+== Compression Options ==
+
+=== Compression Formats ===
+
+  * RGB, RGBA
+  * DXT1, BC1
+  * DXT1a, BC1a
+  * DXT3, BC2
+  * DXT5, BC3
+  * DXT5n, BC3n
+  * BC4
+  * BC5, LATC, RGTC
+
+=== Compression Quality ===
+
+  * Fastest
+  * Normal
+  * Production
+  * Highest
+
+||      || *Fastest* || *Normal* || *Production* || *Highest* ||
+|| BC1  || Yes       || Yes      ||              ||           ||
+|| BC1a || Yes       ||          ||              ||           ||
+|| BC2  || Yes       || Yes      ||              ||           ||
+|| BC3  || Yes       || Yes      ||              ||           ||
+|| BC3n || Yes       || Yes      ||              ||           ||
+|| BC4  || Yes       || Yes      || Yes          ||           ||
+|| BC5  || Yes       || Yes      || Yes          ||           ||
+
+=== GPU Acceleration ===
+
+Not all compressors are GPU accelerated. Some formats can be compressed relatively fast, but others are much more expensive. Currently GPU acceleration is implemented only for the slowest compression modes:
+
+||      || *GPU Accelerated* ||
+|| BC1  || Yes               ||
+|| BC1a ||                   ||
+|| BC2  || Yes               ||
+|| BC3  || Yes               ||
+|| BC3n ||                   ||
+|| BC4  ||                   ||
+|| BC5  ||                   ||
+
+High quality texture compression is a complex problem that would be very hard to solve using traditional GPGPU approaches (that is using the graphics API, vertex and fragment shaders). For this reason GPU compression is implemented in CUDA. Note that currently, CUDA is only available on NVIDIA !GeForce 8 series.
+
+When available, CUDA compression is enabled by default, but can be disabled as follows:
+
+{{{
+compressionOptions.enableHardwareCompression(false);
+}}}
+
+The GPU compressors do not provide exactly the same result as the CPU compressors. The GPU compressor is not bit-exact, but it's very accurate, and generally produces almost the same result.
+
+
+=== Pixel Format Conversion ===
+
+{{{
+compressionOptions.setFormat(Format_RGB);
+compressionOptions.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
+}}}
+
+
+== Output Options ==
+
+{{{
+outputOptions.setOutputHandler(OutputHandler *);
+outputOptions.setErrorHandler(ErrorHandler *);
+}}}
+
+
+=== Output Handler ===
+
+The output handler is an interface that defines two methods:
+
+{{{
+virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel) = 0;
+virtual void writeData(const void * data, int size) = 0;
+}}}
+
+Applications need to implement this interface in order to receive compressed data from nvtt::compress. 
+
+Calls
+
+In order to minimize memory allocations NVTT will call writeData as soon as compressed data is available. Some compressors output one block at a time, while others output many.
+
+
+=== Producing DDS Files ===
+
+nvtt::compress will call writeData before indicating the image that the data belong to.
+
+{{{
+outputOptions.setOutputHeader(false);
+}}}
+
+
+=== Handling Errors ===
+
+=== Reporting Progress ===
+
+Error Handler.
+
+  * !Error_InvalidInput
+  * !Error_UserInterruption
+  * !Error_UnsupportedFeature
+  * !Error_CudaError
+  * !Error_Unknown
+
+{{{
+const char * nvtt::errorString(Error e);
+}}}
+
+== A simple example ==
+
+...
