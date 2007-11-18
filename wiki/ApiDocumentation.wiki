@@ -42,10 +42,8 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 
 where texture `type` is one of the following:
 
-{{{
-TextureType_2D
-TextureType_Cube
-}}}
+  * !TextureType_2D
+  * !TextureType_Cube
 
 Note that 3D textures are not supported yet. The `depth` argument should always be equal to 1.
 
@@ -80,9 +78,9 @@ If the mipmap image is not provided explicitly by the application, and generate 
 
 It's possible to specify what filter should be used using the `filter` argument. The available options are:
 
-  * MipmapFilter_Box
-  * MipmapFilter_Triangle
-  * MipmapFilter_Kaiser
+  * !MipmapFilter_Box
+  * !MipmapFilter_Triangle
+  * !MipmapFilter_Kaiser
 
 *TODO*: Explain behavior of each of the filters.
 
