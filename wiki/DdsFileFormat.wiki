@@ -1,4 +1,4 @@
-#summary DDS File Format
+#summary DDS File Format Reference
 
 == Introduction ==
 
