@@ -19,11 +19,13 @@ All the members of the API are in the `nvtt` namespace. Members outside of the `
 
 As new features are added to NVTT, binary compatibility will always be preserved. That should allow upgrading to new versions without even having to recompile the application code.
 
-
+The most important function of the API is the following:
 
 {{{
 nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
 }}}
+
+It takes the texture defined by `InputOptions`, compresses it according to the `CompressionOptions` and outputs it according to the `OutputOptions`. These classes are documented in detail in the following sections.
 
 == Input Options ==
 
