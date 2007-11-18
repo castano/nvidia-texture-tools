@@ -1,13 +1,13 @@
 #summary API Documentation
-#labels Phase-Implementation
+#labels Documentation
 
 == Introduction ==
 
-The NVIDIA Texture Tools (NVTT for short) library is a C++ library that allows you to ...
+The NVIDIA Texture Tools library (NVTT for short) is a C++ library that allows you to create textures compressed in any of the DX10 texture formats, and apply certain transformations to them such as mipmap generation, and normal map conversion.
+
+== Usage ==
 
 By default NVTT is compiled as a shared library. To use it in your application you only have to link against it. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the *TODO: put path to setting here*.
-
-If you want to use NVTT as a static library things are a bit more complex, since NVTT has multiple dependencies that you will also have to link to. *TODO: Explain that in more detail*.
 
 In order to access the API you only have to include a single header file:
 
@@ -15,22 +15,11 @@ In order to access the API you only have to include a single header file:
 #include <nvtt/nvtt.h>
 }}}
 
-All the members of the API are in the `nvtt namespace`. 
+All the members of the API are in the `nvtt namespace`. Members outside of the nvtt namespace should not be considered public and are subject to change. You should not use them.
 
-The only public 
-
-Only the members of this namespace  of this namespace will 
-
-We will progressively add new features to NVTT, but that will always be done without breaking binary compatibility. That will allow you to upgrate to new versions of NVTT without even having to recompile your code.
+As new features are added to NVTT, binary compatibility will always be preserved. That should allow to upgrade to new versions of NVTT without even having to recompile the application code.
 
 
-You can make the namespace local with:
-
-{{{
-using namespace nvtt;
-}}}
-
-but I would not recommend that to prevent collisions with your own symbols, and to make it clear what classes and functions are part of NVTT.
 
 {{{
 nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
