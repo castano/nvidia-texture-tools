@@ -86,11 +86,21 @@ inputOptions.setWrapMode(WrapMode_Repeat);
 
 === Gamma Correction ===
 
+*TODO*: Explain why gamma correction is important.
+
 {{{
-inputOptions.setGamma(inputGamma, outputGamma);
+void InputOptions::setGamma(float inputGamma, float outputGamma);
+}}}
+
+By default, both the `inputGamma` and the `outputGamma` are set to 2.2. Gamma correction is only applied to the RGB channels. It's not applied to the alpha channel and it's never applied to normal maps. You can disable gamma correction by setting these values to 1.0 as follows:
+
+{{{
+inputOptions.setGamma(1.0f, 1.0f);
 }}}
 
 === Generating Normal Maps ===
+
+*TODO*
 
 {{{
 inputOptions.convertToNormalMap(true);
@@ -113,10 +123,12 @@ inputOptions.setHeightEvaluation(1, 1, 1, 0);
 inputOptions.setNormalFilter(float small, float medium, float big, float large);
 }}}
 
-Are the mipmaps generated from the heightmap or from the normal map?
+*TODO*: Are the mipmaps generated from the heightmap or from the normal map?
 
 
 === Processing Normal Maps ===
+
+*TODO*
 
 {{{
 inputOptions.setNormalMap(true);
@@ -126,16 +138,20 @@ inputOptions.setNormalMap(true);
 inputOptions.setNormalizeMipmaps(true);
 }}}
 
-Is this the default when normalMap is true? What if convertToNormalMap is true?
+*TODO*: Is this the default when normalMap is true? What if convertToNormalMap is true?
 
 === Quantization ===
 
-Should this be part of compression options instead?
+*TODO*: Should this be part of compression options instead?
 
 
 == Compression Options ==
 
+*TODO*
+
 === Compression Formats ===
+
+*TODO*
 
   * RGB, RGBA
   * DXT1, BC1
@@ -207,6 +223,8 @@ The GPU compressors do not provide exactly the same result as the CPU compressor
 
 === Pixel Format Conversion ===
 
+*TODO*
+
 {{{
 compressionOptions.setFormat(Format_RGB);
 compressionOptions.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
@@ -214,6 +232,8 @@ compressionOptions.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
 
 
 == Output Options ==
+
+*TODO*
 
 {{{
 outputOptions.setOutputHandler(OutputHandler *);
@@ -230,16 +250,18 @@ virtual void mipmap(int size, int width, int height, int depth, int face, int mi
 virtual void writeData(const void * data, int size) = 0;
 }}}
 
-Applications need to implement this interface in order to receive compressed data from nvtt::compress. 
+Applications need to implement this interface in order to receive compressed data from `nvtt::compress`.
 
-Calls
+*TODO*
 
 In order to minimize memory allocations NVTT will call writeData as soon as compressed data is available. Some compressors output one block at a time, while others output many.
 
 
 === Producing DDS Files ===
 
-nvtt::compress will call writeData before indicating the image that the data belong to.
+*TODO*
+
+`nvtt::compress` will call writeData before indicating the image that the data belong to.
 
 {{{
 outputOptions.setOutputHeader(false);
@@ -248,7 +270,7 @@ outputOptions.setOutputHeader(false);
 
 === Handling Errors ===
 
-=== Reporting Progress ===
+*TODO*
 
 Error Handler.
 
@@ -262,6 +284,11 @@ Error Handler.
 const char * nvtt::errorString(Error e);
 }}}
 
+
+=== Reporting Progress ===
+
+*TODO*
+
 == A simple example ==
 
-...
+*TODO*
