@@ -66,13 +66,29 @@ Again, since 3D textures are not supported, the depth argument should always be 
 
 === Mipmap Generation ===
 
-downsample the input images...
+Each of the faces of the surface is composed of a mipmap chain. You can provide each of these images explicitely with the `setMipmapData` method, but you can also disable mipmap generation or let the library compute the mipmaps procedurally. The following method provides some control over this process:
 
 {{{
-inputOptions.setMipmapping(true, MipmapFilter_Box);
+void InputOptions::setMipmapping(bool generateMipmaps, MipmapFilter filter, int maxLevel);
 }}}
 
-You can specify the number of mipmap levels you want with the third argument. For example, the following example will only generate the first 4 levels of the mipmap chain:
+In order to output mipmaps for each of the faces of the surface, the `generateMipmaps` argument should be set to true.
+
+If the mipmap image is not provided explicitly by the application, and generate mipmaps is enabled, then the mipmaps will be generated automatically from the previous level using a downsampling filter.
+
+*TODO*: Partial mipmap chains.
+
+It's possible to specify what filter should be used using the `filter` argument. The available options are:
+
+  * MipmapFilter_Box
+  * MipmapFilter_Triangle
+  * MipmapFilter_Kaiser
+
+*TODO*: Explain behavior of each of the filters.
+
+*TODO*: Add options for the Kaiser filter.
+
+It's possible to limit the number of mipmap levels that are generated with the `maxLevel` argument. For example, the following example will only generate the first 4 levels of the mipmap chain using a box filter:
 
 {{{
 inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
@@ -83,6 +99,7 @@ Mipmaps are generated using a convolution filter. When evaluating the color of t
 {{{
 inputOptions.setWrapMode(WrapMode_Repeat);
 }}}
+
 
 === Gamma Correction ===
 
