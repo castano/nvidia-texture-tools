@@ -22,7 +22,7 @@ As new features are added to NVTT, binary compatibility will always be preserved
 The most important function of the API is the following:
 
 {{{
-nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
+bool nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
 }}}
 
 It takes the texture defined by `InputOptions`, compresses it according to the `CompressionOptions` and outputs it according to the `OutputOptions`. These classes are documented in detail in the following sections.
