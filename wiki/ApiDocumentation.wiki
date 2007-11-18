@@ -9,7 +9,7 @@ The NVIDIA Texture Tools library (NVTT for short) is a C++ library that allows y
 
 By default NVTT is compiled as a shared library. To use it in your application you only have to link against it. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the *TODO: put path to setting here*.
 
-In order to access the API you only have to include a single header file:
+In order to access the API you only have to include the [http://nvidia-texture-tools.googlecode.com/svn/trunk/src/nvtt/nvtt.h nvtt.h] header file:
 
 {{{
 #include <nvtt/nvtt.h>
@@ -47,20 +47,19 @@ TextureType_Cube
 
 Note that 3D textures are not supported yet. The `depth` argument should always be equal to 1.
 
-Once the layout of the texture has been defined, the data for each of the images can be provided as follows:
+Once the layout of the texture has been defined, the data for each of the images can be provided with the following method:
 
 {{{
-inputOptions.setMipmapData(data, w, h, 1, face, mipmap);
+bool InputOptions::setMipmapData(const void * data, int w, int h, int d, int face, int mipmap);
 }}}
 
-NVTT internally allocates a copy of the provided data, that allows you to delete or reuse the memory pointed by the provided pointer right after the function call.
+NVTT internally allocates a copy of the provided data, that allows you to delete or reuse the memory.
 
 If the width, height or depth of the provided mipmap does not match the one expected by the layout the function returns false, otherwise it returns true.
 
 Again, since 3D textures are not supported, the depth argument should always be set to 1.
 
-You can specify multiple textures while keeping the remaining input options unchanged. To do that, you simply call `setTextureLayout` multiple times. Alternatively you can also call `resetTextureLayout` to free the resources allocated for the input texture as soon as they are not needed anymore.
-
+*TODO*: explain how the size of the mipmaps are computed, specially for non powers of two.
 
 
 === Mipmap Generation ===
