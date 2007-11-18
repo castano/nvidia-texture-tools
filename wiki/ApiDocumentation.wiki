@@ -15,9 +15,9 @@ In order to access the API you only have to include a single header file:
 #include <nvtt/nvtt.h>
 }}}
 
-All the members of the API are in the `nvtt namespace`. Members outside of the nvtt namespace should not be considered public and are subject to change. You should not use them.
+All the members of the API are in the `nvtt` namespace. Members outside of the `nvtt` namespace should not be considered public and are subject to change. You should not use them if you want your code to always stay compatible with the latest release of NVTT.
 
-As new features are added to NVTT, binary compatibility will always be preserved. That should allow to upgrade to new versions of NVTT without even having to recompile the application code.
+As new features are added to NVTT, binary compatibility will always be preserved. That should allow upgrading to new versions without even having to recompile the application code.
 
 
 
@@ -27,10 +27,15 @@ nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOpt
 
 == Input Options ==
 
+The input options class describe the images that compose the texture to be generated, and several preprocessing operations that could be applied to it.
+
+
 === Specifying Input Images ===
 
+Before specifying image data the layout of the texture has to be defined. This is done with the following method:
+
 {{{
-inputOptions.setTextureLayout(type, w, h);
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth=1);
 }}}
 
 where texture `type` is one of the following:
@@ -40,17 +45,21 @@ TextureType_2D
 TextureType_Cube
 }}}
 
-Note that 3D textures are not supported yet.
+Note that 3D textures are not supported yet. The `depth` argument should always be equal to 1.
 
-Once the layout of the texture has been defined, you can provide the data for each of the images of the texture as follows:
+Once the layout of the texture has been defined, the data for each of the images can be provided as follows:
 
 {{{
 inputOptions.setMipmapData(data, w, h, 1, face, mipmap);
 }}}
 
-The fourth argument is the depth of the image, and since 3D textures are not supported, it currently must be set to 1.
+NVTT internally allocates a copy of the provided data, that allows you to delete or reuse the memory pointed by the provided pointer right after the function call.
 
-You can specify multiple images while keeping the remaining input options unchanged. To do that, you simply call `setTextureLayout` multiple times. Alternatively you can also call `resetTextureLayout` to free the resources allocated for the input texture as soon as they are not needed anymore.
+If the width, height or depth of the provided mipmap does not match the one expected by the layout the function returns false, otherwise it returns true.
+
+Again, since 3D textures are not supported, the depth argument should always be set to 1.
+
+You can specify multiple textures while keeping the remaining input options unchanged. To do that, you simply call `setTextureLayout` multiple times. Alternatively you can also call `resetTextureLayout` to free the resources allocated for the input texture as soon as they are not needed anymore.
 
 
 
