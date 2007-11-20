@@ -35,7 +35,7 @@ inputOptions.setTextureLayout(TextureType_2D, w, h);
 inputOptions.setMipmapData(data, w, h);
 
 OutputOptions outputOptions;
-outputOptions.fileName("output.dds");
+outputOptions.setFileName("output.dds");
 
 CompressionOptions compressionOptions;
 compressionOptions.setFormat(Format_DXT1);
