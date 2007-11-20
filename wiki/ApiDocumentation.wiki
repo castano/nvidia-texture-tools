@@ -46,7 +46,7 @@ nvtt::compress(inputOptions, outputOptions, compressionOptions);
 
 == Input Options ==
 
-The `InputOptions` class describes the images that compose the compressed texture, and several image processing operations that could be applied to them.
+The `InputOptions` class describes the images that compose the compressed texture, and several image processing operations that can be applied to them.
 
 
 === Specifying Input Images ===
