@@ -233,7 +233,7 @@ Selecting a compression quality that's not available won't produce any error, bu
 
 === GPU Acceleration ===
 
-Not all compressors are GPU accelerated. Some formats can be compressed relatively fast, but others are much more expensive. Currently GPU acceleration is implemented only for the slowest compression modes:
+Not all the compressors are GPU accelerated. Some formats can be compressed relatively fast, but others are much more expensive. Currently GPU acceleration is implemented only for the slowest compression modes, as shown in the following table:
 
 ||      || *GPU Accelerated* ||
 || BC1  || Yes               ||
@@ -244,7 +244,7 @@ Not all compressors are GPU accelerated. Some formats can be compressed relative
 || BC4  ||                   ||
 || BC5  ||                   ||
 
-High quality texture compression is a complex problem that would be very hard to solve using traditional GPGPU approaches (that is using the graphics API, vertex and fragment shaders). For this reason GPU compression is implemented in CUDA. Note that currently, CUDA is only available on NVIDIA !GeForce 8 series.
+High quality texture compression is a complex problem that would be very hard to solve using traditional GPGPU approaches (that is, using the graphics API, vertex, and fragment shaders). For this reason GPU compression is implemented in CUDA. Note that currently, CUDA is only available on NVIDIA !GeForce 8 series.
 
 When available, CUDA compression is enabled by default, but can be disabled as follows:
 
