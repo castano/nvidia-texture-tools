@@ -15,11 +15,11 @@ In order to access the API you only have to include the [http://nvidia-texture-t
 #include <nvtt/nvtt.h>
 }}}
 
-All the members of the API are in the `nvtt` namespace. Members outside of the `nvtt` namespace should not be considered public and are subject to change. You should not use them if you want your code to always stay compatible with the latest release of NVTT.
+All the members of the API are in the `nvtt` namespace. Members outside of the `nvtt` namespace should not be considered public and are subject to change. If you want your code to always stay compatible with the latest release of NVTT, you should include other headers, nor use members outside of the `nvtt` namespace.
 
 As new features are added to NVTT, binary compatibility will always be preserved. That should allow upgrading to new versions without even having to recompile the application code.
 
-The most important function of the API is the following:
+The most important function of the NVTT API is the following:
 
 {{{
 bool nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
@@ -323,4 +323,3 @@ Error Handler.
 {{{
 const char * nvtt::errorString(Error e);
 }}}
-
