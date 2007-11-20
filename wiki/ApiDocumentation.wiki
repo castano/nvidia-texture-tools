@@ -122,16 +122,16 @@ inputOptions.convertToNormalMap(true);
 }}}
 
 {{{
-inputOptions.setHeightEvaluation(float r, float g, float b, float a);
+bool InputOptions::setHeightEvaluation(float r, float g, float b, float a);
 }}}
+
+For example, to use the alpha channel of the input texture as the height you would use the following weights:
 
 {{{
 inputOptions.setHeightEvaluation(0, 0, 0, 1);
 }}}
 
-{{{
-inputOptions.setHeightEvaluation(1, 1, 1, 0);
-}}}
+The height factors are not normalized, so you can also use them to change the steepness of the heightmap.
 
 
 {{{
