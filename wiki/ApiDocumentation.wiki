@@ -192,13 +192,15 @@ Where `quality` is one of the following:
   * !Quality_Production
   * !Quality_Highest
 
-`Quality_Fastest` will select a quick compressor that produces reasonable results in a very short amount of time. Note that these compressors are not real-time compressors. The code is not highly optimized, but still are generally one order of magnitude faster than the normal compression mode. If you want real-time compression see: [RealTimeDXTCompression].
+`Quality_Fastest` will select a quick compressor that produces reasonable results in a very short amount of time. Note that this is not a real-time compressor. The code is not highly optimized, but still it's generally one order of magnitude faster than the normal CPU compression mode. If you need real-time compression you can find more resources at: [RealTimeDXTCompression].
 
-`Quality_Normal` is the default mode and the one you should use in most cases.
+`Quality_Normal` is the default mode and the one you should use in most cases. It provides a good trade off between compression quality and speed.
 
-`Quality_Production` will generally produce similar results as `Quality_Normal`, but in some cases it will spend some extra time to try to improve the results further.
+`Quality_Production` will generally produce similar results as `Quality_Normal`, but it may double or triple the compression time to obtain minor quality improvements.
 
 `Quality_Highest` is a brute force compressor. In some cases, depending on the size of the search space, this compressor will be extremely slow. Use this only for testing purposes, to determine how much room is left for improvement in the regular compressors.
+
+The following table indicates what compressor types are available for each of the compression formats.
 
 ||      || *Fastest* || *Normal* || *Production* || *Highest* ||
 || BC1  || Yes       || Yes      ||              ||           ||
@@ -209,7 +211,7 @@ Where `quality` is one of the following:
 || BC4  || Yes       || Yes      || Yes          ||           ||
 || BC5  || Yes       || Yes      || Yes          ||           ||
 
-If `Quality_Production` is not available, `Quality_Normal` will be used instead, and if `Quality_Normal` is not available, `Quality_Fastest` will be used. `Quality_Highest` will never be used as a fallback.
+Selecting a compression quality that's not available won't produce any error, but instead it will fall back to another compression mode. If `Quality_Production` is not available, `Quality_Normal` will be used instead, and if `Quality_Normal` is not available, `Quality_Fastest` will be used. `Quality_Highest` will never be used as a fallback.
 
 
 === GPU Acceleration ===
