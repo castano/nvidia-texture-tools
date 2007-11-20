@@ -29,7 +29,7 @@ It takes the texture defined by `InputOptions`, compresses it according to the `
 
 == Input Options ==
 
-The input options class describe the images that compose the texture to be generated, and several preprocessing operations that could be applied to it.
+The input options class describes the images that compose the texture to be generated, and several image processing operations that could be applied to it.
 
 
 === Specifying Input Images ===
