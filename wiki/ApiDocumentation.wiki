@@ -7,7 +7,7 @@ The NVIDIA Texture Tools library (NVTT for short) is a C++ library that allows y
 
 == Usage ==
 
-By default NVTT is compiled as a shared library. To use it in your application you only have to link against it. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the *TODO*: add path to that setting.
+By default NVTT is compiled as a shared library. To use it in your application you only have to link it implicitly with your application. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the Linker -> Input -> Additional Dependencies field of the project settings. Dynamic linking the library explicitly is not recommended.
 
 In order to access the API you only have to include the [http://nvidia-texture-tools.googlecode.com/svn/trunk/src/nvtt/nvtt.h nvtt.h] header file:
 
