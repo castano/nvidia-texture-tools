@@ -55,10 +55,10 @@ namespace nvtt
 
 		// DX9 formats.
 		Format_DXT1,
-		Format_DXT1a,	// DXT1 with binary alpha.
+		Format_DXT1a,   // DXT1 with binary alpha.
 		Format_DXT3,
 		Format_DXT5,
-		Format_DXT5n,	// Compressed HILO: R=0, G=x, B=0, A=y
+		Format_DXT5n,   // Compressed HILO: R=0, G=x, B=0, A=y
 		
 		// DX10 formats.
 		Format_BC1 = Format_DXT1,
@@ -66,8 +66,8 @@ namespace nvtt
 		Format_BC2 = Format_DXT3,
 		Format_BC3 = Format_DXT5,
 		Format_BC3n = Format_DXT5n,
-		Format_BC4,		// ATI1
-		Format_BC5,		// 3DC, ATI2
+		Format_BC4,     // ATI1
+		Format_BC5,     // 3DC, ATI2
 
 		// OpenGL formats.
 		Format_LATC = Format_BC5,
@@ -134,9 +134,9 @@ namespace nvtt
 	/// Mipmap downsampling filters.
 	enum MipmapFilter
 	{
-		MipmapFilter_Box,		///< Box filter is quite good and very fast.
-		MipmapFilter_Triangle,	///< Triangle filter blurs the results too much, but that might be what you want.
-		MipmapFilter_Kaiser,	///< Kaiser-windowed Sinc filter is the best downsampling filter.
+		MipmapFilter_Box,       ///< Box filter is quite good and very fast.
+		MipmapFilter_Triangle,  ///< Triangle filter blurs the results too much, but that might be what you want.
+		MipmapFilter_Kaiser,    ///< Kaiser-windowed Sinc filter is the best downsampling filter.
 	};
 	
 	enum ColorTransform
