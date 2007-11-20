@@ -51,7 +51,7 @@ The input options class describes the images that compose the compressed texture
 
 === Specifying Input Images ===
 
-Before specifying image data the layout of the texture has to be defined. This is done with the following method:
+Before specifying image data, the layout of the texture has to be defined. This is done with the following method:
 
 {{{
 void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth=1);
