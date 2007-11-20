@@ -27,6 +27,23 @@ bool nvtt::compress(const InputOptions &, const OutputOptions &, const Compressi
 
 It takes the texture defined by `InputOptions`, compresses it according to the `CompressionOptions` and outputs it according to the `OutputOptions`. These classes are documented in detail in the following sections.
 
+Here's a very simple usage example:
+
+{{{
+InputOptions inputOptions;
+inputOptions.setTextureLayout(TextureType_2D, w, h);
+inputOptions.setMipmapData(data, w, h);
+
+OutputOptions outputOptions;
+outputOptions.fileName("output.dds");
+
+CompressionOptions compressionOptions;
+compressionOptions.setFormat(Format_DXT1);
+
+nvtt::compress(inputOptions, outputOptions, compressionOptions);
+}}}
+
+
 == Input Options ==
 
 The input options class describes the images that compose the texture to be generated, and several image processing operations that could be applied to it.
