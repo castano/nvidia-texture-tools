@@ -270,6 +270,7 @@ compressionOptions.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
 *TODO*
 
 {{{
+outputOptions.setFileName(const char *);
 outputOptions.setOutputHandler(OutputHandler *);
 outputOptions.setErrorHandler(ErrorHandler *);
 }}}
@@ -302,6 +303,11 @@ outputOptions.setOutputHeader(false);
 }}}
 
 
+=== Reporting Progress ===
+
+*TODO*
+
+
 === Handling Errors ===
 
 *TODO*
@@ -318,11 +324,3 @@ Error Handler.
 const char * nvtt::errorString(Error e);
 }}}
 
-
-=== Reporting Progress ===
-
-*TODO*
-
-== A simple example ==
-
-*TODO*
