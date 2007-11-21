@@ -30,17 +30,17 @@ It takes the texture defined by `InputOptions`, compresses it according to the `
 Here's a very simple usage example:
 
 {{{
-nvtt::InputOptions inputOptions;
-inputOptions.setTextureLayout(nvtt::TextureType_2D, w, h);
+InputOptions inputOptions;
+inputOptions.setTextureLayout(TextureType_2D, w, h);
 inputOptions.setMipmapData(data, w, h);
 
-nvtt::OutputOptions outputOptions;
+OutputOptions outputOptions;
 outputOptions.setFileName("output.dds");
 
-nvtt::CompressionOptions compressionOptions;
-compressionOptions.setFormat(nvtt::Format_DXT1);
+CompressionOptions compressionOptions;
+compressionOptions.setFormat(Format_DXT1);
 
-nvtt::compress(inputOptions, outputOptions, compressionOptions);
+compress(inputOptions, outputOptions, compressionOptions);
 }}}
 
 
