@@ -50,7 +50,7 @@ Option 4:
 
 == !CompressionOptions ==
 
-  * `enableHardwareCompressor`, should be called `enableGpuCompressor`
+  * `enableHardwareCompressor`, should be called `enableGpuCompressor` or `enableCudaCompressor`.
   * `Quantization` should be a compression option.
   * remove error threshold from setQuality, it's not used.
 
