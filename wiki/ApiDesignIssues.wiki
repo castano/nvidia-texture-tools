@@ -15,9 +15,9 @@
   * Add `setAlphaMode(AlphaMode mode)`
 
 Where `AlphaMode` could be:
-  * AlphaMode_None
-  * AlphaMode_Transparency
-  * AlphaMode_Premultiplied
+  * !AlphaMode_None
+  * !AlphaMode_Transparency
+  * !AlphaMode_Premultiplied
 
 None is the default (treats alpha as a regular channel) while Transparency and Premultiplied are hints. Currently there are some compressors that only support None, others that only support Transparency.
 
@@ -67,5 +67,5 @@ Option 4:
 
 === Error Handling ===
 
-  * Error_Unknown should be 0
-  * Error_UserInterruption is not being used and could be removed.
+  * !Error_Unknown should be 0
+  * !Error_UserInterruption is not being used and could be removed.
