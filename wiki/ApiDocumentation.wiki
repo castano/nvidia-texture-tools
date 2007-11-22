@@ -101,17 +101,14 @@ It's possible to specify what filter should be used using the `filter` argument.
   * !MipmapFilter_Triangle
   * !MipmapFilter_Kaiser
 
-MipmapFilter_Box is a [http://developer.nvidia.com/object/np2_mipmapping.html polyphase box filter]. It's the default option and good choice for most cases.
+`MipmapFilter_Box` is a [http://developer.nvidia.com/object/np2_mipmapping.html polyphase box filter]. It's the default option and good choice for most cases.
 
-MipmapFilter_Triangle uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter. It's not a polyphase filter so it's not recommended for non power of two images.
+`MipmapFilter_Triangle` uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter. It's not a polyphase filter so it's not recommended for non power of two images.
 
-MipmapFilter_Kaiser is a Kaiser windowed sinc filter. It's the best choice when you want sharper results than the box filter provides, or when you want to have extra control over the ringing, sharpness
-can produce better results than the other two options, but might require some tweaking to control ringing and 
-
-The default parameters of the Kaiser filter sometimes produce ringing artifacts. To avoid them, you can tweak these parameters with the following method:
+`MipmapFilter_Kaiser` is a Kaiser windowed sinc filter. That's generally considered the best choice for downsampling, but in order to obtain best results it may be required to tweak some of the parameters of the filter. Otherwise the filter could result in rining artifacts or too blurry result. The default values of the parameters are generally safe, but it's possible to tweak them using the following method:
 
 {{{
-void InputOptions::setKaiserParameters(int width, ...);
+void InputOptions::setKaiserParameters(int width, float sigma, ...);
 }}}
 
 The default values are:
@@ -120,7 +117,8 @@ The default values are:
 inputOptions.setKaiserParameters(#, ...);
 }}}
 
-*TODO*: Add options for the Kaiser filter.
+*TODO*: Add exact options for the Kaiser filter. 
+*TODO*: Explain how the options affect the results.
 
 When evaluating the color of texels that are near the border the filter usually samples outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done controlled with the following method:
 
