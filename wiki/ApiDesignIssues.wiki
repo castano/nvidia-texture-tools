@@ -1,8 +1,25 @@
 #summary API design issues
 #labels Phase-Design
 
+== General Issues ==
+
+  * does nvtt have state? should we have a context? Don't use globals/statics.
 
 == !InputOptions ==
+
+  * Default mipmap filter should be Box instead of Kaiser.
+
+=== Alpha transparency ===
+
+  * `alphaTransparency` should not be specified in setFormat.
+  * Add `setAlphaMode(AlphaMode mode)`
+
+Where `AlphaMode` could be:
+  * AlphaMode_None
+  * AlphaMode_Transparency
+  * AlphaMode_Premultiplied
+
+None is the default (treats alpha as a regular channel) while Transparency and Premultiplied are hints. Currently there are some compressors that only support None, others that only support Transparency.
 
 === Mipmapping options ===
 
@@ -32,4 +49,23 @@ Option 4:
 
 == !CompressionOptions ==
 
+  * `enableHardwareCompressor`, should be called `enableGpuCompressor`
+  * `Quantization` should be a compression option.
+  * remove error threshold from setQuality, it's not used.
+
 == !OutputOptions ==
+
+  * Should be a pimpl like `InputOptions` and `CompressionOptions`. Member attributes should be hidden.
+
+  * Add `setFileName()` member to output dds file directly instead of using output handler.
+
+=== Output Handling ===
+
+  * `OutputHandler::writeData` should return false to signal a write error and stop processing.
+  * The `mipmap` method of `OutputHandler` should have been called `image` or `beginImage`.
+
+
+=== Error Handling ===
+
+  * Error_Unknown should be 0
+  * Error_UserInterruption is not being used and could be removed.
