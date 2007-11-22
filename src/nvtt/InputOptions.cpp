@@ -90,6 +90,10 @@ void InputOptions::reset()
 	m.maxLevel = -1;
 	m.mipmapFilter = MipmapFilter_Box;
 
+	m.kaiserWidth = 10;
+	m.kaiserAlpha = 8.0f;
+	m.kaiserStretch = 0.75f;
+
 	m.normalizeMipmaps = false;
 	m.convertToNormalMap = false;
 	m.heightFactors.set(0.0f, 0.0f, 0.0f, 1.0f);
@@ -207,13 +211,20 @@ void InputOptions::setWrapMode(WrapMode mode)
 
 
 /// Set mipmapping options.
-void InputOptions::setMipmapping(bool generateMipmaps, MipmapFilter filter/*= MipmapFilter_Kaiser*/, int maxLevel/*= -1*/)
+void InputOptions::setMipmapping(bool generateMipmaps, MipmapFilter filter/*= MipmapFilter_Box*/, int maxLevel/*= -1*/)
 {
 	m.generateMipmaps = generateMipmaps;
 	m.mipmapFilter = filter;
 	m.maxLevel = maxLevel;
 }
 
+/// Set Kaiser filter parameters.
+void InputOptions::setKaiserParameters(int width, float alpha, float stretch)
+{
+	m.kaiserWidth = width;
+	m.kaiserAlpha = alpha;
+	m.kaiserStretch = stretch;
+}
 
 /// Set quantization options.
 /// @warning Do not enable dithering unless you know what you are doing. Quantization 
