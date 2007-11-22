@@ -105,7 +105,7 @@ It's possible to specify what filter should be used using the `filter` argument.
 
 `MipmapFilter_Triangle` uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter. It's not a polyphase filter so it's not recommended for non power of two images.
 
-`MipmapFilter_Kaiser` is a Kaiser windowed sinc filter. That's generally considered the best choice for downsampling, but in order to obtain best results it may be required to tweak some of the parameters of the filter. Otherwise the filter could result in rining artifacts or too blurry result. The default values of the parameters are generally safe, but it's possible to tweak them using the following method:
+`MipmapFilter_Kaiser` is a Kaiser windowed sinc filter. That's generally considered the best choice for downsampling filters, but in order to obtain best results it may be required to tweak some of the parameters of the filter, otherwise the resulting images could suffer from ringing artifacts or the result may not be as sharp as desired. The default values of the parameters are generally safe, but it's possible to tweak them using the following method:
 
 {{{
 void InputOptions::setKaiserParameters(int width, float sigma, ...);
@@ -120,17 +120,17 @@ inputOptions.setKaiserParameters(#, ...);
 *TODO*: Add exact options for the Kaiser filter. 
 *TODO*: Explain how the options affect the results.
 
-When evaluating the color of texels that are near the border the filter usually samples outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done controlled with the following method:
+When evaluating the color of texels that are near the border the filter usually samples outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done with the following method:
 
 {{{
-void InputOptions.setWrapMode(WrapMode wrapMode);
+void InputOptions::setWrapMode(WrapMode wrapMode);
 }}}
 
-`wrapMode` takes one the following values:
+Where the `wrapMode` argument must have one the following values:
 
   * !WrapMode_Mirror
-  * !WrapMode_Clamp
   * !WrapMode_Repeat
+  * !WrapMode_Clamp
 
 
 === Gamma Correction ===
