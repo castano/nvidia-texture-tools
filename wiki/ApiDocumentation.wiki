@@ -120,7 +120,7 @@ inputOptions.setKaiserParameters(#, ...);
 *TODO*: Add exact options for the Kaiser filter. 
 *TODO*: Explain how the options affect the results.
 
-When evaluating the color of texels that are near the border the filter usually samples outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done with the following method:
+When evaluating the color of texels that are near the border, the Triangle and Kaiser filters usually sample outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done with the following method:
 
 {{{
 void InputOptions::setWrapMode(WrapMode wrapMode);
