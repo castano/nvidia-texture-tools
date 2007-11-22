@@ -8,6 +8,7 @@
 == !InputOptions ==
 
   * Default mipmap filter should be Box instead of Kaiser.
+  * Remove `Format_LATC`, stop adding more aliases.
 
 === Alpha transparency ===
 
