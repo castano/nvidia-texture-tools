@@ -27,6 +27,7 @@
 #include <nvimage/BlockDXT.h>
 
 #include "QuickCompressDXT.h"
+#include "SingleColorLookup.h"
 
 
 using namespace nv;
@@ -108,7 +109,7 @@ inline static void insetBBox(Vector3 * __restrict maxColor, Vector3 * __restrict
 	*minColor = clamp(*minColor + inset, 0.0f, 255.0f);
 }
 
-inline static uint16 roundAndExpand(Vector3 * v)
+inline static uint16 roundAndExpand(Vector3 * __restrict v)
 {
 	uint r = uint(clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
 	uint g = uint(clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f);
@@ -202,11 +203,11 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	for( int i = 0; i < 16; ++i )
 	{
 		const uint bits = dxtBlock->indices >> (2 * i);
-
+		
 		float beta = (bits & 1);
 		if (bits & 2) beta = (1 + beta) / 3.0f;
 		float alpha = 1.0f - beta;
-
+		
 		alpha2_sum += alpha * alpha;
 		beta2_sum += beta * beta;
 		alphabeta_sum += alpha * beta;
@@ -288,6 +289,78 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 }*/
 
 
+static void optimizeAlpha8(const ColorBlock & rgba, AlphaBlockDXT5 * block)
+{
+	float alpha2_sum = 0;
+	float beta2_sum = 0;
+	float alphabeta_sum = 0;
+	float alphax_sum = 0;
+	float betax_sum = 0;
+
+	for (int i = 0; i < 16; i++)
+	{
+		uint idx = block->index(i);
+		float alpha;
+		if (idx < 2) alpha = 1.0f - idx;
+		else alpha = (8.0f - idx) / 7.0f;
+		
+		float beta = 1 - alpha;
+		
+		alpha2_sum += alpha * alpha;
+		beta2_sum += beta * beta;
+		alphabeta_sum += alpha * beta;
+		alphax_sum += alpha * rgba.color(i).a;
+		betax_sum += beta * rgba.color(i).a;
+	}
+
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+
+	float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+
+	uint alpha0 = uint(min(max(a, 0.0f), 255.0f));
+	uint alpha1 = uint(min(max(b, 0.0f), 255.0f));
+
+	if (alpha0 < alpha1)
+	{
+		swap(alpha0, alpha1);
+		
+		// Flip indices:
+		for (int i = 0; i < 16; i++)
+		{
+			uint idx = block->index(i);
+			if (idx < 2) block->setIndex(i, 1 - idx);
+			else block->setIndex(i, 9 - idx);
+		}
+	}
+	else if (alpha0 == alpha1)
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			block->setIndex(i, 0);
+		}
+	}
+
+	block->alpha0 = alpha0;
+	block->alpha1 = alpha1;
+}
+
+
+
+
+// Single color compressor, based on:
+// https://mollyrocket.com/forums/viewtopic.php?t=392
+void QuickCompress::compressDXT1(Color32 c, BlockDXT1 * dxtBlock)
+{
+	dxtBlock->col0.r = OMatch5[c.r][0];
+	dxtBlock->col0.g = OMatch5[c.g][0];
+	dxtBlock->col0.b = OMatch5[c.b][0];
+	dxtBlock->col1.r = OMatch5[c.r][1];
+	dxtBlock->col1.g = OMatch5[c.g][1];
+	dxtBlock->col1.b = OMatch5[c.b][1];
+	dxtBlock->indices = 0xaaaaaaaa;
+}
+
 void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 {
 	// read block
@@ -357,4 +430,40 @@ void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 }
 
 
+uint QuickCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
+{
+	dxtBlock->alpha0 = rgba.color(0).a >> 4;
+	dxtBlock->alpha1 = rgba.color(1).a >> 4;
+	dxtBlock->alpha2 = rgba.color(2).a >> 4;
+	dxtBlock->alpha3 = rgba.color(3).a >> 4;
+	dxtBlock->alpha4 = rgba.color(4).a >> 4;
+	dxtBlock->alpha5 = rgba.color(5).a >> 4;
+	dxtBlock->alpha6 = rgba.color(6).a >> 4;
+	dxtBlock->alpha7 = rgba.color(7).a >> 4;
+	dxtBlock->alpha8 = rgba.color(8).a >> 4;
+	dxtBlock->alpha9 = rgba.color(9).a >> 4;
+	dxtBlock->alphaA = rgba.color(10).a >> 4;
+	dxtBlock->alphaB = rgba.color(11).a >> 4;
+	dxtBlock->alphaC = rgba.color(12).a >> 4;
+	dxtBlock->alphaD = rgba.color(13).a >> 4;
+	dxtBlock->alphaE = rgba.color(14).a >> 4;
+	dxtBlock->alphaF = rgba.color(15).a >> 4;
+}
+
+uint QuickCompress::compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock)
+{
+	compressDXT1(rgba, &dxtBlock->color);
+	compressDXT3A(rgba, &dxtBlock->alpha);
+}
+
+uint QuickCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock)
+{
+	// @@ TODO
+}
+
+uint QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock)
+{
+	compressDXT1(rgba, &dxtBlock->color);
+	compressDXT5A(rgba, &dxtBlock->alpha);
+}
 
