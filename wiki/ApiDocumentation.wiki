@@ -274,7 +274,7 @@ High quality texture compression is a complex problem that would be very hard to
 When available, CUDA compression is enabled by default, but can be disabled as follows:
 
 {{{
-compressionOptions.enableHardwareCompression(false);
+compressionOptions.enableCudaCompression(false);
 }}}
 
 The GPU compressors do not provide exactly the same result as the CPU compressors. However, the difference between the two compressors is always very small and not noticeable to the eye.
