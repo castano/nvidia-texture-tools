@@ -26,9 +26,6 @@
 
 #include <nvcore/nvcore.h>
 
-//#define HAVE_S3QUANT
-//#define HAVE_ATITC
-
 // Function linkage
 #if NVTT_SHARED
 #ifdef NVTT_EXPORTS
@@ -173,8 +170,9 @@ namespace nvtt
 		NVTT_API void setWrapMode(WrapMode mode);
 
 		// Set mipmapping options.
-		NVTT_API void setMipmapping(bool generateMipmaps, MipmapFilter filter = MipmapFilter_Kaiser, int maxLevel = -1);
-		
+		NVTT_API void setMipmapping(bool generateMipmaps, MipmapFilter filter = MipmapFilter_Box, int maxLevel = -1);
+		NVTT_API void setKaiserParameters(int width, float alpha, float stretch);
+
 		// Set quantization options.
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 

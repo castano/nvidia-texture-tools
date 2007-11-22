@@ -331,8 +331,8 @@ static FloatImage * createMipmap(const FloatImage * floatImage, const InputOptio
 	}
 	else /*if (inputOptions.mipmapFilter == MipmapFilter_Kaiser)*/
 	{
-		Kernel1 kernel(10);
-		kernel.initKaiser(8.0, 0.75f);
+		Kernel1 kernel(inputOptions.kaiserWidth);
+		kernel.initKaiser(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 		result = floatImage->downSample(kernel, (FloatImage::WrapMode)inputOptions.wrapMode);
 	}
 	

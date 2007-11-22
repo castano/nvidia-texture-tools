@@ -68,7 +68,12 @@ namespace nvtt
 		bool generateMipmaps;
 		int maxLevel;
 		MipmapFilter mipmapFilter;
-		
+
+		// Kaiser filter parameters.
+		uint kaiserWidth;
+		float kaiserAlpha;
+		float kaiserStretch;
+
 		// Normal map options.
 		bool normalMap;
 		bool normalizeMipmaps;
