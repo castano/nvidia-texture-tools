@@ -146,13 +146,35 @@ By default, both the `inputGamma` and the `outputGamma` are set to 2.2. Gamma co
 inputOptions.setGamma(1.0f, 1.0f);
 }}}
 
+
+=== Processing Normal Maps ===
+
+If the input image is a normal map, it may require some special treatment. For example, you don't want to gamma correct it. To indicate that the input image is a normal map the following method is available:
+
+{{{
+void InputOptions::setNormalMap(bool isNormalMap);
+}}}
+
+The convolution filter used for mipmap generation generally produces normals that are not unit length. The following method allows you to do that:
+
+{{{
+void InputOptions::setNormalizeMipmaps(bool normalizeMipmaps);
+}}}
+
+*TODO*: Default the value for `normalizeMipmaps` should be true, but it should only be valid when `isNormalMap` is true.
+
+
+*TODO*: Is this the default when normalMap is true? What if convertToNormalMap is true?
+
+
 === Generating Normal Maps ===
 
-*TODO*
+*TODO*: Only input image is converted to normal map. After that, mipmap generation is done on the normal map directly.
 
 {{{
 inputOptions.convertToNormalMap(true);
 }}}
+
 
 {{{
 bool InputOptions::setHeightEvaluation(float r, float g, float b, float a);
@@ -173,20 +195,6 @@ inputOptions.setNormalFilter(float small, float medium, float big, float large);
 
 *TODO*: Are the mipmaps generated from the heightmap or from the normal map?
 
-
-=== Processing Normal Maps ===
-
-*TODO*
-
-{{{
-inputOptions.setNormalMap(true);
-}}}
-
-{{{
-inputOptions.setNormalizeMipmaps(true);
-}}}
-
-*TODO*: Is this the default when normalMap is true? What if convertToNormalMap is true?
 
 === Quantization ===
 
