@@ -45,7 +45,7 @@ namespace nv
 
 	FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, Vector4::Arg filterWeights);
 
-	void normalize(FloatImage * img);
+	void normalizeNormalMap(FloatImage * img);
 
 	// @@ Add generation of DU/DV maps.
 

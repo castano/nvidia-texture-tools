@@ -339,7 +339,7 @@ static FloatImage * createMipmap(const FloatImage * floatImage, const InputOptio
 	// Normalize mipmap.
 	if (inputOptions.normalizeMipmaps)
 	{
-		normalize(result);
+		normalizeNormalMap(result);
 	}
 	
 	return result;

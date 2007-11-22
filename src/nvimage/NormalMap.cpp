@@ -130,7 +130,7 @@ FloatImage * nv::createNormalMap(const Image * img, FloatImage::WrapMode wm, Vec
 }
 
 /// Normalize the given image in place.
-void nv::normalize(FloatImage * img)
+void nv::normalizeNormalMap(FloatImage * img)
 {
 	nvCheck(img != NULL);
 	img->expandNormals(0);
