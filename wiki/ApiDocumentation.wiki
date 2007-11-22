@@ -131,10 +131,11 @@ Where the `wrapMode` argument must have one the following values:
   * !WrapMode_Repeat
   * !WrapMode_Clamp
 
+*TODO*: wrapMode is also used for normal map conversion.
 
 === Gamma Correction ===
 
-*TODO*: Explain why gamma correction is important.
+*TODO*: Explain why gamma correction is important. Filtering in linear space. Energy conservation.
 
 {{{
 void InputOptions::setGamma(float inputGamma, float outputGamma);
@@ -146,10 +147,12 @@ By default, both the `inputGamma` and the `outputGamma` are set to 2.2. Gamma co
 inputOptions.setGamma(1.0f, 1.0f);
 }}}
 
+*TODO*: Warn about using different factors for input and output. Quantization artifacts when input is 8 bits.
+
 
 === Processing Normal Maps ===
 
-If the input image is a normal map, it may require some special treatment. For example, you don't want to gamma correct it. To indicate that the input image is a normal map the following method is available:
+If the input image is a normal map, it may require some special treatment. For example, you don't want to apply gamma correction, and some operations will only be active for normal maps. To indicate that the input image is a normal map the following method is used:
 
 {{{
 void InputOptions::setNormalMap(bool isNormalMap);
