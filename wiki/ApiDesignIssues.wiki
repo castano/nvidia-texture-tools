@@ -24,11 +24,11 @@ None is the default (treats alpha as a regular channel) while Transparency and P
 
 === Mipmapping options ===
 
-Option 1:
+~~Option 1:~~
 
   * Deprecate setMipmapping.
   * Add `setMipmapFilter(MipmapFilter filter)`
-  * Add maxLevel argument to `setTextureLayout`
+  * ~~Add maxLevel argument to `setTextureLayout`~~
   * To disable mipmap output set maxLevel = 0.
 
 Option 2:
