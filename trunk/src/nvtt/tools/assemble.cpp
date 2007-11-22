@@ -175,7 +175,12 @@ int main(int argc, char *argv[])
 		const uint pixelCount = w * h;
 		for (uint p = 0; p < pixelCount; p++)
 		{
-			stream << images[i].pixel(p).b << images[i].pixel(p).g << images[i].pixel(p).r << images[i].pixel(p).a;
+			nv::Color32 c = images[i].pixel(p);
+			uint8 r = c.r;
+			uint8 g = c.g;
+			uint8 b = c.b;
+			uint8 a = c.a;
+			stream << b << g << r << a;
 		}
 	}
 
