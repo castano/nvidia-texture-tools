@@ -93,27 +93,46 @@ If the mipmap image is not provided explicitly by the application, and generate 
 
 *TODO*: Partial mipmap chains.
 
+By default the entire mipmap chain is generated, but it's possible to limit the number of mimap levels generated with the `maxLevel` argument. When `maxLevel` is set to -1, this argument has no effect.
+
 It's possible to specify what filter should be used using the `filter` argument. The available options are:
 
   * !MipmapFilter_Box
   * !MipmapFilter_Triangle
   * !MipmapFilter_Kaiser
 
-*TODO*: Explain behavior of each of the filters.
+MipmapFilter_Box is a [http://developer.nvidia.com/object/np2_mipmapping.html polyphase box filter]. It's the default option and good choice for most cases.
+
+MipmapFilter_Triangle uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter. It's not a polyphase filter so it's not recommended for non power of two images.
+
+MipmapFilter_Kaiser is a Kaiser windowed sinc filter. It's the best choice when you want sharper results than the box filter provides, or when you want to have extra control over the ringing, sharpness
+can produce better results than the other two options, but might require some tweaking to control ringing and 
+
+The default parameters of the Kaiser filter sometimes produce ringing artifacts. To avoid them, you can tweak these parameters with the following method:
+
+{{{
+void InputOptions::setKaiserParameters(int width, ...);
+}}}
+
+The default values are:
+
+{{{
+inputOptions.setKaiserParameters(#, ...);
+}}}
 
 *TODO*: Add options for the Kaiser filter.
 
-It's possible to limit the number of mipmap levels that are generated with the `maxLevel` argument. For example, the following example will only generate the first 4 levels of the mipmap chain using a box filter:
+When evaluating the color of texels that are near the border the filter usually samples outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done controlled with the following method:
 
 {{{
-inputOptions.setMipmapping(true, MipmapFilter_Box, 4);
+void InputOptions.setWrapMode(WrapMode wrapMode);
 }}}
 
-Mipmaps are generated using a convolution filter. When evaluating the color of texels that are near the border the convolution filter usually samples outside of the texture. By default, NVTT assumes the texture is mirrored, because that generally looks good, but better results can be achieved by explicitly specifying the wrapping mode. That can be done as follows:
+`wrapMode` takes one the following values:
 
-{{{
-inputOptions.setWrapMode(WrapMode_Repeat);
-}}}
+  * !WrapMode_Mirror
+  * !WrapMode_Clamp
+  * !WrapMode_Repeat
 
 
 === Gamma Correction ===
