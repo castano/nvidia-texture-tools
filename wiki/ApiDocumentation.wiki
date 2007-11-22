@@ -152,7 +152,7 @@ inputOptions.setGamma(1.0f, 1.0f);
 
 === Processing Normal Maps ===
 
-If the input image is a normal map, it may require some special treatment. For example, you don't want to apply gamma correction, and some operations will only be active for normal maps. To indicate that the input image is a normal map the following method is used:
+If the input image is a normal map, it may require some special treatment. For example, gamma correction won't be applied, and some operations will only be active for normal maps. To indicate that the input image is a normal map the following method is used:
 
 {{{
 void InputOptions::setNormalMap(bool isNormalMap);
