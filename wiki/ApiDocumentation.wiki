@@ -169,8 +169,6 @@ void InputOptions::setNormalizeMipmaps(bool normalizeMipmaps);
 
 === Generating Normal Maps ===
 
-*TODO*: Only input image is converted to normal map. After that, mipmap generation is done on the normal map directly.
-
 {{{
 inputOptions.convertToNormalMap(true);
 }}}
@@ -193,7 +191,7 @@ The height factors are not normalized, so you can also use them to change the st
 inputOptions.setNormalFilter(float small, float medium, float big, float large);
 }}}
 
-*TODO*: Are the mipmaps generated from the heightmap or from the normal map?
+*TODO*: Are the mipmaps generated from the heightmap or from the normal map? from the normal map. Normal map conversion is only done to the input images.
 
 
 === Quantization ===
