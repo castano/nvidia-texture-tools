@@ -2,7 +2,7 @@
 #labels Phase-Design
 
 
-== InputOptions ==
+== !InputOptions ==
 
 === Mipmapping options ===
 
@@ -30,4 +30,6 @@ Option 4:
   * Leave things as is.
 
 
-=== InputOptions ===
+== !CompressionOptions ==
+
+== !OutputOptions ==
