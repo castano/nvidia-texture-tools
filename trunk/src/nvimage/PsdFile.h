@@ -33,7 +33,7 @@ namespace nv
 		
 		bool isValid() const
 		{
-			return signature == 0x38425053; // 38425053;	// '8BPS'
+			return signature == 0x38425053;	// '8BPS'
 		}
 		
 		bool isSupported() const

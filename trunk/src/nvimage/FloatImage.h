@@ -46,12 +46,13 @@ public:
 	//@{
 	NVIMAGE_API void clear(float f=0.0f);
 
-	//NVIMAGE_API void clamp(uint base_component, uint num);
 	NVIMAGE_API void normalize(uint base_component);
 	
 	NVIMAGE_API void packNormals(uint base_component);
 	NVIMAGE_API void expandNormals(uint base_component);
 	NVIMAGE_API void scaleBias(uint base_component, uint num, float scale, float add);
+	
+	//NVIMAGE_API void clamp(uint base_component, uint num);
 	NVIMAGE_API void clamp(float low, float high);
 	
 	NVIMAGE_API void toLinear(uint base_component, uint num, float gamma = 2.2f);
