@@ -1,0 +1,33 @@
+#summary API design issues
+#labels Phase-Design
+
+
+== InputOptions ==
+
+=== Mipmapping options ===
+
+Option 1:
+
+  * Deprecate setMipmapping.
+  * Add `setMipmapFilter(MipmapFilter filter)`
+  * Add maxLevel argument to `setTextureLayout`
+  * To disable mipmap output set maxLevel = 0.
+
+Option 2:
+
+  * Deprecate setMipmapping.
+  * Add `setMipmapFilter(MipmapFilter filter)`
+  * Add `enableMipmaps(bool enable)`
+  * Add `setMipmapMaxLevel(int maxLevel)`
+
+Option 3:
+
+  * Add `setMipmapFilter(MipmapFilter filter)`
+  * Remove filter argument from `setMipmapping`: `setMipmapping(bool enabled, int maxLevel)`
+
+Option 4:
+
+  * Leave things as is.
+
+
+=== InputOptions ===
