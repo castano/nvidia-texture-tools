@@ -50,9 +50,10 @@ Option 4:
 
 == !CompressionOptions ==
 
-  * `enableHardwareCompressor`, should be called `enableGpuCompressor` or `enableCudaCompressor`.
+  * `enableHardwareCompressor`, should be called `enableCudaCompressor`.
   * `Quantization` should be a compression option.
   * remove error threshold from setQuality, it's not used.
+  * `setColorWeights` should take an alpha weight, not used right now, but useful for future formats.
 
 == !OutputOptions ==
 
