@@ -325,7 +325,7 @@ In order to minimize memory allocations NVTT will call writeData as soon as comp
 
 *TODO*
 
-`nvtt::compress` will call writeData before indicating the image that the data belong to.
+`nvtt::compress` will call writeData before indicating the image that the data belongs to.
 
 {{{
 outputOptions.setOutputHeader(false);
