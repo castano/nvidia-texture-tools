@@ -38,7 +38,7 @@ namespace
 	{
 		int mipmap = 0;
 		
-		while (w != 1 && h != 1) {
+		while (w != 1 || h != 1 || d != 1) {
 			w = max(1, w / 2);
 			h = max(1, h / 2);
 			d = max(1, d / 2);
