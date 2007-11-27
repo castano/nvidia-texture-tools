@@ -232,7 +232,6 @@ namespace
 		
 		if (pnt != NULL) {
 			// Overwrite sigaction with caller's address.
-			ucontext_t * uc = (ucontext_t *)secret;
 			trace[1] = pnt;
 		}
 		
