@@ -316,7 +316,11 @@ namespace nv
 		return s;
 	}
 
+} // nv namespace
 
+/* Not used!
+namespace
+{
 	struct FormatDescriptor
 	{
 		uint format;
@@ -327,7 +331,7 @@ namespace nv
 		uint amask;
 	};
 
-	FormatDescriptor s_d3dFormats[] =
+	static const FormatDescriptor s_d3dFormats[] =
 	{
 		{ D3DFMT_R8G8B8,		24, 0xFF0000,   0xFF00,	    0xFF,       0 },
 		{ D3DFMT_A8R8G8B8,		32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 },  // DXGI_FORMAT_B8G8R8A8_UNORM
@@ -350,8 +354,8 @@ namespace nv
 		{ D3DFMT_L16,			16, 16,         0,          0,          0 },           // DXGI_FORMAT_R16_UNORM
 	};
 
-	const uint s_d3dFormatCount = sizeof(s_d3dFormats) / sizeof(s_d3dFormats[0]);
-
+	static const uint s_d3dFormatCount = sizeof(s_d3dFormats) / sizeof(s_d3dFormats[0]);
+	
 	static uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 	{
 		for (int i = 0; i < s_d3dFormatCount; i++)
@@ -369,8 +373,8 @@ namespace nv
 		return 0;
 	}
 
-}
-
+} // nv namespace
+*/
 
 DDSHeader::DDSHeader()
 {
@@ -433,7 +437,7 @@ void DDSHeader::setMipmapCount(uint count)
 	{
 		this->flags &= ~DDSD_MIPMAPCOUNT;
 		this->mipmapcount = 0;
-
+		
 		if (this->caps.caps2 == 0) {
 			this->caps.caps1 = DDSCAPS_TEXTURE;
 		}
