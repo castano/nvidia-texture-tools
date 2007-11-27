@@ -54,7 +54,7 @@ namespace nv
 
 	inline bool rayTest(const Triangle & t, Vector3::Arg orig, Vector3::Arg dir, float * out_t, float * out_u, float * out_v)
 	{
-		rayTest_Moller(t, orig, dir, out_t, out_u, out_v);
+		return rayTest_Moller(t, orig, dir, out_t, out_u, out_v);
 	}
 	
 	inline bool overlap(const Triangle & t, const Box & b)

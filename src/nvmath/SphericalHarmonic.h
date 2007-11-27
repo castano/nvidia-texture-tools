@@ -194,8 +194,6 @@ namespace nv
 		/// Evaluate the spherical harmonic function.
 		float sample(Vector3::Arg dir) const
 		{
-			float out = 0.0f;
-			
 			Sh sh(order());
 			sh.eval(dir);
 			
