@@ -430,7 +430,7 @@ void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 }
 
 
-uint QuickCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
+void QuickCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
 {
 	dxtBlock->alpha0 = rgba.color(0).a >> 4;
 	dxtBlock->alpha1 = rgba.color(1).a >> 4;
@@ -450,18 +450,18 @@ uint QuickCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtB
 	dxtBlock->alphaF = rgba.color(15).a >> 4;
 }
 
-uint QuickCompress::compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock)
+void QuickCompress::compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock)
 {
 	compressDXT1(rgba, &dxtBlock->color);
 	compressDXT3A(rgba, &dxtBlock->alpha);
 }
 
-uint QuickCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock)
+void QuickCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock)
 {
 	// @@ TODO
 }
 
-uint QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock)
+void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock)
 {
 	compressDXT1(rgba, &dxtBlock->color);
 	compressDXT5A(rgba, &dxtBlock->alpha);
