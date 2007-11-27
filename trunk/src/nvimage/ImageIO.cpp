@@ -772,6 +772,7 @@ Image * nv::ImageIO::loadJPG(Stream & s)
 
 #if defined(HAVE_TIFF)
 
+/*
 static tsize_t tiffReadWriteProc(thandle_t h, tdata_t ptr, tsize_t size)
 {
 	Stream * s = (Stream *)h;
@@ -830,7 +831,7 @@ static void tiffUnmapFileProc(thandle_t, tdata_t, toff_t)
 {
 	// @@ TODO, Implement these functions.
 }
-
+*/
 
 FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 {
