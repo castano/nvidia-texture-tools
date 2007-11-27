@@ -72,7 +72,6 @@ public:
 
 	scalar component(uint idx) const;
 
-	// @@ temporary... should use an explicit method?
 	const scalar * ptr() const;
 
 	void set(scalar x, scalar y, scalar z);
@@ -117,7 +116,6 @@ public:
 
 	scalar component(uint idx) const;
 
-	// @@ temporary... should use an explicit method?
 	const scalar * ptr() const;
 
 	void set(scalar x, scalar y, scalar z, scalar w);
