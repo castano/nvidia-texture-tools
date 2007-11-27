@@ -467,7 +467,6 @@ void WeightedClusterFit::Compress4( void* block )
 	Vec3 x0(0.0f);
 	float w0 = 0.0f;
 	int b0 = 0, b1 = 0, b2 = 0;
-	int i = 0;
 
 	// check all possible clusters for this total order
 	for( int c0 = 0; c0 <= 16; c0++)
