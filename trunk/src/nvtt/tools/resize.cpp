@@ -114,18 +114,18 @@ int main(int argc, char *argv[])
 	if (!loadImage(image, input)) return 0;
 
 	nv::FloatImage fimage(&image);
-	fimage.toLinear(0, 3);
+//	fimage.toLinear(0, 3);
 	
 //	nv::AutoPtr<nv::FloatImage> fresult(fimage.fastDownSample());
 	
 //	nv::Kernel1 k(10);
 //	k.initKaiser(4, scale, 20);
-//	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(k, nv::FloatImage::WrapMode_Clamp));
+//	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(k, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Clamp));
 	
 	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
 	
 	
-	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect());
+	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(1.0));
 
 	nv::StdOutputStream stream(output);
 	nv::ImageIO::saveTGA(stream, result.ptr());
