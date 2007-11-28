@@ -700,14 +700,14 @@ typedef unsigned long long posh_u64_t;
 #endif
 
 /* hack */
-#ifdef __MINGW32__
+/*#ifdef __MINGW32__
 #undef POSH_I64
 #undef POSH_U64
 #undef POSH_I64_PRINTF_PREFIX
 #define POSH_I64( x ) ((posh_i64_t)x)
 #define POSH_U64( x ) ((posh_u64_t)x)
 #define POSH_I64_PRINTF_PREFIX "I64"
-#endif
+#endif*/
 
 #ifdef FORCE_DOXYGEN
 typedef long long posh_i64_t;
