@@ -71,8 +71,8 @@ public:
 	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
-	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel * k, int x, float yscale, int c, WrapMode wm, float * output) const;
-	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel * k, float xscale, int y, int c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel * k, float scale, int x, int c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel * k, float scale, int y, int c, WrapMode wm, float * output) const;
 	
 	
 	uint width() const { return m_width; }
