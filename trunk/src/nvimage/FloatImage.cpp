@@ -549,7 +549,7 @@ FloatImage * FloatImage::downSample(const Kernel1 & kernel, WrapMode wm) const
 /// Downsample applying a 1D kernel separately in each dimension.
 FloatImage * FloatImage::downSample(const Kernel1 & kernel, uint w, uint h, WrapMode wm) const
 {
-	nvCheck(!(kernel.width() & 1));	// Make sure that kernel m_width is even.
+	nvCheck(!(kernel.windowSize() & 1));	// Make sure that kernel m_width is even.
 
 	AutoPtr<FloatImage> tmp_image( new FloatImage() );
 	tmp_image->allocate(m_componentNum, w, m_height);
@@ -611,6 +611,9 @@ FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
 	
 	xkernel.debugPrint();	
 	
+	// @@ Select fastest filtering order:
+	// w * m_height <= h * m_width -> XY, else -> YX
+
 	AutoPtr<FloatImage> tmp_image( new FloatImage() );
 	tmp_image->allocate(m_componentNum, w, m_height);
 	
@@ -620,7 +623,7 @@ FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
 	Array<float> tmp_column(h);
 	tmp_column.resize(h);
 	
-	for(uint c = 0; c < m_componentNum; c++)
+	for (uint c = 0; c < m_componentNum; c++)
 	{
 		float * tmp_channel = tmp_image->channel(c);
 		
@@ -630,7 +633,7 @@ FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
 		
 		float * dst_channel = dst_image->channel(c);
 		
-		for(uint x = 0; x < w; x++) {
+		for (uint x = 0; x < w; x++) {
 			tmp_image->applyKernelVertical(&ykernel, yscale, x, c, wm, tmp_column.unsecureBuffer());
 			
 			for(uint y = 0; y < h; y++) {
@@ -639,7 +642,6 @@ FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
 		}
 	}
 	
-	//return tmp_image.release();
 	return dst_image.release();
 }
 
@@ -650,17 +652,17 @@ float FloatImage::applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode w
 {
 	nvDebugCheck(k != NULL);
 	
-	const uint kernelWidth = k->width();
-	const int kernelOffset = int(kernelWidth / 2) - 1;
+	const uint kernelWindow = k->windowSize();
+	const int kernelOffset = int(kernelWindow / 2) - 1;
 	
 	const float * channel = this->channel(c);
 
 	float sum = 0.0f;
-	for(uint i = 0; i < kernelWidth; i++)
+	for (uint i = 0; i < kernelWindow; i++)
 	{
 		const int src_y = int(y + i) - kernelOffset;
 		
-		for(uint e = 0; e < kernelWidth; e++)
+		for (uint e = 0; e < kernelWindow; e++)
 		{
 			const int src_x = int(x + e) - kernelOffset;
 			
@@ -679,13 +681,13 @@ float FloatImage::applyKernelVertical(const Kernel1 * k, int x, int y, int c, Wr
 {
 	nvDebugCheck(k != NULL);
 	
-	const uint kernelWidth = k->width();
-	const int kernelOffset = int(kernelWidth / 2) - 1;
+	const uint kernelWindow = k->windowSize();
+	const int kernelOffset = int(kernelWindow / 2) - 1;
 	
 	const float * channel = this->channel(c);
 
 	float sum = 0.0f;
-	for(uint i = 0; i < kernelWidth; i++)
+	for (uint i = 0; i < kernelWindow; i++)
 	{
 		const int src_y = int(y + i) - kernelOffset;
 		const int idx = this->index(x, src_y, wm);
@@ -701,13 +703,13 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, 
 {
 	nvDebugCheck(k != NULL);
 	
-	const uint kernelWidth = k->width();
-	const int kernelOffset = int(kernelWidth / 2) - 1;
+	const uint kernelWindow = k->windowSize();
+	const int kernelOffset = int(kernelWindow / 2) - 1;
 	
 	const float * channel = this->channel(c);
 
 	float sum = 0.0f;
-	for(uint e = 0; e < kernelWidth; e++)
+	for (uint e = 0; e < kernelWindow; e++)
 	{
 		const int src_x = int(x + e) - kernelOffset;
 		const int idx = this->index(src_x, y, wm);
@@ -725,9 +727,9 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel * k, float scale, int
 	nvDebugCheck(k != NULL);
 	
 	const float kernelWidth = k->width();
-	const float kernelOffset = scale * 0.5f;
+	const float kernelOffset = kernelWidth * 0.5f;
 	const int kernelLength = k->length();
-	const int kernelWindow = k->size();
+	const int kernelWindow = k->windowSize();
 	
 	const float * channel = this->channel(c);
 
@@ -752,9 +754,9 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float scale, i
 	nvDebugCheck(k != NULL);
 	
 	const float kernelWidth = k->width();
-	const float kernelOffset = scale * 0.5f;
+	const float kernelOffset = kernelWidth * 0.5f;
 	const int kernelLength = k->length();
-	const int kernelWindow = k->size();
+	const int kernelWindow = k->windowSize();
 	
 	const float * channel = this->channel(c);
 
