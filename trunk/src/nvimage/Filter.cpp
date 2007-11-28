@@ -109,7 +109,7 @@ inline float sincf( const float x )
 inline static float filter_lanczos3(float x)
 {
 	if( x < 0.0f ) x = -x;
-	if( x < 3.0f ) return(sincf(x) * sincf(x / 3.0f));
+	if( x < 3.0f ) return sincf(x) * sincf(x / 3.0f);
 	return 0.0f;
 }
 
@@ -165,7 +165,7 @@ static float bessel0(float x)
 	return sum;
 }
 
-// Alternative bessel function from Paul Heckbert.
+/*// Alternative bessel function from Paul Heckbert.
 static float _bessel0(float x)
 {
 	const float EPSILON_RATIO = 1E-6;
@@ -177,7 +177,7 @@ static float _bessel0(float x)
 		t *= y / float(i * i);
     }
     return sum;
-}
+}*/
 
 // support = 1.0
 inline static float filter_kaiser(float x, float alpha)
@@ -244,21 +244,29 @@ void Kernel1::normalize()
 
 
 /// Init 1D Box filter.
-void Kernel1::initFilter(Filter::Enum f)
+void Kernel1::initFilter(Filter::Enum f, int samples /*= 1*/)
 {
-	nvCheck((w & 1) == 0);
-	nvCheck(f < Filter::Num);
+	nvDebugCheck(f < Filter::Num);
+	nvDebugCheck(samples >= 1);
 	
 	float (* filter_function)(float) = s_filter_array[f].function;
 	const float support = s_filter_array[f].support;
 	
-	const float half_width = float(w / 2);
+	const float half_width = float(w) / 2;
 	const float offset = -half_width;
-	const float nudge = 0.5f;
+
+	const float s_scale = 1.0f / float(samples);
+	const float x_scale = support / half_width;
 	
-	for(uint i = 0; i < w; i++) {
-		const float x = (i + offset) + nudge;
-		data[i] = filter_function(x * support / half_width);
+	for(uint i = 0; i < w; i++)
+	{
+		float sum = 0;
+		for(int s = 0; s < samples; s++)
+		{
+			float x = i + offset + (s + 0.5f) * s_scale;
+			sum += filter_function(x * x_scale);
+		}
+		data[i] = sum;
 	}
 	
 	normalize();
@@ -268,9 +276,7 @@ void Kernel1::initFilter(Filter::Enum f)
 /// Init 1D sinc filter.
 void Kernel1::initSinc(float stretch /*= 1*/)
 {
-	nvCheck((w & 1) == 0);
-	
-	const float half_width = float(w / 2);
+	const float half_width = float(w) / 2;
 	const float offset = -half_width;
 	const float nudge = 0.5f;
 	
@@ -283,21 +289,28 @@ void Kernel1::initSinc(float stretch /*= 1*/)
 }
 
 
-/// Init 1D windowed Kaiser filter.
-void Kernel1::initKaiser(float alpha, float stretch /*= 1*/)
+/// Init 1D Kaiser-windowed sinc filter.
+void Kernel1::initKaiser(float alpha /*= 4*/, float stretch /*= 0.5*/, int samples/*= 1*/)
 {
-	nvCheck((w & 1) == 0);
-	
-	const float half_width = float(w / 2);
+	const float half_width = float(w) / 2;
 	const float offset = -half_width;
-	const float nudge = 0.5f;
+
+	const float s_scale = 1.0f / float(samples);
+	const float x_scale = 1.0f / half_width;
 	
-	for(uint i = 0; i < w; i++) {
-		const float x = (i + offset) + nudge;
-		const float sinc_value = sincf(PI * x * stretch);
-		const float window_value = filter_kaiser(x / half_width, alpha);
-		
-		data[i] = sinc_value * window_value;	// @@ sinc windowed by kaiser
+	for(uint i = 0; i < w; i++)
+	{
+		float sum = 0;
+		for(int s = 0; s < samples; s++)
+		{
+			float x = i + offset + (s + 0.5f) * s_scale;
+			
+			const float sinc_value = sincf(PI * x * stretch);
+			const float window_value = filter_kaiser(x * x_scale, alpha);	// @@ should the window be streched? I don't think so.
+			
+			sum += sinc_value * window_value;
+		}
+		data[i] = sum;
 	}
 
 	normalize();
@@ -307,9 +320,7 @@ void Kernel1::initKaiser(float alpha, float stretch /*= 1*/)
 /// Init 1D Mitchell filter.
 void Kernel1::initMitchell(float b, float c)
 {
-	nvCheck((w & 1) == 0);
-	
-	const float half_width = float(w / 2);
+	const float half_width = float(w) / 2;
 	const float offset = -half_width;
 	const float nudge = 0.5f;
 	
@@ -496,7 +507,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 	nvCheck(w == 9);
 
 	{
-		float elements[] = {
+		const float elements[] = {
             -1, -2, -3, -4, 0, 4, 3, 2, 1,
             -2, -3, -4, -5, 0, 5, 4, 3, 2,
             -3, -4, -5, -6, 0, 6, 5, 4, 3,
@@ -513,7 +524,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 		}
 	}
 	{
-		float elements[] = {
+		const float elements[] = {
             -1, -2, -3, 0, 3, 2, 1,
             -2, -3, -4, 0, 4, 3, 2,
             -3, -4, -5, 0, 5, 4, 3,
@@ -530,7 +541,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 		}
 	}
 	{
-		float elements[] = {
+		const float elements[] = {
             -1, -2, 0, 2, 1,
             -2, -3, 0, 3, 2,
             -3, -4, 0, 4, 3,
@@ -545,7 +556,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 		}
 	}
 	{
-		float elements[] = {
+		const float elements[] = {
             -1, 0, 1,
             -2, 0, 2,
             -1, 0, 1,
@@ -560,13 +571,100 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 }
 
 
-/*PI_DECLARE_TEST(BesselTest) {
+static float frac(float f)
+{
+	return f - floorf(f);
+}
 
-	for(int i = 0; i < 8; i++) {
-		nvDebug("bessel0(%i) %f =? %f\n", i, bessel0(i), _bessel0(i));
-		PI_TEST(equalf(bessel0(i), _bessel0(i)));
+static bool isMonoPhase(float w)
+{
+	return isZero(frac(w));
+}
+
+
+PolyphaseKernel::PolyphaseKernel(float w, uint l) :
+	m_width(w),
+	m_size(ceilf(w) + 1),
+	m_length(l)
+{
+	// size = width + (length - 1) * phase
+	m_data = new float[m_size * m_length];
+}
+
+PolyphaseKernel::PolyphaseKernel(const PolyphaseKernel & k) :
+	m_width(k.m_width),
+	m_size(k.m_size),
+	m_length(k.m_length)
+{
+	m_data = new float[m_size * m_length];
+	memcpy(m_data, k.m_data, sizeof(float) * m_size * m_length);
+}
+
+PolyphaseKernel::~PolyphaseKernel()
+{
+	delete [] m_data;
+}
+
+void PolyphaseKernel::initFilter(Filter::Enum f, int samples/*= 1*/)
+{
+	nvCheck(f < Filter::Num);
+	
+	nvDebug("Init Filter:\n");
+	nvDebug("  width = %f\n", m_width);
+	
+	float (* filter_function)(float) = s_filter_array[f].function;
+	const float support = s_filter_array[f].support;
+	
+	const float half_width = m_width / 2;
+	const float offset = -half_width;
+	
+	const float s_scale = 1.0f / float(samples);
+	const float x_scale = support / half_width;
+	
+	for (uint j = 0; j < m_length; j++)
+	{
+		const float phase = frac(m_width * j);
+		
+		float total = 0.0f;
+		for (uint i = 0; i < m_size; i++)
+		{
+			const float x = i + offset - phase;
+			
+			float sum = 0;
+			for(int s = 0; s < samples; s++)
+			{
+				const float xx = x + (s + 0.5f) * s_scale;
+				sum += filter_function(xx * x_scale);
+			}
+			m_data[j * m_size + i] = sum;
+			
+			total += sum;
+		}
+		
+		for (uint i = 0; i < m_size; i++)
+		{
+			m_data[j * m_size + i] /= total;
+			//m_data[j * m_size + i] /= samples;
+		}
 	}
+}
 
-	return PiTestUnit::Succeed;
-}*/
+void PolyphaseKernel::initKaiser(float alpha /*= 4.0f*/, float stretch /*= 1.0f*/)
+{
+	
+}
+
+/// Print the kernel for debugging purposes.
+void PolyphaseKernel::debugPrint()
+{
+	for (uint j = 0; j < m_length; j++)
+	{
+		nvDebug("%d: ", j);
+		for (uint i = 0; i < m_size; i++)
+		{
+			nvDebug(" %6.4f", m_data[j * m_size + i]);
+		}
+		nvDebug("\n");
+	}
+}
 

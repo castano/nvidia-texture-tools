@@ -82,18 +82,13 @@ Image * FloatImage::createImage(uint base_component/*= 0*/, uint num/*= 4*/) con
 	for(uint i = 0; i < size; i++) {
 		
 		uint c;
-		uint8 rgba[4];
+		uint8 rgba[4]= {0, 0, 0, 0xff};
 
 		for(c = 0; c < num; c++) {
 			float f = m_mem[size * (base_component + c) + i];
 			rgba[c] = nv::clamp(int(255.0f * f), 0, 255);
 		}
 
-		// Fill the rest with 0xff000000;
-		for(; c < 4; c++) {
-			rgba[c] = c != 3 ? 0 : 0xff;
-		}
-		
 		img->pixel(i) = Color32(rgba[0], rgba[1], rgba[2], rgba[3]);
 	}
 	
@@ -595,6 +590,62 @@ FloatImage * FloatImage::downSample(const Kernel1 & kernel, uint w, uint h, Wrap
 }
 
 
+/// Downsample applying a 1D kernel separately in each dimension.
+FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
+{
+	// Build polyphase kernels.
+	const float xscale = float(m_width) / float(w);
+	const float yscale = float(m_height) / float(h);
+	
+	int kw = 1;
+	
+	float xwidth = kw * xscale;
+	float ywidth = kw * yscale;
+	
+	PolyphaseKernel xkernel(xwidth, w);
+	PolyphaseKernel ykernel(ywidth, h);
+	
+	xkernel.initFilter(Filter::Box, 32);
+	ykernel.initFilter(Filter::Box, 32);
+//	xkernel.initKaiser(4, 1.0f / xscale);
+//	ykernel.initKaiser(4, 1.0f / yscale);
+	
+	xkernel.debugPrint();	
+	
+	AutoPtr<FloatImage> tmp_image( new FloatImage() );
+	tmp_image->allocate(m_componentNum, w, m_height);
+	
+	AutoPtr<FloatImage> dst_image( new FloatImage() );	
+	dst_image->allocate(m_componentNum, w, h);
+	
+	Array<float> tmp_column(h);
+	tmp_column.resize(h);
+	
+	for(uint c = 0; c < m_componentNum; c++)
+	{
+		float * tmp_channel = tmp_image->channel(c);
+		
+		for(uint y = 0; y < m_height; y++) {
+			this->applyKernelHorizontal(&xkernel, xkernel.size(), y, c, wm, tmp_channel + y * w);
+		}
+		
+		float * dst_channel = dst_image->channel(c);
+		
+		for(uint x = 0; x < w; x++) {
+			this->applyKernelVertical(&ykernel, x * xscale, yscale, c, wm, tmp_column.unsecureBuffer());
+			
+			for(uint y = 0; y < h; y++) {
+				dst_channel[y * w + x] = tmp_column[y];
+			}
+		}
+	}
+	
+	//return tmp_image.release();
+	return dst_image.release();
+}
+
+
+
 /// Apply 2D kernel at the given coordinates and return result.
 float FloatImage::applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode wm) const
 {
@@ -669,171 +720,61 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, 
 }
 
 
-
-#if 0
-
-Vec3d bilinear(double u, double v) const
+/// Apply 1D vertical kernel at the given coordinates and return result.
+void FloatImage::applyKernelVertical(const PolyphaseKernel * k, int x, float yscale, int c, WrapMode wm, float * output) const
 {
-	u = mod(u*(W-1),W);
-	v = mod(v*(H-1),H);
-
-	Vec3d v1,v2,v3,v4;
-
-	int x_small	= (int)floor(u);
-	int x_big	  = x_small + 1;
-	int y_small = (int)floor(v);
-	int y_big   = y_small + 1;
-
-	if (x_small < 0)
-		x_small = W-1;
-	else if (x_big >= W)
-		x_big = 0;
-	if (y_small < 0)
-		y_small = H-1;
-	else if (y_big >= H)
-		y_big = 0;
+	nvDebugCheck(k != NULL);
 	
-	double fractional_X = u - x_small;
-	double fractional_Y = v - y_small;
+	const float kernelWidth = k->width();
+	const float kernelOffset = kernelWidth / 2;
+	const int kernelLength = k->length();
+	const int kernelWindow = k->size();
+	
+	const float * channel = this->channel(c);
 
-	if (nchan == 3)
+	for (int y = 0; y < kernelLength; y++)
 	{
-		v1 = Vec3d(pixel(x_small, y_small)[0], pixel(x_small, y_small)[1], pixel(x_small, y_small)[2]);
-		v2 = Vec3d(pixel(x_big, y_small)[0], pixel(x_big, y_small)[1], pixel(x_big, y_small)[2]);
-		v3 = Vec3d(pixel(x_small, y_big)[0], pixel(x_small, y_big)[1], pixel(x_small, y_big)[2]);
-		v4 = Vec3d(pixel(x_big, y_big)[0], pixel(x_big, y_big)[1], pixel(x_big, y_big)[2]);
-	}
+		const float kernelPhase = (kernelWidth * y) - floor(kernelWidth * y);
+		
+		float sum = 0.0f;
+		for (int i = 0; i < kernelWindow; i++)
+		{
+			const int src_y = int(y * kernelWidth - kernelOffset - kernelPhase) + i;
+			const int idx = this->index(x, src_y, wm);
 			
-	Vec3d i1 = lerp(v1, v2, fractional_X);
-	Vec3d i2 = lerp(v3, v4, fractional_X);
-
-	return lerp(i1, i2, fractional_Y);
-}
-
-Vec3d bicubic(double u, double v) const
-{
-	u = mod(u*(W-1),W);
-	v = mod(v*(H-1),H);
-
-	int x_small1	= (int)floor(u),
-		x_small2	= x_small1 - 1,
-		x_big1		= x_small1 + 1,				
-		x_big2		= x_small1 + 2;
-
-	int y_small1	= (int)floor(v),
-		y_small2	= y_small1 - 1,
-		y_big1		= y_small1 + 1,
-		y_big2		= y_small1 + 2;
-
-	x_small1	= (int)mod(x_small1,W);
-	x_small2	= (int)mod(x_small2,W);
-	x_big1		= (int)mod(x_big1,W);
-	x_big2		= (int)mod(x_big2,W);
-	
-	y_small1	= (int)mod(y_small1,H);
-	y_small2	= (int)mod(y_small2,H);
-	y_big1		= (int)mod(y_big1,H);
-	y_big2		= (int)mod(y_big2,H);
-	
-	double fractional_X = u - x_small1;
-	double fractional_Y = v - y_small1;
-
-	if (nchan == 3)
-	{
-		// the interpolations across the rows
-		Vec3d row1 = cubic(Vec3d(pixel(x_small2, y_small2)[0], pixel(x_small2, y_small2)[1], pixel(x_small2, y_small2)[2]),
-							Vec3d(pixel(x_small1, y_small2)[0], pixel(x_small1, y_small2)[1], pixel(x_small1, y_small2)[2]),
-							Vec3d(pixel(x_big1, y_small2)[0], pixel(x_big1, y_small2)[1], pixel(x_big1, y_small2)[2]),
-							Vec3d(pixel(x_big2, y_small2)[0], pixel(x_big2, y_small2)[1], pixel(x_big2, y_small2)[2]),
-							fractional_X);
-
-		Vec3d row2 = cubic(Vec3d(pixel(x_small2, y_small1)[0], pixel(x_small2, y_small1)[1], pixel(x_small2, y_small1)[2]),
-							Vec3d(pixel(x_small1, y_small1)[0], pixel(x_small1, y_small1)[1], pixel(x_small1, y_small1)[2]),
-							Vec3d(pixel(x_big1, y_small1)[0], pixel(x_big1, y_small1)[1], pixel(x_big1, y_small1)[2]),
-							Vec3d(pixel(x_big2, y_small1)[0], pixel(x_big2, y_small1)[1], pixel(x_big2, y_small1)[2]),
-							fractional_X);
-
-		Vec3d row3 = cubic(Vec3d(pixel(x_small2, y_big1)[0], pixel(x_small2, y_big1)[1], pixel(x_small2, y_big1)[2]),
-							Vec3d(pixel(x_small1, y_big1)[0], pixel(x_small1, y_big1)[1], pixel(x_small1, y_big1)[2]),
-							Vec3d(pixel(x_big1, y_big1)[0], pixel(x_big1, y_big1)[1], pixel(x_big1, y_big1)[2]),
-							Vec3d(pixel(x_big2, y_big1)[0], pixel(x_big2, y_big1)[1], pixel(x_big2, y_big1)[2]),
-							fractional_X);
-
-		Vec3d row4 = cubic(Vec3d(pixel(x_small2, y_big2)[0], pixel(x_small2, y_big2)[1], pixel(x_small2, y_big2)[2]),
-							Vec3d(pixel(x_small1, y_big2)[0], pixel(x_small1, y_big2)[1], pixel(x_small1, y_big2)[2]),
-							Vec3d(pixel(x_big1, y_big2)[0], pixel(x_big1, y_big2)[1], pixel(x_big1, y_big2)[2]),
-							Vec3d(pixel(x_big2, y_big2)[0], pixel(x_big2, y_big2)[1], pixel(x_big2, y_big2)[2]),
-							fractional_X);
-
-		// now interpolate across the interpolated rows (the columns)
-
-		return cubic(row1,row2,row3,row4,fractional_Y);
+			sum += k->valueAt(y, i) * channel[idx];
+		}
+		
+		output[y] = sum;
 	}
-	else
-		return Vec3d(0.0);
 }
 
-Vec3d bicubic2(double u, double v) const
+/// Apply 1D horizontal kernel at the given coordinates and return result.
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float xscale, int y, int c, WrapMode wm, float * output) const
 {
-	u = mod(u*(W-1),W);
-	v = mod(v*(H-1),H);
-
-	int x_small1	= floorf(u),
-		x_small2	= x_small1 - 1,
-		x_big1		= int(x_small1 + 1),
-		x_big2		= int(x_small1 + 2);
-
-	int y_small1	= floorf(v),
-		y_small2	= y_small1 - 1,
-		y_big1		= y_small1 + 1,
-		y_big2		= y_small1 + 2;
-
-	x_small1	= (int)mod(x_small1,W);
-	x_small2	= (int)mod(x_small2,W);
-	x_big1		= (int)mod(x_big1,W);
-	x_big2		= (int)mod(x_big2,W);
+	nvDebugCheck(k != NULL);
 	
-	y_small1	= (int)mod(y_small1,H);
-	y_small2	= (int)mod(y_small2,H);
-	y_big1		= (int)mod(y_big1,H);
-	y_big2		= (int)mod(y_big2,H);
+	const float kernelWidth = k->width();
+	const float kernelOffset = kernelWidth / 2;
+	const int kernelLength = k->length();
+	const int kernelWindow = k->size();
 	
-	double fractional_X = u - x_small1;
-	double fractional_Y = v - y_small1;
+	const float * channel = this->channel(c);
 
-	if (nchan == 3)
+	for (int x = 0; x < kernelLength; x++)
 	{
-		// the interpolations across the rows
-		Vec3d row1 = cubic2(Vec3d(pixel(x_small2, y_small2)[0], pixel(x_small2, y_small2)[1], pixel(x_small2, y_small2)[2]),
-							Vec3d(pixel(x_small1, y_small2)[0], pixel(x_small1, y_small2)[1], pixel(x_small1, y_small2)[2]),
-							Vec3d(pixel(x_big1, y_small2)[0], pixel(x_big1, y_small2)[1], pixel(x_big1, y_small2)[2]),
-							Vec3d(pixel(x_big2, y_small2)[0], pixel(x_big2, y_small2)[1], pixel(x_big2, y_small2)[2]),
-							fractional_X);
-
-		Vec3d row2 = cubic2(Vec3d(pixel(x_small2, y_small1)[0], pixel(x_small2, y_small1)[1], pixel(x_small2, y_small1)[2]),
-							Vec3d(pixel(x_small1, y_small1)[0], pixel(x_small1, y_small1)[1], pixel(x_small1, y_small1)[2]),
-							Vec3d(pixel(x_big1, y_small1)[0], pixel(x_big1, y_small1)[1], pixel(x_big1, y_small1)[2]),
-							Vec3d(pixel(x_big2, y_small1)[0], pixel(x_big2, y_small1)[1], pixel(x_big2, y_small1)[2]),
-							fractional_X);
-
-		Vec3d row3 = cubic2(Vec3d(pixel(x_small2, y_big1)[0], pixel(x_small2, y_big1)[1], pixel(x_small2, y_big1)[2]),
-							Vec3d(pixel(x_small1, y_big1)[0], pixel(x_small1, y_big1)[1], pixel(x_small1, y_big1)[2]),
-							Vec3d(pixel(x_big1, y_big1)[0], pixel(x_big1, y_big1)[1], pixel(x_big1, y_big1)[2]),
-							Vec3d(pixel(x_big2, y_big1)[0], pixel(x_big2, y_big1)[1], pixel(x_big2, y_big1)[2]),
-							fractional_X);
-
-		Vec3d row4 = cubic2(Vec3d(pixel(x_small2, y_big2)[0], pixel(x_small2, y_big2)[1], pixel(x_small2, y_big2)[2]),
-							Vec3d(pixel(x_small1, y_big2)[0], pixel(x_small1, y_big2)[1], pixel(x_small1, y_big2)[2]),
-							Vec3d(pixel(x_big1, y_big2)[0], pixel(x_big1, y_big2)[1], pixel(x_big1, y_big2)[2]),
-							Vec3d(pixel(x_big2, y_big2)[0], pixel(x_big2, y_big2)[1], pixel(x_big2, y_big2)[2]),
-							fractional_X);
-
-		// now interpolate across the interpolated rows (the columns)
-
-		return cubic2(row1,row2,row3,row4,fractional_Y);
+		const float kernelPhase = (kernelWidth * x) - floor(kernelWidth * x);
+		
+		float sum = 0.0f;
+		for (int e = 0; e < kernelWindow; e++)
+		{
+			const int src_x = int(x * kernelWidth - kernelOffset - kernelPhase) + e;
+			const int idx = this->index(src_x, y, wm);
+			
+			sum += k->valueAt(x, e) * channel[idx];
+		}
+		
+		output[x] = sum;
 	}
-	else
-		return Vec3d(0.0);
 }
 
-#endif
