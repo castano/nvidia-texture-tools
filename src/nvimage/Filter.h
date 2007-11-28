@@ -26,7 +26,9 @@ namespace nv
 			Num
 		};
 		
-		float (*function)(float x);
+		typedef float (* Function)(float);
+
+		Function function;
 		float support;
 	};
 
@@ -35,18 +37,18 @@ namespace nv
 	class Kernel1
 	{
 	public:
-		NVIMAGE_API Kernel1(uint width);
+		NVIMAGE_API Kernel1(uint windowSize);
 		NVIMAGE_API Kernel1(const Kernel1 & k);
 		NVIMAGE_API ~Kernel1();
 		
 		NVIMAGE_API void normalize();
 		
 		float valueAt(uint x) const {
-			return data[x];
+			return m_data[x];
 		}
 		
-		uint width() const {
-			return w;
+		uint windowSize() const {
+			return m_windowSize;
 		}
 		
 		NVIMAGE_API void initFilter(Filter::Enum filter, int samples = 1);
@@ -57,8 +59,8 @@ namespace nv
 		NVIMAGE_API void debugPrint();
 		
 	private:
-		const uint w;
-		float * data;
+		const uint m_windowSize;
+		float * m_data;
 	};
 
 
@@ -74,11 +76,11 @@ namespace nv
 		NVIMAGE_API void transpose();
 		
 		float valueAt(uint x, uint y) const {
-			return data[y * w + x];
+			return m_data[y * m_windowSize + x];
 		}
 		
-		uint width() const {
-			return w;
+		uint windowSize() const {
+			return m_windowSize;
 		}
 		
 		NVIMAGE_API void initLaplacian();
@@ -89,8 +91,8 @@ namespace nv
 		NVIMAGE_API void initBlendedSobel(const Vector4 & scale);
 		
 	private:
-		const uint w;
-		float * data;
+		const uint m_windowSize;
+		float * m_data;
 	};
 
 	/// A 1D polyphase kernel
@@ -109,7 +111,7 @@ namespace nv
 			return m_width;
 		}
 		
-		uint size() const {
+		uint windowSize() const {
 			return m_size;
 		}
 		

@@ -203,47 +203,62 @@ static Filter s_filter_array[] = {
 	{filter_kaiser,		1.0f},	// Kaiser
 };
 
+
+inline static float sampleFilter(Filter::Function func, float x, float scale, int samples)
+{
+	float sum = 0;
+
+	for(int s = 0; s < samples; s++)
+	{
+		sum += func((x + (float(s) + 0.5f) * (1.0f / float(samples))) * scale);
+	}
+	
+	return sum;
+}
+
+
+
 } // namespace
 
 
 
 /// Ctor.
-Kernel1::Kernel1(uint width) : w(width)
+Kernel1::Kernel1(uint ws) : m_windowSize(ws)
 {
-	data = new float[w];
+	m_data = new float[m_windowSize];
 }
 
 /// Copy ctor.
-Kernel1::Kernel1(const Kernel1 & k) : w(k.w)
+Kernel1::Kernel1(const Kernel1 & k) : m_windowSize(k.m_windowSize)
 {
-	data = new float[w];
-	for(uint i = 0; i < w; i++) {
-		data[i] = k.data[i];
+	m_data = new float[m_windowSize];
+	for(uint i = 0; i < m_windowSize; i++) {
+		m_data[i] = k.m_data[i];
 	}
 }
 
 /// Dtor.
 Kernel1::~Kernel1()
 {
-	delete data;
+	delete m_data;
 }
 
 /// Normalize the filter.
 void Kernel1::normalize()
 {
 	float total = 0.0f;
-	for(uint i = 0; i < w; i++) {
-		total += data[i];
+	for(uint i = 0; i < m_windowSize; i++) {
+		total += m_data[i];
 	}
 	
 	float inv = 1.0f / total;
-	for(uint i = 0; i < w; i++) {
-		data[i] *= inv;
+	for(uint i = 0; i < m_windowSize; i++) {
+		m_data[i] *= inv;
 	}
 }
 
 
-/// Init 1D Box filter.
+/// Init 1D filter.
 void Kernel1::initFilter(Filter::Enum f, int samples /*= 1*/)
 {
 	nvDebugCheck(f < Filter::Num);
@@ -252,21 +267,12 @@ void Kernel1::initFilter(Filter::Enum f, int samples /*= 1*/)
 	float (* filter_function)(float) = s_filter_array[f].function;
 	const float support = s_filter_array[f].support;
 	
-	const float half_width = float(w) / 2;
-	const float offset = -half_width;
-
-	const float s_scale = 1.0f / float(samples);
-	const float x_scale = support / half_width;
+	const float halfWindowSize = float(m_windowSize) / 2.0f;
+	const float scale = support / halfWindowSize;
 	
-	for(uint i = 0; i < w; i++)
+	for(uint i = 0; i < m_windowSize; i++)
 	{
-		float sum = 0;
-		for(int s = 0; s < samples; s++)
-		{
-			float x = i + offset + (s + 0.5f) * s_scale;
-			sum += filter_function(x * x_scale);
-		}
-		data[i] = sum;
+		m_data[i] = sampleFilter(filter_function, i - halfWindowSize, scale, samples);
 	}
 	
 	normalize();
@@ -276,13 +282,12 @@ void Kernel1::initFilter(Filter::Enum f, int samples /*= 1*/)
 /// Init 1D sinc filter.
 void Kernel1::initSinc(float stretch /*= 1*/)
 {
-	const float half_width = float(w) / 2;
-	const float offset = -half_width;
+	const float halfWindowSize = float(m_windowSize) / 2;
 	const float nudge = 0.5f;
 	
-	for(uint i = 0; i < w; i++) {
-		const float x = (i + offset) + nudge;
-		data[i] = sincf(PI * x * stretch);
+	for(uint i = 0; i < m_windowSize; i++) {
+		const float x = (i - halfWindowSize) + nudge;
+		m_data[i] = sincf(PI * x * stretch);
 	}
 
 	normalize();
@@ -292,25 +297,24 @@ void Kernel1::initSinc(float stretch /*= 1*/)
 /// Init 1D Kaiser-windowed sinc filter.
 void Kernel1::initKaiser(float alpha /*= 4*/, float stretch /*= 0.5*/, int samples/*= 1*/)
 {
-	const float half_width = float(w) / 2;
-	const float offset = -half_width;
+	const float halfWindowSize = float(m_windowSize) / 2;
 
 	const float s_scale = 1.0f / float(samples);
-	const float x_scale = 1.0f / half_width;
+	const float x_scale = 1.0f / halfWindowSize;
 	
-	for(uint i = 0; i < w; i++)
+	for(uint i = 0; i < m_windowSize; i++)
 	{
 		float sum = 0;
 		for(int s = 0; s < samples; s++)
 		{
-			float x = i + offset + (s + 0.5f) * s_scale;
+			float x = i - halfWindowSize + (s + 0.5f) * s_scale;
 			
 			const float sinc_value = sincf(PI * x * stretch);
 			const float window_value = filter_kaiser(x * x_scale, alpha);	// @@ should the window be streched? I don't think so.
 			
 			sum += sinc_value * window_value;
 		}
-		data[i] = sum;
+		m_data[i] = sum;
 	}
 
 	normalize();
@@ -320,13 +324,12 @@ void Kernel1::initKaiser(float alpha /*= 4*/, float stretch /*= 0.5*/, int sampl
 /// Init 1D Mitchell filter.
 void Kernel1::initMitchell(float b, float c)
 {
-	const float half_width = float(w) / 2;
-	const float offset = -half_width;
+	const float halfWindowSize = float(m_windowSize) / 2;
 	const float nudge = 0.5f;
 	
-	for(uint i = 0; i < w; i++) {
-		const float x = (i + offset) + nudge;
-		data[i] = filter_mitchell(x / half_width, b, c);
+	for (uint i = 0; i < m_windowSize; i++) {
+		const float x = (i - halfWindowSize) + nudge;
+		m_data[i] = filter_mitchell(x / halfWindowSize, b, c);
 	}
 	
 	normalize();
@@ -336,25 +339,25 @@ void Kernel1::initMitchell(float b, float c)
 /// Print the kernel for debugging purposes.
 void Kernel1::debugPrint()
 {
-	for(uint i = 0; i < w; i++) {
-		nvDebug("%d: %f\n", i, data[i]);
+	for (uint i = 0; i < m_windowSize; i++) {
+		nvDebug("%d: %f\n", i, m_data[i]);
 	}
 }
 
 
 
 /// Ctor.
-Kernel2::Kernel2(uint width) : w(width)
+Kernel2::Kernel2(uint ws) : m_windowSize(ws)
 {
-	data = new float[w*w];
+	m_data = new float[m_windowSize * m_windowSize];
 }
 
 /// Copy ctor.
-Kernel2::Kernel2(const Kernel2 & k) : w(k.w)
+Kernel2::Kernel2(const Kernel2 & k) : m_windowSize(k.m_windowSize)
 {
-	data = new float[w*w];
-	for(uint i = 0; i < w*w; i++) {
-		data[i] = k.data[i];
+	m_data = new float[m_windowSize * m_windowSize];
+	for (uint i = 0; i < m_windowSize * m_windowSize; i++) {
+		m_data[i] = k.m_data[i];
 	}
 }
 
@@ -362,29 +365,29 @@ Kernel2::Kernel2(const Kernel2 & k) : w(k.w)
 /// Dtor.
 Kernel2::~Kernel2()
 {
-	delete data;
+	delete m_data;
 }
 
 /// Normalize the filter.
 void Kernel2::normalize()
 {
 	float total = 0.0f;
-	for(uint i = 0; i < w*w; i++) {
-		total += fabs(data[i]);
+	for(uint i = 0; i < m_windowSize*m_windowSize; i++) {
+		total += fabs(m_data[i]);
 	}
 	
 	float inv = 1.0f / total;
-	for(uint i = 0; i < w*w; i++) {
-		data[i] *= inv;
+	for(uint i = 0; i < m_windowSize*m_windowSize; i++) {
+		m_data[i] *= inv;
 	}
 }
 
 /// Transpose the kernel.
 void Kernel2::transpose()
 {
-	for(uint i = 0; i < w; i++) {
-		for(uint j = i+1; j < w; j++) {
-			swap(data[i*w + j], data[j*w + i]);
+	for(uint i = 0; i < m_windowSize; i++) {
+		for(uint j = i+1; j < m_windowSize; j++) {
+			swap(m_data[i*m_windowSize + j], m_data[j*m_windowSize + i]);
 		}
 	}
 }
@@ -392,40 +395,40 @@ void Kernel2::transpose()
 /// Init laplacian filter, usually used for sharpening.
 void Kernel2::initLaplacian()
 {
-	nvDebugCheck(w == 3);
-//	data[0] = -1; data[1] = -1; data[2] = -1;
-//	data[3] = -1; data[4] = +8; data[5] = -1;
-//	data[6] = -1; data[7] = -1; data[8] = -1;	
+	nvDebugCheck(m_windowSize == 3);
+//	m_data[0] = -1; m_data[1] = -1; m_data[2] = -1;
+//	m_data[3] = -1; m_data[4] = +8; m_data[5] = -1;
+//	m_data[6] = -1; m_data[7] = -1; m_data[8] = -1;	
 	
-	data[0] = +0; data[1] = -1; data[2] = +0;
-	data[3] = -1; data[4] = +4; data[5] = -1;
-	data[6] = +0; data[7] = -1; data[8] = +0;	
+	m_data[0] = +0; m_data[1] = -1; m_data[2] = +0;
+	m_data[3] = -1; m_data[4] = +4; m_data[5] = -1;
+	m_data[6] = +0; m_data[7] = -1; m_data[8] = +0;	
 	
-//	data[0] = +1; data[1] = -2; data[2] = +1;
-//	data[3] = -2; data[4] = +4; data[5] = -2;
-//	data[6] = +1; data[7] = -2; data[8] = +1;	
+//	m_data[0] = +1; m_data[1] = -2; m_data[2] = +1;
+//	m_data[3] = -2; m_data[4] = +4; m_data[5] = -2;
+//	m_data[6] = +1; m_data[7] = -2; m_data[8] = +1;	
 }
 
 
 /// Init simple edge detection filter.
 void Kernel2::initEdgeDetection()
 {
-	nvCheck(w == 3);
-	data[0] = 0; data[1] = 0; data[2] = 0;
-	data[3] = -1; data[4] = 0; data[5] = 1;
-	data[6] = 0; data[7] = 0; data[8] = 0;
+	nvCheck(m_windowSize == 3);
+	m_data[0] = 0; m_data[1] = 0; m_data[2] = 0;
+	m_data[3] =-1; m_data[4] = 0; m_data[5] = 1;
+	m_data[6] = 0; m_data[7] = 0; m_data[8] = 0;
 }
 
 /// Init sobel filter.
 void Kernel2::initSobel()
 {
-	if (w == 3)
+	if (m_windowSize == 3)
 	{
-		data[0] = -1; data[1] = 0; data[2] = 1;
-		data[3] = -2; data[4] = 0; data[5] = 2;
-		data[6] = -1; data[7] = 0; data[8] = 1;
+		m_data[0] = -1; m_data[1] = 0; m_data[2] = 1;
+		m_data[3] = -2; m_data[4] = 0; m_data[5] = 2;
+		m_data[6] = -1; m_data[7] = 0; m_data[8] = 1;
 	}
-	else if (w == 5)
+	else if (m_windowSize == 5)
 	{
 		float elements[] = {
             -1, -2, 0, 2, 1,
@@ -436,10 +439,10 @@ void Kernel2::initSobel()
 		};
 
 		for (int i = 0; i < 5*5; i++) {
-			data[i] = elements[i];
+			m_data[i] = elements[i];
 		}
 	}
-	else if (w == 7)
+	else if (m_windowSize == 7)
 	{
 		float elements[] = {
             -1, -2, -3, 0, 3, 2, 1,
@@ -452,10 +455,10 @@ void Kernel2::initSobel()
 		};
 
 		for (int i = 0; i < 7*7; i++) {
-			data[i] = elements[i];
+			m_data[i] = elements[i];
 		}
 	}
-	else if (w == 9)
+	else if (m_windowSize == 9)
 	{
 		float elements[] = {
             -1, -2, -3, -4, 0, 4, 3, 2, 1,
@@ -470,7 +473,7 @@ void Kernel2::initSobel()
 		};
 		
 		for (int i = 0; i < 9*9; i++) {
-			data[i] = elements[i];
+			m_data[i] = elements[i];
 		}
 	}
 }
@@ -478,13 +481,13 @@ void Kernel2::initSobel()
 /// Init prewitt filter.
 void Kernel2::initPrewitt()
 {
-	if (w == 3)
+	if (m_windowSize == 3)
 	{
-		data[0] = -1; data[1] = 0; data[2] = -1;
-		data[3] = -1; data[4] = 0; data[5] = -1;
-		data[6] = -1; data[7] = 0; data[8] = -1;
+		m_data[0] = -1; m_data[1] = 0; m_data[2] = -1;
+		m_data[3] = -1; m_data[4] = 0; m_data[5] = -1;
+		m_data[6] = -1; m_data[7] = 0; m_data[8] = -1;
 	}
-	else if (w == 5)
+	else if (m_windowSize == 5)
 	{
 		// @@ Is this correct?
 		float elements[] = {
@@ -496,7 +499,7 @@ void Kernel2::initPrewitt()
 		};
 
 		for (int i = 0; i < 5*5; i++) {
-			data[i] = elements[i];
+			m_data[i] = elements[i];
 		}
 	}
 }
@@ -504,7 +507,7 @@ void Kernel2::initPrewitt()
 /// Init blended sobel filter.
 void Kernel2::initBlendedSobel(const Vector4 & scale)
 {
-	nvCheck(w == 9);
+	nvCheck(m_windowSize == 9);
 
 	{
 		const float elements[] = {
@@ -520,7 +523,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 		};
 		
 		for (int i = 0; i < 9*9; i++) {
-			data[i] = elements[i] * scale.w();
+			m_data[i] = elements[i] * scale.w();
 		}
 	}
 	{
@@ -536,7 +539,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 		for (int i = 0; i < 7; i++) {
 			for (int e = 0; e < 7; e++) {
-				data[i * 9 + e + 1] += elements[i * 7 + e] * scale.z();
+				m_data[i * 9 + e + 1] += elements[i * 7 + e] * scale.z();
 			}
 		}
 	}
@@ -551,7 +554,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 		for (int i = 0; i < 5; i++) {
 			for (int e = 0; e < 5; e++) {
-				data[i * 9 + e + 2] += elements[i * 5 + e] * scale.y();
+				m_data[i * 9 + e + 2] += elements[i * 5 + e] * scale.y();
 			}
 		}
 	}
@@ -564,7 +567,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 		for (int i = 0; i < 3; i++) {
 			for (int e = 0; e < 3; e++) {
-				data[i * 9 + e + 3] += elements[i * 3 + e] * scale.x();
+				m_data[i * 9 + e + 3] += elements[i * 3 + e] * scale.x();
 			}
 		}
 	}
@@ -580,6 +583,7 @@ static bool isMonoPhase(float w)
 {
 	return isZero(frac(w));
 }
+
 
 
 PolyphaseKernel::PolyphaseKernel(float w, uint l) :
@@ -605,42 +609,70 @@ PolyphaseKernel::~PolyphaseKernel()
 	delete [] m_data;
 }
 
+
+/* @@ Should we precompute left & right?
+
+	// scale factor
+	double dScale = double(uDstSize) / double(uSrcSize);
+
+	if(dScale < 1.0) {
+		// minification
+		dWidth = dFilterWidth / dScale; 
+		dFScale = dScale; 
+	} else {
+		// magnification
+		dWidth= dFilterWidth; 
+	}
+
+	// window size is the number of sampled pixels
+	m_WindowSize = 2 * (int)ceil(dWidth) + 1; 
+	m_LineLength = uDstSize; 
+
+	// offset for discrete to continuous coordinate conversion
+	double dOffset = (0.5 / dScale) - 0.5;
+
+	for(u = 0; u < m_LineLength; u++) {
+		// scan through line of contributions
+		double dCenter = (double)u / dScale + dOffset;   // reverse mapping
+		// find the significant edge points that affect the pixel
+		int iLeft = MAX (0, (int)floor (dCenter - dWidth)); 
+		int iRight = MIN ((int)ceil (dCenter + dWidth), int(uSrcSize) - 1); 
+
+		...
+	}
+*/
+
 void PolyphaseKernel::initFilter(Filter::Enum f, int samples/*= 1*/)
 {
 	nvCheck(f < Filter::Num);
-	
-	nvDebug("Init Filter:\n");
-	nvDebug("  width = %f\n", m_width);
 	
 	float (* filter_function)(float) = s_filter_array[f].function;
 	const float support = s_filter_array[f].support;
 	
 	const float half_width = m_width / 2;
-	const float offset = -half_width;
-	
-	const float s_scale = 1.0f / float(samples);
-	const float x_scale = support / half_width;
+	const float scale = support / half_width;
 	
 	for (uint j = 0; j < m_length; j++)
 	{
 		const float phase = frac(m_width * j);
+		const float offset = half_width + phase;
 		
+		nvDebug("%d: ", j);
+
 		float total = 0.0f;
 		for (uint i = 0; i < m_size; i++)
 		{
-			const float x = i + offset - phase;
-			
-			float sum = 0;
-			for(int s = 0; s < samples; s++)
-			{
-				const float xx = x + (s + 0.5f) * s_scale;
-				sum += filter_function(xx * x_scale);
-			}
-			m_data[j * m_size + i] = sum;
-			
-			total += sum;
+			float sample = sampleFilter(filter_function, i - offset, scale, samples);
+
+			nvDebug("(%5.3f | %d) ", sample, j + i - m_size/2);
+
+			m_data[j * m_size + i] = sample;
+			total += sample;
 		}
+
+		nvDebug("\n");
 		
+		// normalize weights.
 		for (uint i = 0; i < m_size; i++)
 		{
 			m_data[j * m_size + i] /= total;
