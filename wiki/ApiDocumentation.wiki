@@ -131,7 +131,8 @@ Where the `wrapMode` argument must have one the following values:
   * !WrapMode_Repeat
   * !WrapMode_Clamp
 
-*TODO*: wrapMode is also used for normal map conversion.
+Note that the `wrapMode` is also used for other image processing operations, like normal map generation. So, it's a good idea to set it even if you are not generating mipmaps.
+
 
 === Gamma Correction ===
 
