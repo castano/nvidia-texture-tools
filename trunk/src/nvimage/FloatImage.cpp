@@ -578,7 +578,7 @@ FloatImage * FloatImage::downSample(const Kernel1 & kernel, uint w, uint h, Wrap
 		for(uint y = 0; y < h; y++) {
 			for(uint x = 0; x < w; x++) {
 				
-				float sum = this->applyKernelVertical(&kernel, uint(x*xscale), uint(y*yscale), c, wm);
+				float sum = tmp_image->applyKernelVertical(&kernel, uint(x*xscale), uint(y*yscale), c, wm);
 				
 				const uint dst_index = dst_image->index(x, y);
 				dst_channel[dst_index] = sum;
@@ -598,7 +598,6 @@ FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
 	const float yscale = float(m_height) / float(h);
 	
 	int kw = 1;
-	
 	float xwidth = kw * xscale;
 	float ywidth = kw * yscale;
 	
@@ -626,13 +625,13 @@ FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
 		float * tmp_channel = tmp_image->channel(c);
 		
 		for(uint y = 0; y < m_height; y++) {
-			this->applyKernelHorizontal(&xkernel, xkernel.size(), y, c, wm, tmp_channel + y * w);
+			this->applyKernelHorizontal(&xkernel, xscale, y, c, wm, tmp_channel + y * w);
 		}
 		
 		float * dst_channel = dst_image->channel(c);
 		
 		for(uint x = 0; x < w; x++) {
-			this->applyKernelVertical(&ykernel, x * xscale, yscale, c, wm, tmp_column.unsecureBuffer());
+			tmp_image->applyKernelVertical(&ykernel, yscale, x, c, wm, tmp_column.unsecureBuffer());
 			
 			for(uint y = 0; y < h; y++) {
 				dst_channel[y * w + x] = tmp_column[y];
@@ -721,12 +720,12 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, 
 
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelVertical(const PolyphaseKernel * k, int x, float yscale, int c, WrapMode wm, float * output) const
+void FloatImage::applyKernelVertical(const PolyphaseKernel * k, float scale, int x, int c, WrapMode wm, float * output) const
 {
 	nvDebugCheck(k != NULL);
 	
 	const float kernelWidth = k->width();
-	const float kernelOffset = kernelWidth / 2;
+	const float kernelOffset = scale * 0.5f;
 	const int kernelLength = k->length();
 	const int kernelWindow = k->size();
 	
@@ -734,12 +733,10 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel * k, int x, float ysc
 
 	for (int y = 0; y < kernelLength; y++)
 	{
-		const float kernelPhase = (kernelWidth * y) - floor(kernelWidth * y);
-		
 		float sum = 0.0f;
 		for (int i = 0; i < kernelWindow; i++)
 		{
-			const int src_y = int(y * kernelWidth - kernelOffset - kernelPhase) + i;
+			const int src_y = int(y * scale) + i;
 			const int idx = this->index(x, src_y, wm);
 			
 			sum += k->valueAt(y, i) * channel[idx];
@@ -750,12 +747,12 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel * k, int x, float ysc
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
-void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float xscale, int y, int c, WrapMode wm, float * output) const
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float scale, int y, int c, WrapMode wm, float * output) const
 {
 	nvDebugCheck(k != NULL);
 	
 	const float kernelWidth = k->width();
-	const float kernelOffset = kernelWidth / 2;
+	const float kernelOffset = scale * 0.5f;
 	const int kernelLength = k->length();
 	const int kernelWindow = k->size();
 	
@@ -763,12 +760,10 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float xscale, 
 
 	for (int x = 0; x < kernelLength; x++)
 	{
-		const float kernelPhase = (kernelWidth * x) - floor(kernelWidth * x);
-		
 		float sum = 0.0f;
 		for (int e = 0; e < kernelWindow; e++)
 		{
-			const int src_x = int(x * kernelWidth - kernelOffset - kernelPhase) + e;
+			const int src_x = int(x * scale) + e;
 			const int idx = this->index(src_x, y, wm);
 			
 			sum += k->valueAt(x, e) * channel[idx];
