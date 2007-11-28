@@ -12,7 +12,7 @@ namespace nv
 class Image;
 class Kernel1;
 class Kernel2;
-
+class PolyphaseKernel;
 
 /// Multicomponent floating point image class.
 class FloatImage
@@ -63,11 +63,17 @@ public:
 	NVIMAGE_API FloatImage * fastDownSample() const;
 	NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
 	NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
+	
+	// experimental polyphase filter:
+	NVIMAGE_API FloatImage * downSample(uint w, uint h, WrapMode wm) const;
 	//@}
 
 	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
+	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel * k, int x, float yscale, int c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel * k, float xscale, int y, int c, WrapMode wm, float * output) const;
+	
 	
 	uint width() const { return m_width; }
 	uint height() const { return m_height; }

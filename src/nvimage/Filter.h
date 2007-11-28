@@ -25,7 +25,7 @@ namespace nv
 			Kaiser,		// Kaiser-windowed sinc filter
 			Num
 		};
-
+		
 		float (*function)(float x);
 		float support;
 	};
@@ -49,9 +49,9 @@ namespace nv
 			return w;
 		}
 		
-		NVIMAGE_API void initFilter(Filter::Enum filter);
+		NVIMAGE_API void initFilter(Filter::Enum filter, int samples = 1);
 		NVIMAGE_API void initSinc(float stretch = 1);
-		NVIMAGE_API void initKaiser(float alpha = 4.0f, float stretch = 1.0f);
+		NVIMAGE_API void initKaiser(float alpha = 4.0f, float stretch = 1.0f, int sampes = 1);
 		NVIMAGE_API void initMitchell(float b = 1.0f/3.0f, float c = 1.0f/3.0f);
 		
 		NVIMAGE_API void debugPrint();
@@ -85,18 +85,49 @@ namespace nv
 		NVIMAGE_API void initEdgeDetection();
 		NVIMAGE_API void initSobel();
 		NVIMAGE_API void initPrewitt();
-
+		
 		NVIMAGE_API void initBlendedSobel(const Vector4 & scale);
-
+		
 	private:
 		const uint w;
 		float * data;
 	};
 
-
-	// @@ Implement non linear filters:
-	// Kuwahara filter
-	// Median filter
+	/// A 1D polyphase kernel
+	class PolyphaseKernel
+	{
+	public:
+		NVIMAGE_API PolyphaseKernel(float width, uint lineLength);
+		NVIMAGE_API PolyphaseKernel(const PolyphaseKernel & k);
+		NVIMAGE_API ~PolyphaseKernel();
+		
+		float valueAt(uint column, uint x) const {
+			return m_data[column * m_size + x];
+		}
+		
+		float width() const {
+			return m_width;
+		}
+		
+		uint size() const {
+			return m_size;
+		}
+		
+		uint length() const {
+			return m_length;
+		}
+		
+		NVIMAGE_API void initFilter(Filter::Enum filter, int samples = 1);
+		NVIMAGE_API void initKaiser(float alpha = 4.0f, float stretch = 0.5f);
+		
+		NVIMAGE_API void debugPrint();
+		
+	private:
+		const float m_width;
+		const uint m_size;
+		const uint m_length;
+		float * m_data;
+	};
 
 } // nv namespace
 
