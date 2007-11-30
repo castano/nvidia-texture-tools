@@ -21,8 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NVTT_CWRAPPER_H
-#define NVTT_CWRAPPER_H
+#ifndef NVTT_WRAPPER_H
+#define NVTT_WRAPPER_H
 
 #include <nvcore/nvcore.h>
 
@@ -132,4 +132,4 @@ NVTT_API int nvttEstimateSize(NvttInputOptions inputOptions, NvttCompressionOpti
 } // extern "C"
 #endif
 
-#endif // NVTT_CWRAPPER_H
+#endif // NVTT_WRAPPER_H
