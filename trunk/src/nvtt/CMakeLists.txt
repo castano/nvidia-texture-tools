@@ -5,6 +5,8 @@ ADD_SUBDIRECTORY(squish)
 SET(NVTT_SRCS
 	nvtt.h 
 	nvtt.cpp
+#	nvtt_wrapper.h
+#	nvtt_wrapper.cpp
 	CompressDXT.h
 	CompressDXT.cpp
 	CompressRGB.h
