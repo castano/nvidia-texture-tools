@@ -535,7 +535,7 @@ FloatImage * FloatImage::fastDownSample() const
 	return dst_image.release();
 }
 
-
+/*
 /// Downsample applying a 1D kernel separately in each dimension.
 FloatImage * FloatImage::downSample(const Kernel1 & kernel, WrapMode wm) const
 {
@@ -588,59 +588,83 @@ FloatImage * FloatImage::downSample(const Kernel1 & kernel, uint w, uint h, Wrap
 	
 	return dst_image.release();
 }
-
+*/
 
 /// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(uint w, uint h, WrapMode wm) const
+FloatImage * FloatImage::downSample(const Filter & filter, WrapMode wm) const
 {
-	// Build polyphase kernels.
-	const float xscale = float(m_width) / float(w);
-	const float yscale = float(m_height) / float(h);
-	
-	int kw = 1;
-	float xwidth = kw * xscale;
-	float ywidth = kw * yscale;
-	
-	PolyphaseKernel xkernel(xwidth, w);
-	PolyphaseKernel ykernel(ywidth, h);
-	
-	xkernel.initFilter(Filter::Box, 32);
-	ykernel.initFilter(Filter::Box, 32);
-//	xkernel.initKaiser(4, 1.0f / xscale);
-//	ykernel.initKaiser(4, 1.0f / yscale);
-	
-	xkernel.debugPrint();	
-	
-	// @@ Select fastest filtering order:
-	// w * m_height <= h * m_width -> XY, else -> YX
+	const uint w = max(1, m_width / 2);
+	const uint h = max(1, m_height / 2);
 
+	return downSample(filter, w, h, wm);
+}
+
+/// Downsample applying a 1D kernel separately in each dimension.
+FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapMode wm) const
+{
+	// @@ Use monophase filters when frac(m_width / w) == 0
+
+	PolyphaseKernel xkernel(filter, m_width, w);
+	PolyphaseKernel ykernel(filter, m_height, h);
+	
 	AutoPtr<FloatImage> tmp_image( new FloatImage() );
-	tmp_image->allocate(m_componentNum, w, m_height);
-	
 	AutoPtr<FloatImage> dst_image( new FloatImage() );	
-	dst_image->allocate(m_componentNum, w, h);
-	
-	Array<float> tmp_column(h);
-	tmp_column.resize(h);
-	
-	for (uint c = 0; c < m_componentNum; c++)
+
+	// @@ Select fastest filtering order:
+	//if (w * m_height <= h * m_width)
 	{
-		float * tmp_channel = tmp_image->channel(c);
+		tmp_image->allocate(m_componentNum, w, m_height);
+		dst_image->allocate(m_componentNum, w, h);
 		
-		for(uint y = 0; y < m_height; y++) {
-			this->applyKernelHorizontal(&xkernel, xscale, y, c, wm, tmp_channel + y * w);
-		}
+		Array<float> tmp_column(h);
+		tmp_column.resize(h);
 		
-		float * dst_channel = dst_image->channel(c);
-		
-		for (uint x = 0; x < w; x++) {
-			tmp_image->applyKernelVertical(&ykernel, yscale, x, c, wm, tmp_column.unsecureBuffer());
+		for (uint c = 0; c < m_componentNum; c++)
+		{
+			float * tmp_channel = tmp_image->channel(c);
 			
-			for(uint y = 0; y < h; y++) {
-				dst_channel[y * w + x] = tmp_column[y];
+			for (uint y = 0; y < m_height; y++) {
+				this->applyKernelHorizontal(xkernel, y, c, wm, tmp_channel + y * w);
+			}
+			
+			float * dst_channel = dst_image->channel(c);
+			
+			for (uint x = 0; x < w; x++) {
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
+				
+				for (uint y = 0; y < h; y++) {
+					dst_channel[y * w + x] = tmp_column[y];
+				}
 			}
 		}
 	}
+	/*else
+	{
+		tmp_image->allocate(m_componentNum, m_width, h);
+		dst_image->allocate(m_componentNum, w, h);
+		
+		Array<float> tmp_column(h);
+		tmp_column.resize(h);
+		
+		for (uint c = 0; c < m_componentNum; c++)
+		{
+			float * tmp_channel = tmp_image->channel(c);
+
+			for (uint x = 0; x < w; x++) {
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
+				
+				for (uint y = 0; y < h; y++) {
+					tmp_channel[y * w + x] = tmp_column[y];
+				}
+			}
+
+			float * dst_channel = dst_image->channel(c);
+
+			for (uint y = 0; y < m_height; y++) {
+				this->applyKernelHorizontal(xkernel, y, c, wm, dst_channel + y * w);
+			}
+		}
+	}*/
 	
 	return dst_image.release();
 }
@@ -722,15 +746,46 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, 
 
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelVertical(const PolyphaseKernel * k, float scale, int x, int c, WrapMode wm, float * output) const
+void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, WrapMode wm, float * output) const
 {
-	nvDebugCheck(k != NULL);
-	
+	uint length = k.length();
+	float scale = float(length) / float(m_height);
+	float iscale = 1.0f / scale;
+
+	float width = k.width();
+	float windowSize = k.windowSize();
+
+	const float * channel = this->channel(c);
+
+	for (uint i = 0; i < length; i++)
+	{
+		const float center = (0.5f + i) * iscale;
+		
+		int left = floor(center - width);
+		int right = ceil(center + width);
+		
+		nvCheck(right - left <= windowSize);
+
+		float sum = 0;
+		for (int j = 0; j < windowSize; ++j)
+		{
+			const int idx = this->index(x, j+left, wm);
+			
+			sum += k.valueAt(i, j) * channel[idx];
+		}
+		
+		output[i] = sum;
+	}
+
+	/*
 	const float kernelWidth = k->width();
 	const float kernelOffset = kernelWidth * 0.5f;
 	const int kernelLength = k->length();
 	const int kernelWindow = k->windowSize();
 	
+	//const float offset = 0.5f * scale * (1 - kw);
+	const float offset = (0.5f * scale) - kernelOffset;
+
 	const float * channel = this->channel(c);
 
 	for (int y = 0; y < kernelLength; y++)
@@ -738,7 +793,7 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel * k, float scale, int
 		float sum = 0.0f;
 		for (int i = 0; i < kernelWindow; i++)
 		{
-			const int src_y = int(y * scale) + i;
+			const int src_y = int(y * scale + offset) + i;
 			const int idx = this->index(x, src_y, wm);
 			
 			sum += k->valueAt(y, i) * channel[idx];
@@ -746,18 +801,48 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel * k, float scale, int
 		
 		output[y] = sum;
 	}
+	*/
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
-void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float scale, int y, int c, WrapMode wm, float * output) const
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, WrapMode wm, float * output) const
 {
-	nvDebugCheck(k != NULL);
-	
+	uint length = k.length();
+	float scale = float(length) / float(m_width);
+	float iscale = 1.0f / scale;
+
+	float width = k.width();
+	float windowSize = k.windowSize();
+
+	const float * channel = this->channel(c);
+
+	for (uint i = 0; i < length; i++)
+	{
+		const float center = (0.5f + i) * iscale;
+		
+		int left = floor(center - width);
+		int right = ceil(center + width);
+		nvCheck(right - left <= (int)windowSize);
+
+		float sum = 0;
+		for (int j = 0; j < windowSize; ++j)
+		{
+			const int idx = this->index(left + j, y, wm);
+			
+			sum += k.valueAt(i, j) * channel[idx];
+		}
+		
+		output[i] = sum;
+	}
+
+	/*
 	const float kernelWidth = k->width();
 	const float kernelOffset = kernelWidth * 0.5f;
 	const int kernelLength = k->length();
 	const int kernelWindow = k->windowSize();
-	
+
+	const float offset = (0.5f * scale) - kernelOffset;
+
 	const float * channel = this->channel(c);
 
 	for (int x = 0; x < kernelLength; x++)
@@ -765,7 +850,7 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float scale, i
 		float sum = 0.0f;
 		for (int e = 0; e < kernelWindow; e++)
 		{
-			const int src_x = int(x * scale) + e;
+			const int src_x = int(x * scale + offset) + e;
 			const int idx = this->index(src_x, y, wm);
 			
 			sum += k->valueAt(x, e) * channel[idx];
@@ -773,5 +858,6 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel * k, float scale, i
 		
 		output[x] = sum;
 	}
+	*/
 }
 

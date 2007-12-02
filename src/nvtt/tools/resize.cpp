@@ -68,7 +68,7 @@ static bool loadImage(nv::Image & image, const char * fileName)
 
 int main(int argc, char *argv[])
 {
-	MyAssertHandler assertHandler;
+	//MyAssertHandler assertHandler;
 	MyMessageHandler messageHandler;
 
 	float scale = 0.5f;
@@ -122,7 +122,8 @@ int main(int argc, char *argv[])
 //	k.initKaiser(4, scale, 20);
 //	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(k, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Clamp));
 	
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
+	nv::BoxFilter filter;
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(filter, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
 	
 	
 	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(1.0));

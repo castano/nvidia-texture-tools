@@ -10,6 +10,7 @@
 namespace nv
 {
 class Image;
+class Filter;
 class Kernel1;
 class Kernel2;
 class PolyphaseKernel;
@@ -61,18 +62,18 @@ public:
 	
 	
 	NVIMAGE_API FloatImage * fastDownSample() const;
-	NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
-	NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
-	
-	// experimental polyphase filter:
-	NVIMAGE_API FloatImage * downSample(uint w, uint h, WrapMode wm) const;
+	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
+	NVIMAGE_API FloatImage * downSample(const Filter & filter, uint w, uint h, WrapMode wm) const;
+
+	//NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
+	//NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
 	//@}
 
 	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
-	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel * k, float scale, int x, int c, WrapMode wm, float * output) const;
-	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel * k, float scale, int y, int c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, int c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, WrapMode wm, float * output) const;
 	
 	
 	uint width() const { return m_width; }
@@ -225,17 +226,16 @@ inline uint FloatImage::indexRepeat(int x, int y) const
 	return repeat_remainder(y, m_height) * m_width + repeat_remainder(x, m_width);
 }
 
-// @@ This could be way more efficient.
 inline uint FloatImage::indexMirror(int x, int y) const
 {
-	while ((x < 0) || (x > (m_width - 1))) {
-		if (x < 0) x = -x;
-		if (x >= m_width) x = m_width + m_width - x - 1;
+	x = abs(x);
+	while (x >= m_width) {
+		x = m_width + m_width - x - 2;
 	}
 
-	while ((y < 0) || (y > (m_height - 1))) {
-		if (y < 0) y = -y;
-		if (y >= m_height) y = m_height + m_height - y - 1;
+	y = abs(y);
+	while (y >= m_height) {
+		y = m_height + m_height - y - 2;
 	}
 
 	return index(x, y);

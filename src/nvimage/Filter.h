@@ -9,28 +9,108 @@ namespace nv
 {
 	class Vector4;
 
-	/// A filter function.
-	struct Filter 
+	/// Base filter class.
+	class Filter
 	{
-		// Standard filters.
-		enum Enum 
-		{
-			Box,
-			Triangle,
-			Quadratic,	// Bell
-			Cubic,
-			Spline,
-			Lanczos,
-			Mitchell,
-			Kaiser,		// Kaiser-windowed sinc filter
-			Num
-		};
-		
-		typedef float (* Function)(float);
+	public:
+		NVIMAGE_API Filter(float width);
 
-		Function function;
-		float support;
+		NVIMAGE_API float width() const { return m_width; }
+		NVIMAGE_API float sample(float x, float scale, int samples) const;
+
+		virtual float evaluate(float x) const = 0;
+
+	protected:
+		const float m_width;
 	};
+
+	// Box filter.
+	class BoxFilter : public Filter
+	{
+	public:
+		NVIMAGE_API BoxFilter();
+		NVIMAGE_API BoxFilter(float width);
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	// Triangle (bilinear/tent) filter.
+	class TriangleFilter : public Filter
+	{
+	public:
+		NVIMAGE_API TriangleFilter();
+		NVIMAGE_API TriangleFilter(float width);
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	// Quadratic (bell) filter.
+	class QuadraticFilter : public Filter
+	{
+	public:
+		NVIMAGE_API QuadraticFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	// Cubic filter from Thatcher Ulrich.
+	class CubicFilter : public Filter
+	{
+	public:
+		NVIMAGE_API CubicFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	// Cubic b-spline filter from Paul Heckbert.
+	class BSplineFilter : public Filter
+	{
+	public:
+		NVIMAGE_API BSplineFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	/// Mitchell & Netravali's two-param cubic
+	/// @see "Reconstruction Filters in Computer Graphics", SIGGRAPH 88
+	class MitchellFilter : public Filter
+	{
+	public:
+		NVIMAGE_API MitchellFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
+
+		NVIMAGE_API void setParameters(float a, float b);
+
+	private:
+		float p0, p2, p3;
+		float q0, q1, q2, q3;
+	};
+
+	// Lanczos3 filter.
+	class LanczosFilter : public Filter
+	{
+	public:
+		NVIMAGE_API LanczosFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	// Sinc filter.
+	class SincFilter : public Filter
+	{
+	public:
+		NVIMAGE_API SincFilter(float w);
+		NVIMAGE_API virtual float evaluate(float x) const;
+	};
+
+	// Kaiser filter.
+	class KaiserFilter : public Filter
+	{
+	public:
+		NVIMAGE_API KaiserFilter(float w);
+		NVIMAGE_API virtual float evaluate(float x) const;
+	
+		NVIMAGE_API void setParameters(float a, float stretch);
+
+	private:
+		float alpha;
+		float stretch;
+	};
+
 
 
 	/// A 1D kernel. Used to precompute filter weights.
@@ -50,11 +130,12 @@ namespace nv
 		uint windowSize() const {
 			return m_windowSize;
 		}
-		
+		/*
 		NVIMAGE_API void initFilter(Filter::Enum filter, int samples = 1);
 		NVIMAGE_API void initSinc(float stretch = 1);
 		NVIMAGE_API void initKaiser(float alpha = 4.0f, float stretch = 1.0f, int sampes = 1);
 		NVIMAGE_API void initMitchell(float b = 1.0f/3.0f, float c = 1.0f/3.0f);
+		*/
 		
 		NVIMAGE_API void debugPrint();
 		
@@ -95,39 +176,39 @@ namespace nv
 		float * m_data;
 	};
 
+
 	/// A 1D polyphase kernel
 	class PolyphaseKernel
 	{
+		NV_FORBID_COPY(PolyphaseKernel)
 	public:
-		NVIMAGE_API PolyphaseKernel(float width, uint lineLength);
-		NVIMAGE_API PolyphaseKernel(const PolyphaseKernel & k);
+		NVIMAGE_API PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength);
 		NVIMAGE_API ~PolyphaseKernel();
 		
-		float valueAt(uint column, uint x) const {
-			return m_data[column * m_size + x];
-		}
-		
-		float width() const {
-			return m_width;
-		}
-		
 		uint windowSize() const {
-			return m_size;
+			return m_windowSize;
 		}
 		
 		uint length() const {
 			return m_length;
 		}
-		
-		NVIMAGE_API void initFilter(Filter::Enum filter, int samples = 1);
-		NVIMAGE_API void initKaiser(float alpha = 4.0f, float stretch = 0.5f);
-		
-		NVIMAGE_API void debugPrint();
+
+		float width() const {
+			return m_width;
+		}
+
+		float valueAt(uint column, uint x) const {
+			nvDebugCheck(column < m_length);
+			nvDebugCheck(x < m_windowSize);
+			return m_data[column * m_windowSize + x];
+		}
+
+		NVIMAGE_API void debugPrint() const;
 		
 	private:
-		const float m_width;
-		const uint m_size;
-		const uint m_length;
+		uint m_windowSize;
+		uint m_length;
+		float m_width;
 		float * m_data;
 	};
 
