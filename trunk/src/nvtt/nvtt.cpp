@@ -325,15 +325,15 @@ static FloatImage * createMipmap(const FloatImage * floatImage, const InputOptio
 	}
 	else if (inputOptions.mipmapFilter == MipmapFilter_Triangle)
 	{
-		Kernel1 kernel(4);
-		kernel.initFilter(Filter::Triangle);
-		result = floatImage->downSample(kernel, (FloatImage::WrapMode)inputOptions.wrapMode);
+		TriangleFilter filter;
+		result = floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode);
 	}
 	else /*if (inputOptions.mipmapFilter == MipmapFilter_Kaiser)*/
 	{
-		Kernel1 kernel(inputOptions.kaiserWidth);
-		kernel.initKaiser(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-		result = floatImage->downSample(kernel, (FloatImage::WrapMode)inputOptions.wrapMode);
+		nvDebugCheck(inputOptions.mipmapFilter == MipmapFilter_Kaiser);
+		KaiserFilter filter(inputOptions.kaiserWidth);
+		filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
+		result = floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode);
 	}
 	
 	// Normalize mipmap.

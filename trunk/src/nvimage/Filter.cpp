@@ -9,6 +9,7 @@
  *
  * References from Thacher Ulrich:
  * See _Graphics Gems III_ "General Filtered Image Rescaling", Dale A. Schumacher
+ * http://tog.acm.org/GraphicsGems/gemsiii/filter.c
  *
  * References from Paul Heckbert:
  * A.V. Oppenheim, R.W. Schafer, Digital Signal Processing, Prentice-Hall, 1975
@@ -27,6 +28,9 @@
  * Reconstruction Filters in Computer Graphics
  * http://www.mentallandscape.com/Papers_siggraph88.pdf 
  *
+ * More references:
+ * http://www.worldserver.com/turk/computergraphics/ResamplingFilters.pdf 
+ * http://www.dspguide.com/ch16.htm
  */
 
 
@@ -39,28 +43,107 @@ using namespace nv;
 
 namespace
 {
+	// Sinc function.
+	inline static float sincf(const float x)
+	{
+		if (fabs(x) < NV_EPSILON) {
+			//return 1.0;
+			return 1.0f + x*x*(-1.0f/6.0f + x*x*1.0f/120.0f);
+		}
+		else {
+			return sin(x) / x;
+		}
+	}
 
-// support = 0.5
-inline static float filter_box(float x)
+	// Bessel function of the first kind from Jon Blow's article.
+	// http://mathworld.wolfram.com/BesselFunctionoftheFirstKind.html
+	// http://en.wikipedia.org/wiki/Bessel_function
+	inline static float bessel0(float x)
+	{
+		const float EPSILON_RATIO = 1E-6;
+		float xh, sum, pow, ds;
+		int k;
+
+		xh = 0.5 * x;
+		sum = 1.0;
+		pow = 1.0;
+		k = 0;
+		ds = 1.0;
+		while (ds > sum * EPSILON_RATIO) {
+			++k;
+			pow = pow * (xh / k);
+			ds = pow * pow;
+			sum = sum + ds;
+		}
+
+		return sum;
+	}
+
+	/*// Alternative bessel function from Paul Heckbert.
+	static float _bessel0(float x)
+	{
+		const float EPSILON_RATIO = 1E-6;
+		float sum = 1.0f;
+		float y = x * x / 4.0f;
+		float t = y;
+		for(int i = 2; t > EPSILON_RATIO; i++) {
+			sum += t;
+			t *= y / float(i * i);
+		}
+		return sum;
+	}*/
+
+} // namespace
+
+
+Filter::Filter(float width) : m_width(width)
 {
-    if( x < -0.5f ) return 0.0f;
-    if( x <= 0.5 ) return 1.0f;
+}
+
+float Filter::sample(float x, float scale, int samples) const
+{
+//	return evaluate(x * scale);
+
+	float sum = 0;
+	float isamples = 1.0f / float(samples);
+
+	for(int s = 0; s < samples; s++)
+	{
+		float p = (x + (float(s) + 0.5f) * isamples) * scale;
+		float value = evaluate(p);
+		sum += value;
+	}
+	
+	return sum * isamples;
+}
+
+
+BoxFilter::BoxFilter() : Filter(0.5f) {}
+BoxFilter::BoxFilter(float width) : Filter(width) {}
+
+float BoxFilter::evaluate(float x) const
+{
+	if (fabs(x) <= m_width) return 1.0f;
+	else return 0.0f;
+}
+
+
+TriangleFilter::TriangleFilter() : Filter(1.0f) {}
+TriangleFilter::TriangleFilter(float width) : Filter(width) {}
+
+float TriangleFilter::evaluate(float x) const
+{
+	x = fabs(x);
+    if( x < m_width ) return m_width - x;
     return 0.0f;
 }
 
-// support = 1.0
-inline static float filter_triangle(float x)
-{
-    if( x < -1.0f ) return 0.0f;
-    if( x < 0.0f ) return 1.0f + x;
-    if( x < 1.0f ) return 1.0f - x;
-    return 0.0f;
-}
 
-// support = 1.5
-inline static float filter_quadratic(float x)
+QuadraticFilter::QuadraticFilter() : Filter(1.5f) {}
+
+float QuadraticFilter::evaluate(float x) const
 {
-	if( x < 0.0f ) x = -x;
+	x = fabs(x);
     if( x < 0.5f ) return 0.75f - x * x;
     if( x < 1.5f ) { 
     	float t = x - 1.5f;
@@ -69,22 +152,23 @@ inline static float filter_quadratic(float x)
     return 0.0f;
 }
 
-// @@ Filter from tulrich. 
-// support 1.0
-inline static float filter_cubic(float x)
+
+CubicFilter::CubicFilter() : Filter(1.0f) {}
+
+float CubicFilter::evaluate(float x) const
 {
 	// f(t) = 2|t|^3 - 3|t|^2 + 1, -1 <= t <= 1
-	if( x < 0.0f ) x = -x;
+	x = fabs(x);
 	if( x < 1.0f ) return((2.0f * x - 3.0f) * x * x + 1.0f);
 	return 0.0f;
 }
 
 
-// @@ Paul Heckbert calls this cubic instead of spline.
-// support = 2.0
-inline static float filter_spline(float x)
+BSplineFilter::BSplineFilter() : Filter(2.0f) {}
+
+float BSplineFilter::evaluate(float x) const
 {
-    if( x < 0.0f ) x = -x;
+	x = fabs(x);
     if( x < 1.0f ) return (4.0f + x * x * (-6.0f + x * 3.0f)) / 6.0f;
     if( x < 2.0f ) { 
     	float t = 2.0f - x;
@@ -93,132 +177,64 @@ inline static float filter_spline(float x)
     return 0.0f;
 }
 
-/// Sinc function.
-inline float sincf( const float x )
+
+MitchellFilter::MitchellFilter() : Filter(2.0f) { setParameters(1.0f/3.0f, 1.0f/3.0f); }
+
+float MitchellFilter::evaluate(float x) const
 {
-	if( fabs(x) < NV_EPSILON ) {
-		return 1.0 ;
-		//return 1.0f + x*x*(-1.0f/6.0f + x*x*1.0f/120.0f);
-	}
-	else {
-		return sin(x) / x;
-	}
-}
-
-// support = 3.0
-inline static float filter_lanczos3(float x)
-{
-	if( x < 0.0f ) x = -x;
-	if( x < 3.0f ) return sincf(x) * sincf(x / 3.0f);
-	return 0.0f;
-}
-
-
-
-// Mitchell & Netravali's two-param cubic
-// see "Reconstruction Filters in Computer Graphics", SIGGRAPH 88
-// support = 2.0
-inline static float filter_mitchell(float x, float b, float c)
-{
-	// @@ Coefficients could be precomputed.
-	// @@ if b and c are fixed, these are constants.
-	const float p0 = (6.0f -  2.0f * b) / 6.0f;
-	const float p2 = (-18.0f + 12.0f * b + 6.0f * c) / 6.0f;
-	const float p3 = (12.0f - 9.0f * b - 6.0f * c) / 6.0f;
-	const float q0 = (8.0f * b + 24.0f * c) / 6.0f;
-	const float q1 = (-12.0f * b - 48.0f * c) / 6.0f;
-	const float q2 = (6.0f * b + 30.0f * c) / 6.0f;
-	const float q3 = (-b - 6.0f * c) / 6.0f;
-
-	if( x < 0.0f ) x = -x;
+	x = fabs(x);
 	if( x < 1.0f ) return p0 + x * x * (p2 + x * p3);
 	if( x < 2.0f ) return q0 + x * (q1 + x * (q2 + x * q3));
 	return 0.0f;
 }
 
-inline static float filter_mitchell(float x)
+void MitchellFilter::setParameters(float b, float c)
 {
-	return filter_mitchell(x, 1.0f/3.0f, 1.0f/3.0f);
-}
-
-// Bessel function of the first kind from Jon Blow's article.
-// http://mathworld.wolfram.com/BesselFunctionoftheFirstKind.html
-// http://en.wikipedia.org/wiki/Bessel_function
-static float bessel0(float x)
-{
-	const float EPSILON_RATIO = 1E-6;
-	float xh, sum, pow, ds;
-	int k;
-
-	xh = 0.5 * x;
-	sum = 1.0;
-	pow = 1.0;
-	k = 0;
-	ds = 1.0;
-	while (ds > sum * EPSILON_RATIO) {
-		++k;
-		pow = pow * (xh / k);
-		ds = pow * pow;
-		sum = sum + ds;
-	}
-
-	return sum;
-}
-
-/*// Alternative bessel function from Paul Heckbert.
-static float _bessel0(float x)
-{
-	const float EPSILON_RATIO = 1E-6;
-    float sum = 1.0f;
-    float y = x * x / 4.0f;
-    float t = y;
-    for(int i = 2; t > EPSILON_RATIO; i++) {
-		sum += t;
-		t *= y / float(i * i);
-    }
-    return sum;
-}*/
-
-// support = 1.0
-inline static float filter_kaiser(float x, float alpha)
-{
-	return bessel0(alpha * sqrtf(1 - x * x)) / bessel0(alpha);
-}
-
-inline static float filter_kaiser(float x)
-{
-	return filter_kaiser(x, 4.0f);
+	p0 = (6.0f -  2.0f * b) / 6.0f;
+	p2 = (-18.0f + 12.0f * b + 6.0f * c) / 6.0f;
+	p3 = (12.0f - 9.0f * b - 6.0f * c) / 6.0f;
+	q0 = (8.0f * b + 24.0f * c) / 6.0f;
+	q1 = (-12.0f * b - 48.0f * c) / 6.0f;
+	q2 = (6.0f * b + 30.0f * c) / 6.0f;
+	q3 = (-b - 6.0f * c) / 6.0f;
 }
 
 
-// Array of filters.
-static Filter s_filter_array[] = {
-	{filter_box, 		0.5f},	// Box
-	{filter_triangle, 	1.0f},	// Triangle
-	{filter_quadratic, 	1.5f},	// Quadratic
-	{filter_cubic, 		1.0f},	// Cubic
-	{filter_spline,		2.0f},	// Spline
-	{filter_lanczos3,	3.0f},	// Lanczos
-	{filter_mitchell,	1.0f},	// Mitchell
-	{filter_kaiser,		1.0f},	// Kaiser
-};
+LanczosFilter::LanczosFilter() : Filter(3.0f) {}
 
-
-inline static float sampleFilter(Filter::Function func, float x, float scale, int samples)
+float LanczosFilter::evaluate(float x) const
 {
-	float sum = 0;
-
-	for(int s = 0; s < samples; s++)
-	{
-		sum += func((x + (float(s) + 0.5f) * (1.0f / float(samples))) * scale);
-	}
-	
-	return sum;
+	x = fabs(x);
+	if( x < 3.0f ) return sincf(PI * x) * sincf(PI * x / 3.0f);
+	return 0.0f;
 }
 
 
+SincFilter::SincFilter(float w) : Filter(w) {}
 
-} // namespace
+float SincFilter::evaluate(float x) const
+{
+	return 0.0f;
+}
+
+
+KaiserFilter::KaiserFilter(float w) : Filter(w) { setParameters(4.0f, 1.0f); }
+
+float KaiserFilter::evaluate(float x) const
+{
+	const float sinc_value = sincf(PI * x * stretch);
+	float t = x / m_width;
+	if (t * t <= 1.0f) 
+		return sinc_value * bessel0(alpha * sqrtf(1 - t * t)) / bessel0(alpha);
+	else
+		return 0;
+}
+
+void KaiserFilter::setParameters(float alpha, float stretch)
+{
+	this->alpha = alpha;
+	this->stretch = stretch;
+}
 
 
 
@@ -257,7 +273,7 @@ void Kernel1::normalize()
 	}
 }
 
-
+#if 0
 /// Init 1D filter.
 void Kernel1::initFilter(Filter::Enum f, int samples /*= 1*/)
 {
@@ -334,7 +350,7 @@ void Kernel1::initMitchell(float b, float c)
 	
 	normalize();
 }
-
+#endif
 
 /// Print the kernel for debugging purposes.
 void Kernel1::debugPrint()
@@ -585,7 +601,7 @@ static bool isMonoPhase(float w)
 }
 
 
-
+/*
 PolyphaseKernel::PolyphaseKernel(float w, uint l) :
 	m_width(w),
 	m_size(ceilf(w) + 1),
@@ -603,6 +619,44 @@ PolyphaseKernel::PolyphaseKernel(const PolyphaseKernel & k) :
 	m_data = new float[m_size * m_length];
 	memcpy(m_data, k.m_data, sizeof(float) * m_size * m_length);
 }
+*/
+
+PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength)
+{
+	float scale = float(dstLength) / float(srcLength);
+	float iscale = 1.0f / scale;
+
+	m_length = dstLength;
+	m_width = f.width() * iscale;
+	m_windowSize = ceilf(m_width * 2) + 1;
+
+	m_data = new float[m_windowSize * m_length];
+	memset(m_data, 0, sizeof(float) * m_windowSize * m_length);
+
+	for (uint i = 0; i < m_length; i++)
+	{
+		const float center = (0.5f + i) * iscale;
+		
+		int left = floor(center - m_width);
+		int right = ceil(center + m_width);
+		nvCheck(right - left <= (int)m_windowSize);
+
+		float total = 0.0f;
+		for (int j = 0; j < m_windowSize; j++)
+		{
+			float sample = f.sample(left + j - center, scale, 40);
+
+			m_data[i * m_windowSize + j] = sample;
+			total += sample;
+		}
+
+		// normalize weights.
+		for (int j = 0; j < m_windowSize; j++)
+		{
+			m_data[i * m_windowSize + j] /= total;
+		}
+	}
+}
 
 PolyphaseKernel::~PolyphaseKernel()
 {
@@ -610,91 +664,15 @@ PolyphaseKernel::~PolyphaseKernel()
 }
 
 
-/* @@ Should we precompute left & right?
-
-	// scale factor
-	double dScale = double(uDstSize) / double(uSrcSize);
-
-	if(dScale < 1.0) {
-		// minification
-		dWidth = dFilterWidth / dScale; 
-		dFScale = dScale; 
-	} else {
-		// magnification
-		dWidth= dFilterWidth; 
-	}
-
-	// window size is the number of sampled pixels
-	m_WindowSize = 2 * (int)ceil(dWidth) + 1; 
-	m_LineLength = uDstSize; 
-
-	// offset for discrete to continuous coordinate conversion
-	double dOffset = (0.5 / dScale) - 0.5;
-
-	for(u = 0; u < m_LineLength; u++) {
-		// scan through line of contributions
-		double dCenter = (double)u / dScale + dOffset;   // reverse mapping
-		// find the significant edge points that affect the pixel
-		int iLeft = MAX (0, (int)floor (dCenter - dWidth)); 
-		int iRight = MIN ((int)ceil (dCenter + dWidth), int(uSrcSize) - 1); 
-
-		...
-	}
-*/
-
-void PolyphaseKernel::initFilter(Filter::Enum f, int samples/*= 1*/)
-{
-	nvCheck(f < Filter::Num);
-	
-	float (* filter_function)(float) = s_filter_array[f].function;
-	const float support = s_filter_array[f].support;
-	
-	const float half_width = m_width / 2;
-	const float scale = support / half_width;
-	
-	for (uint j = 0; j < m_length; j++)
-	{
-		const float phase = frac(m_width * j);
-		const float offset = half_width + phase;
-		
-		nvDebug("%d: ", j);
-
-		float total = 0.0f;
-		for (uint i = 0; i < m_size; i++)
-		{
-			float sample = sampleFilter(filter_function, i - offset, scale, samples);
-
-			nvDebug("(%5.3f | %d) ", sample, j + i - m_size/2);
-
-			m_data[j * m_size + i] = sample;
-			total += sample;
-		}
-
-		nvDebug("\n");
-		
-		// normalize weights.
-		for (uint i = 0; i < m_size; i++)
-		{
-			m_data[j * m_size + i] /= total;
-			//m_data[j * m_size + i] /= samples;
-		}
-	}
-}
-
-void PolyphaseKernel::initKaiser(float alpha /*= 4.0f*/, float stretch /*= 1.0f*/)
-{
-	
-}
-
 /// Print the kernel for debugging purposes.
-void PolyphaseKernel::debugPrint()
+void PolyphaseKernel::debugPrint() const
 {
-	for (uint j = 0; j < m_length; j++)
+	for (uint i = 0; i < m_length; i++)
 	{
-		nvDebug("%d: ", j);
-		for (uint i = 0; i < m_size; i++)
+		nvDebug("%d: ", i);
+		for (uint j = 0; j < m_windowSize; j++)
 		{
-			nvDebug(" %6.4f", m_data[j * m_size + i]);
+			nvDebug(" %6.4f", m_data[i * m_windowSize + j]);
 		}
 		nvDebug("\n");
 	}
