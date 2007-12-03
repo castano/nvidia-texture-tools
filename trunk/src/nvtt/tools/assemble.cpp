@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	// Load all files.
 	nv::Array<nv::Image> images;
 	
-	uint w, h;
+	uint w = 0, h = 0;
 	bool hasAlpha = false;
 	
 	const uint imageCount = files.count();
