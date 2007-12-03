@@ -1,6 +1,12 @@
 
 IF (WIN32)
 
+	FIND_PATH(DX9_INCLUDE_PATH d3d9.h
+		PATHS
+			"$ENV{DXSDK_DIR}/Include"
+			"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Include"
+		DOC "The directory where D3D9.h resides")
+
 	FIND_PATH(DX10_INCLUDE_PATH D3D10.h
 		PATHS
 			"$ENV{DXSDK_DIR}/Include"
@@ -19,7 +25,7 @@ IF (WIN32)
 			"$ENV{PROGRAMFILES}/Microsoft DirectX SDK/Lib/x86"
 		DOC "The directory where d3dx10.lib resides")
 
-	SET(DX10_LIBRARIES D3D10_LIBRARY D3DX10_LIBRARY)
+	SET(DX10_LIBRARIES ${D3D10_LIBRARY} ${D3DX10_LIBRARY})
 
 ENDIF (WIN32)
 
