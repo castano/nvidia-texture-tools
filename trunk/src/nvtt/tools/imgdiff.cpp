@@ -85,7 +85,7 @@ struct Error
 		mabse /= samples;
 		mse /= samples;
 		rmse = sqrt(mse);
-		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0 / rmse);
+		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
 	}
 
 	void print()
@@ -133,7 +133,7 @@ struct NormalError
 		ade /= samples;
 		mse /= samples * 3;
 		rmse = sqrt(mse);
-		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0 / rmse);
+		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
 	}
 
 	void print()
@@ -227,10 +227,10 @@ int main(int argc, char *argv[])
 			const nv::Color32 c0(image0.pixel(e, i));
 			const nv::Color32 c1(image1.pixel(e, i));
 
-			float r = c0.r - c1.r;
-			float g = c0.g - c1.g;
-			float b = c0.b - c1.b;
-			float a = c0.a - c1.a;
+			float r = float(c0.r - c1.r);
+			float g = float(c0.g - c1.g);
+			float b = float(c0.b - c1.b);
+			float a = float(c0.a - c1.a);
 
 			error_r.addSample(r);
 			error_g.addSample(g);
