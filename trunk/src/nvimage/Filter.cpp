@@ -100,6 +100,10 @@ Filter::Filter(float width) : m_width(width)
 {
 }
 
+/*virtual*/ Filter::~Filter()
+{
+}
+
 float Filter::sample(float x, float scale, int samples) const
 {
 //	return evaluate(x * scale);
@@ -223,11 +227,9 @@ KaiserFilter::KaiserFilter(float w) : Filter(w) { setParameters(4.0f, 1.0f); }
 float KaiserFilter::evaluate(float x) const
 {
 	const float sinc_value = sincf(PI * x * stretch);
-	float t = x / m_width;
-	if (t * t <= 1.0f) 
-		return sinc_value * bessel0(alpha * sqrtf(1 - t * t)) / bessel0(alpha);
-	else
-		return 0;
+	const float t = x / m_width;
+	if ((1 - t * t) >= 0) return sinc_value * bessel0(alpha * sqrtf(1 - t * t)) / bessel0(alpha);
+	else return 0;
 }
 
 void KaiserFilter::setParameters(float alpha, float stretch)
@@ -239,17 +241,31 @@ void KaiserFilter::setParameters(float alpha, float stretch)
 
 
 /// Ctor.
-Kernel1::Kernel1(uint ws) : m_windowSize(ws)
+Kernel1::Kernel1(const Filter & f, int iscale, int samples/*= 32*/)
 {
+	nvDebugCheck(iscale > 1);
+	nvDebugCheck(samples > 0);
+	
+	const float scale = 1.0f / iscale;
+	
+	m_width = f.width() * iscale;
+	m_windowSize = ceilf(2 * m_width);
 	m_data = new float[m_windowSize];
-}
-
-/// Copy ctor.
-Kernel1::Kernel1(const Kernel1 & k) : m_windowSize(k.m_windowSize)
-{
-	m_data = new float[m_windowSize];
-	for(uint i = 0; i < m_windowSize; i++) {
-		m_data[i] = k.m_data[i];
+	
+	const float offset = float(m_windowSize) / 2;
+	
+	float total = 0.0f;
+	for (int i = 0; i < m_windowSize; i++)
+	{
+		const float sample = f.sample(i - offset, scale, samples);
+		m_data[i] = sample;
+		total += sample;
+	}
+	
+	const float inv = 1.0f / total;
+	for (int i = 0; i < m_windowSize; i++)
+	{
+		m_data[i] *= inv;
 	}
 }
 
@@ -259,103 +275,10 @@ Kernel1::~Kernel1()
 	delete m_data;
 }
 
-/// Normalize the filter.
-void Kernel1::normalize()
-{
-	float total = 0.0f;
-	for(uint i = 0; i < m_windowSize; i++) {
-		total += m_data[i];
-	}
-	
-	float inv = 1.0f / total;
-	for(uint i = 0; i < m_windowSize; i++) {
-		m_data[i] *= inv;
-	}
-}
-
-#if 0
-/// Init 1D filter.
-void Kernel1::initFilter(Filter::Enum f, int samples /*= 1*/)
-{
-	nvDebugCheck(f < Filter::Num);
-	nvDebugCheck(samples >= 1);
-	
-	float (* filter_function)(float) = s_filter_array[f].function;
-	const float support = s_filter_array[f].support;
-	
-	const float halfWindowSize = float(m_windowSize) / 2.0f;
-	const float scale = support / halfWindowSize;
-	
-	for(uint i = 0; i < m_windowSize; i++)
-	{
-		m_data[i] = sampleFilter(filter_function, i - halfWindowSize, scale, samples);
-	}
-	
-	normalize();
-}
-
-
-/// Init 1D sinc filter.
-void Kernel1::initSinc(float stretch /*= 1*/)
-{
-	const float halfWindowSize = float(m_windowSize) / 2;
-	const float nudge = 0.5f;
-	
-	for(uint i = 0; i < m_windowSize; i++) {
-		const float x = (i - halfWindowSize) + nudge;
-		m_data[i] = sincf(PI * x * stretch);
-	}
-
-	normalize();
-}
-
-
-/// Init 1D Kaiser-windowed sinc filter.
-void Kernel1::initKaiser(float alpha /*= 4*/, float stretch /*= 0.5*/, int samples/*= 1*/)
-{
-	const float halfWindowSize = float(m_windowSize) / 2;
-
-	const float s_scale = 1.0f / float(samples);
-	const float x_scale = 1.0f / halfWindowSize;
-	
-	for(uint i = 0; i < m_windowSize; i++)
-	{
-		float sum = 0;
-		for(int s = 0; s < samples; s++)
-		{
-			float x = i - halfWindowSize + (s + 0.5f) * s_scale;
-			
-			const float sinc_value = sincf(PI * x * stretch);
-			const float window_value = filter_kaiser(x * x_scale, alpha);	// @@ should the window be streched? I don't think so.
-			
-			sum += sinc_value * window_value;
-		}
-		m_data[i] = sum;
-	}
-
-	normalize();
-}
-
-
-/// Init 1D Mitchell filter.
-void Kernel1::initMitchell(float b, float c)
-{
-	const float halfWindowSize = float(m_windowSize) / 2;
-	const float nudge = 0.5f;
-	
-	for (uint i = 0; i < m_windowSize; i++) {
-		const float x = (i - halfWindowSize) + nudge;
-		m_data[i] = filter_mitchell(x / halfWindowSize, b, c);
-	}
-	
-	normalize();
-}
-#endif
-
 /// Print the kernel for debugging purposes.
 void Kernel1::debugPrint()
 {
-	for (uint i = 0; i < m_windowSize; i++) {
+	for (int i = 0; i < m_windowSize; i++) {
 		nvDebug("%d: %f\n", i, m_data[i]);
 	}
 }
@@ -590,41 +513,13 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 }
 
 
-static float frac(float f)
+PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength, int samples/*= 32*/)
 {
-	return f - floorf(f);
-}
-
-static bool isMonoPhase(float w)
-{
-	return isZero(frac(w));
-}
-
-
-/*
-PolyphaseKernel::PolyphaseKernel(float w, uint l) :
-	m_width(w),
-	m_size(ceilf(w) + 1),
-	m_length(l)
-{
-	// size = width + (length - 1) * phase
-	m_data = new float[m_size * m_length];
-}
-
-PolyphaseKernel::PolyphaseKernel(const PolyphaseKernel & k) :
-	m_width(k.m_width),
-	m_size(k.m_size),
-	m_length(k.m_length)
-{
-	m_data = new float[m_size * m_length];
-	memcpy(m_data, k.m_data, sizeof(float) * m_size * m_length);
-}
-*/
-
-PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength)
-{
-	float scale = float(dstLength) / float(srcLength);
-	float iscale = 1.0f / scale;
+	nvCheck(srcLength >= dstLength);	// @@ Upsampling not implemented!
+	nvDebugCheck(samples > 0);
+	
+	const float scale = float(dstLength) / float(srcLength);
+	const float iscale = 1.0f / scale;
 
 	m_length = dstLength;
 	m_width = f.width() * iscale;
@@ -637,19 +532,19 @@ PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLengt
 	{
 		const float center = (0.5f + i) * iscale;
 		
-		int left = floor(center - m_width);
-		int right = ceil(center + m_width);
-		nvCheck(right - left <= (int)m_windowSize);
-
+		const int left = floorf(center - m_width);
+		const int right = ceilf(center + m_width);
+		nvDebugCheck(right - left <= m_windowSize);
+		
 		float total = 0.0f;
 		for (int j = 0; j < m_windowSize; j++)
 		{
-			float sample = f.sample(left + j - center, scale, 40);
-
+			const float sample = f.sample(left + j - center, scale, samples);
+			
 			m_data[i * m_windowSize + j] = sample;
 			total += sample;
 		}
-
+		
 		// normalize weights.
 		for (int j = 0; j < m_windowSize; j++)
 		{
@@ -670,7 +565,7 @@ void PolyphaseKernel::debugPrint() const
 	for (uint i = 0; i < m_length; i++)
 	{
 		nvDebug("%d: ", i);
-		for (uint j = 0; j < m_windowSize; j++)
+		for (int j = 0; j < m_windowSize; j++)
 		{
 			nvDebug(" %6.4f", m_data[i * m_windowSize + j]);
 		}
