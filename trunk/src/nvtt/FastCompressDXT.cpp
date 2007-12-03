@@ -453,7 +453,7 @@ void nv::compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * b
 	
 	if( fabs(line.direction().x()) > fabs(line.direction().y()) && fabs(line.direction().x()) > fabs(line.direction().z()) ) {
 		for(int r0 = r_min; r0 <= r_max; r0++) {
-			const float x0 = (r0 << 3) | (r0 >> 2);
+			const float x0 = float((r0 << 3) | (r0 >> 2));
 			const float t0 = (x0 - line.origin().x()) / line.direction().x();
 			const float y0 = line.origin().y() + t0 * line.direction().y();
 			const float z0 = line.origin().z() + t0 * line.direction().z();
@@ -462,7 +462,7 @@ void nv::compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * b
 			const int b0 = clamp(int(z0), 0, 255) >> 3;
 			
 			for(int r1 = r_min; r1 <= r_max; r1++) {
-				const float x1 = (r1 << 3) | (r1 >> 2);
+				const float x1 = float((r1 << 3) | (r1 >> 2));
 				const float t1 = (x1 - line.origin().x()) / line.direction().x();
 				const float y1 = line.origin().y() + t1 * line.direction().y();
 				const float z1 = line.origin().z() + t1 * line.direction().z();
@@ -502,7 +502,7 @@ void nv::compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * b
 	}
 	else if( fabs(line.direction().y()) > fabs(line.direction().z()) ) {
 		for(int g0 = g_min; g0 <= g_max; g0++) {
-			const float y0 = (g0 << 2) | (g0 >> 4);
+			const float y0 = float((g0 << 2) | (g0 >> 4));
 			const float t0 = (y0 - line.origin().y()) / line.direction().y();
 			const float x0 = line.origin().x() + t0 * line.direction().x();
 			const float z0 = line.origin().z() + t0 * line.direction().z();
@@ -511,7 +511,7 @@ void nv::compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * b
 			const int b0 = clamp(int(z0), 0, 255) >> 3;
 			
 			for(int g1 = g_min; g1 <= g_max; g1++) {
-				const float y1 = (g1 << 2) | (g1 >> 4);
+				const float y1 = float((g1 << 2) | (g1 >> 4));
 				const float t1 = (y1 - line.origin().y()) / line.direction().y();
 				const float x1 = line.origin().x() + t1 * line.direction().x();
 				const float z1 = line.origin().z() + t1 * line.direction().z();
@@ -551,7 +551,7 @@ void nv::compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * b
 	}
 	else {
 		for(int b0 = b_min; b0 <= b_max; b0++) {
-			const float z0 = (b0 << 3) | (b0 >> 2);
+			const float z0 = float((b0 << 3) | (b0 >> 2));
 			const float t0 = (z0 - line.origin().z()) / line.direction().z();
 			const float y0 = line.origin().y() + t0 * line.direction().y();
 			const float x0 = line.origin().x() + t0 * line.direction().x();
@@ -560,7 +560,7 @@ void nv::compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * b
 			const int r0 = clamp(int(x0), 0, 255) >> 3;
 			
 			for(int b1 = b_min; b1 <= b_max; b1++) {
-				const float z1 = (b1 << 3) | (b1 >> 2);
+				const float z1 = float((b1 << 3) | (b1 >> 2));
 				const float t1 = (z1 - line.origin().z()) / line.direction().z();
 				const float y1 = line.origin().y() + t1 * line.direction().y();
 				const float x1 = line.origin().x() + t1 * line.direction().x();
@@ -1002,7 +1002,7 @@ void nv::optimizeEndPoints(const ColorBlock & rgba, BlockDXT1 * block)
 	{
 		const uint bits = block->indices >> (2 * i);
 
-		float beta = (bits & 1);
+		float beta = float(bits & 1);
 		if (bits & 2) beta = (1 + beta) / 3.0f;
 		float alpha = 1.0f - beta;
 

@@ -96,7 +96,7 @@ namespace nvtt
 		NVTT_API void setExternalCompressor(const char * name);
 
 		// Set color mask to describe the RGB/RGBA format.
-		NVTT_API void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
 
 	//private:
 		struct Private;
