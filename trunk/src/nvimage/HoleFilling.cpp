@@ -1,6 +1,7 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #include <nvcore/Containers.h>
+#include <nvcore/Ptr.h>
 
 #include <nvmath/nvmath.h>
 
@@ -11,7 +12,7 @@ using namespace nv;
 
 
 // This is a variation of Sapiro's inpainting method.
-void nv::fillExtrapolateOnce(FloatImage * img, BitMap * bmap)
+void nv::fillExtrapolate(int passCount, FloatImage * img, BitMap * bmap)
 {
 	nvCheck(img != NULL);
 	nvCheck(bmap != NULL);
@@ -23,83 +24,73 @@ void nv::fillExtrapolateOnce(FloatImage * img, BitMap * bmap)
 	nvCheck(bmap->width() == uint(w));
 	nvCheck(bmap->height() == uint(h));
 
-	BitMap * newbmap = new BitMap(w, h);
+	AutoPtr<BitMap> newbmap(new BitMap(w, h));
 
-	for(int c = 0; c < count; c++) {
-		
-		float * channel = img->channel(c);
-		
-		for(int y = 0; y < h; y++) {
-			for(int x = 0; x < w; x++) {
-				
-				if (bmap->bitAt(x, y)) {
-					// Not a hole.
-					newbmap->setBitAt(x, y);
-					continue;
-				}
-				
-				const bool west = bmap->bitAt(img->indexClamp(x-1, y));
-				const bool east = bmap->bitAt(img->indexClamp(x+1, y));
-				const bool north = bmap->bitAt(img->indexClamp(x, y-1));
-				const bool south = bmap->bitAt(img->indexClamp(x, y+1));
-				const bool northwest = bmap->bitAt(img->indexClamp(x-1, y-1));
-				const bool northeast = bmap->bitAt(img->indexClamp(x+1, y-1));
-				const bool southwest = bmap->bitAt(img->indexClamp(x-1, y+1));
-				const bool southeast = bmap->bitAt(img->indexClamp(x+1, y+1));
-				
-				int num = west + east + north + south + northwest + northeast + southwest + southeast;
-				
-				if (num != 0) {
-
-					float average = 0.0f;
-					if (num == 3 && west && northwest && southwest) {
-						average = channel[img->indexClamp(x-1, y)];
-					}
-					else if (num == 3 && east && northeast && southeast) {
-						average = channel[img->indexClamp(x+1, y)];
-					}
-					else if (num == 3 && north && northwest && northeast) {
-						average = channel[img->indexClamp(x, y-1)];
-					}
-					else if (num == 3 && south && southwest && southeast) {
-						average = channel[img->indexClamp(x, y+1)];
-					}
-					else {
-						float total = 0.0f;
-						if (west) { average += 1 * channel[img->indexClamp(x-1, y)]; total += 1; }
-						if (east) { average += 1 * channel[img->indexClamp(x+1, y)]; total += 1; }
-						if (north) { average += 1 * channel[img->indexClamp(x, y-1)]; total += 1; }
-						if (south) { average += 1 * channel[img->indexClamp(x, y+1)]; total += 1; }
+	for(int p = 0; p < passCount; p++)
+	{
+		for(int c = 0; c < count; c++)
+		{
+			float * channel = img->channel(c);
+			
+			for(int y = 0; y < h; y++) {
+				for(int x = 0; x < w; x++) {
 					
-						if (northwest) { average += channel[img->indexClamp(x-1, y-1)]; ++total; }
-						if (northeast) { average += channel[img->indexClamp(x+1, y-1)]; ++total; }
-						if (southwest) { average += channel[img->indexClamp(x-1, y+1)]; ++total; }
-						if (southeast) { average += channel[img->indexClamp(x+1, y+1)]; ++total; }
-						
-						average /= total;
+					if (bmap->bitAt(x, y)) {
+						// Not a hole.
+						newbmap->setBitAt(x, y);
+						continue;
 					}
+					
+					const bool west = bmap->bitAt(img->indexClamp(x-1, y));
+					const bool east = bmap->bitAt(img->indexClamp(x+1, y));
+					const bool north = bmap->bitAt(img->indexClamp(x, y-1));
+					const bool south = bmap->bitAt(img->indexClamp(x, y+1));
+					const bool northwest = bmap->bitAt(img->indexClamp(x-1, y-1));
+					const bool northeast = bmap->bitAt(img->indexClamp(x+1, y-1));
+					const bool southwest = bmap->bitAt(img->indexClamp(x-1, y+1));
+					const bool southeast = bmap->bitAt(img->indexClamp(x+1, y+1));
+					
+					int num = west + east + north + south + northwest + northeast + southwest + southeast;
+					
+					if (num != 0) {
 
-					channel[img->indexClamp(x, y)] = average;
-					newbmap->setBitAt(x, y);
+						float average = 0.0f;
+						if (num == 3 && west && northwest && southwest) {
+							average = channel[img->indexClamp(x-1, y)];
+						}
+						else if (num == 3 && east && northeast && southeast) {
+							average = channel[img->indexClamp(x+1, y)];
+						}
+						else if (num == 3 && north && northwest && northeast) {
+							average = channel[img->indexClamp(x, y-1)];
+						}
+						else if (num == 3 && south && southwest && southeast) {
+							average = channel[img->indexClamp(x, y+1)];
+						}
+						else {
+							float total = 0.0f;
+							if (west) { average += 1 * channel[img->indexClamp(x-1, y)]; total += 1; }
+							if (east) { average += 1 * channel[img->indexClamp(x+1, y)]; total += 1; }
+							if (north) { average += 1 * channel[img->indexClamp(x, y-1)]; total += 1; }
+							if (south) { average += 1 * channel[img->indexClamp(x, y+1)]; total += 1; }
+						
+							if (northwest) { average += channel[img->indexClamp(x-1, y-1)]; ++total; }
+							if (northeast) { average += channel[img->indexClamp(x+1, y-1)]; ++total; }
+							if (southwest) { average += channel[img->indexClamp(x-1, y+1)]; ++total; }
+							if (southeast) { average += channel[img->indexClamp(x+1, y+1)]; ++total; }
+							
+							average /= total;
+						}
+
+						channel[img->indexClamp(x, y)] = average;
+						newbmap->setBitAt(x, y);
+					}
 				}
 			}
 		}
-	}
 
-	// Update the bit mask.
-	swap(*newbmap, *bmap);
-
-}
-
-void nv::fillExtrapolateNTimes(FloatImage * img, BitMap * bmap, int n)
-{
-	nvCheck(img != NULL);
-	nvCheck(bmap != NULL);
-	nvCheck(n > 0);
-
-	for(int i = 0; i < n; i++)
-	{
-		fillExtrapolateOnce(img, bmap);
+		// Update the bit mask.
+		swap(*newbmap, *bmap);
 	}
 }
 
@@ -134,7 +125,7 @@ namespace {
 } // namespace
 
 // Voronoi filling using EDT-4
-void nv::fillVoronoi(FloatImage * img, const BitMap & bmap)
+void nv::fillVoronoi(FloatImage * img, const BitMap * bmap)
 {
 	nvCheck(img != NULL);
 
@@ -142,8 +133,8 @@ void nv::fillVoronoi(FloatImage * img, const BitMap & bmap)
 	const int h = img->height();
 	const int count = img->componentNum();
 
-	nvCheck(bmap.width() == uint(w));
-	nvCheck(bmap.height() == uint(h));
+	nvCheck(bmap->width() == uint(w));
+	nvCheck(bmap->height() == uint(h));
 
 	Array<Neighbor> edm;
 	edm.resize(w * h);
@@ -154,7 +145,7 @@ void nv::fillVoronoi(FloatImage * img, const BitMap & bmap)
 	// Init edm.
 	for( y = 0; y < h; y++ ) {
 		for( x = 0; x < w; x++ ) {
-			if( bmap.bitAt(x, y) ) {
+			if( bmap->bitAt(x, y) ) {
 				edm[y * w + x].x = x;
 				edm[y * w + x].y = y;
 				edm[y * w + x].d = 0;
@@ -229,7 +220,7 @@ void nv::fillVoronoi(FloatImage * img, const BitMap & bmap)
 }
 
 
-void nv::fillBlur(FloatImage * img, const BitMap & bmap)
+void nv::fillBlur(FloatImage * img, const BitMap * bmap)
 {
 	nvCheck(img != NULL);
 	
@@ -306,7 +297,7 @@ static bool downsample(const FloatImage * src, const BitMap * srcMask, const Flo
 }
 
 // This is the filter used in the Lumigraph paper. The Unreal engine uses something similar.
-void nv::fillPullPush(FloatImage * img, const BitMap & bmap)
+void nv::fillPullPush(FloatImage * img, const BitMap * bmap)
 {
 	nvCheck(img != NULL);
 
@@ -320,7 +311,7 @@ void nv::fillPullPush(FloatImage * img, const BitMap & bmap)
 	Array<const BitMap *> mipmapMasks(num);
 
 	mipmaps.append(img);
-	mipmapMasks.append(&bmap);
+	mipmapMasks.append(bmap);
 
 	const FloatImage * current;
 	const BitMap * currentMask;
@@ -336,16 +327,22 @@ void nv::fillPullPush(FloatImage * img, const BitMap & bmap)
 	for(uint y = 0; y < h; y++) {
 		for(uint x = 0; x < w; x++) {
 
-			uint sx = x;
-			uint sy = y;
+			int sx = x;
+			int sy = y;
+			//float sx = x;
+			//float sy = y;
 
 			const uint levelCount = mipmaps.count();
-			for(uint l = 0; l < levelCount; l++) {
+			for (uint l = 0; l < levelCount; l++)
+			{
+				//const float fx = sx / mipmaps[l]->width();
+				//const float fy = sy / mipmaps[l]->height();
 
 				if (mipmapMasks[l]->bitAt(sx, sy))
 				{
 					// Sample mipmaps[l](sx, sy) and copy to img(x, y)
 					for(uint c = 0; c < count; c++) {
+						//img->setPixel(mipmaps[l]->linear_clamp(fx, fy, c), x, y, c);
 						img->setPixel(mipmaps[l]->pixel(sx, sy, c), x, y, c);
 					}
 					break;
@@ -357,20 +354,20 @@ void nv::fillPullPush(FloatImage * img, const BitMap & bmap)
 		}
 	}
 
+	// Don't delete the original image and mask.
+	mipmaps[0] = NULL;
+	mipmapMasks[0] = NULL;
+
+	// Delete the mipmaps.
 	deleteAll(mipmaps);
 	deleteAll(mipmapMasks);
 }
 
 
+
 /*
-void nv::fillSeamFix(FloatImage * img, const BitMap & bmap)
-{
-}
-*/
-#if 0 // Code below is under the BPL license.
 
-
-/**
+This Code is from Charles Bloom:
 
 DoPixelSeamFix
 10-20-02
@@ -386,7 +383,7 @@ Note that I'm working on normals, but I treat them just as 3 scalars and normali
 at the end.  To be more correct, I would work on the surface of a sphere, but that
 just seems like way too much work.
 
-**/
+*/
 
 struct LocalPixels
 {
@@ -395,11 +392,11 @@ struct LocalPixels
 	// index [y][x]
 	bool fill[5][5];
 	float data[5][5];
+	
 	mutable float result;
 	mutable float weight;
 
-
-	bool Quad3SubH(gVec4 * pQ,int row) const
+	bool Quad3SubH(float * pQ, int row) const
 	{
 		const bool * pFill = fill[row];
 		const float * pDat = data[row];
@@ -426,7 +423,7 @@ struct LocalPixels
 	}
 
 	// improve result with a horizontal quad in row 1 and/or 
-	bool Quad3SubV(gVec4 * pQ,int col) const
+	bool Quad3SubV(float * pQ, int col) const
 	{
 		if ( fill[1][col] && fill[2][col] && fill[3][col] )
 		{
@@ -449,14 +446,14 @@ struct LocalPixels
 		return false;
 	}
 	
-	bool Quad3H(gVec4 * pQ) const
+	bool Quad3H(float * pQ) const
 	{
-		if ( ! Quad3SubH(pQ,1) )
+		if (!Quad3SubH(pQ,1))
 		{
 			return Quad3SubH(pQ,3);	
 		}
-		gVec4 q(0,0,0,0); // initializer not needed, just make it shut up
-		if ( Quad3SubH(&q,3) )
+		float q = 0.0f; // initializer not needed, just make it shut up
+		if (Quad3SubH(&q, 3))
 		{
 			// got q and pQ
 			*pQ = (*pQ+q)*0.5f;
@@ -464,17 +461,17 @@ struct LocalPixels
 		return true;
 	}
 	
-	bool Quad3V(gVec4 * pQ) const
+	bool Quad3V(float * pQ) const
 	{
-		if ( ! Quad3SubV(pQ,1) )
+		if (!Quad3SubV(pQ, 1))
 		{
-			return Quad3SubV(pQ,3);	
+			return Quad3SubV(pQ, 3);	
 		}
-		gVec4 q(0,0,0,0); // initializer not needed, just make it shut up
-		if ( Quad3SubV(&q,3) )
+		float q = 0.0f; // initializer not needed, just make it shut up
+		if (Quad3SubV(&q, 3))
 		{
 			// got q and pQ
-			*pQ = (*pQ+q)*0.5f;
+			*pQ = (*pQ + q) * 0.5f;
 		}
 		return true;
 	}
@@ -482,7 +479,7 @@ struct LocalPixels
 	//	a common want is [1] - ([0]+[2])*0.5f ;
 	// so use -0.5f*Quad
 
-	bool TryQuads() const
+	bool tryQuads() const
 	{
 		bool res = false;
 	
@@ -490,7 +487,7 @@ struct LocalPixels
 		if ( fill[2][1] && fill[2][3] )
 		{
 			// got horizontal straddle
-			gVec4 q;
+			float q;
 			if ( Quad3H(&q) )
 			{
 				result += (data[2][1] + data[2][3] - q) * 0.5f;
@@ -501,7 +498,7 @@ struct LocalPixels
 		if ( fill[1][2] && fill[3][2] )
 		{
 			// got vertical straddle
-			gVec4 q;
+			float q;
 			if ( Quad3V(&q) )
 			{
 				result += (data[1][2] + data[3][2] - q) * 0.5f;
@@ -514,7 +511,7 @@ struct LocalPixels
 		if ( fill[2][0] && fill[2][1] )
 		{
 			// got left-side pair
-			gVec4 q;
+			float q;
 			if ( Quad3H(&q) )
 			{
 				result += data[2][1]*2.f - data[2][0] + q;
@@ -525,7 +522,7 @@ struct LocalPixels
 		if ( fill[2][3] && fill[2][4] )
 		{
 			// got right-side pair
-			gVec4 q;
+			float q;
 			if ( Quad3H(&q) )
 			{
 				result += data[2][3]*2.f - data[2][4] + q;
@@ -536,7 +533,7 @@ struct LocalPixels
 		if ( fill[0][2] && fill[1][2] )
 		{
 			// got left-side pair
-			gVec4 q;
+			float q;
 			if ( Quad3V(&q) )
 			{
 				result += data[1][2]*2.f - data[0][2] + q;
@@ -547,7 +544,7 @@ struct LocalPixels
 		if ( fill[3][2] && fill[4][2] )
 		{
 			// got right-side pair
-			gVec4 q;
+			float q;
 			if ( Quad3V(&q) )
 			{
 				result += data[3][2]*2.f - data[4][2] + q;
@@ -558,7 +555,7 @@ struct LocalPixels
 		return res;
 	}
 	
-	bool TryPlanar() const
+	bool tryPlanar() const
 	{
 		// four cases :
 		const int indices[] =
@@ -569,37 +566,37 @@ struct LocalPixels
 			2,3, 3,2, 3,3
 		};
 		bool res = false;
-		for(int i=0;i<4;i++)
+		for (int i = 0; i < 4; i++)
 		{
 			const int * I = indices + i*6;
-			if ( ! fill[ I[0] ][ I[1] ] )
+			if (!fill[ I[0] ][ I[1] ])
 				continue;
-			if ( ! fill[ I[2] ][ I[3] ] )
+			if (!fill[ I[2] ][ I[3] ])
 				continue;
-			if ( ! fill[ I[4] ][ I[5] ] )
+			if (!fill[ I[4] ][ I[5] ])
 				continue;
 	
 			result += data[ I[0] ][ I[1] ] + data[ I[2] ][ I[3] ] - data[ I[4] ][ I[5] ];
-			weight += 1.f;
+			weight += 1.0f;
 			res = true;
 		}
 		return res;
 	}
 	
-	bool TryTwos() const
+	bool tryTwos() const
 	{
 		bool res = false;
 	
-		if ( fill[2][1] && fill[2][3] )
+		if (fill[2][1] && fill[2][3])
 		{
 			result += (data[2][1] + data[2][3]) * 0.5f;
-			weight += 1.f;
+			weight += 1.0f;
 			res = true;
 		}
-		if ( fill[1][2] && fill[3][2] )
+		if (fill[1][2] && fill[3][2])
 		{
 			result += (data[1][2] + data[3][2]) * 0.5f;
-			weight += 1.f;
+			weight += 1.0f;
 			res = true;
 		}
 		
@@ -611,141 +608,146 @@ struct LocalPixels
 			1,2, 0,2,
 			3,2, 4,2,
 		};
-		for(int i=0;i<4;i++)
+		for (int i = 0; i < 4; i++)
 		{
 			const int * I = indices + i*4;
-			if ( ! fill[ I[0] ][ I[1] ] )
+			if (!fill[ I[0] ][ I[1] ])
 				continue;
-			if ( ! fill[ I[2] ][ I[3] ] )
+			if (!fill[ I[2] ][ I[3] ])
 				continue;
 	
-			result += data[ I[0] ][ I[1] ]*2.f - data[ I[2] ][ I[3] ];
-			weight += 1.f;
+			result += data[ I[0] ][ I[1] ]*2.0f - data[ I[2] ][ I[3] ];
+			weight += 1.0f;
 			res = true;
 		}
 	
 		return res;
 	}
 
-
-	bool DoLocalPixelFill() const
+	bool doLocalPixelFill() const
 	{
-		result = gVec4::zero;
-		weight = 0.f;
-	
-		if ( TryQuads() )
+		result = 0.0f;
+		weight = 0.0f;
+		
+		if (tryQuads()) {
 			return true;
-			
-		if ( TryPlanar() )
+		}
+		
+		if (tryPlanar()) {
 			return true;
-	
-		return TryTwos();
+		}
+		
+		return tryTwos();
 	}
 
-}; // LocalPixels -----------------------------------------------
+}; // struct LocalPixels
 
-void gNormalMap::DoPixelSeamFix()
+
+
+// This is a cubic extrapolation filter from Charles Bloom (DoPixelSeamFix).
+void nv::fillCubicExtrapolate(int passCount, FloatImage * img, BitMap * bmap, int coverageIndex /*= -1*/)
 {
-	gLog::Printf("gNormalMap::DoPixelSeamFix..");
+	nvCheck(passCount > 0);
+	nvCheck(img != NULL);
+	nvCheck(bmap != NULL);
 
-	const int desiredTicks = 30;
-	const int heightPerTick = NUM_SEAMFIX_PASSES * m_height / desiredTicks;
-	int tick = 0;
+	const int w = img->width();
+	const int h = img->height();
+	const int count = img->componentNum();
 
-	for(int pass=0;pass<NUM_SEAMFIX_PASSES;pass++)
+	nvCheck(bmap->width() == uint(w));
+	nvCheck(bmap->height() == uint(h));
+
+	AutoPtr<BitMap> newbmap( new BitMap(w, h) );
+
+	float * coverageChannel = NULL;
+	if (coverageIndex != -1)
 	{
-		for(int yb=0;yb<m_height;yb++)
-		{
-			gVec4 * pRow = m_normals + m_width * yb;
-			const EState * pStateRow = m_states + m_width * yb;
-			for(int xb=0;xb<m_width;xb++)
-			{
-				if ( pStateRow[xb] != eNull && pStateRow[xb] != eEdge )
-				{
-					ASSERT( ! IsNull(pRow[xb]) );
-					continue; // it's got a pixel
-				}
-				// can be non-null, if it wasn't actually inside any tri,
-				//	but got the anti-aliased edge effect of a tri
-				// replace edge pixels with seam-fix here
-				//ASSERT( IsNull(pRow[xb]) );
+		coverageChannel = img->channel(coverageIndex);
+	}
 
-				// make the local neighborhood:
-				int numFill = 0;
-				LocalPixels lp;
-				for(int ny=0;ny<5;ny++)
-				{
-					int y = (yb + ny - 2);
-					if ( y < 0 || y >= m_height )
-					{
-						// out of range
-						for(int i=0;i<5;i++)
-						{
-							lp.fill[ny][i] = false;
-						}
+	int firstChannel = -1;
+
+	for (int p = 0; p < passCount; p++)
+	{
+		for (int c = 0; c < count; c++)
+		{
+			if (c == coverageIndex) continue;
+			if (firstChannel == -1) firstChannel = c;
+
+			float * channel = img->channel(c);
+			
+			for (int yb = 0; yb < h; yb++) {
+				for (int xb = 0; xb < w; xb++) {
+					
+					if (bmap->bitAt(xb, yb)) {
+						// Not a hole.
+						newbmap->setBitAt(xb, yb);
 						continue;
 					}
-					gVec4 * pRow = m_normals + m_width * y;
-					const EState * pStateRow = m_states + m_width * y;
-					for(int nx=0;nx<5;nx++)
+					
+					int numFill = 0;
+					
+					LocalPixels lp;
+					for (int ny = 0; ny < 5; ny++)
 					{
-						int x = (xb + nx - 2);
-						if ( x < 0 || x >= m_width )
+						int y = (yb + ny - 2);
+						if ( y < 0 || y >= h )
 						{
-							lp.fill[ny][nx] = false;
+							// out of range
+							for(int i = 0; i < 5; i++) 
+							{
+								lp.fill[ny][i] = false;
+							}
+							continue;
 						}
-						else if ( pStateRow[x] == eNull || pStateRow[x] == eEdge )
+
+						for (int nx = 0; nx < 5; nx++)
 						{
-							lp.fill[ny][nx] = false;
+							int x = (xb + nx - 2);
+							if (x < 0 || x >= w)
+							{
+								lp.fill[ny][nx] = false;
+							}
+							else
+							{
+								int idx = img->index(x, y);
+								if (!bmap->bitAt(idx))
+								{
+									lp.fill[ny][nx] = false;
+								}
+								else
+								{
+									lp.fill[ny][nx] = true;
+									lp.data[ny][nx] = channel[idx];
+									numFill++;
+								}
+							}
 						}
-						else
+					}
+
+					// need at least 3 to do anything decent
+					if (numFill < 2)
+						continue;
+
+					nvDebugCheck(lp.fill[2][2] == false);
+					
+					if (lp.doLocalPixelFill())
+					{
+						const int idx = img->index(xb, yb);
+						channel[idx] = lp.result / lp.weight;
+
+						if (c == firstChannel)
 						{
-							lp.fill[ny][nx] = true;
-							lp.data[ny][nx] = pRow[x];
-							numFill++;
+							//coverageChannel[idx] /= lp.weight;	// @@ Not sure what this was for, coverageChannel[idx] is always zero.
+							newbmap->setBitAt(xb, yb);
 						}
 					}
 				}
-
-				// need at least 3 to do anything decent
-				if ( numFill < 2 )
-					continue;
-
-				ASSERT(lp.fill[2][2] == false);
-				if ( lp.DoLocalPixelFill() )
-				{
-					if ( lp.result.MutableVec3().NormalizeSafe() )
-					{
-						pRow[xb] = lp.result;
-						pRow[xb][3] /= lp.weight;
-					}
-				}
-			}
-
-			if ( ++tick == heightPerTick )
-			{
-				tick = 0;
-				gLog::Printf(".");
 			}
 		}
 
-		// now run back over and stamp anything that's not null as being ok
-
-		for(int y=0;y<m_height;y++)
-		{
-			const gVec4 * pRow = m_normals + m_width * y;
-			EState * pStateRow = m_states + m_width * y;
-			for(int x=0;x<m_width;x++)
-			{
-				if ( ( pStateRow[x] == eNull || pStateRow[x] == eEdge ) && ! IsNull(pRow[x]) )
-				{
-					pStateRow[x] = eSeamFixed;
-				}
-			}
-		}
+		// Update the bit mask.
+		swap(*newbmap, *bmap);
 	}
-	
-	gLog::Printf("done\n");
 }
-
-#endif // 0

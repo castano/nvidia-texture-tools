@@ -97,18 +97,16 @@ public:
 	void setPixel(float f, uint idx);
 	float pixel(uint idx) const;
 	
-	float nearest(int x, int y, int c, WrapMode wm) const;
+	float sampleNearest(float x, float y, int c, WrapMode wm) const;
+	float sampleLinear(float x, float y, int c, WrapMode wm) const;
 	
-	float nearest(float x, float y, int c, WrapMode wm) const;
-	float linear(float x, float y, int c, WrapMode wm) const;
+	float sampleNearestClamp(float x, float y, int c) const;
+	float sampleNearestRepeat(float x, float y, int c) const;
+	float sampleNearestMirror(float x, float y, int c) const;
 	
-	float nearest_clamp(float x, float y, int c) const;
-	float nearest_repeat(float x, float y, int c) const;
-	float nearest_mirror(float x, float y, int c) const;
-	
-	float linear_clamp(float x, float y, int c) const;
-	float linear_repeat(float x, float y, int c) const;
-	float linear_mirror(float x, float y, int c) const;
+	float sampleLinearClamp(float x, float y, int c) const;
+	float sampleLinearRepeat(float x, float y, int c) const;
+	float sampleLinearMirror(float x, float y, int c) const;
 	//@}
 	
 public:

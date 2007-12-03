@@ -15,14 +15,28 @@ using namespace nv;
 
 namespace 
 {
-	static int round(float f)
+	static int iround(float f)
 	{
 		return int(f);
+	}
+
+	static int ifloor(float f)
+	{
+		return int(floor(f));
 	}
 
 	static float frac(float f)
 	{
 		return f - floor(f);
+	}
+
+	static int mirror(int x, int w)
+	{
+		x = fabs(x);
+		while (x >= w) {
+			x = 2 * w - x - 2;
+		}
+		return x;
 	}
 }
 
@@ -161,7 +175,7 @@ void FloatImage::normalize(uint base_component)
 	for(uint i = 0; i < size; i++) {
 		
 		Vector3 normal(xChannel[i], yChannel[i], zChannel[i]);
-		normal = normalizeSafe(normal, Vector3(zero));
+		normal = normalizeSafe(normal, Vector3(zero), 0.0f);
 		
 		xChannel[i] = normal.x();
 		yChannel[i] = normal.y();
@@ -226,72 +240,42 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
 	}
 }
 
-#if 0
-float FloatImage::nearest(float x, float y, int c, WrapMode wm) const
+float FloatImage::sampleNearest(const float x, const float y, const int c, const WrapMode wm) const
 {
-	if( wm == WrapMode_Clamp ) return nearest_clamp(x, y, c);
-	/*if( wm == WrapMode_Repeat )*/ return nearest_repeat(x, y, c);
-	//if( wm == WrapMode_Mirror ) return nearest_mirror(x, y, c);
+	if( wm == WrapMode_Clamp ) return sampleNearestClamp(x, y, c);
+	else if( wm == WrapMode_Repeat ) return sampleNearestRepeat(x, y, c);
+	else /*if( wm == WrapMode_Mirror )*/ return sampleNearestMirror(x, y, c);
 }
 
-float FloatImage::nearest_clamp(int x, int y, const int c) const
+float FloatImage::sampleLinear(const float x, const float y, const int c, const WrapMode wm) const
 {
-	const int w = m_width;
-	const int h = m_height;
-	int ix = ::clamp(x, 0, w-1);
-	int iy = ::clamp(y, 0, h-1);
+	if( wm == WrapMode_Clamp ) return sampleLinearClamp(x, y, c);
+	else if( wm == WrapMode_Repeat ) return sampleLinearRepeat(x, y, c);
+	else /*if( wm == WrapMode_Mirror )*/ return sampleLinearMirror(x, y, c);
+}
+
+float FloatImage::sampleNearestClamp(const float x, const float y, const int c) const
+{
+	int ix = ::clamp(iround(x * m_width), 0, m_width-1);
+	int iy = ::clamp(iround(y * m_height), 0, m_height-1);
 	return pixel(ix, iy, c);
 }
 
-float FloatImage::nearest_repeat(int x, int y, const int c) const
+float FloatImage::sampleNearestRepeat(const float x, const float y, const int c) const
 {
-	const int w = m_width;
-	const int h = m_height;
-	int ix = x % w;
-	int iy = y % h;
-	return pixel(ix, iy, c);
-}
-#endif
-
-float FloatImage::nearest(float x, float y, int c, WrapMode wm) const
-{
-	if( wm == WrapMode_Clamp ) return nearest_clamp(x, y, c);
-	/*if( wm == WrapMode_Repeat )*/ return nearest_repeat(x, y, c);
-	//if( wm == WrapMode_Mirror ) return nearest_mirror(x, y, c);
-}
-
-float FloatImage::linear(float x, float y, int c, WrapMode wm) const
-{
-	if( wm == WrapMode_Clamp ) return linear_clamp(x, y, c);
-	/*if( wm == WrapMode_Repeat )*/ return linear_repeat(x, y, c);
-	//if( wm == WrapMode_Mirror ) return linear_mirror(x, y, c);
-}
-
-float FloatImage::nearest_clamp(float x, float y, const int c) const
-{
-	const int w = m_width;
-	const int h = m_height;
-	int ix = ::clamp(round(x * w), 0, w-1);
-	int iy = ::clamp(round(y * h), 0, h-1);
+	int ix = iround(frac(x) * m_width);
+	int iy = iround(frac(y) * m_height);
 	return pixel(ix, iy, c);
 }
 
-float FloatImage::nearest_repeat(float x, float y, const int c) const
+float FloatImage::sampleNearestMirror(const float x, const float y, const int c) const
 {
-	const int w = m_width;
-	const int h = m_height;
-	int ix = round(frac(x) * w);
-	int iy = round(frac(y) * h);
+	int ix = mirror(iround(x * m_width), m_width);
+	int iy = mirror(iround(y * m_height), m_height);
 	return pixel(ix, iy, c);
 }
 
-float FloatImage::nearest_mirror(float x, float y, const int c) const
-{
-	// @@ TBD
-	return 0.0f;
-}
-
-float FloatImage::linear_clamp(float x, float y, const int c) const
+float FloatImage::sampleLinearClamp(float x, float y, const int c) const
 {
 	const int w = m_width;
 	const int h = m_height;
@@ -302,10 +286,10 @@ float FloatImage::linear_clamp(float x, float y, const int c) const
 	const float fracX = frac(x);
 	const float fracY = frac(y);
 	
-	const int ix0 = ::clamp(round(x), 0, w-1);
-	const int iy0 = ::clamp(round(y), 0, h-1);
-	const int ix1 = ::clamp(round(x)+1, 0, w-1);
-	const int iy1 = ::clamp(round(y)+1, 0, h-1);
+	const int ix0 = ::clamp(ifloor(x), 0, w-1);
+	const int iy0 = ::clamp(ifloor(y), 0, h-1);
+	const int ix1 = ::clamp(ifloor(x)+1, 0, w-1);
+	const int iy1 = ::clamp(ifloor(y)+1, 0, h-1);
 
 	float f1 = pixel(ix0, iy0, c);
 	float f2 = pixel(ix1, iy0, c);
@@ -318,7 +302,7 @@ float FloatImage::linear_clamp(float x, float y, const int c) const
 	return lerp(i1, i2, fracY);
 }
 
-float FloatImage::linear_repeat(float x, float y, int c) const
+float FloatImage::sampleLinearRepeat(float x, float y, int c) const
 {
 	const int w = m_width;
 	const int h = m_height;
@@ -326,10 +310,10 @@ float FloatImage::linear_repeat(float x, float y, int c) const
 	const float fracX = frac(x * w);
 	const float fracY = frac(y * h);
 	
-	int ix0 = round(frac(x) * w);
-	int iy0 = round(frac(y) * h);
-	int ix1 = round(frac(x + 1.0f/w) * w);
-	int iy1 = round(frac(y + 1.0f/h) * h);
+	int ix0 = ifloor(frac(x) * w);
+	int iy0 = ifloor(frac(y) * h);
+	int ix1 = ifloor(frac(x + 1.0f/w) * w);
+	int iy1 = ifloor(frac(y + 1.0f/h) * h);
 	
 	float f1 = pixel(ix0, iy0, c);
 	float f2 = pixel(ix1, iy0, c);
@@ -342,10 +326,31 @@ float FloatImage::linear_repeat(float x, float y, int c) const
 	return lerp(i1, i2, fracY);
 }
 
-float FloatImage::linear_mirror(float x, float y, int c) const
+float FloatImage::sampleLinearMirror(float x, float y, int c) const
 {
-	// @@ TBD
-	return 0.0f;
+	const int w = m_width;
+	const int h = m_height;
+
+	x *= w;
+	y *= h;
+
+	const float fracX = frac(x);
+	const float fracY = frac(y);
+
+	int ix0 = mirror(x, w);
+	int iy0 = mirror(y, h);
+	int ix1 = mirror(x + 1, w);
+	int iy1 = mirror(y + 1, h);
+
+	float f1 = pixel(ix0, iy0, c);
+	float f2 = pixel(ix1, iy0, c);
+	float f3 = pixel(ix0, iy1, c);
+	float f4 = pixel(ix1, iy1, c);
+	
+	float i1 = lerp(f1, f2, fracX);
+	float i2 = lerp(f3, f4, fracX);
+
+	return lerp(i1, i2, fracY);
 }
 
 

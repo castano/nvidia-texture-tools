@@ -4,6 +4,8 @@
 #include <nvcore/Containers.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
+#include <nvcore/Tokenizer.h>
+#include <nvcore/TextWriter.h>
 
 #include <nvmath/Color.h>
 
@@ -29,11 +31,13 @@ extern "C" {
 #	include <tiffio.h>
 #endif
 
-#if defined(HAVE_EXR)
-#	include <ImfRgbaFile.h>
-#	include <ImfInputFile.h>	// ???
+#if defined(HAVE_OPENEXR)
+#	include <ImfIO.h>
+#	include <ImathBox.h>
+#	include <ImfChannelList.h>
+#	include <ImfInputFile.h>
+#	include <ImfOutputFile.h>
 #	include <ImfArray.h>
-using namespace Imf;
 #endif
 
 using namespace nv;
@@ -55,23 +59,28 @@ namespace {
 } // namespace
 
 
-Image * nv::ImageIO::load(const char * name)
+Image * nv::ImageIO::load(const char * fileName)
 {
-	StdInputStream stream(name);
+	nvDebugCheck(fileName != NULL);
+
+	StdInputStream stream(fileName);
 	
 	if (stream.isError()) {
-		return false;
+		return NULL;
 	}
 	
-	return load(name, stream);
+	return ImageIO::load(fileName, stream);
 }
 
-Image * nv::ImageIO::load(const char * name, Stream & s)
+Image * nv::ImageIO::load(const char * fileName, Stream & s)
 {
-	const char * extension = Path::extension(name);
+	nvDebugCheck(fileName != NULL);
+	nvDebugCheck(s.isLoading());
+
+	const char * extension = Path::extension(fileName);
 	
 	if (strCaseCmp(extension, ".tga") == 0) {
-		return loadTGA(s);
+		return ImageIO::loadTGA(s);
 	}
 #if defined(HAVE_JPEG)
 	if (strCaseCmp(extension, ".jpg") == 0 || strCaseCmp(extension, ".jpeg") == 0) {
@@ -90,33 +99,110 @@ Image * nv::ImageIO::load(const char * name, Stream & s)
 	return NULL;
 }
 
-NVIMAGE_API FloatImage * nv::ImageIO::loadFloat(const char * name)
+bool nv::ImageIO::save(const char * fileName, Stream & s, Image * img)
 {
-	StdInputStream stream(name);
+	nvDebugCheck(fileName != NULL);
+	nvDebugCheck(s.isSaving());
+	nvDebugCheck(img != NULL);
+
+	const char * extension = Path::extension(fileName);
+
+	if (strCaseCmp(extension, ".tga") == 0) {
+		return ImageIO::saveTGA(s, img);
+	}
+
+	return false;
+}
+
+bool nv::ImageIO::save(const char * fileName, Image * img)
+{
+	nvDebugCheck(fileName != NULL);
+	nvDebugCheck(img != NULL);
+
+	StdOutputStream stream(fileName);
+	if (stream.isError())
+	{
+		return false;
+	}
+
+	return ImageIO::save(fileName, stream, img);
+}
+
+FloatImage * nv::ImageIO::loadFloat(const char * fileName)
+{
+	nvDebugCheck(fileName != NULL);
+
+	StdInputStream stream(fileName);
 	
 	if (stream.isError()) {
 		return false;
 	}
 	
-	return loadFloat(name, stream);
+	return loadFloat(fileName, stream);
 }
 
-NVIMAGE_API FloatImage * nv::ImageIO::loadFloat(const char * name, Stream & s)
+FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 {
-	const char * extension = Path::extension(name);
+	nvDebugCheck(fileName != NULL);
+
+	const char * extension = Path::extension(fileName);
 	
 #if defined(HAVE_TIFF)
 	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
-		return loadFloatTIFF(name, s);
+		return loadFloatTIFF(fileName, s);
 	}
 #endif
-#if defined(HAVE_EXR)
+#if defined(HAVE_OPENEXR)
 	if (strCaseCmp(extension, ".exr") == 0) {
-		return loadFloatEXR(name, s);
+		return loadFloatEXR(fileName, s);
 	}
 #endif
 
+	if (strCaseCmp(extension, ".pfm") == 0) {
+		return loadFloatPFM(fileName, s);
+	}
+
 	return NULL;
+}
+
+
+bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
+{
+	const char * extension = Path::extension(fileName);
+
+#if defined(HAVE_OPENEXR)
+	if (strCaseCmp(extension, ".exr") == 0)
+	{
+		return ImageIO::saveFloatEXR(fileName, fimage, base_component, num_components);
+	}
+#endif
+
+#if defined(HAVE_TIFF)
+	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0)
+	{
+		return ImageIO::saveFloatTIFF(fileName, fimage, base_component, num_components);
+	}
+#endif
+
+	if (strCaseCmp(extension, ".pfm") == 0)
+	{
+//		return ImageIO::saveFloatPFM(fileName, fimage, base_component, num_components);
+	}
+
+	if (num_components == 3 || num_components == 4)
+	{
+		AutoPtr<Image> image(fimage->createImage(base_component, num_components));
+		nvCheck(image != NULL);
+
+		if (num_components == 4)
+		{
+			image->setFormat(Image::Format_ARGB);
+		}
+
+		return ImageIO::save(fileName, image.ptr());
+	}
+
+	return false;
 }
 
 
@@ -912,7 +998,7 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 {
 	nvCheck(fileName != NULL);
 	nvCheck(fimage != NULL);
-	nvCheck(fimage->componentNum() <= base_component + num_components);
+	nvCheck(base_component + num_components <= fimage->componentNum());
 	
 	const int iW = fimage->width();
 	const int iH = fimage->height();
@@ -936,7 +1022,12 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 	uint32 rowsperstrip = TIFFDefaultStripSize(image, (uint32)-1); 
 
 	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
-	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_PACKBITS); 
+	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_PACKBITS);
+	if (num_components == 3)
+	{
+		// Set this so that it can be visualized with pfstools.
+		TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+	}
 	TIFFSetField(image, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
 	TIFFSetField(image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
@@ -963,14 +1054,14 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 
 #endif
 
-#if defined(HAVE_EXR)
+#if defined(HAVE_OPENEXR)
 
 namespace
 {
 	class ExrStream : public Imf::IStream
 	{
 	public:
-		ExrStream(Stream & s) : m_stream(s)
+		ExrStream(const char * name, Stream & s) : Imf::IStream(name), m_stream(s)
 		{
 			nvDebugCheck(s.isLoading());
 		}
@@ -987,12 +1078,12 @@ namespace
 			return m_stream.isAtEnd();
 		}
 		
-		virtual Int64 tellg()
+		virtual Imf::Int64 tellg()
 		{
 			return m_stream.tell();
 		}
 		
-		virtual void seekg(Int64 pos)
+		virtual void seekg(Imf::Int64 pos)
 		{
 			m_stream.seek(pos);
 		}
@@ -1010,12 +1101,13 @@ namespace
 
 FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 {
+	nvCheck(s.isLoading());
 	nvCheck(!s.isError());
 
-	ExrStream stream(s);
-	RgbaInputFile inputFile(stream);
+	ExrStream stream(fileName, s);
+	Imf::InputFile inputFile(stream);
 
-	Box2i box = inputFile.dataWindow();
+	Imath::Box2i box = inputFile.header().dataWindow();
 
 	int width = box.max.x - box.min.y + 1;
 	int height = box.max.x - box.min.y + 1;
@@ -1024,7 +1116,7 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	
 	// Count channels.
 	uint channelCount= 0;
-	for (ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it)
+	for (Imf::ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it)
 	{
 		channelCount++;
 	}
@@ -1034,11 +1126,11 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	fimage->allocate(channelCount, width, height);
 	
 	// Describe image's layout with a framebuffer.
-	FrameBuffer frameBuffer;
+	Imf::FrameBuffer frameBuffer;
 	uint i = 0;
-	for (ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it, ++i)
+	for (Imf::ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it, ++i)
 	{
-		frameBuffer.insert(it.name(), Slice(FLOAT, fimage->channel(i), sizeof(float), sizeof(float) * width));
+		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(i), sizeof(float), sizeof(float) * width));
 	}
 	
 	// Read it.
@@ -1048,22 +1140,11 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	return fimage.release();
 }
 
-FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName)
-{
-	StdInputStream stream(fileName);
-	
-	if (stream.isError()) {
-		return false;
-	}
-	
-	return loadFloatExr(fileName, stream);
-}
-
 bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
 {
 	nvCheck(fileName != NULL);
 	nvCheck(fimage != NULL);
-	nvCheck(fimage->componentNum() <= base_component + num_components);
+	nvCheck(base_component + num_components <= fimage->componentNum());
 	nvCheck(num_components > 0 && num_components <= 4);
 	
 	const int w = fimage->width();
@@ -1071,29 +1152,146 @@ bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage,
 	
 	const char * channelNames[] = {"R", "G", "B", "A"};
 	
-    Header header (width, height);
+    Imf::Header header (w, h);
 	
 	for (uint c = 0; c < num_components; c++)
 	{
-	    header.channels().insert(channelNames[c], Channel(FLOAT));
+		header.channels().insert(channelNames[c], Imf::Channel(Imf::FLOAT));
 	}
 	
-    OutputFile file(fileName, header);
-    FrameBuffer frameBuffer;
+    Imf::OutputFile file(fileName, header);
+    Imf::FrameBuffer frameBuffer;
     
 	for (uint c = 0; c < num_components; c++)
 	{
-		const char * channel = (char *) fimage->channel(base_component + c);
-		frameBuffer.insert(channelNames[c], Slice(FLOAT, channel, sizeof(float), sizeof(float) * w));
+		char * channel = (char *) fimage->channel(base_component + c);
+		frameBuffer.insert(channelNames[c], Imf::Slice(Imf::FLOAT, channel, sizeof(float), sizeof(float) * w));
 	}
 	
 	file.setFrameBuffer(frameBuffer);
-	file.writePixels(height);
+	file.writePixels(h);
 	
-	return false;
+	return true;
 }
 
-#endif // defined(HAVE_EXR)
+#endif // defined(HAVE_OPENEXR)
+
+
+FloatImage * nv::ImageIO::loadFloatPFM(const char * fileName, Stream & s)
+{
+	nvCheck(s.isLoading());
+	nvCheck(!s.isError());
+
+	Tokenizer parser(&s);
+
+	parser.nextToken();
+
+	bool grayscale;
+	if (parser.token() == "PF")
+	{
+		grayscale = false;
+	}
+	else if (parser.token() == "Pf")
+	{
+		grayscale = true;
+	}
+	else
+	{
+		// Invalid file.
+		return NULL;
+	}
+
+	parser.nextLine();
+	
+	int width = parser.token().toInt(); parser.nextToken();
+	int height = parser.token().toInt();
+
+	parser.nextLine();
+
+	float scaleFactor = parser.token().toFloat();
+
+	if (scaleFactor >= 0)
+	{
+		s.setByteOrder(Stream::BigEndian);
+	}
+	else
+	{
+		s.setByteOrder(Stream::LittleEndian);
+	}
+	scaleFactor = fabsf(scaleFactor);
+
+	// Allocate image.
+	AutoPtr<FloatImage> fimage(new FloatImage());
+
+	if (grayscale)
+	{
+		fimage->allocate(1, width, height);
+
+		float * channel = fimage->channel(0);
+
+		for (int i = 0; i < width * height; i++)
+		{
+			s << channel[i];
+		}
+	}
+	else
+	{
+		fimage->allocate(3, width, height);
+
+		float * rchannel = fimage->channel(0);
+		float * gchannel = fimage->channel(1);
+		float * bchannel = fimage->channel(2);
+
+		for (int i = 0; i < width * height; i++)
+		{
+			s << rchannel[i] << gchannel[i] << bchannel[i];
+		}
+	}
+
+	return fimage.release();
+}
+
+bool nv::ImageIO::saveFloatPFM(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
+{
+	nvCheck(fileName != NULL);
+	nvCheck(fimage != NULL);
+	nvCheck(fimage->componentNum() <= base_component + num_components);
+	nvCheck(num_components == 1 || num_components == 3);
+
+	StdOutputStream stream(fileName);
+	TextWriter writer(&stream);
+
+	if (num_components == 1) writer.write("Pf\n");
+	else /*if (num_components == 3)*/ writer.write("PF\n");
+
+	int w = fimage->width();
+	int h = fimage->height();
+	writer.write("%d %d\n", w, h);
+	writer.write("%f\n", -1.0f);	// little endian with 1.0 scale.
+
+	if (num_components == 1)
+	{
+		float * channel = const_cast<float *>(fimage->channel(0));
+
+		for (int i = 0; i < w * h; i++)
+		{
+			stream << channel[i];
+		}
+	}
+	else
+	{
+		float * rchannel = const_cast<float *>(fimage->channel(0));
+		float * gchannel = const_cast<float *>(fimage->channel(1));
+		float * bchannel = const_cast<float *>(fimage->channel(2));
+
+		for (int i = 0; i < w * h; i++)
+		{
+			stream << rchannel[i] << gchannel[i] << bchannel[i];
+		}
+	}
+
+	return true;
+}
 
 
 #if 0
