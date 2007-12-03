@@ -114,7 +114,7 @@ void InputOptions::setKaiserParameters(int width, float alpha, float stretch);
 The default values are:
 
 {{{
-inputOptions.setKaiserParameters(5, 8.0f, 0.75f);
+inputOptions.setKaiserParameters(5, 4.0f, 1.0f);
 }}}
 
 *TODO*: Explain how the options affect the results.
