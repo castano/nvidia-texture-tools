@@ -32,7 +32,7 @@ namespace
 
 	static int mirror(int x, int w)
 	{
-		x = fabs(x);
+		x = abs(x);
 		while (x >= w) {
 			x = 2 * w - x - 2;
 		}
@@ -337,10 +337,10 @@ float FloatImage::sampleLinearMirror(float x, float y, int c) const
 	const float fracX = frac(x);
 	const float fracY = frac(y);
 
-	int ix0 = mirror(x, w);
-	int iy0 = mirror(y, h);
-	int ix1 = mirror(x + 1, w);
-	int iy1 = mirror(y + 1, h);
+	int ix0 = mirror(iround(x), w);
+	int iy0 = mirror(iround(y), h);
+	int ix1 = mirror(iround(x) + 1, w);
+	int iy1 = mirror(iround(y) + 1, h);
 
 	float f1 = pixel(ix0, iy0, c);
 	float f2 = pixel(ix1, iy0, c);
@@ -387,9 +387,9 @@ FloatImage * FloatImage::fastDownSample() const
 				
 				for(uint x = 0; x < w; x++)
 				{
-					const float w0 = (w - x);
-					const float w1 = (w - 0);
-					const float w2 = (1 + x);
+					const float w0 = float(w - x);
+					const float w1 = float(w - 0);
+					const float w2 = float(1 + x);
 					
 					*dst++ = scale * (w0 * src[0] + w1 * src[1] + w2 * src[2]);
 					src += 2;
@@ -450,15 +450,15 @@ FloatImage * FloatImage::fastDownSample() const
 			
 			for(uint y = 0; y < h; y++)
 			{
-				const float v0 = (h - y);
-				const float v1 = (h - 0);
-				const float v2 = (1 + y);
+				const float v0 = float(h - y);
+				const float v1 = float(h - 0);
+				const float v2 = float(1 + y);
 				
 				for (uint x = 0; x < w; x++)
 				{
-					const float w0 = (w - x);
-					const float w1 = (w - 0);
-					const float w2 = (1 + x);
+					const float w0 = float(w - x);
+					const float w1 = float(w - 0);
+					const float w2 = float(1 + x);
 					
 					float f = 0.0f;
 					f += v0 * (w0 * src[0 * m_width + 2 * x] + w1 * src[0 * m_width + 2 * x + 1] + w2 * src[0 * m_width + 2 * x + 2]);
@@ -487,9 +487,9 @@ FloatImage * FloatImage::fastDownSample() const
 			{
 				for (uint x = 0; x < w; x++)
 				{
-					const float w0 = (w - x);
-					const float w1 = (w - 0);
-					const float w2 = (1 + x);
+					const float w0 = float(w - x);
+					const float w1 = float(w - 0);
+					const float w2 = float(1 + x);
 					
 					float f = 0.0f;
 					f += w0 * (src[2 * x + 0] + src[m_width + 2 * x + 0]);
@@ -517,9 +517,9 @@ FloatImage * FloatImage::fastDownSample() const
 			
 			for(uint y = 0; y < h; y++)
 			{
-				const float v0 = (h - y);
-				const float v1 = (h - 0);
-				const float v2 = (1 + y);
+				const float v0 = float(h - y);
+				const float v1 = float(h - 0);
+				const float v2 = float(1 + y);
 				
 				for (uint x = 0; x < w; x++)
 				{
@@ -767,8 +767,8 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, Wr
 	{
 		const float center = (0.5f + i) * iscale;
 		
-		const int left = floor(center - width);
-		const int right = ceil(center + width);
+		const int left = (int)floorf(center - width);
+		const int right = (int)ceilf(center + width);
 		nvCheck(right - left <= windowSize);
 		
 		float sum = 0;
@@ -799,8 +799,8 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, 
 	{
 		const float center = (0.5f + i) * iscale;
 		
-		const int left = floorf(center - width);
-		const int right = ceilf(center + width);
+		const int left = (int)floorf(center - width);
+		const int right = (int)ceilf(center + width);
 		nvDebugCheck(right - left <= windowSize);
 		
 		float sum = 0;

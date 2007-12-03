@@ -203,7 +203,7 @@ public:
 		
 		virtual int tell() const
 		{
-			return m_ptr - m_mem;
+			return int(m_ptr - m_mem);
 		}
 		
 		virtual int size() const

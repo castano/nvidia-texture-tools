@@ -60,13 +60,13 @@ namespace
 	// http://en.wikipedia.org/wiki/Bessel_function
 	inline static float bessel0(float x)
 	{
-		const float EPSILON_RATIO = 1E-6;
+		const float EPSILON_RATIO = 1e-6f;
 		float xh, sum, pow, ds;
 		int k;
 
-		xh = 0.5 * x;
-		sum = 1.0;
-		pow = 1.0;
+		xh = 0.5f * x;
+		sum = 1.0f;
+		pow = 1.0f;
 		k = 0;
 		ds = 1.0;
 		while (ds > sum * EPSILON_RATIO) {
@@ -249,7 +249,7 @@ Kernel1::Kernel1(const Filter & f, int iscale, int samples/*= 32*/)
 	const float scale = 1.0f / iscale;
 	
 	m_width = f.width() * iscale;
-	m_windowSize = ceilf(2 * m_width);
+	m_windowSize = (int)ceilf(2 * m_width);
 	m_data = new float[m_windowSize];
 	
 	const float offset = float(m_windowSize) / 2;
@@ -523,7 +523,7 @@ PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLengt
 
 	m_length = dstLength;
 	m_width = f.width() * iscale;
-	m_windowSize = ceilf(m_width * 2) + 1;
+	m_windowSize = (int)ceilf(m_width * 2) + 1;
 
 	m_data = new float[m_windowSize * m_length];
 	memset(m_data, 0, sizeof(float) * m_windowSize * m_length);
@@ -532,8 +532,8 @@ PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLengt
 	{
 		const float center = (0.5f + i) * iscale;
 		
-		const int left = floorf(center - m_width);
-		const int right = ceilf(center + m_width);
+		const int left = (int)floorf(center - m_width);
+		const int right = (int)ceilf(center + m_width);
 		nvDebugCheck(right - left <= m_windowSize);
 		
 		float total = 0.0f;
