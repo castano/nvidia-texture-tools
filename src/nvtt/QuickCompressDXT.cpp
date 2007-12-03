@@ -120,7 +120,7 @@ inline static uint16 roundAndExpand(Vector3 * __restrict v)
 	r = (r << 3) | (r >> 2);
 	g = (g << 2) | (g >> 4);
 	b = (b << 3) | (b >> 2);
-	*v = Vector3(r, g, b);
+	*v = Vector3(float(r), float(g), float(b));
 	
 	return w;
 }
@@ -204,7 +204,7 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	{
 		const uint bits = dxtBlock->indices >> (2 * i);
 		
-		float beta = (bits & 1);
+		float beta = float(bits & 1);
 		if (bits & 2) beta = (1 + beta) / 3.0f;
 		float alpha = 1.0f - beta;
 		
