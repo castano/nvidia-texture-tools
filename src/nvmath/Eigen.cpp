@@ -276,14 +276,14 @@ void semi_definite_symmetric_eigen(
                     
                     delta = a_ll - a_mm;
                     
-                    if( delta == 0.0 ) {
+                    if( delta == 0.0f ) {
                         x = - PI/4 ; 
                     } else {
-                        x = - atan( (a_lm+a_lm) / delta ) / 2.0 ;
+                        x = - atanf( (a_lm+a_lm) / delta ) / 2.0f ;
                     }
 
-                    sinx    = sin(x)   ;
-                    cosx    = cos(x)   ;
+                    sinx    = sinf(x);
+                    cosx    = cosf(x);
                     sinx_2  = sinx*sinx;
                     cosx_2  = cosx*cosx;
                     sincos  = sinx*cosx;

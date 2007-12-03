@@ -18,7 +18,7 @@ public:
 	Color64(uint16 R, uint16 G, uint16 B, uint16 A) { setRGBA(R, G, B, A); }
 	explicit Color64(uint64 U) : u(U) { }
 
-	void setRGBA(uint8 R, uint8 G, uint8 B, uint8 A)
+	void setRGBA(uint16 R, uint16 G, uint16 B, uint16 A)
 	{
 		r = R;
 		g = G;
