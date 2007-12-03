@@ -344,8 +344,8 @@ public:
 	
 private:
 	
-	Stream * m_s;
-	bool m_autodelete;
+	Stream * const m_s;
+	bool const m_autodelete;
 
 };
 
