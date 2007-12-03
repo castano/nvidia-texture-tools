@@ -72,9 +72,11 @@ int main(int argc, char *argv[])
 	MyMessageHandler messageHandler;
 
 	float scale = 0.5f;
+	float gamma = 2.2f;
+	nv::Filter * filter = NULL;
 	nv::Path input;
 	nv::Path output;
-
+	
 	// Parse arguments.
 	for (int i = 1; i < argc; i++)
 	{
@@ -84,6 +86,29 @@ int main(int argc, char *argv[])
 			if (i+1 < argc && argv[i+1][0] != '-') {
 				scale = atof(argv[i+1]);
 				i++;
+			}
+		}
+		else if (strcmp("-g", argv[i]) == 0)
+		{
+			if (i+1 < argc && argv[i+1][0] != '-') {
+				gamma = atof(argv[i+1]);
+				i++;
+			}
+		}
+		else if (strcmp("-f", argv[i]) == 0)
+		{
+			if (i+1 == argc) break;
+			i++;
+			
+			if (strcmp("box", argv[i]) == 0) filter = new nv::BoxFilter();
+			else if (strcmp("triangle", argv[i]) == 0) filter = new nv::TriangleFilter();
+			else if (strcmp("quadratic", argv[i]) == 0) filter = new nv::QuadraticFilter();
+			else if (strcmp("bspline", argv[i]) == 0) filter = new nv::BSplineFilter();
+			else if (strcmp("mitchell", argv[i]) == 0) filter = new nv::MitchellFilter();
+			else if (strcmp("lanczos", argv[i]) == 0) filter = new nv::LanczosFilter();
+			else if (strcmp("kaiser", argv[i]) == 0) {
+				filter = new nv::KaiserFilter(5);
+				((nv::KaiserFilter *)filter)->setParameters(4.0f, 1.0f);
 			}
 		}
 		else if (argv[i][0] != '-')
@@ -102,34 +127,42 @@ int main(int argc, char *argv[])
 	{
 		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");	
 		
-		printf("usage: resize [options] input [output]\n\n");
+		printf("usage: nvzoom [options] input [output]\n\n");
 		
-		printf("Diff options:\n");
-		printf("  -s scale \tScale factor (default = 0.5).\n");
+		printf("Options:\n");
+		printf("  -s scale     Scale factor (default = 0.5)\n");
+		printf("  -g gamma     Gamma correction (default = 2.2)\n");
+		printf("  -f filter    One of the following: (default = 'box')\n");
+		printf("                * box\n");
+		printf("                * triangle\n");
+		printf("                * quadratic\n");
+		printf("                * bspline\n");
+		printf("                * mitchell\n");
+		printf("                * lanczos\n");
+		printf("                * kaiser\n");
 
 		return 1;
+	}
+	
+	if (filter == NULL)
+	{
+		filter = new nv::BoxFilter();
 	}
 
 	nv::Image image;
 	if (!loadImage(image, input)) return 0;
 
 	nv::FloatImage fimage(&image);
-//	fimage.toLinear(0, 3);
+	fimage.toLinear(0, 3, gamma);
 	
-//	nv::AutoPtr<nv::FloatImage> fresult(fimage.fastDownSample());
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(*filter, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
 	
-//	nv::Kernel1 k(10);
-//	k.initKaiser(4, scale, 20);
-//	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(k, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Clamp));
-	
-	nv::BoxFilter filter;
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(filter, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
-	
-	
-	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(1.0));
+	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
 
 	nv::StdOutputStream stream(output);
-	nv::ImageIO::saveTGA(stream, result.ptr());
+	nv::ImageIO::saveTGA(stream, result.ptr());	// @@ Add generic save function. Add support for png too.
+	
+	delete filter;
 	
 	return 0;
 }
