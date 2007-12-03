@@ -289,6 +289,18 @@
 				RelativePath="..\..\..\src\nvcore\StrLib.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\TextReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\TextWriter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\Tokenizer.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
