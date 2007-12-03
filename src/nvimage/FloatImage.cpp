@@ -599,17 +599,18 @@ FloatImage * FloatImage::downSample(const Filter & filter, WrapMode wm) const
 	return downSample(filter, w, h, wm);
 }
 
+
 /// Downsample applying a 1D kernel separately in each dimension.
 FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapMode wm) const
 {
 	// @@ Use monophase filters when frac(m_width / w) == 0
 
-	PolyphaseKernel xkernel(filter, m_width, w);
-	PolyphaseKernel ykernel(filter, m_height, h);
-	
 	AutoPtr<FloatImage> tmp_image( new FloatImage() );
 	AutoPtr<FloatImage> dst_image( new FloatImage() );	
-
+	
+	PolyphaseKernel xkernel(filter, m_width, w, 32);
+	PolyphaseKernel ykernel(filter, m_height, h, 32);
+	
 	// @@ Select fastest filtering order:
 	//if (w * m_height <= h * m_width)
 	{
@@ -748,12 +749,12 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, 
 /// Apply 1D vertical kernel at the given coordinates and return result.
 void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, WrapMode wm, float * output) const
 {
-	uint length = k.length();
-	float scale = float(length) / float(m_height);
-	float iscale = 1.0f / scale;
+	const uint length = k.length();
+	const float scale = float(length) / float(m_height);
+	const float iscale = 1.0f / scale;
 
-	float width = k.width();
-	float windowSize = k.windowSize();
+	const float width = k.width();
+	const int windowSize = k.windowSize();
 
 	const float * channel = this->channel(c);
 
@@ -761,11 +762,10 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, Wr
 	{
 		const float center = (0.5f + i) * iscale;
 		
-		int left = floor(center - width);
-		int right = ceil(center + width);
-		
+		const int left = floor(center - width);
+		const int right = ceil(center + width);
 		nvCheck(right - left <= windowSize);
-
+		
 		float sum = 0;
 		for (int j = 0; j < windowSize; ++j)
 		{
@@ -776,43 +776,17 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, Wr
 		
 		output[i] = sum;
 	}
-
-	/*
-	const float kernelWidth = k->width();
-	const float kernelOffset = kernelWidth * 0.5f;
-	const int kernelLength = k->length();
-	const int kernelWindow = k->windowSize();
-	
-	//const float offset = 0.5f * scale * (1 - kw);
-	const float offset = (0.5f * scale) - kernelOffset;
-
-	const float * channel = this->channel(c);
-
-	for (int y = 0; y < kernelLength; y++)
-	{
-		float sum = 0.0f;
-		for (int i = 0; i < kernelWindow; i++)
-		{
-			const int src_y = int(y * scale + offset) + i;
-			const int idx = this->index(x, src_y, wm);
-			
-			sum += k->valueAt(y, i) * channel[idx];
-		}
-		
-		output[y] = sum;
-	}
-	*/
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
 void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, WrapMode wm, float * output) const
 {
-	uint length = k.length();
-	float scale = float(length) / float(m_width);
-	float iscale = 1.0f / scale;
+	const uint length = k.length();
+	const float scale = float(length) / float(m_width);
+	const float iscale = 1.0f / scale;
 
-	float width = k.width();
-	float windowSize = k.windowSize();
+	const float width = k.width();
+	const int windowSize = k.windowSize();
 
 	const float * channel = this->channel(c);
 
@@ -820,10 +794,10 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, 
 	{
 		const float center = (0.5f + i) * iscale;
 		
-		int left = floor(center - width);
-		int right = ceil(center + width);
-		nvCheck(right - left <= (int)windowSize);
-
+		const int left = floorf(center - width);
+		const int right = ceilf(center + width);
+		nvDebugCheck(right - left <= windowSize);
+		
 		float sum = 0;
 		for (int j = 0; j < windowSize; ++j)
 		{
@@ -834,30 +808,5 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, 
 		
 		output[i] = sum;
 	}
-
-	/*
-	const float kernelWidth = k->width();
-	const float kernelOffset = kernelWidth * 0.5f;
-	const int kernelLength = k->length();
-	const int kernelWindow = k->windowSize();
-
-	const float offset = (0.5f * scale) - kernelOffset;
-
-	const float * channel = this->channel(c);
-
-	for (int x = 0; x < kernelLength; x++)
-	{
-		float sum = 0.0f;
-		for (int e = 0; e < kernelWindow; e++)
-		{
-			const int src_x = int(x * scale + offset) + e;
-			const int idx = this->index(src_x, y, wm);
-			
-			sum += k->valueAt(x, e) * channel[idx];
-		}
-		
-		output[x] = sum;
-	}
-	*/
 }
 

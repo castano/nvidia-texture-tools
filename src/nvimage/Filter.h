@@ -4,6 +4,7 @@
 #define NV_IMAGE_FILTER_H
 
 #include <nvimage/nvimage.h>
+#include <nvcore/Debug.h>
 
 namespace nv
 {
@@ -14,6 +15,7 @@ namespace nv
 	{
 	public:
 		NVIMAGE_API Filter(float width);
+		NVIMAGE_API virtual ~Filter();
 
 		NVIMAGE_API float width() const { return m_width; }
 		NVIMAGE_API float sample(float x, float scale, int samples) const;
@@ -116,31 +118,29 @@ namespace nv
 	/// A 1D kernel. Used to precompute filter weights.
 	class Kernel1
 	{
+		NV_FORBID_COPY(Kernel1);
 	public:
-		NVIMAGE_API Kernel1(uint windowSize);
-		NVIMAGE_API Kernel1(const Kernel1 & k);
+		NVIMAGE_API Kernel1(const Filter & f, int iscale, int samples = 32);
 		NVIMAGE_API ~Kernel1();
 		
-		NVIMAGE_API void normalize();
-		
 		float valueAt(uint x) const {
+			nvDebugCheck(x < (uint)m_windowSize);
 			return m_data[x];
 		}
 		
-		uint windowSize() const {
+		int windowSize() const {
 			return m_windowSize;
 		}
-		/*
-		NVIMAGE_API void initFilter(Filter::Enum filter, int samples = 1);
-		NVIMAGE_API void initSinc(float stretch = 1);
-		NVIMAGE_API void initKaiser(float alpha = 4.0f, float stretch = 1.0f, int sampes = 1);
-		NVIMAGE_API void initMitchell(float b = 1.0f/3.0f, float c = 1.0f/3.0f);
-		*/
+		
+		float width() const {
+			return m_width;
+		}
 		
 		NVIMAGE_API void debugPrint();
 		
 	private:
-		const uint m_windowSize;
+		int m_windowSize;
+		float m_width;
 		float * m_data;
 	};
 
@@ -180,12 +180,12 @@ namespace nv
 	/// A 1D polyphase kernel
 	class PolyphaseKernel
 	{
-		NV_FORBID_COPY(PolyphaseKernel)
+		NV_FORBID_COPY(PolyphaseKernel);
 	public:
-		NVIMAGE_API PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength);
+		NVIMAGE_API PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength, int samples = 32);
 		NVIMAGE_API ~PolyphaseKernel();
 		
-		uint windowSize() const {
+		int windowSize() const {
 			return m_windowSize;
 		}
 		
@@ -199,14 +199,14 @@ namespace nv
 
 		float valueAt(uint column, uint x) const {
 			nvDebugCheck(column < m_length);
-			nvDebugCheck(x < m_windowSize);
+			nvDebugCheck(x < (uint)m_windowSize);
 			return m_data[column * m_windowSize + x];
 		}
 
 		NVIMAGE_API void debugPrint() const;
 		
 	private:
-		uint m_windowSize;
+		int m_windowSize;
 		uint m_length;
 		float m_width;
 		float * m_data;
