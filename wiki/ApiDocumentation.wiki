@@ -103,9 +103,9 @@ It's possible to specify what filter should be used using the `filter` argument.
 
 `MipmapFilter_Box` is a [http://developer.nvidia.com/object/np2_mipmapping.html polyphase box filter]. It's the default option and good choice for most cases.
 
-`MipmapFilter_Triangle` uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter. It's not a polyphase filter so it's not recommended for non power of two images.
+`MipmapFilter_Triangle` uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter.
 
-`MipmapFilter_Kaiser` is a Kaiser windowed sinc filter. That's generally considered the best choice for downsampling filters, but in order to obtain best results it may be required to tweak some of the parameters of the filter, otherwise the resulting images could suffer from ringing artifacts or the result may not be as sharp as desired. The default values of the parameters are generally safe, but it's possible to tweak them using the following method:
+`MipmapFilter_Kaiser` is a Kaiser-windowed sinc filter. That's generally considered the best choice for downsampling filters, but in order to obtain best results it may be required to tweak some of the parameters of the filter, otherwise the resulting images could suffer from ringing artifacts or the result may not be as sharp as desired. The default values of the parameters are generally safe, but it's possible to tweak them using the following method:
 
 {{{
 void InputOptions::setKaiserParameters(int width, float alpha, float stretch);
@@ -118,6 +118,8 @@ inputOptions.setKaiserParameters(5, 4.0f, 1.0f);
 }}}
 
 *TODO*: Explain how the options affect the results.
+
+*TODO*: Add page comparing the results of each filter on different images: [ResizeFilters].
 
 When evaluating the color of texels that are near the border, the Triangle and Kaiser filters usually sample outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done with the following method:
 
