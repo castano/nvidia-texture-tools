@@ -1,9 +1,46 @@
 #summary Resize Filters.
 
-= Introduction =
+== Introduction ==
 
 This page demonstrates the results of resampling different images using various resize filters.
 
-= Details =
-
 *TODO*: Add content here.
+
+== Test 1 ==
+
+=== Original image ===
+
+=== Box filter ===
+
+`nvzoom -f box -s # test1.png`
+
+|| 0.7 || 0.5 || 0.3 ||
+||     ||     ||     ||
+
+=== Triangle filter ===
+
+`nvzoom -f triangle -s # test1.png`
+
+|| 0.7 || 0.5 || 0.3 ||
+||     ||     ||     ||
+
+=== Quadratic (Bell) filter ===
+
+`nvzoom -f quadratic -s # test1.png`
+
+|| 0.7 || 0.5 || 0.3 ||
+||     ||     ||     ||
+
+=== Lanczos3 filter ===
+
+`nvzoom -f lanczos -s # test1.png`
+
+|| 0.7 || 0.5 || 0.3 ||
+||     ||     ||     ||
+
+=== Kaiser-windowed sinc filter ===
+
+`nvzoom -f kaiser -s # test1.png`
+
+|| 0.7 || 0.5 || 0.3 ||
+||     ||     ||     ||
