@@ -138,7 +138,7 @@ Note that the `wrapMode` is also used for other image processing operations, lik
 
 === Gamma Correction ===
 
-*TODO*: Explain why gamma correction is important. Filtering in linear space. Energy conservation.
+*TODO*: Explain why gamma correction is important. Filtering in linear space. Energy conservation. Etc.
 
 {{{
 void InputOptions::setGamma(float inputGamma, float outputGamma);
@@ -150,7 +150,7 @@ By default, both the `inputGamma` and the `outputGamma` are set to 2.2. Gamma co
 inputOptions.setGamma(1.0f, 1.0f);
 }}}
 
-*TODO*: Warn about using different factors for input and output. Quantization artifacts when input is 8 bits.
+Note, that using different factors for input and output could result in quantization artifacts when the input components only have 8 bits (that is always the case in the current version).
 
 
 === Processing Normal Maps ===
@@ -169,6 +169,8 @@ void InputOptions::setNormalizeMipmaps(bool normalizeMipmaps);
 
 
 === Generating Normal Maps ===
+
+*TODO*: Explain how normal maps are generated from color images or height maps.
 
 {{{
 inputOptions.convertToNormalMap(true);
@@ -293,7 +295,10 @@ compressionOptions.setColorWeights(float red, float green, float blue);
 
 {{{
 compressionOptions.setFormat(Format_RGB);
-compressionOptions.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
+}}}
+
+{{{
+void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 }}}
 
 
@@ -303,7 +308,13 @@ compressionOptions.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
 
 {{{
 outputOptions.setFileName(const char *);
+}}}
+
+{{{
 outputOptions.setOutputHandler(OutputHandler *);
+}}}
+
+{{{
 outputOptions.setErrorHandler(ErrorHandler *);
 }}}
 
