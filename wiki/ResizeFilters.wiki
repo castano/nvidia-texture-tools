@@ -33,12 +33,7 @@ Downsampling without gamma correction.
 
 == Test 2 ==
 
-Downsampling with gamma correction.
-
-=== Original image ===
-
-[http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2.png]
-
+Downsampling with gamma correction. Gamma is set to 2.2.
 
 === 0.7 scale factor ===
 
