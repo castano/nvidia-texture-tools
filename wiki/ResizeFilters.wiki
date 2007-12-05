@@ -14,6 +14,12 @@ Resize filters without gamme correction.
 
 [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png]
 
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_box.png] ||    [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_triangle.png] ||    [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_quadratic.png] ||
+[http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_lanczos.png] ||
+[http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_kaiser.png] ||
+
 === Box filter ===
 
 `nvzoom -g 1.0 -f box -s # test1.png`
