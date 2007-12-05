@@ -4,14 +4,13 @@
 
 This page demonstrates the results of resampling different images using various resize filters.
 
+Images used for the test:
+
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png] ||
+
 == Test 1 ==
 
 Downsampling without gamma correction.
-
-=== Original image ===
-
-[http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png]
-
 
 === 0.7 scale factor ===
 
@@ -24,12 +23,14 @@ Downsampling without gamma correction.
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_kaiser.png] ||
 
+
 === 0.3 scale factor ===
 
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_kaiser.png] ||
 
 *TODO*: Reconstruct or scale images to better appreciate the downsampling errors.
+
 
 == Test 2 ==
 
@@ -45,6 +46,7 @@ Downsampling with gamma correction. Gamma is set to 2.2.
 
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_05_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_05_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_05_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_05_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_05_kaiser.png] ||
+
 
 === 0.3 scale factor ===
 
