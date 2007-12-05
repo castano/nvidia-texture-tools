@@ -1,0 +1,9 @@
+#summary Resize Filters.
+
+= Introduction =
+
+This page demonstrates the results of resampling different images using various resize filters.
+
+= Details =
+
+*TODO*: Add content here.
