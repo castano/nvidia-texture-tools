@@ -84,14 +84,14 @@ int main(int argc, char *argv[])
 		if (strcmp("-s", argv[i]) == 0)
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') {
-				scale = atof(argv[i+1]);
+				scale = (float)atof(argv[i+1]);
 				i++;
 			}
 		}
 		else if (strcmp("-g", argv[i]) == 0)
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') {
-				gamma = atof(argv[i+1]);
+				gamma = (float)atof(argv[i+1]);
 				i++;
 			}
 		}
@@ -155,7 +155,10 @@ int main(int argc, char *argv[])
 	nv::FloatImage fimage(&image);
 	fimage.toLinear(0, 3, gamma);
 	
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(*filter, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
+	int w = int(image.width() * scale);
+	int h = int(image.height() * scale);
+
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(*filter, w, h, nv::FloatImage::WrapMode_Mirror));
 	
 	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
 
