@@ -1,5 +1,5 @@
 #summary API Documentation
-#labels Documentation
+#labels Documentation,Featured
 
 == Introduction ==
 
