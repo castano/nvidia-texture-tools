@@ -28,3 +28,5 @@ Downsampling without gamma correction.
 
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_kaiser.png] ||
+
+*TODO*: Reconstruct images to better appreciate the downsampling errors.
