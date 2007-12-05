@@ -1,4 +1,5 @@
 #summary Resize Filters.
+#labels Documentation
 
 == Introduction ==
 
