@@ -4,56 +4,27 @@
 
 This page demonstrates the results of resampling different images using various resize filters.
 
-*TODO*: Add content here.
-
 == Test 1 ==
 
-Resize filters without gamme correction.
+Downsampling without gamma correction.
 
 === Original image ===
 
 [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png]
 
 
+=== 0.7 scale factor ===
+
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_box.png] ||    [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_triangle.png] ||    [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_quadratic.png] ||
-[http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_lanczos.png] ||
-[http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_kaiser.png] ||
-
-=== Box filter ===
-
-`nvzoom -g 1.0 -f box -s # test1.png`
-
-|| 0.7 || 0.5 || 0.3 ||
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_box.png] ||     [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_box.png] ||
-
-=== Triangle filter ===
-
-`nvzoom -g 1.0 -f triangle -s # test1.png`
-
-|| 0.7 || 0.5 || 0.3 ||
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_triangle.png] ||     [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_triangle.png] ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_kaiser.png] ||
 
 
-=== Quadratic (Bell) filter ===
+=== 0.5 scale factor ===
 
-`nvzoom -g 1.0 -f quadratic -s # test1.png`
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_kaiser.png] ||
 
-|| 0.7 || 0.5 || 0.3 ||
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_quadratic.png] ||     [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_quadratic.png] ||
+=== 0.3 scale factor ===
 
-
-=== Lanczos3 filter ===
-
-`nvzoom -g 1.0 -f lanczos -s # test1.png`
-
-|| 0.7 || 0.5 || 0.3 ||
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_lanczos.png] ||     [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_lanczos.png] ||
-
-
-=== Kaiser-windowed sinc filter ===
-
-`nvzoom -g 1.0 -f kaiser -s # test1.png`
-
-|| 0.7 || 0.5 || 0.3 ||
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_07_kaiser.png] ||     [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_05_kaiser.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_kaiser.png] ||
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_kaiser.png] ||
