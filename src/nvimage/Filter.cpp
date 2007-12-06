@@ -104,10 +104,13 @@ Filter::Filter(float width) : m_width(width)
 {
 }
 
-float Filter::sample(float x, float scale, int samples) const
+float Filter::sampleDelta(float x, float scale) const
 {
-//	return evaluate(x * scale);
+	return evaluate((x + 0.5f)* scale);
+}
 
+float Filter::sampleBox(float x, float scale, int samples) const
+{
 	float sum = 0;
 	float isamples = 1.0f / float(samples);
 
@@ -120,6 +123,29 @@ float Filter::sample(float x, float scale, int samples) const
 	
 	return sum * isamples;
 }
+
+float Filter::sampleTriangle(float x, float scale, int samples) const
+{
+	float sum = 0;
+	float isamples = 1.0f / float(samples);
+
+	for(int s = 0; s < samples; s++)
+	{
+		float offset = (2 * float(s) + 1.0f) * isamples;		
+		float p = (x + offset - 0.5f) * scale;
+		float value = evaluate(p);
+		
+		float weight = offset;
+		if (weight > 1.0f) weight = 2.0f - weight;
+		
+		sum += value * weight;
+	}
+	
+	return 2 * sum * isamples;
+}
+
+
+
 
 
 BoxFilter::BoxFilter() : Filter(0.5f) {}
@@ -257,7 +283,7 @@ Kernel1::Kernel1(const Filter & f, int iscale, int samples/*= 32*/)
 	float total = 0.0f;
 	for (int i = 0; i < m_windowSize; i++)
 	{
-		const float sample = f.sample(i - offset, scale, samples);
+		const float sample = f.sampleBox(i - offset, scale, samples);
 		m_data[i] = sample;
 		total += sample;
 	}
@@ -539,7 +565,7 @@ PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLengt
 		float total = 0.0f;
 		for (int j = 0; j < m_windowSize; j++)
 		{
-			const float sample = f.sample(left + j - center, scale, samples);
+			const float sample = f.sampleBox(left + j - center, scale, samples);
 			
 			m_data[i * m_windowSize + j] = sample;
 			total += sample;
