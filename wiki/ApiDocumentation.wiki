@@ -114,10 +114,10 @@ void InputOptions::setKaiserParameters(int width, float alpha, float stretch);
 The default values are:
 
 {{{
-inputOptions.setKaiserParameters(5, 4.0f, 1.0f);
+inputOptions.setKaiserParameters(3, 4.0f, 1.0f);
 }}}
 
-*TODO*: Explain how the options affect the results.
+Larger kernel widths are supposed to approximate better a perfect low pass filter, but result in ringing artifacts. Values above 5 are not recommended. You should not change the alpha and stretch values unless you know what you are doing.
 
 You can compare the result of each of these filters at [ResizeFilters].
 
