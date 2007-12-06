@@ -108,13 +108,13 @@ It's possible to specify what filter should be used using the `filter` argument.
 `MipmapFilter_Kaiser` is a Kaiser-windowed sinc filter. That's generally considered the best choice for downsampling filters, but in order to obtain best results it may be required to tweak some of the parameters of the filter, otherwise the resulting images could suffer from ringing artifacts or the result may not be as sharp as desired. The default values of the parameters are generally safe, but it's possible to tweak them using the following method:
 
 {{{
-void InputOptions::setKaiserParameters(int width, float alpha, float stretch);
+void InputOptions::setKaiserParameters(float width, float alpha, float stretch);
 }}}
 
 The default values are:
 
 {{{
-inputOptions.setKaiserParameters(3, 4.0f, 1.0f);
+inputOptions.setKaiserParameters(3.0f, 4.0f, 1.0f);
 }}}
 
 Larger kernel widths are supposed to approximate better a perfect low pass filter, but result in ringing artifacts. Values above 5 are not recommended. You should not change the alpha and stretch values unless you know what you are doing.
