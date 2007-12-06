@@ -42,8 +42,6 @@ Downsampling without gamma correction.
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1_03_kaiser.png] ||
 
-*TODO*: Reconstruct or scale images to better appreciate the downsampling errors.
-
 
 == Test 2 ==
 
@@ -88,8 +86,6 @@ Downsampling without gamma correction.
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_kaiser.png] ||
 
-*TODO*: Reconstruct or scale images to better appreciate the downsampling errors.
-
 
 == Test 4 ==
 
@@ -111,5 +107,3 @@ Downsampling with gamma correction. Gamma is set to 2.2.
 
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_kaiser.png] ||
-
-*TODO*: Reconstruct or scale images to better appreciate the downsampling errors.
