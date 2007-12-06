@@ -101,7 +101,7 @@ It's possible to specify what filter should be used using the `filter` argument.
   * !MipmapFilter_Triangle
   * !MipmapFilter_Kaiser
 
-`MipmapFilter_Box` is a [http://developer.nvidia.com/object/np2_mipmapping.html polyphase box filter]. It's the default option and good choice for most cases.
+`MipmapFilter_Box` is a [http://developer.nvidia.com/object/np2_mipmapping.html polyphase box filter]. It's the default option and good choice for most cases. It's also much faster than the other filters.
 
 `MipmapFilter_Triangle` uses a triangle filter. The kernel has a larger width and thus produces blurrier results than the box filter.
 
@@ -119,9 +119,9 @@ inputOptions.setKaiserParameters(5, 4.0f, 1.0f);
 
 *TODO*: Explain how the options affect the results.
 
-*TODO*: Add page comparing the results of each filter on different images: [ResizeFilters].
+You can compare the result of each of these filters at [ResizeFilters].
 
-When evaluating the color of texels that are near the border, the Triangle and Kaiser filters usually sample outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done with the following method:
+When evaluating the color of texels that are near the border, most the filters usually sample outside of the texture. By default, NVTT assumes the texture wrapping mode is to mirror, because that generally looks good, but better results can be achieved by explicitly specifying the desired wrapping mode. That can be done with the following method:
 
 {{{
 void InputOptions::setWrapMode(WrapMode wrapMode);
