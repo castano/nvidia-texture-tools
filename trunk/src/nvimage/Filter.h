@@ -18,7 +18,9 @@ namespace nv
 		NVIMAGE_API virtual ~Filter();
 
 		NVIMAGE_API float width() const { return m_width; }
-		NVIMAGE_API float sample(float x, float scale, int samples) const;
+		NVIMAGE_API float sampleDelta(float x, float scale) const;
+		NVIMAGE_API float sampleBox(float x, float scale, int samples) const;
+		NVIMAGE_API float sampleTriangle(float x, float scale, int samples) const;
 
 		virtual float evaluate(float x) const = 0;
 
