@@ -7,7 +7,19 @@ This page demonstrates the results of resampling different images using various 
 
 Images used for the test:
 
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png] ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3.png] ||
+
+The width of the filters are:
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| 0.5   || 1.0        || 1.5         || 3.0       || 5.0      ||
+
+The parameters used for the Kaiser filter are:
+
+{{{
+alpha = 4
+stretch = 1
+}}}
 
 == Test 1 ==
 
@@ -53,3 +65,51 @@ Downsampling with gamma correction. Gamma is set to 2.2.
 
 || *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
 || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test2_03_kaiser.png] ||
+
+
+== Test 3 ==
+
+Downsampling without gamma correction.
+
+=== 0.7 scale factor ===
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_07_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_07_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_07_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_07_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_07_kaiser.png] ||
+
+
+=== 0.5 scale factor ===
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_05_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_05_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_05_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_05_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_05_kaiser.png] ||
+
+
+=== 0.3 scale factor ===
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3_03_kaiser.png] ||
+
+*TODO*: Reconstruct or scale images to better appreciate the downsampling errors.
+
+
+== Test 4 ==
+
+Downsampling with gamma correction. Gamma is set to 2.2.
+
+=== 0.7 scale factor ===
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_07_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_07_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_07_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_07_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_07_kaiser.png] ||
+
+
+=== 0.5 scale factor ===
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_05_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_05_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_05_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_05_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_05_kaiser.png] ||
+
+
+=== 0.3 scale factor ===
+
+|| *Box* || *Triangle* || *Quadratic* || *Lanczos* || *Kaiser* ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_box.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_triangle.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_quadratic.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_lanczos.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test4_03_kaiser.png] ||
+
+*TODO*: Reconstruct or scale images to better appreciate the downsampling errors.
