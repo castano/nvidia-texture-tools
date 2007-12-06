@@ -7,7 +7,7 @@ This page demonstrates the results of resampling different images using various 
 
 Images used for the test:
 
-|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3.png] ||
+|| [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test1.png] || [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/wiki/test3.jpg] ||
 
 The width of the filters are:
 
