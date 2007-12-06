@@ -150,7 +150,7 @@ By default, both the `inputGamma` and the `outputGamma` are set to 2.2. Gamma co
 inputOptions.setGamma(1.0f, 1.0f);
 }}}
 
-Note, that using different factors for input and output could result in quantization artifacts when the input components only have 8 bits (that is always the case in the current version).
+Note, that using different values for `inputGamma` and `outputGamma` could result in quantization artifacts when the input components only have 8 bits (that is always the case in the current version).
 
 
 === Processing Normal Maps ===
