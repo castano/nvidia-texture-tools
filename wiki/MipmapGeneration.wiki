@@ -1,0 +1,7 @@
+#summary Mipmap Generation
+
+== References ==
+
+* Jon Blow articles in Game Developer Magazine:
+[http://number-none.com/product/Mipmapping,%20Part%201/index.html Mipmapping, Part 1]
+[http://number-none.com/product/Mipmapping,%20Part%202/index.html Mipmapping, Part 2]
