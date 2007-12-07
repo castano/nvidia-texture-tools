@@ -117,7 +117,7 @@ The default values are:
 inputOptions.setKaiserParameters(3.0f, 4.0f, 1.0f);
 }}}
 
-Larger kernel widths are supposed to approximate better a perfect low pass filter, but result in ringing artifacts. Values above 5 are not recommended. You should not change the alpha and stretch values unless you know what you are doing.
+Larger kernel widths are supposed to approximate better a perfect low pass filter, but sometimes result in ringing artifacts. Values above 5 are not recommended. You should not change the alpha and stretch values unless you know what you are doing.
 
 You can compare the result of each of these filters at [ResizeFilters]. For more information about mipmap generation algorithms see [MipmapGeneration].
 
