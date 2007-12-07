@@ -10,12 +10,12 @@
 
 == Conclusions ==
 
-Here are some misc findings:
+Here are some of my findings:
 
-  * Filters with radius greater than 3 produce too much ringing artifacts.
+  * Windowed sinc filters with radius greater than 3 produce too many ringing artifacts.
   * For good results with non power of two textures or arbitrary scales, you must use polyphase filters.
   * Sampling the polyphase filter with a box filter greatly improves the quality.
   * Using a triangle filter looks even better, but the difference is small.
   * For most cases box does a great job.
-  * Lanczos and Kaiser produce indistinguishable results.
-  * Gamma correction produces more correct results, but enhances the ringing artifacts.
+  * The Lanczos and Kaiser windows produce indistinguishable results.
+  * Gamma correction produces more correct results, but sometimes enhances the ringing artifacts.
