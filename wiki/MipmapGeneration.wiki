@@ -17,5 +17,5 @@ Here are some misc findings:
   * Sampling the polyphase filter with a box filter greatly improves the quality.
   * Using a triangle filter looks even better, but the difference is small.
   * For most cases box does a great job.
-  * Lanczos and Kaiser produce almost the same result.
-  * Gamma correction enhances the ringing artifacts.
+  * Lanczos and Kaiser produce indistinguishable results.
+  * Gamma correction produces more correct results, but enhances the ringing artifacts.
