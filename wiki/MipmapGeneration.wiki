@@ -5,3 +5,17 @@
   * Jon Blow articles in Game Developer Magazine:
     * [http://number-none.com/product/Mipmapping,%20Part%201/index.html Mipmapping, Part 1]
     * [http://number-none.com/product/Mipmapping,%20Part%202/index.html Mipmapping, Part 2]
+
+  * [http://developer.nvidia.com/object/np2_mipmapping.html Non-Power-of-Two Mipmapping]
+
+== Conclusions ==
+
+Here are some misc findings:
+
+  * Filters with radius greater than 3 produce too much ringing artifacts.
+  * For good results with non power of two textures or arbitrary scales, you must use polyphase filters.
+  * Sampling the polyphase filter with a box filter greatly improves the quality.
+  * Using a triangle filter looks even better, but the difference is small.
+  * For most cases box does a great job.
+  * Lanczos and Kaiser produce almost the same result.
+  * Gamma correction enhances the ringing artifacts.
