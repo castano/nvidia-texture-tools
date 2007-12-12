@@ -74,11 +74,24 @@ bool nv::cuda::isHardwarePresent()
 {
 #if defined HAVE_CUDA
 #if NV_OS_WIN32
-	return !isWindowsVista() && deviceCount() > 0;
-	//return !isWindowsVista() && isWow32() && deviceCount() > 0;
-#else
-	return deviceCount() > 0;
+	if (isWindowsVista()) return false;
+	//if (isWindowsVista() || !isWow32()) return false;
 #endif
+	int count = deviceCount();
+	if (count == 1)
+	{
+		// Make sure it's not an emulation device.
+	    cudaDeviceProp deviceProp;
+		cudaGetDeviceProperties(&deviceProp, 0);
+
+		// deviceProp.name != Device Emulation (CPU)
+		if (deviceProp.major == -1 || deviceProp.minor == -1)
+		{
+			return false;
+		}
+	}
+
+	return count > 0;
 #else
 	return false;
 #endif
