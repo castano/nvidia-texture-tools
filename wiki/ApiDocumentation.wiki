@@ -189,8 +189,10 @@ inputOptions.setHeightEvaluation(0, 0, 0, 1);
 
 The height factors do not necessarily sum 1. So, you can also use them to change the steepness of the height map, and the sharpness of the resulting normal map.
 
+*TODO*: Explain normal filter, add wiki page that compares different values.
+
 {{{
-inputOptions.setNormalFilter(float small, float medium, float big, float large);
+void InputOptions::setNormalFilter(float small, float medium, float big, float large);
 }}}
 
 Mipmap generation behaves as with regular normal maps. The input images are first converted to normal map. Then the mipmaps are generated from the normal maps as usual, unless the user provides the mipmaps explicitly, in which case normal map conversion is applied again.
