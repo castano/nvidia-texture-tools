@@ -7,7 +7,7 @@
 
 == !InputOptions ==
 
-  * Default mipmap filter should be Box instead of Kaiser.
+  * ~~Default mipmap filter should be Box instead of Kaiser.~~ (Fixed)
   * Remove `Format_LATC`, stop adding more aliases.
 
 === Alpha transparency ===
@@ -50,7 +50,7 @@ Option 4:
 
 == !CompressionOptions ==
 
-  * `enableHardwareCompressor`, should be called `enableCudaCompressor`.
+  * `enableHardwareCompressor`, should be called `enableCudaCompressor` or `enableGpuCompressor`.
   * `Quantization` should be a compression option.
   * remove error threshold from setQuality, it's not used.
   * `setColorWeights` should take an alpha weight, not used right now, but useful for future formats.
