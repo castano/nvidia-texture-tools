@@ -55,6 +55,7 @@ private:
 	Vec4 m_unweighted[16];
 	Vec4 m_weights[16];
 	Vec4 m_metric;
+	Vec4 m_metricSqr;
 	Vec4 m_alpha[16];
 	Vec4 m_beta[16];
 	Vec4 m_xxsum;
@@ -66,6 +67,7 @@ private:
 	Vec3 m_unweighted[16];
 	float m_weights[16];
 	Vec3 m_metric;
+	Vec3 m_metricSqr;
 	float m_alpha[16];
 	float m_beta[16];
 	Vec3 m_xxsum;
