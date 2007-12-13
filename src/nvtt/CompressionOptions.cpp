@@ -76,13 +76,11 @@ void CompressionOptions::setQuality(Quality quality, float errorThreshold /*= 0.
 /// The choice for these values is subjective. In many case uniform color weights 
 /// (1.0, 1.0, 1.0) work very well. A popular choice is to use the NTSC luma encoding 
 /// weights (0.2126, 0.7152, 0.0722), but I think that blue contributes to our 
-/// perception more than a 7%. A better choice in my opinion is (3, 4, 2). Ideally
-/// the compressor should use a non linear colour metric as described here:
-/// http://www.compuphase.com/cmetric.htm
+/// perception more than a 7%. A better choice in my opinion is (3, 4, 2).
 void CompressionOptions::setColorWeights(float red, float green, float blue)
 {
 	float total = red + green + blue;
-	float x = blue / total;
+	float x = red / total;
 	float y = green / total;
 
 	m.colorWeight.set(x, y, 1.0f - x - y);

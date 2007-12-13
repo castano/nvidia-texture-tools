@@ -231,7 +231,7 @@ private:
 	float m_x[6];
 };
 
-Sym3x3 ComputeWeightedCovariance( int n, Vec3 const* points, float const* weights );
+Sym3x3 ComputeWeightedCovariance( int n, Vec3 const* points, float const* weights, Vec3::Arg metric );
 Vec3 ComputePrincipleComponent( Sym3x3 const& matrix );
 
 } // namespace squish

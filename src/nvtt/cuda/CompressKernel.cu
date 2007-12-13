@@ -49,6 +49,7 @@ __device__ inline void swap(T & a, T & b)
 }
 
 __constant__ float3 kColorMetric = { 1.0f, 1.0f, 1.0f };
+__constant__ float3 kColorMetricSqr = { 1.0f, 1.0f, 1.0f };
 
 
 
@@ -121,7 +122,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
-		float3 axis = bestFitLine(colors, sums[0]);
+		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
 		
 		dps[idx] = dot(colors[idx], axis);
 		
@@ -164,7 +165,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
-		float3 axis = bestFitLine(colors, sums[0]);
+		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
 
 		dps[idx] = dot(rawColors[idx], axis);
 		
@@ -239,7 +240,7 @@ __device__ float evalPermutation4(const float3 * colors, uint permutation, ushor
     // compute the error
     float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return dot(e, kColorMetric);
+    return dot(e, kColorMetricSqr);
 }
 
 __device__ float evalPermutation3(const float3 * colors, uint permutation, ushort * start, ushort * end)
@@ -279,7 +280,7 @@ __device__ float evalPermutation3(const float3 * colors, uint permutation, ushor
     // compute the error
     float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return dot(e, kColorMetric);
+    return dot(e, kColorMetricSqr);
 }
 
 __constant__ float alphaTable4[4] = { 9.0f, 0.0f, 6.0f, 3.0f };
@@ -320,7 +321,7 @@ __device__ float evalPermutation4(const float3 * colors, float3 color_sum, uint 
     // compute the error
     float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return (1.0f / 9.0f) * dot(e, kColorMetric);
+    return (1.0f / 9.0f) * dot(e, kColorMetricSqr);
 }
 
 __device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint permutation, ushort * start, ushort * end)
@@ -356,7 +357,7 @@ __device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint 
     // compute the error
     float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return (1.0f / 4.0f) * dot(e, kColorMetric);
+    return (1.0f / 4.0f) * dot(e, kColorMetricSqr);
 }
 
 __device__ float evalPermutation4(const float3 * colors, const float * weights, float3 color_sum, uint permutation, ushort * start, ushort * end)
@@ -396,7 +397,7 @@ __device__ float evalPermutation4(const float3 * colors, const float * weights, 
     // compute the error
     float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return dot(e, kColorMetric);
+    return dot(e, kColorMetricSqr);
 }
 
 /*
@@ -437,7 +438,7 @@ __device__ float evalPermutation3(const float3 * colors, const float * weights, 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-	return dot(e, kColorMetric);
+	return dot(e, kColorMetricSqr);
 }
 */
 
@@ -963,6 +964,13 @@ extern "C" void setupCompressKernel(const float weights[3])
 {
 	// Set constants.
 	cudaMemcpyToSymbol(kColorMetric, weights, sizeof(float) * 3, 0);
+
+	float weightsSqr[3];
+	weightsSqr[0] = weights[0] * weights[0];
+	weightsSqr[1] = weights[1] * weights[1];
+	weightsSqr[2] = weights[2] * weights[2];
+
+	cudaMemcpyToSymbol(kColorMetricSqr, weights, sizeof(float) * 3, 0);
 }
 
 

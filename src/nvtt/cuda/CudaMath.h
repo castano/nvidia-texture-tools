@@ -166,14 +166,14 @@ inline __device__ void colorSums(const float3 * colors, float3 * sums)
 #endif
 }
 
-inline __device__ float3 bestFitLine(const float3 * colors, float3 color_sum)
+inline __device__ float3 bestFitLine(const float3 * colors, float3 color_sum, float3 colorMetric)
 {
 	// Compute covariance matrix of the given colors.
 #if __DEVICE_EMULATION__
 	float covariance[6] = {0, 0, 0, 0, 0, 0};
 	for (int i = 0; i < 16; i++)
 	{
-		float3 a = colors[i] - color_sum * (1.0f / 16.0f);
+		float3 a = (colors[i] - color_sum * (1.0f / 16.0f)) * colorMetric;
 		covariance[0] += a.x * a.x;
 		covariance[1] += a.x * a.y;
 		covariance[2] += a.x * a.z;
@@ -185,7 +185,7 @@ inline __device__ float3 bestFitLine(const float3 * colors, float3 color_sum)
 
 	const int idx = threadIdx.x;
 
-	float3 diff = colors[idx] - color_sum * (1.0f / 16.0f);
+	float3 diff = (colors[idx] - color_sum * (1.0f / 16.0f)) * colorMetric;
 
 	// @@ Eliminate two-way bank conflicts here.
 	// @@ It seems that doing that and unrolling the reduction doesn't help...
