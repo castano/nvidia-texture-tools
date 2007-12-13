@@ -37,8 +37,10 @@ FastClusterFit::FastClusterFit( ColourSet const* colours, int flags ) :
 	// initialise the best error
 #if SQUISH_USE_SIMD
 	m_besterror = VEC4_CONST( FLT_MAX );
+	Vec3 metric = m_metric.GetVec3();
 #else
 	m_besterror = FLT_MAX;
+	Vec3 metric = m_metric;
 #endif
 
 	// cache some values
@@ -46,7 +48,7 @@ FastClusterFit::FastClusterFit( ColourSet const* colours, int flags ) :
 	Vec3 const* values = m_colours->GetPoints();
 	
 	// get the covariance matrix
-	Sym3x3 covariance = ComputeWeightedCovariance( count, values, m_colours->GetWeights() );
+	Sym3x3 covariance = ComputeWeightedCovariance( count, values, m_colours->GetWeights(), metric );
 	
 	// compute the principle component
 	Vec3 principle = ComputePrincipleComponent( covariance );

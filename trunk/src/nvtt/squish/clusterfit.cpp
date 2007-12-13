@@ -36,30 +36,18 @@ ClusterFit::ClusterFit( ColourSet const* colours, int flags )
 	// initialise the best error
 #if SQUISH_USE_SIMD
 	m_besterror = VEC4_CONST( FLT_MAX );
+	Vec3 metric = m_metric.GetVec3();
 #else
 	m_besterror = FLT_MAX;
+	Vec3 metric = m_metric;
 #endif
 
-/*	// initialise the metric
-	bool perceptual = ( ( m_flags & kColourMetricPerceptual ) != 0 );
-#if SQUISH_USE_SIMD
-	if( perceptual )
-		m_metric = Vec4( 0.2126f, 0.7152f, 0.0722f, 0.0f );
-	else
-		m_metric = VEC4_CONST( 1.0f );	
-#else
-	if( perceptual )
-		m_metric = Vec3( 0.2126f, 0.7152f, 0.0722f );
-	else
-		m_metric = Vec3( 1.0f );
-#endif
-*/
 	// cache some values
 	int const count = m_colours->GetCount();
 	Vec3 const* values = m_colours->GetPoints();
 	
 	// get the covariance matrix
-	Sym3x3 covariance = ComputeWeightedCovariance( count, values, m_colours->GetWeights() );
+	Sym3x3 covariance = ComputeWeightedCovariance( count, values, m_colours->GetWeights(), metric );
 	
 	// compute the principle component
 	Vec3 principle = ComputePrincipleComponent( covariance );
