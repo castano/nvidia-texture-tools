@@ -98,6 +98,7 @@ void ClusterFit::setMetric(float r, float g, float b)
 #else
 	m_metric = Vec3(r, g, b);
 #endif
+	m_metricSqr = m_metric * m_metric;
 }
 
 float ClusterFit::bestError() const
@@ -401,7 +402,7 @@ Vec4 ClusterFit::SolveLeastSquares( Vec4& start, Vec4& end ) const
 	Vec4 e4 = MultiplyAdd( a*b*alphabeta_sum - e2, two, e3 );
 
 	// apply the metric to the error term
-	Vec4 e5 = e4*m_metric;
+	Vec4 e5 = e4*m_metricSqr;
 	Vec4 error = e5.SplatX() + e5.SplatY() + e5.SplatZ();
 	
 	// save the start and end
@@ -473,7 +474,7 @@ float ClusterFit::SolveLeastSquares( Vec3& start, Vec3& end ) const
 		+ 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
 
 	// apply the metric to the error term
-	float error = Dot( e1, m_metric );
+	float error = Dot( e1, m_metricSqr );
 	
 	//if (debug) printf(" - %f\n", error);
 

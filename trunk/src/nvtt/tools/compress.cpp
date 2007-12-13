@@ -386,15 +386,7 @@ int main(int argc, char *argv[])
 		//compressionOptions.setQuality(nvtt::Quality_Highest);
 	}
 	compressionOptions.enableHardwareCompression(!nocuda);
-
-	if (normal)
-	{
-		compressionOptions.setColorWeights(4, 4, 2);
-	}
-	else
-	{
-		compressionOptions.setColorWeights(1, 1, 1);
-	}
+	compressionOptions.setColorWeights(1, 1, 1);
 
 	if (externalCompressor != NULL)
 	{

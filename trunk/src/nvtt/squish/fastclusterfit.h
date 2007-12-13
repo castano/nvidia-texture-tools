@@ -55,12 +55,14 @@ private:
 #if SQUISH_USE_SIMD
 	Vec4 m_unweighted[16];
 	Vec4 m_metric;
+	Vec4 m_metricSqr;
 	Vec4 m_xxsum;
 	Vec4 m_xsum;
 	Vec4 m_besterror;
 #else
 	Vec3 m_unweighted[16];
 	Vec3 m_metric;
+	Vec3 m_metricSqr;
 	Vec3 m_xxsum;
 	Vec3 m_xsum;
 	float m_besterror;

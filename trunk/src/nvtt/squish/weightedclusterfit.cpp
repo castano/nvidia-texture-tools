@@ -107,16 +107,17 @@ void WeightedClusterFit::setMetric(float r, float g, float b)
 #else
 	m_metric = Vec3(r, g, b);
 #endif
+	m_metricSqr = m_metric * m_metric;
 }
 
 float WeightedClusterFit::bestError() const
 {
 #if SQUISH_USE_SIMD
-	Vec4 x = m_xxsum * m_metric;
+	Vec4 x = m_xxsum * m_metricSqr;
 	Vec4 error = m_besterror + x.SplatX() + x.SplatY() + x.SplatZ();
 	return error.GetVec3().X();
 #else
-	return m_besterror + Dot(m_xxsum, m_metric);
+	return m_besterror + Dot(m_xxsum, m_metricSqr);
 #endif
 
 }
@@ -183,7 +184,7 @@ void WeightedClusterFit::Compress3( void* block )
 			Vec4 e3 = MultiplyAdd( a*b*alphabeta_sum - e1, two, e2 );
 			
 			// apply the metric to the error term
-			Vec4 e4 = e3 * m_metric;
+			Vec4 e4 = e3 * m_metricSqr;
 			Vec4 error = e4.SplatX() + e4.SplatY() + e4.SplatZ();
 			
 			// keep the solution if it wins
@@ -298,7 +299,7 @@ void WeightedClusterFit::Compress4( void* block )
 				Vec4 e3 = MultiplyAdd( a*b*alphabeta_sum - e1, two, e2 );
 				
 				// apply the metric to the error term
-				Vec4 e4 = e3 * m_metric;
+				Vec4 e4 = e3 * m_metricSqr;
 				Vec4 error = e4.SplatX() + e4.SplatY() + e4.SplatZ();
 				
 				// keep the solution if it wins
@@ -408,7 +409,7 @@ void WeightedClusterFit::Compress3( void* block )
 			Vec3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
 			
 			// apply the metric to the error term
-			float error = Dot( e1, m_metric );
+			float error = Dot( e1, m_metricSqr );
 			
 			// keep the solution if it wins
 			if( error < besterror )
@@ -513,7 +514,7 @@ void WeightedClusterFit::Compress4( void* block )
 				Vec3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
 				
 				// apply the metric to the error term
-				float error = Dot( e1, m_metric );
+				float error = Dot( e1, m_metricSqr );
 				
 				// keep the solution if it wins
 				if( error < besterror )
