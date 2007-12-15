@@ -374,21 +374,21 @@ FloatImage * FloatImage::fastDownSample() const
 	// 1D box filter.
 	if (m_width == 1 || m_height == 1)
 	{
-		w *= h;
+		const uint n = w * h;
 		
-		if (w & 1)
+		if (n & 1)
 		{
-			const float scale = 1.0f / (2 * w + 1);
+			const float scale = 1.0f / (2 * n + 1);
 			
 			for(uint c = 0; c < m_componentNum; c++)
 			{
 				const float * src = this->channel(c);
 				float * dst = dst_image->channel(c);
 				
-				for(uint x = 0; x < w; x++)
+				for(uint x = 0; x < n; x++)
 				{
-					const float w0 = float(w - x);
-					const float w1 = float(w - 0);
+					const float w0 = float(n - x);
+					const float w1 = float(n - 0);
 					const float w2 = float(1 + x);
 					
 					*dst++ = scale * (w0 * src[0] + w1 * src[1] + w2 * src[2]);
@@ -403,7 +403,7 @@ FloatImage * FloatImage::fastDownSample() const
 				const float * src = this->channel(c);
 				float * dst = dst_image->channel(c);
 				
-				for(uint x = 0; x < w; x++)
+				for(uint x = 0; x < n; x++)
 				{
 					*dst = 0.5f * (src[0] + src[1]);
 					dst++;
