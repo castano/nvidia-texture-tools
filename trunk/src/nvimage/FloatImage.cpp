@@ -374,7 +374,7 @@ FloatImage * FloatImage::fastDownSample() const
 	// 1D box filter.
 	if (m_width == 1 || m_height == 1)
 	{
-		const uint w = m_width * m_height;
+		w *= h;
 		
 		if (w & 1)
 		{
