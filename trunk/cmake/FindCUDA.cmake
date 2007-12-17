@@ -91,6 +91,8 @@ MACRO (GET_CUFILE_DEPENDENCIES dependencies file)
 	
 	#  parse file for dependencies
 	FILE(READ "${file}" CONTENTS)
+	#STRING(REGEX MATCHALL "#[ \t]*include[ \t]+[<\"][^>\"]*" DEPS "${CONTENTS}")
+	STRING(REGEX MATCHALL "#[ \t]*include[ \t]+\"[^\"]*" DEPS "${CONTENTS}")
 	
 	SET(${dependencies})
 	
@@ -101,12 +103,10 @@ MACRO (GET_CUFILE_DEPENDENCIES dependencies file)
 			${filepath})
 
 		IF(NOT ${PATH_OF_${DEP}} STREQUAL PATH_OF_${DEP}-NOTFOUND)
-			MESSAGE("${filepath} ${PATH_OF_${DEP}}/${DEP}")
+			#MESSAGE("${file} : ${PATH_OF_${DEP}}/${DEP}")
 			SET(${dependencies} ${${dependencies}} ${PATH_OF_${DEP}}/${DEP})
 		ENDIF(NOT ${PATH_OF_${DEP}} STREQUAL PATH_OF_${DEP}-NOTFOUND)
 		
-		# reset path.
-		#SET(PATH_OF_${DEP})
 	ENDFOREACH(DEP)
 
 ENDMACRO (GET_CUFILE_DEPENDENCIES)
