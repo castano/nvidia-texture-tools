@@ -26,7 +26,7 @@ NVIDIA Texture Tools version 0.9.4
  * Many bug fixes.
 
 NVIDIA Texture Tools version 0.9.5
- * Fixed PSNR formula.
+ * Fixed PSNR formula in nvimgdiff.
  * Added support for arbitrary RGB formats.
  * Add support for DXT1a.
  * Refactor and improve compression quality of fast compressors.
@@ -34,4 +34,11 @@ NVIDIA Texture Tools version 0.9.5
  * Fix normal map decompression.
  * Evaluate angular deviation error for normal maps in nvimgdiff.
  * Fix DXT1 compression with custom color metrics.
+ * Fix error in normal map generation from heightmap mipmaps.
+ * Fix errors in estimateSize.
+ * Fix errors when maxLevel is used.
+ * Enable the use of BC5 not just for normal maps.
+ * Add mirror wrapping mode, use by default.
+ * Implement polyphase filters.
+ * Add box and triangle filter sampling.
 
