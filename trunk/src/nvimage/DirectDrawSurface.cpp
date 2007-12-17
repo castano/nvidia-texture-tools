@@ -433,7 +433,7 @@ void DDSHeader::setDepth(uint d)
 
 void DDSHeader::setMipmapCount(uint count)
 {
-	if (count == 0)
+	if (count == 0 || count == 1)
 	{
 		this->flags &= ~DDSD_MIPMAPCOUNT;
 		this->mipmapcount = 0;

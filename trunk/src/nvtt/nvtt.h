@@ -40,7 +40,7 @@
 #define NVTT_CLASS
 #endif
 
-#define NVTT_DEPRECATED NVTT_API NV_DEPRECATED
+#define NVTT_DEPRECATED NVTT_API /*NV_DEPRECATED*/
 
 
 // Public interface.
@@ -270,9 +270,9 @@ namespace nvtt
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
 		NVTT_API void setOutputHeader(bool outputHeader);
 		
-		NVTT_DEPRECATED OutputHandler * outputHandler;
-		NVTT_DEPRECATED ErrorHandler * errorHandler;
-		NVTT_DEPRECATED bool outputHeader;
+		OutputHandler * outputHandler;
+		ErrorHandler * errorHandler;
+		bool outputHeader;
 		
 	//private:
 		struct Private;

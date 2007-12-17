@@ -12,7 +12,7 @@
 #define NV_STDCALL      __stdcall
 #define NV_FASTCALL     __fastcall
 #define NV_FORCEINLINE  __forceinline
-#define NV_DEPRECATED   __deprecated
+#define NV_DEPRECATED
 
 #define NV_PURE
 #define NV_CONST
