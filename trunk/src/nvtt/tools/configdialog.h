@@ -26,17 +26,42 @@
 
 #include <QtGui/QDialog>
 
-#include "ui_nvdxtdialog.h"
+#include "ui_configdialog.h"
+
+#include <nvtt/nvtt.h>
 
 
 class ConfigDialog : public QDialog
 {
 	Q_OBJECT
-	public:
-		ConfigDialog(QWidget *parent = 0);
-		
-	private:
-		Ui::ConfigDialog ui;
+public:
+	ConfigDialog(QWidget *parent = 0);
+	ConfigDialog(const char * fileName, QWidget *parent = 0);
+	
+protected slots:
+	
+	void openClicked();
+	void generateMipmapsChanged(int state);
+	void mipmapFilterChanged(QString name);
+	
+	void colorWeightChanged();
+	void uniformWeightToggled(bool checked);
+	void luminanceWeightToggled(bool checked);
+	
+	
+	bool open(QString fileName);
+	
+private:
+	
+	void init();
+	
+private:
+	Ui::ConfigDialog ui;
+	
+	nvtt::InputOptions inputOptions;
+	nvtt::CompressionOptions compressionOptions;
+	nvtt::OutputOptions outputOptions;
+	
 };
 
 

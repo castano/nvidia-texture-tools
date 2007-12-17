@@ -84,14 +84,14 @@ int main(int argc, char *argv[])
 		if (strcmp("-s", argv[i]) == 0)
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') {
-				scale = (float)atof(argv[i+1]);
+				scale = atof(argv[i+1]);
 				i++;
 			}
 		}
 		else if (strcmp("-g", argv[i]) == 0)
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') {
-				gamma = (float)atof(argv[i+1]);
+				gamma = atof(argv[i+1]);
 				i++;
 			}
 		}
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 			else if (strcmp("mitchell", argv[i]) == 0) filter = new nv::MitchellFilter();
 			else if (strcmp("lanczos", argv[i]) == 0) filter = new nv::LanczosFilter();
 			else if (strcmp("kaiser", argv[i]) == 0) {
-				filter = new nv::KaiserFilter(5);
+				filter = new nv::KaiserFilter(3);
 				((nv::KaiserFilter *)filter)->setParameters(4.0f, 1.0f);
 			}
 		}
@@ -155,10 +155,7 @@ int main(int argc, char *argv[])
 	nv::FloatImage fimage(&image);
 	fimage.toLinear(0, 3, gamma);
 	
-	int w = int(image.width() * scale);
-	int h = int(image.height() * scale);
-
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(*filter, w, h, nv::FloatImage::WrapMode_Mirror));
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(*filter, image.width() * scale, image.height() * scale, nv::FloatImage::WrapMode_Mirror));
 	
 	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
 

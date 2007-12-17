@@ -44,7 +44,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	
 	virtual void setTotal(int t)
 	{
-		total = t;
+		total = t + 128;
 	}
 	virtual void setDisplayProgress(bool b)
 	{
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 		//compressionOptions.setQuality(nvtt::Quality_Production, 0.5f);
 		//compressionOptions.setQuality(nvtt::Quality_Highest);
 	}
-	compressionOptions.enableHardwareCompression(!nocuda);
+	compressionOptions.enableCudaCompression(!nocuda);
 	compressionOptions.setColorWeights(1, 1, 1);
 
 	if (externalCompressor != NULL)
@@ -395,8 +395,10 @@ int main(int argc, char *argv[])
 	outputHandler.setTotal(nvtt::estimateSize(inputOptions, compressionOptions));
 	outputHandler.setDisplayProgress(!silent);
 
-	nvtt::OutputOptions outputOptions(&outputHandler, &errorHandler);
-	//nvtt::OutputOptions outputOptions(NULL, &errorHandler);
+	nvtt::OutputOptions outputOptions;
+	//outputOptions.setFileName(output);
+	outputOptions.setOutputHandler(&outputHandler);
+	outputOptions.setErrorHandler(&errorHandler);
 	
 //	printf("Press ENTER.\n");
 //	fflush(stdout);
