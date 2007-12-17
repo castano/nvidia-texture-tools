@@ -902,6 +902,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\OutputOptions.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\QuickCompressDXT.h"
 				>
 			</File>
