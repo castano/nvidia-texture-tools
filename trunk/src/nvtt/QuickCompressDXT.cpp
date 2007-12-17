@@ -62,7 +62,7 @@ inline static uint extractColorBlockRGBA(const ColorBlock & rgba, Vector3 block[
 
 
 // find minimum and maximum colors based on bounding box in color space
-inline static void findMinMaxColorsBox(const Vector3 * block, uint num, Vector3 * __restrict maxColor, Vector3 * __restrict minColor)
+inline static void findMinMaxColorsBox(const Vector3 * block, uint num, Vector3 * restrict maxColor, Vector3 * restrict minColor)
 {
 	*maxColor = Vector3(0, 0, 0);
 	*minColor = Vector3(255, 255, 255);
@@ -75,7 +75,7 @@ inline static void findMinMaxColorsBox(const Vector3 * block, uint num, Vector3 
 }
 
 
-inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * __restrict maxColor, Vector3 * __restrict minColor)
+inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * restrict maxColor, Vector3 * restrict minColor)
 {
 	Vector3 center = (*maxColor + *minColor) * 0.5;
 
@@ -102,14 +102,14 @@ inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * __r
 	minColor->set(x1, y1, minColor->z());
 }
 
-inline static void insetBBox(Vector3 * __restrict maxColor, Vector3 * __restrict minColor)
+inline static void insetBBox(Vector3 * restrict maxColor, Vector3 * restrict minColor)
 {
 	Vector3 inset = (*maxColor - *minColor) / 16.0f - (8.0f / 255.0f) / 16.0f;
 	*maxColor = clamp(*maxColor - inset, 0.0f, 255.0f);
 	*minColor = clamp(*minColor + inset, 0.0f, 255.0f);
 }
 
-inline static uint16 roundAndExpand(Vector3 * __restrict v)
+inline static uint16 roundAndExpand(Vector3 * restrict v)
 {
 	uint r = uint(clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
 	uint g = uint(clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f);
