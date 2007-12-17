@@ -335,16 +335,6 @@ int main(int argc, char *argv[])
 		inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
 	}
 
-	if (fast)
-	{
-		inputOptions.setMipmapping(true, nvtt::MipmapFilter_Box);
-	}
-	else
-	{
-		inputOptions.setMipmapping(true, nvtt::MipmapFilter_Box);
-		//inputOptions.setMipmapping(true, nvtt::MipmapFilter_Kaiser);
-	}
-
 	if (wrapRepeat)
 	{
 		inputOptions.setWrapMode(nvtt::WrapMode_Repeat);
