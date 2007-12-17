@@ -64,7 +64,7 @@ namespace
 	
 		// Rule 2 needs no previous results
 		if (l == m) {
-			return powf(-1.0f, m) * doubleFactorial(2 * m - 1) * powf(1 - x*x, 0.5f * m);
+			return powf(-1.0f, float(m)) * doubleFactorial(2 * m - 1) * powf(1 - x*x, 0.5f * m);
 		}
 	
 		// Rule 3 requires the result for the same argument of the previous band

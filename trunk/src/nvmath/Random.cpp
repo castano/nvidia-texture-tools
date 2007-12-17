@@ -15,7 +15,7 @@ const uint16 Rand48::c0 = 0x000B;
 /// Get a random seed based on the current time.
 uint Rand::randomSeed()
 {
-	return time(NULL);
+	return (uint)time(NULL);
 }
 
 
