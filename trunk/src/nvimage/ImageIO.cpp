@@ -1042,7 +1042,7 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 		if (TIFFWriteScanline(image, scanline, y, 0)==-1)
 		{
 			nvDebug("Error writing scanline %d\n", y);
-			return -1;
+			return false;
 		}
 	}
 	delete [] scanline;
