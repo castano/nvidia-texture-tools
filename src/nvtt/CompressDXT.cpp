@@ -36,7 +36,6 @@
 
 // squish
 #include "squish/colourset.h"
-//#include "squish/clusterfit.h"
 #include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
 
@@ -183,7 +182,7 @@ void nv::fastCompressBC5(const Image * image, const nvtt::OutputOptions::Private
 
 void nv::doPrecomputation()
 {
-	static bool done = false;
+	static bool done = false;	// @@ Stop using statics for reentrancy.
 	
 	if (!done)
 	{
@@ -319,7 +318,7 @@ void nv::compressDXT5n(const Image * image, const OutputOptions::Private & outpu
 			}
 			
 			// Compress Y.
- 			compressGreenBlock_BruteForce(rgba, &block.color);
+			QuickCompress::compressDXT1G(rgba, &block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -350,8 +349,7 @@ void nv::compressBC4(const Image * image, const nvtt::OutputOptions::Private & o
 			//error = compressBlock_BoundsRange(rgba, &block);
 			uint error = compressBlock_Iterative(rgba, &block);
 
-			if (compressionOptions.quality == Quality_Highest ||
-				(compressionOptions.quality == Quality_Production && error > threshold))
+			if (compressionOptions.quality == Quality_Highest)
 			{
 				// Try brute force algorithm.
 				error = compressBlock_BruteForce(rgba, &block);
@@ -364,20 +362,6 @@ void nv::compressBC4(const Image * image, const nvtt::OutputOptions::Private & o
 			}
 		}
 	}
-
-	// @@ All the compressors should work like this.
-	// Effect of adjusting threshold: 
-	// (threshold: error - time)
-	// 0: 4.29 - 1.83
-	// 32: 4.32 - 1.77
-	// 48: 4.37 - 1.72
-	// 64: 4.43 - 1.45
-	// 74: 4.45 - 1.35
-	// 92: 4.54 - 1.15
-	// 128: 4.67 - 0.79
-	// 256: 4.92 - 0.20
-	// inf: 4.98 - 0.09
-	//printf("Alpha error: %f\n", float(totalError) / (w*h));
 }
 
 
