@@ -40,6 +40,7 @@ namespace nv
 		void compressDXT1(const Color32 rgba, BlockDXT1 * dxtBlock);
 		void compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock);
 		void compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock);
+		void compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block);
 		
 		void compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock);
 		void compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock);
