@@ -29,6 +29,7 @@
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
 #include <nvtt/CompressionOptions.h>
+#include <nvtt/OutputOptions.h>
 #include <nvtt/FastCompressDXT.h>
 
 #include "CudaCompressDXT.h"
@@ -70,8 +71,6 @@ static void doPrecomputation()
 	// @@ Free allocated memory.
 }
 
-#endif
-
 // Convert linear image to block linear.
 static void convertToBlockLinear(const Image * image, uint * blockLinearImage)
 {
@@ -92,11 +91,13 @@ static void convertToBlockLinear(const Image * image, uint * blockLinearImage)
 	}
 }
 
+#endif // defined HAVE_CUDA
+
 // @@ This code is very repetitive and needs to be cleaned up.
 
 
 /// Compress image using CUDA.
-void nv::cudaCompressDXT1(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::cudaCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
@@ -179,7 +180,7 @@ void nv::cudaCompressDXT1(const Image * image, const OutputOptions & outputOptio
 
 
 /// Compress image using CUDA.
-void nv::cudaCompressDXT3(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::cudaCompressDXT3(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
@@ -276,7 +277,7 @@ void nv::cudaCompressDXT3(const Image * image, const OutputOptions & outputOptio
 
 
 /// Compress image using CUDA.
-void nv::cudaCompressDXT5(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::cudaCompressDXT5(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
@@ -455,7 +456,7 @@ public:
 		return blockCount == blockMaxCount;
 	}
 	
-	void flush(const OutputOptions & outputOptions)
+	void flush(const OutputOptions::Private & outputOptions)
 	{
 		if (blockCount == 0)
 		{
@@ -512,7 +513,7 @@ private:
 #endif // defined HAVE_CUDA
 
 
-void nv::cudaCompressDXT1_2(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::cudaCompressDXT1_2(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 #if defined HAVE_CUDA	
 	const uint w = image->width();
