@@ -110,7 +110,7 @@ static void outputHeader(const InputOptions::Private & inputOptions, const Outpu
 		int mipmapCount = inputOptions.realMipmapCount();
 		nvDebugCheck(mipmapCount > 0);
 		
-		header.setMipmapCount(mipmapCount - 1);
+		header.setMipmapCount(mipmapCount);
 		
 		if (inputOptions.textureType == TextureType_2D) {
 			header.setTexture2D();
@@ -472,14 +472,16 @@ private:
 // Find the first mipmap provided that is greater or equal to the target image size.
 static int findMipmap(const InputOptions::Private & inputOptions, uint f, int firstMipmap, uint w, uint h, uint d)
 {
+	nvDebugCheck(firstMipmap >= 0);
+
 	int bestIdx = -1;
 	
-	for (int m = firstMipmap; m < inputOptions.mipmapCount; m++)
+	for (int m = firstMipmap; m < int(inputOptions.mipmapCount); m++)
 	{
 		int idx = f * inputOptions.mipmapCount + m;
 		const InputOptions::Private::Image & mipmap = inputOptions.images[idx];
 		
-		if (mipmap.width >= w && mipmap.height >= h && mipmap.depth >= d)
+		if (mipmap.width >= int(w) && mipmap.height >= int(h) && mipmap.depth >= int(d))
 		{
 			if (mipmap.data != NULL)
 			{
@@ -501,7 +503,7 @@ static int findMipmap(const InputOptions::Private & inputOptions, uint f, int fi
 static int findImage(const InputOptions::Private & inputOptions, uint f, uint w, uint h, uint d, int inputImageIdx, ImagePair * pair)
 {
 	nvDebugCheck(w > 0 && h > 0);
-	nvDebugCheck(inputImageIdx >= 0 && inputImageIdx < inputOptions.mipmapCount);
+	nvDebugCheck(inputImageIdx >= 0 && inputImageIdx < int(inputOptions.mipmapCount));
 	nvDebugCheck(pair != NULL);
 	
 	int bestIdx = findMipmap(inputOptions, f, inputImageIdx, w, h, d);
@@ -552,6 +554,9 @@ static int findImage(const InputOptions::Private & inputOptions, uint f, uint w,
 			pair->setFloatImage(createMipmap(pair->floatImage(), inputOptions));
 		}
 	}
+
+
+	return bestIdx;	// @@ ???
 }
 
 
