@@ -19,18 +19,30 @@
    <bool>true</bool>
   </property>
   <layout class="QVBoxLayout" >
+   <property name="margin" >
+    <number>9</number>
+   </property>
+   <property name="spacing" >
+    <number>6</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
      <item>
       <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>0</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
        <item>
         <widget class="QListWidget" name="listWidget" >
-         <property name="sizePolicy" >
-          <sizepolicy vsizetype="Expanding" hsizetype="Expanding" >
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
          <property name="minimumSize" >
           <size>
            <width>64</width>
@@ -90,67 +102,61 @@
      </item>
      <item>
       <widget class="QStackedWidget" name="stackedWidget" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>7</hsizetype>
+         <vsizetype>7</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="currentIndex" >
         <number>0</number>
        </property>
        <widget class="QWidget" name="inputPage" >
         <layout class="QVBoxLayout" >
-         <property name="leftMargin" >
-          <number>0</number>
+         <property name="margin" >
+          <number>9</number>
          </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
-          <number>0</number>
+         <property name="spacing" >
+          <number>6</number>
          </property>
          <item>
           <widget class="QTabWidget" name="tabWidget" >
            <property name="currentIndex" >
-            <number>0</number>
+            <number>2</number>
            </property>
            <property name="usesScrollButtons" >
             <bool>false</bool>
            </property>
-           <widget class="QWidget" name="" >
+           <widget class="QWidget" name="widget" >
             <attribute name="title" >
              <string>File Path</string>
             </attribute>
             <layout class="QVBoxLayout" >
+             <property name="margin" >
+              <number>9</number>
+             </property>
+             <property name="spacing" >
+              <number>6</number>
+             </property>
              <item>
               <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
                <property name="spacing" >
                 <number>6</number>
                </property>
-               <property name="leftMargin" >
-                <number>0</number>
-               </property>
-               <property name="topMargin" >
-                <number>0</number>
-               </property>
-               <property name="rightMargin" >
-                <number>0</number>
-               </property>
-               <property name="bottomMargin" >
-                <number>0</number>
-               </property>
                <item>
-                <widget class="QLineEdit" name="imagePathLineEdit" >
-                 <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
+                <widget class="QLineEdit" name="imagePathLineEdit" />
                </item>
                <item>
                 <widget class="QPushButton" name="openButton" >
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Fixed" hsizetype="Minimum" >
+                  <sizepolicy>
+                   <hsizetype>0</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -168,7 +174,9 @@
              <item>
               <widget class="QTextEdit" name="imageDescription" >
                <property name="sizePolicy" >
-                <sizepolicy vsizetype="Maximum" hsizetype="Expanding" >
+                <sizepolicy>
+                 <hsizetype>0</hsizetype>
+                 <vsizetype>0</vsizetype>
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -186,15 +194,23 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="" >
+           <widget class="QWidget" name="widget" >
             <attribute name="title" >
              <string>Image Settings</string>
             </attribute>
             <layout class="QVBoxLayout" >
+             <property name="margin" >
+              <number>9</number>
+             </property>
+             <property name="spacing" >
+              <number>6</number>
+             </property>
              <item>
               <widget class="QGroupBox" name="groupBox_5" >
                <property name="sizePolicy" >
-                <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+                <sizepolicy>
+                 <hsizetype>0</hsizetype>
+                 <vsizetype>0</vsizetype>
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -203,20 +219,11 @@
                 <string>Color Mode</string>
                </property>
                <layout class="QVBoxLayout" >
+                <property name="margin" >
+                 <number>9</number>
+                </property>
                 <property name="spacing" >
                  <number>0</number>
-                </property>
-                <property name="leftMargin" >
-                 <number>4</number>
-                </property>
-                <property name="topMargin" >
-                 <number>4</number>
-                </property>
-                <property name="rightMargin" >
-                 <number>4</number>
-                </property>
-                <property name="bottomMargin" >
-                 <number>4</number>
                 </property>
                 <item>
                  <widget class="QRadioButton" name="radioButton_3" >
@@ -241,7 +248,9 @@
              <item>
               <widget class="QGroupBox" name="groupBox_4" >
                <property name="sizePolicy" >
-                <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+                <sizepolicy>
+                 <hsizetype>0</hsizetype>
+                 <vsizetype>0</vsizetype>
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -250,20 +259,11 @@
                 <string>Alpha Mode</string>
                </property>
                <layout class="QVBoxLayout" >
+                <property name="margin" >
+                 <number>9</number>
+                </property>
                 <property name="spacing" >
                  <number>0</number>
-                </property>
-                <property name="leftMargin" >
-                 <number>4</number>
-                </property>
-                <property name="topMargin" >
-                 <number>4</number>
-                </property>
-                <property name="rightMargin" >
-                 <number>4</number>
-                </property>
-                <property name="bottomMargin" >
-                 <number>4</number>
                 </property>
                 <item>
                  <widget class="QRadioButton" name="alphaNoneRadioButton" >
@@ -297,19 +297,10 @@
              </item>
              <item>
               <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
                <property name="spacing" >
-                <number>0</number>
-               </property>
-               <property name="leftMargin" >
-                <number>0</number>
-               </property>
-               <property name="topMargin" >
-                <number>0</number>
-               </property>
-               <property name="rightMargin" >
-                <number>0</number>
-               </property>
-               <property name="bottomMargin" >
                 <number>0</number>
                </property>
                <item>
@@ -351,25 +342,18 @@
              </item>
              <item>
               <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
                <property name="spacing" >
                 <number>6</number>
-               </property>
-               <property name="leftMargin" >
-                <number>0</number>
-               </property>
-               <property name="topMargin" >
-                <number>0</number>
-               </property>
-               <property name="rightMargin" >
-                <number>0</number>
-               </property>
-               <property name="bottomMargin" >
-                <number>0</number>
                </property>
                <item>
                 <widget class="QLabel" name="label_5" >
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Preferred" hsizetype="Minimum" >
+                  <sizepolicy>
+                   <hsizetype>7</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -384,14 +368,22 @@
                </item>
                <item>
                 <widget class="QDoubleSpinBox" name="inputGammaSpinBox" >
+                 <property name="sizePolicy" >
+                  <sizepolicy>
+                   <hsizetype>4</hsizetype>
+                   <vsizetype>0</vsizetype>
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="buttonSymbols" >
                   <enum>QAbstractSpinBox::UpDownArrows</enum>
                  </property>
-                 <property name="minimum" >
-                  <double>0.050000000000000</double>
-                 </property>
                  <property name="maximum" >
                   <double>4.000000000000000</double>
+                 </property>
+                 <property name="minimum" >
+                  <double>0.050000000000000</double>
                  </property>
                  <property name="singleStep" >
                   <double>0.050000000000000</double>
@@ -405,25 +397,18 @@
              </item>
              <item>
               <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
                <property name="spacing" >
                 <number>6</number>
-               </property>
-               <property name="leftMargin" >
-                <number>0</number>
-               </property>
-               <property name="topMargin" >
-                <number>0</number>
-               </property>
-               <property name="rightMargin" >
-                <number>0</number>
-               </property>
-               <property name="bottomMargin" >
-                <number>0</number>
                </property>
                <item>
                 <widget class="QLabel" name="label_6" >
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Preferred" hsizetype="Minimum" >
+                  <sizepolicy>
+                   <hsizetype>7</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -438,14 +423,22 @@
                </item>
                <item>
                 <widget class="QDoubleSpinBox" name="outputGammaSpinBox" >
+                 <property name="sizePolicy" >
+                  <sizepolicy>
+                   <hsizetype>4</hsizetype>
+                   <vsizetype>0</vsizetype>
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="buttonSymbols" >
                   <enum>QAbstractSpinBox::UpDownArrows</enum>
                  </property>
-                 <property name="minimum" >
-                  <double>0.050000000000000</double>
-                 </property>
                  <property name="maximum" >
                   <double>4.000000000000000</double>
+                 </property>
+                 <property name="minimum" >
+                  <double>0.050000000000000</double>
                  </property>
                  <property name="singleStep" >
                   <double>0.050000000000000</double>
@@ -472,11 +465,17 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="" >
+           <widget class="QWidget" name="widget" >
             <attribute name="title" >
              <string>Mipmap Settings</string>
             </attribute>
             <layout class="QVBoxLayout" >
+             <property name="margin" >
+              <number>9</number>
+             </property>
+             <property name="spacing" >
+              <number>6</number>
+             </property>
              <item>
               <widget class="QCheckBox" name="generateMipmapsCheckBox" >
                <property name="text" >
@@ -489,23 +488,22 @@
              </item>
              <item>
               <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
                <property name="spacing" >
-                <number>0</number>
-               </property>
-               <property name="leftMargin" >
-                <number>0</number>
-               </property>
-               <property name="topMargin" >
-                <number>0</number>
-               </property>
-               <property name="rightMargin" >
-                <number>0</number>
-               </property>
-               <property name="bottomMargin" >
                 <number>0</number>
                </property>
                <item>
                 <widget class="QLabel" name="mipmapFilterLabel" >
+                 <property name="sizePolicy" >
+                  <sizepolicy>
+                   <hsizetype>7</hsizetype>
+                   <vsizetype>5</vsizetype>
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
                  <property name="text" >
                   <string>Mipmap filter:</string>
                  </property>
@@ -545,7 +543,9 @@
                   <bool>false</bool>
                  </property>
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
+                  <sizepolicy>
+                   <hsizetype>0</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -568,10 +568,18 @@
              </item>
              <item>
               <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
+               <property name="spacing" >
+                <number>6</number>
+               </property>
                <item>
                 <widget class="QCheckBox" name="limitMipmapsCheckBox" >
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+                  <sizepolicy>
+                   <hsizetype>7</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -587,7 +595,9 @@
                   <bool>false</bool>
                  </property>
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Preferred" hsizetype="Minimum" >
+                  <sizepolicy>
+                   <hsizetype>0</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -603,7 +613,9 @@
                   <bool>false</bool>
                  </property>
                  <property name="sizePolicy" >
-                  <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
+                  <sizepolicy>
+                   <hsizetype>0</hsizetype>
+                   <vsizetype>0</vsizetype>
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -633,7 +645,7 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="" >
+           <widget class="QWidget" name="widget" >
             <attribute name="title" >
              <string>Normal Map Settings</string>
             </attribute>
@@ -644,8 +656,20 @@
        </widget>
        <widget class="QWidget" name="compressionPage" >
         <layout class="QVBoxLayout" >
+         <property name="margin" >
+          <number>9</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
          <item>
           <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>6</number>
+           </property>
            <item>
             <widget class="QLabel" name="label_3" >
              <property name="text" >
@@ -655,7 +679,7 @@
               <enum>Qt::PlainText</enum>
              </property>
              <property name="textInteractionFlags" >
-              <set>Qt::NoTextInteraction</set>
+              <enum>Qt::NoTextInteraction</enum>
              </property>
              <property name="buddy" >
               <cstring>formatComboBox</cstring>
@@ -705,6 +729,12 @@
          </item>
          <item>
           <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>6</number>
+           </property>
            <item>
             <widget class="QLabel" name="label_4" >
              <property name="text" >
@@ -714,7 +744,7 @@
               <enum>Qt::PlainText</enum>
              </property>
              <property name="textInteractionFlags" >
-              <set>Qt::NoTextInteraction</set>
+              <enum>Qt::NoTextInteraction</enum>
              </property>
              <property name="buddy" >
               <cstring>formatComboBox</cstring>
@@ -753,7 +783,9 @@
          <item>
           <widget class="QGroupBox" name="groupBox_6" >
            <property name="sizePolicy" >
-            <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+            <sizepolicy>
+             <hsizetype>0</hsizetype>
+             <vsizetype>0</vsizetype>
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -762,22 +794,19 @@
             <string>Color Weights</string>
            </property>
            <layout class="QVBoxLayout" >
+            <property name="margin" >
+             <number>9</number>
+            </property>
+            <property name="spacing" >
+             <number>6</number>
+            </property>
             <item>
              <layout class="QHBoxLayout" >
+              <property name="margin" >
+               <number>0</number>
+              </property>
               <property name="spacing" >
                <number>6</number>
-              </property>
-              <property name="leftMargin" >
-               <number>0</number>
-              </property>
-              <property name="topMargin" >
-               <number>0</number>
-              </property>
-              <property name="rightMargin" >
-               <number>0</number>
-              </property>
-              <property name="bottomMargin" >
-               <number>0</number>
               </property>
               <item>
                <widget class="QLabel" name="label_10" >
@@ -806,20 +835,11 @@
             </item>
             <item>
              <layout class="QHBoxLayout" >
+              <property name="margin" >
+               <number>0</number>
+              </property>
               <property name="spacing" >
                <number>6</number>
-              </property>
-              <property name="leftMargin" >
-               <number>0</number>
-              </property>
-              <property name="topMargin" >
-               <number>0</number>
-              </property>
-              <property name="rightMargin" >
-               <number>0</number>
-              </property>
-              <property name="bottomMargin" >
-               <number>0</number>
               </property>
               <item>
                <widget class="QLabel" name="label_11" >
@@ -848,20 +868,11 @@
             </item>
             <item>
              <layout class="QHBoxLayout" >
+              <property name="margin" >
+               <number>0</number>
+              </property>
               <property name="spacing" >
                <number>6</number>
-              </property>
-              <property name="leftMargin" >
-               <number>0</number>
-              </property>
-              <property name="topMargin" >
-               <number>0</number>
-              </property>
-              <property name="rightMargin" >
-               <number>0</number>
-              </property>
-              <property name="bottomMargin" >
-               <number>0</number>
               </property>
               <item>
                <widget class="QLabel" name="label_12" >
@@ -890,6 +901,12 @@
             </item>
             <item>
              <layout class="QHBoxLayout" >
+              <property name="margin" >
+               <number>0</number>
+              </property>
+              <property name="spacing" >
+               <number>6</number>
+              </property>
               <item>
                <widget class="QPushButton" name="uniformButton" >
                 <property name="maximumSize" >
@@ -948,34 +965,19 @@
        <widget class="QWidget" name="outputPage" />
        <widget class="QWidget" name="previewPage" >
         <layout class="QVBoxLayout" >
-         <property name="leftMargin" >
-          <number>0</number>
+         <property name="margin" >
+          <number>9</number>
          </property>
-         <property name="topMargin" >
-          <number>0</number>
-         </property>
-         <property name="rightMargin" >
-          <number>0</number>
-         </property>
-         <property name="bottomMargin" >
-          <number>0</number>
+         <property name="spacing" >
+          <number>6</number>
          </property>
          <item>
           <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
            <property name="spacing" >
             <number>6</number>
-           </property>
-           <property name="leftMargin" >
-            <number>0</number>
-           </property>
-           <property name="topMargin" >
-            <number>0</number>
-           </property>
-           <property name="rightMargin" >
-            <number>0</number>
-           </property>
-           <property name="bottomMargin" >
-            <number>0</number>
            </property>
            <item>
             <widget class="QGraphicsView" name="graphicsView_2" />
@@ -984,20 +986,11 @@
          </item>
          <item>
           <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
            <property name="spacing" >
             <number>6</number>
-           </property>
-           <property name="leftMargin" >
-            <number>0</number>
-           </property>
-           <property name="topMargin" >
-            <number>0</number>
-           </property>
-           <property name="rightMargin" >
-            <number>0</number>
-           </property>
-           <property name="bottomMargin" >
-            <number>0</number>
            </property>
            <item>
             <widget class="QCheckBox" name="filterCheckBox" >
@@ -1033,20 +1026,11 @@
    </item>
    <item>
     <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
      <property name="spacing" >
       <number>6</number>
-     </property>
-     <property name="leftMargin" >
-      <number>0</number>
-     </property>
-     <property name="topMargin" >
-      <number>0</number>
-     </property>
-     <property name="rightMargin" >
-      <number>0</number>
-     </property>
-     <property name="bottomMargin" >
-      <number>0</number>
      </property>
      <item>
       <widget class="QPushButton" name="pushButton_6" >
