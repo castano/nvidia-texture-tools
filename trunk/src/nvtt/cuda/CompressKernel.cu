@@ -283,8 +283,8 @@ __device__ float evalPermutation3(const float3 * colors, uint permutation, ushor
     return dot(e, kColorMetricSqr);
 }
 
-__constant__ float alphaTable4[4] = { 9.0f, 0.0f, 6.0f, 3.0f };
-__constant__ float alphaTable3[4] = { 4.0f, 0.0f, 2.0f, 2.0f };
+__constant__ const float alphaTable4[4] = { 9.0f, 0.0f, 6.0f, 3.0f };
+__constant__ const float alphaTable3[4] = { 4.0f, 0.0f, 2.0f, 2.0f };
 __constant__ const uint prods4[4] = { 0x090000,0x000900,0x040102,0x010402 };
 __constant__ const uint prods3[4] = { 0x040000,0x000400,0x040101,0x010401 };
 
@@ -970,7 +970,7 @@ extern "C" void setupCompressKernel(const float weights[3])
 	weightsSqr[1] = weights[1] * weights[1];
 	weightsSqr[2] = weights[2] * weights[2];
 
-	cudaMemcpyToSymbol(kColorMetricSqr, weights, sizeof(float) * 3, 0);
+	cudaMemcpyToSymbol(kColorMetricSqr, weightsSqr, sizeof(float) * 3, 0);
 }
 
 
