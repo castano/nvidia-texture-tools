@@ -40,6 +40,9 @@
 #define NVTT_CLASS
 #endif
 
+#define NVTT_DEPRECATED NVTT_API NV_DEPRECATED
+
+
 // Public interface.
 namespace nvtt
 {
@@ -49,7 +52,7 @@ namespace nvtt
 		// No compression.
 		Format_RGB,
 		Format_RGBA = Format_RGB,
-
+		
 		// DX9 formats.
 		Format_DXT1,
 		Format_DXT1a,   // DXT1 with binary alpha.
@@ -65,9 +68,6 @@ namespace nvtt
 		Format_BC3n = Format_DXT5n,
 		Format_BC4,     // ATI1
 		Format_BC5,     // 3DC, ATI2
-
-		// OpenGL formats.
-		Format_LATC = Format_BC5,
 	};
 	
 	/// Quality modes.
@@ -91,7 +91,9 @@ namespace nvtt
 		NVTT_API void setFormat(Format format);
 		NVTT_API void setQuality(Quality quality, float errorThreshold = 0.5f);
 		NVTT_API void setColorWeights(float red, float green, float blue);
-		NVTT_API void enableHardwareCompression(bool enable);
+		
+		NVTT_DEPRECATED void enableHardwareCompression(bool enable);
+		NVTT_API void enableCudaCompression(bool enable);
 		
 		NVTT_API void setExternalCompressor(const char * name);
 
@@ -136,12 +138,28 @@ namespace nvtt
 		MipmapFilter_Kaiser,    ///< Kaiser-windowed Sinc filter is the best downsampling filter.
 	};
 	
+	/// Color transformation.
 	enum ColorTransform
 	{
 		ColorTransform_None,
 		ColorTransform_Linear,
-		ColorTransform_CoYCg,
-		ColorTransform_CoSCgY,
+	};
+	
+	/// Extents rounding mode.
+	enum RoundMode
+	{
+		RoundMode_None,
+		RoundMode_ToNextPowerOfTwo,
+  		RoundMode_ToNearestPowerOfTwo,
+		RoundMode_ToPreviousPowerOfTwo,
+	};
+	
+	/// Alpha mode.
+	enum AlphaMode
+	{
+		AlphaMode_None,
+		AlphaMode_Transparency,
+   		AlphaMode_Premultiplied,
 	};
 
 	/// Input options. Specify format and layout of the input texture.
@@ -156,37 +174,45 @@ namespace nvtt
 		// Setup input layout.
 		NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1);
 		NVTT_API void resetTextureLayout();
-
+		
 		// Set mipmap data. Copies the data.
 		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);
-
+		
 		// Describe the format of the input.
-		NVTT_API void setFormat(InputFormat fmt, bool alphaTransparency);
-
+		NVTT_DEPRECATED void setFormat(InputFormat format, bool alphaTransparency);
+		NVTT_API void setFormat(InputFormat format);
+		
+		// Set the way the input alpha channel is interpreted.
+		NVTT_API void setAlphaMode(AlphaMode alphaMode);
+		
 		// Set gamma settings.
 		NVTT_API void setGamma(float inputGamma, float outputGamma);
-
+		
 		// Set texture wrappign mode.
 		NVTT_API void setWrapMode(WrapMode mode);
-
+		
 		// Set mipmapping options.
 		NVTT_API void setMipmapping(bool generateMipmaps, MipmapFilter filter = MipmapFilter_Box, int maxLevel = -1);
-		NVTT_API void setKaiserParameters(int width, float alpha, float stretch);
+		NVTT_API void setKaiserParameters(float width, float alpha, float stretch);
 
 		// Set quantization options.
-		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
-
+		NVTT_DEPRECATED void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
+		
 		// Set normal map options.
 		NVTT_API void setNormalMap(bool b);
 		NVTT_API void setConvertToNormalMap(bool convert);
 		NVTT_API void setHeightEvaluation(float redScale, float greenScale, float blueScale, float alphaScale);
 		NVTT_API void setNormalFilter(float small, float medium, float big, float large);
 		NVTT_API void setNormalizeMipmaps(bool b);
-
+		
 		// Set color transforms.
 		NVTT_API void setColorTransform(ColorTransform t);
 		NVTT_API void setLinearTransfrom(int channel, float w0, float w1, float w2, float w3);
-
+		
+		// Set resizing options.
+		NVTT_API void setMaxExtents(int d);
+		NVTT_API void setRoundMode(RoundMode mode);
+		
 	//private:
 		struct Private;
 		Private & m;
@@ -213,6 +239,8 @@ namespace nvtt
 		Error_UnsupportedFeature,
 		Error_CudaError,
 		Error_Unknown,
+  		Error_FileOpen,
+  		Error_FileWrite,
 	};
 	
 	/// Error handler.
@@ -229,15 +257,26 @@ namespace nvtt
 	/// the compressor to the user.
 	struct OutputOptions
 	{
-		OutputOptions() : outputHandler(NULL), outputHeader(true) { reset(); }
-		OutputOptions(OutputHandler * oh, ErrorHandler * eh) : outputHandler(oh), errorHandler(eh), outputHeader(true) { reset(); }
+		NVTT_API OutputOptions();
+		NVTT_DEPRECATED OutputOptions(OutputHandler * oh, ErrorHandler * eh);
+		NVTT_API ~OutputOptions();
 		
 		// Set default options.
 		NVTT_API void reset();
 		
-		OutputHandler * outputHandler;
-		ErrorHandler * errorHandler;
-		bool outputHeader;
+		NVTT_API void setFileName(const char * fileName);
+		
+		NVTT_API void setOutputHandler(OutputHandler * outputHandler);
+		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
+		NVTT_API void setOutputHeader(bool outputHeader);
+		
+		NVTT_DEPRECATED OutputHandler * outputHandler;
+		NVTT_DEPRECATED ErrorHandler * errorHandler;
+		NVTT_DEPRECATED bool outputHeader;
+		
+	//private:
+		struct Private;
+		Private & m;
 	};
 	
 	

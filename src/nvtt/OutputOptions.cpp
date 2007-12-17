@@ -21,12 +21,105 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "nvtt.h"
+#include "OutputOptions.h"
 
 using namespace nvtt;
+
+
+OutputOptions::OutputOptions() : m(*new OutputOptions::Private())
+{
+	reset();
+}
+
+OutputOptions::OutputOptions(OutputHandler * oh, ErrorHandler * eh) : m(*new OutputOptions::Private())
+{
+	reset();
+	outputHandler = oh;
+	errorHandler = eh;
+}
+
+OutputOptions::~OutputOptions()
+{
+	delete &m;
+}
 
 /// Set default output options.
 void OutputOptions::reset()
 {
-	// endiannes = native...
+	m.fileName.reset();
+	m.outputHandler = NULL;
+	m.errorHandler = NULL;
+	m.outputHeader = true;
+	
+	outputHandler = NULL;
+	errorHandler = NULL;
+	outputHeader = true;
 }
+
+
+/// Set output file name.
+void OutputOptions::setFileName(const char * fileName)
+{
+	m.fileName = fileName;
+	outputHandler = NULL;
+}
+
+/// Set output handler.
+void OutputOptions::setOutputHandler(OutputHandler * outputHandler)
+{
+	m.fileName.reset();
+	this->outputHandler = outputHandler;
+}
+
+/// Set error handler.
+void OutputOptions::setErrorHandler(ErrorHandler * errorHandler)
+{
+	this->errorHandler = errorHandler;
+}
+
+/// Set output header.
+void OutputOptions::setOutputHeader(bool outputHeader)
+{
+	this->outputHeader = outputHeader;
+}
+
+
+bool OutputOptions::Private::openFile() const
+{
+	if (!fileName.isNull())
+	{
+		nvCheck(outputHandler == NULL);
+		
+		DefaultOutputHandler * oh = new DefaultOutputHandler(fileName.str());
+		if (oh->stream.isError())
+		{
+			return false;
+		}
+		
+		outputHandler = oh;
+	}
+	
+	return true;
+}
+
+void OutputOptions::Private::closeFile() const
+{
+	if (!fileName.isNull())
+	{
+		delete outputHandler;
+		outputHandler = NULL;
+	}
+}
+
+
+void nvtt::initOptions(OutputOptions * outputOptions)
+{
+	nvDebugCheck(outputOptions != NULL);
+	
+	OutputOptions::Private & pimpl = outputOptions->m;
+	
+	pimpl.outputHandler = outputOptions->outputHandler;
+	pimpl.errorHandler = outputOptions->errorHandler;
+	pimpl.outputHeader = outputOptions->outputHeader;
+}
+

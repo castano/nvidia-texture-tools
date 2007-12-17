@@ -29,7 +29,7 @@
 
 #include "CompressRGB.h"
 #include "CompressionOptions.h"
-
+#include "OutputOptions.h"
 
 using namespace nv;
 using namespace nvtt;
@@ -59,7 +59,7 @@ namespace
 
 
 // Pixel format converter.
-void nv::compressRGB(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressRGB(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	nvCheck(image != NULL);
 
