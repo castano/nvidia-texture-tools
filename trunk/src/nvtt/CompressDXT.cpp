@@ -32,6 +32,7 @@
 #include "FastCompressDXT.h"
 #include "QuickCompressDXT.h"
 #include "CompressionOptions.h"
+#include "OutputOptions.h"
 
 // squish
 #include "squish/colourset.h"
@@ -55,7 +56,7 @@ using namespace nv;
 using namespace nvtt;
 
 
-void nv::fastCompressDXT1(const Image * image, const OutputOptions & outputOptions)
+void nv::fastCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -77,7 +78,7 @@ void nv::fastCompressDXT1(const Image * image, const OutputOptions & outputOptio
 }
 
 
-void nv::fastCompressDXT1a(const Image * image, const OutputOptions & outputOptions)
+void nv::fastCompressDXT1a(const Image * image, const OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -99,7 +100,7 @@ void nv::fastCompressDXT1a(const Image * image, const OutputOptions & outputOpti
 }
 
 
-void nv::fastCompressDXT3(const Image * image, const nvtt::OutputOptions & outputOptions)
+void nv::fastCompressDXT3(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -120,7 +121,7 @@ void nv::fastCompressDXT3(const Image * image, const nvtt::OutputOptions & outpu
 }
 
 
-void nv::fastCompressDXT5(const Image * image, const nvtt::OutputOptions & outputOptions)
+void nv::fastCompressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -141,7 +142,7 @@ void nv::fastCompressDXT5(const Image * image, const nvtt::OutputOptions & outpu
 }
 
 
-void nv::fastCompressDXT5n(const Image * image, const nvtt::OutputOptions & outputOptions)
+void nv::fastCompressDXT5n(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -166,14 +167,14 @@ void nv::fastCompressDXT5n(const Image * image, const nvtt::OutputOptions & outp
 }
 
 
-void nv::fastCompressBC4(const Image * image, const nvtt::OutputOptions & outputOptions)
+void nv::fastCompressBC4(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
 	// @@ TODO
 	// compress red channel (X)
 }
 
 
-void nv::fastCompressBC5(const Image * image, const nvtt::OutputOptions & outputOptions)
+void nv::fastCompressBC5(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
 	// @@ TODO
 	// compress red, green channels (X,Y)
@@ -192,7 +193,7 @@ void nv::doPrecomputation()
 }
 
 
-void nv::compressDXT1(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressDXT1(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -225,7 +226,7 @@ void nv::compressDXT1(const Image * image, const OutputOptions & outputOptions, 
 }
 
 
-void nv::compressDXT3(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressDXT3(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -254,7 +255,7 @@ void nv::compressDXT3(const Image * image, const OutputOptions & outputOptions, 
 	}
 }
 
-void nv::compressDXT5(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressDXT5(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -292,7 +293,7 @@ void nv::compressDXT5(const Image * image, const OutputOptions & outputOptions, 
 }
 
 
-void nv::compressDXT5n(const Image * image, const OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressDXT5n(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -328,7 +329,7 @@ void nv::compressDXT5n(const Image * image, const OutputOptions & outputOptions,
 }
 
 
-void nv::compressBC4(const Image * image, const nvtt::OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressBC4(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -380,7 +381,7 @@ void nv::compressBC4(const Image * image, const nvtt::OutputOptions & outputOpti
 }
 
 
-void nv::compressBC5(const Image * image, const nvtt::OutputOptions & outputOptions, const CompressionOptions::Private & compressionOptions)
+void nv::compressBC5(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -423,7 +424,7 @@ void nv::compressBC5(const Image * image, const nvtt::OutputOptions & outputOpti
 
 #if defined(HAVE_S3QUANT)
 
-void nv::s3CompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions)
+void nv::s3CompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -518,7 +519,7 @@ void nv::s3CompressDXT1(const Image * image, const nvtt::OutputOptions & outputO
 
 #if defined(HAVE_ATITC)
 
-void nv::atiCompressDXT1(const Image * image, const OutputOptions & outputOptions)
+void nv::atiCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
 {
 	// Init source texture
 	ATI_TC_Texture srcTexture;

@@ -36,54 +36,65 @@ namespace nvtt
 	struct InputOptions::Private
 	{
 		Private() : images(NULL) {}
-
+		
 		WrapMode wrapMode;
 		TextureType textureType;
 		InputFormat inputFormat;
+		AlphaMode alphaMode;
 		
-		int faceCount;
-		int mipmapCount;
-		int imageCount;
+		uint faceCount;
+		uint mipmapCount;
+		uint imageCount;
 		
 		struct Image;
 		Image * images;
-
+		
 		// Quantization.
 		bool enableColorDithering;
 		bool enableAlphaDithering;
 		bool binaryAlpha;
 		int alphaThreshold;			// reference value used for binary alpha quantization.
-
-		bool alphaTransparency;	// set to true if alpha is used for transparency.
 		
 		// Gamma conversion.
 		float inputGamma;
 		float outputGamma;
-	
+		
 		// Color transform.
 		ColorTransform colorTransform;
 		nv::Matrix linearTransform;
-
+		
 		// Mipmap generation options.
 		bool generateMipmaps;
 		int maxLevel;
 		MipmapFilter mipmapFilter;
-
+		
 		// Kaiser filter parameters.
-		uint kaiserWidth;
+		float kaiserWidth;
 		float kaiserAlpha;
 		float kaiserStretch;
-
+		
 		// Normal map options.
-		bool normalMap;
+		bool isNormalMap;
 		bool normalizeMipmaps;
 		bool convertToNormalMap;
-		nv::Vector4 heightFactors;		// Used for cone mapping too.
+		nv::Vector4 heightFactors;
 		nv::Vector4 bumpFrequencyScale;
-
-		// Cone map options.
-		bool convertToConeMap;
-
+		
+		// Adjust extents.
+		uint maxExtent;
+		RoundMode roundMode;
+		
+		// @@ These are computed in nvtt::compress, so they should be mutable or stored elsewhere...
+		mutable uint targetWidth;
+		mutable uint targetHeight;
+		mutable uint targetDepth;
+		mutable uint targetMipmapCount;
+		
+		void computeTargetExtents() const;
+		
+		int realMipmapCount() const;
+		int firstMipmap(int face) const;
+		
 	};
 
 	// Internal image structure.

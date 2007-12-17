@@ -35,29 +35,29 @@ namespace nv
 	void doPrecomputation();
 	
 	// Fast compressors.
-	void fastCompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions);
-	void fastCompressDXT1a(const Image * image, const nvtt::OutputOptions & outputOptions);
-	void fastCompressDXT3(const Image * image, const nvtt::OutputOptions & outputOptions);
-	void fastCompressDXT5(const Image * image, const nvtt::OutputOptions & outputOptions);
-	void fastCompressDXT5n(const Image * image, const nvtt::OutputOptions & outputOptions);
-	void fastCompressBC4(const Image * image, const nvtt::OutputOptions & outputOptions);
-	void fastCompressBC5(const Image * image, const nvtt::OutputOptions & outputOptions);
+	void fastCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void fastCompressDXT1a(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void fastCompressDXT3(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void fastCompressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void fastCompressDXT5n(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void fastCompressBC4(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void fastCompressBC5(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 
 	// Normal compressors.
-	void compressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void compressDXT3(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void compressDXT5(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void compressDXT5n(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void compressBC4(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void compressBC5(const Image * image, const nvtt::OutputOptions & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressDXT3(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressDXT5n(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressBC4(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressBC5(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 	
 	// External compressors.
 #if defined(HAVE_S3QUANT)
-	void s3CompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions);
+	void s3CompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 #endif
 	
 #if defined(HAVE_ATITC)
-	void atiCompressDXT1(const Image * image, const nvtt::OutputOptions & outputOptions);
+	void atiCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 #endif
 
 } // nv namespace

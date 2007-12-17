@@ -21,19 +21,56 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_COMPRESSRGB_H
-#define NV_TT_COMPRESSRGB_H
+#ifndef NV_TT_OUTPUTOPTIONS_H
+#define NV_TT_OUTPUTOPTIONS_H
 
+#include <nvcore/StrLib.h>
+#include <nvcore/StdStream.h>
 #include "nvtt.h"
 
-namespace nv
+namespace nvtt
 {
-	class Image;
 
-	// Pixel format converter.
-	void compressRGB(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	struct DefaultOutputHandler : public nvtt::OutputHandler
+	{
+		DefaultOutputHandler(const char * fileName) : stream(fileName) {}
+		
+		virtual ~DefaultOutputHandler()
+		{
+		}
+		
+		virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel)
+		{
+			// ignore.
+		}
+		
+		// Output data.
+		virtual void writeData(const void * data, int size)
+		{
+			stream.serialize(const_cast<void *>(data), size);
+		}
+		
+		nv::StdOutputStream stream;
+	};
 	
-} // nv namespace
+	
+	struct OutputOptions::Private
+	{
+		nv::Path fileName;
+		
+		mutable OutputHandler * outputHandler;
+		mutable ErrorHandler * errorHandler;
+		mutable bool outputHeader;
+		
+		bool openFile() const;
+		void closeFile() const;
+	};
+
+	// @@ temporary hack to copy public attributes to pimpl.
+	void initOptions(OutputOptions * outputOptions);
+	
+	
+} // nvtt namespace
 
 
-#endif // NV_TT_COMPRESSDXT_H
+#endif // NV_TT_OUTPUTOPTIONS_H

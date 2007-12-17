@@ -34,9 +34,9 @@ using namespace nvtt;
 namespace
 {
 
-	static int countMipmaps(int w, int h, int d)
+	static uint countMipmaps(int w, int h, int d)
 	{
-		int mipmap = 0;
+		uint mipmap = 0;
 		
 		while (w != 1 || h != 1 || d != 1) {
 			w = max(1, w / 2);
@@ -48,6 +48,27 @@ namespace
 		return mipmap + 1;
 	}
 
+	// 1 -> 1, 2 -> 2, 3 -> 2, 4 -> 4, 5 -> 4, ...
+	static uint previousPowerOfTwo(const uint v)
+	{
+		return nextPowerOfTwo(v + 1) / 2;
+	}
+	
+	static uint nearestPowerOfTwo(const uint v)
+	{
+		const uint np2 = nextPowerOfTwo(v);
+		const uint pp2 = previousPowerOfTwo(v);
+		
+		if (np2 - v <= v - pp2)
+		{
+			return np2;
+		}
+		else
+		{
+			return pp2;
+		}
+	}
+	
 } // namespace
 
 
@@ -69,7 +90,7 @@ InputOptions::~InputOptions()
 // Reset input options.
 void InputOptions::reset()
 {
-	m.wrapMode = WrapMode_Repeat;
+	m.wrapMode = WrapMode_Mirror;
 	m.textureType = TextureType_2D;
 	m.inputFormat = InputFormat_BGRA_8UB;
 
@@ -78,7 +99,7 @@ void InputOptions::reset()
 	m.binaryAlpha = false;
 	m.alphaThreshold = 127;
 
-	m.alphaTransparency = true;
+	m.alphaMode = AlphaMode_Transparency;
 
 	m.inputGamma = 2.2f;
 	m.outputGamma = 2.2f;
@@ -90,14 +111,18 @@ void InputOptions::reset()
 	m.maxLevel = -1;
 	m.mipmapFilter = MipmapFilter_Box;
 
-	m.kaiserWidth = 10;
-	m.kaiserAlpha = 8.0f;
-	m.kaiserStretch = 0.75f;
+	m.kaiserWidth = 3;
+	m.kaiserAlpha = 4.0f;
+	m.kaiserStretch = 1.0f;
 
-	m.normalizeMipmaps = false;
+	m.isNormalMap = false;
+	m.normalizeMipmaps = true;
 	m.convertToNormalMap = false;
 	m.heightFactors.set(0.0f, 0.0f, 0.0f, 1.0f);
 	m.bumpFrequencyScale = Vector4(1.0f, 0.5f, 0.25f, 0.125f) / (1.0f + 0.5f + 0.25f + 0.125f);
+	
+	m.maxExtent = 0;
+	m.roundMode = RoundMode_None;
 }
 
 
@@ -126,13 +151,13 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 	
 	m.images = new Private::Image[m.imageCount];
 	
-	for(int f = 0; f < m.faceCount; f++)
+	for(uint f = 0; f < m.faceCount; f++)
 	{
-		int w = width;
-		int h = height;
-		int d = depth;
+		uint w = width;
+		uint h = height;
+		uint d = depth;
 
-		for (int mipLevel = 0; mipLevel < m.mipmapCount; mipLevel++)
+		for (uint mipLevel = 0; mipLevel < m.mipmapCount; mipLevel++)
 		{
 			Private::Image & img = m.images[f * m.mipmapCount + mipLevel];
 			img.width = w;
@@ -143,9 +168,9 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 			
 			img.data = NULL;
 			
-			w = max(1, w / 2);
-			h = max(1, h / 2);
-			d = max(1, d / 2);
+			w = max(1U, w / 2);
+			h = max(1U, h / 2);
+			d = max(1U, d / 2);
 		}
 	}
 }
@@ -188,10 +213,21 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 
 
 /// Describe the format of the input.
-void InputOptions::setFormat(InputFormat format, bool alphaTransparency)
+void InputOptions::setFormat(InputFormat format, /*deprecated*/bool alphaTransparency)
 {
 	m.inputFormat = format;
-	m.alphaTransparency = alphaTransparency;
+	//m.alphaTransparency = alphaTransparency;
+}
+void InputOptions::setFormat(InputFormat format)
+{
+	m.inputFormat = format;
+}
+
+
+/// Set the way the input alpha channel is interpreted.
+void InputOptions::setAlphaMode(AlphaMode alphaMode)
+{
+	m.alphaMode = alphaMode;
 }
 
 
@@ -219,7 +255,7 @@ void InputOptions::setMipmapping(bool generateMipmaps, MipmapFilter filter/*= Mi
 }
 
 /// Set Kaiser filter parameters.
-void InputOptions::setKaiserParameters(int width, float alpha, float stretch)
+void InputOptions::setKaiserParameters(float width, float alpha, float stretch)
 {
 	m.kaiserWidth = width;
 	m.kaiserAlpha = alpha;
@@ -233,6 +269,7 @@ void InputOptions::setKaiserParameters(int width, float alpha, float stretch)
 /// the compressor.
 void InputOptions::setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold/*= 127*/)
 {
+	nvCheck(alphaThreshold >= 0 && alphaThreshold < 256);
 	m.enableColorDithering = colorDithering;
 	m.enableAlphaDithering = alphaDithering;
 	m.binaryAlpha = binaryAlpha;
@@ -243,7 +280,7 @@ void InputOptions::setQuantization(bool colorDithering, bool alphaDithering, boo
 /// Indicate whether input is a normal map or not.
 void InputOptions::setNormalMap(bool b)
 {
-	m.normalMap = b;
+	m.isNormalMap = b;
 }
 
 /// Enable normal map conversion.
@@ -287,3 +324,103 @@ void InputOptions::setLinearTransfrom(int channel, float w0, float w1, float w2,
 	Vector4 w(w0, w1, w2, w3);
 	//m.linearTransform.setRow(channel, w);
 }
+
+void InputOptions::setMaxExtents(int e)
+{
+	nvDebugCheck(e > 0);
+	m.maxExtent = e;
+}
+
+void InputOptions::setRoundMode(RoundMode mode)
+{
+	m.roundMode = mode;
+}
+
+
+void InputOptions::Private::computeTargetExtents() const
+{
+	nvCheck(images != NULL);
+	
+	uint maxExtent = this->maxExtent;
+	if (roundMode != RoundMode_None)
+	{
+		// rounded max extent should never be higher than original max extent.
+		maxExtent = previousPowerOfTwo(maxExtent);
+	}
+
+	uint w = images->width;
+	uint h = images->height;
+	uint d = images->depth;
+	
+	nvDebugCheck(w > 0);
+	nvDebugCheck(h > 0);
+	nvDebugCheck(d > 0);
+	
+	// Scale extents without changing aspect ratio.
+	uint maxwhd = max(max(w, h), d);
+	if (maxExtent != 0 && maxwhd > maxExtent)
+	{
+		w = max((w * maxExtent) / maxwhd, 1U);
+		h = max((h * maxExtent) / maxwhd, 1U);
+		d = max((d * maxExtent) / maxwhd, 1U);
+	}
+	
+	// Round to power of two.
+	if (roundMode == RoundMode_ToNextPowerOfTwo)
+	{
+		w = nextPowerOfTwo(w);
+		h = nextPowerOfTwo(h);
+		d = nextPowerOfTwo(d);
+	}
+	else if (roundMode == RoundMode_ToNearestPowerOfTwo)
+	{
+		w = nearestPowerOfTwo(w);
+		h = nearestPowerOfTwo(h);
+		d = nearestPowerOfTwo(d);
+	}
+	else if (roundMode == RoundMode_ToPreviousPowerOfTwo)
+	{
+		w = previousPowerOfTwo(w);
+		h = previousPowerOfTwo(h);
+		d = previousPowerOfTwo(d);
+	}
+	
+	this->targetWidth = w;
+	this->targetHeight = h;
+	this->targetDepth = d;
+	
+	this->targetMipmapCount = countMipmaps(w, h, d);
+}
+
+
+// Return real number of mipmaps, including first level.
+// computeTargetExtents should have been called before.
+int InputOptions::Private::realMipmapCount() const
+{
+	int mipmapCount = targetMipmapCount;
+	
+	if (!generateMipmaps) mipmapCount = 1;
+	else if (maxLevel != -1 && maxLevel < mipmapCount - 1) mipmapCount = maxLevel + 1;
+
+	return mipmapCount;
+}
+
+
+// Called everytime max extents or rounding mode changes.
+int InputOptions::Private::firstMipmap(int face) const
+{
+	nvCheck(images != NULL);
+	
+	// @@ Find the last image that's not NULL and is greater than target extents.
+	
+	uint first = 0;
+	for (uint f = 0; f < mipmapCount; f++)
+	{
+		
+	}
+	
+	return first;
+}
+
+
+

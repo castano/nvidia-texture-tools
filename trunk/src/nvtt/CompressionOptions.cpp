@@ -87,8 +87,14 @@ void CompressionOptions::setColorWeights(float red, float green, float blue)
 }
 
 
-/// Enable or disable hardware compression.
+/// Enable or disable CUDA compression.
 void CompressionOptions::enableHardwareCompression(bool enable)
+{
+	m.useCuda = enable;
+}
+
+/// Enable or disable CUDA compression.
+void CompressionOptions::enableCudaCompression(bool enable)
 {
 	m.useCuda = enable;
 }
