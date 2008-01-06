@@ -55,11 +55,12 @@ public:
 		return *this;
 	}
 	
-/*	Vec4( float x, float y, float z, float w )
+	Vec4( float x, float y, float z, float w )
 	{
-		m_v = _mm_setr_ps( x, y, z, w );
+		m_v0 = _mm_set_pi32( *(int *)&x, *(int *)&y );
+		m_v1 = _mm_set_pi32( *(int *)&z, *(int *)&w );
 	}
-*/	
+
 /*	Vec3 GetVec3() const
 	{
 #ifdef __GNUC__
@@ -164,22 +165,22 @@ public:
 				_m_pfmax( left.m_v1, right.m_v1 ));
 	}
 	
-/*	friend Vec4 Truncate( Vec4::Arg v )
+	friend Vec4 Truncate( Vec4::Arg v )
 	{
 		// convert to ints
-		__m128 input = v.m_v;
-		__m64 lo = _mm_cvttps_pi32( input );
-		__m64 hi = _mm_cvttps_pi32( _mm_movehl_ps( input, input ) );
+		__m64 i0 = _m_pf2id( v.m_v0 );
+		__m64 i1 = _m_pf2id( v.m_v1 );
 
 		// convert to floats
-		__m128 part = _mm_movelh_ps( input, _mm_cvtpi32_ps( input, hi ) );
-		__m128 truncated = _mm_cvtpi32_ps( part, lo );
+		__m64 f0 = _m_pi2fd( i0 );
+		__m64 f1 = _m_pi2fd( i1 );
 		
 		// clear out the MMX multimedia state to allow FP calls later
-		_m_femms(); 
-		return Vec4( truncated );
+		//_m_femms();
+		
+		return Vec4( f0, f1 );
 	}
-*/	
+	
 	friend Vec4 CompareEqual( Vec4::Arg left, Vec4::Arg right )
 	{
 		return Vec4(
