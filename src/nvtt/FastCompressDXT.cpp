@@ -31,9 +31,12 @@
 #include <emmintrin.h>
 #endif
 
+#if defined(__SSE__)
+#include <xmmintrin.h>
+#endif
+
 #if defined(__MMX__)
 #include <mmintrin.h>
-#include <xmmintrin.h>
 #endif
 
 #undef __VEC__
