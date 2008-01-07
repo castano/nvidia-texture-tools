@@ -216,8 +216,21 @@ static bool compressMipmap(const Image * image, const OutputOptions::Private & o
 	}
 	else if (compressionOptions.format == Format_DXT1a)
 	{
-		// @@ Only fast compression mode for now.
-		fastCompressDXT1a(image, outputOptions);
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			fastCompressDXT1a(image, outputOptions);
+		}
+		else
+		{
+			if (compressionOptions.useCuda && nv::cuda::isHardwarePresent())
+			{
+				/*cuda*/compressDXT1a(image, outputOptions);
+			}
+			else
+			{
+				compressDXT1a(image, outputOptions);
+			}
+		}
 	}
 	else if (compressionOptions.format == Format_DXT3)
 	{
@@ -351,37 +364,37 @@ static FloatImage * createMipmap(const FloatImage * floatImage, const InputOptio
 
 
 // Quantize the input image to the precision of the output format.
-static void quantize(Image * img, const InputOptions::Private & inputOptions, Format format)
+static void quantize(Image * img, const CompressionOptions::Private & compressionOptions)
 {
-	if (inputOptions.enableColorDithering)
+	if (compressionOptions.enableColorDithering)
 	{
-		if (format >= Format_DXT1 && format <= Format_DXT5)
+		if (compressionOptions.format >= Format_DXT1 && compressionOptions.format <= Format_DXT5)
 		{
 			Quantize::FloydSteinberg_RGB16(img);
 		}
 	}
-	if (inputOptions.binaryAlpha)
+	if (compressionOptions.binaryAlpha)
 	{
-		if (inputOptions.enableAlphaDithering)
+		if (compressionOptions.enableAlphaDithering)
 		{
-			Quantize::FloydSteinberg_BinaryAlpha(img, inputOptions.alphaThreshold);
+			Quantize::FloydSteinberg_BinaryAlpha(img, compressionOptions.alphaThreshold);
 		}
 		else
 		{
-			Quantize::BinaryAlpha(img, inputOptions.alphaThreshold);
+			Quantize::BinaryAlpha(img, compressionOptions.alphaThreshold);
 		}
 	}
 	else
 	{
-		if (inputOptions.enableAlphaDithering)
+		if (compressionOptions.enableAlphaDithering)
 		{
-			if (format == Format_DXT3)
+			if (compressionOptions.format == Format_DXT3)
 			{
 				Quantize::Alpha4(img);
 			}
-			else if (format == Format_DXT1a)
+			else if (compressionOptions.format == Format_DXT1a)
 			{
-				Quantize::BinaryAlpha(img, inputOptions.alphaThreshold);
+				Quantize::BinaryAlpha(img, compressionOptions.alphaThreshold);
 			}
 		}
 	}
@@ -575,8 +588,11 @@ static bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, 
 	}
 	
 	ImagePair pair;
-	
-	for (uint m = 0; m < inputOptions.mipmapCount; m++)
+
+	const uint mipmapCount = inputOptions.realMipmapCount();
+	nvDebugCheck(mipmapCount > 0);
+
+	for (uint m = 0; m < mipmapCount; m++)
 	{
 		if (outputOptions.outputHandler)
 		{
@@ -594,7 +610,7 @@ static bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, 
 		pair.toFixed(inputOptions);
 		
 		// @@ Quantization should be done in compressMipmap! @@ It should not modify the input image!!!
-		quantize(pair.fixedImage(), inputOptions, compressionOptions.format);
+		quantize(pair.fixedImage(), compressionOptions);
 		
 		compressMipmap(pair.fixedImage(), outputOptions, compressionOptions);
 		
@@ -606,10 +622,6 @@ static bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, 
 	
 	return true;
 }
-
-
-
-
 
 
 
@@ -629,9 +641,6 @@ static bool compress(const InputOptions::Private & inputOptions, const OutputOpt
 	
 	inputOptions.computeTargetExtents();
 	
-	uint mipmapCount = inputOptions.realMipmapCount();
-	nvDebugCheck(mipmapCount > 0);
-	
 	// Output DDS header.
 	outputHeader(inputOptions, outputOptions, compressionOptions);
 
@@ -641,105 +650,6 @@ static bool compress(const InputOptions::Private & inputOptions, const OutputOpt
 		{
 			return false;
 		}
-		
-		/*
-		Image * lastImage = NULL;
-		AutoPtr<FloatImage> floatImage(NULL);
-		
-		uint w = inputOptions.targetWidth;
-		uint h = inputOptions.targetHeight;
-		uint d = inputOptions.targetDepth;
-		
-		for (uint m = 0; m < mipmapCount; m++)
-		{
-			if (outputOptions.outputHandler)
-			{
-				int size = computeImageSize(w, h, bitCount, format);
-				outputOptions.outputHandler->mipmap(size, w, h, d, f, m);
-			}
-			
-			// @@ Write a more sofisticated get input image, that:
-			// - looks for the nearest image in the input mipmap chain, resizes it to desired extents.
-			// - uses previous floating point image, if available.
-			// - uses previous byte image if available.
-			
-			
-			int idx = f * inputOptions.mipmapCount + m;
-			InputOptions::Private::Image & mipmap = inputOptions.images[idx];
-			
-			// @@ Prescale not implemented yet.
-			nvCheck(w == mipmap.width);
-			nvCheck(h == mipmap.height);
-			nvCheck(d == mipmap.depth);
-			
-			Image * img = NULL; // Image to compress.
-			
-			if (mipmap.data != NULL) // Mipmap provided.
-			{
-				// Convert to normal map.
-				if (inputOptions.convertToNormalMap)
-				{
-					// Scale height factor by 1 / 2 ^ m
-					Vector4 heightScale = inputOptions.heightFactors / float(1 << m);
-					floatImage = createNormalMap(mipmap.data.ptr(), (FloatImage::WrapMode)inputOptions.wrapMode, heightScale, inputOptions.bumpFrequencyScale);
-				}
-				else
-				{
-					lastImage = img = mipmap.data.ptr();
-					
-					// Delete float image.
-					floatImage = NULL;
-				}
-			}
-			else // Create mipmap from last.
-			{
-				if (m == 0) {
-					// First mipmap missing.
-					if (outputOptions.errorHandler != NULL) outputOptions.errorHandler->error(Error_InvalidInput);
-					return false;
-				}
-				
-				if (floatImage == NULL)
-				{
-					nvDebugCheck(lastImage != NULL);
-					floatImage = toFloatImage(lastImage, inputOptions);
-				}
-				
-				// Create mipmap.
-				floatImage = createMipmap(floatImage.ptr(), inputOptions);
-			}
-			
-			if (floatImage != NULL)
-			{
-				// Convert to fixed.
-				img = toFixedImage(floatImage.ptr(), inputOptions);
-			}
-			
-			// @@ Where to do the color transform?
-			// - Color transform may not be linear, so we cannot do before computing mipmaps.
-			// - Should be done in linear space, that is, after gamma correction.
-
-			// @@ Error! gamma correction is not performed when mipmap data provided. (only if inputGamma != outputGamma)
-
-			// @@ This code is too complicated, too prone to erros, and hard to understand. Must be simplified!
-			
-			
-			// @@ Quantization should be done in compressMipmap!
-			quantize(img, inputOptions, format);
-			
-			compressMipmap(img, outputOptions, compressionOptions);
-			
-			if (img != mipmap.data)
-			{
-				delete img;
-			}
-			
-			// Compute extents of next mipmap:
-			w = max(1U, w / 2);
-			h = max(1U, h / 2);
-			d = max(1U, d / 2);
-		}
-		*/
 	}
 
 	outputOptions.closeFile();

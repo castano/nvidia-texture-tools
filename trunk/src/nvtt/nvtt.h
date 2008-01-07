@@ -100,6 +100,8 @@ namespace nvtt
 		// Set color mask to describe the RGB/RGBA format.
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
 
+		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold/*= 127*/);
+
 	//private:
 		struct Private;
 		Private & m;

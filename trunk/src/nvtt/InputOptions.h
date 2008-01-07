@@ -49,12 +49,6 @@ namespace nvtt
 		struct Image;
 		Image * images;
 		
-		// Quantization.
-		bool enableColorDithering;
-		bool enableAlphaDithering;
-		bool binaryAlpha;
-		int alphaThreshold;			// reference value used for binary alpha quantization.
-		
 		// Gamma conversion.
 		float inputGamma;
 		float outputGamma;
