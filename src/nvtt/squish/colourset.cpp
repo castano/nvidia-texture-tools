@@ -27,6 +27,12 @@
 
 namespace squish {
 
+// @@ Add flags:
+// - FindColorMatch
+// - DXT1a
+// - WeightColorByAlpha
+
+	
 ColourSet::ColourSet( u8 const* rgba, int flags )
   : m_count( 0 ), 
 	m_transparent( false )
