@@ -54,6 +54,7 @@ extern "C" void compressWeightedKernel(uint blockNum, uint * d_data, uint * d_re
 
 #include "Bitmaps.h"
 
+// @@ Store this pointer in CompressionOptions. Allocate in ctor, free in dtor.
 static uint * d_bitmaps = NULL;
 
 static void doPrecomputation()
