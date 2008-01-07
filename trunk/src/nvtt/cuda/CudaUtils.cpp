@@ -89,6 +89,8 @@ bool nv::cuda::isHardwarePresent()
 		{
 			return false;
 		}
+
+		// @@ Make sure that warp size == 32
 	}
 
 	return count > 0;
