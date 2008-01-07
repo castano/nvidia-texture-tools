@@ -24,23 +24,30 @@
 #ifndef NV_TT_H
 #define NV_TT_H
 
-#include <nvcore/nvcore.h>
-
 // Function linkage
 #if NVTT_SHARED
-#ifdef NVTT_EXPORTS
-#define NVTT_API DLL_EXPORT
-#define NVTT_CLASS DLL_EXPORT_CLASS
-#else
-#define NVTT_API DLL_IMPORT
-#define NVTT_CLASS DLL_IMPORT
-#endif
-#else
-#define NVTT_API
-#define NVTT_CLASS
+
+#if defined _WIN32 || defined WIN32 || defined __NT__ || defined __WIN32__ || defined __MINGW32__
+#	ifdef NVTT_EXPORTS
+#		define NVTT_API __declspec(dllexport)
+#	else
+#		define NVTT_API __declspec(dllimport)
+#	endif
 #endif
 
-#define NVTT_DEPRECATED NVTT_API /*NV_DEPRECATED*/
+#if defined __GNUC__ >= 4
+#	ifdef NVTT_EXPORTS
+#		define NVTT_API __attribute__((visibility("default")))
+#	endif
+#endif
+
+#endif // NVTT_SHARED
+
+#if !defined NVTT_API
+#	define NVTT_API
+#endif
+
+#define NVTT_DEPRECATED NVTT_API
 
 
 // Public interface.
