@@ -54,6 +54,9 @@ void ConfigDialog::init()
 	connect(ui.blueSpinBox, SIGNAL(valueChanged(double)), this, SLOT(colorWeightChanged()));
 	connect(ui.uniformButton, SIGNAL(toggled(bool)), this, SLOT(uniformWeightToggled(bool)));
 	connect(ui.luminanceButton, SIGNAL(toggled(bool)), this, SLOT(luminanceWeightToggled(bool)));
+	
+	//connect(ui.rgbMapRadioButton, SIGNAL(toggled(bool)), this, SLOT(colorModeChanged()));
+	connect(ui.normalMapRadioButton, SIGNAL(toggled(bool)), this, SLOT(normalMapModeChanged(bool)));
 }
 
 
@@ -124,7 +127,14 @@ void ConfigDialog::luminanceWeightToggled(bool checked)
 	}
 }
 
-
+void ConfigDialog::normalMapModeChanged(bool checked)
+{
+	ui.alphaModeGroupBox->setEnabled(!checked);
+	ui.inputGammaSpinBox->setEnabled(!checked);
+	ui.inputGammaLabel->setEnabled(!checked);
+	ui.outputGammaSpinBox->setEnabled(!checked);
+	ui.outputGammaLabel->setEnabled(!checked);
+}
 
 
 bool ConfigDialog::open(QString fileName)

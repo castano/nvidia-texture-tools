@@ -48,6 +48,7 @@ protected slots:
 	void uniformWeightToggled(bool checked);
 	void luminanceWeightToggled(bool checked);
 	
+	void normalMapModeChanged(bool checked);
 	
 	bool open(QString fileName);
 	
