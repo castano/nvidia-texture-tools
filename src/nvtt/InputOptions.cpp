@@ -94,11 +94,6 @@ void InputOptions::reset()
 	m.textureType = TextureType_2D;
 	m.inputFormat = InputFormat_BGRA_8UB;
 
-	m.enableColorDithering = false;
-	m.enableAlphaDithering = false;
-	m.binaryAlpha = false;
-	m.alphaThreshold = 127;
-
 	m.alphaMode = AlphaMode_Transparency;
 
 	m.inputGamma = 2.2f;
@@ -261,21 +256,6 @@ void InputOptions::setKaiserParameters(float width, float alpha, float stretch)
 	m.kaiserAlpha = alpha;
 	m.kaiserStretch = stretch;
 }
-
-/// Set quantization options.
-/// @warning Do not enable dithering unless you know what you are doing. Quantization 
-/// introduces errors. It's better to let the compressor quantize the result to 
-/// minimize the error, instead of quantizing the data before handling it to
-/// the compressor.
-void InputOptions::setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold/*= 127*/)
-{
-	nvCheck(alphaThreshold >= 0 && alphaThreshold < 256);
-	m.enableColorDithering = colorDithering;
-	m.enableAlphaDithering = alphaDithering;
-	m.binaryAlpha = binaryAlpha;
-	m.alphaThreshold = alphaThreshold;
-}
-
 
 /// Indicate whether input is a normal map or not.
 void InputOptions::setNormalMap(bool b)

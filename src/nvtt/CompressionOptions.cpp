@@ -49,11 +49,17 @@ void CompressionOptions::reset()
 	m.quality = Quality_Normal;
 	m.colorWeight.set(1.0f, 1.0f, 1.0f);
 	m.useCuda = true;
+
 	m.bitcount = 32;
 	m.bmask = 0x000000FF;
 	m.gmask = 0x0000FF00;
 	m.rmask = 0x00FF0000;
 	m.amask = 0xFF000000;
+
+	m.enableColorDithering = false;
+	m.enableAlphaDithering = false;
+	m.binaryAlpha = false;
+	m.alphaThreshold = 127;
 }
 
 
@@ -133,4 +139,20 @@ void CompressionOptions::setExternalCompressor(const char * name)
 {
 	m.externalCompressor = name;
 }
+
+/// Set quantization options.
+/// @warning Do not enable dithering unless you know what you are doing. Quantization 
+/// introduces errors. It's better to let the compressor quantize the result to 
+/// minimize the error, instead of quantizing the data before handling it to
+/// the compressor.
+void CompressionOptions::setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold/*= 127*/)
+{
+	nvCheck(alphaThreshold >= 0 && alphaThreshold < 256);
+	m.enableColorDithering = colorDithering;
+	m.enableAlphaDithering = alphaDithering;
+	m.binaryAlpha = binaryAlpha;
+	m.alphaThreshold = alphaThreshold;
+}
+
+
 

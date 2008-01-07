@@ -36,10 +36,11 @@ namespace nvtt
 		Format format;
 		
 		Quality quality;
-		float errorThreshold;
+		float errorThreshold;	// deprecated.
 		
 		nv::Vector3 colorWeight;
 		
+		// Pixel format description.
 		uint bitcount;
 		uint rmask;
 		uint gmask;
@@ -49,6 +50,12 @@ namespace nvtt
 		bool useCuda;
 
 		nv::String externalCompressor;
+
+		// Quantization.
+		bool enableColorDithering;
+		bool enableAlphaDithering;
+		bool binaryAlpha;
+		int alphaThreshold;			// reference value used for binary alpha quantization.
 	};
 
 } // nvtt namespace

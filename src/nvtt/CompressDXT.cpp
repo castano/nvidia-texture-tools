@@ -225,6 +225,37 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 }
 
 
+void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+{
+	const uint w = image->width();
+	const uint h = image->height();
+	
+	ColorBlock rgba;
+	BlockDXT1 block;
+
+	doPrecomputation();
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(image, x, y);
+			
+			// Compress color.
+			squish::WeightedClusterFit fit(&colours, squish::kDxt1);
+			squish::ClusterFit fit(&colours, squish::kDxt1);
+			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+			fit.Compress(&block);
+			
+			// @@ Use iterative cluster fit algorithm to improve error in highest quality mode.
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
+
+
 void nv::compressDXT3(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
