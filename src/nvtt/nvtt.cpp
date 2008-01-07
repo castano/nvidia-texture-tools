@@ -224,11 +224,11 @@ static bool compressMipmap(const Image * image, const OutputOptions::Private & o
 		{
 			if (compressionOptions.useCuda && nv::cuda::isHardwarePresent())
 			{
-				/*cuda*/compressDXT1a(image, outputOptions);
+				/*cuda*/compressDXT1a(image, outputOptions, compressionOptions);
 			}
 			else
 			{
-				compressDXT1a(image, outputOptions);
+				compressDXT1a(image, outputOptions, compressionOptions);
 			}
 		}
 	}

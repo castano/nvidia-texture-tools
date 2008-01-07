@@ -43,7 +43,7 @@ ColourSet::ColourSet( u8 const* rgba, int flags )
 		{
 			m_remap[i] = -1;
 			m_transparent = true;
-			continue;
+		//	continue;
 		}
 		
 #if 1
