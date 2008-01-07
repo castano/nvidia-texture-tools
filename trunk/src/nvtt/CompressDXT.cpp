@@ -241,8 +241,8 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 			rgba.init(image, x, y);
 			
 			// Compress color.
+			squish::ColourSet colours((uint8 *)rgba.colors(), 0);
 			squish::WeightedClusterFit fit(&colours, squish::kDxt1);
-			squish::ClusterFit fit(&colours, squish::kDxt1);
 			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 			fit.Compress(&block);
 			
