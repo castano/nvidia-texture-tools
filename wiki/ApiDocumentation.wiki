@@ -306,18 +306,16 @@ void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, u
 
 == Output Options ==
 
-*TODO*
+The most simple way of configuring the output options is by only providing the name of the file that will contain the resulting DDS texture:
 
 {{{
-outputOptions.setFileName(const char *);
+OutputOptions::setFileName(const char *);
 }}}
 
-{{{
-outputOptions.setOutputHandler(OutputHandler *);
-}}}
+
 
 {{{
-outputOptions.setErrorHandler(ErrorHandler *);
+OutputOptions::setOutputHandler(OutputHandler *);
 }}}
 
 
@@ -339,9 +337,7 @@ In order to minimize memory allocations NVTT will call writeData as soon as comp
 
 === Producing DDS Files ===
 
-*TODO*
-
-`nvtt::compress` will call writeData before indicating the image that the data belongs to.
+By default `nvtt::compress` calls the `writeData` method before indicating the image that the data belongs to. That means that the data does not belong to any of the surface images, but is part of the header file. If you don't want to output the header file, you can ignore these calls, or disable this behavior with:
 
 {{{
 outputOptions.setOutputHeader(false);
@@ -356,6 +352,10 @@ outputOptions.setOutputHeader(false);
 === Handling Errors ===
 
 *TODO*
+
+{{{
+OutputOptions::setErrorHandler(ErrorHandler *);
+}}}
 
 Error Handler.
 
