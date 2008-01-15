@@ -88,7 +88,7 @@ void ColorBlock::swizzleDXT5n()
 	for(int i = 0; i < 16; i++)
 	{
 		Color32 c = m_color[i];
-		m_color[i] = Color32(0, c.g, 0, c.r);
+		m_color[i] = Color32(0xFF, c.g, 0, c.r);
 	}
 }
 

@@ -506,10 +506,12 @@ void QuickCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 		maxg = max(maxg, green);
 	}
 
-	block->col0.u = 0;
-	block->col1.u = 0;
+	block->col0.r = 0xFF;
+	block->col1.r = 0xFF;
 	block->col0.g = maxg;
 	block->col1.g = ming;
+	block->col0.b = 0;
+	block->col1.b = 0;
 
 	if (maxg - ming > 4)
 	{
