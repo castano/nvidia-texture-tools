@@ -4,7 +4,7 @@
 #include <nvcore/Containers.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
-#include <nvcore/Tokenizer.h>
+//#include <nvcore/Tokenizer.h>	// @@ Disable temporarily
 #include <nvcore/TextWriter.h>
 
 #include <nvmath/Color.h>
@@ -158,9 +158,11 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 	}
 #endif
 
+/* // @@ Disable temporarily
 	if (strCaseCmp(extension, ".pfm") == 0) {
 		return loadFloatPFM(fileName, s);
 	}
+*/
 
 	return NULL;
 }
@@ -184,10 +186,12 @@ bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, ui
 	}
 #endif
 
+/* // @@ Disable Temporarily
 	if (strCaseCmp(extension, ".pfm") == 0)
 	{
 //		return ImageIO::saveFloatPFM(fileName, fimage, base_component, num_components);
 	}
+*/
 
 	if (num_components == 3 || num_components == 4)
 	{
@@ -1176,6 +1180,7 @@ bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage,
 
 #endif // defined(HAVE_OPENEXR)
 
+#if 0 // @@ Disable temporarily.
 
 FloatImage * nv::ImageIO::loadFloatPFM(const char * fileName, Stream & s)
 {
@@ -1293,6 +1298,7 @@ bool nv::ImageIO::saveFloatPFM(const char * fileName, const FloatImage * fimage,
 	return true;
 }
 
+#endif
 
 #if 0
 
