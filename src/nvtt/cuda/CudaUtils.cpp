@@ -81,7 +81,7 @@ bool nv::cuda::isHardwarePresent()
 	if (count == 1)
 	{
 		// Make sure it's not an emulation device.
-	    cudaDeviceProp deviceProp;
+		cudaDeviceProp deviceProp;
 		cudaGetDeviceProperties(&deviceProp, 0);
 
 		// deviceProp.name != Device Emulation (CPU)
