@@ -67,7 +67,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH);C:\cygwin\home\icastano\src\pi\branches\nv\src\nvtt\atitc\Debug"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
@@ -124,8 +124,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include;$(CUDA_INC_PATH)"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -145,10 +145,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
@@ -228,7 +228,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;;C:\cygwin\home\icastano\src\pi\branches\nv\src\nvtt\atitc\Release"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -288,8 +288,8 @@
 				Name="VCCLCompilerTool"
 				EnableIntrinsicFunctions="true"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include;$(CUDA_INC_PATH)"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -307,10 +307,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -685,17 +685,19 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						AdditionalDependencies="CudaMath.h"
+						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -703,17 +705,19 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|x64"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						AdditionalDependencies="CudaMath.h"
+						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -722,7 +726,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -741,7 +745,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu"
+						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -862,6 +866,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\..\src\nvtt\cuda\Bitmaps.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\CompressDXT.h"
 				>
 			</File>
@@ -871,10 +879,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\CompressRGB.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\cuda\Bitmaps.h"
 				>
 			</File>
 			<File

@@ -8,6 +8,7 @@
 #include <stdlib.h>	// atof, atoi
 
 #if NV_CC_MSVC
+#if 0 // This doesn't work on MSVC for x64
 /* vsscanf for Win32
  * Written 5/2003 by <mgix@mgix.com>
  * This code is in the Public Domain
@@ -55,24 +56,7 @@ static int vsscanf(const char * buffer, const char * format, va_list argPtr)
 	}
 	return result;
 }
-
-/*
-int hacky_vsscanf(const char *str, int count, const char *format, va_list ap) {
-	nvCheck(count < 8)
-	if (count == 0) {
-	}
-	void * arg0 = va_arg(ap, void *);
-	void * arg1 = va_arg(ap, void *);
-	void * arg2 = va_arg(ap, void *);
-	void * arg3 = va_arg(ap, void *);
-	void * arg4 = va_arg(ap, void *);
-	void * arg5 = va_arg(ap, void *);
-	void * arg6 = va_arg(ap, void *);
-	void * arg7 = va_arg(ap, void *);
-	return sscanf(str, format, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
-}
-*/
-
+#endif
 #endif
 
 using namespace nv;
