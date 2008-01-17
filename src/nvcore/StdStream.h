@@ -29,6 +29,7 @@ inline FILE * fileOpen(const char * fileName, const char * mode)
 /// Base stdio stream.
 class NVCORE_CLASS StdStream : public Stream
 {
+	NV_FORBID_COPY(StdStream);
 public:
 
 	/// Ctor.
@@ -101,6 +102,7 @@ protected:
 /// Standard output stream.
 class NVCORE_CLASS StdOutputStream : public StdStream
 {
+	NV_FORBID_COPY(StdOutputStream);
 public:
 
 	/// Construct stream by file name.
@@ -139,6 +141,7 @@ public:
 /// Standard input stream.
 class NVCORE_CLASS StdInputStream : public StdStream
 {
+	NV_FORBID_COPY(StdInputStream);
 public:
 
 	/// Construct stream by file name.
@@ -177,6 +180,7 @@ public:
 /// Memory input stream.
 class NVCORE_CLASS MemoryInputStream : public Stream
 {
+	NV_FORBID_COPY(MemoryInputStream);
 public:
 
 	/// Ctor.
@@ -256,6 +260,7 @@ private:
 /// Protected input stream.
 class NVCORE_CLASS ProtectedStream : public Stream
 {
+	NV_FORBID_COPY(ProtectedStream);
 public:
 
 	/// Ctor.
