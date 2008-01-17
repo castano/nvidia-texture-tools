@@ -32,7 +32,7 @@ namespace nv
 	class Stream;
 	struct ColorBlock;
 
-	struct DDSPixelFormat
+	struct NVIMAGE_CLASS DDSPixelFormat
 	{
 		uint size;
 		uint flags;
@@ -44,7 +44,7 @@ namespace nv
 		uint amask;
 	};
 
-	struct DDSCaps
+	struct NVIMAGE_CLASS DDSCaps
 	{
 		uint caps1;
 		uint caps2;
@@ -53,7 +53,7 @@ namespace nv
 	};
 
 	/// DDS file header for DX10.
-	struct DDSHeader10
+	struct NVIMAGE_CLASS DDSHeader10
 	{
 	    uint dxgiFormat;
 	    uint resourceDimension;
@@ -63,7 +63,7 @@ namespace nv
 	};
 
 	/// DDS file header.
-	struct DDSHeader
+	struct NVIMAGE_CLASS DDSHeader
 	{
 		uint fourcc;
 		uint size;
