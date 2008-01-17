@@ -39,39 +39,39 @@ namespace nv
 
 	
 	/// String builder.
-	class StringBuilder
+	class NVCORE_CLASS StringBuilder
 	{
 	public:
 	
-		NVCORE_API StringBuilder();
-		NVCORE_API explicit StringBuilder( int size_hint );
-		NVCORE_API StringBuilder( const char * str );
-		NVCORE_API StringBuilder( const StringBuilder & );
-		NVCORE_API StringBuilder( int size_hint, const StringBuilder & );	
-		NVCORE_API StringBuilder( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-		NVCORE_API StringBuilder( int size_hint, const char * format, ... ) __attribute__((format (printf, 3, 4)));
+		StringBuilder();
+		explicit StringBuilder( int size_hint );
+		StringBuilder( const char * str );
+		StringBuilder( const StringBuilder & );
+		StringBuilder( int size_hint, const StringBuilder & );	
+		StringBuilder( const char * format, ... ) __attribute__((format (printf, 2, 3)));
+		StringBuilder( int size_hint, const char * format, ... ) __attribute__((format (printf, 3, 4)));
 	
-		NVCORE_API ~StringBuilder();
+		~StringBuilder();
 	
-		NVCORE_API StringBuilder & format( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-		NVCORE_API StringBuilder & format( const char * format, va_list arg );
+		StringBuilder & format( const char * format, ... ) __attribute__((format (printf, 2, 3)));
+		StringBuilder & format( const char * format, va_list arg );
 	
-		NVCORE_API StringBuilder & append( const char * str );
-		NVCORE_API StringBuilder & appendFormat( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-		NVCORE_API StringBuilder & appendFormat( const char * format, va_list arg );
+		StringBuilder & append( const char * str );
+		StringBuilder & appendFormat( const char * format, ... ) __attribute__((format (printf, 2, 3)));
+		StringBuilder & appendFormat( const char * format, va_list arg );
 	
-		NVCORE_API StringBuilder & number( int i, int base = 10 );
-		NVCORE_API StringBuilder & number( uint i, int base = 10 );
+		StringBuilder & number( int i, int base = 10 );
+		StringBuilder & number( uint i, int base = 10 );
 	
-		NVCORE_API StringBuilder & reserve( uint size_hint );
-		NVCORE_API StringBuilder & copy( const char * str );
-		NVCORE_API StringBuilder & copy( const StringBuilder & str );
+		StringBuilder & reserve( uint size_hint );
+		StringBuilder & copy( const char * str );
+		StringBuilder & copy( const StringBuilder & str );
 		
-		NVCORE_API StringBuilder & toLower();
-		NVCORE_API StringBuilder & toUpper();
+		StringBuilder & toLower();
+		StringBuilder & toUpper();
 		
-		NVCORE_API void reset();
-		NVCORE_API bool isNull() const { return m_size == 0; }
+		void reset();
+		bool isNull() const { return m_size == 0; }
 	
 		// const char * accessors
 		operator const char * () const { return m_str; }
@@ -123,35 +123,33 @@ namespace nv
 	
 
 	/// Path string.
-	class Path : public StringBuilder
+	class NVCORE_CLASS Path : public StringBuilder
 	{
 	public:
 		Path() : StringBuilder() {}
 		explicit Path(int size_hint) : StringBuilder(size_hint) {}
 		Path(const StringBuilder & str) : StringBuilder(str) {}
 		Path(int size_hint, const StringBuilder & str) : StringBuilder(size_hint, str) {}	
-		NVCORE_API Path(const char * format, ...) __attribute__((format (printf, 2, 3)));
-		NVCORE_API Path(int size_hint, const char * format, ...) __attribute__((format (printf, 3, 4)));
+		Path(const char * format, ...) __attribute__((format (printf, 2, 3)));
+		Path(int size_hint, const char * format, ...) __attribute__((format (printf, 3, 4)));
 		
+		const char * fileName() const;
+		const char * extension() const;
 		
-		NVCORE_API const char * fileName() const;
-		NVCORE_API const char * extension() const;
+		void translatePath();
 		
-		NVCORE_API void translatePath();
-		
-		NVCORE_API void stripFileName();
-		NVCORE_API void stripExtension();
+		void stripFileName();
+		void stripExtension();
 		
 		// statics
 		NVCORE_API static char separator();
 		NVCORE_API static const char * fileName(const char *);
 		NVCORE_API static const char * extension(const char *);
-
 	};
 	
 	
 	/// String class.
-	class String
+	class NVCORE_CLASS String
 	{
 	public:
 
@@ -194,7 +192,7 @@ namespace nv
 			release();
 		}
 
-		NVCORE_API String clone() const;
+		String clone() const;
 	
 		/// Release the current string and allocate a new one.
 		const String & operator=( const char * str )
@@ -334,9 +332,9 @@ namespace nv
 			const_cast<char *>(data)[len] = '\0';
 		}
 	
-		NVCORE_API void setString(const char * str);
-		NVCORE_API void setString(const char * str, int length);
-		NVCORE_API void setString(const StringBuilder & str);	
+		void setString(const char * str);
+		void setString(const char * str, int length);
+		void setString(const StringBuilder & str);	
 	
 		///	Swap strings.
 		friend void swap(String & a, String & b) {
