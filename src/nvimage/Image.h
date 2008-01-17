@@ -11,8 +11,9 @@ namespace nv
 	class Color32;
 	
 	/// 32 bit RGBA image.
-	class Image
+	class NVIMAGE_CLASS Image
 	{
+		NV_FORBID_COPY(Image);
 	public:
 		
 		enum Format 
@@ -21,34 +22,34 @@ namespace nv
 			Format_ARGB,
 		};
 		
-		NVIMAGE_API Image();
-		NVIMAGE_API ~Image();
+		Image();
+		~Image();
 		
-		NVIMAGE_API void allocate(uint w, uint h);
-		NVIMAGE_API bool load(const char * name);
+		void allocate(uint w, uint h);
+		bool load(const char * name);
 		
-		NVIMAGE_API void wrap(void * data, uint w, uint h);
-		NVIMAGE_API void unwrap();
+		void wrap(void * data, uint w, uint h);
+		void unwrap();
 		
-		NVIMAGE_API uint width() const;
-		NVIMAGE_API uint height() const;
+		uint width() const;
+		uint height() const;
 		
-		NVIMAGE_API const Color32 * scanline(uint h) const;
-		NVIMAGE_API Color32 * scanline(uint h);
+		const Color32 * scanline(uint h) const;
+		Color32 * scanline(uint h);
 		
-		NVIMAGE_API const Color32 * pixels() const;
-		NVIMAGE_API Color32 * pixels();
+		const Color32 * pixels() const;
+		Color32 * pixels();
 		
-		NVIMAGE_API const Color32 & pixel(uint idx) const;
-		NVIMAGE_API Color32 & pixel(uint idx);
+		const Color32 & pixel(uint idx) const;
+		Color32 & pixel(uint idx);
 		
 		const Color32 & pixel(uint x, uint y) const;
 		Color32 & pixel(uint x, uint y);
 		
-		NVIMAGE_API Format format() const;
-		NVIMAGE_API void setFormat(Format f);
+		Format format() const;
+		void setFormat(Format f);
 		
-		NVIMAGE_API void fill(Color32 c);
+		void fill(Color32 c);
 
 	private:
 		void free();

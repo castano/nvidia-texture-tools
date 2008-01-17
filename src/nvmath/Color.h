@@ -10,7 +10,7 @@ namespace nv
 {
 
 /// 64 bit color stored as BGRA.
-class Color64 
+class NVMATH_CLASS Color64 
 {
 public:
 	Color64() { }
@@ -33,7 +33,7 @@ public:
 	union {
 		struct {
 #if NV_LITTLE_ENDIAN
-			uint16 b, g, r, a;
+			uint16 r, a, b, g;
 #else
 			uint16 a: 16;
 			uint16 r: 16;
@@ -46,7 +46,7 @@ public:
 };
 
 /// 32 bit color stored as BGRA.
-class Color32
+class NVMATH_CLASS Color32
 {
 public:
 	Color32() { }
@@ -95,7 +95,7 @@ public:
 
 
 /// 16 bit 565 BGR color.
-class Color16
+class NVMATH_CLASS Color16
 {
 public:
 	Color16() { }

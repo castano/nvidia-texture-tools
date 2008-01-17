@@ -10,7 +10,7 @@ namespace nv
 {
 
 /// Base stream class.
-class Stream {
+class NVCORE_CLASS Stream {
 public:
 
 	enum ByteOrder {

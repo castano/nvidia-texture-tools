@@ -27,7 +27,7 @@ inline FILE * fileOpen(const char * fileName, const char * mode)
 
 
 /// Base stdio stream.
-class StdStream : public Stream
+class NVCORE_CLASS StdStream : public Stream
 {
 public:
 
@@ -99,7 +99,7 @@ protected:
 
 
 /// Standard output stream.
-class StdOutputStream : public StdStream
+class NVCORE_CLASS StdOutputStream : public StdStream
 {
 public:
 
@@ -137,7 +137,7 @@ public:
 
 
 /// Standard input stream.
-class StdInputStream : public StdStream
+class NVCORE_CLASS StdInputStream : public StdStream
 {
 public:
 
@@ -175,7 +175,7 @@ public:
 
 
 /// Memory input stream.
-class MemoryInputStream : public Stream
+class NVCORE_CLASS MemoryInputStream : public Stream
 {
 public:
 
@@ -254,7 +254,7 @@ private:
 
 
 /// Protected input stream.
-class ProtectedStream : public Stream
+class NVCORE_CLASS ProtectedStream : public Stream
 {
 public:
 
