@@ -1098,7 +1098,7 @@ static uint computeAlphaIndices(const ColorBlock & rgba, AlphaBlockDXT5 * block)
 		uint8 alpha = rgba.color(i).a;
 
 		uint besterror = 256*256;
-		uint best;
+		uint best = 8;
 		for(uint p = 0; p < 8; p++)
 		{
 			int d = alphas[p] - alpha;
@@ -1110,6 +1110,7 @@ static uint computeAlphaIndices(const ColorBlock & rgba, AlphaBlockDXT5 * block)
 				best = p;
 			}
 		}
+		nvDebugCheck(best < 8);
 
 		totalError += besterror;
 		block->setIndex(i, best);
