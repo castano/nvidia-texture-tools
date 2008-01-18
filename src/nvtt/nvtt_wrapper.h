@@ -40,10 +40,15 @@
 #define NVTT_CLASS
 #endif
 
-typedef struct InputOptions * NvttInputOptions;
-typedef struct CompressionOptions * NvttCompressionOptions;
-typedef struct OutputOptions * NvttOutputOptions;
-
+#ifdef __cplusplus
+typedef struct nvtt::InputOptions NvttInputOptions;
+typedef struct nvtt::CompressionOptions NvttCompressionOptions;
+typedef struct nvtt::OutputOptions NvttOutputOptions;
+#else
+typedef struct NvttInputOptions NvttInputOptions;
+typedef struct NvttCompressionOptions NvttCompressionOptions;
+typedef struct NvttOutputOptions NvttOutputOptions;
+#endif
 
 /// Supported compression formats.
 typedef enum
@@ -97,35 +102,35 @@ extern "C" {
 #endif
 
 // Input Options
-NVTT_API NvttInputOptions nvttCreateInputOptions();
-NVTT_API void nvttDestroyInputOptions(NvttInputOptions inputOptions);
+NVTT_API NvttInputOptions * nvttCreateInputOptions();
+NVTT_API void nvttDestroyInputOptions(NvttInputOptions * inputOptions);
 
-NVTT_API void nvttSetInputOptionsTextureLayout(NvttInputOptions inputOptions, NvttTextureType type, int w, int h, int d);
-NVTT_API void nvttResetInputOptionsTextureLayout(NvttInputOptions inputOptions);
-NVTT_API NvttBoolean nvttSetInputOptionsMipmapData(NvttInputOptions inputOptions, const void * data, int w, int h, int d, int face, int mipmap);
+NVTT_API void nvttSetInputOptionsTextureLayout(NvttInputOptions * inputOptions, NvttTextureType type, int w, int h, int d);
+NVTT_API void nvttResetInputOptionsTextureLayout(NvttInputOptions * inputOptions);
+NVTT_API NvttBoolean nvttSetInputOptionsMipmapData(NvttInputOptions * inputOptions, const void * data, int w, int h, int d, int face, int mipmap);
 
 
 // Compression Options
-NVTT_API NvttCompressionOptions nvttCreateCompressionOptions();
-NVTT_API void nvttDestroyCompressionOptions(NvttCompressionOptions compressionOptions);
+NVTT_API NvttCompressionOptions * nvttCreateCompressionOptions();
+NVTT_API void nvttDestroyCompressionOptions(NvttCompressionOptions * compressionOptions);
 
-NVTT_API void nvttSetCompressionOptionsFormat(NvttCompressionOptions compressionOptions, NvttFormat format);
-NVTT_API void nvttSetCompressionOptionsQuality(NvttCompressionOptions compressionOptions, NvttQuality quality);
-NVTT_API void nvttSetCompressionOptionsPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
+NVTT_API void nvttSetCompressionOptionsFormat(NvttCompressionOptions * compressionOptions, NvttFormat format);
+NVTT_API void nvttSetCompressionOptionsQuality(NvttCompressionOptions * compressionOptions, NvttQuality quality);
+NVTT_API void nvttSetCompressionOptionsPixelFormat(NvttCompressionOptions * compressionOptions, unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
 	
 
 // Output Options
-NVTT_API NvttOutputOptions nvttCreateOutputOptions();
-NVTT_API void nvttDestroyOutputOptions(NvttOutputOptions outputOptions);
+NVTT_API NvttOutputOptions * nvttCreateOutputOptions();
+NVTT_API void nvttDestroyOutputOptions(NvttOutputOptions * outputOptions);
 
-NVTT_API void nvttSetOutputOptionsFileName(NvttOutputOptions outputOptions, const char * fileName);
+NVTT_API void nvttSetOutputOptionsFileName(NvttOutputOptions * outputOptions, const char * fileName);
 
 
 // Main entrypoint of the compression library.
-NVTT_API NvttBoolean nvttCompress(NvttInputOptions inputOptions, NvttOutputOptions outputOptions, NvttCompressionOptions compressionOptions);
+NVTT_API NvttBoolean nvttCompress(NvttInputOptions * inputOptions, NvttCompressionOptions * compressionOptions, NvttOutputOptions * outputOptions);
 	
 // Estimate the size of compressing the input with the given options.
-NVTT_API int nvttEstimateSize(NvttInputOptions inputOptions, NvttCompressionOptions compressionOptions);
+NVTT_API int nvttEstimateSize(NvttInputOptions * inputOptions, NvttCompressionOptions * compressionOptions);
 
 
 #ifdef __cplusplus

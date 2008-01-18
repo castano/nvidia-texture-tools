@@ -1,86 +1,88 @@
 
+#include "nvtt.h"
+#include "nvtt_wrapper.h"
 
 
 // Input Options
-NvttInputOptions nvttCreateInputOptions()
+NvttInputOptions * nvttCreateInputOptions()
 {
-	return (NvttInputOptions *) new nvtt::InputOptions();
+	return new nvtt::InputOptions();
 }
 
-void nvttDestroyInputOptions(NvttInputOptions inputOptions)
+void nvttDestroyInputOptions(NvttInputOptions * inputOptions)
 {
-	delete (nvtt::InputOptions *) inputOptions;
+	delete inputOptions;
 }
 
-void nvttSetInputOptionsTextureLayout(NvttInputOptions inputOptions, NvttTextureType type, int w, int h, int d)
+void nvttSetInputOptionsTextureLayout(NvttInputOptions * inputOptions, NvttTextureType type, int w, int h, int d)
 {
-	((nvtt::InputOptions *)inputOptions)->setTextureLayout(type, w, h, d);
+	inputOptions->setTextureLayout((nvtt::TextureType)type, w, h, d);
 }
 
-void nvttResetInputOptionsTextureLayout(NvttInputOptions inputOptions)
+void nvttResetInputOptionsTextureLayout(NvttInputOptions * inputOptions)
 {
-	((nvtt::InputOptions *)inputOptions)->resetTextureLayout();
+	inputOptions->resetTextureLayout();
 }
 
-NvttBoolean nvttSetInputOptionsMipmapData(NvttInputOptions inputOptions, const void * data, int w, int h, int d, int face, int mipmap)
+NvttBoolean nvttSetInputOptionsMipmapData(NvttInputOptions * inputOptions, const void * data, int w, int h, int d, int face, int mipmap)
 {
-	return ((nvtt::InputOptions *)inputOptions)->setMipmapData(data, w, h, d, face, mipmap);
+	return (NvttBoolean)inputOptions->setMipmapData(data, w, h, d, face, mipmap);
 }
 
 
 // Compression Options
-NvttCompressionOptions nvttCreateCompressionOptions()
+NvttCompressionOptions * nvttCreateCompressionOptions()
 {
-	return (NvttCompressionOptions *) new nvtt::CompressionOptions();
+	return new nvtt::CompressionOptions();
 }
 
-void nvttDestroyCompressionOptions(NvttCompressionOptions compressionOptions)
+void nvttDestroyCompressionOptions(NvttCompressionOptions * compressionOptions)
 {
-	delete (nvtt::CompressionOptions *) compressionOptions;
+	delete compressionOptions;
 }
 
-void nvttSetCompressionOptionsFormat(NvttCompressionOptions compressionOptions, NvttFormat format)
+void nvttSetCompressionOptionsFormat(NvttCompressionOptions * compressionOptions, NvttFormat format)
 {
-	((nvtt::CompressionOptions *)compressionOptions)->setFormat(format);
+	compressionOptions->setFormat((nvtt::Format)format);
 }
 
-void nvttSetCompressionOptionsQuality(NvttCompressionOptions compressionOptionso, NvttQuality quality)
+void nvttSetCompressionOptionsQuality(NvttCompressionOptions * compressionOptions, NvttQuality quality)
 {
-	((nvtt::CompressionOptions *)compressionOptions)->setQuality(quality);
+	compressionOptions->setQuality((nvtt::Quality)quality);
 }
 
-void nvttSetCompressionOptionsPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask)
+void nvttSetCompressionOptionsPixelFormat(NvttCompressionOptions * compressionOptions, unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask)
 {
-	((nvtt::CompressionOptions *)compressionOptions)->setPixelFormat(bitcount, rmask, gmask, bmask, amask);
+	compressionOptions->setPixelFormat(bitcount, rmask, gmask, bmask, amask);
 }
 	
 
 // Output Options
-NvttOutputOptions nvttCreateOutputOptions()
+NvttOutputOptions * nvttCreateOutputOptions()
 {
-	return (NvttOutputOptions *) new nvtt::OutputOptions();
+	return new nvtt::OutputOptions();
 }
 
-void nvttDestroyOutputOptions(NvttOutputOptions outputOptions)
+void nvttDestroyOutputOptions(NvttOutputOptions * outputOptions)
 {
-	delete (nvtt::OutputOptions *) outputOptions;
+	delete outputOptions;
 }
 
-void nvttSetOutputOptionsFileName(NvttOutputOptions outputOptions, const char * fileName)
+void nvttSetOutputOptionsFileName(NvttOutputOptions * outputOptions, const char * fileName)
 {
-	((nvtt::OutputOptions *)outputOptions)->setFileName(fileName);
+	outputOptions->setFileName(fileName);
 }
 
 
 // Main entrypoint of the compression library.
-NvttBoolean nvttCompress(NvttInputOptions inputOptions, NvttOutputOptions outputOptions, NvttCompressionOptions compressionOptions)
+NvttBoolean nvttCompress(const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions)
 {
-	return nvtt::compress((nvtt::InputOptions *)inputOptions, (nvtt::OutputOptions *)outputOptions, (nvtt::CompressionOptions *)compressionOptions);
+	return (NvttBoolean)nvtt::compress(*inputOptions, *outputOptions, *compressionOptions);
 }
 
 // Estimate the size of compressing the input with the given options.
-int nvttEstimateSize(NvttInputOptions inputOptions, NvttCompressionOptions compressionOptions)
+int nvttEstimateSize(const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions)
 {
-	return nvtt::estimateSize((nvtt::InputOptions *)inputOptions, (nvtt::CompressionOptions *)compressionOptions);
+	return nvtt::estimateSize(*inputOptions, *compressionOptions);
 }
 
