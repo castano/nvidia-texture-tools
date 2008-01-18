@@ -47,7 +47,7 @@ void CompressionOptions::reset()
 {
 	m.format = Format_DXT1;
 	m.quality = Quality_Normal;
-	m.colorWeight.set(1.0f, 1.0f, 1.0f);
+	m.colorWeight.set(1.0f, 1.0f, 1.0f, 1.0f);
 	m.useCuda = true;
 
 	m.bitcount = 32;
@@ -83,13 +83,13 @@ void CompressionOptions::setQuality(Quality quality, float errorThreshold /*= 0.
 /// (1.0, 1.0, 1.0) work very well. A popular choice is to use the NTSC luma encoding 
 /// weights (0.2126, 0.7152, 0.0722), but I think that blue contributes to our 
 /// perception more than a 7%. A better choice in my opinion is (3, 4, 2).
-void CompressionOptions::setColorWeights(float red, float green, float blue)
+void CompressionOptions::setColorWeights(float red, float green, float blue, float alpha/*=1.0f*/)
 {
-	float total = red + green + blue;
-	float x = red / total;
-	float y = green / total;
-
-	m.colorWeight.set(x, y, 1.0f - x - y);
+//	float total = red + green + blue;
+//	float x = red / total;
+//	float y = green / total;
+//	m.colorWeight.set(x, y, 1.0f - x - y);
+	m.colorWeight.set(red, green, blue, alpha);
 }
 
 

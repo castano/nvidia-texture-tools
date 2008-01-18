@@ -38,7 +38,7 @@ namespace nvtt
 		Quality quality;
 		float errorThreshold;	// deprecated.
 		
-		nv::Vector3 colorWeight;
+		nv::Vector4 colorWeight;
 		
 		// Pixel format description.
 		uint bitcount;
