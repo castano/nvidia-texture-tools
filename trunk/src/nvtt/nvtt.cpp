@@ -400,7 +400,7 @@ static void quantize(Image * img, const CompressionOptions::Private & compressio
 	}
 }
 
-// Process the input, convert to normal map, normalize or convert to linear space.
+// Process the input, convert to normal map, normalize, or convert to linear space.
 static FloatImage * processInput(const InputOptions::Private & inputOptions, int idx)
 {
 	const InputOptions::Private::Image & mipmap = inputOptions.images[idx];
