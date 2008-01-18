@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		compressionOptions.setQuality(nvtt::Quality_Normal);
-		//compressionOptions.setQuality(nvtt::Quality_Production, 0.5f);
+		//compressionOptions.setQuality(nvtt::Quality_Production);
 		//compressionOptions.setQuality(nvtt::Quality_Highest);
 	}
 	compressionOptions.enableCudaCompression(!nocuda);
