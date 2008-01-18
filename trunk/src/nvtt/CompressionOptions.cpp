@@ -71,10 +71,9 @@ void CompressionOptions::setFormat(Format format)
 
 
 /// Set compression quality settings.
-void CompressionOptions::setQuality(Quality quality, float errorThreshold /*= 0.5f*/)
+void CompressionOptions::setQuality(Quality quality)
 {
 	m.quality = quality;
-	m.errorThreshold = errorThreshold;
 }
 
 

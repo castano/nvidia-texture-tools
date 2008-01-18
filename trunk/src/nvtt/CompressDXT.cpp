@@ -364,9 +364,6 @@ void nv::compressBC4(const Image * image, const nvtt::OutputOptions::Private & o
 	const uint w = image->width();
 	const uint h = image->height();
 	
-	// threshold should be from [0 - 1] but may also be higher...
-	const uint threshold = uint(compressionOptions.errorThreshold * 256);
-	
 	ColorBlock rgba;
 	AlphaBlockDXT5 block;
 	
