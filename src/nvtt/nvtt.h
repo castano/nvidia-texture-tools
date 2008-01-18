@@ -96,7 +96,7 @@ namespace nvtt
 		NVTT_API void reset();
 		
 		NVTT_API void setFormat(Format format);
-		NVTT_API void setQuality(Quality quality, float errorThreshold = 0.5f);
+		NVTT_API void setQuality(Quality quality);
 		NVTT_API void setColorWeights(float red, float green, float blue, float alpha = 1.0f);
 		
 		NVTT_DEPRECATED void enableHardwareCompression(bool enable);

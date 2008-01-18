@@ -36,7 +36,6 @@ namespace nvtt
 		Format format;
 		
 		Quality quality;
-		float errorThreshold;	// deprecated.
 		
 		nv::Vector4 colorWeight;
 		
