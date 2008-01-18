@@ -189,14 +189,14 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 ////////////////////////////////////////////////////////////////////////////////
 inline __device__ float3 roundAndExpand(float3 v, ushort * w)
 {
-    v.x = rintf(__saturatef(v.x) * 31.0f);
-    v.y = rintf(__saturatef(v.y) * 63.0f);
-    v.z = rintf(__saturatef(v.z) * 31.0f);
-    *w = ((ushort)v.x << 11) | ((ushort)v.y << 5) | (ushort)v.z;
-    v.x *= 0.03227752766457f; // approximate integer bit expansion.
-    v.y *= 0.01583151765563f;
-    v.z *= 0.03227752766457f;
-    return v;
+	v.x = rintf(__saturatef(v.x) * 31.0f);
+	v.y = rintf(__saturatef(v.y) * 63.0f);
+	v.z = rintf(__saturatef(v.z) * 31.0f);
+	*w = ((ushort)v.x << 11) | ((ushort)v.y << 5) | (ushort)v.z;
+	v.x *= 0.03227752766457f; // approximate integer bit expansion.
+	v.y *= 0.01583151765563f;
+	v.z *= 0.03227752766457f;
+	return v;
 }
 
 
@@ -205,82 +205,82 @@ inline __device__ float3 roundAndExpand(float3 v, ushort * w)
 ////////////////////////////////////////////////////////////////////////////////
 __device__ float evalPermutation4(const float3 * colors, uint permutation, ushort * start, ushort * end)
 {
-    // Compute endpoints using least squares.
-    float alpha2_sum = 0.0f;
-    float beta2_sum = 0.0f;
-    float alphabeta_sum = 0.0f;
-    float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
-    float3 betax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	// Compute endpoints using least squares.
+	float alpha2_sum = 0.0f;
+	float beta2_sum = 0.0f;
+	float alphabeta_sum = 0.0f;
+	float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	float3 betax_sum = make_float3(0.0f, 0.0f, 0.0f);
 
-    // Compute alpha & beta for this permutation.
-    for (int i = 0; i < 16; i++)
-    {
+	// Compute alpha & beta for this permutation.
+	for (int i = 0; i < 16; i++)
+	{
 		const uint bits = permutation >> (2*i);
 		
-        float beta = (bits & 1);
-        if (bits & 2) beta = (1 + beta) / 3.0f;
-        float alpha = 1.0f - beta;
-    
+		float beta = (bits & 1);
+		if (bits & 2) beta = (1 + beta) / 3.0f;
+		float alpha = 1.0f - beta;
+		
 		alpha2_sum += alpha * alpha;
 		beta2_sum += beta * beta;
 		alphabeta_sum += alpha * beta;
-        alphax_sum += alpha * colors[i];
-        betax_sum += beta * colors[i];
-    }
+		alphax_sum += alpha * colors[i];
+		betax_sum += beta * colors[i];
+	}
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-    float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-    
-    // Round a, b to the closest 5-6-5 color and expand...
-    a = roundAndExpand(a, start);
-    b = roundAndExpand(b, end);
+	float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+	
+	// Round a, b to the closest 5-6-5 color and expand...
+	a = roundAndExpand(a, start);
+	b = roundAndExpand(b, end);
 
-    // compute the error
-    float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+	// compute the error
+	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return dot(e, kColorMetricSqr);
+	return dot(e, kColorMetricSqr);
 }
 
 __device__ float evalPermutation3(const float3 * colors, uint permutation, ushort * start, ushort * end)
 {
-    // Compute endpoints using least squares.
-    float alpha2_sum = 0.0f;
-    float beta2_sum = 0.0f;
-    float alphabeta_sum = 0.0f;
-    float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
-    float3 betax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	// Compute endpoints using least squares.
+	float alpha2_sum = 0.0f;
+	float beta2_sum = 0.0f;
+	float alphabeta_sum = 0.0f;
+	float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	float3 betax_sum = make_float3(0.0f, 0.0f, 0.0f);
 
-    // Compute alpha & beta for this permutation.
-    for (int i = 0; i < 16; i++)
-    {
-        const uint bits = permutation >> (2*i);
+	// Compute alpha & beta for this permutation.
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
 
-        float beta = (bits & 1);
-        if (bits & 2) beta = 0.5f;
-        float alpha = 1.0f - beta;
-    
-        alpha2_sum += alpha * alpha;
-        beta2_sum += beta * beta;
-        alphabeta_sum += alpha * beta;
-        alphax_sum += alpha * colors[i];
-        betax_sum += beta * colors[i];
-    }
+		float beta = (bits & 1);
+		if (bits & 2) beta = 0.5f;
+		float alpha = 1.0f - beta;
+	
+		alpha2_sum += alpha * alpha;
+		beta2_sum += beta * beta;
+		alphabeta_sum += alpha * beta;
+		alphax_sum += alpha * colors[i];
+		betax_sum += beta * colors[i];
+	}
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-    float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-    
-    // Round a, b to the closest 5-6-5 color and expand...
-    a = roundAndExpand(a, start);
-    b = roundAndExpand(b, end);
+	float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+	
+	// Round a, b to the closest 5-6-5 color and expand...
+	a = roundAndExpand(a, start);
+	b = roundAndExpand(b, end);
 
-    // compute the error
-    float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+	// compute the error
+	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return dot(e, kColorMetricSqr);
+	return dot(e, kColorMetricSqr);
 }
 
 __constant__ const float alphaTable4[4] = { 9.0f, 0.0f, 6.0f, 3.0f };
@@ -290,114 +290,114 @@ __constant__ const uint prods3[4] = { 0x040000,0x000400,0x040101,0x010401 };
 
 __device__ float evalPermutation4(const float3 * colors, float3 color_sum, uint permutation, ushort * start, ushort * end)
 {
-    // Compute endpoints using least squares.
-    float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	// Compute endpoints using least squares.
+	float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
 	uint akku = 0;
 
-    // Compute alpha & beta for this permutation.
+	// Compute alpha & beta for this permutation.
 	#pragma unroll
-    for (int i = 0; i < 16; i++)
-    {
+	for (int i = 0; i < 16; i++)
+	{
 		const uint bits = permutation >> (2*i);
-
+		
 		alphax_sum += alphaTable4[bits & 3] * colors[i];
-	    akku += prods4[bits & 3];
-    }
+		akku += prods4[bits & 3];
+	}
 
 	float alpha2_sum = float(akku >> 16);
 	float beta2_sum = float((akku >> 8) & 0xff);
 	float alphabeta_sum = float(akku & 0xff);
 	float3 betax_sum = 9.0f * color_sum - alphax_sum;
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-    float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-    
-    // Round a, b to the closest 5-6-5 color and expand...
-    a = roundAndExpand(a, start);
-    b = roundAndExpand(b, end);
+	float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+	
+	// Round a, b to the closest 5-6-5 color and expand...
+	a = roundAndExpand(a, start);
+	b = roundAndExpand(b, end);
 
-    // compute the error
-    float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+	// compute the error
+	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return (1.0f / 9.0f) * dot(e, kColorMetricSqr);
+	return (1.0f / 9.0f) * dot(e, kColorMetricSqr);
 }
 
 __device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint permutation, ushort * start, ushort * end)
 {
-    // Compute endpoints using least squares.
-    float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	// Compute endpoints using least squares.
+	float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
 	uint akku = 0;
 
-    // Compute alpha & beta for this permutation.
+	// Compute alpha & beta for this permutation.
 	#pragma unroll
-    for (int i = 0; i < 16; i++)
-    {
-        const uint bits = permutation >> (2*i);
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
 
 		alphax_sum += alphaTable3[bits & 3] * colors[i];
-	    akku += prods3[bits & 3];
-    }
+		akku += prods3[bits & 3];
+	}
 
 	float alpha2_sum = float(akku >> 16);
 	float beta2_sum = float((akku >> 8) & 0xff);
 	float alphabeta_sum = float(akku & 0xff);
 	float3 betax_sum = 4.0f * color_sum - alphax_sum;
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-    float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-    
-    // Round a, b to the closest 5-6-5 color and expand...
-    a = roundAndExpand(a, start);
-    b = roundAndExpand(b, end);
+	float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+	
+	// Round a, b to the closest 5-6-5 color and expand...
+	a = roundAndExpand(a, start);
+	b = roundAndExpand(b, end);
 
-    // compute the error
-    float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+	// compute the error
+	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return (1.0f / 4.0f) * dot(e, kColorMetricSqr);
+	return (1.0f / 4.0f) * dot(e, kColorMetricSqr);
 }
 
 __device__ float evalPermutation4(const float3 * colors, const float * weights, float3 color_sum, uint permutation, ushort * start, ushort * end)
 {
-    // Compute endpoints using least squares.
-    float alpha2_sum = 0.0f;
-    float beta2_sum = 0.0f;
-    float alphabeta_sum = 0.0f;
-    float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
+	// Compute endpoints using least squares.
+	float alpha2_sum = 0.0f;
+	float beta2_sum = 0.0f;
+	float alphabeta_sum = 0.0f;
+	float3 alphax_sum = make_float3(0.0f, 0.0f, 0.0f);
 
-    // Compute alpha & beta for this permutation.
-    for (int i = 0; i < 16; i++)
-    {
-        const uint bits = permutation >> (2*i);
+	// Compute alpha & beta for this permutation.
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
 		
-        float beta = (bits & 1);
-        if (bits & 2) beta = (1 + beta) / 3.0f;
-        float alpha = 1.0f - beta;
+		float beta = (bits & 1);
+		if (bits & 2) beta = (1 + beta) / 3.0f;
+		float alpha = 1.0f - beta;
 		
 		alpha2_sum += alpha * alpha * weights[i];
-        beta2_sum += beta * beta * weights[i];
-        alphabeta_sum += alpha * beta * weights[i];
-        alphax_sum += alpha * colors[i];
-    }
+		beta2_sum += beta * beta * weights[i];
+		alphabeta_sum += alpha * beta * weights[i];
+		alphax_sum += alpha * colors[i];
+	}
 
 	float3 betax_sum = color_sum - alphax_sum;
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-    float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-    
-    // Round a, b to the closest 5-6-5 color and expand...
-    a = roundAndExpand(a, start);
-    b = roundAndExpand(b, end);
+	float3 a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+	
+	// Round a, b to the closest 5-6-5 color and expand...
+	a = roundAndExpand(a, start);
+	b = roundAndExpand(b, end);
 
-    // compute the error
-    float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+	// compute the error
+	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
-    return dot(e, kColorMetricSqr);
+	return dot(e, kColorMetricSqr);
 }
 
 /*
@@ -454,55 +454,55 @@ __device__ void evalAllPermutations(const float3 * colors, float3 colorSum, cons
 	
 	__shared__ uint s_permutations[160];
 
-    for(int i = 0; i < 16; i++)
-    {
+	for(int i = 0; i < 16; i++)
+	{
 		int pidx = idx + NUM_THREADS * i;
 		if (pidx >= 992) break;
-        
-        ushort start, end;
-        uint permutation = permutations[pidx];
-        if (pidx < 160) s_permutations[pidx] = permutation;
-                
-        float error = evalPermutation4(colors, colorSum, permutation, &start, &end);
-        
-        if (error < bestError)
-        {
-            bestError = error;
-            bestPermutation = permutation;
-            bestStart = start;
-            bestEnd = end;
-        }
-    }
+		
+		ushort start, end;
+		uint permutation = permutations[pidx];
+		if (pidx < 160) s_permutations[pidx] = permutation;
+				
+		float error = evalPermutation4(colors, colorSum, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+		}
+	}
 
-    if (bestStart < bestEnd)
-    {
-        swap(bestEnd, bestStart);
-        bestPermutation ^= 0x55555555;    // Flip indices.
-    }
+	if (bestStart < bestEnd)
+	{
+		swap(bestEnd, bestStart);
+		bestPermutation ^= 0x55555555;	// Flip indices.
+	}
 
-    for(int i = 0; i < 3; i++)
-    {
+	for(int i = 0; i < 3; i++)
+	{
 		int pidx = idx + NUM_THREADS * i;
-        if (pidx >= 160) break;
-        
-        ushort start, end;
-        uint permutation = s_permutations[pidx];
-        float error = evalPermutation3(colors, colorSum, permutation, &start, &end);
-        
-        if (error < bestError)
-        {
-            bestError = error;
-            bestPermutation = permutation;
-            bestStart = start;
-            bestEnd = end;
-            
-            if (bestStart > bestEnd)
-            {
-                swap(bestEnd, bestStart);
-                bestPermutation ^= (~bestPermutation >> 1) & 0x55555555;    // Flip indices.
-            }
-        }
-    }
+		if (pidx >= 160) break;
+		
+		ushort start, end;
+		uint permutation = s_permutations[pidx];
+		float error = evalPermutation3(colors, colorSum, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+			
+			if (bestStart > bestEnd)
+			{
+				swap(bestEnd, bestStart);
+				bestPermutation ^= (~bestPermutation >> 1) & 0x55555555;	// Flip indices.
+			}
+		}
+	}
 
 	errors[idx] = bestError;
 }
@@ -516,55 +516,55 @@ __device__ void evalAllPermutations(const float3 * colors, const float * weights
 	
 	__shared__ uint s_permutations[160];
 	
-    for(int i = 0; i < 16; i++)
-    {
+	for(int i = 0; i < 16; i++)
+	{
 		int pidx = idx + NUM_THREADS * i;
 		if (pidx >= 992) break;
-        
-        ushort start, end;
-        uint permutation = permutations[pidx];
-        if (pidx < 160) s_permutations[pidx] = permutation;
+		
+		ushort start, end;
+		uint permutation = permutations[pidx];
+		if (pidx < 160) s_permutations[pidx] = permutation;
 
-        float error = evalPermutation4(colors, weights, permutation, &start, &end);
-        
-        if (error < bestError)
-        {
-            bestError = error;
-            bestPermutation = permutation;
-            bestStart = start;
-            bestEnd = end;
-        }
-    }
+		float error = evalPermutation4(colors, weights, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+		}
+	}
 
-    if (bestStart < bestEnd)
-    {
-        swap(bestEnd, bestStart);
-        bestPermutation ^= 0x55555555;    // Flip indices.
-    }
+	if (bestStart < bestEnd)
+	{
+		swap(bestEnd, bestStart);
+		bestPermutation ^= 0x55555555;	// Flip indices.
+	}
 
-    for(int i = 0; i < 3; i++)
-    {
+	for(int i = 0; i < 3; i++)
+	{
 		int pidx = idx + NUM_THREADS * i;
-        if (pidx >= 160) break;
-        
-        ushort start, end;
-        uint permutation = s_permutations[pidx];
-        float error = evalPermutation3(colors, weights, permutation, &start, &end);
-        
-        if (error < bestError)
-        {
-            bestError = error;
-            bestPermutation = permutation;
-            bestStart = start;
-            bestEnd = end;
-            
-            if (bestStart > bestEnd)
-            {
-                swap(bestEnd, bestStart);
-                bestPermutation ^= (~bestPermutation >> 1) & 0x55555555;    // Flip indices.
-            }
-        }
-    }
+		if (pidx >= 160) break;
+		
+		ushort start, end;
+		uint permutation = s_permutations[pidx];
+		float error = evalPermutation3(colors, weights, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+			
+			if (bestStart > bestEnd)
+			{
+				swap(bestEnd, bestStart);
+				bestPermutation ^= (~bestPermutation >> 1) & 0x55555555;	// Flip indices.
+			}
+		}
+	}
 
 	errors[idx] = bestError;
 }
@@ -576,30 +576,30 @@ __device__ void evalLevel4Permutations(const float3 * colors, const float * weig
 	
 	float bestError = FLT_MAX;
 	
-    for(int i = 0; i < 16; i++)
-    {
+	for(int i = 0; i < 16; i++)
+	{
 		int pidx = idx + NUM_THREADS * i;
 		if (pidx >= 992) break;
-        
-        ushort start, end;
-        uint permutation = permutations[pidx];
+		
+		ushort start, end;
+		uint permutation = permutations[pidx];
 
-        float error = evalPermutation4(colors, weights, colorSum, permutation, &start, &end);
-        
-        if (error < bestError)
-        {
-            bestError = error;
-            bestPermutation = permutation;
-            bestStart = start;
-            bestEnd = end;
-        }
-    }
+		float error = evalPermutation4(colors, weights, colorSum, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+		}
+	}
 
-    if (bestStart < bestEnd)
-    {
-        swap(bestEnd, bestStart);
-        bestPermutation ^= 0x55555555;    // Flip indices.
-    }
+	if (bestStart < bestEnd)
+	{
+		swap(bestEnd, bestStart);
+		bestPermutation ^= 0x55555555;	// Flip indices.
+	}
 
 	errors[idx] = bestError;
 }
@@ -812,7 +812,7 @@ __device__ float computeError(const float weights[16], uchar a0, uchar a1)
 
 inline __device__ uchar roundAndExpand(float a)
 {
-    return rintf(__saturatef(a) * 255.0f);
+	return rintf(__saturatef(a) * 255.0f);
 }
 */
 /*
@@ -833,16 +833,16 @@ __device__ void optimizeAlpha8(const float alphas[16], uchar & a0, uchar & a1)
 		
 		float beta = 1 - alpha;
 
-        alpha2_sum += alpha * alpha;
-        beta2_sum += beta * beta;
-        alphabeta_sum += alpha * beta;
-        alphax_sum += alpha * alphas[i];
-        betax_sum += beta * alphas[i];
+		alpha2_sum += alpha * alpha;
+		beta2_sum += beta * beta;
+		alphabeta_sum += alpha * beta;
+		alphax_sum += alpha * alphas[i];
+		betax_sum += beta * alphas[i];
 	}
 
-    const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 
-    float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+	float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
 	float b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 
 	a0 = roundAndExpand(a);
