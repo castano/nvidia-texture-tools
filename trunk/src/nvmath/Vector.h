@@ -353,6 +353,11 @@ inline scalar Vector4::component(uint idx) const
 	return 0.0f;
 }
 
+inline const scalar * Vector3::ptr() const
+{
+	return &m_x;
+}
+
 inline void Vector4::set(scalar x, scalar y, scalar z, scalar w)
 {
 	m_x = x;
