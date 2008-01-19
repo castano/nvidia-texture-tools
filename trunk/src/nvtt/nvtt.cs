@@ -1,10 +1,15 @@
 
+using System;
+using System.Runtime.InteropServices;
 
-namespace nvtt
+namespace Nvidia.TextureTools
 {
 	#region Enums
 	
 	#region enum Format
+	/// <summary>
+	/// Compression format.
+	/// </summary>
 	enum Format
 	{
 		// No compression.
@@ -30,7 +35,9 @@ namespace nvtt
 	#endregion
 
 	#region enum Quality
+	/// <summary>
 	/// Quality modes.
+	/// </summary>
 	enum Quality
 	{
 		Fastest,
@@ -41,7 +48,9 @@ namespace nvtt
 	#endregion
 
 	#region enum TextureType
+	/// <summary>
 	/// Texture types.
+	/// </summary>
 	enum TextureType
 	{
 		Texture2D,
@@ -51,136 +60,164 @@ namespace nvtt
 	
 	#endregion
 
-	#region private static class Bindings
-	private static class Bindings
-	{
-		// Input Options
-		//NVTT_API NvttInputOptions nvttCreateInputOptions();
-		//NVTT_API void nvttDestroyInputOptions(NvttInputOptions inputOptions);
 
-		//NVTT_API void nvttSetInputOptionsTextureLayout(NvttInputOptions inputOptions, NvttTextureType type, int w, int h, int d);
-		//NVTT_API void nvttResetInputOptionsTextureLayout(NvttInputOptions inputOptions);
-		//NVTT_API NvttBoolean nvttSetInputOptionsMipmapData(NvttInputOptions inputOptions, const void * data, int w, int h, int d, int face, int mipmap);
-
-
-		// Compression Options
-		//NVTT_API NvttCompressionOptions nvttCreateCompressionOptions();
-		//NVTT_API void nvttDestroyCompressionOptions(NvttCompressionOptions compressionOptions);
-
-		//NVTT_API void nvttSetCompressionOptionsFormat(NvttCompressionOptions compressionOptions, NvttFormat format);
-		//NVTT_API void nvttSetCompressionOptionsQuality(NvttCompressionOptions compressionOptions, NvttQuality quality);
-		//NVTT_API void nvttSetCompressionOptionsPixelFormat(NvttCompressionOptions compressionOptions, unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
-
-
-		// Output Options
-		//NVTT_API NvttOutputOptions nvttCreateOutputOptions();
-		//NVTT_API void nvttDestroyOutputOptions(NvttOutputOptions outputOptions);
-
-		//NVTT_API void nvttSetOutputOptionsFileName(NvttOutputOptions outputOptions, const char * fileName);
-
-
-		// Main entrypoint of the compression library.
-		//NVTT_API NvttBoolean nvttCompress(NvttInputOptions inputOptions, NvttOutputOptions outputOptions, NvttCompressionOptions compressionOptions);
-
-		// Estimate the size of compressing the input with the given options.
-		//NVTT_API int nvttEstimateSize(NvttInputOptions inputOptions, NvttCompressionOptions compressionOptions);
-	}
-	#endregion
-	
 	#region public class InputOptions
+	/// <summary>
+	/// Input options.
+	/// </summary>
 	public class InputOptions
 	{
+		#region Bindings
+		[DllImport("nvtt")]
+		private extern static IntPtr nvttCreateInputOptions();
+
+		[DllImport("nvtt")]
+		private extern static void nvttDestroyInputOptions(IntPtr inputOptions);
+
+		[DllImport("nvtt")]
+		private extern static void nvttSetInputOptionsTextureLayout(IntPtr inputOptions, TextureType type, int w, int h, int d);
+		
+		[DllImport("nvtt")]
+		private extern static void nvttResetInputOptionsTextureLayout(IntPtr inputOptions);
+		
+		[DllImport("nvtt")]
+		private extern static bool nvttSetInputOptionsMipmapData(IntPtr inputOptions, IntPtr data, int w, int h, int d, int face, int mipmap);
+		#endregion
+
+		internal IntPtr options;
+			
 		public InputOptions()
 		{
-			options = Bindings.CreateInputOptions();
+			options = nvttCreateInputOptions();
 		}
 		public ~InputOptions()
 		{
-			Bindings.DestroyInputOptions(options);
+			nvttDestroyInputOptions(options);
 		}
 		
 		public void SetTextureLayout(TextureType type, int w, int h, int d)
 		{
-			Bindings.InputOptions_SetTextureLayout(options, type, w, h, d);
+			nvttSetInputOptionsTextureLayout(options, type, w, h, d);
 		}
 		public void ResetTextureLayout()
 		{
-			Bindings.InputOptions_ResetTextureLayout(options);
+			nvttResetInputOptionsTextureLayout(options);
 		}
 		
-		public void SetMipmapData(Image img, int face, int mipmap)
+		public void SetMipmapData(IntPtr data, int width, int height, int depth, int face, int mipmap)
 		{
-			// TODO
-			//Bindings.InputOptions_SetMipmapData(options, img.Data, img.Width, img.Height, 1, face, mipmap);
+			nvttSetInputOptionsMipmapData(options, data, width, height, depth, face, mipmap);
 		}
-	
-		private IntPtr options;
 	}
 	#endregion
 
 	#region public class CompressionOptions
+	/// <summary>
+	/// Compression options.
+	/// </summary>
 	public class CompressionOptions
 	{
+		#region Bindings
+		[DllImport("nvtt")]
+		private extern static IntPtr nvttCreateCompressionOptions();
+
+		[DllImport("nvtt")]
+		private extern static void nvttDestroyCompressionOptions(IntPtr compressionOptions);
+
+		[DllImport("nvtt")]
+		private extern static void nvttSetCompressionOptionsFormat(IntPtr compressionOptions, Format format);
+		
+		[DllImport("nvtt")]
+		private extern static void nvttSetCompressionOptionsQuality(IntPtr compressionOptions, Quality quality);
+		
+		[DllImport("nvtt")]
+		private extern static void nvttSetCompressionOptionsPixelFormat(IntPtr compressionOptions, uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+		#endregion
+		
+		internal IntPtr options;
+		
 		public CompressionOptions()
 		{
-			options = Bindings.CreateCompressionOptions();
+			options = nvttCreateCompressionOptions();
 		}
 		public ~CompressionOptions()
 		{
-			Bindings.DestroyCompressionOptions(options);
+			nvttDestroyCompressionOptions(options);
 		}
 		
 		public void SetFormat(Format format)
 		{
-			Bindings.CompressionOptions_SetFormat(format);
+			nvttSetCompressionOptionsFormat(options, format);
 		}
 		public void SetQuality(Quality quality)
 		{
-			Bindings.CompressionOptions_SetQuality(quality);
+			nvttSetCompressionOptionsQuality(options, quality);
 		}
 		public void SetPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 		{
-			Bindings.CompressionOptions_SetPixelFormat(bitcount, rmask, gmask, bmask, amask);
+			nvttSetCompressionOptionsPixelFormat(options, bitcount, rmask, gmask, bmask, amask);
 		}
-		
-		private IntPtr options;
 	}
 	#endregion
 
 	#region public class OutputOptions
+	/// <summary>
+	/// Output options.
+	/// </summary>
 	public class OutputOptions
 	{
+		#region Bindings
+		[DllImport("nvtt")]
+		private extern static IntPtr nvttCreateOutputOptions();
+
+		[DllImport("nvtt")]
+		private extern static void nvttDestroyOutputOptions(IntPtr outputOptions);
+
+		[DllImport("nvtt", CharSet = CharSet.Ansi)]
+		private extern static void nvttSetOutputOptionsFileName(IntPtr outputOptions, string fileName);
+		
+		#endregion
+
+		internal IntPtr options;
+		
 		public OutputOptions()
 		{
-			options = Bindings.CreateOutputOptions();
+			options = nvttCreateOutputOptions();
 		}
 		public ~OutputOptions()
 		{
-			Bindings.DestroyOutputOptions(options);
+			nvttDestroyOutputOptions(options);
 		}
 		
 		public void SetFileName(string fileName)
 		{
-			// TODO
-			//Bindings.OutputOptions_SetFileName(fileName)
+			nvttSetOutputOptionsFileName(options, fileName);
 		}
-		
-		private IntPtr options;
 	}
 	#endregion
 
 	#region public static class Compressor
 	public static class Compressor
 	{
+		#region Bindings
+		[DllImport("nvtt")]
+		private extern static bool nvttCompress(IntPtr inputOptions, IntPtr compressionOptions, IntPtr outputOptions);
+
+		[DllImport("nvtt")]
+		private extern static void nvttEstimateSize(IntPtr inputOptions, IntPtr compressionOptions);
+
+		#endregion
+		
 		public bool Compress(InputOptions inputOptions, CompressionOptions compressionOptions, OutputOptions outputOptions)
 		{
-			Bindings.Compress(inputOptions.options, compressionOptions.options, outputOptions.options);
+			nvttCompress(inputOptions.options, compressionOptions.options, outputOptions.options);
 		}
 		
 		public bool EstimateSize(InputOptions inputOptions, CompressionOptions compressionOptions)
 		{
-			Bindings.EstimateSize(inputOptions.options, compressionOptions.options);
+			nvttEstimateSize(inputOptions.options, compressionOptions.options);
 		}
 	}
 	#endregion
-}
+		
+} // Nvidia.TextureTools namespace
