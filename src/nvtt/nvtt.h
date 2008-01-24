@@ -87,9 +87,8 @@ namespace nvtt
 	};
 
 	/// Compression options. This class describes the desired compression format and other compression settings.
-	class CompressionOptions
+	struct CompressionOptions
 	{
-	public:
 		NVTT_API CompressionOptions();
 		NVTT_API ~CompressionOptions();
 		
@@ -107,7 +106,7 @@ namespace nvtt
 		// Set color mask to describe the RGB/RGBA format.
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
 
-		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold/*= 127*/);
+		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 
 	//private:
 		struct Private;
@@ -216,7 +215,7 @@ namespace nvtt
 		
 		// Set color transforms. @@ Not implemented!
 		NVTT_API void setColorTransform(ColorTransform t);
-		NVTT_API void setLinearTransfrom(int channel, float w0, float w1, float w2, float w3);
+		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
 		
 		// Set resizing options. @@ Not fully tested!
 		NVTT_API void setMaxExtents(int d);

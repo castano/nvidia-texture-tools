@@ -297,7 +297,7 @@ void InputOptions::setColorTransform(ColorTransform t)
 }
 
 // Set linear transform for the given channel.
-void InputOptions::setLinearTransfrom(int channel, float w0, float w1, float w2, float w3)
+void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2, float w3)
 {
 	nvCheck(channel >= 0 && channel < 4);
 
