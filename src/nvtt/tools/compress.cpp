@@ -57,7 +57,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	}
 	
 	// Output data.
-	virtual void writeData(const void * data, int size)
+	virtual bool writeData(const void * data, int size)
 	{
 		nvDebugCheck(stream != NULL);
 		stream->serialize(const_cast<void *>(data), size);
@@ -70,6 +70,8 @@ struct MyOutputHandler : public nvtt::OutputHandler
 			printf("\r%d%%", percentage);
 			fflush(stdout);
 		}
+
+		return true;
 	}
 	
 	int total;
@@ -375,7 +377,6 @@ int main(int argc, char *argv[])
 		//compressionOptions.setQuality(nvtt::Quality_Production);
 		//compressionOptions.setQuality(nvtt::Quality_Highest);
 	}
-	compressionOptions.enableCudaCompression(!nocuda);
 	compressionOptions.setColorWeights(1, 1, 1);
 
 	if (externalCompressor != NULL)
@@ -391,8 +392,11 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error opening '%s' for writting\n", output.str());
 		return 1;
 	}
-	
-	outputHandler.setTotal(nvtt::estimateSize(inputOptions, compressionOptions));
+
+	nvtt::Compressor compressor;
+	compressor.enableCudaAceleration(!nocuda);
+
+	outputHandler.setTotal(compressor.estimateSize(inputOptions, compressionOptions));
 	outputHandler.setDisplayProgress(!silent);
 
 	nvtt::OutputOptions outputOptions;
@@ -413,7 +417,7 @@ int main(int argc, char *argv[])
 */
 	clock_t start = clock();
 	
-	nvtt::compress(inputOptions, outputOptions, compressionOptions);
+	compressor.process(inputOptions, compressionOptions, outputOptions);
 /*
 	LARGE_INTEGER end_time;
 	QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
