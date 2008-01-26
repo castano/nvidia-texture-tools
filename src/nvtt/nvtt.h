@@ -98,9 +98,6 @@ namespace nvtt
 		NVTT_API void setQuality(Quality quality);
 		NVTT_API void setColorWeights(float red, float green, float blue, float alpha = 1.0f);
 		
-		NVTT_DEPRECATED void enableHardwareCompression(bool enable);
-		NVTT_API void enableCudaCompression(bool enable);
-		
 		NVTT_API void setExternalCompressor(const char * name);
 
 		// Set color mask to describe the RGB/RGBA format.
@@ -187,7 +184,6 @@ namespace nvtt
 		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);
 		
 		// Describe the format of the input.
-		NVTT_DEPRECATED void setFormat(InputFormat format, bool alphaTransparency);
 		NVTT_API void setFormat(InputFormat format);
 		
 		// Set the way the input alpha channel is interpreted.
@@ -203,9 +199,6 @@ namespace nvtt
 		NVTT_API void setMipmapping(bool generateMipmaps, MipmapFilter filter = MipmapFilter_Box, int maxLevel = -1);
 		NVTT_API void setKaiserParameters(float width, float alpha, float stretch);
 
-		// Set quantization options.
-		NVTT_DEPRECATED void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
-		
 		// Set normal map options.
 		NVTT_API void setNormalMap(bool b);
 		NVTT_API void setConvertToNormalMap(bool convert);
@@ -236,17 +229,16 @@ namespace nvtt
 		virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel) = 0;
 		
 		/// Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
-		virtual void writeData(const void * data, int size) = 0;
+		virtual bool writeData(const void * data, int size) = 0;
 	};
 
 	/// Error codes.
 	enum Error
 	{
+		Error_Unknown,
 		Error_InvalidInput,
-		Error_UserInterruption,
 		Error_UnsupportedFeature,
 		Error_CudaError,
-		Error_Unknown,
   		Error_FileOpen,
   		Error_FileWrite,
 	};
@@ -266,7 +258,6 @@ namespace nvtt
 	struct OutputOptions
 	{
 		NVTT_API OutputOptions();
-		NVTT_DEPRECATED OutputOptions(OutputHandler * oh, ErrorHandler * eh);
 		NVTT_API ~OutputOptions();
 		
 		// Set default options.
@@ -278,24 +269,36 @@ namespace nvtt
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
 		NVTT_API void setOutputHeader(bool outputHeader);
 		
-		OutputHandler * outputHandler;
-		ErrorHandler * errorHandler;
-		bool outputHeader;
+	//private:
+		struct Private;
+		Private & m;
+	};
+
+
+	/// Texture compressor.
+	struct Compressor
+	{
+		NVTT_API Compressor();
+		NVTT_API ~Compressor();
+
+		NVTT_API void enableCudaAceleration(bool enable);
+		NVTT_API bool isCudaAcelerationEnabled() const;
+
+		// Main entrypoint of the compression library.
+		NVTT_API bool process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
 		
+		// Estimate the size of compressing the input with the given options.
+		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
+
 	//private:
 		struct Private;
 		Private & m;
 	};
 	
 	
-	// Main entrypoint of the compression library.
-	NVTT_API bool compress(const InputOptions & inputOptions, const OutputOptions & outputOptions, const CompressionOptions & compressionOptions);
-	
-	// Estimate the size of compressing the input with the given options.
-	NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions);
-	
-	// Return string for the given error.
+	// Return string for the given error code.
 	NVTT_API const char * errorString(Error e);
+
 
 } // nvtt namespace
 

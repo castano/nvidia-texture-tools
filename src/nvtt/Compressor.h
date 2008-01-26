@@ -1,4 +1,4 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright NVIDIA Corporation 2008 -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,56 +21,23 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_OUTPUTOPTIONS_H
-#define NV_TT_OUTPUTOPTIONS_H
+#ifndef NV_TT_COMPRESSOR_H
+#define NV_TT_COMPRESSOR_H
 
-#include <nvcore/StrLib.h>
-#include <nvcore/StdStream.h>
 #include "nvtt.h"
 
 namespace nvtt
 {
 
-	struct DefaultOutputHandler : public nvtt::OutputHandler
+	struct Compressor::Private
 	{
-		DefaultOutputHandler(const char * fileName) : stream(fileName) {}
-		
-		virtual ~DefaultOutputHandler()
-		{
-		}
-		
-		virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel)
-		{
-			// ignore.
-		}
-		
-		// Output data.
-		virtual bool writeData(const void * data, int size)
-		{
-			stream.serialize(const_cast<void *>(data), size);
+		Private() {}
 
-			//return !stream.isError();
-			return true;
-		}
-		
-		nv::StdOutputStream stream;
-	};
-	
-	
-	struct OutputOptions::Private
-	{
-		nv::Path fileName;
-		
-		mutable OutputHandler * outputHandler;
-		ErrorHandler * errorHandler;
-		bool outputHeader;
-		
-		bool openFile() const;
-		void closeFile() const;
+		bool cudaSupported;
+		bool cudaEnabled;
 	};
 
-	
 } // nvtt namespace
 
 
-#endif // NV_TT_OUTPUTOPTIONS_H
+#endif // NV_TT_COMPRESSOR_H

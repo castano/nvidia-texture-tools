@@ -91,7 +91,7 @@ void CompressionOptions::setColorWeights(float red, float green, float blue, flo
 	m.colorWeight.set(red, green, blue, alpha);
 }
 
-
+/*
 /// Enable or disable CUDA compression.
 void CompressionOptions::enableHardwareCompression(bool enable)
 {
@@ -103,6 +103,7 @@ void CompressionOptions::enableCudaCompression(bool enable)
 {
 	m.useCuda = enable;
 }
+*/
 
 
 /// Set color mask to describe the RGB/RGBA format.

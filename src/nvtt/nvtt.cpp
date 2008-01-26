@@ -33,12 +33,14 @@
 #include <nvimage/Quantize.h>
 #include <nvimage/NormalMap.h>
 
-#include "CompressDXT.h"
-#include "FastCompressDXT.h"
-#include "CompressRGB.h"
+#include "Compressor.h"
 #include "InputOptions.h"
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
+
+#include "CompressDXT.h"
+#include "FastCompressDXT.h"
+#include "CompressRGB.h"
 #include "cuda/CudaUtils.h"
 #include "cuda/CudaCompressDXT.h"
 
@@ -97,79 +99,86 @@ namespace
 // compress
 //
 
-static void outputHeader(const InputOptions::Private & inputOptions, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+static bool outputHeader(const InputOptions::Private & inputOptions, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	// Output DDS header.
-	if (outputOptions.outputHandler != NULL && outputOptions.outputHeader)
+	if (outputOptions.outputHandler == NULL || !outputOptions.outputHeader)
 	{
-		DDSHeader header;
-		
-		header.setWidth(inputOptions.targetWidth);
-		header.setHeight(inputOptions.targetHeight);
-		
-		int mipmapCount = inputOptions.realMipmapCount();
-		nvDebugCheck(mipmapCount > 0);
-		
-		header.setMipmapCount(mipmapCount);
-		
-		if (inputOptions.textureType == TextureType_2D) {
-			header.setTexture2D();
-		}
-		else if (inputOptions.textureType == TextureType_Cube) {
-			header.setTextureCube();
-		}		
-		/*else if (inputOptions.textureType == TextureType_3D) {
-			header.setTexture3D();
-			header.setDepth(inputOptions.targetDepth);
-		}*/
-		
-		if (compressionOptions.format == Format_RGBA)
-		{
-			header.setPitch(4 * inputOptions.targetWidth);
-			header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
-		}
-		else
-		{
-			header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, compressionOptions.bitcount, compressionOptions.format));
-			
-			if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
-				header.setFourCC('D', 'X', 'T', '1');
-			}
-			else if (compressionOptions.format == Format_DXT3) {
-				header.setFourCC('D', 'X', 'T', '3');
-			}
-			else if (compressionOptions.format == Format_DXT5) {
-				header.setFourCC('D', 'X', 'T', '5');
-			}
-			else if (compressionOptions.format == Format_DXT5n) {
-				header.setFourCC('D', 'X', 'T', '5');
-				if (inputOptions.isNormalMap) header.setNormalFlag(true);
-			}
-			else if (compressionOptions.format == Format_BC4) {
-				header.setFourCC('A', 'T', 'I', '1');
-			}
-			else if (compressionOptions.format == Format_BC5) {
-				header.setFourCC('A', 'T', 'I', '2');
-				if (inputOptions.isNormalMap) header.setNormalFlag(true);
-			}
-		}
-		
-		// Swap bytes if necessary.
-		header.swapBytes();
-		
-		nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
-		if (header.hasDX10Header())
-		{
-			outputOptions.outputHandler->writeData(&header, 128 + 20);
-		}
-		else
-		{
-			outputOptions.outputHandler->writeData(&header, 128);
-		}
-		
-		// Revert swap.
-		header.swapBytes();
+		return true;
 	}
+
+	DDSHeader header;
+	
+	header.setWidth(inputOptions.targetWidth);
+	header.setHeight(inputOptions.targetHeight);
+	
+	int mipmapCount = inputOptions.realMipmapCount();
+	nvDebugCheck(mipmapCount > 0);
+	
+	header.setMipmapCount(mipmapCount);
+	
+	if (inputOptions.textureType == TextureType_2D) {
+		header.setTexture2D();
+	}
+	else if (inputOptions.textureType == TextureType_Cube) {
+		header.setTextureCube();
+	}		
+	/*else if (inputOptions.textureType == TextureType_3D) {
+		header.setTexture3D();
+		header.setDepth(inputOptions.targetDepth);
+	}*/
+	
+	if (compressionOptions.format == Format_RGBA)
+	{
+		header.setPitch(4 * inputOptions.targetWidth);
+		header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+	}
+	else
+	{
+		header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, compressionOptions.bitcount, compressionOptions.format));
+		
+		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
+			header.setFourCC('D', 'X', 'T', '1');
+		}
+		else if (compressionOptions.format == Format_DXT3) {
+			header.setFourCC('D', 'X', 'T', '3');
+		}
+		else if (compressionOptions.format == Format_DXT5) {
+			header.setFourCC('D', 'X', 'T', '5');
+		}
+		else if (compressionOptions.format == Format_DXT5n) {
+			header.setFourCC('D', 'X', 'T', '5');
+			if (inputOptions.isNormalMap) header.setNormalFlag(true);
+		}
+		else if (compressionOptions.format == Format_BC4) {
+			header.setFourCC('A', 'T', 'I', '1');
+		}
+		else if (compressionOptions.format == Format_BC5) {
+			header.setFourCC('A', 'T', 'I', '2');
+			if (inputOptions.isNormalMap) header.setNormalFlag(true);
+		}
+	}
+	
+	// Swap bytes if necessary.
+	header.swapBytes();
+	
+	uint headerSize = 128;
+	if (header.hasDX10Header())
+	{
+		nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
+		headerSize = 128 + 20;
+	}
+
+	bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
+	if (!writeSucceed && outputOptions.errorHandler != NULL)
+	{
+		outputOptions.errorHandler->error(Error_FileWrite);
+	}
+	
+	// Revert swap.
+	header.swapBytes();
+
+	return writeSucceed;
 }
 
 
@@ -636,13 +645,16 @@ static bool compress(const InputOptions::Private & inputOptions, const OutputOpt
 	if (!outputOptions.openFile())
 	{
 		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_FileOpen);
-		// @@ Should return here?
+		return false;
 	}
 	
 	inputOptions.computeTargetExtents();
 	
 	// Output DDS header.
-	outputHeader(inputOptions, outputOptions, compressionOptions);
+	if (!outputHeader(inputOptions, outputOptions, compressionOptions))
+	{
+		return false;
+	}
 
 	for (uint f = 0; f < inputOptions.faceCount; f++)
 	{
@@ -658,18 +670,43 @@ static bool compress(const InputOptions::Private & inputOptions, const OutputOpt
 }
 
 
-/// Compress the input texture with the given compression options.
-bool nvtt::compress(const InputOptions & inputOptions, const OutputOptions & outputOptions, const CompressionOptions & compressionOptions)
+Compressor::Compressor() : m(*new Compressor::Private())
 {
-	// @@ Hack this is necessary because of the pimpl transition.
-	initOptions(const_cast<OutputOptions *>(&outputOptions));
-	
+	m.cudaSupported = cuda::isHardwarePresent();
+	m.cudaEnabled = true;
+
+	// @@ Do CUDA initialization here.
+
+}
+
+Compressor::~Compressor()
+{
+	// @@ Free CUDA resources here.
+}
+
+void Compressor::enableCudaAceleration(bool enable)
+{
+	if (m.cudaSupported)
+	{
+		m.cudaEnabled = enable;
+	}
+}
+
+bool Compressor::isCudaAcelerationEnabled() const
+{
+	return m.cudaEnabled;
+}
+
+
+/// Compress the input texture with the given compression options.
+bool Compressor::process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+{
 	return ::compress(inputOptions.m, outputOptions.m, compressionOptions.m);
 }
 
 
 /// Estimate the size of compressing the input with the given options.
-int nvtt::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions)
+int Compressor::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const
 {
 	const Format format = compressionOptions.m.format;
 	const uint bitCount = compressionOptions.m.bitcount;
@@ -706,10 +743,10 @@ const char * nvtt::errorString(Error e)
 {
 	switch(e)
 	{
+		case Error_Unknown:
+			return "Unknown error";
 		case Error_InvalidInput:
 			return "Invalid input";
-		case Error_UserInterruption:
-			return "User interruption";
 		case Error_UnsupportedFeature:
 			return "Unsupported feature";
 		case Error_CudaError:
@@ -718,9 +755,6 @@ const char * nvtt::errorString(Error e)
 			return "Error opening file";
 		case Error_FileWrite:
 			return "Error writing through output handler";
-		case Error_Unknown:
-		//default:
-			return "Unknown error";
 	}
 	
 	return "Invalid error";

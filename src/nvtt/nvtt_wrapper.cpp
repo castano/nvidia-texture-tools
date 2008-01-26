@@ -3,7 +3,7 @@
 #include "nvtt_wrapper.h"
 
 
-// Input Options
+// InputOptions class.
 NvttInputOptions * nvttCreateInputOptions()
 {
 	return new nvtt::InputOptions();
@@ -43,7 +43,6 @@ void nvttSetInputOptionsGamma(NvttInputOptions * inputOptions, float inputGamma,
 {
 	inputOptions->setGamma(inputGamma, outputGamma);
 }
-
 
 void nvttSetInputOptionsWrapMode(NvttInputOptions * inputOptions, NvttWrapMode mode)
 {
@@ -106,7 +105,7 @@ void nvttSetInputOptionsRoundMode(NvttInputOptions * inputOptions, NvttRoundMode
 }
 
 
-// Compression Options
+// CompressionOptions class.
 NvttCompressionOptions * nvttCreateCompressionOptions()
 {
 	return new nvtt::CompressionOptions();
@@ -132,10 +131,10 @@ void nvttSetCompressionOptionsColorWeights(NvttCompressionOptions * compressionO
 	compressionOptions->setColorWeights(red, green, blue, alpha);
 }
 
-void nvttEnableCompressionOptionsCudaCompression(NvttCompressionOptions * compressionOptions, NvttBoolean enable)
+/*void nvttEnableCompressionOptionsCudaCompression(NvttCompressionOptions * compressionOptions, NvttBoolean enable)
 {
 	compressionOptions->enableCudaCompression(enable != NVTT_False);
-}
+}*/
 
 void nvttSetCompressionOptionsPixelFormat(NvttCompressionOptions * compressionOptions, unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask)
 {
@@ -148,7 +147,7 @@ void nvttSetCompressionOptionsQuantization(NvttCompressionOptions * compressionO
 }
 
 
-// Output Options
+// OutputOptions class.
 NvttOutputOptions * nvttCreateOutputOptions()
 {
 	return new nvtt::OutputOptions();
@@ -180,17 +179,19 @@ void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttOu
 */
 
 
-// Main entrypoints.
-NvttBoolean nvttCompress(const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions)
+// Compressor class.
+NvttBoolean nvttCompress(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions)
 {
-	return (NvttBoolean)nvtt::compress(*inputOptions, *outputOptions, *compressionOptions);
+	return (NvttBoolean)compressor->process(*inputOptions, *compressionOptions, *outputOptions);
 }
 
-int nvttEstimateSize(const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions)
+int nvttEstimateSize(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions)
 {
-	return nvtt::estimateSize(*inputOptions, *compressionOptions);
+	return compressor->estimateSize(*inputOptions, *compressionOptions);
 }
 
+
+// Global functions.
 const char * nvttErrorString(NvttError e)
 {
 	return nvtt::errorString((nvtt::Error)e);

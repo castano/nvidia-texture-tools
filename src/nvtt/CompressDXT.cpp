@@ -215,7 +215,7 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 			fit.Compress(&block);
 			
-			// @@ Use iterative cluster fit algorithm to improve error in highest quality mode.
+			// @@ Use iterative cluster fit algorithm to improve error in production quality mode.
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
