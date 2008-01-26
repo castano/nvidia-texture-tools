@@ -460,6 +460,11 @@ namespace Nvidia.TextureTools
 
 		public event ErrorHandler Error;
 
+		public void SetOutputHeader(bool b)
+		{
+			nvttSetOutputOptionsOutputHeader(options, b);
+		}
+
 		// @@ Add OutputHandler interface.
 	}
 	#endregion
