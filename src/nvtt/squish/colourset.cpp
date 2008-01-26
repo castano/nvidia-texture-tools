@@ -28,12 +28,11 @@
 namespace squish {
 
 // @@ Add flags:
-// - FindColorMatch
-// - DXT1a
+// - MatchTransparent
 // - WeightColorByAlpha
 
 	
-ColourSet::ColourSet( u8 const* rgba, int flags )
+ColourSet::ColourSet( u8 const* rgba, int flags, bool createMinimalSet/*=false*/ )
   : m_count( 0 ), 
 	m_transparent( false )
 {
@@ -49,70 +48,74 @@ ColourSet::ColourSet( u8 const* rgba, int flags )
 		{
 			m_remap[i] = -1;
 			m_transparent = true;
-		//	continue;
+			if (createMinimalSet) continue;
 		}
 		
-#if 1
-		// normalise coordinates to [0,1]
-		float x = ( float )rgba[4*i + 2] / 255.0f;
-		float y = ( float )rgba[4*i + 1] / 255.0f;
-		float z = ( float )rgba[4*i + 0] / 255.0f;
-		
-		// ensure there is always non-zero weight even for zero alpha
-		float w = ( float )( rgba[4*i + 3] + 1 ) / 256.0f;
-
-		// add the point
-		m_points[m_count] = Vec3( x, y, z );
-		m_weights[m_count] = ( weightByAlpha ? w : 1.0f );
-		m_remap[i] = m_count;
-		
-		// advance
-		++m_count;
-#else
-		// loop over previous points for a match
-		for( int j = 0;; ++j )
+		if (createMinimalSet)
 		{
-			// allocate a new point
-			if( j == i )
+			// loop over previous points for a match
+			for( int j = 0;; ++j )
 			{
-				// normalise coordinates to [0,1]
-				float x = ( float )rgba[4*i + 2] / 255.0f;
-				float y = ( float )rgba[4*i + 1] / 255.0f;
-				float z = ( float )rgba[4*i + 0] / 255.0f;
-				
-				// ensure there is always non-zero weight even for zero alpha
-				float w = ( float )( rgba[4*i + 3] + 1 ) / 256.0f;
+				// allocate a new point
+				if( j == i )
+				{
+					// normalise coordinates to [0,1]
+					float x = ( float )rgba[4*i + 2] / 255.0f;
+					float y = ( float )rgba[4*i + 1] / 255.0f;
+					float z = ( float )rgba[4*i + 0] / 255.0f;
+					
+					// ensure there is always non-zero weight even for zero alpha
+					float w = ( float )( rgba[4*i + 3] + 1 ) / 256.0f;
 
-				// add the point
-				m_points[m_count] = Vec3( x, y, z );
-				m_weights[m_count] = ( weightByAlpha ? w : 1.0f );
-				m_remap[i] = m_count;
-				
-				// advance
-				++m_count;
-				break;
-			}
-		
-			// check for a match
-			bool match = ( rgba[4*i] == rgba[4*j] )
-				&& ( rgba[4*i + 1] == rgba[4*j + 1] )
-				&& ( rgba[4*i + 2] == rgba[4*j + 2] )
-				&& ( rgba[4*j + 3] != 0 || !isDxt1 );
-			if( match )
-			{
-				// get the index of the match
-				int index = m_remap[j];
-				
-				// ensure there is always non-zero weight even for zero alpha
-				float w = ( float )( rgba[4*i + 3] + 1 ) / 256.0f;
+					// add the point
+					m_points[m_count] = Vec3( x, y, z );
+					m_weights[m_count] = ( weightByAlpha ? w : 1.0f );
+					m_remap[i] = m_count;
+					
+					// advance
+					++m_count;
+					break;
+				}
+			
+				// check for a match
+				bool match = ( rgba[4*i] == rgba[4*j] )
+					&& ( rgba[4*i + 1] == rgba[4*j + 1] )
+					&& ( rgba[4*i + 2] == rgba[4*j + 2] )
+					&& ( rgba[4*j + 3] != 0 || !isDxt1 ); // @@ I think this check is not necessary.
 
-				// map to this point and increase the weight
-				m_weights[index] += ( weightByAlpha ? w : 1.0f );
-				m_remap[i] = index;
-				break;
+				if( match )
+				{
+					// get the index of the match
+					int index = m_remap[j];
+					
+					// ensure there is always non-zero weight even for zero alpha
+					float w = ( float )( rgba[4*i + 3] + 1 ) / 256.0f;
+
+					// map to this point and increase the weight
+					m_weights[index] += ( weightByAlpha ? w : 1.0f );
+					m_remap[i] = index;
+					break;
+				}
 			}
 		}
-#endif
+		else
+		{
+			// normalise coordinates to [0,1]
+			float x = ( float )rgba[4*i + 2] / 255.0f;
+			float y = ( float )rgba[4*i + 1] / 255.0f;
+			float z = ( float )rgba[4*i + 0] / 255.0f;
+			
+			// ensure there is always non-zero weight even for zero alpha
+			float w = ( float )( rgba[4*i + 3] + 1 ) / 256.0f;
+
+			// add the point
+			m_points[m_count] = Vec3( x, y, z );
+			m_weights[m_count] = ( weightByAlpha ? w : 1.0f );
+			m_remap[i] = m_count;
+			
+			// advance
+			++m_count;
+		}
 	}
 	
 #if SQUISH_USE_SIMD
