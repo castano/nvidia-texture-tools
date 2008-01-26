@@ -208,11 +208,6 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 
 
 /// Describe the format of the input.
-void InputOptions::setFormat(InputFormat format, /*deprecated*/bool alphaTransparency)
-{
-	m.inputFormat = format;
-	//m.alphaTransparency = alphaTransparency;
-}
 void InputOptions::setFormat(InputFormat format)
 {
 	m.inputFormat = format;
@@ -384,23 +379,5 @@ int InputOptions::Private::realMipmapCount() const
 
 	return mipmapCount;
 }
-
-
-// Called everytime max extents or rounding mode changes.
-int InputOptions::Private::firstMipmap(int face) const
-{
-	nvCheck(images != NULL);
-	
-	// @@ Find the last image that's not NULL and is greater than target extents.
-	
-	uint first = 0;
-	for (uint f = 0; f < mipmapCount; f++)
-	{
-		
-	}
-	
-	return first;
-}
-
 
 

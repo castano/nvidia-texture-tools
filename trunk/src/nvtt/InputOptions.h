@@ -87,7 +87,6 @@ namespace nvtt
 		void computeTargetExtents() const;
 		
 		int realMipmapCount() const;
-		int firstMipmap(int face) const;
 		
 	};
 

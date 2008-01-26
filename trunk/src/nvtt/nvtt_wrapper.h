@@ -51,10 +51,12 @@
 typedef struct nvtt::InputOptions NvttInputOptions;
 typedef struct nvtt::CompressionOptions NvttCompressionOptions;
 typedef struct nvtt::OutputOptions NvttOutputOptions;
+typedef struct nvtt::Compressor NvttCompressor;
 #else
 typedef struct NvttInputOptions NvttInputOptions;
 typedef struct NvttCompressionOptions NvttCompressionOptions;
 typedef struct NvttOutputOptions NvttOutputOptions;
+typedef struct NvttCompressor NvttCompressor;
 #endif
 
 /// Supported compression formats.
@@ -169,8 +171,9 @@ extern "C" {
 //typedef void (* nvttErrorHandler)(NvttError e);
 //typedef void (* nvttOutputHandler)(const void * data, int size);
 //typedef void (* nvttImageHandler)(int size, int width, int height, int depth, int face, int miplevel);
-	
-// Input Options
+
+
+// InputOptions class.
 NVTT_API NvttInputOptions * nvttCreateInputOptions();
 NVTT_API void nvttDestroyInputOptions(NvttInputOptions * inputOptions);
 
@@ -194,7 +197,7 @@ NVTT_API void nvttSetInputOptionsMaxExtents(NvttInputOptions * inputOptions, int
 NVTT_API void nvttSetInputOptionsRoundMode(NvttInputOptions * inputOptions, NvttRoundMode mode);
 
 
-// Compression Options
+// CompressionOptions class.
 NVTT_API NvttCompressionOptions * nvttCreateCompressionOptions();
 NVTT_API void nvttDestroyCompressionOptions(NvttCompressionOptions * compressionOptions);
 
@@ -206,7 +209,7 @@ NVTT_API void nvttSetCompressionOptionsPixelFormat(NvttCompressionOptions * comp
 NVTT_API void nvttSetCompressionOptionsQuantization(NvttCompressionOptions * compressionOptions, NvttBoolean colorDithering, NvttBoolean alphaDithering, NvttBoolean binaryAlpha, int alphaThreshold);
 
 
-// Output Options
+// OutputOptions class.
 NVTT_API NvttOutputOptions * nvttCreateOutputOptions();
 NVTT_API void nvttDestroyOutputOptions(NvttOutputOptions * outputOptions);
 
@@ -216,14 +219,17 @@ NVTT_API void nvttSetOutputOptionsOutputHeader(NvttOutputOptions * outputOptions
 //NVTT_API void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttOutputHandler outputHandler, nvttImageHandler imageHandler);
 
 
-// Main entrypoint of the compression library.
-NVTT_API NvttBoolean nvttCompress(NvttInputOptions * inputOptions, NvttCompressionOptions * compressionOptions, NvttOutputOptions * outputOptions);
-	
-// Estimate the size of compressing the input with the given options.
-NVTT_API int nvttEstimateSize(NvttInputOptions * inputOptions, NvttCompressionOptions * compressionOptions);
+// Compressor class.
+NVTT_API NvttCompressor * nvttCreateCompressor();
+NVTT_API void nvttDestroyCompressor(NvttCompressor * compressor);
 
-// Return string for the given error.
+NVTT_API NvttBoolean nvttCompress(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions);
+NVTT_API int nvttEstimateSize(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions);
+
+
+// Global functions.
 NVTT_API const char * nvttErrorString(NvttError e);
+
 
 #ifdef __cplusplus
 } // extern "C"

@@ -31,13 +31,6 @@ OutputOptions::OutputOptions() : m(*new OutputOptions::Private())
 	reset();
 }
 
-OutputOptions::OutputOptions(OutputHandler * oh, ErrorHandler * eh) : m(*new OutputOptions::Private())
-{
-	reset();
-	outputHandler = oh;
-	errorHandler = eh;
-}
-
 OutputOptions::~OutputOptions()
 {
 	delete &m;
@@ -50,10 +43,6 @@ void OutputOptions::reset()
 	m.outputHandler = NULL;
 	m.errorHandler = NULL;
 	m.outputHeader = true;
-	
-	outputHandler = NULL;
-	errorHandler = NULL;
-	outputHeader = true;
 }
 
 
@@ -61,26 +50,26 @@ void OutputOptions::reset()
 void OutputOptions::setFileName(const char * fileName)
 {
 	m.fileName = fileName;
-	outputHandler = NULL;
+	m.outputHandler = NULL;
 }
 
 /// Set output handler.
 void OutputOptions::setOutputHandler(OutputHandler * outputHandler)
 {
 	m.fileName.reset();
-	this->outputHandler = outputHandler;
+	m.outputHandler = outputHandler;
 }
 
 /// Set error handler.
 void OutputOptions::setErrorHandler(ErrorHandler * errorHandler)
 {
-	this->errorHandler = errorHandler;
+	m.errorHandler = errorHandler;
 }
 
 /// Set output header.
 void OutputOptions::setOutputHeader(bool outputHeader)
 {
-	this->outputHeader = outputHeader;
+	m.outputHeader = outputHeader;
 }
 
 
@@ -109,17 +98,5 @@ void OutputOptions::Private::closeFile() const
 		delete outputHandler;
 		outputHandler = NULL;
 	}
-}
-
-
-void nvtt::initOptions(OutputOptions * outputOptions)
-{
-	nvDebugCheck(outputOptions != NULL);
-	
-	OutputOptions::Private & pimpl = outputOptions->m;
-	
-	pimpl.outputHandler = outputOptions->outputHandler;
-	pimpl.errorHandler = outputOptions->errorHandler;
-	pimpl.outputHeader = outputOptions->outputHeader;
 }
 
