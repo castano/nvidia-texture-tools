@@ -349,9 +349,6 @@ namespace Nvidia.TextureTools
 		private extern static void nvttSetCompressionOptionsColorWeights(IntPtr compressionOptions, float red, float green, float blue, float alpha);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static void nvttEnableCompressionOptionsCudaCompression(IntPtr compressionOptions, bool enable);
-
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsPixelFormat(IntPtr compressionOptions, uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
@@ -387,11 +384,6 @@ namespace Nvidia.TextureTools
 		public void SetColorWeights(float red, float green, float blue, float alpha)
 		{
 			nvttSetCompressionOptionsColorWeights(options, red, green, blue, alpha);
-		}
-
-		public void EnableCudaCompression(bool enable)
-		{
-			nvttEnableCompressionOptionsCudaCompression(options, enable);
 		}
 
 		public void SetPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
@@ -473,28 +465,46 @@ namespace Nvidia.TextureTools
 	#endregion
 
 	#region public static class Compressor
-	public static class Compressor
+	public class Compressor
 	{
 		#region Bindings
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static bool nvttCompress(IntPtr inputOptions, IntPtr compressionOptions, IntPtr outputOptions);
+		private extern static IntPtr nvttCreateCompressor();
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static int nvttEstimateSize(IntPtr inputOptions, IntPtr compressionOptions);
+		private extern static void nvttDestroyCompressor(IntPtr compressor);
+
+		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		private extern static bool nvttCompress(IntPtr compressor, IntPtr inputOptions, IntPtr compressionOptions, IntPtr outputOptions);
+
+		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		private extern static int nvttEstimateSize(IntPtr compressor, IntPtr inputOptions, IntPtr compressionOptions);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private static extern IntPtr nvttErrorString(Error error);
 
 		#endregion
 
-		public static bool Compress(InputOptions inputOptions, CompressionOptions compressionOptions, OutputOptions outputOptions)
+		internal IntPtr compressor;
+
+		public Compressor()
 		{
-			return nvttCompress(inputOptions.options, compressionOptions.options, outputOptions.options);
+			compressor = nvttCreateCompressor();
 		}
 
-		public static int EstimateSize(InputOptions inputOptions, CompressionOptions compressionOptions)
+		~Compressor()
 		{
-			return nvttEstimateSize(inputOptions.options, compressionOptions.options);
+			nvttDestroyCompressor(compressor);
+		}
+
+		public bool Compress(InputOptions input, CompressionOptions compression, OutputOptions output)
+		{
+			return nvttCompress(compressor, input.options, compression.options, output.options);
+		}
+
+		public int EstimateSize(InputOptions input, CompressionOptions compression)
+		{
+			return nvttEstimateSize(compressor, input.options, compression.options);
 		}
 
 		public static string ErrorString(Error error)
