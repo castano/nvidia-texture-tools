@@ -758,6 +758,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\Compressor.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\CompressRGB.cpp"
 				>
 			</File>
