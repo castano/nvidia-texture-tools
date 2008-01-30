@@ -26,12 +26,28 @@
 
 #include "nvtt.h"
 
+namespace nv
+{
+	class Image;
+}
+
 namespace nvtt
 {
 
 	struct Compressor::Private
 	{
 		Private() {}
+
+		bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+		int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
+
+	private:
+
+		bool outputHeader(const InputOptions::Private & inputOptions, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions) const;
+		bool compressMipmap(const nv::Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions) const;
+
+
+	public:
 
 		bool cudaSupported;
 		bool cudaEnabled;
