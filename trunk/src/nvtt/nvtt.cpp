@@ -139,6 +139,7 @@ static bool outputHeader(const InputOptions::Private & inputOptions, const Outpu
 		
 		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
 			header.setFourCC('D', 'X', 'T', '1');
+			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
 		else if (compressionOptions.format == Format_DXT3) {
 			header.setFourCC('D', 'X', 'T', '3');
@@ -175,9 +176,6 @@ static bool outputHeader(const InputOptions::Private & inputOptions, const Outpu
 		outputOptions.errorHandler->error(Error_FileWrite);
 	}
 	
-	// Revert swap.
-	header.swapBytes();
-
 	return writeSucceed;
 }
 
@@ -670,32 +668,6 @@ static bool compress(const InputOptions::Private & inputOptions, const OutputOpt
 }
 
 
-Compressor::Compressor() : m(*new Compressor::Private())
-{
-	m.cudaSupported = cuda::isHardwarePresent();
-	m.cudaEnabled = true;
-
-	// @@ Do CUDA initialization here.
-
-}
-
-Compressor::~Compressor()
-{
-	// @@ Free CUDA resources here.
-}
-
-void Compressor::enableCudaAceleration(bool enable)
-{
-	if (m.cudaSupported)
-	{
-		m.cudaEnabled = enable;
-	}
-}
-
-bool Compressor::isCudaAcelerationEnabled() const
-{
-	return m.cudaEnabled;
-}
 
 
 /// Compress the input texture with the given compression options.
@@ -704,38 +676,6 @@ bool Compressor::process(const InputOptions & inputOptions, const CompressionOpt
 	return ::compress(inputOptions.m, outputOptions.m, compressionOptions.m);
 }
 
-
-/// Estimate the size of compressing the input with the given options.
-int Compressor::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const
-{
-	const Format format = compressionOptions.m.format;
-	const uint bitCount = compressionOptions.m.bitcount;
-
-	inputOptions.m.computeTargetExtents();
-	
-	uint mipmapCount = inputOptions.m.realMipmapCount();
-	
-	int size = 0;
-	
-	for (uint f = 0; f < inputOptions.m.faceCount; f++)
-	{
-		uint w = inputOptions.m.targetWidth;
-		uint h = inputOptions.m.targetHeight;
-		uint d = inputOptions.m.targetDepth;
-		
-		for (uint m = 0; m < mipmapCount; m++)
-		{
-			size += computeImageSize(w, h, bitCount, format);
-			
-			// Compute extents of next mipmap:
-			w = max(1U, w / 2);
-			h = max(1U, h / 2);
-			d = max(1U, d / 2);
-		}
-	}
-	
-	return size;
-}
 
 
 /// Return a string for the given error.

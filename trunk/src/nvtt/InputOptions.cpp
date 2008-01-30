@@ -102,7 +102,7 @@ void InputOptions::reset()
 	m.colorTransform = ColorTransform_None;
 	m.linearTransform = Matrix(identity);
 
-	m.generateMipmaps = false;
+	m.generateMipmaps = true;
 	m.maxLevel = -1;
 	m.mipmapFilter = MipmapFilter_Box;
 
