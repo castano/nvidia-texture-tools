@@ -423,9 +423,9 @@ static FloatImage * processInput(const InputOptions::Private & inputOptions, int
 		if (inputOptions.normalizeMipmaps)
 		{
 			FloatImage * img = new FloatImage(mipmap.data.ptr());
-			img->normalize(0);
+			normalizeNormalMap(img);
 			return img;
-		}		
+		}	
 	}
 	else
 	{
