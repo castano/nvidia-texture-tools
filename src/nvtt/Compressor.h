@@ -43,8 +43,9 @@ namespace nvtt
 
 	private:
 
-		bool outputHeader(const InputOptions::Private & inputOptions, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions) const;
-		bool compressMipmap(const nv::Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions) const;
+		bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+		bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+		bool compressMipmap(const nv::Image * image, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 
 	public:

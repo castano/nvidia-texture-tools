@@ -410,7 +410,7 @@ static void quantize(Image * img, const CompressionOptions::Private & compressio
 // Process the input, convert to normal map, normalize, or convert to linear space.
 static FloatImage * processInput(const InputOptions::Private & inputOptions, int idx)
 {
-	const InputOptions::Private::Image & mipmap = inputOptions.images[idx];
+	const InputOptions::Private::InputImage & mipmap = inputOptions.images[idx];
 	
 	if (inputOptions.convertToNormalMap)
 	{
@@ -499,7 +499,7 @@ static int findMipmap(const InputOptions::Private & inputOptions, uint f, int fi
 	for (int m = firstMipmap; m < int(inputOptions.mipmapCount); m++)
 	{
 		int idx = f * inputOptions.mipmapCount + m;
-		const InputOptions::Private::Image & mipmap = inputOptions.images[idx];
+		const InputOptions::Private::InputImage & mipmap = inputOptions.images[idx];
 		
 		if (mipmap.width >= int(w) && mipmap.height >= int(h) && mipmap.depth >= int(d))
 		{
@@ -527,7 +527,7 @@ static int findImage(const InputOptions::Private & inputOptions, uint f, uint w,
 	nvDebugCheck(pair != NULL);
 	
 	int bestIdx = findMipmap(inputOptions, f, inputImageIdx, w, h, d);
-	const InputOptions::Private::Image & mipmap = inputOptions.images[bestIdx];
+	const InputOptions::Private::InputImage & mipmap = inputOptions.images[bestIdx];
 	
 	if (mipmap.width == w && mipmap.height == h && mipmap.depth == d)
 	{
