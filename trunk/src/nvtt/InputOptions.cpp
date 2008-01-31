@@ -144,7 +144,7 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 	m.faceCount = (type == TextureType_Cube) ? 6 : 1;
 	m.imageCount = m.mipmapCount * m.faceCount;
 	
-	m.images = new Private::Image[m.imageCount];
+	m.images = new Private::InputImage[m.imageCount];
 	
 	for(uint f = 0; f < m.faceCount; f++)
 	{
@@ -154,7 +154,7 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 
 		for (uint mipLevel = 0; mipLevel < m.mipmapCount; mipLevel++)
 		{
-			Private::Image & img = m.images[f * m.mipmapCount + mipLevel];
+			Private::InputImage & img = m.images[f * m.mipmapCount + mipLevel];
 			img.width = w;
 			img.height = h;
 			img.depth = d;
@@ -381,3 +381,14 @@ int InputOptions::Private::realMipmapCount() const
 }
 
 
+const Image * InputOptions::Private::image(uint face, uint mipmap) const
+{
+	nvDebugCheck(face < faceCount);
+	nvDebugCheck(mipmap < mipmapCount);
+
+	const InputImage & image = this->images[face * mipmapCount + mipmap];
+	nvDebugCheck(image.face == face);
+	nvDebugCheck(image.mipLevel == mipmap);
+
+	return image.data.ptr();
+}

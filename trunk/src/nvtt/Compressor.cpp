@@ -92,7 +92,70 @@ namespace
 			return ((w + 3) / 4) * ((h + 3) / 4) * blockSize(format);
 		}
 	}
-	
+
+	// Mipmap could be:
+	// - a pointer to an input image.
+	// - a fixed point image.
+	// - a floating point image.
+	struct Mipmap
+	{
+		Mipmap() : m_inputImage(NULL) {}
+		~Mipmap() {}
+
+		// Reference input image.
+		void set(const InputOptions::Private & inputOptions, uint f, uint m)
+		{
+			m_inputImage = inputOptions.image(f, m);
+			m_fixedImage = NULL;
+			m_floatImage = NULL;
+		}
+
+		// Assign and take ownership of given image.
+		void set(FloatImage * image)
+		{
+			m_inputImage = NULL;
+			m_fixedImage = NULL;
+			m_floatImage = image;
+		}
+		
+		// Assign and take ownership of given image.
+		void set(Image * image)
+		{
+			m_inputImage = NULL;
+			m_fixedImage = image;
+			m_floatImage = NULL;
+		}
+
+
+		const FloatImage * asFloatImage() const
+		{
+			return m_floatImage.ptr();
+		}
+
+		const Image * asFixedImage() const
+		{
+			if (m_inputImage != NULL) 
+			{
+				return m_inputImage;
+			}
+			return m_fixedImage.ptr();
+		}
+		
+		/*void toFixed(const InputOptions::Private & inputOptions)
+		{
+			if (m_floatImage != NULL)
+			{
+				// Convert to fixed.
+				m_fixedImage = toFixedImage(m_floatImage.ptr(), inputOptions);
+			}
+		}*/
+		
+	private:
+		const Image * m_inputImage;
+		AutoPtr<Image> m_fixedImage;
+		AutoPtr<FloatImage> m_floatImage;
+	};
+
 } // namespace
 
 
@@ -162,17 +225,17 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 	inputOptions.computeTargetExtents();
 	
 	// Output DDS header.
-	if (!outputHeader(inputOptions, outputOptions, compressionOptions))
+	if (!outputHeader(inputOptions, compressionOptions, outputOptions))
 	{
 		return false;
 	}
 
 	for (uint f = 0; f < inputOptions.faceCount; f++)
 	{
-		/*if (!compressMipmaps(f, inputOptions, outputOptions, compressionOptions))
+		if (!compressMipmaps(f, inputOptions, compressionOptions, outputOptions))
 		{
 			return false;
-		}*/
+		}
 	}
 
 	outputOptions.closeFile();
@@ -182,7 +245,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 
 
 // Output DDS header.
-bool Compressor::Private::outputHeader(const InputOptions::Private & inputOptions, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions) const
+bool Compressor::Private::outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	// Output DDS header.
 	if (outputOptions.outputHandler == NULL || !outputOptions.outputHeader)
@@ -262,7 +325,64 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	return writeSucceed;
 }
 
-// @@ compressMipmaps...
+
+bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+{
+	uint w = inputOptions.targetWidth;
+	uint h = inputOptions.targetHeight;
+	uint d = inputOptions.targetDepth;
+	/*
+	int inputImageIdx = findMipmap(inputOptions, f, 0, w, h, d);
+	if (inputImageIdx == -1)
+	{
+		// First mipmap missing.
+		if (outputOptions.errorHandler != NULL) outputOptions.errorHandler->error(Error_InvalidInput);
+		return false;
+	}
+	
+	ImagePair pair;
+	*/
+
+	Mipmap mipmap;
+	// Mipmap could be:
+	// - a pointer to an input image.
+	// - a fixed point image.
+	// - a floating point image.
+
+	const uint mipmapCount = inputOptions.realMipmapCount();
+	nvDebugCheck(mipmapCount > 0);
+
+	for (uint m = 0; m < mipmapCount; m++)
+	{
+		if (outputOptions.outputHandler)
+		{
+			int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.format);
+			outputOptions.outputHandler->mipmap(size, w, h, d, f, m);
+		}
+		/*
+		inputImageIdx = findImage(inputOptions, f, w, h, d, inputImageIdx, &pair);
+		
+		// @@ Where to do the color transform?
+		// - Color transform may not be linear, so we cannot do before computing mipmaps.
+		// - Should be done in linear space, that is, after gamma correction.
+		
+		
+		pair.toFixed(inputOptions);
+		
+		// @@ Quantization should be done in compressMipmap! @@ It should not modify the input image!!!
+		quantize(pair.fixedImage(), compressionOptions);
+		
+		compressMipmap(pair.fixedImage(), outputOptions, compressionOptions);
+		*/
+
+		// Compute extents of next mipmap:
+		w = max(1U, w / 2);
+		h = max(1U, h / 2);
+		d = max(1U, d / 2);
+	}
+	
+	return true;
+}
 
 #if 0
 
@@ -546,60 +666,9 @@ static int findImage(const InputOptions::Private & inputOptions, uint f, uint w,
 	return bestIdx;	// @@ ???
 }
 
-
-static bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
-{
-	uint w = inputOptions.targetWidth;
-	uint h = inputOptions.targetHeight;
-	uint d = inputOptions.targetDepth;
-	
-	int inputImageIdx = findMipmap(inputOptions, f, 0, w, h, d);
-	if (inputImageIdx == -1)
-	{
-		// First mipmap missing.
-		if (outputOptions.errorHandler != NULL) outputOptions.errorHandler->error(Error_InvalidInput);
-		return false;
-	}
-	
-	ImagePair pair;
-
-	const uint mipmapCount = inputOptions.realMipmapCount();
-	nvDebugCheck(mipmapCount > 0);
-
-	for (uint m = 0; m < mipmapCount; m++)
-	{
-		if (outputOptions.outputHandler)
-		{
-			int size = computeImageSize(w, h, compressionOptions.bitcount, compressionOptions.format);
-			outputOptions.outputHandler->mipmap(size, w, h, d, f, m);
-		}
-		
-		inputImageIdx = findImage(inputOptions, f, w, h, d, inputImageIdx, &pair);
-		
-		// @@ Where to do the color transform?
-		// - Color transform may not be linear, so we cannot do before computing mipmaps.
-		// - Should be done in linear space, that is, after gamma correction.
-		
-		
-		pair.toFixed(inputOptions);
-		
-		// @@ Quantization should be done in compressMipmap! @@ It should not modify the input image!!!
-		quantize(pair.fixedImage(), compressionOptions);
-		
-		compressMipmap(pair.fixedImage(), outputOptions, compressionOptions);
-		
-		// Compute extents of next mipmap:
-		w = max(1U, w / 2);
-		h = max(1U, h / 2);
-		d = max(1U, d / 2);
-	}
-	
-	return true;
-}
-
 #endif // 0
 
-bool Compressor::Private::compressMipmap(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions) const
+bool Compressor::Private::compressMipmap(const Image * image, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	nvDebugCheck(image != NULL);
 

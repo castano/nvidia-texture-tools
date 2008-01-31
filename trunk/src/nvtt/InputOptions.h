@@ -46,8 +46,8 @@ namespace nvtt
 		uint mipmapCount;
 		uint imageCount;
 		
-		struct Image;
-		Image * images;
+		struct InputImage;
+		InputImage * images;
 		
 		// Gamma conversion.
 		float inputGamma;
@@ -88,12 +88,14 @@ namespace nvtt
 		
 		int realMipmapCount() const;
 		
+		const nv::Image * image(uint face, uint mipmap) const;
+
 	};
 
 	// Internal image structure.
-	struct InputOptions::Private::Image
+	struct InputOptions::Private::InputImage
 	{
-		Image() {}
+		InputImage() {}
 		
 		int mipLevel;
 		int face;
