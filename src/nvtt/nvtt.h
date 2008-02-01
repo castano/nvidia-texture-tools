@@ -203,7 +203,7 @@ namespace nvtt
 		NVTT_API void setNormalMap(bool b);
 		NVTT_API void setConvertToNormalMap(bool convert);
 		NVTT_API void setHeightEvaluation(float redScale, float greenScale, float blueScale, float alphaScale);
-		NVTT_API void setNormalFilter(float small, float medium, float big, float large);
+		NVTT_API void setNormalFilter(float sm, float medium, float big, float large);
 		NVTT_API void setNormalizeMipmaps(bool b);
 		
 		// Set color transforms. @@ Not implemented!
@@ -281,8 +281,8 @@ namespace nvtt
 		NVTT_API Compressor();
 		NVTT_API ~Compressor();
 
-		NVTT_API void enableCudaAceleration(bool enable);
-		NVTT_API bool isCudaAcelerationEnabled() const;
+		NVTT_API void enableCudaAcceleration(bool enable);
+		NVTT_API bool isCudaAccelerationEnabled() const;
 
 		// Main entrypoint of the compression library.
 		NVTT_API bool process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
