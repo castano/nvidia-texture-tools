@@ -45,6 +45,76 @@
 #define __debugsync()
 #endif
 
+#define TN            256
+#define WARP_COUNT    (TN / 32)
+#define HWARP_COUNT   (TN / 16)
+
+// Window size
+#define WS            20
+
+
+
+struct WrapClamp
+{
+	int operator()(int i, int h)
+	{
+		i = min(max(i, 0), h-1);
+	}
+};
+
+struct WrapRepeat
+{
+	int operator()(int i, int h)
+	{
+		i = abs(i) % h;	// :( Non power of two!
+	}
+};
+
+struct WrapMirror
+{
+	int operator()(int i, int h)
+	{
+		i = abs(i);
+		while (i >= h) i = 2 * w - i - 2;
+	}
+};
+
+
+// Vertical convolution filter that processes vertical strips.
+__global__ void convolveStrip(float * d_channel, float * d_kernel, int width, int height)
+{
+	__shared__ float s_kernel[32 * WS];
+
+	// Preload kernel in shared memory.
+	for (int i = 0; i < 32 * WS / TN; i++)
+	{
+		int idx = i * TN + tid;
+		if (idx < 32 * WS) s_kernel[idx] = d_kernel[idx];
+	}
+
+	__shared__ float s_strip[32 * WS];	// TN/32
+	
+	int wid = tid / 32 - WS/2;
+
+	Mirror wrap;
+	int row = wrap(wid);
+
+	// Preload image block.
+	for (int i = 0; i < 32 * WS / TN; i++)
+	{
+	}
+
+	// @@ Apply kernel to TN/32 rows.
+
+	// @@ Load 
+
+
+}
+
+
+
+
+
 
 __constant__ float inputGamma, outputInverseGamma;
 __constant__ float kernel[MAX_KERNEL_WIDTH];

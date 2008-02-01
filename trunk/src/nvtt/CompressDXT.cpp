@@ -349,8 +349,7 @@ void nv::compressDXT5n(const Image * image, const OutputOptions::Private & outpu
 			}
 			
 			// Compress Y.
-		//	QuickCompress::compressDXT1G(rgba, &block.color);
-			compressGreenBlock_BruteForce(rgba, &block.color);
+			QuickCompress::compressDXT1G(rgba, &block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
