@@ -28,10 +28,14 @@
 
 namespace squish {
 
-ColourFit::ColourFit( ColourSet const* colours, int flags ) 
-  : m_colours( colours ), 
-	m_flags( flags )
+ColourFit::ColourFit()
 {
+}
+
+void ColourFit::SetColourSet( ColourSet const* colours, int flags )
+{
+	m_colours = colours; 
+	m_flags = flags;
 }
 
 void ColourFit::Compress( void* block )

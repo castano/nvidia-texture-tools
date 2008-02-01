@@ -32,9 +32,14 @@
 
 namespace squish {
 
-WeightedClusterFit::WeightedClusterFit( ColourSet const* colours, int flags ) :
-	ColourFit( colours, flags )
+WeightedClusterFit::WeightedClusterFit()
 {
+}
+
+void WeightedClusterFit::SetColourSet( ColourSet const* colours, int flags )
+{
+	ColourFit::SetColourSet( colours, flags );
+
 	// initialise the best error
 #if SQUISH_USE_SIMD
 	m_besterror = VEC4_CONST( FLT_MAX );
@@ -100,7 +105,7 @@ WeightedClusterFit::WeightedClusterFit( ColourSet const* colours, int flags ) :
 }
 
 
-void WeightedClusterFit::setMetric(float r, float g, float b)
+void WeightedClusterFit::SetMetric(float r, float g, float b)
 {
 #if SQUISH_USE_SIMD
 	m_metric = Vec4(r, g, b, 0);
@@ -110,7 +115,7 @@ void WeightedClusterFit::setMetric(float r, float g, float b)
 	m_metricSqr = m_metric * m_metric;
 }
 
-float WeightedClusterFit::bestError() const
+float WeightedClusterFit::GetBestError() const
 {
 #if SQUISH_USE_SIMD
 	Vec4 x = m_xxsum * m_metricSqr;

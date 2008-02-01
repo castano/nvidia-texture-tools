@@ -36,7 +36,9 @@ class ColourSet;
 class ColourFit
 {
 public:
-	ColourFit( ColourSet const* colours, int flags );
+	ColourFit();
+
+	void SetColourSet( ColourSet const* colours, int flags );
 
 	void Compress( void* block );
 
