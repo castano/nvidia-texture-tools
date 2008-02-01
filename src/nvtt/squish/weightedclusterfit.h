@@ -37,12 +37,12 @@ namespace squish {
 class WeightedClusterFit : public ColourFit
 {
 public:
-	WeightedClusterFit( ColourSet const* colours, int flags );
-	
-	void setMetric(float r, float g, float b);
-	float bestError() const;
+	WeightedClusterFit();
 
-	static void doPrecomputation();
+	void SetColourSet( ColourSet const* colours, int flags );
+	
+	void SetMetric(float r, float g, float b);
+	float GetBestError() const;
 
 	// Make them public
 	virtual void Compress3( void* block );

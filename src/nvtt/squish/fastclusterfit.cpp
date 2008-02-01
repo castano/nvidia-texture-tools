@@ -31,9 +31,14 @@
 
 namespace squish {
 
-FastClusterFit::FastClusterFit( ColourSet const* colours, int flags ) :
-	ColourFit( colours, flags )
+FastClusterFit::FastClusterFit()
 {
+}
+
+void FastClusterFit::SetColourSet( ColourSet const* colours, int flags )
+{
+	ColourFit::SetColourSet( colours, flags );
+
 	// initialise the best error
 #if SQUISH_USE_SIMD
 	m_besterror = VEC4_CONST( FLT_MAX );
@@ -102,7 +107,7 @@ struct Precomp {
 static Precomp s_threeElement[153];
 static Precomp s_fourElement[969];
 
-void FastClusterFit::doPrecomputation()
+void FastClusterFit::DoPrecomputation()
 {
 	int i = 0;
 	
@@ -177,7 +182,7 @@ void FastClusterFit::doPrecomputation()
 	//printf("%d four cluster elements\n", i);
 }
 
-void FastClusterFit::setMetric(float r, float g, float b)
+void FastClusterFit::SetMetric(float r, float g, float b)
 {
 #if SQUISH_USE_SIMD
 	m_metric = Vec4(r, g, b, 0);
@@ -187,7 +192,7 @@ void FastClusterFit::setMetric(float r, float g, float b)
 	m_metricSqr = m_metric * m_metric;
 }
 
-float FastClusterFit::bestError() const
+float FastClusterFit::GetBestError() const
 {
 #if SQUISH_USE_SIMD
 	Vec4 x = m_xxsum * m_metricSqr;

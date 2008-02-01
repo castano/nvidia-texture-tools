@@ -30,9 +30,14 @@
 
 namespace squish {
 
-ClusterFit::ClusterFit( ColourSet const* colours, int flags ) 
-  : ColourFit( colours, flags )
+ClusterFit::ClusterFit()
 {
+}
+
+void ClusterFit::SetColourSet( ColourSet const* colours, int flags )
+{
+	ColourFit::SetColourSet( colours, flags );
+
 	// initialise the best error
 #if SQUISH_USE_SIMD
 	m_besterror = VEC4_CONST( FLT_MAX );
@@ -91,7 +96,7 @@ ClusterFit::ClusterFit( ColourSet const* colours, int flags )
 }
 
 
-void ClusterFit::setMetric(float r, float g, float b)
+void ClusterFit::SetMetric(float r, float g, float b)
 {
 #if SQUISH_USE_SIMD
 	m_metric = Vec4(r, g, b, 0);
@@ -101,7 +106,7 @@ void ClusterFit::setMetric(float r, float g, float b)
 	m_metricSqr = m_metric * m_metric;
 }
 
-float ClusterFit::bestError() const
+float ClusterFit::GetBestError() const
 {
 #if SQUISH_USE_SIMD
 	return m_besterror.GetVec3().X();

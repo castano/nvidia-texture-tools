@@ -36,10 +36,12 @@ namespace squish {
 class ClusterFit : public ColourFit
 {
 public:
-	ClusterFit( ColourSet const* colours, int flags );
-	
-	void setMetric(float r, float g, float b);
-	float bestError() const;
+	ClusterFit();
+
+	void SetColourSet( ColourSet const* colours, int flags );
+
+	void SetMetric(float r, float g, float b);
+	float GetBestError() const;
 
 private:
 	virtual void Compress3( void* block );

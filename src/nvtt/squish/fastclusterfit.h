@@ -37,12 +37,14 @@ namespace squish {
 class FastClusterFit : public ColourFit
 {
 public:
-	FastClusterFit( ColourSet const* colours, int flags );
+	FastClusterFit();
 	
-	void setMetric(float r, float g, float b);
-	float bestError() const;
+	void SetColourSet( ColourSet const* colours, int flags );
 
-	static void doPrecomputation();
+	void SetMetric(float r, float g, float b);
+	float GetBestError() const;
+
+	static void DoPrecomputation();
 
 	// Make them public
 	virtual void Compress3( void* block );
