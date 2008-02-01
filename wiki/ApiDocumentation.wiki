@@ -22,7 +22,7 @@ As new features are added to NVTT, binary compatibility will always be preserved
 The most important function of the NVTT API is the following:
 
 {{{
-bool nvtt::compress(const InputOptions &, const OutputOptions &, const CompressionOptions &);
+bool Compressor::process(const InputOptions &, const CompressionOptions &, const OutputOptions &);
 }}}
 
 It takes the texture defined by `InputOptions`, compresses it according to the `CompressionOptions` and outputs it according to the `OutputOptions`. These classes are documented in detail in the following sections.
@@ -40,7 +40,8 @@ outputOptions.setFileName("output.dds");
 CompressionOptions compressionOptions;
 compressionOptions.setFormat(Format_DXT1);
 
-compress(inputOptions, outputOptions, compressionOptions);
+Compressor compressor;
+compressor.process(inputOptions, compressionOptions, outputOptions);
 }}}
 
 
