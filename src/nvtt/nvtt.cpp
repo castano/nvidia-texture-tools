@@ -673,6 +673,9 @@ static bool compress(const InputOptions::Private & inputOptions, const OutputOpt
 /// Compress the input texture with the given compression options.
 bool Compressor::process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
+	// @@ Hack!
+	compressionOptions.m.useCuda = this->m.cudaEnabled;
+
 	return ::compress(inputOptions.m, outputOptions.m, compressionOptions.m);
 }
 

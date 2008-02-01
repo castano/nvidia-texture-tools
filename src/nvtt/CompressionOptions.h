@@ -46,7 +46,7 @@ namespace nvtt
 		uint bmask;
 		uint amask;
 		
-		bool useCuda;
+		mutable bool useCuda;
 
 		nv::String externalCompressor;
 
