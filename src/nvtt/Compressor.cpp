@@ -175,7 +175,7 @@ Compressor::~Compressor()
 
 
 /// Enable CUDA acceleration.
-void Compressor::enableCudaAceleration(bool enable)
+void Compressor::enableCudaAcceleration(bool enable)
 {
 	if (m.cudaSupported)
 	{
@@ -184,7 +184,7 @@ void Compressor::enableCudaAceleration(bool enable)
 }
 
 /// Check if CUDA acceleration is enabled.
-bool Compressor::isCudaAcelerationEnabled() const
+bool Compressor::isCudaAccelerationEnabled() const
 {
 	return m.cudaEnabled;
 }
