@@ -136,6 +136,7 @@ int main(int argc, char *argv[])
 	bool fast = false;
 	bool nocuda = false;
 	bool silent = false;
+	bool bc1n = false;
 	nvtt::Format format = nvtt::Format_BC1;
 
 	const char * externalCompressor = NULL;
@@ -187,6 +188,11 @@ int main(int argc, char *argv[])
 		else if (strcmp("-bc1", argv[i]) == 0)
 		{
 			format = nvtt::Format_BC1;
+		}
+		else if (strcmp("-bc1n", argv[i]) == 0)
+		{
+			format = nvtt::Format_BC1;
+			bc1n = true;
 		}
 		else if (strcmp("-bc1a", argv[i]) == 0)
 		{
@@ -265,6 +271,7 @@ int main(int argc, char *argv[])
 		printf("  -nocuda  \tDo not use cuda compressor.\n");
 		printf("  -rgb     \tRGBA format\n");
 		printf("  -bc1     \tBC1 format (DXT1)\n");
+		printf("  -bc1n    \tBC1 normal map format (DXT1nm)\n");
 		printf("  -bc1a    \tBC1 format with binary alpha (DXT1a)\n");
 		printf("  -bc2     \tBC2 format (DXT3)\n");
 		printf("  -bc3     \tBC3 format (DXT5)\n");
@@ -377,7 +384,11 @@ int main(int argc, char *argv[])
 		//compressionOptions.setQuality(nvtt::Quality_Production);
 		//compressionOptions.setQuality(nvtt::Quality_Highest);
 	}
-	compressionOptions.setColorWeights(1, 1, 1);
+
+	if (bc1n)
+	{
+		compressionOptions.setColorWeights(1, 1, 0);
+	}
 
 	if (externalCompressor != NULL)
 	{
@@ -394,7 +405,7 @@ int main(int argc, char *argv[])
 	}
 
 	nvtt::Compressor compressor;
-	compressor.enableCudaAceleration(!nocuda);
+	compressor.enableCudaAcceleration(!nocuda);
 
 	outputHandler.setTotal(compressor.estimateSize(inputOptions, compressionOptions));
 	outputHandler.setDisplayProgress(!silent);
