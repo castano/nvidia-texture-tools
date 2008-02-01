@@ -189,7 +189,7 @@ NVTT_API void nvttSetInputOptionsKaiserParameters(NvttInputOptions * inputOption
 NVTT_API void nvttSetInputOptionsNormalMap(NvttInputOptions * inputOptions, NvttBoolean b);
 NVTT_API void nvttSetInputOptionsConvertToNormalMap(NvttInputOptions * inputOptions, NvttBoolean convert);
 NVTT_API void nvttSetInputOptionsHeightEvaluation(NvttInputOptions * inputOptions, float redScale, float greenScale, float blueScale, float alphaScale);
-NVTT_API void nvttSetInputOptionsNormalFilter(NvttInputOptions * inputOptions, float small, float medium, float big, float large);
+NVTT_API void nvttSetInputOptionsNormalFilter(NvttInputOptions * inputOptions, float sm, float medium, float big, float large);
 NVTT_API void nvttSetInputOptionsNormalizeMipmaps(NvttInputOptions * inputOptions, NvttBoolean b);
 NVTT_API void nvttSetInputOptionsColorTransform(NvttInputOptions * inputOptions, NvttColorTransform t);
 NVTT_API void nvttSetInputOptionsLinearTransform(NvttInputOptions * inputOptions, int channel, float w0, float w1, float w2, float w3);
