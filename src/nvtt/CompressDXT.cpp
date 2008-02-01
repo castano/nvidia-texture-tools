@@ -187,7 +187,7 @@ void nv::doPrecomputation()
 	if (!done)
 	{
 		done = true;
-		squish::FastClusterFit::doPrecomputation();
+		squish::FastClusterFit::DoPrecomputation();
 	}
 }
 
@@ -202,6 +202,11 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 
 	doPrecomputation();
 
+	//squish::WeightedClusterFit fit;
+	//squish::ClusterFit fit;
+	squish::FastClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -209,10 +214,7 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 			
 			// Compress color.
 			squish::ColourSet colours((uint8 *)rgba.colors(), 0);
-			squish::FastClusterFit fit(&colours, squish::kDxt1);
-			//squish::WeightedClusterFit fit(&colours, squish::kDxt1);
-			//squish::ClusterFit fit(&colours, squish::kDxt1);
-			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+			fit.SetColourSet(&colours, squish::kDxt1);
 			fit.Compress(&block);
 			
 			// @@ Use iterative cluster fit algorithm to improve error in production quality mode.
@@ -235,6 +237,9 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 
 	doPrecomputation();
 
+	squish::WeightedClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -242,8 +247,7 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 			
 			// Compress color.
 			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kDxt1|squish::kWeightColourByAlpha);
-			squish::WeightedClusterFit fit(&colours, squish::kDxt1);
-			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+			fit.SetColourSet(&colours, squish::kDxt1);
 			fit.Compress(&block);
 			
 			// @@ Use iterative cluster fit algorithm to improve error in highest quality mode.
@@ -264,6 +268,9 @@ void nv::compressDXT3(const Image * image, const OutputOptions::Private & output
 	ColorBlock rgba;
 	BlockDXT3 block;
 	
+	squish::WeightedClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -274,8 +281,7 @@ void nv::compressDXT3(const Image * image, const OutputOptions::Private & output
 			
 			// Compress color.
 			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
-			squish::WeightedClusterFit fit(&colours, 0);
-			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+			fit.SetColourSet(&colours, 0);
 			fit.Compress(&block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
@@ -292,7 +298,10 @@ void nv::compressDXT5(const Image * image, const OutputOptions::Private & output
 	
 	ColorBlock rgba;
 	BlockDXT5 block;
-	
+
+	squish::WeightedClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -311,8 +320,7 @@ void nv::compressDXT5(const Image * image, const OutputOptions::Private & output
 
 			// Compress color.
 			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
-			squish::WeightedClusterFit fit(&colours, 0);
-			fit.setMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+			fit.SetColourSet(&colours, 0);
 			fit.Compress(&block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
