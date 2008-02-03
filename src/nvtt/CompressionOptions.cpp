@@ -48,7 +48,6 @@ void CompressionOptions::reset()
 	m.format = Format_DXT1;
 	m.quality = Quality_Normal;
 	m.colorWeight.set(1.0f, 1.0f, 1.0f, 1.0f);
-	m.useCuda = true;
 
 	m.bitcount = 32;
 	m.bmask = 0x000000FF;
@@ -90,20 +89,6 @@ void CompressionOptions::setColorWeights(float red, float green, float blue, flo
 //	m.colorWeight.set(x, y, 1.0f - x - y);
 	m.colorWeight.set(red, green, blue, alpha);
 }
-
-/*
-/// Enable or disable CUDA compression.
-void CompressionOptions::enableHardwareCompression(bool enable)
-{
-	m.useCuda = enable;
-}
-
-/// Enable or disable CUDA compression.
-void CompressionOptions::enableCudaCompression(bool enable)
-{
-	m.useCuda = enable;
-}
-*/
 
 
 /// Set color mask to describe the RGB/RGBA format.

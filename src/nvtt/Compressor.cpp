@@ -93,6 +93,10 @@ namespace
 		}
 	}
 
+} // namespace
+
+namespace nvtt
+{
 	// Mipmap could be:
 	// - a pointer to an input image.
 	// - a fixed point image.
@@ -103,31 +107,68 @@ namespace
 		~Mipmap() {}
 
 		// Reference input image.
-		void set(const InputOptions::Private & inputOptions, uint f, uint m)
+		void setFromInput(const InputOptions::Private & inputOptions, uint idx)
 		{
-			m_inputImage = inputOptions.image(f, m);
+			m_inputImage = inputOptions.image(idx);
 			m_fixedImage = NULL;
 			m_floatImage = NULL;
 		}
 
 		// Assign and take ownership of given image.
-		void set(FloatImage * image)
+		void setImage(FloatImage * image)
 		{
 			m_inputImage = NULL;
 			m_fixedImage = NULL;
 			m_floatImage = image;
 		}
 		
-		// Assign and take ownership of given image.
-		void set(Image * image)
+
+		// Convert linear float image to fixed image ready for compression.
+		void toFixedImage(const InputOptions::Private & inputOptions)
 		{
-			m_inputImage = NULL;
-			m_fixedImage = image;
-			m_floatImage = NULL;
+			if (this->asFixedImage() == NULL)
+			{
+				nvDebugCheck(m_floatImage != NULL);
+
+				if (inputOptions.isNormalMap || inputOptions.outputGamma == 1.0f)
+				{
+					m_fixedImage = m_floatImage->createImage();
+				}
+				else
+				{
+					m_fixedImage = m_floatImage->createImageGammaCorrect(inputOptions.outputGamma);
+				}
+			}
 		}
 
+		// Convert input image to linear float image.
+		void toFloatImage(const InputOptions::Private & inputOptions)
+		{
+			if (m_floatImage == NULL)
+			{
+				nvDebugCheck(this->asFixedImage() != NULL);
+
+				m_floatImage = new FloatImage(this->asFixedImage());
+
+				if (inputOptions.isNormalMap)
+				{
+					// Expand normals to [-1, 1] range.
+				//	floatImage->expandNormals(0);
+				}
+				else if (inputOptions.inputGamma != 1.0f)
+				{
+					// Convert to linear space.
+					m_floatImage->toLinear(0, 3, inputOptions.inputGamma);
+				}
+			}
+		}
 
 		const FloatImage * asFloatImage() const
+		{
+			return m_floatImage.ptr();
+		}
+
+		FloatImage * asFloatImage()
 		{
 			return m_floatImage.ptr();
 		}
@@ -140,15 +181,18 @@ namespace
 			}
 			return m_fixedImage.ptr();
 		}
-		
-		/*void toFixed(const InputOptions::Private & inputOptions)
+
+		Image * asMutableFixedImage()
 		{
-			if (m_floatImage != NULL)
+			if (m_inputImage != NULL)
 			{
-				// Convert to fixed.
-				m_fixedImage = toFixedImage(m_floatImage.ptr(), inputOptions);
+				// Do not modify input image, create a copy.
+				m_fixedImage = new Image(*m_inputImage);
+				m_inputImage = NULL;
 			}
-		}*/
+			return m_fixedImage.ptr();
+		}
+
 		
 	private:
 		const Image * m_inputImage;
@@ -156,13 +200,13 @@ namespace
 		AutoPtr<FloatImage> m_floatImage;
 	};
 
-} // namespace
+}
 
 
 Compressor::Compressor() : m(*new Compressor::Private())
 {
 	m.cudaSupported = cuda::isHardwarePresent();
-	m.cudaEnabled = true;
+	m.cudaEnabled = m.cudaSupported;
 
 	// @@ Do CUDA initialization here.
 
@@ -189,15 +233,13 @@ bool Compressor::isCudaAccelerationEnabled() const
 	return m.cudaEnabled;
 }
 
-#if 0
 
 /// Compress the input texture with the given compression options.
 bool Compressor::process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-	return m.compress(inputOptions.m, outputOptions.m, compressionOptions.m);
+	return m.compress(inputOptions.m, compressionOptions.m, outputOptions.m);
 }
 
-#endif // 0
 
 /// Estimate the size of compressing the input with the given options.
 int Compressor::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const
@@ -331,23 +373,8 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 	uint w = inputOptions.targetWidth;
 	uint h = inputOptions.targetHeight;
 	uint d = inputOptions.targetDepth;
-	/*
-	int inputImageIdx = findMipmap(inputOptions, f, 0, w, h, d);
-	if (inputImageIdx == -1)
-	{
-		// First mipmap missing.
-		if (outputOptions.errorHandler != NULL) outputOptions.errorHandler->error(Error_InvalidInput);
-		return false;
-	}
-	
-	ImagePair pair;
-	*/
 
 	Mipmap mipmap;
-	// Mipmap could be:
-	// - a pointer to an input image.
-	// - a fixed point image.
-	// - a floating point image.
 
 	const uint mipmapCount = inputOptions.realMipmapCount();
 	nvDebugCheck(mipmapCount > 0);
@@ -359,21 +386,23 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.format);
 			outputOptions.outputHandler->mipmap(size, w, h, d, f, m);
 		}
-		/*
-		inputImageIdx = findImage(inputOptions, f, w, h, d, inputImageIdx, &pair);
-		
+
 		// @@ Where to do the color transform?
 		// - Color transform may not be linear, so we cannot do before computing mipmaps.
 		// - Should be done in linear space, that is, after gamma correction.
+
+		if (!initMipmap(mipmap, inputOptions, w, h, d, f, m))
+		{
+			if (outputOptions.errorHandler != NULL)
+			{
+				outputOptions.errorHandler->error(Error_InvalidInput);
+				return false;
+			}
+		}
 		
-		
-		pair.toFixed(inputOptions);
-		
-		// @@ Quantization should be done in compressMipmap! @@ It should not modify the input image!!!
-		quantize(pair.fixedImage(), compressionOptions);
-		
-		compressMipmap(pair.fixedImage(), outputOptions, compressionOptions);
-		*/
+		quantizeMipmap(mipmap, compressionOptions);
+
+		compressMipmap(mipmap, compressionOptions, outputOptions);
 
 		// Compute extents of next mipmap:
 		w = max(1U, w / 2);
@@ -384,98 +413,210 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 	return true;
 }
 
-#if 0
-
-// Convert input image to linear float image.
-static FloatImage * toFloatImage(const Image * image, const InputOptions::Private & inputOptions)
+bool Compressor::Private::initMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f, uint m) const
 {
-	nvDebugCheck(image != NULL);
+	// Find image from input.
+	int inputIdx = findExactMipmap(inputOptions, w, h, d, f);
 
-	FloatImage * floatImage = new FloatImage(image);
-
-	if (inputOptions.isNormalMap)
+	if (inputIdx == -1 && m != 0)
 	{
-		// Expand normals. to [-1, 1] range.
-	//	floatImage->expandNormals(0);
-	}
-	else if (inputOptions.inputGamma != 1.0f)
-	{
-		// Convert to linear space.
-		floatImage->toLinear(0, 3, inputOptions.inputGamma);
-	}
-
-	return floatImage;
-}
-
-
-// Convert linear float image to output image.
-static Image * toFixedImage(const FloatImage * floatImage, const InputOptions::Private & inputOptions)
-{
-	nvDebugCheck(floatImage != NULL);
-
-	if (inputOptions.isNormalMap || inputOptions.outputGamma == 1.0f)
-	{
-		return floatImage->createImage();
+		// If input mipmap not found, and not top of the chain, then generate from last.
+		downsampleMipmap(mipmap, inputOptions);
 	}
 	else
 	{
-		return floatImage->createImageGammaCorrect(inputOptions.outputGamma);
+		if (inputIdx != -1)
+		{
+			// If input mipmap found, then get from input.
+			mipmap.setFromInput(inputOptions, inputIdx);
+		}
+		else
+		{
+			// If not found, resize closest mipmap.
+			inputIdx = findClosestMipmap(inputOptions, w, h, d, f);
+
+			if (inputIdx == -1)
+			{
+				return false;
+			}
+
+			mipmap.setFromInput(inputOptions, inputIdx);
+
+			scaleMipmap(mipmap, inputOptions, w, h, d);
+		}
+
+		processInputImage(mipmap, inputOptions);
 	}
+
+	// Convert linear float image to fixed image ready for compression.
+	mipmap.toFixedImage(inputOptions);
+
+	return true;
 }
 
+int Compressor::Private::findExactMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const
+{
+	for (int m = 0; m < int(inputOptions.mipmapCount); m++)
+	{
+		int idx = f * inputOptions.mipmapCount + m;
+		const InputOptions::Private::InputImage & inputImage = inputOptions.images[idx];
+		
+		if (inputImage.width == int(w) && inputImage.height == int(h) && inputImage.depth == int(d))
+		{
+			if (inputImage.data != NULL)
+			{
+				return idx;
+			}
+			return -1;
+		}
+		else if (inputImage.width < int(w) || inputImage.height < int(h) || inputImage.depth < int(d))
+		{
+			return -1;
+		}
+	}
+
+	return -1;
+}
+
+int Compressor::Private::findClosestMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const
+{
+	int bestIdx = -1;
+
+	for (int m = 0; m < int(inputOptions.mipmapCount); m++)
+	{
+		int idx = f * inputOptions.mipmapCount + m;
+		const InputOptions::Private::InputImage & inputImage = inputOptions.images[idx];
+
+		if (inputImage.data != NULL)
+		{
+			int difference = (inputImage.width - w) + (inputImage.height - h) + (inputImage.depth - d);
+
+			if (difference < 0)
+			{
+				if (bestIdx == -1)
+				{
+					bestIdx = idx;
+				}
+
+				return bestIdx;
+			}
+
+			bestIdx = idx;
+		}
+	}
+
+	return bestIdx;
+}
 
 // Create mipmap from the given image.
-static FloatImage * createMipmap(const FloatImage * floatImage, const InputOptions::Private & inputOptions)
+void Compressor::Private::downsampleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
 {
-	FloatImage * result = NULL;
+	// Make sure that floating point linear representation is available.
+	mipmap.toFloatImage(inputOptions);
+
+	const FloatImage * floatImage = mipmap.asFloatImage();
 	
 	if (inputOptions.mipmapFilter == MipmapFilter_Box)
 	{
 		// Use fast downsample.
-		result = floatImage->fastDownSample();
+		mipmap.setImage(floatImage->fastDownSample());
 	}
 	else if (inputOptions.mipmapFilter == MipmapFilter_Triangle)
 	{
 		TriangleFilter filter;
-		result = floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode);
+		mipmap.setImage(floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode));
 	}
 	else /*if (inputOptions.mipmapFilter == MipmapFilter_Kaiser)*/
 	{
 		nvDebugCheck(inputOptions.mipmapFilter == MipmapFilter_Kaiser);
 		KaiserFilter filter(inputOptions.kaiserWidth);
 		filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-		result = floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode);
+		mipmap.setImage(floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode));
 	}
 	
 	// Normalize mipmap.
 	if ((inputOptions.isNormalMap || inputOptions.convertToNormalMap) && inputOptions.normalizeMipmaps)
 	{
-		normalizeNormalMap(result);
+		normalizeNormalMap(mipmap.asFloatImage());
 	}
-	
-	return result;
 }
 
 
-// Quantize the input image to the precision of the output format.
-static void quantize(Image * img, const CompressionOptions::Private & compressionOptions)
+void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d) const
 {
+	mipmap.toFloatImage(inputOptions);
+
+	// @@ Add more filters.
+	// @@ Select different filters for downscaling and reconstruction.
+
+	// Resize image. 
+	BoxFilter boxFilter;
+	mipmap.setImage(mipmap.asFloatImage()->downSample(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
+}
+
+
+// Process an input image: Convert to normal map, normalize, or convert to linear space.
+void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
+{
+	if (inputOptions.convertToNormalMap)
+	{
+		mipmap.toFixedImage(inputOptions);
+
+		// @@ Compute heighmap scale factor correctly.
+		// m = original_width / this_width
+		// Scale height factor by 1 / 2 ^ m
+		Vector4 heightScale = inputOptions.heightFactors; // / float(1 << m);
+		mipmap.setImage(createNormalMap(mipmap.asFixedImage(), (FloatImage::WrapMode)inputOptions.wrapMode, heightScale, inputOptions.bumpFrequencyScale));
+	}
+	else if (inputOptions.isNormalMap)
+	{
+		if (inputOptions.normalizeMipmaps)
+		{
+			// If floating point image available, normalize in place.
+			if (mipmap.asFloatImage() == NULL)
+			{
+				FloatImage * floatImage = new FloatImage(mipmap.asFixedImage());
+				normalizeNormalMap(floatImage);
+				mipmap.setImage(floatImage);
+			}
+			else
+			{
+				normalizeNormalMap(mipmap.asFloatImage());
+				mipmap.setImage(mipmap.asFloatImage());
+			}
+		}
+	}
+	else
+	{
+		if (inputOptions.inputGamma != inputOptions.outputGamma)
+		{
+			mipmap.toFloatImage(inputOptions);
+		}
+	}
+}
+
+
+// Quantize the given mipmap according to the compression options.
+void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const
+{
+	nvDebugCheck(mipmap.asFixedImage() != NULL);
+
 	if (compressionOptions.enableColorDithering)
 	{
 		if (compressionOptions.format >= Format_DXT1 && compressionOptions.format <= Format_DXT5)
 		{
-			Quantize::FloydSteinberg_RGB16(img);
+			Quantize::FloydSteinberg_RGB16(mipmap.asMutableFixedImage());
 		}
 	}
 	if (compressionOptions.binaryAlpha)
 	{
 		if (compressionOptions.enableAlphaDithering)
 		{
-			Quantize::FloydSteinberg_BinaryAlpha(img, compressionOptions.alphaThreshold);
+			Quantize::FloydSteinberg_BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
 		}
 		else
 		{
-			Quantize::BinaryAlpha(img, compressionOptions.alphaThreshold);
+			Quantize::BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
 		}
 	}
 	else
@@ -484,192 +625,22 @@ static void quantize(Image * img, const CompressionOptions::Private & compressio
 		{
 			if (compressionOptions.format == Format_DXT3)
 			{
-				Quantize::Alpha4(img);
+				Quantize::Alpha4(mipmap.asMutableFixedImage());
 			}
 			else if (compressionOptions.format == Format_DXT1a)
 			{
-				Quantize::BinaryAlpha(img, compressionOptions.alphaThreshold);
+				Quantize::BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
 			}
 		}
 	}
 }
 
-// Process the input, convert to normal map, normalize, or convert to linear space.
-static FloatImage * processInput(const InputOptions::Private & inputOptions, int idx)
+
+// Compress the given mipmap.
+bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-	const InputOptions::Private::Image & mipmap = inputOptions.images[idx];
-	
-	if (inputOptions.convertToNormalMap)
-	{
-		// Scale height factor by 1 / 2 ^ m		// @@ Compute scale factor exactly...
-		Vector4 heightScale = inputOptions.heightFactors / float(1 << idx);
-		return createNormalMap(mipmap.data.ptr(), (FloatImage::WrapMode)inputOptions.wrapMode, heightScale, inputOptions.bumpFrequencyScale);
-	}
-	else if (inputOptions.isNormalMap)
-	{
-		if (inputOptions.normalizeMipmaps)
-		{
-			FloatImage * img = new FloatImage(mipmap.data.ptr());
-			img->normalize(0);
-			return img;
-		}		
-	}
-	else
-	{
-		if (inputOptions.inputGamma != inputOptions.outputGamma)
-		{
-			FloatImage * img = new FloatImage(mipmap.data.ptr());
-			img->toLinear(0, 3, inputOptions.inputGamma);
-			return img;
-		}
-	}
-	
-	return NULL;
-}
+	const Image * image = mipmap.asFixedImage();
 
-
-
-
-struct ImagePair
-{
-	ImagePair() : m_floatImage(NULL), m_fixedImage(NULL), m_deleteFixedImage(false) {}
-	~ImagePair()
-	{
-		if (m_deleteFixedImage) {
-			delete m_fixedImage;
-		}
-	}
-	
-	void setFloatImage(FloatImage * image)
-	{
-		m_floatImage = image;
-		if (m_deleteFixedImage) delete m_fixedImage;
-		m_fixedImage = NULL;
-	}
-	
-	void setFixedImage(Image * image, bool deleteImage)
-	{
-		m_floatImage = NULL;
-		if (m_deleteFixedImage) delete m_fixedImage;
-		m_fixedImage = image;
-		m_deleteFixedImage = deleteImage;
-	}
-	
-	FloatImage * floatImage() const { return m_floatImage.ptr(); }
-	Image * fixedImage() const { return m_fixedImage; }
-	
-	void toFixed(const InputOptions::Private & inputOptions)
-	{
-		if (m_floatImage != NULL)
-		{
-			// Convert to fixed.
-			m_fixedImage = toFixedImage(m_floatImage.ptr(), inputOptions);
-		}
-	}
-	
-private:
-	AutoPtr<FloatImage> m_floatImage;
-	Image * m_fixedImage;
-	bool m_deleteFixedImage;
-};
-
-
-
-
-// Find the first mipmap provided that is greater or equal to the target image size.
-static int findMipmap(const InputOptions::Private & inputOptions, uint f, int firstMipmap, uint w, uint h, uint d)
-{
-	nvDebugCheck(firstMipmap >= 0);
-
-	int bestIdx = -1;
-	
-	for (int m = firstMipmap; m < int(inputOptions.mipmapCount); m++)
-	{
-		int idx = f * inputOptions.mipmapCount + m;
-		const InputOptions::Private::Image & mipmap = inputOptions.images[idx];
-		
-		if (mipmap.width >= int(w) && mipmap.height >= int(h) && mipmap.depth >= int(d))
-		{
-			if (mipmap.data != NULL)
-			{
-				bestIdx = idx;
-			}
-		}
-		else
-		{
-			// Do not look further down.
-			break;
-		}
-	}
-	
-	return bestIdx;
-}
-
-
-
-static int findImage(const InputOptions::Private & inputOptions, uint f, uint w, uint h, uint d, int inputImageIdx, ImagePair * pair)
-{
-	nvDebugCheck(w > 0 && h > 0);
-	nvDebugCheck(inputImageIdx >= 0 && inputImageIdx < int(inputOptions.mipmapCount));
-	nvDebugCheck(pair != NULL);
-	
-	int bestIdx = findMipmap(inputOptions, f, inputImageIdx, w, h, d);
-	const InputOptions::Private::Image & mipmap = inputOptions.images[bestIdx];
-	
-	if (mipmap.width == w && mipmap.height == h && mipmap.depth == d)
-	{
-		// Generate from input image.
-		AutoPtr<FloatImage> processedImage( processInput(inputOptions, bestIdx) );
-		
-		if (processedImage != NULL)
-		{
-			pair->setFloatImage(processedImage.release());
-		}
-		else
-		{
-			pair->setFixedImage(mipmap.data.ptr(), false);
-		}
-		
-		return bestIdx;
-	}
-	else
-	{
-		if (pair->floatImage() == NULL && pair->fixedImage() == NULL)
-		{
-			// Generate from input image and resize.
-			AutoPtr<FloatImage> processedImage( processInput(inputOptions, bestIdx) );
-			
-			if (processedImage == NULL)
-			{
-				processedImage = new FloatImage(mipmap.data.ptr());
-			}
-			
-			// Resize image. @@ Add more filters. @@ Distinguish between downscaling and reconstruction filters.
-			BoxFilter boxFilter;
-			pair->setFloatImage(processedImage->downSample(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
-		}
-		else
-		{
-			// Generate from previous mipmap.
-			if (pair->floatImage() == NULL)
-			{
-				nvDebugCheck(pair->fixedImage() != NULL);
-				pair->setFloatImage(toFloatImage(pair->fixedImage(), inputOptions));
-			}
-			
-			// Create mipmap.
-			pair->setFloatImage(createMipmap(pair->floatImage(), inputOptions));
-		}
-	}
-
-
-	return bestIdx;	// @@ ???
-}
-
-#endif // 0
-
-bool Compressor::Private::compressMipmap(const Image * image, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
-{
 	nvDebugCheck(image != NULL);
 
 	if (compressionOptions.format == Format_RGBA || compressionOptions.format == Format_RGB)

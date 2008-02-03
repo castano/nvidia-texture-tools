@@ -46,8 +46,6 @@ namespace nvtt
 		uint bmask;
 		uint amask;
 		
-		mutable bool useCuda;
-
 		nv::String externalCompressor;
 
 		// Quantization.

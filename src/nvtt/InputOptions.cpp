@@ -392,3 +392,12 @@ const Image * InputOptions::Private::image(uint face, uint mipmap) const
 
 	return image.data.ptr();
 }
+
+const Image * InputOptions::Private::image(uint idx) const
+{
+	nvDebugCheck(idx < faceCount * mipmapCount);
+
+	const InputImage & image = this->images[idx];
+
+	return image.data.ptr();
+}
