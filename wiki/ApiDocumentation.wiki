@@ -3,12 +3,28 @@
 
 == Contents ==
 
- * [ApiDocumentation#Introduction Introduction]
- * [ApiDocumentation#Usage Usage]
- * [ApiDocumentation#Input_Options Input Options]
- ** [ApiDocumentation#Image_Resizing Image Resizing]
- * [ApiDocumentation#Compression_Options Compression Options]
- * [ApiDocumentation#Output_Options Output Options]
+  * [ApiDocumentation#Introduction Introduction]
+  * [ApiDocumentation#Usage Usage]
+  * [ApiDocumentation#Input_Options Input Options]
+    * [ApiDocumentation#Specifying_Input_Images Specifying Input Images]
+    * [ApiDocumentation#Mipmap_Generation Mipmap Generation]
+    * [ApiDocumentation#Image_Resizing Image Resizing]
+    * [ApiDocumentation#Gamma_Correction Gamma Correction]
+    * [ApiDocumentation#Processing_Normalmaps Processing Normalmaps]
+    * [ApiDocumentation#Generating_Normalmaps Generating Normalmaps]
+    * [ApiDocumentation#Image_Resizing Image Resizing]
+  * [ApiDocumentation#Compression_Options Compression Options]
+    * [ApiDocumentation#Compression_Formats Compression Formats]
+    * [ApiDocumentation#Compression_Quality Compression Quality]
+    * [ApiDocumentation#CUDA_Acceleration CUDA Acceleration]
+    * [ApiDocumentation#Color_Weighting Color Weighting]
+    * [ApiDocumentation#Pixel_Format_Conversion Pixel Format Conversion]
+    * [ApiDocumentation#Quantization Quantization]
+  * [ApiDocumentation#Output_Options Output Options]
+    * [ApiDocumentation#Output_Handler Output Handler]
+    * [ApiDocumentation#Producing_DDS_Files Producing DDS Files]
+    * [ApiDocumentation#Reporting Progress Reporting Progress]
+    * [ApiDocumentation#Handling_Errors Handling Errors]
 
 == Introduction ==
 
