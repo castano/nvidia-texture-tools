@@ -370,7 +370,10 @@ int main(int argc, char *argv[])
 	{
 		inputOptions.setMipmapping(false);
 	}
-	
+
+	//inputOptions.setGamma(2.2, 1);
+	//inputOptions.setRoundMode(nvtt::RoundMode_ToPreviousPowerOfTwo);
+
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
