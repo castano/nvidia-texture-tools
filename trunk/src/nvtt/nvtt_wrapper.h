@@ -184,7 +184,8 @@ NVTT_API void nvttSetInputOptionsFormat(NvttInputOptions * inputOptions, NvttInp
 NVTT_API void nvttSetInputOptionsAlphaMode(NvttInputOptions * inputOptions, NvttAlphaMode alphaMode);
 NVTT_API void nvttSetInputOptionsGamma(NvttInputOptions * inputOptions, float inputGamma, float outputGamma);
 NVTT_API void nvttSetInputOptionsWrapMode(NvttInputOptions * inputOptions, NvttWrapMode mode);
-NVTT_API void nvttSetInputOptionsMipmapping(NvttInputOptions * inputOptions, NvttBoolean generateMipmaps, NvttMipmapFilter filter, int maxLevel);
+NVTT_API void nvttSetInputOptionsMipmapFilter(NvttInputOptions * inputOptions, NvttMipmapFilter filter);
+NVTT_API void nvttSetInputOptionsMipmapGeneration(NvttInputOptions * inputOptions, NvttBoolean enabled, int maxLevel);
 NVTT_API void nvttSetInputOptionsKaiserParameters(NvttInputOptions * inputOptions, float width, float alpha, float stretch);
 NVTT_API void nvttSetInputOptionsNormalMap(NvttInputOptions * inputOptions, NvttBoolean b);
 NVTT_API void nvttSetInputOptionsConvertToNormalMap(NvttInputOptions * inputOptions, NvttBoolean convert);

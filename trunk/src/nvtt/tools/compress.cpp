@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
 	
 	if (noMipmaps)
 	{
-		inputOptions.setMipmapping(false);
+		inputOptions.setMipmapGeneration(false);
 	}
 
 
