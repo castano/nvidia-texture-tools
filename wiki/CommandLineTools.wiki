@@ -1,5 +1,5 @@
 #summary Command Line Tools
-#labels Documentation
+#labels Documentation,Featured
 
 = Introduction =
 
