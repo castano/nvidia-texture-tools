@@ -89,6 +89,7 @@ namespace nvtt
 		int realMipmapCount() const;
 		
 		const nv::Image * image(uint face, uint mipmap) const;
+		const nv::Image * image(uint idx) const;
 
 	};
 
