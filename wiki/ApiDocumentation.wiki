@@ -29,6 +29,8 @@
 
 The NVIDIA Texture Tools library (NVTT for short) is a C++ library that allows you to create textures compressed in any of the DX10 texture formats, and apply certain transformations to them such as mipmap generation, and normal map conversion.
 
+There are bindings for other languages, see 
+
 == Usage ==
 
 By default NVTT is compiled as a shared library. To use it in your application you only have to link it implicitly. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the Linker -> Input -> Additional Dependencies field of the project settings. Dynamic linking the library explicitly is not recommended.
