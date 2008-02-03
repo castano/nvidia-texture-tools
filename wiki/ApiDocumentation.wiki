@@ -403,9 +403,7 @@ outputOptions.setOutputHeader(false);
 
 === Handling Errors ===
 
-NVTT will produce errors in some circumstances. In order to 
-
-it's possible to register an error handler with the following method:
+NVTT will produce errors in some circumstances. In order to detect them it's possible to register an error handler with the following method:
 
 {{{
 OutputOptions::setErrorHandler(ErrorHandler *);
