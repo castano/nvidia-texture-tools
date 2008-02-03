@@ -194,7 +194,8 @@ namespace nvtt
 		NVTT_API void setWrapMode(WrapMode mode);
 		
 		// Set mipmapping options.
-		NVTT_API void setMipmapping(bool generateMipmaps, MipmapFilter filter = MipmapFilter_Box, int maxLevel = -1);
+		NVTT_API void setMipmapFilter(MipmapFilter filter);
+		NVTT_API void setMipmapGeneration(bool enabled, int maxLevel = -1);
 		NVTT_API void setKaiserParameters(float width, float alpha, float stretch);
 
 		// Set normal map options.

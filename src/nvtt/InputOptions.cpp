@@ -236,11 +236,16 @@ void InputOptions::setWrapMode(WrapMode mode)
 }
 
 
-/// Set mipmapping options.
-void InputOptions::setMipmapping(bool generateMipmaps, MipmapFilter filter/*= MipmapFilter_Box*/, int maxLevel/*= -1*/)
+/// Set mipmap filter.
+void InputOptions::setMipmapFilter(MipmapFilter filter)
 {
-	m.generateMipmaps = generateMipmaps;
 	m.mipmapFilter = filter;
+}
+
+/// Set mipmap generation.
+void InputOptions::setMipmapGeneration(bool enabled, int maxLevel/*= -1*/)
+{
+	m.generateMipmaps = enabled;
 	m.maxLevel = maxLevel;
 }
 

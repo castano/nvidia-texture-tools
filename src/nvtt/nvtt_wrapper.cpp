@@ -49,9 +49,14 @@ void nvttSetInputOptionsWrapMode(NvttInputOptions * inputOptions, NvttWrapMode m
 	inputOptions->setWrapMode((nvtt::WrapMode)mode);
 }
 
-void nvttSetInputOptionsMipmapping(NvttInputOptions * inputOptions, NvttBoolean generateMipmaps, NvttMipmapFilter filter, int maxLevel)
+void nvttSetInputOptionsMipmapFilter(NvttInputOptions * inputOptions, NvttMipmapFilter filter)
 {
-	inputOptions->setMipmapping(generateMipmaps != NVTT_False, (nvtt::MipmapFilter)filter, maxLevel);
+	inputOptions->setMipmapFilter((nvtt::MipmapFilter)filter);
+}
+
+void nvttSetInputOptionsMipmapGeneration(NvttInputOptions * inputOptions, NvttBoolean enabled, int maxLevel)
+{
+	inputOptions->setMipmapGeneration(enabled != NVTT_False, maxLevel);
 }
 
 void nvttSetInputOptionsKaiserParameters(NvttInputOptions * inputOptions, float width, float alpha, float stretch)
