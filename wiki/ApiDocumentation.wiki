@@ -1,6 +1,15 @@
 #summary API Documentation
 #labels Documentation,Featured
 
+== Contents ==
+
+ * [ApiDocumentation#Introduction Introduction]
+ * [ApiDocumentation#Usage Usage]
+ * [ApiDocumentation#Input_Options Input Options]
+ ** [ApiDocumentation#Image_Resizing Image Resizing]
+ * [ApiDocumentation#Compression_Options Compression Options]
+ * [ApiDocumentation#Output_Options Output Options]
+
 == Introduction ==
 
 The NVIDIA Texture Tools library (NVTT for short) is a C++ library that allows you to create textures compressed in any of the DX10 texture formats, and apply certain transformations to them such as mipmap generation, and normal map conversion.
