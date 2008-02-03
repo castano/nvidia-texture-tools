@@ -181,7 +181,10 @@ namespace Nvidia.TextureTools
 		private extern static void nvttSetInputOptionsWrapMode(IntPtr inputOptions, WrapMode mode);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static void nvttSetInputOptionsMipmapping(IntPtr inputOptions, bool generateMipmaps, MipmapFilter filter, int maxLevel);
+		private extern static void nvttSetInputOptionsMipmapFilter(IntPtr inputOptions, MipmapFilter filter);
+
+		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		private extern static void nvttSetInputOptionsMipmapGeneration(IntPtr inputOptions, bool generateMipmaps, int maxLevel);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsKaiserParameters(IntPtr inputOptions, float width, float alpha, float stretch);
@@ -259,19 +262,19 @@ namespace Nvidia.TextureTools
 			nvttSetInputOptionsWrapMode(options, wrapMode);
 		}
 
-		public void SetMipmapping(bool generateMipmaps)
+		public void SetMipmapFilter(MipmapFilter filter)
 		{
-			nvttSetInputOptionsMipmapping(options, generateMipmaps, MipmapFilter.Box, -1);
+			nvttSetInputOptionsMipmapFilter(options, filter);
 		}
 
-		public void SetMipmapping(bool generateMipmaps, MipmapFilter filter)
+		public void SetMipmapGeneration(bool enabled)
 		{
-			nvttSetInputOptionsMipmapping(options, generateMipmaps, filter, -1);
+			nvttSetInputOptionsMipmapGeneration(options, enabled, -1);
 		}
 
-		public void SetMipmapping(bool generateMipmaps, MipmapFilter filter, int maxLevel)
+		public void SetMipmapGeneration(bool enabled, int maxLevel)
 		{
-			nvttSetInputOptionsMipmapping(options, generateMipmaps, filter, maxLevel);
+			nvttSetInputOptionsMipmapGeneration(options, enabled, maxLevel);
 		}
 
 		public void SetKaiserParameters(float width, float alpha, float stretch)
