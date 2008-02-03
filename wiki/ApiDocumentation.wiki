@@ -158,7 +158,7 @@ Where the `wrapMode` argument must have one the following values:
   * !WrapMode_Repeat
   * !WrapMode_Clamp
 
-Note that the `wrapMode` is also used for other image processing operations, like normal map generation. So, it's a good idea to set it even if you are not generating mipmaps.
+Note that the `wrapMode` is also used for other image processing operations, like normal map generation. So, it's a good idea to set it even if you are not generating mipmaps. The default `wrapMode` is `WrapMode_Mirror`.
 
 
 === Gamma Correction ===
