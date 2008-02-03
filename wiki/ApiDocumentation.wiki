@@ -201,9 +201,28 @@ Mipmap generation behaves as with regular normal maps. The input images are firs
 *TODO*: Normal map conversion is only done to the input images. Mipmaps are generated from the normal map as usual.
 
 
-=== Quantization ===
+=== Resizing Image ===
 
-*TODO*: Should this be part of compression options instead?
+It's possible to constrain the size of the textures to a certain limit. This is accomplished with the following method:
+
+{{{
+void InputOptions::setMaxExtents(int d);
+}}}
+
+NVTT is able to handle non power of two textures correctly, but not all hardware supports them. It's possible to round the size of the input images to the next, nearest, or previous power of two. The rounding mode is specified with the following method.
+
+{{{
+void InputOptions::setRoundMode(RoundMode mode);
+}}}
+
+where `RoundMode` is one of the following:
+
+ * !RoundMode_None
+ * !RoundMode_ToNextPowerOfTwo
+ * !RoundMode_ToNearestPowerOfTwo
+ * !RoundMode_ToPreviousPowerOfTwo
+
+The default round mode is none.
 
 
 == Compression Options ==
@@ -302,6 +321,14 @@ compressionOptions.setFormat(Format_RGB);
 
 {{{
 void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+}}}
+
+=== Quantization ===
+
+*TODO*
+
+{{{
+void CompressionOptions::setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 }}}
 
 
