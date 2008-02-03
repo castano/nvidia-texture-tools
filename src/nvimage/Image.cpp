@@ -15,10 +15,26 @@ Image::Image() : m_width(0), m_height(0), m_format(Format_RGB), m_data(NULL)
 {
 }
 
+Image::Image(const Image & img)
+{
+	allocate(img.m_width, img.m_height);
+	m_format = img.m_format;
+	memcpy(m_data, img.m_data, sizeof(Color32) * m_width * m_height);
+}
+
 Image::~Image()
 {
 	free();
 }
+
+const Image & Image::operator=(const Image & img)
+{
+	allocate(img.m_width, img.m_height);
+	m_format = img.m_format;
+	memcpy(m_data, img.m_data, sizeof(Color32) * m_width * m_height);
+	return *this;
+}
+
 
 void Image::allocate(uint w, uint h)
 {

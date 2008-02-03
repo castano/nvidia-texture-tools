@@ -13,7 +13,6 @@ namespace nv
 	/// 32 bit RGBA image.
 	class NVIMAGE_CLASS Image
 	{
-		NV_FORBID_COPY(Image);
 	public:
 		
 		enum Format 
@@ -23,8 +22,12 @@ namespace nv
 		};
 		
 		Image();
+		Image(const Image & img);
 		~Image();
-		
+
+		const Image & operator=(const Image & img);
+
+
 		void allocate(uint w, uint h);
 		bool load(const char * name);
 		
