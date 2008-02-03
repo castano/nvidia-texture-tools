@@ -22,7 +22,7 @@
   * [ApiDocumentation#Output_Options Output Options]
     * [ApiDocumentation#Output_Handler Output Handler]
     * [ApiDocumentation#Producing_DDS_Files Producing DDS Files]
-    * [ApiDocumentation#Reporting Progress Reporting Progress]
+    * [ApiDocumentation#Reporting_Progress Reporting Progress]
     * [ApiDocumentation#Handling_Errors Handling Errors]
 
 == Introduction ==
