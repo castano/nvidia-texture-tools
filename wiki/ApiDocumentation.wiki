@@ -417,11 +417,12 @@ virtual void error(Error e) = 0;
 
 That receives one of these error codes:
 
+  * !Error_Unknown
   * !Error_InvalidInput
-  * !Error_UserInterruption
   * !Error_UnsupportedFeature
   * !Error_CudaError
-  * !Error_Unknown
+  * !Error_FileOpen
+  * !Error_FileWrite
 
 It's possible to translate the error codes to strings using the following function:
 
