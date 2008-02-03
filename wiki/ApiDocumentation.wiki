@@ -201,7 +201,7 @@ Mipmap generation behaves as with regular normal maps. The input images are firs
 *TODO*: Normal map conversion is only done to the input images. Mipmaps are generated from the normal map as usual.
 
 
-=== Resizing Image ===
+=== Image Resizing ===
 
 It's possible to constrain the size of the textures to a certain limit. This is accomplished with the following method:
 
