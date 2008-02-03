@@ -109,10 +109,10 @@ Again, since 3D textures are not supported, the depth argument should always be 
 Each of the faces of the surface is composed of a mipmap chain. You can provide each of these images explicitely with the `setMipmapData` method, but you can also disable mipmap generation or let the library compute the mipmaps procedurally. The following method provides some control over this process:
 
 {{{
-void InputOptions::setMipmapGeneration(bool generateMipmaps, int maxLevel);
+void InputOptions::setMipmapGeneration(bool enabled, int maxLevel);
 }}}
 
-In order to output mipmaps for each of the faces of the surface, the `generateMipmaps` argument should be set to true.
+In order to output mipmaps for each of the faces of the surface, the `enabled` argument should be set to true.
 
 If the mipmap image is not provided explicitly by the application, and generate mipmaps is enabled, then the mipmaps will be generated automatically from the previous level using a downsampling filter. It's also possible to provide incomplete mipmap chains, and the missing levels will be generated using the same process.
 
