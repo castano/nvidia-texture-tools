@@ -353,19 +353,19 @@ The output handler is an interface that defines two methods:
 
 {{{
 virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel) = 0;
-virtual void writeData(const void * data, int size) = 0;
+virtual bool writeData(const void * data, int size) = 0;
 }}}
 
-Applications need to implement this interface in order to receive compressed data from `nvtt::compress`.
+Applications need to implement this interface in order to receive compressed data from the compressor.
 
 *TODO*
 
-In order to minimize memory allocations NVTT will call writeData as soon as compressed data is available. Some compressors output one block at a time, while others output many.
+In order to minimize memory allocations NVTT will call `writeData` as soon as compressed data is available. Some compressors output one block at a time, while others output many.
 
 
 === Producing DDS Files ===
 
-By default `nvtt::compress` calls the `writeData` method before indicating the image that the data belongs to. That means that the data does not belong to any of the surface images, but is part of the header file. If you don't want to output the header file, you can ignore these calls, or disable this behavior with:
+By default the compressor calls the `writeData` method before indicating the image that the data belongs to. That means that the data does not belong to any of the surface images, but is part of the header file. If you don't want to output the header file, you can ignore these calls, or disable this behavior with:
 
 {{{
 outputOptions.setOutputHeader(false);
@@ -379,19 +379,29 @@ outputOptions.setOutputHeader(false);
 
 === Handling Errors ===
 
-*TODO*
+NVTT will produce errors in some circumstances. In order to 
+
+it's possible to register an error handler with the following method:
 
 {{{
 OutputOptions::setErrorHandler(ErrorHandler *);
 }}}
 
-Error Handler.
+The `ErrorHandler` interface has a single method:
+
+{{{
+virtual void error(Error e) = 0;
+}}}
+
+That receives one of these error codes:
 
   * !Error_InvalidInput
   * !Error_UserInterruption
   * !Error_UnsupportedFeature
   * !Error_CudaError
   * !Error_Unknown
+
+It's possible to translate the error codes to strings using the following function:
 
 {{{
 const char * nvtt::errorString(Error e);
