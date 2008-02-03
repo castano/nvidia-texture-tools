@@ -47,8 +47,6 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_DEPRECATED NVTT_API
-
 
 // Public interface.
 namespace nvtt
@@ -111,7 +109,7 @@ namespace nvtt
 	};
 
 
-	/// Wrap modes. // This matches FloatImage::WrapMode.
+	/// Wrap modes.
 	enum WrapMode
 	{
 		WrapMode_Clamp,
@@ -155,7 +153,7 @@ namespace nvtt
 	{
 		RoundMode_None,
 		RoundMode_ToNextPowerOfTwo,
-  		RoundMode_ToNearestPowerOfTwo,
+		RoundMode_ToNearestPowerOfTwo,
 		RoundMode_ToPreviousPowerOfTwo,
 	};
 	
@@ -186,7 +184,7 @@ namespace nvtt
 		// Describe the format of the input.
 		NVTT_API void setFormat(InputFormat format);
 		
-		// Set the way the input alpha channel is interpreted.
+		// Set the way the input alpha channel is interpreted. @@ Not implemented!
 		NVTT_API void setAlphaMode(AlphaMode alphaMode);
 		
 		// Set gamma settings.
@@ -210,7 +208,7 @@ namespace nvtt
 		NVTT_API void setColorTransform(ColorTransform t);
 		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
 		
-		// Set resizing options. @@ Not fully tested!
+		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
 		NVTT_API void setRoundMode(RoundMode mode);
 		
