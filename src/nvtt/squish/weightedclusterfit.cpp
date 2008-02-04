@@ -231,8 +231,11 @@ void WeightedClusterFit::Compress3( void* block )
 		for( int i = 0; i < 16; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
+		m_colours->RemapIndices( ordered, bestindices ); // Set alpha indices.
+
+
 		// save the block
-		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), ordered, block );
+		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );
 		
 		// save the error
 		m_besterror = besterror;
