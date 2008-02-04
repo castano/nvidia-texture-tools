@@ -35,6 +35,12 @@
 #define SQUISH_SSE_SPLAT( a )										\
 	( ( a ) | ( ( a ) << 2 ) | ( ( a ) << 4 ) | ( ( a ) << 6 ) )
 
+#ifdef __GNUC__
+#	define SQUISH_ALIGN_16 __attribute__ ((__aligned__ (16)))
+#else
+#	define SQUISH_ALIGN_16 __declspec(align(16))
+#endif
+
 namespace squish {
 
 #define VEC4_CONST( X ) Vec4( _mm_set1_ps( X ) )
@@ -55,7 +61,12 @@ public:
 		m_v = arg.m_v;
 		return *this;
 	}
-	
+
+	Vec4( const float * v )
+	{
+		m_v = _mm_load_ps( v );
+	}
+
 	Vec4( float x, float y, float z, float w )
 	{
 		m_v = _mm_setr_ps( x, y, z, w );
@@ -63,11 +74,7 @@ public:
 	
 	Vec3 GetVec3() const
 	{
-#ifdef __GNUC__
-		__attribute__ ((__aligned__ (16))) float c[4];
-#else
-		__declspec(align(16)) float c[4];
-#endif
+		SQUISH_ALIGN_16 float c[4];
 		_mm_store_ps( c, m_v );
 		return Vec3( c[0], c[1], c[2] );
 	}

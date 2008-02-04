@@ -43,16 +43,16 @@ ColourSet::ColourSet( u8 const* rgba, int flags, bool createMinimalSet/*=false*/
 	// create the minimal set
 	for( int i = 0; i < 16; ++i )
 	{
-		// check for transparent pixels when using dxt1
-		if( isDxt1 && rgba[4*i + 3] == 0 )
-		{
-			m_remap[i] = -1;
-			m_transparent = true;
-			if (createMinimalSet) continue;
-		}
-		
 		if (createMinimalSet)
 		{
+			// check for transparent pixels when using dxt1
+			if( isDxt1 && rgba[4*i + 3] == 0 )
+			{
+				m_remap[i] = -1;
+				m_transparent = true;
+				continue;
+			}
+
 			// loop over previous points for a match
 			for( int j = 0;; ++j )
 			{
@@ -100,6 +100,17 @@ ColourSet::ColourSet( u8 const* rgba, int flags, bool createMinimalSet/*=false*/
 		}
 		else
 		{
+			// check for transparent pixels when using dxt1
+			if( isDxt1 && rgba[4*i + 3] == 0 )
+			{
+				m_remap[i] = -1;
+				m_transparent = true;
+			}
+			else
+			{
+				m_remap[i] = m_count;
+			}
+
 			// normalise coordinates to [0,1]
 			float x = ( float )rgba[4*i + 2] / 255.0f;
 			float y = ( float )rgba[4*i + 1] / 255.0f;
@@ -111,7 +122,6 @@ ColourSet::ColourSet( u8 const* rgba, int flags, bool createMinimalSet/*=false*/
 			// add the point
 			m_points[m_count] = Vec3( x, y, z );
 			m_weights[m_count] = ( weightByAlpha ? w : 1.0f );
-			m_remap[i] = m_count;
 			
 			// advance
 			++m_count;

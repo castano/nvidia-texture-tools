@@ -104,8 +104,8 @@ struct Precomp {
 	float factor;
 };
 
-static Precomp s_threeElement[153];
-static Precomp s_fourElement[969];
+static SQUISH_ALIGN_16 Precomp s_threeElement[153];
+static SQUISH_ALIGN_16 Precomp s_fourElement[969];
 
 void FastClusterFit::DoPrecomputation()
 {
@@ -229,11 +229,12 @@ void FastClusterFit::Compress3( void* block )
 		x1 = zero;
 		
 		for( int c1 = 0; c1 <= 16-c0; c1++)
-		{	
-			Vec4 const alpha2_sum = VEC4_CONST(s_threeElement[i].alpha2_sum);
-			Vec4 const beta2_sum = VEC4_CONST(s_threeElement[i].beta2_sum);
-			Vec4 const alphabeta_sum = VEC4_CONST(s_threeElement[i].alphabeta_sum);
-			Vec4 const factor = VEC4_CONST(s_threeElement[i].factor);
+		{
+			Vec4 const constants = Vec4((const float *)&s_threeElement[i]);
+			Vec4 const alpha2_sum = constants.SplatX();
+			Vec4 const beta2_sum = constants.SplatY();
+			Vec4 const alphabeta_sum = constants.SplatZ();
+			Vec4 const factor = constants.SplatW();
 			i++;
 			
 			Vec4 const alphax_sum = MultiplyAdd(half, x1, x0);
@@ -310,6 +311,8 @@ void FastClusterFit::Compress3( void* block )
 		for( int i = 0; i < 16; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
+		m_colours->RemapIndices( ordered, bestindices ); // Set alpha indices.
+
 		// save the block
 		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), ordered, block );
 		
@@ -347,10 +350,11 @@ void FastClusterFit::Compress4( void* block )
 			
 			for( int c2 = 0; c2 <= 16-c0-c1; c2++)
 			{
-				Vec4 const alpha2_sum = VEC4_CONST(s_fourElement[i].alpha2_sum);
-				Vec4 const beta2_sum = VEC4_CONST(s_fourElement[i].beta2_sum);
-				Vec4 const alphabeta_sum = VEC4_CONST(s_fourElement[i].alphabeta_sum);
-				Vec4 const factor = VEC4_CONST(s_fourElement[i].factor);
+				Vec4 const constants = Vec4((const float *)&s_fourElement[i]);
+				Vec4 const alpha2_sum = constants.SplatX();
+				Vec4 const beta2_sum = constants.SplatY();
+				Vec4 const alphabeta_sum = constants.SplatZ();
+				Vec4 const factor = constants.SplatW();
 				i++;
 				
 				Vec4 const alphax_sum = x0 + MultiplyAdd(x1, twothirds, x2 * onethird);
