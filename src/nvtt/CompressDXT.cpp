@@ -36,8 +36,10 @@
 
 // squish
 #include "squish/colourset.h"
+//#include "squish/clusterfit.h"
 #include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
+
 
 // s3_quant
 #if defined(HAVE_S3QUANT)
@@ -217,8 +219,6 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 			fit.SetColourSet(&colours, squish::kDxt1);
 			fit.Compress(&block);
 			
-			// @@ Use iterative cluster fit algorithm to improve error in production quality mode.
-			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
 			}
@@ -235,8 +235,6 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 	ColorBlock rgba;
 	BlockDXT1 block;
 
-	doPrecomputation();
-
 	squish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
@@ -249,8 +247,6 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kDxt1|squish::kWeightColourByAlpha);
 			fit.SetColourSet(&colours, squish::kDxt1);
 			fit.Compress(&block);
-			
-			// @@ Use iterative cluster fit algorithm to improve error in highest quality mode.
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
