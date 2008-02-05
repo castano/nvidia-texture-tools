@@ -1,4 +1,4 @@
-The NVIDIA Texture Tools 2 are licensed under the MIT license.
+NVIDIA Texture Tools 2.0 is licensed under the MIT license.
 
 Copyright (c) 2007 NVIDIA Corporation
 
