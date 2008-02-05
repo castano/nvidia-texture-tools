@@ -201,3 +201,8 @@ const char * nvttErrorString(NvttError e)
 {
 	return nvtt::errorString((nvtt::Error)e);
 }
+
+unsigned int nvttVersion()
+{
+	return nvtt::version();
+}

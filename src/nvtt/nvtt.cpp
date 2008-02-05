@@ -47,3 +47,9 @@ const char * nvtt::errorString(Error e)
 	return "Invalid error";
 }
 
+/// Return NVTT version.
+unsigned int nvtt::version()
+{
+	return NVTT_VERSION;
+}
+

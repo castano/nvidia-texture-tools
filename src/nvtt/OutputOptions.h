@@ -39,7 +39,7 @@ namespace nvtt
 		{
 		}
 		
-		virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel)
+		virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
 		{
 			// ignore.
 		}

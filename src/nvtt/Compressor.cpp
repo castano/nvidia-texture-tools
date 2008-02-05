@@ -384,7 +384,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 		if (outputOptions.outputHandler)
 		{
 			int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.format);
-			outputOptions.outputHandler->mipmap(size, w, h, d, f, m);
+			outputOptions.outputHandler->beginImage(size, w, h, d, f, m);
 		}
 
 		// @@ Where to do the color transform?

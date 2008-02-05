@@ -47,6 +47,8 @@
 #	define NVTT_API
 #endif
 
+#define NVTT_VERSION 200
+
 
 // Public interface.
 namespace nvtt
@@ -162,7 +164,7 @@ namespace nvtt
 	{
 		AlphaMode_None,
 		AlphaMode_Transparency,
-   		AlphaMode_Premultiplied,
+		AlphaMode_Premultiplied,
 	};
 
 	/// Input options. Specify format and layout of the input texture.
@@ -225,7 +227,7 @@ namespace nvtt
 		virtual ~OutputHandler() {}
 		
 		/// Indicate the start of a new compressed image that's part of the final texture.
-		virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel) = 0;
+		virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel) = 0;
 		
 		/// Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
 		virtual bool writeData(const void * data, int size) = 0;
@@ -298,6 +300,8 @@ namespace nvtt
 	// Return string for the given error code.
 	NVTT_API const char * errorString(Error e);
 
+	// Return NVTT version.
+	NVTT_API unsigned int version();
 
 } // nvtt namespace
 
