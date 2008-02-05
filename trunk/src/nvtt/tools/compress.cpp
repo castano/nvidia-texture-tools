@@ -42,7 +42,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	MyOutputHandler(const char * name) : total(0), progress(0), percentage(0), stream(new nv::StdOutputStream(name)) {}
 	virtual ~MyOutputHandler() { delete stream; }
 	
-	virtual void setTotal(int t)
+	virtual void setTotal(int64 t)
 	{
 		total = t + 128;
 	}
@@ -63,9 +63,11 @@ struct MyOutputHandler : public nvtt::OutputHandler
 		stream->serialize(const_cast<void *>(data), size);
 
 		progress += size;
-		int p = (100 * progress) / total;
+		int p = int((100 * progress) / total);
 		if (verbose && p != percentage)
 		{
+			nvCheck(p >= 0);
+
 			percentage = p;
 			printf("\r%d%%", percentage);
 			fflush(stdout);
@@ -74,8 +76,8 @@ struct MyOutputHandler : public nvtt::OutputHandler
 		return true;
 	}
 	
-	int total;
-	int progress;
+	int64 total;
+	int64 progress;
 	int percentage;
 	bool verbose;
 	nv::StdOutputStream * stream;
