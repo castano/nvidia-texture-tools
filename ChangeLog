@@ -20,15 +20,15 @@ NVIDIA Texture Tools version 0.9.4
  * Added nvdecompress tool.
  * Added nvimgdiff tool.
  * Added nvddsinfo tool.
- * CUDA decompressor 22% faster.
+ * CUDA compressor 22% faster.
  * DXT3 & DXT5 CUDA compressors.
  * Faster DXT5n CPU compressor.
  * Many bug fixes.
 
-NVIDIA Texture Tools version 0.9.5
+NVIDIA Texture Tools version 2.0.0
  * Fixed PSNR formula in nvimgdiff.
  * Added support for arbitrary RGB formats.
- * Add support for DXT1a.
+ * Add support for DXT1a. Solves issue 1.
  * Refactor and improve compression quality of fast compressors.
  * Add cmake scripts to detect processor and chose compiler options.
  * Fix normal map decompression.
@@ -39,6 +39,9 @@ NVIDIA Texture Tools version 0.9.5
  * Fix errors when maxLevel is used.
  * Enable the use of BC5 not just for normal maps.
  * Add mirror wrapping mode, use by default.
- * Implement polyphase filters.
+ * Implement polyphase filters. Solves issue 3.
  * Add box and triangle filter sampling.
+ * Refactor nvtt public interface.
+ * Add resizing input options (setMaxExtents, setRoundMode). Solves issue 12.
+ * Plain C and C# wrappers. Solves issue 22.
 
