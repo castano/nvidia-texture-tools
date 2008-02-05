@@ -47,6 +47,8 @@
 #	define NVTT_API
 #endif
 
+#define NVTT_VERSION 200
+
 #ifdef __cplusplus
 typedef struct nvtt::InputOptions NvttInputOptions;
 typedef struct nvtt::CompressionOptions NvttCompressionOptions;
@@ -230,6 +232,7 @@ NVTT_API int nvttEstimateSize(const NvttCompressor * compressor, const NvttInput
 
 // Global functions.
 NVTT_API const char * nvttErrorString(NvttError e);
+NVTT_API unsigned int nvttVersion();
 
 
 #ifdef __cplusplus
