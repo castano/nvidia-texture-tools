@@ -6,6 +6,7 @@ SET(NVTT_SRCS
 	nvtt.h 
 	nvtt.cpp
 	Compressor.h
+	Compressor.cpp
 	nvtt_wrapper.h
 	nvtt_wrapper.cpp
 	CompressDXT.h
