@@ -439,8 +439,8 @@ namespace Nvidia.TextureTools
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsOutputHeader(IntPtr outputOptions, bool b);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, WriteDataDelegate writeData, ImageDelegate image);
+		//[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		//private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, WriteDataDelegate writeData, ImageDelegate image);
 
 		#endregion
 
