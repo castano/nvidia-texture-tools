@@ -1,6 +1,14 @@
-#summary One-sentence summary of this page.
+#summary Third Party Legal Notices
 
-The NVIDIA Texture Tools use several third party libraries. Note that the NVTT library does not use any of these libraries, the libraries are only used by the command line tools.
+The NVIDIA Texture Tools use the following third party libraries:
+
+  * [ThirdPartyLegalNotices#zlib zlib]
+  * [ThirdPartyLegalNotices#libtiff libtiff]
+  * [ThirdPartyLegalNotices#libpng libpng]
+  * [ThirdPartyLegalNotices#libjpeg libjpeg]
+
+Note, that the NVTT library does not use any of these libraries, the libraries are only used by the command line tools.
+
 
 = zlib =
 
@@ -198,4 +206,3 @@ We specifically permit and encourage the use of this software as the basis of
 commercial products, provided that all warranty or liability claims are
 assumed by the product vendor.
 }}}
-
