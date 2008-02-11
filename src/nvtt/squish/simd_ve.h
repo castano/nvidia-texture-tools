@@ -29,8 +29,6 @@
 #include <altivec.h>
 #undef bool
 
-#define SQUISH_ALIGN_16 __attribute__ ((__aligned__ (16)))
-
 namespace squish {
 
 #define VEC4_CONST( X ) Vec4( ( vector float )( X ) )
