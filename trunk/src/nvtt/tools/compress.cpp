@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
 		
 		for (uint f = 0; f < faceCount; f++)
 		{
-			for (uint m = 0; m <= mipmapCount; m++)
+			for (uint m = 0; m < mipmapCount; m++)
 			{
 				dds.mipmap(&mipmap, f, m);
 				
