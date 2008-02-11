@@ -418,9 +418,9 @@ bool Compressor::Private::initMipmap(Mipmap & mipmap, const InputOptions::Privat
 	// Find image from input.
 	int inputIdx = findExactMipmap(inputOptions, w, h, d, f);
 
-	if (inputIdx == -1 && m != 0)
+	if ((inputIdx == -1 || inputOptions.convertToNormalMap) && m != 0)
 	{
-		// If input mipmap not found, and not top of the chain, then generate from last.
+		// Generate from last, when mipmap not found, or normal map conversion enabled.
 		downsampleMipmap(mipmap, inputOptions);
 	}
 	else
@@ -561,11 +561,8 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 	if (inputOptions.convertToNormalMap)
 	{
 		mipmap.toFixedImage(inputOptions);
-
-		// @@ Compute heighmap scale factor correctly.
-		// m = original_width / this_width
-		// Scale height factor by 1 / 2 ^ m
-		Vector4 heightScale = inputOptions.heightFactors; // / float(1 << m);
+		
+		Vector4 heightScale = inputOptions.heightFactors;
 		mipmap.setImage(createNormalMap(mipmap.asFixedImage(), (FloatImage::WrapMode)inputOptions.wrapMode, heightScale, inputOptions.bumpFrequencyScale));
 	}
 	else if (inputOptions.isNormalMap)
