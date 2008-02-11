@@ -28,6 +28,12 @@
 
 #include "maths.h"
 
+#ifdef __GNUC__
+#	define SQUISH_ALIGN_16 __attribute__ ((__aligned__ (16)))
+#else
+#	define SQUISH_ALIGN_16 __declspec(align(16))
+#endif
+
 #if SQUISH_USE_ALTIVEC
 #include "simd_ve.h"
 #endif
