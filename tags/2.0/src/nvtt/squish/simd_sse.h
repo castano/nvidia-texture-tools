@@ -35,12 +35,6 @@
 #define SQUISH_SSE_SPLAT( a )										\
 	( ( a ) | ( ( a ) << 2 ) | ( ( a ) << 4 ) | ( ( a ) << 6 ) )
 
-#ifdef __GNUC__
-#	define SQUISH_ALIGN_16 __attribute__ ((__aligned__ (16)))
-#else
-#	define SQUISH_ALIGN_16 __declspec(align(16))
-#endif
-
 namespace squish {
 
 #define VEC4_CONST( X ) Vec4( _mm_set1_ps( X ) )

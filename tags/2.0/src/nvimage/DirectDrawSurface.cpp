@@ -687,7 +687,7 @@ uint DirectDrawSurface::mipmapCount() const
 {
 	nvDebugCheck(isValid());
 	if (header.flags & DDSD_MIPMAPCOUNT) return header.mipmapcount;
-	else return 0;
+	else return 1;
 }
 
 
@@ -991,8 +991,13 @@ uint DirectDrawSurface::faceSize() const
 
 uint DirectDrawSurface::offset(const uint face, const uint mipmap)
 {
-	uint size = 128; //sizeof(DDSHeader);
+	uint size = 128; // sizeof(DDSHeader);
 	
+	if (header.hasDX10Header())
+	{
+		size += 20; // sizeof(DDSHeader10);
+	}
+
 	if (face != 0)
 	{
 		size += face * faceSize();
