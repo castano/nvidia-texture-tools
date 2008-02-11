@@ -36,9 +36,9 @@ done
 
 if [ "$help" = "true" ]
 then
-    echo "---------------------------------------"
-    echo "nv "`cat VERSION`" configuration script"
-    echo "---------------------------------------"
+    echo "-----------------------------------------------"
+    echo "nvidia-texture-tools "`cat VERSION`" configuration script"
+    echo "-----------------------------------------------"
 	echo
 	echo "--help			Show this message."
 	echo "--debug			Configure debug build."
@@ -49,7 +49,7 @@ then
 	exit 0
 fi
 
-echo "-- Configuring nv "`cat VERSION`
+echo "-- Configuring nvidia-texture-tools "`cat VERSION`
 
 mkdir -p ./build
 cd ./build
