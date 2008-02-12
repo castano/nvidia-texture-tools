@@ -35,7 +35,7 @@ There are also bindings for other languages, see [LanguageBindings].
 
 By default NVTT is compiled as a shared library. To use it in your application you only have to link it implicitly. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the Linker -> Input -> Additional Dependencies field of the project settings. Dynamic linking the library explicitly is not recommended.
 
-In order to access the API you only have to include the [http://nvidia-texture-tools.googlecode.com/svn/trunk/src/nvtt/nvtt.h nvtt.h] header file:
+In order to access the API you only have to include the [http://code.google.com/p/nvidia-texture-tools/source/browse/trunk/src/nvtt/nvtt.h nvtt.h] header file:
 
 {{{
 #include <nvtt/nvtt.h>
