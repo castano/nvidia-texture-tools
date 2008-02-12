@@ -239,7 +239,7 @@ It's possible to constrain the size of the textures to a certain limit. This is 
 void InputOptions::setMaxExtents(int d);
 }}}
 
-NVTT is able to handle non power of two textures correctly, but not all hardware supports them. It's possible to round the size of the input images to the next, nearest, or previous power of two. The rounding mode is specified with the following method.
+NVTT is able to handle non power of two textures correctly, but not all hardware supports them. It's possible to round the size of the input images to the next, nearest, or previous power of two. The desired rounding mode is specified with the following method.
 
 {{{
 void InputOptions::setRoundMode(RoundMode mode);
