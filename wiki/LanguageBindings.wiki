@@ -1,6 +1,6 @@
-#summary NVTT C and C# language bindings.
+#summary C and C# language bindings.
 
-*This page is under construction*
+*This page is under construction!*
 
 You can find the C bindings at:
 
