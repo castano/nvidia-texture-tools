@@ -99,7 +99,7 @@ bool InputOptions::setMipmapData(const void * data, int w, int h, int d, int fac
 
 NVTT internally allocates a copy of the provided data, that allows you to delete or reuse the memory.
 
-If the width, height or depth of the provided mipmap does not match the one expected by the layout the function returns false, otherwise it returns true.
+If the width, height or depth of the provided mipmap does not match the one expected by the layout, then the function returns false, otherwise it returns true.
 
 Again, since 3D textures are not supported, the depth argument should always be set to 1.
 
