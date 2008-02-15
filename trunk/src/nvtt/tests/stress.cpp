@@ -83,9 +83,102 @@ struct MyOutputHandler : public nvtt::OutputHandler
 
 };
 
+void precomp()
+{
+	unsigned int bitmaps[1024];
+
+	int num = 0;
+
+	printf("{\n");
+	printf("\t%8X,\n", 0);
+
+	bitmaps[0] = 0;
+
+	num = 1;
+	for (int a = 1; a <= 15; a++)
+	{
+		  for (int b = a; b <= 15; b++)
+		  {
+				for (int c = b; c <= 15; c++)
+				{
+					int indices[16];
+
+					int i = 0;
+					for(; i < a; i++) {
+						indices[i] = 0;
+					}
+					for(; i < a+b; i++) {
+						indices[i] = 2;
+					}
+					for(; i < a+b+c; i++) {
+						indices[i] = 3;
+					}
+					for(; i < 16; i++) {
+						indices[i] = 1;
+					}
+
+					unsigned int bm = 0;
+					for(i = 0; i < 16; i++) {
+						bm |= indices[i] << (i * 2);
+					}
+
+					printf("\t0x%8X, // %d %d %d %d\n", bm, a-0, b-a, c-b, 16-c);
+
+					bitmaps[num] = bm;
+					num++;
+				}
+		  }
+	}
+
+	printf("}\n");
+
+	printf("// num = %d\n", num);
+
+/*
+	for( int i = imax; i >= 0; --i )
+	{
+		// second cluster [i,j) is one third along
+		for( int m = i; m < 16; ++m )
+		{
+			indices[m] = 2;
+		}
+		const int jmax = ( i == 0 ) ? 15 : 16;
+		for( int j = jmax; j >= i; --j )
+		{
+			// third cluster [j,k) is two thirds along
+			for( int m = j; m < 16; ++m )
+			{
+				indices[m] = 3;
+			}
+			
+			int kmax = ( j == 0 ) ? 15 : 16;
+			for( int k = kmax; k >= j; --k )
+			{
+				// last cluster [k,n) is at the end
+				if( k < 16 )
+				{
+					indices[k] = 1;
+				}
+				
+				uint bitmap = 0;
+				
+				bool hasThree = false;
+				for(int p = 0; p < 16; p++) {
+					bitmap |= indices[p] << (p * 2);
+				}
+				
+				bitmaps[num] = bitmap;
+				num++;
+			}
+		}
+	}
+*/
+}
 
 int main(int argc, char *argv[])
 {
+	precomp();
+
 	nvtt::InputOptions inputOptions;
 	inputOptions.setTextureLayout(nvtt::TextureType_2D, 1024, 1024);
 
@@ -98,6 +191,9 @@ int main(int argc, char *argv[])
 	inputOptions.setMipmapGeneration(false);
 
 	nvtt::CompressionOptions compressionOptions;
+//	compressionOptions.setFormat(nvtt::Format_DXT1);
+//	compressionOptions.setFormat(nvtt::Format_DXT1n);
+	compressionOptions.setFormat(nvtt::Format_CTX1);
 	
 	nvtt::OutputOptions outputOptions;
 	outputOptions.setOutputHeader(false);
