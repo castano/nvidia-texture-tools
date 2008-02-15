@@ -205,16 +205,19 @@ namespace nvtt
 
 Compressor::Compressor() : m(*new Compressor::Private())
 {
+	// CUDA initialization.
 	m.cudaSupported = cuda::isHardwarePresent();
 	m.cudaEnabled = m.cudaSupported;
 
-	// @@ Do CUDA initialization here.
-
+	if (m.cudaEnabled)
+	{
+		m.cuda = new CudaCompressor();
+	}
 }
 
 Compressor::~Compressor()
 {
-	// @@ Free CUDA resources here.
+	delete &m;
 }
 
 
@@ -224,6 +227,11 @@ void Compressor::enableCudaAcceleration(bool enable)
 	if (m.cudaSupported)
 	{
 		m.cudaEnabled = enable;
+	}
+
+	if (m.cudaEnabled && m.cuda == NULL)
+	{
+		m.cuda = new CudaCompressor();
 	}
 }
 
@@ -670,7 +678,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cudaCompressDXT1(image, outputOptions, compressionOptions);
+				cuda->compressDXT1(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -708,7 +716,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cudaCompressDXT3(image, outputOptions, compressionOptions);
+				cuda->compressDXT3(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -727,7 +735,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cudaCompressDXT5(image, outputOptions, compressionOptions);
+				cuda->compressDXT5(image, outputOptions, compressionOptions);
 			}
 			else
 			{
