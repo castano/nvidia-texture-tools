@@ -79,6 +79,9 @@ TARGET_LINK_LIBRARIES(nvassemble nvcore nvmath nvimage)
 ADD_EXECUTABLE(filtertest tests/filtertest.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(filtertest nvcore nvmath nvimage)
 
+ADD_EXECUTABLE(stress tests/stress.cpp tools/cmdline.h)
+TARGET_LINK_LIBRARIES(stress nvcore nvmath nvimage nvtt)
+
 ADD_EXECUTABLE(nvzoom tools/resize.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 

@@ -47,7 +47,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	
 	virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
 	{
-		assert(size == OUTPUT_SIZE);
+		assert(size == sizeof(int) * OUTPUT_SIZE);
 		assert(width == WIDTH);
 		assert(height == HEIGHT);
 		assert(depth == 1);
@@ -177,7 +177,7 @@ void precomp()
 
 int main(int argc, char *argv[])
 {
-	precomp();
+	//precomp();
 
 	nvtt::InputOptions inputOptions;
 	inputOptions.setTextureLayout(nvtt::TextureType_2D, 1024, 1024);

@@ -82,6 +82,12 @@ inline __device__ __host__ void operator /=(float3 & b, float f)
     b.z *= inv;
 }
 
+inline __device__ __host__ bool operator ==(float3 a, float3 b)
+{
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+
 // float2 operators
 inline __device__ __host__ float2 operator *(float2 a, float2 b)
 {
@@ -187,13 +193,35 @@ inline __device__ __host__ float3 firstEigenVector( float matrix[6] )
 		float z = v.x * matrix[2] + v.y * matrix[4] + v.z * matrix[5];
 		float m = max(max(x, y), z);        
 		float iv = 1.0f / m;
-		#if __DEVICE_EMULATION__
 		if (m == 0.0f) iv = 0.0f;
-		#endif
 		v = make_float3(x*iv, y*iv, z*iv);
 	}
 
 	return v;
+}
+
+inline __device__ bool singleColor(const float3 * colors)
+{
+#if __DEVICE_EMULATION__
+	bool sameColor = false;
+	for (int i = 0; i < 16; i++)
+	{
+		sameColor &= (colors[idx] == colors[0]);
+	}
+	return sameColor;
+#else
+	__shared__ int sameColor[16];
+	
+	const int idx = threadIdx.x;
+	
+	sameColor[idx] = (colors[idx] == colors[0]);
+	sameColor[idx] &= sameColor[idx^8];
+	sameColor[idx] &= sameColor[idx^4];
+	sameColor[idx] &= sameColor[idx^2];
+	sameColor[idx] &= sameColor[idx^1];
+	
+	return sameColor[0];
+#endif
 }
 
 inline __device__ void colorSums(const float3 * colors, float3 * sums)
@@ -284,9 +312,7 @@ inline __device__ __host__ float2 firstEigenVector2D( float matrix[3] )
 		float y = v.x * matrix[1] + v.y * matrix[2];
 		float m = max(x, y);        
 		float iv = 1.0f / m;
-		#if __DEVICE_EMULATION__
 		if (m == 0.0f) iv = 0.0f;
-		#endif
 		v = make_float2(x*iv, y*iv);
 	}
 
