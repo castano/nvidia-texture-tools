@@ -28,6 +28,8 @@
 
 #include "CudaMath.h"
 
+#include "../SingleColorLookup.h"
+
 #define NUM_THREADS 64		// Number of threads per block.
 
 #if __DEVICE_EMULATION__
@@ -117,7 +119,7 @@ __device__ void sortColors(const float * values, int * cmp)
 ////////////////////////////////////////////////////////////////////////////////
 // Load color block to shared mem
 ////////////////////////////////////////////////////////////////////////////////
-__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16])
+__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
@@ -128,7 +130,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 	{
 		// Read color and copy to shared mem.
 		uint c = image[(bid) * 16 + idx];
-	
+		
 		colors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
 		colors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
 		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
@@ -137,10 +139,12 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 #if __DEVICE_EMULATION__
 		} __debugsync(); if (idx < 16) {
 #endif
-
+		
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
 		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
+		
+		*sameColor = (axis == make_float3(0, 0, 0));
 		
 		dps[idx] = dot(colors[idx], axis);
 		
@@ -997,6 +1001,20 @@ __device__ void saveBlockCTX1(ushort start, ushort end, uint permutation, int xr
 	saveBlockDXT1(start, end, permutation, xrefs, result);
 }
 
+__device__ void saveSingleColorBlockDXT1(float3 color, uint2 * result)
+{
+	const int bid = blockIdx.x;
+
+	int r = color.x * 255;
+	int g = color.y * 255;
+	int b = color.z * 255;
+
+	ushort color0 = (OMatch5[r][0] << 11) | (OMatch6[g][0] << 5) | OMatch5[b][0];
+	ushort color1 = (OMatch5[r][1] << 11) | (OMatch6[g][1] << 5) | OMatch5[b][1];
+
+	result[bid].x = (color1 << 16) | color0;
+	result[bid].y = 0xaaaaaaaa;
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1007,9 +1025,16 @@ __global__ void compressDXT1(const uint * permutations, const uint * image, uint
 	__shared__ float3 colors[16];
 	__shared__ float3 sums[16];
 	__shared__ int xrefs[16];
+	__shared__ int sameColor;
 	
-	loadColorBlock(image, colors, sums, xrefs);
-	
+	loadColorBlock(image, colors, sums, xrefs, &sameColor);
+
+	if (sameColor)
+	{
+		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
+		return;
+	}
+
 	__syncthreads();
 
 	ushort bestStart, bestEnd;
@@ -1269,7 +1294,7 @@ __global__ void compressDXT5(const uint * permutations, const uint * image, uint
 	__shared__ int xrefs[16];
 	
 	loadColorBlock(image, colors, sums, weights, xrefs);
-		
+	
 	__syncthreads();
 
 	compressAlpha(weights, result);	
