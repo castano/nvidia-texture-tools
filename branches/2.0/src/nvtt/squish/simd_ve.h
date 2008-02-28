@@ -50,6 +50,16 @@ public:
 		return *this;
 	}
 	
+	Vec4( const float * v )
+	{
+		union { vector float v; float c[4]; } u;
+		u.c[0] = v[0];
+		u.c[1] = v[1];
+		u.c[2] = v[2];
+		u.c[3] = v[3];
+		m_v = u.v;
+	}
+
 	Vec4( float x, float y, float z, float w )
 	{
 		union { vector float v; float c[4]; } u;
