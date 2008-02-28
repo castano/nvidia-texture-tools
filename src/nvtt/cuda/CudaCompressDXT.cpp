@@ -48,16 +48,11 @@ using namespace nvtt;
 
 #if defined HAVE_CUDA
 
-//#define MAX_BLOCKS 32768U // 49152, 65535
-#define MAX_BLOCKS 8192U // 49152, 65535
-
+#define MAX_BLOCKS 32768 // 49152, 65535
 
 extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
-extern "C" void compressNormalKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
-extern "C" void compressKernelCTX1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
-
 
 #include "Bitmaps.h"	// @@ Rename to BitmapTable.h
 
@@ -124,7 +119,7 @@ void CudaCompressor::compressDXT1(const Image * image, const OutputOptions::Priv
 
 	uint imageSize = w * h * 16 * sizeof(Color32);
     uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);	// @@ Do this in parallel with the GPU, or in the GPU!
+	convertToBlockLinear(image, blockLinearImage);	// @@ Do this on the GPU!
 
 	const uint blockNum = w * h;
 	const uint compressedSize = blockNum * 8;
@@ -339,144 +334,6 @@ void CudaCompressor::compressDXT5(const Image * image, const OutputOptions::Priv
 	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(alphaBlocks);
-	free(blockLinearImage);
-
-#else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
-#endif
-}
-
-
-void CudaCompressor::compressDXT1n(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions)
-{
-	nvDebugCheck(cuda::isHardwarePresent());
-#if defined HAVE_CUDA
-
-	// Image size in blocks.
-	const uint w = (image->width() + 3) / 4;
-	const uint h = (image->height() + 3) / 4;
-
-	uint imageSize = w * h * 16 * sizeof(Color32);
-    uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);	// @@ Do this in parallel with the GPU, or in the GPU!
-
-	const uint blockNum = w * h;
-	const uint compressedSize = blockNum * 8;
-
-	clock_t start = clock();
-
-	setupCompressKernel(compressionOptions.colorWeight.ptr());
-	
-	// TODO: Add support for multiple GPUs.
-	uint bn = 0;
-	while(bn != blockNum)
-	{
-		uint count = min(blockNum - bn, MAX_BLOCKS);
-
-	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
-
-		// Launch kernel.
-		compressNormalKernelDXT1(count, m_data, m_result, m_bitmapTable);
-
-		// Check for errors.
-		cudaError_t err = cudaGetLastError();
-		if (err != cudaSuccess)
-		{
-			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
-		}
-
-		// Copy result to host, overwrite swizzled image.
-		cudaMemcpy(blockLinearImage, m_result, count * 8, cudaMemcpyDeviceToHost);
-
-		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(blockLinearImage, count * 8);
-		}
-
-		bn += count;
-	}
-
-	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
-
-	free(blockLinearImage);
-
-#else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
-#endif
-}
-
-
-void CudaCompressor::compressCTX1(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions)
-{
-	nvDebugCheck(cuda::isHardwarePresent());
-#if defined HAVE_CUDA
-
-	// Image size in blocks.
-	const uint w = (image->width() + 3) / 4;
-	const uint h = (image->height() + 3) / 4;
-
-	uint imageSize = w * h * 16 * sizeof(Color32);
-    uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);	// @@ Do this in parallel with the GPU, or in the GPU!
-
-	const uint blockNum = w * h;
-	const uint compressedSize = blockNum * 8;
-
-	clock_t start = clock();
-
-	setupCompressKernel(compressionOptions.colorWeight.ptr());
-	
-	// TODO: Add support for multiple GPUs.
-	uint bn = 0;
-	while(bn != blockNum)
-	{
-		uint count = min(blockNum - bn, MAX_BLOCKS);
-
-	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
-
-		// Launch kernel.
-		compressKernelCTX1(count, m_data, m_result, m_bitmapTable);
-
-		// Check for errors.
-		cudaError_t err = cudaGetLastError();
-		if (err != cudaSuccess)
-		{
-			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
-		}
-
-		// Copy result to host, overwrite swizzled image.
-		cudaMemcpy(blockLinearImage, m_result, count * 8, cudaMemcpyDeviceToHost);
-
-		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(blockLinearImage, count * 8);
-		}
-
-		bn += count;
-	}
-
-	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
-
 	free(blockLinearImage);
 
 #else
