@@ -107,7 +107,10 @@ CudaCompressor::~CudaCompressor()
 #endif
 }
 
-
+bool CudaCompressor::isValid() const
+{
+	return m_data != NULL && m_result != NULL && m_bitmapTable != NULL;
+}
 
 // @@ This code is very repetitive and needs to be cleaned up.
 
