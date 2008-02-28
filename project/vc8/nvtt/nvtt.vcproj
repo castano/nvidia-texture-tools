@@ -96,6 +96,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying header files..."
+				CommandLine="xcopy /y /f /i $(SolutionDir)\..\..\src\nvtt\nvtt*.h $(SolutionDir)\$(ConfigurationName).$(PlatformName)\include\"
 			/>
 		</Configuration>
 		<Configuration
@@ -258,6 +260,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying header files..."
+				CommandLine="xcopy /y /f /i $(SolutionDir)\..\..\src\nvtt\nvtt*.h $(SolutionDir)\$(ConfigurationName).$(PlatformName)\include\"
 			/>
 		</Configuration>
 		<Configuration
@@ -420,6 +424,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying header files..."
+				CommandLine="xcopy /y /f /i $(SolutionDir)\..\..\src\nvtt\nvtt*.h $(SolutionDir)\$(ConfigurationName).$(PlatformName)\include\"
 			/>
 		</Configuration>
 		<Configuration
@@ -578,6 +584,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying header files..."
+				CommandLine="xcopy /y /f /i $(SolutionDir)\..\..\src\nvtt\nvtt*.h $(SolutionDir)\$(ConfigurationName).$(PlatformName)\include\"
 			/>
 		</Configuration>
 		<Configuration
