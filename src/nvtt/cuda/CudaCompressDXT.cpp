@@ -109,6 +109,12 @@ CudaCompressor::~CudaCompressor()
 
 bool CudaCompressor::isValid() const
 {
+#if defined HAVE_CUDA
+	if (cudaGetLastError() != cudaSuccess)
+   	{
+		return false;
+	}
+#endif
 	return m_data != NULL && m_result != NULL && m_bitmapTable != NULL;
 }
 
