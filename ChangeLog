@@ -1,11 +1,8 @@
-NVIDIA Texture Tools version 2.1.0
- * CTX1 CUDA compressor.
- * DXT1n CUDA compressor.
-
 NVIDIA Texture Tools version 2.0.1
  * Fix memory leaks.
  * Pre-allocate device memory for CUDA compressor.
  * Add single color compressor.
+ * Better CUDA error checking.
 
 NVIDIA Texture Tools version 2.0.0
  * Fixed PSNR formula in nvimgdiff.
