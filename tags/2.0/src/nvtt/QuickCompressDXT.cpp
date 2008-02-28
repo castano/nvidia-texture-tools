@@ -353,12 +353,18 @@ static void optimizeAlpha8(const ColorBlock & rgba, AlphaBlockDXT5 * block)
 void QuickCompress::compressDXT1(Color32 c, BlockDXT1 * dxtBlock)
 {
 	dxtBlock->col0.r = OMatch5[c.r][0];
-	dxtBlock->col0.g = OMatch5[c.g][0];
+	dxtBlock->col0.g = OMatch6[c.g][0];
 	dxtBlock->col0.b = OMatch5[c.b][0];
 	dxtBlock->col1.r = OMatch5[c.r][1];
-	dxtBlock->col1.g = OMatch5[c.g][1];
+	dxtBlock->col1.g = OMatch6[c.g][1];
 	dxtBlock->col1.b = OMatch5[c.b][1];
 	dxtBlock->indices = 0xaaaaaaaa;
+
+	if (dxtBlock->col0.u < dxtBlock->col1.u)
+	{
+		swap(dxtBlock->col0.u, dxtBlock->col1.u);
+		dxtBlock->indices ^= 0x55555555;
+	}
 }
 
 void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
