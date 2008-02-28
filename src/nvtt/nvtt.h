@@ -49,6 +49,14 @@
 
 #define NVTT_VERSION 200
 
+#define NVTT_DECLARE_PIMPL(Class) \
+	private: \
+		Class(const Class &); \
+		void operator=(const Class &); \
+	public: \
+		struct Private; \
+		Private & m
+
 
 // Public interface.
 namespace nvtt
@@ -89,6 +97,8 @@ namespace nvtt
 	/// Compression options. This class describes the desired compression format and other compression settings.
 	struct CompressionOptions
 	{
+		NVTT_DECLARE_PIMPL(CompressionOptions);
+
 		NVTT_API CompressionOptions();
 		NVTT_API ~CompressionOptions();
 		
@@ -104,10 +114,6 @@ namespace nvtt
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
 
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
-
-	//private:
-		struct Private;
-		Private & m;
 	};
 
 
@@ -170,6 +176,8 @@ namespace nvtt
 	/// Input options. Specify format and layout of the input texture.
 	struct InputOptions
 	{
+		NVTT_DECLARE_PIMPL(InputOptions);
+
 		NVTT_API InputOptions();
 		NVTT_API ~InputOptions();
 		
@@ -214,10 +222,6 @@ namespace nvtt
 		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
 		NVTT_API void setRoundMode(RoundMode mode);
-		
-	//private:
-		struct Private;
-		Private & m;
 	};
 	
 	
@@ -258,6 +262,8 @@ namespace nvtt
 	/// the compressor to the user.
 	struct OutputOptions
 	{
+		NVTT_DECLARE_PIMPL(OutputOptions);
+
 		NVTT_API OutputOptions();
 		NVTT_API ~OutputOptions();
 		
@@ -269,16 +275,14 @@ namespace nvtt
 		NVTT_API void setOutputHandler(OutputHandler * outputHandler);
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
 		NVTT_API void setOutputHeader(bool outputHeader);
-		
-	//private:
-		struct Private;
-		Private & m;
 	};
 
 
 	/// Texture compressor.
 	struct Compressor
 	{
+		NVTT_DECLARE_PIMPL(Compressor);
+
 		NVTT_API Compressor();
 		NVTT_API ~Compressor();
 
@@ -290,10 +294,6 @@ namespace nvtt
 		
 		// Estimate the size of compressing the input with the given options.
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
-
-	//private:
-		struct Private;
-		Private & m;
 	};
 	
 	
