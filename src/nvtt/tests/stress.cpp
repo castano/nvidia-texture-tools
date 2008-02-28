@@ -31,8 +31,8 @@
 
 #define FRAME_COUNT  1000
 
-#define WIDTH        1024
-#define HEIGHT       1024
+#define WIDTH        2048
+#define HEIGHT       2048
 #define INPUT_SIZE   (WIDTH*HEIGHT)
 #define OUTPUT_SIZE  (WIDTH*HEIGHT/16*2)
 
@@ -180,20 +180,20 @@ int main(int argc, char *argv[])
 	//precomp();
 
 	nvtt::InputOptions inputOptions;
-	inputOptions.setTextureLayout(nvtt::TextureType_2D, 1024, 1024);
+	inputOptions.setTextureLayout(nvtt::TextureType_2D, WIDTH, HEIGHT);
 
-	for (int i = 0; i < 1024 * 1024; i++)
+	for (int i = 0; i < INPUT_SIZE; i++)
 	{
 		s_input[i] = rand();
 	}
 
-	inputOptions.setMipmapData(s_input, 1024, 1024);
+	inputOptions.setMipmapData(s_input, WIDTH, HEIGHT);
 	inputOptions.setMipmapGeneration(false);
 
 	nvtt::CompressionOptions compressionOptions;
-//	compressionOptions.setFormat(nvtt::Format_DXT1);
+	compressionOptions.setFormat(nvtt::Format_DXT1);
 //	compressionOptions.setFormat(nvtt::Format_DXT1n);
-	compressionOptions.setFormat(nvtt::Format_CTX1);
+//	compressionOptions.setFormat(nvtt::Format_CTX1);
 	
 	nvtt::OutputOptions outputOptions;
 	outputOptions.setOutputHeader(false);

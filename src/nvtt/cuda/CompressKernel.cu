@@ -1012,8 +1012,16 @@ __device__ void saveSingleColorBlockDXT1(float3 color, uint2 * result)
 	ushort color0 = (OMatch5[r][0] << 11) | (OMatch6[g][0] << 5) | OMatch5[b][0];
 	ushort color1 = (OMatch5[r][1] << 11) | (OMatch6[g][1] << 5) | OMatch5[b][1];
 
-	result[bid].x = (color1 << 16) | color0;
-	result[bid].y = 0xaaaaaaaa;
+	if (color0 < color1)
+	{
+		result[bid].x = (color0 << 16) | color1;
+		result[bid].y = 0xffffffff;
+	}
+	else
+	{
+		result[bid].x = (color1 << 16) | color0;
+		result[bid].y = 0xaaaaaaaa;
+	}
 }
 
 
@@ -1029,13 +1037,13 @@ __global__ void compressDXT1(const uint * permutations, const uint * image, uint
 	
 	loadColorBlock(image, colors, sums, xrefs, &sameColor);
 
+	__syncthreads();
+
 	if (sameColor)
 	{
 		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
 		return;
 	}
-
-	__syncthreads();
 
 	ushort bestStart, bestEnd;
 	uint bestPermutation;
