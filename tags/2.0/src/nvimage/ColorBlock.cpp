@@ -110,6 +110,19 @@ void ColorBlock::splatY()
 	}
 }
 
+/// Returns true if the block has a single color.
+bool ColorBlock::isSingleColor() const
+{
+	for(int i = 1; i < 16; i++)
+	{
+		if (m_color[0] != m_color[i])
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
 
 /// Count number of unique colors in this color block.
 uint ColorBlock::countUniqueColors() const

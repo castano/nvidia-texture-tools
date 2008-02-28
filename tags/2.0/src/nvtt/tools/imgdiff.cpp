@@ -130,10 +130,13 @@ struct NormalError
 
 	void done()
 	{
-		ade /= samples;
-		mse /= samples * 3;
-		rmse = sqrt(mse);
-		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
+		if (samples)
+		{
+			ade /= samples;
+			mse /= samples * 3;
+			rmse = sqrt(mse);
+			psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
+		}
 	}
 
 	void print()

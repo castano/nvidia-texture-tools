@@ -28,6 +28,8 @@
 
 #include "CudaMath.h"
 
+#include "../SingleColorLookup.h"
+
 #define NUM_THREADS 64		// Number of threads per block.
 
 #if __DEVICE_EMULATION__
@@ -60,6 +62,7 @@ __device__ void sortColors(const float * values, int * cmp)
 {
 	int tid = threadIdx.x;
 
+#if 1
 	cmp[tid] = (values[0] < values[tid]);
 	cmp[tid] += (values[1] < values[tid]);
 	cmp[tid] += (values[2] < values[tid]);
@@ -93,13 +96,30 @@ __device__ void sortColors(const float * values, int * cmp)
 	if (tid > 12 && cmp[tid] == cmp[12]) ++cmp[tid];
 	if (tid > 13 && cmp[tid] == cmp[13]) ++cmp[tid];
 	if (tid > 14 && cmp[tid] == cmp[14]) ++cmp[tid];
+#else
+
+	cmp[tid] = 0;
+
+	#pragma unroll
+	for (int i = 0; i < 16; i++)
+	{
+		cmp[tid] += (values[i] < values[tid]);
+	}
+
+	// Resolve elements with the same index.
+	#pragma unroll
+	for (int i = 0; i < 15; i++)
+	{
+		if (tid > 0 && cmp[tid] == cmp[i]) ++cmp[tid];
+	}
+#endif
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Load color block to shared mem
 ////////////////////////////////////////////////////////////////////////////////
-__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16])
+__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
@@ -110,7 +130,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 	{
 		// Read color and copy to shared mem.
 		uint c = image[(bid) * 16 + idx];
-	
+		
 		colors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
 		colors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
 		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
@@ -119,10 +139,12 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 #if __DEVICE_EMULATION__
 		} __debugsync(); if (idx < 16) {
 #endif
-
+		
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
 		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
+		
+		*sameColor = (axis == make_float3(0, 0, 0));
 		
 		dps[idx] = dot(colors[idx], axis);
 		
@@ -187,7 +209,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 ////////////////////////////////////////////////////////////////////////////////
 // Round color to RGB565 and expand
 ////////////////////////////////////////////////////////////////////////////////
-inline __device__ float3 roundAndExpand(float3 v, ushort * w)
+inline __device__ float3 roundAndExpand565(float3 v, ushort * w)
 {
 	v.x = rintf(__saturatef(v.x) * 31.0f);
 	v.y = rintf(__saturatef(v.y) * 63.0f);
@@ -234,8 +256,8 @@ __device__ float evalPermutation4(const float3 * colors, uint permutation, ushor
 	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 	
 	// Round a, b to the closest 5-6-5 color and expand...
-	a = roundAndExpand(a, start);
-	b = roundAndExpand(b, end);
+	a = roundAndExpand565(a, start);
+	b = roundAndExpand565(b, end);
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
@@ -274,8 +296,8 @@ __device__ float evalPermutation3(const float3 * colors, uint permutation, ushor
 	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 	
 	// Round a, b to the closest 5-6-5 color and expand...
-	a = roundAndExpand(a, start);
-	b = roundAndExpand(b, end);
+	a = roundAndExpand565(a, start);
+	b = roundAndExpand565(b, end);
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
@@ -315,8 +337,8 @@ __device__ float evalPermutation4(const float3 * colors, float3 color_sum, uint 
 	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 	
 	// Round a, b to the closest 5-6-5 color and expand...
-	a = roundAndExpand(a, start);
-	b = roundAndExpand(b, end);
+	a = roundAndExpand565(a, start);
+	b = roundAndExpand565(b, end);
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
@@ -351,8 +373,8 @@ __device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint 
 	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 	
 	// Round a, b to the closest 5-6-5 color and expand...
-	a = roundAndExpand(a, start);
-	b = roundAndExpand(b, end);
+	a = roundAndExpand565(a, start);
+	b = roundAndExpand565(b, end);
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
@@ -391,8 +413,8 @@ __device__ float evalPermutation4(const float3 * colors, const float * weights, 
 	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 	
 	// Round a, b to the closest 5-6-5 color and expand...
-	a = roundAndExpand(a, start);
-	b = roundAndExpand(b, end);
+	a = roundAndExpand565(a, start);
+	b = roundAndExpand565(b, end);
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
@@ -432,8 +454,8 @@ __device__ float evalPermutation3(const float3 * colors, const float * weights, 
 	float3 b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 
 	// Round a, b to the closest 5-6-5 color and expand...
-	a = roundAndExpand(a, start);
-	b = roundAndExpand(b, end);
+	a = roundAndExpand565(a, start);
+	b = roundAndExpand565(b, end);
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
@@ -715,21 +737,49 @@ __device__ void saveBlockDXT1(ushort start, ushort end, uint permutation, int xr
 	result[bid].y = indices;
 }
 
+__device__ void saveSingleColorBlockDXT1(float3 color, uint2 * result)
+{
+	const int bid = blockIdx.x;
 
+	int r = color.x * 255;
+	int g = color.y * 255;
+	int b = color.z * 255;
+
+	ushort color0 = (OMatch5[r][0] << 11) | (OMatch6[g][0] << 5) | OMatch5[b][0];
+	ushort color1 = (OMatch5[r][1] << 11) | (OMatch6[g][1] << 5) | OMatch5[b][1];
+
+	if (color0 < color1)
+	{
+		result[bid].x = (color0 << 16) | color1;
+		result[bid].y = 0xffffffff;
+	}
+	else
+	{
+		result[bid].x = (color1 << 16) | color0;
+		result[bid].y = 0xaaaaaaaa;
+	}
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Compress color block
 ////////////////////////////////////////////////////////////////////////////////
-__global__ void compress(const uint * permutations, const uint * image, uint2 * result)
+__global__ void compressDXT1(const uint * permutations, const uint * image, uint2 * result)
 {
 	__shared__ float3 colors[16];
 	__shared__ float3 sums[16];
 	__shared__ int xrefs[16];
+	__shared__ int sameColor;
 	
-	loadColorBlock(image, colors, sums, xrefs);
-	
+	loadColorBlock(image, colors, sums, xrefs, &sameColor);
+
 	__syncthreads();
+
+	if (sameColor)
+	{
+		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
+		return;
+	}
 
 	ushort bestStart, bestEnd;
 	uint bestPermutation;
@@ -749,7 +799,7 @@ __global__ void compress(const uint * permutations, const uint * image, uint2 * 
 }
 
 
-__global__ void compressWeighted(const uint * permutations, const uint * image, uint2 * result)
+__global__ void compressWeightedDXT1(const uint * permutations, const uint * image, uint2 * result)
 {
 	__shared__ float3 colors[16];
 	__shared__ float3 sums[16];
@@ -845,8 +895,8 @@ __device__ void optimizeAlpha8(const float alphas[16], uchar & a0, uchar & a1)
 	float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
 	float b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
 
-	a0 = roundAndExpand(a);
-	a1 = roundAndExpand(b);
+	a0 = roundAndExpand8(a);
+	a1 = roundAndExpand8(b);
 }
 */
 /*
@@ -933,7 +983,7 @@ __global__ void compressDXT5(const uint * permutations, const uint * image, uint
 	__shared__ int xrefs[16];
 	
 	loadColorBlock(image, colors, sums, weights, xrefs);
-		
+	
 	__syncthreads();
 
 	compressAlpha(weights, result);	
@@ -978,12 +1028,12 @@ extern "C" void setupCompressKernel(const float weights[3])
 // Launch kernel
 ////////////////////////////////////////////////////////////////////////////////
 
-extern "C" void compressKernel(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
+extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
-	compress<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+	compressDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
 }
 
-extern "C" void compressWeightedKernel(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
+extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
-	compressWeighted<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+	compressWeightedDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
 }
