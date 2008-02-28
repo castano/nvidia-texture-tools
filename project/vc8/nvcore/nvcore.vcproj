@@ -328,10 +328,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvcore\Ptr.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvcore\StrLib.h"
 				>
 			</File>

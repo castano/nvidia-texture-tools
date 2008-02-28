@@ -48,12 +48,7 @@ void initTables()
 };
 */
 
-#if __CUDACC__
-__constant__ unsigned short
-#else
-const static uint8 
-#endif
-OMatch5[256][2] =
+const static uint8 OMatch5[256][2] =
 {
 	{0x00, 0x00},
 	{0x00, 0x00},
@@ -313,12 +308,7 @@ OMatch5[256][2] =
 	{0x1F, 0x1F},
 };
 
-#if __CUDACC__
-__constant__ unsigned short
-#else
-const static uint8
-#endif
-OMatch6[256][2] =
+const static uint8 OMatch6[256][2] =
 {
 	{0x00, 0x00},
 	{0x00, 0x01},

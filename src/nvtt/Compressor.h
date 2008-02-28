@@ -24,10 +24,6 @@
 #ifndef NV_TT_COMPRESSOR_H
 #define NV_TT_COMPRESSOR_H
 
-#include <nvcore/Ptr.h>
-
-#include <nvtt/cuda/CudaCompressDXT.h>
-
 #include "nvtt.h"
 
 namespace nv
@@ -67,9 +63,6 @@ namespace nvtt
 
 		bool cudaSupported;
 		bool cudaEnabled;
-
-		nv::AutoPtr<nv::CudaCompressor> cuda;
-
 	};
 
 } // nvtt namespace

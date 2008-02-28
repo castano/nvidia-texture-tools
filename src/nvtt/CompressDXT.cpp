@@ -69,14 +69,7 @@ void nv::fastCompressDXT1(const Image * image, const OutputOptions::Private & ou
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
 			
-			if (rgba.isSingleColor())
-			{
-				QuickCompress::compressDXT1(rgba.color(0), &block);
-			}
-			else
-			{
-				QuickCompress::compressDXT1(rgba, &block);
-			}
+			QuickCompress::compressDXT1(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -221,16 +214,10 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 			
 			rgba.init(image, x, y);
 			
-			if (rgba.isSingleColor())
-			{
-				QuickCompress::compressDXT1(rgba.color(0), &block);
-			}
-			else
-			{
-				squish::ColourSet colours((uint8 *)rgba.colors(), 0);
-				fit.SetColourSet(&colours, squish::kDxt1);
-				fit.Compress(&block);
-			}
+			// Compress color.
+			squish::ColourSet colours((uint8 *)rgba.colors(), 0);
+			fit.SetColourSet(&colours, squish::kDxt1);
+			fit.Compress(&block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));

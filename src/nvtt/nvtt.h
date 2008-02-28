@@ -75,9 +75,6 @@ namespace nvtt
 		Format_BC3n = Format_DXT5n,
 		Format_BC4,     // ATI1
 		Format_BC5,     // 3DC, ATI2
-
-		Format_DXT1n,
-		Format_CTX1,
 	};
 	
 	/// Quality modes.

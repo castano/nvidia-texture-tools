@@ -56,7 +56,7 @@ namespace
 	
 	static int blockSize(Format format)
 	{
-		if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
+		if (format == Format_DXT1 || format == Format_DXT1a) {
 			return 8;
 		}
 		else if (format == Format_DXT3) {
@@ -70,9 +70,6 @@ namespace
 		}
 		else if (format == Format_BC5) {
 			return 16;
-		}
-		else if (format == Format_CTX1) {
-			return 8;
 		}
 		return 0;
 	}
@@ -208,19 +205,16 @@ namespace nvtt
 
 Compressor::Compressor() : m(*new Compressor::Private())
 {
-	// CUDA initialization.
 	m.cudaSupported = cuda::isHardwarePresent();
 	m.cudaEnabled = m.cudaSupported;
 
-	if (m.cudaEnabled)
-	{
-		m.cuda = new CudaCompressor();
-	}
+	// @@ Do CUDA initialization here.
+
 }
 
 Compressor::~Compressor()
 {
-	delete &m;
+	// @@ Free CUDA resources here.
 }
 
 
@@ -230,11 +224,6 @@ void Compressor::enableCudaAcceleration(bool enable)
 	if (m.cudaSupported)
 	{
 		m.cudaEnabled = enable;
-	}
-
-	if (m.cudaEnabled && m.cuda == NULL)
-	{
-		m.cuda = new CudaCompressor();
 	}
 }
 
@@ -336,7 +325,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	{
 		header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
 		
-		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
+		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
 			header.setFourCC('D', 'X', 'T', '1');
 			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
@@ -355,10 +344,6 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		}
 		else if (compressionOptions.format == Format_BC5) {
 			header.setFourCC('A', 'T', 'I', '2');
-			if (inputOptions.isNormalMap) header.setNormalFlag(true);
-		}
-		else if (compressionOptions.format == Format_CTX1) {
-			header.setFourCC('C', 'T', 'X', '1');
 			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
 	}
@@ -685,7 +670,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT1(image, outputOptions, compressionOptions);
+				cudaCompressDXT1(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -712,18 +697,6 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			}
 		}
 	}
-	else if (compressionOptions.format == Format_DXT1n)
-	{
-		if (cudaEnabled)
-		{
-			nvDebugCheck(cudaSupported);
-			cuda->compressDXT1n(image, outputOptions, compressionOptions);
-		}
-		else
-		{
-			if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-		}
-	}
 	else if (compressionOptions.format == Format_DXT3)
 	{
 		if (compressionOptions.quality == Quality_Fastest)
@@ -735,7 +708,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT3(image, outputOptions, compressionOptions);
+				cudaCompressDXT3(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -754,7 +727,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT5(image, outputOptions, compressionOptions);
+				cudaCompressDXT5(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -780,18 +753,6 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 	else if (compressionOptions.format == Format_BC5)
 	{
 		compressBC5(image, outputOptions, compressionOptions);
-	}
-	else if (compressionOptions.format == Format_CTX1)
-	{
-		if (cudaEnabled)
-		{
-			nvDebugCheck(cudaSupported);
-			cuda->compressCTX1(image, outputOptions, compressionOptions);
-		}
-		else
-		{
-			if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-		}
 	}
 
 	return true;

@@ -122,7 +122,7 @@ static void doPrecomputation()
 */
 
 
-const static uint s_bitmapTable[992] =
+const static uint bitmaps[992] =
 {
 	0x80000000,
 	0x40000000,

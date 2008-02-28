@@ -31,24 +31,11 @@ namespace nv
 {
 	class Image;
 
-	class CudaCompressor
-	{
-	public:
-		CudaCompressor();
-		~CudaCompressor();
+	void cudaCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void cudaCompressDXT3(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void cudaCompressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 
-		void compressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-		void compressDXT3(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-		void compressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-		void compressDXT1n(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-		void compressCTX1(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-
-	private:
-
-		uint * m_bitmapTable;
-		uint * m_data;
-		uint * m_result;
-	};
+	void cudaCompressDXT1_2(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 
 } // nv namespace
 
