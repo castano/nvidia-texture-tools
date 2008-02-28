@@ -29,3 +29,13 @@ This approach is interesting, but according to Tom, it doesn't work that well in
 Instead he suggests doing something similar to Humus' compression, but using an uncompressed RGB-565 texture, and a separate luminance texture. The original texture is downsampled to 1/4th its size, and the luminance texture encodes the luminance difference between the original and the downsampled texture. The luminance deltas usually have a small range, so you could use a per texture scale factor to scale the deltas to the representable range, and obtain higher precision. Tom [http://home.comcast.net/~tom_forsyth/blog.wiki.html#%5B%5BTexture%20formats%20for%20faster%20compression%5D%5D explains it with more details on his blog].
 
 The advantage of this method is that compression is very fast, the downsampled texture is only quantized, and the luminance texture is 1D, so it has a small search space. He has not done any PSNR analysis, thought.
+
+
+=== Bungie Compression ===
+
+The basic idea is to compress a texture once, compute the difference between the compressed texture and the original, and compress that difference again.
+
+http://research.microsoft.com/research/pubs/view.aspx?tr_id=1198
+
+https://www.cmpevents.com/GD08/a.asp?option=C&V=11&SessID=6221
+
