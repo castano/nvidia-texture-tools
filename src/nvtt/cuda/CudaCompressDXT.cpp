@@ -48,8 +48,7 @@ using namespace nvtt;
 
 #if defined HAVE_CUDA
 
-//#define MAX_BLOCKS 32768U // 49152, 65535
-#define MAX_BLOCKS 8192U // 49152, 65535
+#define MAX_BLOCKS 8192U // 32768, 65535
 
 
 extern "C" void setupCompressKernel(const float weights[3]);
@@ -84,12 +83,15 @@ static void convertToBlockLinear(const Image * image, uint * blockLinearImage)
 #endif
 
 
-CudaCompressor::CudaCompressor()
+CudaCompressor::CudaCompressor() : m_bitmapTable(NULL), m_data(NULL), m_result(NULL)
 {
 #if defined HAVE_CUDA
     // Allocate and upload bitmaps.
     cudaMalloc((void**) &m_bitmapTable, 992 * sizeof(uint));
-    cudaMemcpy(m_bitmapTable, s_bitmapTable, 992 * sizeof(uint), cudaMemcpyHostToDevice);
+	if (m_bitmapTable != NULL)
+	{
+		cudaMemcpy(m_bitmapTable, s_bitmapTable, 992 * sizeof(uint), cudaMemcpyHostToDevice);
+	}
 
 	// Allocate scratch buffers.
     cudaMalloc((void**) &m_data, MAX_BLOCKS * 64U);
