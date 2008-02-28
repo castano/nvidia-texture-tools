@@ -215,6 +215,12 @@ Compressor::Compressor() : m(*new Compressor::Private())
 	if (m.cudaEnabled)
 	{
 		m.cuda = new CudaCompressor();
+
+		if (!m.cuda->isValid())
+		{
+			m.cudaEnabled = false;
+			m.cuda = NULL;
+		}
 	}
 }
 
@@ -235,6 +241,12 @@ void Compressor::enableCudaAcceleration(bool enable)
 	if (m.cudaEnabled && m.cuda == NULL)
 	{
 		m.cuda = new CudaCompressor();
+		
+		if (!m.cuda->isValid())
+		{
+			m.cudaEnabled = false;
+			m.cuda = NULL;
+		}
 	}
 }
 
