@@ -89,7 +89,7 @@ namespace nv
 	NVIMAGE_API void fillPullPush(FloatImage * img, const BitMap * bmap);
 	
 	NVIMAGE_API void fillExtrapolate(int passCount, FloatImage * img, BitMap * bmap);
-	NVIMAGE_API void fillCubicExtrapolate(int passCount, FloatImage * img, BitMap * bmap, int coverageIndex = -1);
+	NVIMAGE_API void fillQuadraticExtrapolate(int passCount, FloatImage * img, BitMap * bmap, int coverageIndex = -1);
 	
 } // nv namespace
 
