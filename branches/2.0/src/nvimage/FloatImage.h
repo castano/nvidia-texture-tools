@@ -228,12 +228,12 @@ inline uint FloatImage::indexMirror(int x, int y) const
 {
 	x = abs(x);
 	while (x >= m_width) {
-		x = m_width + m_width - x - 2;
+		x = abs(m_width + m_width - x - 2);
 	}
 
 	y = abs(y);
 	while (y >= m_height) {
-		y = m_height + m_height - y - 2;
+		y = abs(m_height + m_height - y - 2);
 	}
 
 	return index(x, y);
