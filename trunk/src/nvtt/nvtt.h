@@ -157,6 +157,7 @@ namespace nvtt
 	{
 		ColorTransform_None,
 		ColorTransform_Linear,
+		ColorTransform_Swizzle
 	};
 	
 	/// Extents rounding mode.
@@ -221,6 +222,7 @@ namespace nvtt
 		// Set color transforms. @@ Not implemented!
 		NVTT_API void setColorTransform(ColorTransform t);
 		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
+		NVTT_API void setSwizzleTransform(int x, int y, int z, int w);
 		
 		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
