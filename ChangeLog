@@ -1,7 +1,10 @@
+NVIDIA Texture Tools version 2.0.2
+ * Fix copy ctor error reported by Richard Sim.
+
 NVIDIA Texture Tools version 2.0.1
  * Fix memory leaks.
  * Pre-allocate device memory for CUDA compressor.
- * Add single color compressor.
+ * Add single color compressor. Thanks to Amir Ebrahimi.
  * Better CUDA error checking.
 
 NVIDIA Texture Tools version 2.0.0

@@ -15,7 +15,7 @@ Image::Image() : m_width(0), m_height(0), m_format(Format_RGB), m_data(NULL)
 {
 }
 
-Image::Image(const Image & img)
+Image::Image(const Image & img) : m_data(NULL)
 {
 	allocate(img.m_width, img.m_height);
 	m_format = img.m_format;
