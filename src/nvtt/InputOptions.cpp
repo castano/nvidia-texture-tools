@@ -305,6 +305,19 @@ void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2,
 	//m.linearTransform.setRow(channel, w);
 }
 
+void InputOptions::setSwizzleTransform(int x, int y, int z, int w)
+{
+	nvCheck(x >= 0 && x < 3);
+	nvCheck(y >= 0 && y < 3);
+	nvCheck(z >= 0 && z < 3);
+	nvCheck(w >= 0 && w < 3);
+	
+	// m.xswizzle = x;
+	// m.yswizzle = y;
+	// m.zswizzle = z;
+	// m.wswizzle = w;
+}
+
 void InputOptions::setMaxExtents(int e)
 {
 	nvDebugCheck(e > 0);
