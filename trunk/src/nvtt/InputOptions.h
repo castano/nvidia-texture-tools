@@ -78,6 +78,8 @@ namespace nvtt
 		uint maxExtent;
 		RoundMode roundMode;
 		
+		bool premultiplyAlpha;
+
 		// @@ These are computed in nvtt::compress, so they should be mutable or stored elsewhere...
 		mutable uint targetWidth;
 		mutable uint targetHeight;

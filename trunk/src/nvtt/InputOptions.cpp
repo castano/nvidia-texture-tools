@@ -118,6 +118,8 @@ void InputOptions::reset()
 	
 	m.maxExtent = 0;
 	m.roundMode = RoundMode_None;
+
+	m.premultiplyAlpha = false;
 }
 
 
@@ -329,6 +331,10 @@ void InputOptions::setRoundMode(RoundMode mode)
 	m.roundMode = mode;
 }
 
+void InputOptions::setPremultiplyAlpha(bool b)
+{
+	m.premultiplyAlpha = b;
+}
 
 void InputOptions::Private::computeTargetExtents() const
 {
