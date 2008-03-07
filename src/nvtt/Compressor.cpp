@@ -478,6 +478,11 @@ bool Compressor::Private::initMipmap(Mipmap & mipmap, const InputOptions::Privat
 	// Convert linear float image to fixed image ready for compression.
 	mipmap.toFixedImage(inputOptions);
 
+	if (inputOptions.premultiplyAlpha)
+	{
+		premultiplyAlphaMipmap(mipmap, inputOptions);
+	}
+
 	return true;
 }
 
@@ -581,6 +586,29 @@ void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Priva
 	mipmap.setImage(mipmap.asFloatImage()->downSample(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
 }
 
+
+void Compressor::Private::premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
+{
+	nvDebugCheck(mipmap.asFixedImage() != NULL);
+
+	Image * image = mipmap.asMutableFixedImage();
+
+	const uint w = image->width();
+	const uint h = image->height();
+
+	const uint count = w * h;
+
+	for (uint i = 0; i < count; ++i)
+	{
+		Color32 c = image->pixel(i);
+
+		c.r = (uint(c.r) * uint(c.a)) >> 8;
+		c.g = (uint(c.g) * uint(c.a)) >> 8;
+		c.b = (uint(c.b) * uint(c.a)) >> 8;
+
+		image->pixel(i) = c;
+	}
+}
 
 // Process an input image: Convert to normal map, normalize, or convert to linear space.
 void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const

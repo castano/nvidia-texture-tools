@@ -58,6 +58,7 @@ namespace nvtt
 
 		void downsampleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void scaleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d) const;
+		void premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
 		bool compressMipmap(const Mipmap & mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;

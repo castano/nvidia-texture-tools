@@ -227,6 +227,9 @@ namespace nvtt
 		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
 		NVTT_API void setRoundMode(RoundMode mode);
+
+		// Set whether or not to premultiply color by alpha
+		NVTT_API void setPremultiplyAlpha(bool b);
 	};
 	
 	

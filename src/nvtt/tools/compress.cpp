@@ -140,6 +140,7 @@ int main(int argc, char *argv[])
 	bool silent = false;
 	bool bc1n = false;
 	nvtt::Format format = nvtt::Format_BC1;
+	bool premultiplyAlpha = false;
 
 	const char * externalCompressor = NULL;
 
@@ -172,6 +173,10 @@ int main(int argc, char *argv[])
 		else if (strcmp("-nomips", argv[i]) == 0)
 		{
 			noMipmaps = true;
+		}
+		else if (strcmp("-premula", argv[i]) == 0)
+		{
+			premultiplyAlpha = true;
 		}
 
 		// Compression options.
@@ -266,7 +271,8 @@ int main(int argc, char *argv[])
 		printf("  -tonormal\tConvert input to normal map.\n");
 		printf("  -clamp   \tClamp wrapping mode (default).\n");
 		printf("  -repeat  \tRepeat wrapping mode.\n");
-		printf("  -nomips  \tDisable mipmap generation.\n\n");
+		printf("  -nomips  \tDisable mipmap generation.\n");
+		printf("  -premula \tPremultiply alpha into color channel.\n\n");
 
 		printf("Compression options:\n");
 		printf("  -fast    \tFast compression.\n");
@@ -373,6 +379,11 @@ int main(int argc, char *argv[])
 		inputOptions.setMipmapGeneration(false);
 	}
 
+	if (premultiplyAlpha)
+	{
+		inputOptions.setPremultiplyAlpha(true);
+		inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
+	}
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
