@@ -530,9 +530,9 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 	nvCheck(bitcount > 0 && bitcount <= 32);
 
 	// Align to 8.
-	if (bitcount < 8) bitcount = 8;
-	else if (bitcount < 16) bitcount = 16;
-	else if (bitcount < 24) bitcount = 24;
+	if (bitcount <= 8) bitcount = 8;
+	else if (bitcount <= 16) bitcount = 16;
+	else if (bitcount <= 24) bitcount = 24;
 	else bitcount = 32;
 
 	this->pf.fourcc = 0; //findD3D9Format(bitcount, rmask, gmask, bmask, amask);
