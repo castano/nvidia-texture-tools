@@ -338,7 +338,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	
 	if (compressionOptions.format == Format_RGBA)
 	{
-		header.setPitch(4 * inputOptions.targetWidth);
+		header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
 		header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
 	}
 	else

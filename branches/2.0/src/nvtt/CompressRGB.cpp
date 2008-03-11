@@ -115,11 +115,17 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 				c |= PixelFormat::convert(src[x].b, 8, bsize) << bshift;
 				c |= PixelFormat::convert(src[x].a, 8, asize) << ashift;
 				
-				// Output one byte at a time. @@ Not tested... Does this work on LE and BE?
+				// Output one byte at a time.
 				for (uint i = 0; i < byteCount; i++)
 				{
-					*(dst + x * byteCount) = (c >> (i * 8)) & 0xFF;
+					*(dst + x * byteCount + i) = (c >> (i * 8)) & 0xFF;
 				}
+			}
+			
+			// Zero padding.
+			for (uint x = w; x < pitch; x++)
+			{
+				*(dst + x) = 0;
 			}
 		}
 
