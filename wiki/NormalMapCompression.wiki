@@ -1,5 +1,10 @@
 #summary Normalmap Compression Strategies
 
+J.M.P. van Waveren's paper has a much more detailed analysis of the different ways a normal map can be compressed:
+
+http://developer.nvidia.com/object/real-time-normal-map-dxt-compression.html
+
+
 === DXT5nm ===
 
 This format was introduced in the original nvdxt library and since then it has become quite popular. It uses a DXT5 block to represent normals, storing the X component in the Alpha and the Y component in the Green channel.
