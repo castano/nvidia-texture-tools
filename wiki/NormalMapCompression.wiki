@@ -2,7 +2,7 @@
 
 J.M.P. van Waveren's paper has a much more detailed analysis of the different ways a normal map can be compressed:
 
-http://developer.nvidia.com/object/real-time-normal-map-dxt-compression.html
+[http://developer.nvidia.com/object/real-time-normal-map-dxt-compression.html Real-Time Normal Map DXT Compression]
 
 
 === DXT5nm ===
