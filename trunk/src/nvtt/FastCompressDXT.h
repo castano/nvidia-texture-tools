@@ -49,9 +49,6 @@ namespace nv
 	// Compressor that uses bounding box and takes alpha into account.
 	void compressBlock_BoundsRangeAlpha(const ColorBlock & rgba, BlockDXT1 * block);
 
-	// Compressor that uses the best fit axis.
-	void compressBlock_BestFitAxis(const ColorBlock & rgba, BlockDXT1 * block);
-
 
 	// Simple, but slow compressor that tests all color pairs.
 	void compressBlock_TestAllPairs(const ColorBlock & rgba, BlockDXT1 * block);
