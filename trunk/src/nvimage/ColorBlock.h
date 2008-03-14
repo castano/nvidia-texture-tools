@@ -4,7 +4,6 @@
 #define NV_IMAGE_COLORBLOCK_H
 
 #include <nvmath/Color.h>
-#include <nvmath/Fitting.h>	// Line3
 
 namespace nv
 {
@@ -33,16 +32,13 @@ namespace nv
 		void luminanceRange(Color32 * start, Color32 * end) const;
 		void boundsRange(Color32 * start, Color32 * end) const;
 		void boundsRangeAlpha(Color32 * start, Color32 * end) const;
-		void bestFitRange(Color32 * start, Color32 * end) const;
 		
 		void sortColorsByAbsoluteValue();
 		
 		void computeRange(const Vector3 & axis, Color32 * start, Color32 * end) const;
 		void sortColors(const Vector3 & axis);
 		
-		Line3 bestFitLine() const;
 		float volume() const;
-		Line3 diameterLine() const;
 		
 		// Accessors
 		const Color32 * colors() const;
