@@ -24,7 +24,6 @@
 #include <nvcore/Debug.h>
 #include <nvcore/Containers.h>
 #include <nvmath/Color.h>
-#include <nvmath/Fitting.h>
 #include <nvimage/Image.h>
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
