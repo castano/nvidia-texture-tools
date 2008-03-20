@@ -29,7 +29,7 @@
 #include <nvimage/BlockDXT.h>
 #include <nvtt/CompressionOptions.h>
 #include <nvtt/OutputOptions.h>
-#include <nvtt/FastCompressDXT.h>
+#include <nvtt/QuickCompressDXT.h>
 
 #include "CudaCompressDXT.h"
 #include "CudaUtils.h"
@@ -230,7 +230,7 @@ void CudaCompressor::compressDXT3(const Image * image, const OutputOptions::Priv
 		for (uint i = 0; i < count; i++)
 		{
 			ColorBlock rgba(blockLinearImage + (bn + i) * 16);
-			compressBlock(rgba, alphaBlocks + i);
+			QuickCompress::compressDXT3A(rgba, alphaBlocks + i);
 		}
 
 		// Check for errors.
@@ -314,7 +314,7 @@ void CudaCompressor::compressDXT5(const Image * image, const OutputOptions::Priv
 		for (uint i = 0; i < count; i++)
 		{
 			ColorBlock rgba(blockLinearImage + (bn + i) * 16);
-			compressBlock_Iterative(rgba, alphaBlocks + i);
+			QuickCompress::compressDXT5A(rgba, alphaBlocks + i);
 		}
 
 		// Check for errors.

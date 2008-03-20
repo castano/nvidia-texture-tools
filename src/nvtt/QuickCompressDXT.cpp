@@ -288,62 +288,219 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	dxtBlock->indices = computeIndices3(block, a, b);
 }*/
 
-
-static void optimizeAlpha8(const ColorBlock & rgba, AlphaBlockDXT5 * block)
+namespace
 {
-	float alpha2_sum = 0;
-	float beta2_sum = 0;
-	float alphabeta_sum = 0;
-	float alphax_sum = 0;
-	float betax_sum = 0;
-
-	for (int i = 0; i < 16; i++)
+	static int computeGreenError(const ColorBlock & rgba, const BlockDXT1 * block)
 	{
-		uint idx = block->index(i);
-		float alpha;
-		if (idx < 2) alpha = 1.0f - idx;
-		else alpha = (8.0f - idx) / 7.0f;
-		
-		float beta = 1 - alpha;
-		
-		alpha2_sum += alpha * alpha;
-		beta2_sum += beta * beta;
-		alphabeta_sum += alpha * beta;
-		alphax_sum += alpha * rgba.color(i).a;
-		betax_sum += beta * rgba.color(i).a;
+		nvDebugCheck(block != NULL);
+
+		int palette[4];
+		palette[0] = (block->col0.g << 2) | (block->col0.g >> 4);
+		palette[1] = (block->col1.g << 2) | (block->col1.g >> 4);
+		palette[2] = (2 * palette[0] + palette[1]) / 3;
+		palette[3] = (2 * palette[1] + palette[0]) / 3;
+
+		int totalError = 0;
+
+		for (int i = 0; i < 16; i++)
+		{
+			const int green = rgba.color(i).g;
+			
+			int error = abs(green - palette[0]);
+			error = min(error, abs(green - palette[1]));
+			error = min(error, abs(green - palette[2]));
+			error = min(error, abs(green - palette[3]));
+			
+			totalError += error;
+		}
+
+		return totalError;
 	}
 
-	const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-
-	float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
-	float b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-
-	uint alpha0 = uint(min(max(a, 0.0f), 255.0f));
-	uint alpha1 = uint(min(max(b, 0.0f), 255.0f));
-
-	if (alpha0 < alpha1)
+	static uint computeGreenIndices(const ColorBlock & rgba, const Color32 palette[4])
 	{
-		swap(alpha0, alpha1);
+		const int color0 = palette[0].g;
+		const int color1 = palette[1].g;
+		const int color2 = palette[2].g;
+		const int color3 = palette[3].g;
 		
-		// Flip indices:
+		uint indices = 0;
+		for (int i = 0; i < 16; i++)
+		{
+			const int color = rgba.color(i).g;
+			
+			uint d0 = abs(color0 - color);
+			uint d1 = abs(color1 - color);
+			uint d2 = abs(color2 - color);
+			uint d3 = abs(color3 - color);
+			
+			uint b0 = d0 > d3;
+			uint b1 = d1 > d2;
+			uint b2 = d0 > d2;
+			uint b3 = d1 > d3;
+			uint b4 = d2 > d3;
+			
+			uint x0 = b1 & b2;
+			uint x1 = b0 & b3;
+			uint x2 = b0 & b4;
+			
+			indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
+		}
+
+		return indices;
+	}
+
+} // namespace
+
+namespace
+{
+
+	static uint computeAlphaIndices(const ColorBlock & rgba, AlphaBlockDXT5 * block)
+	{
+		uint8 alphas[8];
+		block->evaluatePalette(alphas);
+
+		uint totalError = 0;
+
+		for (uint i = 0; i < 16; i++)
+		{
+			uint8 alpha = rgba.color(i).a;
+
+			uint besterror = 256*256;
+			uint best = 8;
+			for(uint p = 0; p < 8; p++)
+			{
+				int d = alphas[p] - alpha;
+				uint error = d * d;
+
+				if (error < besterror)
+				{
+					besterror = error;
+					best = p;
+				}
+			}
+			nvDebugCheck(best < 8);
+
+			totalError += besterror;
+			block->setIndex(i, best);
+		}
+
+		return totalError;
+	}
+
+	static void optimizeAlpha8(const ColorBlock & rgba, AlphaBlockDXT5 * block)
+	{
+		float alpha2_sum = 0;
+		float beta2_sum = 0;
+		float alphabeta_sum = 0;
+		float alphax_sum = 0;
+		float betax_sum = 0;
+
 		for (int i = 0; i < 16; i++)
 		{
 			uint idx = block->index(i);
-			if (idx < 2) block->setIndex(i, 1 - idx);
-			else block->setIndex(i, 9 - idx);
+			float alpha;
+			if (idx < 2) alpha = 1.0f - idx;
+			else alpha = (8.0f - idx) / 7.0f;
+			
+			float beta = 1 - alpha;
+
+			alpha2_sum += alpha * alpha;
+			beta2_sum += beta * beta;
+			alphabeta_sum += alpha * beta;
+			alphax_sum += alpha * rgba.color(i).a;
+			betax_sum += beta * rgba.color(i).a;
 		}
-	}
-	else if (alpha0 == alpha1)
-	{
-		for (int i = 0; i < 16; i++)
+
+		const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+
+		float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+		float b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+
+		uint alpha0 = uint(min(max(a, 0.0f), 255.0f));
+		uint alpha1 = uint(min(max(b, 0.0f), 255.0f));
+
+		if (alpha0 < alpha1)
 		{
-			block->setIndex(i, 0);
+			swap(alpha0, alpha1);
+
+			// Flip indices:
+			for (int i = 0; i < 16; i++)
+			{
+				uint idx = block->index(i);
+				if (idx < 2) block->setIndex(i, 1 - idx);
+				else block->setIndex(i, 9 - idx);
+			}
 		}
+		else if (alpha0 == alpha1)
+		{
+			for (int i = 0; i < 16; i++)
+			{
+				block->setIndex(i, 0);
+			}
+		}
+
+		block->alpha0 = alpha0;
+		block->alpha1 = alpha1;
 	}
 
-	block->alpha0 = alpha0;
-	block->alpha1 = alpha1;
-}
+	/*
+	static void optimizeAlpha6(const ColorBlock & rgba, AlphaBlockDXT5 * block)
+	{
+		float alpha2_sum = 0;
+		float beta2_sum = 0;
+		float alphabeta_sum = 0;
+		float alphax_sum = 0;
+		float betax_sum = 0;
+
+		for (int i = 0; i < 16; i++)
+		{
+			uint8 x = rgba.color(i).a;
+			if (x == 0 || x == 255) continue;
+
+			uint bits = block->index(i);
+			if (bits == 6 || bits == 7) continue;
+
+			float alpha;
+			if (bits == 0) alpha = 1.0f;
+			else if (bits == 1) alpha = 0.0f;
+			else alpha = (6.0f - block->index(i)) / 5.0f;
+			
+			float beta = 1 - alpha;
+
+			alpha2_sum += alpha * alpha;
+			beta2_sum += beta * beta;
+			alphabeta_sum += alpha * beta;
+			alphax_sum += alpha * x;
+			betax_sum += beta * x;
+		}
+
+		const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+
+		float a = (alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor;
+		float b = (betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor;
+
+		uint alpha0 = uint(min(max(a, 0.0f), 255.0f));
+		uint alpha1 = uint(min(max(b, 0.0f), 255.0f));
+
+		if (alpha0 > alpha1)
+		{
+			swap(alpha0, alpha1);
+		}
+
+		block->alpha0 = alpha0;
+		block->alpha1 = alpha1;
+	}
+	*/
+
+	static bool sameIndices(const AlphaBlockDXT5 & block0, const AlphaBlockDXT5 & block1)
+	{
+		const uint64 mask = ~uint64(0xFFFF);
+		return (block0.u | mask) == (block1.u | mask);
+	}
+
+} // namespace
+
 
 
 
@@ -436,66 +593,6 @@ void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 }
 
 
-static int computeGreenError(const ColorBlock & rgba, const BlockDXT1 * block)
-{
-	nvDebugCheck(block != NULL);
-
-	int palette[4];
-	palette[0] = (block->col0.g << 2) | (block->col0.g >> 4);
-	palette[1] = (block->col1.g << 2) | (block->col1.g >> 4);
-	palette[2] = (2 * palette[0] + palette[1]) / 3;
-	palette[3] = (2 * palette[1] + palette[0]) / 3;
-
-	int totalError = 0;
-
-	for (int i = 0; i < 16; i++)
-	{
-		const int green = rgba.color(i).g;
-		
-		int error = abs(green - palette[0]);
-		error = min(error, abs(green - palette[1]));
-		error = min(error, abs(green - palette[2]));
-		error = min(error, abs(green - palette[3]));
-		
-		totalError += error;
-	}
-
-	return totalError;
-}
-
-static uint computeGreenIndices(const ColorBlock & rgba, const Color32 palette[4])
-{
-	const int color0 = palette[0].g;
-	const int color1 = palette[1].g;
-	const int color2 = palette[2].g;
-	const int color3 = palette[3].g;
-	
-	uint indices = 0;
-	for (int i = 0; i < 16; i++)
-	{
-		const int color = rgba.color(i).g;
-		
-		uint d0 = abs(color0 - color);
-		uint d1 = abs(color1 - color);
-		uint d2 = abs(color2 - color);
-		uint d3 = abs(color3 - color);
-		
-		uint b0 = d0 > d3;
-		uint b1 = d1 > d2;
-		uint b2 = d0 > d2;
-		uint b3 = d1 > d3;
-		uint b4 = d2 > d3;
-		
-		uint x0 = b1 & b2;
-		uint x1 = b0 & b3;
-		uint x2 = b0 & b4;
-		
-		indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
-	}
-
-	return indices;
-}
-
 // Brute force green channel compressor
 void QuickCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 {
@@ -558,6 +655,7 @@ void QuickCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 
 void QuickCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
 {
+	// @@ Round instead of truncate. When rounding take into account bit expansion.
 	dxtBlock->alpha0 = rgba.color(0).a >> 4;
 	dxtBlock->alpha1 = rgba.color(1).a >> 4;
 	dxtBlock->alpha2 = rgba.color(2).a >> 4;
@@ -582,9 +680,49 @@ void QuickCompress::compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock)
 	compressDXT3A(rgba, &dxtBlock->alpha);
 }
 
+
 void QuickCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock)
 {
-	// @@ TODO
+	uint8 alpha0 = 0;
+	uint8 alpha1 = 255;
+	
+	// Get min/max alpha.
+	for (uint i = 0; i < 16; i++)
+	{
+		uint8 alpha = rgba.color(i).a;
+		alpha0 = max(alpha0, alpha);
+		alpha1 = min(alpha1, alpha);
+	}
+	
+	AlphaBlockDXT5 block;
+	block.alpha0 = alpha0 - (alpha0 - alpha1) / 34;
+	block.alpha1 = alpha1 + (alpha0 - alpha1) / 34;
+	uint besterror = computeAlphaIndices(rgba, &block);
+	
+	AlphaBlockDXT5 bestblock = block;
+	
+	while(true)
+	{
+		optimizeAlpha8(rgba, &block);
+		uint error = computeAlphaIndices(rgba, &block);
+		
+		if (error >= besterror)
+		{
+			// No improvement, stop.
+			break;
+		}
+		if (sameIndices(block, bestblock))
+		{
+			bestblock = block;
+			break;
+		}
+		
+		besterror = error;
+		bestblock = block;
+	};
+	
+	// Copy best block to result;
+	*dxtBlock = bestblock;
 }
 
 void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock)
