@@ -38,37 +38,37 @@ namespace nv
 	// Color compression:
 
 	// Compressor that uses the extremes of the luminance axis.
-	void compressBlock_DiameterAxis(const ColorBlock & rgba, BlockDXT1 * block);
+//	void compressBlock_DiameterAxis(const ColorBlock & rgba, BlockDXT1 * block);
 
 	// Compressor that uses the extremes of the luminance axis.
-	void compressBlock_LuminanceAxis(const ColorBlock & rgba, BlockDXT1 * block);
+//	void compressBlock_LuminanceAxis(const ColorBlock & rgba, BlockDXT1 * block);
 
 	// Compressor that uses bounding box.
 	void compressBlock_BoundsRange(const ColorBlock & rgba, BlockDXT1 * block);
 
 	// Compressor that uses bounding box and takes alpha into account.
-	void compressBlock_BoundsRangeAlpha(const ColorBlock & rgba, BlockDXT1 * block);
+//	void compressBlock_BoundsRangeAlpha(const ColorBlock & rgba, BlockDXT1 * block);
 
 
 	// Simple, but slow compressor that tests all color pairs.
-	void compressBlock_TestAllPairs(const ColorBlock & rgba, BlockDXT1 * block);
+//	void compressBlock_TestAllPairs(const ColorBlock & rgba, BlockDXT1 * block);
 	
 	// Brute force 6d search along the best fit axis.
-	void compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * block);
+//	void compressBlock_AnalyzeBestFitAxis(const ColorBlock & rgba, BlockDXT1 * block);
 
 	// Spatial greedy search.
-	void refineSolution_1dSearch(const ColorBlock & rgba, BlockDXT1 * block);
-	void refineSolution_3dSearch(const ColorBlock & rgba, BlockDXT1 * block);
-	void refineSolution_6dSearch(const ColorBlock & rgba, BlockDXT1 * block);
+//	void refineSolution_1dSearch(const ColorBlock & rgba, BlockDXT1 * block);
+//	void refineSolution_3dSearch(const ColorBlock & rgba, BlockDXT1 * block);
+//	void refineSolution_6dSearch(const ColorBlock & rgba, BlockDXT1 * block);
 	
 	// Brute force compressor for DXT5n
-	void compressGreenBlock_BruteForce(const ColorBlock & rgba, BlockDXT1 * block);
+//	void compressGreenBlock_BruteForce(const ColorBlock & rgba, BlockDXT1 * block);
 
 	// Minimize error of the endpoints.
-	void optimizeEndPoints(const ColorBlock & rgba, BlockDXT1 * block);
+//	void optimizeEndPoints(const ColorBlock & rgba, BlockDXT1 * block);
 	
-	uint blockError(const ColorBlock & rgba, const BlockDXT1 & block);
-	uint blockError(const ColorBlock & rgba, const AlphaBlockDXT5 & block);
+//	uint blockError(const ColorBlock & rgba, const BlockDXT1 & block);
+//	uint blockError(const ColorBlock & rgba, const AlphaBlockDXT5 & block);
 
 	// Alpha compression:
 	void compressBlock(const ColorBlock & rgba, AlphaBlockDXT3 * block);
@@ -77,7 +77,7 @@ namespace nv
 
 	uint compressBlock_BoundsRange(const ColorBlock & rgba, AlphaBlockDXT5 * block);
 	uint compressBlock_BruteForce(const ColorBlock & rgba, AlphaBlockDXT5 * block);
-	uint compressBlock_Iterative(const ColorBlock & rgba, AlphaBlockDXT5 * block);
+//	uint compressBlock_Iterative(const ColorBlock & rgba, AlphaBlockDXT5 * block);
 
 } // nv namespace
 
