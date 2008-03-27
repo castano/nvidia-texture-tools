@@ -429,7 +429,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 		
 		quantizeMipmap(mipmap, compressionOptions);
 
-		compressMipmap(mipmap, compressionOptions, outputOptions);
+		compressMipmap(mipmap, inputOptions, compressionOptions, outputOptions);
 
 		// Compute extents of next mipmap:
 		w = max(1U, w / 2);
@@ -689,7 +689,7 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 
 
 // Compress the given mipmap.
-bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	const Image * image = mipmap.asFixedImage();
 
@@ -725,7 +725,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT1(image, outputOptions, compressionOptions);
+				cuda->compressDXT1(image, compressionOptions, outputOptions);
 			}
 			else
 			{
@@ -757,7 +757,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 		if (cudaEnabled)
 		{
 			nvDebugCheck(cudaSupported);
-			cuda->compressDXT1n(image, outputOptions, compressionOptions);
+			cuda->compressDXT1n(image, compressionOptions, outputOptions);
 		}
 		else
 		{
@@ -775,7 +775,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT3(image, outputOptions, compressionOptions);
+				cuda->compressDXT3(image, inputOptions, compressionOptions, outputOptions);
 			}
 			else
 			{
@@ -794,7 +794,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT5(image, outputOptions, compressionOptions);
+				cuda->compressDXT5(image, inputOptions, compressionOptions, outputOptions);
 			}
 			else
 			{
@@ -826,7 +826,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const Compressio
 		if (cudaEnabled)
 		{
 			nvDebugCheck(cudaSupported);
-			cuda->compressCTX1(image, outputOptions, compressionOptions);
+			cuda->compressCTX1(image, compressionOptions, outputOptions);
 		}
 		else
 		{

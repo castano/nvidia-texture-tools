@@ -61,7 +61,7 @@ namespace nvtt
 		void premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
-		bool compressMipmap(const Mipmap & mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+		bool compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 
 	public:
