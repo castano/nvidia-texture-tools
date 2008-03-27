@@ -7,4 +7,8 @@
 
 == References ==
 
+DDS File Reference:
 http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/ddsfilereference/ddsfileformat.asp
+
+DX10 block compression formats:
+http://msdn2.microsoft.com/en-us/library/bb694531(VS.85).aspx
