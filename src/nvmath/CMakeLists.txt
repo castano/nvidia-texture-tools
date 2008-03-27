@@ -7,8 +7,6 @@ SET(MATH_SRCS
 	Quaternion.h
 	Box.h
 	Color.h
-	Eigen.h Eigen.cpp
-	Fitting.h Fitting.cpp
 	Montecarlo.h Montecarlo.cpp
 	Random.h Random.cpp
 	SphericalHarmonic.h SphericalHarmonic.cpp

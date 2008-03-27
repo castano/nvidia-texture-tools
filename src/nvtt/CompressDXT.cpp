@@ -97,7 +97,6 @@ void nv::fastCompressDXT1a(const Image * image, const OutputOptions::Private & o
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
-			
 			QuickCompress::compressDXT1a(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
@@ -119,7 +118,7 @@ void nv::fastCompressDXT3(const Image * image, const nvtt::OutputOptions::Privat
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
-			compressBlock_BoundsRange(rgba, &block);
+			QuickCompress::compressDXT3(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -140,7 +139,8 @@ void nv::fastCompressDXT5(const Image * image, const nvtt::OutputOptions::Privat
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
-			compressBlock_BoundsRange(rgba, &block);
+			//QuickCompress::compressDXT5(rgba, &block);	// @@ Use fast version!!
+			nv::compressBlock_BoundsRange(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -164,8 +164,9 @@ void nv::fastCompressDXT5n(const Image * image, const nvtt::OutputOptions::Priva
 			
 			// copy X coordinate to alpha channel and Y coordinate to green channel.
 			rgba.swizzleDXT5n();
-			
-			compressBlock_BoundsRange(rgba, &block);
+
+			//QuickCompress::compressDXT5(rgba, &block);	// @@ Use fast version!!
+			nv::compressBlock_BoundsRange(rgba, &block);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -286,7 +287,7 @@ void nv::compressDXT3(const Image * image, const OutputOptions::Private & output
 			rgba.init(image, x, y);
 			
 			// Compress explicit alpha.
-			compressBlock(rgba, &block.alpha);
+			QuickCompress::compressDXT3A(rgba, &block.alpha);
 			
 			// Compress color.
 			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
@@ -317,14 +318,13 @@ void nv::compressDXT5(const Image * image, const OutputOptions::Private & output
 			rgba.init(image, x, y);
 
 			// Compress alpha.
-			uint error;
 			if (compressionOptions.quality == Quality_Highest)
 			{
-				error = compressBlock_BruteForce(rgba, &block.alpha);
+				compressBlock_BruteForce(rgba, &block.alpha);
 			}
 			else
 			{
-				error = compressBlock_Iterative(rgba, &block.alpha);
+				QuickCompress::compressDXT5A(rgba, &block.alpha);
 			}
 
 			// Compress color.
@@ -359,10 +359,13 @@ void nv::compressDXT5n(const Image * image, const OutputOptions::Private & outpu
 			rgba.swizzleDXT5n();			
 			
 			// Compress X.
-			uint error = compressBlock_Iterative(rgba, &block.alpha);
 			if (compressionOptions.quality == Quality_Highest)
 			{
-				error = compressBlock_BruteForce(rgba, &block.alpha);
+				compressBlock_BruteForce(rgba, &block.alpha);
+			}
+			else
+			{
+				QuickCompress::compressDXT5A(rgba, &block.alpha);
 			}
 			
 			// Compress Y.
@@ -384,23 +387,19 @@ void nv::compressBC4(const Image * image, const nvtt::OutputOptions::Private & o
 	ColorBlock rgba;
 	AlphaBlockDXT5 block;
 	
-	uint totalError = 0;
-	
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
 			rgba.init(image, x, y);
 
-			//error = compressBlock_BoundsRange(rgba, &block);
-			uint error = compressBlock_Iterative(rgba, &block);
-
 			if (compressionOptions.quality == Quality_Highest)
 			{
-				// Try brute force algorithm.
-				error = compressBlock_BruteForce(rgba, &block);
+				compressBlock_BruteForce(rgba, &block);
 			}
-
-			totalError += error;
+			else
+			{
+				QuickCompress::compressDXT5A(rgba, &block);
+			}
 
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -429,18 +428,15 @@ void nv::compressBC5(const Image * image, const nvtt::OutputOptions::Private & o
 			ycolor.init(image, x, y);
 			ycolor.splatY();
 
-			// @@ Compute normal error, instead of separate xy errors.
-			uint xerror, yerror;
-			
 			if (compressionOptions.quality == Quality_Highest)
 			{
-				xerror = compressBlock_BruteForce(xcolor, &block.x);
-				yerror = compressBlock_BruteForce(ycolor, &block.y);
+				compressBlock_BruteForce(xcolor, &block.x);
+				compressBlock_BruteForce(ycolor, &block.y);
 			}
 			else
 			{
-				xerror = compressBlock_Iterative(xcolor, &block.x);
-				yerror = compressBlock_Iterative(ycolor, &block.y);
+				QuickCompress::compressDXT5A(xcolor, &block.x);
+				QuickCompress::compressDXT5A(ycolor, &block.y);
 			}
 
 			if (outputOptions.outputHandler != NULL) {

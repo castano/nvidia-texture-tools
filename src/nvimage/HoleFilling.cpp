@@ -296,7 +296,7 @@ static bool downsample(const FloatImage * src, const BitMap * srcMask, const Flo
 	return true;
 }
 
-// This is the filter used in the Lumigraph paper. The Unreal engine uses something similar.
+// This is the filter used in the Lumigraph paper.
 void nv::fillPullPush(FloatImage * img, const BitMap * bmap)
 {
 	nvCheck(img != NULL);
@@ -644,8 +644,8 @@ struct LocalPixels
 
 
 
-// This is a cubic extrapolation filter from Charles Bloom (DoPixelSeamFix).
-void nv::fillCubicExtrapolate(int passCount, FloatImage * img, BitMap * bmap, int coverageIndex /*= -1*/)
+// This is a quadratic extrapolation filter from Charles Bloom (DoPixelSeamFix). Used with his permission.
+void nv::fillQuadraticExtrapolate(int passCount, FloatImage * img, BitMap * bmap, int coverageIndex /*= -1*/)
 {
 	nvCheck(passCount > 0);
 	nvCheck(img != NULL);
