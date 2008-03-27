@@ -307,15 +307,6 @@ void ColorBlock::boundsRangeAlpha(Color32 * start, Color32 * end) const
 }
 
 
-void ColorBlock::bestFitRange(Color32 * start, Color32 * end) const
-{
-	nvDebugCheck(start != NULL);
-	nvDebugCheck(end != NULL);
-
-	Vector3 axis = bestFitLine().direction();
-	computeRange(axis, start, end);
-}
-
 /// Sort colors by abosolute value in their 16 bit representation.
 void ColorBlock::sortColorsByAbsoluteValue()
 {
@@ -390,19 +381,6 @@ void ColorBlock::sortColors(const Vector3 & axis)
 		swap( luma_array[a], luma_array[min] );
 		swap( m_color[a], m_color[min] );
 	}
-}
-
-
-/// Get least squares line that best approxiamtes the points of the color block.
-Line3 ColorBlock::bestFitLine() const
-{
-	Array<Vector3> pointArray(16);
-	
-	for(int i = 0; i < 16; i++) {
-		pointArray.append(Vector3(m_color[i].r, m_color[i].g, m_color[i].b));
-	}
-	
-	return Fit::bestLine(pointArray);
 }
 
 
