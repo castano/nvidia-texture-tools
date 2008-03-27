@@ -555,6 +555,20 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 }
 
 
+void QuickCompress::compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock)
+{
+	if (rgba.a == 0)
+	{
+		dxtBlock->col0.u = 0;
+		dxtBlock->col1.u = 0;
+		dxtBlock->indices = 0xFFFFFFFF;
+	}
+	else
+	{
+		compressDXT1(rgba, dxtBlock);
+	}
+}
+
 void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 {
 	if (!rgba.hasAlpha())

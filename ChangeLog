@@ -4,6 +4,7 @@ NVIDIA Texture Tools version 2.0.2
  * Fix vc8 post build command, reported by Richard Sim.
  * Fix RGBA modes with less than 32 bpp by Viktor Linder.
  * Fix alpha decompression by amorilia. See issue 40.
+ * Add single color compresor for DXT1a.
 
 NVIDIA Texture Tools version 2.0.1
  * Fix memory leaks.

@@ -37,8 +37,9 @@ namespace nv
 
 	namespace QuickCompress
 	{
-		void compressDXT1(const Color32 rgba, BlockDXT1 * dxtBlock);
+		void compressDXT1(Color32 rgba, BlockDXT1 * dxtBlock);
 		void compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock);
+		void compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock);
 		void compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock);
 		void compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block);
 		
