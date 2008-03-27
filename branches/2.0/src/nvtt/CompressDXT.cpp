@@ -97,7 +97,16 @@ void nv::fastCompressDXT1a(const Image * image, const OutputOptions::Private & o
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(image, x, y);
-			QuickCompress::compressDXT1a(rgba, &block);
+			
+			// @@ We could do better here: check for single RGB, but varying alpha.
+			if (rgba.isSingleColor())
+			{
+				QuickCompress::compressDXT1a(rgba.color(0), &block);
+			}
+			else
+			{
+				QuickCompress::compressDXT1a(rgba, &block);
+			}
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -192,7 +201,7 @@ void nv::fastCompressBC5(const Image * image, const nvtt::OutputOptions::Private
 
 void nv::doPrecomputation()
 {
-	static bool done = false;	// @@ Stop using statics for reentrancy.
+	static bool done = false;	// @@ Stop using statics for reentrancy. Although the worst that could happen is that this stuff is precomputed multiple times.
 	
 	if (!done)
 	{
@@ -257,10 +266,16 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 			
 			rgba.init(image, x, y);
 			
-			// Compress color.
-			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kDxt1|squish::kWeightColourByAlpha);
-			fit.SetColourSet(&colours, squish::kDxt1);
-			fit.Compress(&block);
+			if (rgba.isSingleColor())
+			{
+				QuickCompress::compressDXT1a(rgba.color(0), &block);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kDxt1|squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, squish::kDxt1);
+				fit.Compress(&block);
+			}
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
