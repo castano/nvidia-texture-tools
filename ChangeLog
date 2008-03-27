@@ -1,11 +1,20 @@
 NVIDIA Texture Tools version 2.1.0
  * CTX1 CUDA compressor.
  * DXT1n CUDA compressor.
+ * Support alpha premultiplication by Charles Nicholson. See issue 30.
+
+NVIDIA Texture Tools version 2.0.2
+ * Fix copy ctor error reported by Richard Sim.
+ * Fix indexMirror error reported by Chris Lambert.
+ * Fix vc8 post build command, reported by Richard Sim.
+ * Fix RGBA modes with less than 32 bpp by Viktor Linder.
+ * Fix alpha decompression by amorilia. See issue 40.
 
 NVIDIA Texture Tools version 2.0.1
  * Fix memory leaks.
  * Pre-allocate device memory for CUDA compressor.
- * Add single color compressor.
+ * Add single color compressor. Thanks to Amir Ebrahimi.
+ * Better CUDA error checking.
 
 NVIDIA Texture Tools version 2.0.0
  * Fixed PSNR formula in nvimgdiff.
