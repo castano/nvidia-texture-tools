@@ -18,8 +18,6 @@ SET(CORE_SRCS
 	TextReader.cpp
 	TextWriter.h
 	TextWriter.cpp
-	Tokenizer.h
-	Tokenizer.cpp
 	Radix.h
 	Radix.cpp)
 
