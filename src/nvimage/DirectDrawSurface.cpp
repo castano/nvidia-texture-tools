@@ -730,6 +730,12 @@ bool DirectDrawSurface::isTextureCube() const
 	return (header.caps.caps2 & DDSCAPS2_CUBEMAP) != 0;
 }
 
+void DirectDrawSurface::setNormalFlag(bool b)
+{
+	nvDebugCheck(isValid());
+	header.setNormalFlag(b);
+}
+
 void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 {
 	nvDebugCheck(isValid());
@@ -780,7 +786,13 @@ void DirectDrawSurface::readLinearImage(Image * img)
 
 	uint byteCount = (header.pf.bitcount + 7) / 8;
 
-	if (header.pf.amask != 0)
+	// set image format: RGB or ARGB
+	// alpha channel exists if and only if the alpha mask is non-zero
+	if (header.pf.amask == 0)
+ 	{
+		img->setFormat(Image::Format_RGB);
+	}
+	else
 	{
 		img->setFormat(Image::Format_ARGB);
 	}
@@ -808,7 +820,20 @@ void DirectDrawSurface::readBlockImage(Image * img)
 {
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(img != NULL);
-	
+
+	// set image format: RGB or ARGB
+	if (header.pf.fourcc == FOURCC_RXGB ||
+		header.pf.fourcc == FOURCC_ATI1 ||
+		header.pf.fourcc == FOURCC_ATI2 ||
+		header.pf.flags & DDPF_NORMAL)
+	{
+		img->setFormat(Image::Format_RGB);
+	}
+	else
+	{
+		img->setFormat(Image::Format_ARGB);
+	}
+
 	const uint w = img->width();
 	const uint h = img->height();
 	
