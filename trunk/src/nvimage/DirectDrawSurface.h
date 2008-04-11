@@ -119,6 +119,7 @@ namespace nv
 		uint width() const;
 		uint height() const;
 		uint depth() const;
+		bool isTexture1D() const;
 		bool isTexture2D() const;
 		bool isTexture3D() const;
 		bool isTextureCube() const;
