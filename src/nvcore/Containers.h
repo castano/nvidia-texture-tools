@@ -446,7 +446,7 @@ namespace nv
 			
 			// Call default constructors
 			for( i = old_size; i < new_size; i++ ) {
-				new(m_buffer+i) T();	// placement new
+				new(m_buffer+i) T;	// placement new
 			}
 		}
 	
