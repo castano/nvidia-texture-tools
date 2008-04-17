@@ -74,7 +74,9 @@ namespace
 
 	// TODO write minidump
 	
-	static LONG WINAPI nvTopLevelFilter( struct _EXCEPTION_POINTERS *pExceptionInfo ) {
+	static LONG WINAPI nvTopLevelFilter( struct _EXCEPTION_POINTERS * pExceptionInfo)
+	{
+		NV_UNUSED(pExceptionInfo);
 	/*	BOOL (WINAPI * Dump) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE, PMINIDUMP_EXCEPTION_INFORMATION, PMINIDUMP_USER_STREAM_INFORMATION, PMINIDUMP_CALLBACK_INFORMATION );
 	
 		AutoString dbghelp_path(512);

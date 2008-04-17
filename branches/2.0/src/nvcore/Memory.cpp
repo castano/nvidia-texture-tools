@@ -18,6 +18,8 @@ void * nv::mem::malloc(size_t size)
 
 void * nv::mem::malloc(size_t size, const char * file, int line)
 {
+	NV_UNUSED(file);
+	NV_UNUSED(line);
 	return ::malloc(size);
 }
 
