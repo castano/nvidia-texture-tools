@@ -7,6 +7,7 @@ NVIDIA Texture Tools version 2.0.2
  * Avoid default-initialized constructors for POD types, reported by Jim Tilander.
  * Improved decompressor tool submitted by Amorilia. See issue 41.
  * Add single color compresor for DXT1a.
+ * Set swizzle code to ATI2 files. See issue 41.
 
 NVIDIA Texture Tools version 2.0.1
  * Fix memory leaks.
