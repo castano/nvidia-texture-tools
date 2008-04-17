@@ -636,7 +636,7 @@ FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapM
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					dst_channel[y * w + x] = tmp_column[y];
@@ -657,7 +657,7 @@ FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapM
 			float * tmp_channel = tmp_image->channel(c);
 
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					tmp_channel[y * w + x] = tmp_column[y];

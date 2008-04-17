@@ -39,11 +39,9 @@ namespace nv
 
 		bool isValid() const;
 
-		void compressDXT1(const Image * image, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressDXT3(const Image * image, const nvtt::InputOptions::Private & inputOptions, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressDXT5(const Image * image, const nvtt::InputOptions::Private & inputOptions, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressDXT1n(const Image * image, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressCTX1(const Image * image, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+		void compressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+		void compressDXT3(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+		void compressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 
 	private:
 

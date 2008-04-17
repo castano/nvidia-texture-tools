@@ -9,7 +9,6 @@
 
 namespace nv
 {
-class Stream;
 
 /// Axis Aligned Bounding Box.
 class Box
@@ -28,13 +27,11 @@ public:
 	// Cast operators.
 	operator const float * () const { return reinterpret_cast<const float *>(this); }
 
-	// Min corner of the box.
-	Vector3 minCorner() const { return m_mins; }
-	Vector3 & minCorner() { return m_mins; }
+	/// Min corner of the box.
+	Vector3 mins() const { return m_mins; }
 
-	// Max corner of the box.
-	Vector3 maxCorner() const { return m_maxs; }
-	Vector3 & maxCorner() { return m_maxs; }
+	/// Max corner of the box.
+	Vector3 maxs() const { return m_maxs; }
 
 	/// Clear the bounds.
 	void clearBounds()
@@ -111,7 +108,7 @@ public:
 	float area() const
 	{
 		const Vector3 d = extents();
-		return 8.0f * (d.x()*d.y() + d.x()*d.z() + d.y()*d.z());
+		return 4.0f * (d.x()*d.y() + d.x()*d.z() + d.y()*d.z());
 	}	
 
 	/// Get the volume of the box.
@@ -121,22 +118,21 @@ public:
 		return 8.0f * (d.x() * d.y() * d.z());
 	}
 	
-	/// Return true if the box contains the given point.
-	bool contains(Vector3::Arg p) const
-	{
-		return 
-			m_mins.x() < p.x() && m_mins.y() < p.y() && m_mins.z() < p.z() &&
-			m_maxs.x() > p.x() && m_maxs.y() > p.y() && m_maxs.z() > p.z();
-	}
-
-	friend Stream & operator<< (Stream & s, Box & box);
-
 private:
 
 	Vector3 m_mins;
 	Vector3 m_maxs;
 };
 
+
+/*
+/// Point inside box test.
+inline bool pointInsideBox(const Box & b, Vector3::Arg p) const
+{
+	return (m_mins.x() < p.x() && m_mins.y() < p.y() && m_mins.z() < p.z() &&
+		m_maxs.x() > p.x() && m_maxs.y() > p.y() && m_maxs.z() > p.z());
+}
+*/
 
 
 } // nv namespace

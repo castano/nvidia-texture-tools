@@ -54,8 +54,7 @@ namespace nv
 				tangent.z() * bitangent.x() * normal.y() - tangent.x() * bitangent.z() * normal.y();
 		}
 		
-		bool isValid() const;
-		
+		/*
 		// Get transform matrix for this basis.
 		NVMATH_API Matrix matrix() const;
 		
@@ -67,7 +66,7 @@ namespace nv
 
 		// Transform by the inverse. (From object space to this basis).
 		NVMATH_API Vector3 transformI(Vector3::Arg v) const;
-
+		*/
 		
 		Vector3 tangent;
 		Vector3 bitangent;

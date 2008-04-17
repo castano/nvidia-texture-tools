@@ -56,7 +56,7 @@ namespace
 	
 	static int blockSize(Format format)
 	{
-		if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
+		if (format == Format_DXT1 || format == Format_DXT1a) {
 			return 8;
 		}
 		else if (format == Format_DXT3) {
@@ -70,9 +70,6 @@ namespace
 		}
 		else if (format == Format_BC5) {
 			return 16;
-		}
-		else if (format == Format_CTX1) {
-			return 8;
 		}
 		return 0;
 	}
@@ -348,7 +345,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	{
 		header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
 		
-		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
+		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
 			header.setFourCC('D', 'X', 'T', '1');
 			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
@@ -367,10 +364,6 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		}
 		else if (compressionOptions.format == Format_BC5) {
 			header.setFourCC('A', 'T', 'I', '2');
-			if (inputOptions.isNormalMap) header.setNormalFlag(true);
-		}
-		else if (compressionOptions.format == Format_CTX1) {
-			header.setFourCC('C', 'T', 'X', '1');
 			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
 	}
@@ -429,7 +422,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 		
 		quantizeMipmap(mipmap, compressionOptions);
 
-		compressMipmap(mipmap, inputOptions, compressionOptions, outputOptions);
+		compressMipmap(mipmap, compressionOptions, outputOptions);
 
 		// Compute extents of next mipmap:
 		w = max(1U, w / 2);
@@ -477,11 +470,6 @@ bool Compressor::Private::initMipmap(Mipmap & mipmap, const InputOptions::Privat
 
 	// Convert linear float image to fixed image ready for compression.
 	mipmap.toFixedImage(inputOptions);
-
-	if (inputOptions.premultiplyAlpha)
-	{
-		premultiplyAlphaMipmap(mipmap, inputOptions);
-	}
 
 	return true;
 }
@@ -587,29 +575,6 @@ void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Priva
 }
 
 
-void Compressor::Private::premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
-{
-	nvDebugCheck(mipmap.asFixedImage() != NULL);
-
-	Image * image = mipmap.asMutableFixedImage();
-
-	const uint w = image->width();
-	const uint h = image->height();
-
-	const uint count = w * h;
-
-	for (uint i = 0; i < count; ++i)
-	{
-		Color32 c = image->pixel(i);
-
-		c.r = (uint(c.r) * uint(c.a)) >> 8;
-		c.g = (uint(c.g) * uint(c.a)) >> 8;
-		c.b = (uint(c.b) * uint(c.a)) >> 8;
-
-		image->pixel(i) = c;
-	}
-}
-
 // Process an input image: Convert to normal map, normalize, or convert to linear space.
 void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
 {
@@ -689,7 +654,7 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 
 
 // Compress the given mipmap.
-bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	const Image * image = mipmap.asFixedImage();
 
@@ -725,7 +690,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT1(image, compressionOptions, outputOptions);
+				cuda->compressDXT1(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -752,18 +717,6 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 		}
 	}
-	else if (compressionOptions.format == Format_DXT1n)
-	{
-		if (cudaEnabled)
-		{
-			nvDebugCheck(cudaSupported);
-			cuda->compressDXT1n(image, compressionOptions, outputOptions);
-		}
-		else
-		{
-			if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-		}
-	}
 	else if (compressionOptions.format == Format_DXT3)
 	{
 		if (compressionOptions.quality == Quality_Fastest)
@@ -775,7 +728,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT3(image, inputOptions, compressionOptions, outputOptions);
+				cuda->compressDXT3(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -794,7 +747,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT5(image, inputOptions, compressionOptions, outputOptions);
+				cuda->compressDXT5(image, outputOptions, compressionOptions);
 			}
 			else
 			{
@@ -820,18 +773,6 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	else if (compressionOptions.format == Format_BC5)
 	{
 		compressBC5(image, outputOptions, compressionOptions);
-	}
-	else if (compressionOptions.format == Format_CTX1)
-	{
-		if (cudaEnabled)
-		{
-			nvDebugCheck(cudaSupported);
-			cuda->compressCTX1(image, compressionOptions, outputOptions);
-		}
-		else
-		{
-			if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-		}
 	}
 
 	return true;

@@ -96,7 +96,7 @@ static bool planeBoxOverlap(Vector3::Arg normal, Vector3::Arg vert, Vector3::Arg
 	if(min>rad || max<-rad) return false;
 
 
-bool nv::triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Triangle & tri)
+bool triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Triangle & tri)
 {
 	// use separating axis theorem to test overlap between triangle and box
 	// need to test for overlap in these directions:
@@ -170,7 +170,7 @@ bool nv::triBoxOverlap(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const T
 }
 
 
-bool nv::triBoxOverlapNoBounds(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Triangle & tri)
+bool triBoxOverlapNoBounds(Vector3::Arg boxcenter, Vector3::Arg boxhalfsize, const Triangle & tri)
 {
 	// use separating axis theorem to test overlap between triangle and box
 	// need to test for overlap in these directions:
