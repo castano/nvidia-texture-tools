@@ -23,6 +23,8 @@
 
 #include <string.h> // memcpy
 
+#include <nvcore/Containers.h> // nextPowerOfTwo
+
 #include <nvcore/Memory.h>
 
 #include "nvtt.h"
