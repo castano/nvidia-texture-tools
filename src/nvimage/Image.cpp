@@ -2,6 +2,7 @@
 
 #include <nvcore/Debug.h>
 #include <nvcore/Ptr.h>
+#include <nvcore/Containers.h> // swap
 
 #include <nvmath/Color.h>
 

@@ -162,6 +162,9 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 	if (strCaseCmp(extension, ".pfm") == 0) {
 		return loadFloatPFM(fileName, s);
 	}
+	if (strCaseCmp(extension, ".hdr") == 0) {
+		return loadGridFloat(fileName, s);
+	}
 */
 
 	return NULL;
@@ -794,7 +797,7 @@ Image * nv::ImageIO::loadJPG(Stream & s)
 	// Read the entire file.
 	Array<uint8> byte_array;
 	byte_array.resize(s.size());
-	s.serialize(byte_array.unsecureBuffer(), s.size());
+	s.serialize(byte_array.mutableBuffer(), s.size());
 	
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -1089,7 +1092,8 @@ namespace
 		
 		virtual void seekg(Imf::Int64 pos)
 		{
-			m_stream.seek(pos);
+			nvDebugCheck(pos >= 0 && pos < UINT_MAX);
+			m_stream.seek((uint)pos);
 		}
 		
 		virtual void clear()
@@ -1298,6 +1302,77 @@ bool nv::ImageIO::saveFloatPFM(const char * fileName, const FloatImage * fimage,
 	return true;
 }
 
+#pragma warning(disable : 4996)
+
+NVIMAGE_API FloatImage * nv::ImageIO::loadGridFloat(const char * fileName, Stream & s)
+{
+	nvCheck(s.isLoading());
+	nvCheck(!s.isError());
+
+	Tokenizer parser(&s);
+
+	parser.nextLine();
+
+	if (parser.token() != "ncols")
+	{
+		nvDebug("Failed to find 'ncols' token in file '%s'.\n", fileName);
+		return NULL;
+	}
+
+	parser.nextToken(true);
+	const int nCols = parser.token().toInt(); 
+
+	parser.nextToken(true);
+	if (parser.token() != "nrows")
+	{
+		nvDebug("Failed to find 'nrows' token in file '%s'.\n", fileName);
+		return NULL;
+	}
+
+	parser.nextToken(true);
+	const int nRows = parser.token().toInt();
+
+	/* There's a byte order defined in the header.  We could read it.  However, here we 
+	   just assume that it matches the platform's byte order.
+	// There is then a bunch of data that we don't care about (lat, long definitions, etc).
+	for (int i=0; i!=9; ++i)
+		parser.nextToken(true);
+
+	if (parser.token() != "byteorder")
+		return NULL;
+
+	parser.nextToken(true);
+
+	const Stream::ByteOrder byteOrder = (parser.token() == "LSBFIRST")? Stream::LittleEndian: Stream::BigEndian;
+	*/
+
+	// GridFloat comes in two files: an ASCII header which was parsed above (.hdr) and a big blob
+	// of binary data in a .flt file.
+	Path dataPath(fileName);
+	dataPath.stripExtension();
+	dataPath.append(".flt");
+
+	// Open the binary data.
+	FILE* file = fopen(dataPath.fileName(), "rb");
+	if (!file)
+	{
+		nvDebug("Failed to find GridFloat blob file '%s' corresponding to '%s'.\n", dataPath.fileName(), fileName);
+		return NULL;
+	}
+
+	// Allocate image.
+	AutoPtr<FloatImage> fimage(new FloatImage());
+	fimage->allocate(1, nCols, nRows);
+
+	float * channel = fimage->channel(0);
+
+	// The binary blob is defined to be in row-major order, containing IEEE floats.
+	// So we can just slurp it in.  Theoretically, we ought to use the byte order.
+	const size_t nRead = fread((void*) channel, sizeof(float), nRows * nCols, file);
+	fclose(file);
+
+	return fimage.release();
+}
 #endif
 
 #if 0

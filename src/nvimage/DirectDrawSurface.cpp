@@ -1241,8 +1241,23 @@ void DirectDrawSurface::printInfo() const
 	if (header.pf.flags & DDPF_ALPHAPREMULT) printf("\t\tDDPF_ALPHAPREMULT\n");
 	if (header.pf.flags & DDPF_NORMAL) printf("\t\tDDPF_NORMAL\n");
 	
-	printf("\tFourCC: '%c%c%c%c'\n", ((header.pf.fourcc >> 0) & 0xFF), ((header.pf.fourcc >> 8) & 0xFF), ((header.pf.fourcc >> 16) & 0xFF), ((header.pf.fourcc >> 24) & 0xFF));
-	printf("\tBit count: %d (0x%.8X)\n", header.pf.bitcount, header.pf.bitcount);
+	printf("\tFourCC: '%c%c%c%c'\n",
+		((header.pf.fourcc >> 0) & 0xFF),
+		((header.pf.fourcc >> 8) & 0xFF),
+		((header.pf.fourcc >> 16) & 0xFF),
+		((header.pf.fourcc >> 24) & 0xFF));
+	if ((header.pf.fourcc & DDPF_FOURCC) && (header.pf.bitcount != 0))
+	{
+		printf("\tSwizzle: '%c%c%c%c'\n", 
+			(header.pf.bitcount >> 0) & 0xFF,
+			(header.pf.bitcount >> 8) & 0xFF,
+			(header.pf.bitcount >> 16) & 0xFF,
+			(header.pf.bitcount >> 24) & 0xFF);
+	}
+	else
+	{
+		printf("\tBit count: %d\n", header.pf.bitcount);
+	}
 	printf("\tRed mask: 0x%.8X\n", header.pf.rmask);
 	printf("\tGreen mask: 0x%.8X\n", header.pf.gmask);
 	printf("\tBlue mask: 0x%.8X\n", header.pf.bmask);

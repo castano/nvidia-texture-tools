@@ -3,8 +3,10 @@
 #ifndef NV_IMAGE_FLOATIMAGE_H
 #define NV_IMAGE_FLOATIMAGE_H
 
+#include <stdlib.h> // abs
+
 #include <nvcore/Debug.h>
-#include <nvcore/Containers.h> // clamp
+#include <nvcore/Algorithms.h> // clamp
 #include <nvimage/nvimage.h>
 
 namespace nv
