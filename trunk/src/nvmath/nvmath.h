@@ -136,6 +136,11 @@ inline float lerp(float f0, float f1, float t)
 	return f0 * s + f1 * t;
 }
 
+inline float square(float f)
+{
+	return f * f;
+}
+
 } // nv
 
 #endif // NV_MATH_H

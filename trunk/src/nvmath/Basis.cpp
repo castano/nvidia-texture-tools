@@ -49,7 +49,7 @@ void Basis::robustOrthonormalize(float epsilon /*= NV_EPSILON*/)
 			return;
 		}
 	}
-	normal = ::normalize(normal, epsilon);
+	normal = nv::normalize(normal, epsilon);
 	
 	tangent -= normal * dot(normal, tangent);
 	bitangent -= normal * dot(normal, bitangent);
@@ -68,7 +68,8 @@ void Basis::robustOrthonormalize(float epsilon /*= NV_EPSILON*/)
 	}
 	else
 	{
-		tangent = ::normalize(tangent, epsilon);
+#if 0
+		tangent = nv::normalize(tangent, epsilon);
 		bitangent -= tangent * dot(tangent, bitangent);
 		
 		if (length(bitangent) < epsilon)
@@ -78,11 +79,47 @@ void Basis::robustOrthonormalize(float epsilon /*= NV_EPSILON*/)
 		}
 		else
 		{
-			tangent = ::normalize(tangent, epsilon);
+			bitangent = nv::normalize(bitangent, epsilon);
 		}
+#else
+		if (length(bitangent) < epsilon)
+		{
+			bitangent = cross(tangent, normal);
+			nvCheck(isNormalized(bitangent));
+		}
+		else
+		{
+			tangent = nv::normalize(tangent);
+			bitangent = nv::normalize(bitangent);
+			
+			Vector3 bisector = nv::normalize(tangent + bitangent);
+			Vector3 axis = cross(bisector, normal);
+			
+			nvDebugCheck(isNormalized(axis, epsilon));
+			nvDebugCheck(equal(dot(axis, tangent), -dot(axis, bitangent), epsilon));
+			
+			if (dot(axis, tangent) > 0)
+			{
+				tangent = nv::normalize(bisector + axis);
+				bitangent = nv::normalize(bisector - axis);
+			}
+			else
+			{
+				tangent = nv::normalize(bisector - axis);
+				bitangent = nv::normalize(bisector + axis);
+			}
+		}
+#endif
 	}
 	
-	// Check vector lengths.
+	/*// Check vector lengths.
+	if (!isNormalized(normal, epsilon))
+	{
+		nvDebug("%f %f %f\n", normal.x(), normal.y(), normal.z());
+		nvDebug("%f %f %f\n", tangent.x(), tangent.y(), tangent.z());
+		nvDebug("%f %f %f\n", bitangent.x(), bitangent.y(), bitangent.z());
+	}*/
+	
 	nvCheck(isNormalized(normal, epsilon));
 	nvCheck(isNormalized(tangent, epsilon));
 	nvCheck(isNormalized(bitangent, epsilon));
@@ -125,9 +162,18 @@ void Basis::buildFrameForDirection(Vector3::Arg d)
 	bitangent = cross(normal, tangent);
 }
 
+bool Basis::isValid() const
+{
+	if (equal(normal, Vector3(zero))) return false;
+	if (equal(tangent, Vector3(zero))) return false;
+	if (equal(bitangent, Vector3(zero))) return false;
+
+	if (equal(determinant(), 0.0f)) return false;
+	
+	return true;
+}
 
 
-/*
 /// Transform by this basis. (From this basis to object space).
 Vector3 Basis::transform(Vector3::Arg v) const
 {
@@ -144,30 +190,31 @@ Vector3 Basis::transformT(Vector3::Arg v)
 }
 
 /// Transform by the inverse. (From object space to this basis).
-/// @note Uses Kramer's rule so the inverse is not accurate if the basis is ill-conditioned.
+/// @note Uses Cramer's rule so the inverse is not accurate if the basis is ill-conditioned.
 Vector3 Basis::transformI(Vector3::Arg v) const
 {
 	const float det = determinant();
-	nvCheck(!equalf(det, 0.0f));
+	nvDebugCheck(!equal(det, 0.0f, 0.0f));
 	
 	const float idet = 1.0f / det;
 
 	// Rows of the inverse matrix.
-	Vector3 r0, r1, r2;
-	r0.x =  (bitangent.y() * normal.z() - bitangent.z() * normal.y()) * idet;
-	r0.y = -(bitangent.x() * normal.z() - bitangent.z() * normal.x()) * idet;
-	r0.z =  (bitangent.x() * normal.y() - bitangent.y() * normal.x()) * idet;
+	Vector3 r0(
+		 (bitangent.y() * normal.z() - bitangent.z() * normal.y()),
+		-(bitangent.x() * normal.z() - bitangent.z() * normal.x()),
+		 (bitangent.x() * normal.y() - bitangent.y() * normal.x()));
 
-	r1.x = -(tangent.y() * normal.z() - tangent.z() * normal.y()) * idet;
-	r1.y =  (tangent.x() * normal.z() - tangent.z() * normal.x()) * idet;
-	r1.z = -(tangent.x() * normal.y() - tangent.y() * normal.x()) * idet;
+	Vector3 r1(
+		-(tangent.y() * normal.z() - tangent.z() * normal.y()),
+		 (tangent.x() * normal.z() - tangent.z() * normal.x()),
+		-(tangent.x() * normal.y() - tangent.y() * normal.x()));
 
-	r2.x =  (tangent.y() * bitangent.z() - tangent.z() * bitangent.y()) * idet;
-	r2.y = -(tangent.x() * bitangent.z() - tangent.z() * bitangent.x()) * idet;
-	r2.z =  (tangent.x() * bitangent.y() - tangent.y() * bitangent.x()) * idet;
+	Vector3 r2(
+		 (tangent.y() * bitangent.z() - tangent.z() * bitangent.y()),
+		-(tangent.x() * bitangent.z() - tangent.z() * bitangent.x()),
+		 (tangent.x() * bitangent.y() - tangent.y() * bitangent.x()));
 
-	return Vector3(dot(v, r0), dot(v, r1), dot(v, r2));
+	return Vector3(dot(v, r0), dot(v, r1), dot(v, r2)) * idet;
 }	
-*/
 
 
