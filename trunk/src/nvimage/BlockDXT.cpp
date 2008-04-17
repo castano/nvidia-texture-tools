@@ -22,6 +22,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include <nvcore/Stream.h>
+#include <nvcore/Containers.h> // swap
 
 #include "ColorBlock.h"
 #include "BlockDXT.h"
