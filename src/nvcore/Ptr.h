@@ -48,8 +48,11 @@ public:
 
 	/** Delete owned pointer and assign new one. */
 	void operator=( T * p ) {
-		delete m_ptr;
-		m_ptr = p;
+		if (p != m_ptr)
+		{
+			delete m_ptr;
+			m_ptr = p;
+		}
 	}
 
 	/** Member access. */
