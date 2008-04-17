@@ -54,6 +54,8 @@ namespace
 	static const uint FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
 	static const uint FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
 
+	static const uint FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y');
+	
 	static const uint FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0');
 
 	// 32 bit RGB formats.
@@ -634,7 +636,16 @@ void DDSHeader::setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
 	// set fourcc pixel format.
 	this->pf.flags = DDPF_FOURCC;
 	this->pf.fourcc = MAKEFOURCC(c0, c1, c2, c3);
-	this->pf.bitcount = 0;
+	
+	if (this->pf.fourcc == FOURCC_ATI2)
+	{
+		this->pf.bitcount = FOURCC_A2XY;
+	}
+	else
+	{
+		this->pf.bitcount = 0;
+	}
+	
 	this->pf.rmask = 0;
 	this->pf.gmask = 0;
 	this->pf.bmask = 0;
