@@ -21,6 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include <nvcore/Containers.h> // swap
+
 #include <nvmath/Color.h>
 
 #include <nvimage/ColorBlock.h>
@@ -554,6 +556,20 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 	optimizeEndPoints4(block, dxtBlock);
 }
 
+
+void QuickCompress::compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock)
+{
+	if (rgba.a == 0)
+	{
+		dxtBlock->col0.u = 0;
+		dxtBlock->col1.u = 0;
+		dxtBlock->indices = 0xFFFFFFFF;
+	}
+	else
+	{
+		compressDXT1(rgba, dxtBlock);
+	}
+}
 
 void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 {
