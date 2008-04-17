@@ -2,6 +2,7 @@ NVIDIA Texture Tools version 2.1.0
  * CTX1 CUDA compressor.
  * DXT1n CUDA compressor.
  * Support alpha premultiplication by Charles Nicholson. See issue 30.
+ * Improved decompressor tool submitted by Amorilia. See issue 41.
 
 NVIDIA Texture Tools version 2.0.2
  * Fix copy ctor error reported by Richard Sim.
@@ -10,7 +11,6 @@ NVIDIA Texture Tools version 2.0.2
  * Fix RGBA modes with less than 32 bpp by Viktor Linder.
  * Fix alpha decompression by Amorilia. See issue 40.
  * Avoid default-initialized constructors for POD types, reported by Jim Tilander.
- * Improved decompressor tool submitted by Amorilia. See issue 41.
  * Add single color compresor for DXT1a.
  * Set swizzle code to ATI2 files. See issue 41.
 
