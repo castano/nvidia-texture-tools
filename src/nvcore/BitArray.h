@@ -80,13 +80,13 @@ public:
 	/// Clear all the bits.
 	void clearAll()
 	{
-		memset(m_bitArray.unsecureBuffer(), 0, m_bitArray.size());
+		memset(m_bitArray.mutableBuffer(), 0, m_bitArray.size());
 	}
 
 	/// Set all the bits.
 	void setAll()
 	{
-		memset(m_bitArray.unsecureBuffer(), 0xFF, m_bitArray.size());
+		memset(m_bitArray.mutableBuffer(), 0xFF, m_bitArray.size());
 	}
 
 	/// Toggle all the bits.
