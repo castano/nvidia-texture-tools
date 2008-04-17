@@ -227,7 +227,7 @@ void CudaCompressor::compressDXT3(const Image * image, const OutputOptions::Priv
 		for (uint i = 0; i < count; i++)
 		{
 			ColorBlock rgba(blockLinearImage + (bn + i) * 16);
-			QuickCompress::compressDXT5A(rgba, alphaBlocks + i);
+			QuickCompress::compressDXT3A(rgba, alphaBlocks + i);
 		}
 
 		// Check for errors.
