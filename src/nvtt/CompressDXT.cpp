@@ -199,18 +199,6 @@ void nv::fastCompressBC5(const Image * image, const nvtt::OutputOptions::Private
 }
 
 
-void nv::doPrecomputation()
-{
-	static bool done = false;	// @@ Stop using statics for reentrancy. Although the worst that could happen is that this stuff is precomputed multiple times.
-	
-	if (!done)
-	{
-		done = true;
-		squish::FastClusterFit::DoPrecomputation();
-	}
-}
-
-
 void nv::compressDXT1(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	const uint w = image->width();
@@ -218,8 +206,6 @@ void nv::compressDXT1(const Image * image, const OutputOptions::Private & output
 	
 	ColorBlock rgba;
 	BlockDXT1 block;
-
-	doPrecomputation();
 
 	//squish::WeightedClusterFit fit;
 	//squish::ClusterFit fit;
@@ -363,8 +349,6 @@ void nv::compressDXT5n(const Image * image, const OutputOptions::Private & outpu
 	ColorBlock rgba;
 	BlockDXT5 block;
 	
-	doPrecomputation();
-
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			

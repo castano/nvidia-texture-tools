@@ -725,7 +725,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT1(image, compressionOptions, outputOptions);
+				cuda->setImage(image, inputOptions.alphaMode);
+				cuda->compressDXT1(compressionOptions, outputOptions);
 			}
 			else
 			{
@@ -757,7 +758,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		if (cudaEnabled)
 		{
 			nvDebugCheck(cudaSupported);
-			cuda->compressDXT1n(image, compressionOptions, outputOptions);
+			cuda->setImage(image, inputOptions.alphaMode);	
+			cuda->compressDXT1n(compressionOptions, outputOptions);
 		}
 		else
 		{
@@ -775,7 +777,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT3(image, inputOptions, compressionOptions, outputOptions);
+				cuda->setImage(image, inputOptions.alphaMode);
+				cuda->compressDXT3(compressionOptions, outputOptions);
 			}
 			else
 			{
@@ -794,7 +797,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				cuda->compressDXT5(image, inputOptions, compressionOptions, outputOptions);
+				cuda->setImage(image, inputOptions.alphaMode);
+				cuda->compressDXT5(compressionOptions, outputOptions);
 			}
 			else
 			{
@@ -826,7 +830,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		if (cudaEnabled)
 		{
 			nvDebugCheck(cudaSupported);
-			cuda->compressCTX1(image, compressionOptions, outputOptions);
+			cuda->setImage(image, inputOptions.alphaMode);
+			cuda->compressCTX1(compressionOptions, outputOptions);
 		}
 		else
 		{
