@@ -64,11 +64,11 @@ int main()
 
 			if (isfinite(p.factor))
 			{
-				printf("\t{ %f, %f, %f, %f }, // %d (%d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, p.factor, i, c0, c1, c2);
+				printf("\t{ %ff, %ff, %ff, %ff }, // %d (%d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, p.factor, i, c0, c1, c2);
 			}
 			else
 			{
-				printf("\t{ %f, %f, %f, INFINITY }, // %d (%d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, i, c0, c1, c2);
+				printf("\t{ %ff, %ff, %ff, FLT_MAX }, // %d (%d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, i, c0, c1, c2);
 			}
 			
 			i++;
@@ -96,11 +96,11 @@ int main()
 
 				if (isfinite(p.factor))
 				{
-					printf("\t{ %f, %f, %f, %f }, // %d (%d %d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, p.factor, i, c0, c1, c2, c3);
+					printf("\t{ %ff, %ff, %ff, %ff }, // %d (%d %d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, p.factor, i, c0, c1, c2, c3);
 				}
 				else
 				{
-					printf("\t{ %f, %f, %f, INFINITY }, // %d (%d %d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, i, c0, c1, c2, c3);
+					printf("\t{ %ff, %ff, %ff, FLT_MAX }, // %d (%d %d %d %d)\n", p.alpha2_sum, p.beta2_sum, p.alphabeta_sum, i, c0, c1, c2, c3);
 				}
 
 				i++;
