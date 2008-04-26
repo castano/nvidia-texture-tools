@@ -288,6 +288,27 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	dxtBlock->indices = computeIndices3(block, a, b);
 }*/
 
+// Choose quantized color that produces less error. Used by DXT3 compressor.
+inline static uint quantize4(uint8 a)
+{
+	int q0 = (a >> 4) - 1;
+	int q1 = (a >> 4);
+	int q2 = (a >> 4) + 1;
+	
+	q0 = (q0 << 4) | q0;
+	q1 = (q1 << 4) | q1;
+	q2 = (q2 << 4) | q2;
+	
+	int d0 = abs(q0 - a);
+	int d1 = abs(q1 - a);
+	int d2 = abs(q2 - a);
+
+	if (d0 < d1 && d0 < d2) return q0 >> 4;
+	if (d1 < d2) return q1 >> 4;
+	return q2 >> 4;
+}
+
+
 namespace
 {
 	static int computeGreenError(const ColorBlock & rgba, const BlockDXT1 * block)
@@ -665,27 +686,24 @@ void QuickCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 	block->indices = computeGreenIndices(rgba, palette);
 }
 
-
-
 void QuickCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
 {
-	// @@ Round instead of truncate. When rounding take into account bit expansion.
-	dxtBlock->alpha0 = rgba.color(0).a >> 4;
-	dxtBlock->alpha1 = rgba.color(1).a >> 4;
-	dxtBlock->alpha2 = rgba.color(2).a >> 4;
-	dxtBlock->alpha3 = rgba.color(3).a >> 4;
-	dxtBlock->alpha4 = rgba.color(4).a >> 4;
-	dxtBlock->alpha5 = rgba.color(5).a >> 4;
-	dxtBlock->alpha6 = rgba.color(6).a >> 4;
-	dxtBlock->alpha7 = rgba.color(7).a >> 4;
-	dxtBlock->alpha8 = rgba.color(8).a >> 4;
-	dxtBlock->alpha9 = rgba.color(9).a >> 4;
-	dxtBlock->alphaA = rgba.color(10).a >> 4;
-	dxtBlock->alphaB = rgba.color(11).a >> 4;
-	dxtBlock->alphaC = rgba.color(12).a >> 4;
-	dxtBlock->alphaD = rgba.color(13).a >> 4;
-	dxtBlock->alphaE = rgba.color(14).a >> 4;
-	dxtBlock->alphaF = rgba.color(15).a >> 4;
+	dxtBlock->alpha0 = quantize4(rgba.color(0).a);
+	dxtBlock->alpha1 = quantize4(rgba.color(1).a);
+	dxtBlock->alpha2 = quantize4(rgba.color(2).a);
+	dxtBlock->alpha3 = quantize4(rgba.color(3).a);
+	dxtBlock->alpha4 = quantize4(rgba.color(4).a);
+	dxtBlock->alpha5 = quantize4(rgba.color(5).a);
+	dxtBlock->alpha6 = quantize4(rgba.color(6).a);
+	dxtBlock->alpha7 = quantize4(rgba.color(7).a);
+	dxtBlock->alpha8 = quantize4(rgba.color(8).a);
+	dxtBlock->alpha9 = quantize4(rgba.color(9).a);
+	dxtBlock->alphaA = quantize4(rgba.color(10).a);
+	dxtBlock->alphaB = quantize4(rgba.color(11).a);
+	dxtBlock->alphaC = quantize4(rgba.color(12).a);
+	dxtBlock->alphaD = quantize4(rgba.color(13).a);
+	dxtBlock->alphaE = quantize4(rgba.color(14).a);
+	dxtBlock->alphaF = quantize4(rgba.color(15).a);
 }
 
 void QuickCompress::compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock)
