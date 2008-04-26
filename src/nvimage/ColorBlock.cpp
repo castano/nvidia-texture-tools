@@ -114,9 +114,12 @@ void ColorBlock::splatY()
 /// Returns true if the block has a single color.
 bool ColorBlock::isSingleColor() const
 {
-	for(int i = 1; i < 16; i++)
+	Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
+	uint u = m_color[0].u & mask.u;
+	
+	for (int i = 1; i < 16; i++)
 	{
-		if (m_color[0] != m_color[i])
+		if (u != (m_color[i].u & mask.u))
 		{
 			return false;
 		}
@@ -134,10 +137,13 @@ bool ColorBlock::isSingleColorNoAlpha() const
 	{
 		if (m_color[i].a != 0) c = m_color[i];
 	}
-	
+
+	Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
+	uint u = c.u & mask.u;
+
 	for(; i < 16; i++)
 	{
-		if (c != m_color[i])
+		if (u != (m_color[i].u & mask.u))
 		{
 			return false;
 		}

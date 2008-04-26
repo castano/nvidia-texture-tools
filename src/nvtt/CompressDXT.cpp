@@ -237,7 +237,16 @@ void nv::compressDXT1a(const Image * image, const OutputOptions::Private & outpu
 			
 			rgba.init(image, x, y);
 			
-			if (rgba.isSingleColor())
+			bool anyAlpha = false;
+			bool allAlpha = true;
+			
+			for (uint i = 0; i < 16; i++)
+			{
+				if (rgba.color(i).a < 128) anyAlpha = true;
+				else allAlpha = false;
+			}
+			
+			if ((!anyAlpha && rgba.isSingleColor() || allAlpha))
 			{
 				OptimalCompress::compressDXT1a(rgba.color(0), &block);
 			}
@@ -274,11 +283,18 @@ void nv::compressDXT3(const Image * image, const OutputOptions::Private & output
 			
 			// Compress explicit alpha.
 			OptimalCompress::compressDXT3A(rgba, &block.alpha);
-			
+
 			// Compress color.
-			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
-			fit.SetColourSet(&colours, 0);
-			fit.Compress(&block.color);
+			if (rgba.isSingleColor())
+			{
+				OptimalCompress::compressDXT1(rgba.color(0), &block.color);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, 0);
+				fit.Compress(&block.color);
+			}
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -314,9 +330,16 @@ void nv::compressDXT5(const Image * image, const OutputOptions::Private & output
 			}
 
 			// Compress color.
-			squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
-			fit.SetColourSet(&colours, 0);
-			fit.Compress(&block.color);
+			if (rgba.isSingleColor())
+			{
+				OptimalCompress::compressDXT1(rgba.color(0), &block.color);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, 0);
+				fit.Compress(&block.color);
+			}
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));

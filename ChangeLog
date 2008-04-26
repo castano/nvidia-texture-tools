@@ -4,6 +4,10 @@ NVIDIA Texture Tools version 2.1.0
  * Support alpha premultiplication by Charles Nicholson. See issue 30.
  * Improved decompressor tool submitted by Amorilia. See issue 41.
 
+NVIDIA Texture Tools version 2.0.3
+ * More accurate DXT3 compressor. Fixes issue 38.
+ * Remove legacy compressors. Fix issue 34?
+
 NVIDIA Texture Tools version 2.0.2
  * Fix copy ctor error reported by Richard Sim.
  * Fix indexMirror error reported by Chris Lambert.
