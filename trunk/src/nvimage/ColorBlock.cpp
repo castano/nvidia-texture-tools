@@ -125,6 +125,27 @@ bool ColorBlock::isSingleColor() const
 	return true;
 }
 
+/// Returns true if the block has a single color, ignoring transparent pixels.
+bool ColorBlock::isSingleColorNoAlpha() const
+{
+	Color32 c;
+	int i;
+	for(i = 0; i < 16; i++)
+	{
+		if (m_color[i].a != 0) c = m_color[i];
+	}
+	
+	for(; i < 16; i++)
+	{
+		if (c != m_color[i])
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
 /// Count number of unique colors in this color block.
 uint ColorBlock::countUniqueColors() const
 {
