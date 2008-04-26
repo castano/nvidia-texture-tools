@@ -41,7 +41,6 @@
 #include "OutputOptions.h"
 
 #include "CompressDXT.h"
-#include "FastCompressDXT.h"
 #include "CompressRGB.h"
 #include "cuda/CudaUtils.h"
 #include "cuda/CudaCompressDXT.h"
