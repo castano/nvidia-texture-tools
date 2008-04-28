@@ -32,8 +32,6 @@ namespace nv
 	class Image;
 	class FloatImage;
 
-	void doPrecomputation();
-	
 	// Fast compressors.
 	void fastCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 	void fastCompressDXT1a(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
