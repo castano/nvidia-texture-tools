@@ -30,6 +30,7 @@
 #include <nvtt/CompressionOptions.h>
 #include <nvtt/OutputOptions.h>
 #include <nvtt/QuickCompressDXT.h>
+#include <nvtt/OptimalCompressDXT.h>
 
 #include "CudaCompressDXT.h"
 #include "CudaUtils.h"
@@ -329,7 +330,7 @@ void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressio
 		for (uint i = 0; i < count; i++)
 		{
 			ColorBlock rgba(blockLinearImage + (bn + i) * 16);
-			QuickCompress::compressDXT3A(rgba, alphaBlocks + i);
+			OptimalCompress::compressDXT3A(rgba, alphaBlocks + i);
 		}
 
 		// Check for errors.
