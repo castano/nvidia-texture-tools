@@ -34,7 +34,7 @@
 #define WIDTH        2048
 #define HEIGHT       2048
 #define INPUT_SIZE   (WIDTH*HEIGHT)
-#define OUTPUT_SIZE  (WIDTH*HEIGHT/16*2)
+#define OUTPUT_SIZE  (WIDTH*HEIGHT/16*4)
 
 static int s_input[INPUT_SIZE];
 static int s_reference[OUTPUT_SIZE];
@@ -89,12 +89,8 @@ void precomp()
 
 	int num = 0;
 
-	printf("{\n");
-	printf("\t%8X,\n", 0);
+	printf("const static uint s_bitmapTableCTX[704] =\n{\n");
 
-	bitmaps[0] = 0;
-
-	num = 1;
 	for (int a = 1; a <= 15; a++)
 	{
 		  for (int b = a; b <= 15; b++)
@@ -130,9 +126,16 @@ void precomp()
 		  }
 	}
 
-	printf("}\n");
+	// Align to 32: 680 -> 704
+	while (num < 704)
+	{
+		printf("\t0x80000000,\n");
 
-	printf("// num = %d\n", num);
+		bitmaps[num] = 0x80000000; // 15 0 0 1;
+		num++;
+	}
+
+	printf("}; // num = %d\n", num);
 
 /*
 	for( int i = imax; i >= 0; --i )
@@ -177,7 +180,7 @@ void precomp()
 
 int main(int argc, char *argv[])
 {
-	//precomp();
+//	precomp();
 
 	nvtt::InputOptions inputOptions;
 	inputOptions.setTextureLayout(nvtt::TextureType_2D, WIDTH, HEIGHT);
@@ -191,7 +194,7 @@ int main(int argc, char *argv[])
 	inputOptions.setMipmapGeneration(false);
 
 	nvtt::CompressionOptions compressionOptions;
-	compressionOptions.setFormat(nvtt::Format_DXT1);
+//	compressionOptions.setFormat(nvtt::Format_DXT3);
 //	compressionOptions.setFormat(nvtt::Format_DXT1n);
 //	compressionOptions.setFormat(nvtt::Format_CTX1);
 	
@@ -203,6 +206,7 @@ int main(int argc, char *argv[])
 
 
 	nvtt::Compressor compressor;
+//	compressor.enableCudaAcceleration(false);
 
 	for (s_frame = 0; s_frame < FRAME_COUNT; s_frame++)
 	{
