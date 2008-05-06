@@ -56,6 +56,7 @@ namespace nvtt
 		// Color transform.
 		ColorTransform colorTransform;
 		nv::Matrix linearTransform;
+		uint swizzleTransform[4];
 		
 		// Mipmap generation options.
 		bool generateMipmaps;
