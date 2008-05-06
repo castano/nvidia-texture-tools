@@ -662,7 +662,7 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 		}
 		else if (inputOptions.colorTransform == ColorTransform_Swizzle)
 		{
-			image->swizzle(0, input.swizzleTransform[0], input.swizzleTransform[1], input.swizzleTransform[2], input.swizzleTransform[3]);
+			image->swizzle(0, inputOptions.swizzleTransform[0], inputOptions.swizzleTransform[1], inputOptions.swizzleTransform[2], inputOptions.swizzleTransform[3]);
 		}
 	}
 }
