@@ -50,6 +50,7 @@ namespace nv
 	private:
 
 		uint * m_bitmapTable;
+		uint * m_bitmapTableCTX;
 		uint * m_data;
 		uint * m_result;
 		

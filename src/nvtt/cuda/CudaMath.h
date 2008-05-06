@@ -139,6 +139,11 @@ inline __device__ __host__ void operator /=(float2 & b, float f)
 	b.y *= inv;
 }
 
+inline __device__ __host__ bool operator ==(float2 a, float2 b)
+{
+	return a.x == b.x && a.y == b.y;
+}
+
 
 inline __device__ __host__ float dot(float2 a, float2 b)
 {

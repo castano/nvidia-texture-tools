@@ -74,7 +74,7 @@ bool nv::cuda::isHardwarePresent()
 {
 #if defined HAVE_CUDA
 #if NV_OS_WIN32
-	if (isWindowsVista()) return false;
+	//if (isWindowsVista()) return false;
 	//if (isWindowsVista() || !isWow32()) return false;
 #endif
 	int count = deviceCount();

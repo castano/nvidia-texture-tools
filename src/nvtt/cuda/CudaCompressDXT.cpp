@@ -83,7 +83,7 @@ static void convertToBlockLinear(const Image * image, uint * blockLinearImage)
 #endif
 
 
-CudaCompressor::CudaCompressor() : m_bitmapTable(NULL), m_data(NULL), m_result(NULL)
+CudaCompressor::CudaCompressor() : m_bitmapTable(NULL), m_bitmapTableCTX(NULL), m_data(NULL), m_result(NULL)
 {
 #if defined HAVE_CUDA
     // Allocate and upload bitmaps.
@@ -91,6 +91,12 @@ CudaCompressor::CudaCompressor() : m_bitmapTable(NULL), m_data(NULL), m_result(N
 	if (m_bitmapTable != NULL)
 	{
 		cudaMemcpy(m_bitmapTable, s_bitmapTable, 992 * sizeof(uint), cudaMemcpyHostToDevice);
+	}
+
+    cudaMalloc((void**) &m_bitmapTableCTX, 704 * sizeof(uint));
+	if (m_bitmapTableCTX != NULL)
+	{
+		cudaMemcpy(m_bitmapTableCTX, s_bitmapTableCTX, 704 * sizeof(uint), cudaMemcpyHostToDevice);
 	}
 
 	// Allocate scratch buffers.
@@ -558,7 +564,7 @@ void CudaCompressor::compressCTX1(const nvtt::CompressionOptions::Private & comp
 	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
 
 		// Launch kernel.
-		compressKernelCTX1(count, m_data, m_result, m_bitmapTable);
+		compressKernelCTX1(count, m_data, m_result, m_bitmapTableCTX);
 
 		// Check for errors.
 		cudaError_t err = cudaGetLastError();
