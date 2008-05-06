@@ -4,6 +4,7 @@
 #include <nvcore/Ptr.h>
 
 #include <nvmath/Color.h>
+#include <nvmath/Matrix.h>
 
 #include "FloatImage.h"
 #include "Filter.h"
@@ -237,6 +238,52 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
 		for(uint i = 0; i < size; i++) {
 			ptr[i] = pow(ptr[i], power);
 		}
+	}
+}
+
+/// Apply linear transform.
+void FloatImage::transform(uint base_component, const Matrix & m)
+{
+	nvCheck(base_component + 4 <= m_componentNum);
+
+	const uint size = m_width * m_height;
+
+	float * r = this->channel(base_component + 0);
+	float * g = this->channel(base_component + 1);
+	float * b = this->channel(base_component + 2);
+	float * a = this->channel(base_component + 3);
+
+	for (uint i = 0; i < size; i++)
+	{
+		Vector4 color = nv::transform(m, Vector4(*r, *g, *b, *a));
+
+		*r++ = color.x();
+		*g++ = color.y();
+		*b++ = color.z();
+		*a++ = color.w();
+	}
+}
+
+void FloatImage::swizzle(uint base_component, uint r, uint g, uint b, uint a)
+{
+	nvCheck(base_component + 4 <= m_componentNum);
+
+	const uint size = m_width * m_height;
+
+	float * c[4];
+	c[0] = this->channel(base_component + 0);
+	c[1] = this->channel(base_component + 1);
+	c[2] = this->channel(base_component + 2);
+	c[3] = this->channel(base_component + 3);
+
+	for (uint i = 0; i < size; i++)
+	{
+		float tmp[4] = { c[r], c[g], c[b], c[a] };
+
+		*r++ = tmp[0];
+		*g++ = tmp[1];
+		*b++ = tmp[2];
+		*a++ = tmp[3];
 	}
 }
 

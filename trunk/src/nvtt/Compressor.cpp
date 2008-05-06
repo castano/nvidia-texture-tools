@@ -651,9 +651,20 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 		{
 			mipmap.toFloatImage(inputOptions);
 		}
-	}
 
-	// @@ Linear and swizzle color transforms should be done here.
+		// Apply linear transforms in linear space.
+		FloatImage * image = mipmap.asFloatImage();
+		nvDebugCheck(image != NULL);
+
+		if (inputOptions.colorTransform == ColorTransform_Linear)
+		{
+			image->transform(0, inputOptions.linearTransform);
+		}
+		else if (inputOptions.colorTransform == ColorTransform_Swizzle)
+		{
+			image->swizzle(0, input.swizzleTransform[0], input.swizzleTransform[1], input.swizzleTransform[2], input.swizzleTransform[3]);
+		}
+	}
 }
 
 

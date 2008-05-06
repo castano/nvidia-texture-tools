@@ -316,10 +316,10 @@ void InputOptions::setSwizzleTransform(int x, int y, int z, int w)
 	nvCheck(z >= 0 && z < 3);
 	nvCheck(w >= 0 && w < 3);
 	
-	// m.xswizzle = x;
-	// m.yswizzle = y;
-	// m.zswizzle = z;
-	// m.wswizzle = w;
+	m.swizzleTransform[0] = x;
+	m.swizzleTransform[1] = y;
+	m.swizzleTransform[2] = z;
+	m.swizzleTransform[3] = w;
 }
 
 void InputOptions::setMaxExtents(int e)
