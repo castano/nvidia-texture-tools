@@ -53,6 +53,7 @@ using namespace nvtt;
 
 extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
+extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressNormalKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressKernelCTX1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
@@ -330,7 +331,14 @@ void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressio
 	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
 
 		// Launch kernel.
-		compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		if (m_alphaMode == AlphaMode_Transparency)
+		{
+			compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		}
+		else
+		{
+			compressKernelDXT1_Level4(count, m_data, m_result, m_bitmapTable);
+		}
 
 		// Compress alpha in parallel with the GPU.
 		for (uint i = 0; i < count; i++)
@@ -414,7 +422,14 @@ void CudaCompressor::compressDXT5(const CompressionOptions::Private & compressio
 	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
 
 		// Launch kernel.
-		compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		if (m_alphaMode == AlphaMode_Transparency)
+		{
+			compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		}
+		else
+		{
+			compressKernelDXT1_Level4(count, m_data, m_result, m_bitmapTable);
+		}
 
 		// Compress alpha in parallel with the GPU.
 		for (uint i = 0; i < count; i++)

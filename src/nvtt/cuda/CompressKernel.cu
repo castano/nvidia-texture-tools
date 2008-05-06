@@ -822,6 +822,40 @@ __device__ void evalAllPermutations(const float2 * colors, float2 colorSum, cons
 	errors[idx] = bestError;
 }
 
+__device__ void evalLevel4Permutations(const float3 * colors, float3 colorSum, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
+{
+	const int idx = threadIdx.x;
+	
+	float bestError = FLT_MAX;
+	
+	for(int i = 0; i < 16; i++)
+	{
+		int pidx = idx + NUM_THREADS * i;
+		if (pidx >= 992) break;
+		
+		ushort start, end;
+		uint permutation = permutations[pidx];
+
+		float error = evalPermutation4(colors, colorSum, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+		}
+	}
+
+	if (bestStart < bestEnd)
+	{
+		swap(bestEnd, bestStart);
+		bestPermutation ^= 0x55555555;	// Flip indices.
+	}
+
+	errors[idx] = bestError;
+}
+
 __device__ void evalLevel4Permutations(const float3 * colors, const float * weights, float3 colorSum, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
 {
 	const int idx = threadIdx.x;
@@ -1101,6 +1135,39 @@ __global__ void compressDXT1(const uint * permutations, const uint * image, uint
 	}
 }
 
+__global__ void compressLevel4DXT1(const uint * permutations, const uint * image, uint2 * result)
+{
+	__shared__ float3 colors[16];
+	__shared__ float3 sums[16];
+	__shared__ int xrefs[16];
+	__shared__ int sameColor;
+	
+	loadColorBlock(image, colors, sums, xrefs, &sameColor);
+
+	__syncthreads();
+
+	if (sameColor)
+	{
+		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
+		return;
+	}
+
+	ushort bestStart, bestEnd;
+	uint bestPermutation;
+
+	__shared__ float errors[NUM_THREADS];
+
+	evalLevel4Permutations(colors, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
+	
+	// Use a parallel reduction to find minimum error.
+	const int minIdx = findMinError(errors);
+	
+	// Only write the result of the winner thread.
+	if (threadIdx.x == minIdx)
+	{
+		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, result);
+	}
+}
 
 __global__ void compressWeightedDXT1(const uint * permutations, const uint * image, uint2 * result)
 {
@@ -1410,6 +1477,11 @@ extern "C" void setupCompressKernel(const float weights[3])
 extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
 	compressDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+}
+
+extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
+{
+	compressLevel4DXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
 }
 
 extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
