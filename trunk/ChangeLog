@@ -3,11 +3,13 @@ NVIDIA Texture Tools version 2.1.0
  * DXT1n CUDA compressor.
  * Support alpha premultiplication by Charles Nicholson. See issue 30.
  * Improved decompressor tool submitted by Amorilia. See issue 41.
+ * Add support for YCoCg color transform. Fixes issue 18.
+ * Add support for linear and swizzle transforms. Fixes issue 4.
 
 NVIDIA Texture Tools version 2.0.3
  * More accurate DXT3 compressor. Fixes issue 38.
  * Remove legacy compressors. Fix issue 34.
- * Check for single color in all compressors.
+ * Check for single color in all compressors. Fixes issue 43.
 
 NVIDIA Texture Tools version 2.0.2
  * Fix copy ctor error reported by Richard Sim.
