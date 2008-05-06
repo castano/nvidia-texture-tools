@@ -34,6 +34,7 @@
 #include <nvimage/Filter.h>
 #include <nvimage/Quantize.h>
 #include <nvimage/NormalMap.h>
+#include <nvimage/ColorSpace.h>
 
 #include "Compressor.h"
 #include "InputOptions.h"
@@ -480,6 +481,17 @@ bool Compressor::Private::initMipmap(Mipmap & mipmap, const InputOptions::Privat
 	if (inputOptions.premultiplyAlpha)
 	{
 		premultiplyAlphaMipmap(mipmap, inputOptions);
+	}
+
+	// Apply gamma space color transforms:
+	if (inputOptions.colorTransform == ColorTransform_YCoCg)
+	{
+		ColorSpace::RGBtoYCoCg_R(mipmap.asMutableFixedImage());
+	}
+	else if (inputOptions.colorTransform == ColorTransform_ScaledYCoCg)
+	{
+		// @@ TODO
+		//ColorSpace::RGBtoYCoCg_R(mipmap.asMutableFixedImage());
 	}
 
 	return true;

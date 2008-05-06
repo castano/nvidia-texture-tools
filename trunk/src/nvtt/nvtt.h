@@ -156,8 +156,10 @@ namespace nvtt
 	enum ColorTransform
 	{
 		ColorTransform_None,
-		ColorTransform_Linear,
-		ColorTransform_Swizzle
+		ColorTransform_Linear,      ///< Not implemented.
+		ColorTransform_Swizzle,     ///< Not implemented.
+		ColorTransform_YCoCg,       ///< Transform into r=Co, g=Cg, b=0, a=Y
+		ColorTransform_ScaledYCoCg, ///< Not implemented.
 	};
 	
 	/// Extents rounding mode.
