@@ -712,8 +712,14 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	const Image * image = mipmap.asFixedImage();
-
 	nvDebugCheck(image != NULL);
+
+	FastCompressor fast;
+	fast.setImage(image, inputOptions.alphaMode);
+
+	SlowCompressor slow;
+	slow.setImage(image, inputOptions.alphaMode);
+
 
 	if (compressionOptions.format == Format_RGBA || compressionOptions.format == Format_RGB)
 	{
@@ -738,7 +744,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 #endif
 		if (compressionOptions.quality == Quality_Fastest)
 		{
-			fastCompressDXT1(image, outputOptions);
+			fast.compressDXT1(outputOptions);
 		}
 		else
 		{
@@ -750,7 +756,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				compressDXT1(image, outputOptions, compressionOptions);
+				slow.compressDXT1(compressionOptions, outputOptions);
 			}
 		}
 	}
@@ -758,18 +764,18 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	{
 		if (compressionOptions.quality == Quality_Fastest)
 		{
-			fastCompressDXT1a(image, outputOptions);
+			fast.compressDXT1a(outputOptions);
 		}
 		else
 		{
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
-				/*cuda*/compressDXT1a(image, outputOptions, compressionOptions);
+				/*cuda*/slow.compressDXT1a(compressionOptions, outputOptions);
 			}
 			else
 			{
-				compressDXT1a(image, outputOptions, compressionOptions);
+				slow.compressDXT1a(compressionOptions, outputOptions);
 			}
 		}
 	}
@@ -790,7 +796,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	{
 		if (compressionOptions.quality == Quality_Fastest)
 		{
-			fastCompressDXT3(image, outputOptions);
+			fast.compressDXT3(outputOptions);
 		}
 		else
 		{
@@ -802,7 +808,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				compressDXT3(image, outputOptions, compressionOptions);
+				slow.compressDXT3(compressionOptions, outputOptions);
 			}
 		}
 	}
@@ -810,7 +816,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	{
 		if (compressionOptions.quality == Quality_Fastest)
 		{
-			fastCompressDXT5(image, outputOptions);
+			fast.compressDXT5(outputOptions);
 		}
 		else
 		{
@@ -822,7 +828,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				compressDXT5(image, outputOptions, compressionOptions);
+				slow.compressDXT5(compressionOptions, outputOptions);
 			}
 		}
 	}
@@ -830,20 +836,20 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	{
 		if (compressionOptions.quality == Quality_Fastest)
 		{
-			fastCompressDXT5n(image, outputOptions);
+			fast.compressDXT5n(outputOptions);
 		}
 		else
 		{
-			compressDXT5n(image, outputOptions, compressionOptions);
+			slow.compressDXT5n(compressionOptions, outputOptions);
 		}
 	}
 	else if (compressionOptions.format == Format_BC4)
 	{
-		compressBC4(image, outputOptions, compressionOptions);
+		slow.compressBC4(compressionOptions, outputOptions);
 	}
 	else if (compressionOptions.format == Format_BC5)
 	{
-		compressBC5(image, outputOptions, compressionOptions);
+		slow.compressBC5(compressionOptions, outputOptions);
 	}
 	else if (compressionOptions.format == Format_CTX1)
 	{
