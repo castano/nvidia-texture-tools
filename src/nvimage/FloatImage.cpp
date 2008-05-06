@@ -278,12 +278,12 @@ void FloatImage::swizzle(uint base_component, uint r, uint g, uint b, uint a)
 
 	for (uint i = 0; i < size; i++)
 	{
-		float tmp[4] = { c[r], c[g], c[b], c[a] };
+		float tmp[4] = { *c[r], *c[g], *c[b], *c[a] };
 
-		*r++ = tmp[0];
-		*g++ = tmp[1];
-		*b++ = tmp[2];
-		*a++ = tmp[3];
+		*c[0]++ = tmp[0];
+		*c[1]++ = tmp[1];
+		*c[2]++ = tmp[2];
+		*c[3]++ = tmp[3];
 	}
 }
 
