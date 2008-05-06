@@ -25,7 +25,9 @@ SET(IMAGE_SRCS
 	NormalMipmap.h
 	NormalMipmap.cpp
 	PsdFile.h
-	TgaFile.h)
+	TgaFile.h
+	ColorSpace.h
+	ColorSpace.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
