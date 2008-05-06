@@ -414,10 +414,6 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			outputOptions.outputHandler->beginImage(size, w, h, d, f, m);
 		}
 
-		// @@ Where to do the color transform?
-		// - Color transform may not be linear, so we cannot do before computing mipmaps.
-		// - Should be done in linear space, that is, after gamma correction.
-
 		if (!initMipmap(mipmap, inputOptions, w, h, d, f, m))
 		{
 			if (outputOptions.errorHandler != NULL)
@@ -656,6 +652,8 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 			mipmap.toFloatImage(inputOptions);
 		}
 	}
+
+	// @@ Linear and swizzle color transforms should be done here.
 }
 
 
