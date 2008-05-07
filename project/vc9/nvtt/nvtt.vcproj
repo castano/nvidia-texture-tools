@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="nvtt"
 	ProjectGUID="{1AEB7681-57D8-48EE-813D-5C41CC38B647}"
 	RootNamespace="nvtt"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -50,7 +51,6 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -70,6 +70,8 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="1"
 			/>
@@ -90,9 +92,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -133,7 +132,6 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -153,6 +151,8 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="17"
 			/>
@@ -173,9 +173,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -213,7 +210,6 @@
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -234,6 +230,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="1"
 			/>
@@ -254,9 +252,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -297,7 +292,6 @@
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -318,6 +312,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="17"
 			/>
@@ -338,9 +334,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -378,7 +371,6 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -398,6 +390,8 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="1"
 			/>
@@ -418,9 +412,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -458,7 +449,6 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -477,6 +467,8 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="17"
 			/>
@@ -497,9 +489,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -537,7 +526,6 @@
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -558,6 +546,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="1"
 			/>
@@ -578,9 +568,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -618,7 +605,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -638,6 +624,8 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
 				TargetMachine="17"
 			/>
@@ -658,9 +646,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -691,7 +676,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -701,7 +686,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -711,7 +696,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -721,7 +706,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
