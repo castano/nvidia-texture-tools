@@ -850,10 +850,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\FastCompressDXT.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
 				>
 			</File>
@@ -863,6 +859,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\nvtt_wrapper.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.cpp"
 				>
 			</File>
 			<File
@@ -912,10 +912,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\FastCompressDXT.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.h"
 				>
 			</File>
@@ -925,6 +921,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\nvtt_wrapper.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.h"
 				>
 			</File>
 			<File
