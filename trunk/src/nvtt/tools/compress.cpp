@@ -42,11 +42,11 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	MyOutputHandler(const char * name) : total(0), progress(0), percentage(0), stream(new nv::StdOutputStream(name)) {}
 	virtual ~MyOutputHandler() { delete stream; }
 	
-	virtual void setTotal(int64 t)
+	void setTotal(int64 t)
 	{
 		total = t + 128;
 	}
-	virtual void setDisplayProgress(bool b)
+	void setDisplayProgress(bool b)
 	{
 		verbose = b;
 	}
