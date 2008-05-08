@@ -19,7 +19,9 @@
 
 // Set standard function names.
 #define snprintf _snprintf
-#define vsnprintf _vsnprintf
+#if _MSC_VER < 1500
+#	define vsnprintf _vsnprintf
+#endif
 #define vsscanf _vsscanf
 #define chdir _chdir
 #define getcwd _getcwd 
