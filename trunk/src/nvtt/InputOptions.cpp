@@ -211,7 +211,7 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 			{
 				image->allocate(width, height);
 				memcpy(image->pixels(), data, width * height * 4);
-				m.images[idx].data = image;
+				m.images[idx].uint8data = image;
 			}
 			else
 			{
@@ -234,7 +234,7 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 					}
 				}
 				
-				m.images[idx].data = image;
+				m.images[idx].floatdata = image;
 			}
 			else
 			{
@@ -467,7 +467,7 @@ const Image * InputOptions::Private::image(uint idx) const
 	return image.uint8data.ptr();
 }
 
-const FloatImage * InputOptions::Private::image(uint idx) const
+const FloatImage * InputOptions::Private::floatImage(uint idx) const
 {
 	nvDebugCheck(idx < faceCount * mipmapCount);
 

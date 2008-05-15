@@ -104,6 +104,8 @@ namespace nvtt
 	{
 		InputImage() {}
 		
+		bool hasValidData() const { return uint8data != NULL || floatdata != NULL; }
+		
 		int mipLevel;
 		int face;
 		

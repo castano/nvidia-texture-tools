@@ -1,3 +1,4 @@
+// This code is in the public domain -- jim@tilander.org
 
 #ifndef NV_IMAGE_COLORSPACE_H
 #define NV_IMAGE_COLORSPACE_H
