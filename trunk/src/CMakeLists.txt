@@ -102,6 +102,15 @@ ELSE(OPENEXR_FOUND)
 	MESSAGE(STATUS "Looking for OpenEXR - not found")
 ENDIF(OPENEXR_FOUND)
 
+# FreeImage
+INCLUDE(${NV_CMAKE_DIR}/FindFreeImage.cmake)
+IF(FREEIMAGE_FOUND)
+	SET(HAVE_FREEIMAGE ${FREEIMAGE_FOUND} CACHE BOOL "Set to TRUE if FreeImage is found, FALSE otherwise")
+	MESSAGE(STATUS "Looking for FreeImage - found")
+ELSE(FREEIMAGE_FOUND)
+	MESSAGE(STATUS "Looking for FreeImage - not found")
+ENDIF(FREEIMAGE_FOUND)
+
 # Qt
 FIND_PACKAGE(Qt4)
 
