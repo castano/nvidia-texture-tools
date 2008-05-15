@@ -1,7 +1,11 @@
-#include "ColorSpace.h"
+// This code is in the public domain -- jim@tilander.org
+
+#include <nvcore/nvcore.h>
+
 #include <nvmath/Color.h>
 #include <nvimage/Image.h>
-#include <nvcore/nvcore.h>
+
+#include "ColorSpace.h"
 
 namespace nv
 {
