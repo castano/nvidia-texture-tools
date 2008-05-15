@@ -27,8 +27,7 @@ void Basis::orthonormalize(float epsilon /*= NV_EPSILON*/)
 	tangent -= normal * dot(normal, tangent);
 	tangent = ::normalize(tangent, epsilon);
 
-	bitangent -= normal * dot(normal, bitangent);
-	bitangent -= tangent * dot(tangent, bitangent);
+	bitangent -= normal * dot(normal, bitangent) + tangent * dot(tangent, bitangent);
 	bitangent = ::normalize(bitangent, epsilon);
 }
 
