@@ -28,6 +28,7 @@
 #include <nvmath/Vector.h>
 #include <nvmath/Matrix.h>
 #include <nvimage/Image.h>
+#include <nvimage/FloatImage.h>
 #include "nvtt.h"
 
 namespace nvtt
@@ -94,6 +95,8 @@ namespace nvtt
 		const nv::Image * image(uint face, uint mipmap) const;
 		const nv::Image * image(uint idx) const;
 
+		const nv::FloatImage * floatImage(uint idx) const;
+
 	};
 
 	// Internal image structure.
@@ -108,7 +111,8 @@ namespace nvtt
 		int height;
 		int depth;
 		
-		nv::AutoPtr<nv::Image> data;
+		nv::AutoPtr<nv::Image> uint8data;
+		nv::AutoPtr<nv::FloatImage> floatdata;
 	};
 
 } // nvtt namespace

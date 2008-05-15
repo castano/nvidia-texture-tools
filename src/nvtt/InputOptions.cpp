@@ -165,7 +165,8 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 			img.mipLevel = mipLevel;
 			img.face = f;
 			
-			img.data = NULL;
+			img.uint8data = NULL;
+			img.floatdata = NULL;
 			
 			w = max(1U, w / 2);
 			h = max(1U, h / 2);
@@ -203,9 +204,47 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 		return false;
 	}
 	
-	m.images[idx].data = new nv::Image();
-	m.images[idx].data->allocate(width, height);
-	memcpy(m.images[idx].data->pixels(), data, width * height * 4); 
+	switch(m.inputFormat)
+	{
+		case InputFormat_BGRA_8UB:
+			if (Image * image = new nv::Image())
+			{
+				image->allocate(width, height);
+				memcpy(image->pixels(), data, width * height * 4);
+				m.images[idx].data = image;
+			}
+			else
+			{
+				// @@ Out of memory error.
+				return false;
+			}
+			break;
+		case InputFormat_RGBA_32F:
+			if (FloatImage * image = new nv::FloatImage())
+			{
+				const float * floatData = (const float *)data;
+				image->allocate(4, width, height);
+				
+				for (int c = 0; c < 4; c++)
+				{
+					float * channel = image->channel(c);
+					for (int i = 0; i < width * height; i++)
+					{
+						channel[i] = floatData[i*4 + c];
+					}
+				}
+				
+				m.images[idx].data = image;
+			}
+			else
+			{
+				// @@ Out of memory error.
+				return false;
+			}
+			break;
+		default:
+			return false;
+	}
 	
 	return true;
 }
@@ -416,7 +455,7 @@ const Image * InputOptions::Private::image(uint face, uint mipmap) const
 	nvDebugCheck(image.face == face);
 	nvDebugCheck(image.mipLevel == mipmap);
 
-	return image.data.ptr();
+	return image.uint8data.ptr();
 }
 
 const Image * InputOptions::Private::image(uint idx) const
@@ -425,5 +464,14 @@ const Image * InputOptions::Private::image(uint idx) const
 
 	const InputImage & image = this->images[idx];
 
-	return image.data.ptr();
+	return image.uint8data.ptr();
+}
+
+const FloatImage * InputOptions::Private::image(uint idx) const
+{
+	nvDebugCheck(idx < faceCount * mipmapCount);
+
+	const InputImage & image = this->images[idx];
+
+	return image.floatdata.ptr();
 }

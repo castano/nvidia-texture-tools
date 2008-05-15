@@ -140,8 +140,7 @@ namespace nvtt
 	enum InputFormat
 	{
 		InputFormat_BGRA_8UB,
-	//	InputFormat_RGBE_8UB,
-	//	InputFormat_BGRA_32F,
+		InputFormat_RGBA_32F,
 	};
 	
 	/// Mipmap downsampling filters.

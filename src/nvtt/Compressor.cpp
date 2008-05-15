@@ -115,6 +115,11 @@ namespace nvtt
 			m_inputImage = inputOptions.image(idx);
 			m_fixedImage = NULL;
 			m_floatImage = NULL;
+			
+			if (const FloatImage * floatImage = inputOptions.floatImage(idx))
+			{
+				m_floatImage = floatImage->clone();
+			}
 		}
 
 		// Assign and take ownership of given image.
@@ -203,7 +208,7 @@ namespace nvtt
 		AutoPtr<FloatImage> m_floatImage;
 	};
 
-}
+} // nvtt namespace
 
 
 Compressor::Compressor() : m(*new Compressor::Private())
@@ -502,7 +507,7 @@ int Compressor::Private::findExactMipmap(const InputOptions::Private & inputOpti
 		
 		if (inputImage.width == int(w) && inputImage.height == int(h) && inputImage.depth == int(d))
 		{
-			if (inputImage.data != NULL)
+			if (inputImage.hasValidData())
 			{
 				return idx;
 			}
@@ -526,7 +531,7 @@ int Compressor::Private::findClosestMipmap(const InputOptions::Private & inputOp
 		int idx = f * inputOptions.mipmapCount + m;
 		const InputOptions::Private::InputImage & inputImage = inputOptions.images[idx];
 
-		if (inputImage.data != NULL)
+		if (inputImage.hasValidData())
 		{
 			int difference = (inputImage.width - w) + (inputImage.height - h) + (inputImage.depth - d);
 
@@ -647,7 +652,9 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 	}
 	else
 	{
-		if (inputOptions.inputGamma != inputOptions.outputGamma)
+		if (inputOptions.inputGamma != inputOptions.outputGamma ||
+			inputOptions.colorTransform == ColorTransform_Linear ||
+			inputOptions.colorTransform == ColorTransform_Swizzle)
 		{
 			mipmap.toFloatImage(inputOptions);
 		}
