@@ -114,6 +114,9 @@ public:
 	float sampleLinearMirror(float x, float y, int c) const;
 	//@}
 	
+	
+	FloatImage* clone() const;
+	
 public:
 	
 	uint index(uint x, uint y) const;

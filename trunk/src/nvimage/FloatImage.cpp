@@ -862,3 +862,20 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, 
 	}
 }
 
+FloatImage* FloatImage::clone() const
+{
+	FloatImage* copy = new FloatImage();
+	copy->m_width = m_width;
+	copy->m_height = m_height;
+	copy->m_componentNum = m_componentNum;
+	copy->m_count = m_count;
+	
+	if(m_mem)
+	{
+		copy->allocate(m_componentNum, m_width, m_height);
+		memcpy(copy->m_mem, m_mem, m_count * sizeof(float));
+	}
+		
+	return copy;
+}
+
