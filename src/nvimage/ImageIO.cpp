@@ -62,9 +62,10 @@ namespace {
 	
 } // namespace
 
+#if defined(HAVE_FREEIMAGE)
 static Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
 static FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
-
+#endif
 
 Image * nv::ImageIO::load(const char * fileName)
 {
