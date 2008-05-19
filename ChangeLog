@@ -1,5 +1,6 @@
 NVIDIA Texture Tools version 2.0.3
  * More accurate DXT3 compressor. Fixes issue 38.
+ * Fix error in fast downsample filter, reported by Noel Llopis.
 
 NVIDIA Texture Tools version 2.0.2
  * Fix copy ctor error reported by Richard Sim.

@@ -376,7 +376,7 @@ FloatImage * FloatImage::fastDownSample() const
 	{
 		const uint n = w * h;
 		
-		if (n & 1)
+		if ((m_width * m_height) & 1)
 		{
 			const float scale = 1.0f / (2 * n + 1);
 			
