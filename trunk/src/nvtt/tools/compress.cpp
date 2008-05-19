@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
 	bool bc1n = false;
 	nvtt::Format format = nvtt::Format_BC1;
 	bool premultiplyAlpha = false;
+	nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
 
 	const char * externalCompressor = NULL;
 
@@ -177,6 +178,15 @@ int main(int argc, char *argv[])
 		else if (strcmp("-premula", argv[i]) == 0)
 		{
 			premultiplyAlpha = true;
+		}
+		else if (strcmp("-mipfilter", argv[i]) == 0)
+		{
+			if (i+1 == argc) break;
+			i++;
+
+			if (strcmp("box", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Box;
+			else if (strcmp("triangle", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Triangle;
+			else if (strcmp("kaiser", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Kaiser;
 		}
 
 		// Compression options.
@@ -272,7 +282,8 @@ int main(int argc, char *argv[])
 		printf("  -clamp   \tClamp wrapping mode (default).\n");
 		printf("  -repeat  \tRepeat wrapping mode.\n");
 		printf("  -nomips  \tDisable mipmap generation.\n");
-		printf("  -premula \tPremultiply alpha into color channel.\n\n");
+		printf("  -premula \tPremultiply alpha into color channel.\n");
+		printf("  -mipfilter \tMipmap filter. One of the following: box, triangle, kaiser.\n\n");
 
 		printf("Compression options:\n");
 		printf("  -fast    \tFast compression.\n");
@@ -384,6 +395,8 @@ int main(int argc, char *argv[])
 		inputOptions.setPremultiplyAlpha(true);
 		inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
 	}
+	
+	inputOptions.setMipmapFilter(mipmapFilter);
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
