@@ -24,6 +24,7 @@ Remaining features:
  * Support for floating point formats: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=27 Issue 27]
  * Support for different alpha modes: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=30 Issue 30]
  * Support for YCoCg color transform: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=18 Issue 18]
+ * Use FreeImage as primary image loading library: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
 
 Critical issues:
 
