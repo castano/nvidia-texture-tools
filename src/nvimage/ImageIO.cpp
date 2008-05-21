@@ -1328,6 +1328,23 @@ namespace
 		Stream & m_stream;
 	};
 
+	static int channelIndexFromName(const char* name)
+	{
+		char c = tolower(name[0]);
+		switch (c)
+		{
+		default:
+		case 'r':
+			return 0;
+		case 'g':
+			return 1;
+		case 'b':
+			return 2;
+		case 'a':
+			return 3;
+		}
+	}
+
 } // namespace
 
 FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
@@ -1361,7 +1378,8 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	uint i = 0;
 	for (Imf::ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it, ++i)
 	{
-		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(i), sizeof(float), sizeof(float) * width));
+		int channelIndex = channelIndexFromName(it.name());
+		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(channelIndex), sizeof(float), sizeof(float) * width));
 	}
 	
 	// Read it.
@@ -1525,7 +1543,7 @@ bool nv::ImageIO::saveFloatPFM(const char * fileName, const FloatImage * fimage,
 	return true;
 }
 
-#pragma warning(disable : 4996)
+//#pragma warning(disable : 4996)
 
 NVIMAGE_API FloatImage * nv::ImageIO::loadGridFloat(const char * fileName, Stream & s)
 {
