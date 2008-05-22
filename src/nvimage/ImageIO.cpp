@@ -626,14 +626,14 @@ Image * nv::ImageIO::loadPSD(Stream & s)
 
 #if defined(HAVE_FREEIMAGE)
 
-unsigned ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
+unsigned DLL_CALLCONV ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
 {
 	Stream * s = (Stream *) handle;
 	s->serialize(buffer, size * count);
 	return count;
 }
 
-int SeekProc(fi_handle handle, long offset, int origin)
+int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
 {
 	Stream * s = (Stream *) handle;
 	
@@ -651,7 +651,7 @@ int SeekProc(fi_handle handle, long offset, int origin)
 	return 0;
 }
 
-long TellProc(fi_handle handle)
+long DLL_CALLCONV TellProc(fi_handle handle)
 {
 	Stream * s = (Stream *) handle;
 	return s->tell();
@@ -765,8 +765,8 @@ FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 				
 				for (int x=0; x < w; x++)
 				{
-					dst_real[x] = src[x].r;
-					dst_imag[x] = src[x].i;
+					dst_real[x] = (float)src[x].r;
+					dst_imag[x] = (float)src[x].i;
 				}
 			}
 			break;
