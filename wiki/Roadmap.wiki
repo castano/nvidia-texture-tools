@@ -38,8 +38,11 @@ Expected release date:
 
 Features:
 
- * Experimental lower level interface.
  * Largely driven by developer demand and requests.
+ * Experimental lower level interface.
+ * Win64 image loaders: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
+ * Better support for DX10 style DDS files: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=41 Issue 41]
+ * More CUDA accelerated compressors and image processing operations.
 
 
 = 2.3 =
