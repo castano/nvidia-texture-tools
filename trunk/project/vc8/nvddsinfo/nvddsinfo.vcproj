@@ -60,10 +60,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
+				AdditionalDependencies="FreeImage.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
+				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -133,9 +133,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
+				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -203,10 +202,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
+				AdditionalDependencies="FreeImage.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
+				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -274,9 +273,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
+				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
+				LinkTimeCodeGeneration="1"
 				TargetMachine="17"
 			/>
 			<Tool

@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -52,67 +52,6 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
-			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
-			ConfigurationType="4"
-			CharacterSet="2"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
-				RuntimeLibrary="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -168,11 +107,72 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
+			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
+			ConfigurationType="4"
+			CharacterSet="2"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -232,7 +232,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
