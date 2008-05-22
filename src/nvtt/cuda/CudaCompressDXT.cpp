@@ -206,7 +206,7 @@ void CudaCompressor::compressKernel(CudaCompressionKernel * kernel)
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
@@ -286,7 +286,7 @@ void CudaCompressor::compressDXT1(const CompressionOptions::Private & compressio
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
@@ -376,7 +376,7 @@ void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressio
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(alphaBlocks);
 	free(blockLinearImage);
@@ -467,7 +467,7 @@ void CudaCompressor::compressDXT5(const CompressionOptions::Private & compressio
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(alphaBlocks);
 	free(blockLinearImage);
@@ -537,7 +537,7 @@ void CudaCompressor::compressDXT1n(const nvtt::CompressionOptions::Private & com
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
@@ -606,7 +606,7 @@ void CudaCompressor::compressCTX1(const nvtt::CompressionOptions::Private & comp
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
