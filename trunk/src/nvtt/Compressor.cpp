@@ -660,15 +660,18 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 		}
 
 		// Apply linear transforms in linear space.
-		FloatImage * image = mipmap.asFloatImage();
-		nvDebugCheck(image != NULL);
-
 		if (inputOptions.colorTransform == ColorTransform_Linear)
 		{
+			FloatImage * image = mipmap.asFloatImage();
+			nvDebugCheck(image != NULL);
+
 			image->transform(0, inputOptions.linearTransform);
 		}
 		else if (inputOptions.colorTransform == ColorTransform_Swizzle)
 		{
+			FloatImage * image = mipmap.asFloatImage();
+			nvDebugCheck(image != NULL);
+
 			image->swizzle(0, inputOptions.swizzleTransform[0], inputOptions.swizzleTransform[1], inputOptions.swizzleTransform[2], inputOptions.swizzleTransform[3]);
 		}
 	}
