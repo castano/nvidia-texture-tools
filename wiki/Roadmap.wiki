@@ -9,13 +9,13 @@ Here's a rough roadmap for the next releases of the NVIDIA Texture Tools:
 
 = 2.1 =
 
- * Branch creation expected by May 15th.
+ * Branch creation expected by May 31.
 
 == 2.1.0 ==
 
 Expected release date:
 
- * 2008/Q2 or quickly after the final CUDA 2.0 release.
+ * June 2008 or quickly after the final CUDA 2.0 release.
 
 Remaining features:
 
@@ -28,7 +28,7 @@ Remaining features:
 
 Critical issues:
 
- * [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=46 Issue 46]
+ * ~~[http://code.google.com/p/nvidia-texture-tools/issues/detail?id=46 Issue 46]~~
 
 = 2.2 =
 
