@@ -269,7 +269,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
+	const uint version = nvtt::version();
+	const uint major = version / 100;
+	const uint minor = version % 100;
+	
+
+	printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor);
 
 	if (input.isNull())
 	{
