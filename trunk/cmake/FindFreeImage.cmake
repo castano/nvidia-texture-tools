@@ -17,7 +17,7 @@ IF (WIN32)
 		${PROJECT_SOURCE_DIR}/FreeImage
 		DOC "The FreeImage library")
 ELSE (WIN32)
-	FIND_PATH( FREEIMAGE_INCLUDE_PATH GL/glew.h
+	FIND_PATH( FREEIMAGE_INCLUDE_PATH FreeImage.h
 		/usr/include
 		/usr/local/include
 		/sw/include
