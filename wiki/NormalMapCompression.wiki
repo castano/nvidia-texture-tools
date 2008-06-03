@@ -41,3 +41,10 @@ This is easy to compute on your shaders and has the advantage of providing more 
 The main disadvantage is that the reconstruction is done after interpolation and unfortunately lines in 2D do not map to great circles when using this projection, and that can potentially cause interpolation artifacts.
 
 Another approach is to use a stereographic projection. This projection has a slightly better behavior under interpolation and is only slightly more expensive. The distribution of normals is also more uniform, although it's not clear whether that's good or not.
+
+
+=== References ===
+
+This article compares different normal map compression techniques:
+
+http://www.ozone3d.net/tutorials/bump_map_compression.php
