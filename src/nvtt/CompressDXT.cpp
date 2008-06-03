@@ -171,7 +171,6 @@ void nv::FastCompressor::compressDXT5n(const nvtt::OutputOptions::Private & outp
 		for (uint x = 0; x < w; x += 4) {
 			rgba.init(m_image, x, y);
 			
-			// copy X coordinate to alpha channel and Y coordinate to green channel.
 			rgba.swizzleDXT5n();
 
 			QuickCompress::compressDXT5(rgba, &block, 0);
@@ -377,7 +376,6 @@ void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compr
 			
 			rgba.init(m_image, x, y);
 			
-			// copy X coordinate to green channel and Y coordinate to alpha channel.
 			rgba.swizzleDXT5n();			
 			
 			// Compress X.
