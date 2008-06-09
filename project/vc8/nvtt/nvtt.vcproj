@@ -711,7 +711,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -m32 -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -m32 -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -850,10 +850,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\FastCompressDXT.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
 				>
 			</File>
@@ -863,6 +859,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\nvtt_wrapper.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.cpp"
 				>
 			</File>
 			<File
@@ -912,10 +912,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\FastCompressDXT.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.h"
 				>
 			</File>
@@ -925,6 +921,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\nvtt_wrapper.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.h"
 				>
 			</File>
 			<File

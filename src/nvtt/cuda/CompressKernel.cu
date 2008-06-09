@@ -594,6 +594,40 @@ __device__ void evalAllPermutations(const float3 * colors, const float * weights
 }
 */
 
+__device__ void evalLevel4Permutations(const float3 * colors, float3 colorSum, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
+{
+	const int idx = threadIdx.x;
+	
+	float bestError = FLT_MAX;
+	
+	for(int i = 0; i < 16; i++)
+	{
+		int pidx = idx + NUM_THREADS * i;
+		if (pidx >= 992) break;
+		
+		ushort start, end;
+		uint permutation = permutations[pidx];
+
+		float error = evalPermutation4(colors, colorSum, permutation, &start, &end);
+		
+		if (error < bestError)
+		{
+			bestError = error;
+			bestPermutation = permutation;
+			bestStart = start;
+			bestEnd = end;
+		}
+	}
+
+	if (bestStart < bestEnd)
+	{
+		swap(bestEnd, bestStart);
+		bestPermutation ^= 0x55555555;	// Flip indices.
+	}
+
+	errors[idx] = bestError;
+}
+
 __device__ void evalLevel4Permutations(const float3 * colors, const float * weights, float3 colorSum, const uint * permutations, ushort & bestStart, ushort & bestEnd, uint & bestPermutation, float * errors)
 {
 	const int idx = threadIdx.x;
@@ -627,7 +661,6 @@ __device__ void evalLevel4Permutations(const float3 * colors, const float * weig
 
 	errors[idx] = bestError;
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
