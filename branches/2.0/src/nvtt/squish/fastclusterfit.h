@@ -44,8 +44,6 @@ public:
 	void SetMetric(float r, float g, float b);
 	float GetBestError() const;
 
-	static void DoPrecomputation();
-
 	// Make them public
 	virtual void Compress3( void* block );
 	virtual void Compress4( void* block );

@@ -1,4 +1,4 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright NVIDIA Corporation 2008 -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -21,8 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_QUICKCOMPRESSDXT_H
-#define NV_TT_QUICKCOMPRESSDXT_H
+#ifndef NV_TT_OPTIMALCOMPRESSDXT_H
+#define NV_TT_OPTIMALCOMPRESSDXT_H
 
 #include <nvimage/nvimage.h>
 
@@ -35,16 +35,15 @@ namespace nv
 	struct AlphaBlockDXT3;
 	struct AlphaBlockDXT5;
 
-	namespace QuickCompress
+	namespace OptimalCompress
 	{
-		void compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock);
-		void compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock);
+		void compressDXT1(Color32 rgba, BlockDXT1 * dxtBlock);
+		void compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock);
 		
-		void compressDXT3(const ColorBlock & rgba, BlockDXT3 * dxtBlock);
-		
-		void compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock, int iterationCount=8);
-		void compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, int iterationCount=8);
+		void compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block);
+		void compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock);
+		void compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock);
 	}
 } // nv namespace
 
-#endif // NV_TT_QUICKCOMPRESSDXT_H
+#endif // NV_TT_OPTIMALCOMPRESSDXT_H

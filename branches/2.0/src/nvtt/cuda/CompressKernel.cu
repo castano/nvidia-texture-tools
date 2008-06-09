@@ -159,7 +159,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 	}
 }
 
-__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], float weights[16], int xrefs[16])
+__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], float weights[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
@@ -188,6 +188,8 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
 		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
+
+		*sameColor = (axis == make_float3(0, 0, 0));
 
 		dps[idx] = dot(rawColors[idx], axis);
 		
@@ -798,6 +800,39 @@ __global__ void compressDXT1(const uint * permutations, const uint * image, uint
 	}
 }
 
+__global__ void compressLevel4DXT1(const uint * permutations, const uint * image, uint2 * result)
+{
+	__shared__ float3 colors[16];
+	__shared__ float3 sums[16];
+	__shared__ int xrefs[16];
+	__shared__ int sameColor;
+	
+	loadColorBlock(image, colors, sums, xrefs, &sameColor);
+
+	__syncthreads();
+
+	if (sameColor)
+	{
+		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
+		return;
+	}
+
+	ushort bestStart, bestEnd;
+	uint bestPermutation;
+
+	__shared__ float errors[NUM_THREADS];
+
+	evalLevel4Permutations(colors, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
+	
+	// Use a parallel reduction to find minimum error.
+	const int minIdx = findMinError(errors);
+	
+	// Only write the result of the winner thread.
+	if (threadIdx.x == minIdx)
+	{
+		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, result);
+	}
+}
 
 __global__ void compressWeightedDXT1(const uint * permutations, const uint * image, uint2 * result)
 {
@@ -805,10 +840,17 @@ __global__ void compressWeightedDXT1(const uint * permutations, const uint * ima
 	__shared__ float3 sums[16];
 	__shared__ float weights[16];
 	__shared__ int xrefs[16];
+	__shared__ int sameColor;
 	
-	loadColorBlock(image, colors, sums, weights, xrefs);
+	loadColorBlock(image, colors, sums, weights, xrefs, &sameColor);
 	
 	__syncthreads();
+
+	if (sameColor)
+	{
+		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
+		return;
+	}
 
 	ushort bestStart, bestEnd;
 	uint bestPermutation;
@@ -1031,6 +1073,11 @@ extern "C" void setupCompressKernel(const float weights[3])
 extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
 	compressDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+}
+
+extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
+{
+	compressLevel4DXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
 }
 
 extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)

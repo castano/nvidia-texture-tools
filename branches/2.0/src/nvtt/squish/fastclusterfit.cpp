@@ -29,6 +29,8 @@
 #include "colourblock.h"
 #include <cfloat>
 
+#include "fastclusterlookup.inl"
+
 namespace squish {
 
 FastClusterFit::FastClusterFit()
@@ -96,91 +98,6 @@ void FastClusterFit::SetColourSet( ColourSet const* colours, int flags )
 	}
 }
 
-
-struct Precomp {
-	float alpha2_sum;
-	float beta2_sum;
-	float alphabeta_sum;
-	float factor;
-};
-
-static SQUISH_ALIGN_16 Precomp s_threeElement[153];
-static SQUISH_ALIGN_16 Precomp s_fourElement[969];
-
-void FastClusterFit::DoPrecomputation()
-{
-	int i = 0;
-	
-	// Three element clusters:
-	for( int c0 = 0; c0 <= 16; c0++)	// At least two clusters.
-	{
-		for( int c1 = 0; c1 <=  16-c0; c1++)
-		{
-			int c2 = 16 - c0 - c1;
-
-			/*if (c2 == 16) {
-				// a = b = x2 / 16
-				s_threeElement[i].alpha2_sum = 0;
-				s_threeElement[i].beta2_sum = 16;
-				s_threeElement[i].alphabeta_sum = -16;
-				s_threeElement[i].factor = 1.0f / 256.0f;
-			}
-			else if (c0 == 16) {
-				// a = b = x0 / 16
-				s_threeElement[i].alpha2_sum = 16;
-				s_threeElement[i].beta2_sum = 0;
-				s_threeElement[i].alphabeta_sum = -16;
-				s_threeElement[i].factor = 1.0f / 256.0f;
-			}
-			else*/ {
-				s_threeElement[i].alpha2_sum = c0 + c1 * 0.25f;
-				s_threeElement[i].beta2_sum = c2 + c1 * 0.25f;
-				s_threeElement[i].alphabeta_sum = c1 * 0.25f;
-				s_threeElement[i].factor = 1.0f / (s_threeElement[i].alpha2_sum * s_threeElement[i].beta2_sum - s_threeElement[i].alphabeta_sum * s_threeElement[i].alphabeta_sum);
-			}
-			
-			i++;
-		}
-	}
-	//printf("%d three cluster elements\n", i);
-	
-	// Four element clusters:
-	i = 0;
-	for( int c0 = 0; c0 <= 16; c0++)
-	{
-		for( int c1 = 0; c1 <=  16-c0; c1++)
-		{
-			for( int c2 = 0; c2 <=  16-c0-c1; c2++)
-			{
-				int c3 = 16 - c0 - c1 - c2;
-				
-				/*if (c3 == 16) {
-					// a = b = x3 / 16
-					s_fourElement[i].alpha2_sum = 16.0f;
-					s_fourElement[i].beta2_sum = 0.0f;
-					s_fourElement[i].alphabeta_sum = -16.0f;
-					s_fourElement[i].factor = 1.0f / 256.0f;					
-				}
-				else if (c0 == 16) {
-					// a = b = x0 / 16
-					s_fourElement[i].alpha2_sum = 0.0f;
-					s_fourElement[i].beta2_sum = 16.0f;
-					s_fourElement[i].alphabeta_sum = -16.0f;
-					s_fourElement[i].factor = 1.0f / 256.0f;					
-				}
-				else*/ {
-					s_fourElement[i].alpha2_sum = c0 + c1 * (4.0f/9.0f) + c2 * (1.0f/9.0f);
-					s_fourElement[i].beta2_sum = c3 + c2 * (4.0f/9.0f) + c1 * (1.0f/9.0f);
-					s_fourElement[i].alphabeta_sum = (c1 + c2) * (2.0f/9.0f);
-					s_fourElement[i].factor = 1.0f / (s_fourElement[i].alpha2_sum * s_fourElement[i].beta2_sum - s_fourElement[i].alphabeta_sum * s_fourElement[i].alphabeta_sum);
-				}
-
-				i++;
-			}
-		}
-	}
-	//printf("%d four cluster elements\n", i);
-}
 
 void FastClusterFit::SetMetric(float r, float g, float b)
 {
