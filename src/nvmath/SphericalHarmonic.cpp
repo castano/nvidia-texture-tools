@@ -11,10 +11,8 @@ namespace
 	// Basic integer factorial.
 	inline static int factorial( int v )
 	{
-		const static int fac_table[] = { 1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800 };
-
-		if(v <= 11){
-			return fac_table[v];
+		if (v == 0) {
+			return 1;
 		}
 	
 		int result = v;

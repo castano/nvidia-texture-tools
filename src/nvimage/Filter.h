@@ -11,16 +11,16 @@ namespace nv
 	class Vector4;
 
 	/// Base filter class.
-	class NVIMAGE_CLASS Filter
+	class Filter
 	{
 	public:
-		Filter(float width);
-		virtual ~Filter();
+		NVIMAGE_API Filter(float width);
+		NVIMAGE_API virtual ~Filter();
 
-		float width() const { return m_width; }
-		float sampleDelta(float x, float scale) const;
-		float sampleBox(float x, float scale, int samples) const;
-		float sampleTriangle(float x, float scale, int samples) const;
+		NVIMAGE_API float width() const { return m_width; }
+		NVIMAGE_API float sampleDelta(float x, float scale) const;
+		NVIMAGE_API float sampleBox(float x, float scale, int samples) const;
+		NVIMAGE_API float sampleTriangle(float x, float scale, int samples) const;
 
 		virtual float evaluate(float x) const = 0;
 
@@ -29,56 +29,56 @@ namespace nv
 	};
 
 	// Box filter.
-	class NVIMAGE_CLASS BoxFilter : public Filter
+	class BoxFilter : public Filter
 	{
 	public:
-		BoxFilter();
-		BoxFilter(float width);
-		virtual float evaluate(float x) const;
+		NVIMAGE_API BoxFilter();
+		NVIMAGE_API BoxFilter(float width);
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	// Triangle (bilinear/tent) filter.
-	class NVIMAGE_CLASS TriangleFilter : public Filter
+	class TriangleFilter : public Filter
 	{
 	public:
-		TriangleFilter();
-		TriangleFilter(float width);
-		virtual float evaluate(float x) const;
+		NVIMAGE_API TriangleFilter();
+		NVIMAGE_API TriangleFilter(float width);
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	// Quadratic (bell) filter.
-	class NVIMAGE_CLASS QuadraticFilter : public Filter
+	class QuadraticFilter : public Filter
 	{
 	public:
-		QuadraticFilter();
-		virtual float evaluate(float x) const;
+		NVIMAGE_API QuadraticFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	// Cubic filter from Thatcher Ulrich.
-	class NVIMAGE_CLASS CubicFilter : public Filter
+	class CubicFilter : public Filter
 	{
 	public:
-		CubicFilter();
-		virtual float evaluate(float x) const;
+		NVIMAGE_API CubicFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	// Cubic b-spline filter from Paul Heckbert.
-	class NVIMAGE_CLASS BSplineFilter : public Filter
+	class BSplineFilter : public Filter
 	{
 	public:
-		BSplineFilter();
-		virtual float evaluate(float x) const;
+		NVIMAGE_API BSplineFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	/// Mitchell & Netravali's two-param cubic
 	/// @see "Reconstruction Filters in Computer Graphics", SIGGRAPH 88
-	class NVIMAGE_CLASS MitchellFilter : public Filter
+	class MitchellFilter : public Filter
 	{
 	public:
-		MitchellFilter();
-		virtual float evaluate(float x) const;
+		NVIMAGE_API MitchellFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
 
-		void setParameters(float a, float b);
+		NVIMAGE_API void setParameters(float a, float b);
 
 	private:
 		float p0, p2, p3;
@@ -86,29 +86,29 @@ namespace nv
 	};
 
 	// Lanczos3 filter.
-	class NVIMAGE_CLASS LanczosFilter : public Filter
+	class LanczosFilter : public Filter
 	{
 	public:
-		LanczosFilter();
-		virtual float evaluate(float x) const;
+		NVIMAGE_API LanczosFilter();
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	// Sinc filter.
-	class NVIMAGE_CLASS SincFilter : public Filter
+	class SincFilter : public Filter
 	{
 	public:
-		SincFilter(float w);
-		virtual float evaluate(float x) const;
+		NVIMAGE_API SincFilter(float w);
+		NVIMAGE_API virtual float evaluate(float x) const;
 	};
 
 	// Kaiser filter.
-	class NVIMAGE_CLASS KaiserFilter : public Filter
+	class KaiserFilter : public Filter
 	{
 	public:
-		KaiserFilter(float w);
-		virtual float evaluate(float x) const;
+		NVIMAGE_API KaiserFilter(float w);
+		NVIMAGE_API virtual float evaluate(float x) const;
 	
-		void setParameters(float a, float stretch);
+		NVIMAGE_API void setParameters(float a, float stretch);
 
 	private:
 		float alpha;
@@ -118,12 +118,12 @@ namespace nv
 
 
 	/// A 1D kernel. Used to precompute filter weights.
-	class NVIMAGE_CLASS Kernel1
+	class Kernel1
 	{
 		NV_FORBID_COPY(Kernel1);
 	public:
-		Kernel1(const Filter & f, int iscale, int samples = 32);
-		~Kernel1();
+		NVIMAGE_API Kernel1(const Filter & f, int iscale, int samples = 32);
+		NVIMAGE_API ~Kernel1();
 		
 		float valueAt(uint x) const {
 			nvDebugCheck(x < (uint)m_windowSize);
@@ -138,7 +138,7 @@ namespace nv
 			return m_width;
 		}
 		
-		void debugPrint();
+		NVIMAGE_API void debugPrint();
 		
 	private:
 		int m_windowSize;
@@ -148,15 +148,15 @@ namespace nv
 
 
 	/// A 2D kernel.
-	class NVIMAGE_CLASS Kernel2 
+	class Kernel2 
 	{
 	public:
-		Kernel2(uint width);
-		Kernel2(const Kernel2 & k);
-		~Kernel2();
+		NVIMAGE_API Kernel2(uint width);
+		NVIMAGE_API Kernel2(const Kernel2 & k);
+		NVIMAGE_API ~Kernel2();
 		
-		void normalize();
-		void transpose();
+		NVIMAGE_API void normalize();
+		NVIMAGE_API void transpose();
 		
 		float valueAt(uint x, uint y) const {
 			return m_data[y * m_windowSize + x];
@@ -166,12 +166,12 @@ namespace nv
 			return m_windowSize;
 		}
 		
-		void initLaplacian();
-		void initEdgeDetection();
-		void initSobel();
-		void initPrewitt();
+		NVIMAGE_API void initLaplacian();
+		NVIMAGE_API void initEdgeDetection();
+		NVIMAGE_API void initSobel();
+		NVIMAGE_API void initPrewitt();
 		
-		void initBlendedSobel(const Vector4 & scale);
+		NVIMAGE_API void initBlendedSobel(const Vector4 & scale);
 		
 	private:
 		const uint m_windowSize;
@@ -180,12 +180,12 @@ namespace nv
 
 
 	/// A 1D polyphase kernel
-	class NVIMAGE_CLASS PolyphaseKernel
+	class PolyphaseKernel
 	{
 		NV_FORBID_COPY(PolyphaseKernel);
 	public:
-		PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength, int samples = 32);
-		~PolyphaseKernel();
+		NVIMAGE_API PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength, int samples = 32);
+		NVIMAGE_API ~PolyphaseKernel();
 		
 		int windowSize() const {
 			return m_windowSize;
@@ -205,7 +205,7 @@ namespace nv
 			return m_data[column * m_windowSize + x];
 		}
 
-		void debugPrint() const;
+		NVIMAGE_API void debugPrint() const;
 		
 	private:
 		int m_windowSize;

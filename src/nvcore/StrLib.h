@@ -213,12 +213,9 @@ namespace nv
 		/// Implement value semantics.
 		String & operator=( const String & str )
 		{
-			if (str.data != data)
-			{
-				release();
-				data = str.data;
-				addRef();
-			}
+			release();
+			data = str.data;
+			addRef();
 			return *this;
 		}
 

@@ -51,46 +51,13 @@ namespace nv
 
 	inline Quaternion mul(Quaternion::Arg a, Quaternion::Arg b)
 	{
+		// @@ Efficient SIMD implementation?
 		return Quaternion(
 			+ a.x() * b.w() + a.y()*b.z() - a.z()*b.y() + a.w()*b.x(),
 			- a.x() * b.z() + a.y()*b.w() + a.z()*b.x() + a.w()*b.y(),
 			+ a.x() * b.y() - a.y()*b.x() + a.z()*b.w() + a.w()*b.z(),
 			- a.x() * b.x() - a.y()*b.y() - a.z()*b.z() + a.w()*b.w());
 	}
-
-	inline Quaternion mul(Quaternion::Arg a, Vector3::Arg b)
-	{
-		return Quaternion(
-			                + a.y()*b.z() - a.z()*b.y() + a.w()*b.x(),
-			- a.x() * b.z()               + a.z()*b.x() + a.w()*b.y(),
-			+ a.x() * b.y() - a.y()*b.x()               + a.w()*b.z(),
-			- a.x() * b.x() - a.y()*b.y() - a.z()*b.z() );
-	}
-
-	inline Quaternion mul(Vector3::Arg a, Quaternion::Arg b)
-	{
-		return Quaternion(
-			+ a.x() * b.w() + a.y()*b.z() - a.z()*b.y(),
-			- a.x() * b.z() + a.y()*b.w() + a.z()*b.x(),
-			+ a.x() * b.y() - a.y()*b.x() + a.z()*b.w(),
-			- a.x() * b.x() - a.y()*b.y() - a.z()*b.z());
-	}
-
-	inline Quaternion operator *(Quaternion::Arg a, Quaternion::Arg b)
-	{
-		return mul(a, b);
-	}
-
-	inline Quaternion operator *(Quaternion::Arg a, Vector3::Arg b)
-	{
-		return mul(a, b);
-	}
-
-	inline Quaternion operator *(Vector3::Arg a, Quaternion::Arg b)
-	{
-		return mul(a, b);
-	}
-
 
 	inline Quaternion scale(Quaternion::Arg q, float s)
 	{
@@ -153,24 +120,6 @@ namespace nv
 		float s = sinf(alpha * 0.5f);
 		float c = cosf(alpha * 0.5f);
 		return Quaternion(Vector4(v * s, c));
-	}
-
-	inline Vector3 imag(Quaternion::Arg q)
-	{
-		return q.asVector().xyz();
-	}
-
-	inline float real(Quaternion::Arg q)
-	{
-		return q.w();
-	}
-
-
-	/// Transform vector.
-	inline Vector3 transform(Quaternion::Arg q, Vector3::Arg v)
-	{
-		Quaternion t = q * v * conjugate(q);
-		return imag(t);
 	}
 
 

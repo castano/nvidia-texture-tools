@@ -4,7 +4,7 @@
 #define NV_MATH_VECTOR_H
 
 #include <nvmath/nvmath.h>
-#include <nvcore/Algorithms.h> // min, max
+#include <nvcore/Containers.h> // min, max
 
 namespace nv
 {
@@ -71,7 +71,6 @@ public:
 	const Vector2 & xy() const;
 
 	scalar component(uint idx) const;
-	void setComponent(uint idx, scalar f);
 
 	const scalar * ptr() const;
 
@@ -240,19 +239,11 @@ inline const Vector2 & Vector3::xy() const
 inline scalar Vector3::component(uint idx) const
 {
 	nvDebugCheck(idx < 3);
-	if (idx == 0) return m_x;
-	if (idx == 1) return m_y;
-	if (idx == 2) return m_z;
+	if (idx == 0) return x();
+	if (idx == 1) return y();
+	if (idx == 2) return z();
 	nvAssume(false);
 	return 0.0f;
-}
-
-inline void Vector3::setComponent(uint idx, float f)
-{
-	nvDebugCheck(idx < 3);
-	if (idx == 0) m_x = f;
-	else if (idx == 1) m_y = f;
-	else if (idx == 2) m_z = f;
 }
 
 inline const scalar * Vector3::ptr() const
@@ -486,35 +477,6 @@ inline scalar length(Vector2::Arg v)
 	return sqrtf(length_squared(v));
 }
 
-inline scalar inverse_length(Vector2::Arg v)
-{
-	return 1.0f / sqrtf(length_squared(v));
-}
-
-inline bool isNormalized(Vector2::Arg v, float epsilon = NV_NORMAL_EPSILON)
-{
-	return equal(length(v), 1, epsilon);
-}
-
-inline Vector2 normalize(Vector2::Arg v, float epsilon = NV_EPSILON)
-{
-	float l = length(v);
-	nvDebugCheck(!isZero(l, epsilon));
-	Vector2 n = scale(v, 1.0f / l);
-	nvDebugCheck(isNormalized(n));
-	return n;
-}
-
-inline Vector2 normalizeSafe(Vector2::Arg v, Vector2::Arg fallback, float epsilon = NV_EPSILON)
-{
-	float l = length(v);
-	if (isZero(l, epsilon)) {
-		return fallback;
-	}
-	return scale(v, 1.0f / l);
-}
-
-
 inline bool equal(Vector2::Arg v1, Vector2::Arg v2, float epsilon = NV_EPSILON)
 {
 	return equal(v1.x(), v2.x(), epsilon) && equal(v1.y(), v2.y(), epsilon);
@@ -631,11 +593,6 @@ inline scalar length_squared(Vector3::Arg v)
 inline scalar length(Vector3::Arg v)
 {
 	return sqrtf(length_squared(v));
-}
-
-inline scalar inverse_length(Vector3::Arg v)
-{
-	return 1.0f / sqrtf(length_squared(v));
 }
 
 inline bool isNormalized(Vector3::Arg v, float epsilon = NV_NORMAL_EPSILON)
@@ -757,11 +714,6 @@ inline scalar length_squared(Vector4::Arg v)
 inline scalar length(Vector4::Arg v)
 {
 	return sqrtf(length_squared(v));
-}
-
-inline scalar inverse_length(Vector4::Arg v)
-{
-	return 1.0f / sqrtf(length_squared(v));
 }
 
 inline bool isNormalized(Vector4::Arg v, float epsilon = NV_NORMAL_EPSILON)

@@ -24,7 +24,6 @@ namespace nv
 		void splatY();
 		
 		bool isSingleColor() const;
-		bool isSingleColorNoAlpha() const;
 		uint countUniqueColors() const;
 		Color32 averageColor() const;
 		bool hasAlpha() const;

@@ -19,7 +19,6 @@ Do not use memmove in insert & remove, use copy ctors instead.
 #include <nvcore/nvcore.h>
 #include <nvcore/Memory.h>
 #include <nvcore/Debug.h>
-//#include <nvcore/Stream.h>
 
 #include <string.h>	// memmove
 #include <new>		// for placement new
@@ -71,10 +70,40 @@ namespace nv
 {
 	// Templates
 
+	/// Return the maximum of two values.
+	template <typename T> 
+	inline const T & max(const T & a, const T & b)
+	{
+		//return std::max(a, b);
+		if( a < b ) {
+			return b; 
+		}
+		return a;
+	}
+	
+	/// Return the minimum of two values.
+	template <typename T> 
+	inline const T & min(const T & a, const T & b)
+	{
+		//return std::min(a, b);
+		if( b < a ) {
+			return b; 
+		}
+		return a;
+	}
+	
+	/// Clamp between two values.
+	template <typename T> 
+	inline const T & clamp(const T & x, const T & a, const T & b)
+	{
+		return min(max(x, a), b);
+	}
+	
 	/// Swap two values.
 	template <typename T> 
 	inline void swap(T & a, T & b)
 	{
+		//return std::swap(a, b);
 		T temp = a; 
 		a = b; 
 		b = temp;
@@ -105,6 +134,16 @@ namespace nv
 		uint operator()(uint x) const { return x; }
 	};
 	
+	/// Delete all the elements of a container.
+	template <typename T>
+	void deleteAll(T & container)
+	{
+		for(typename T::PseudoIndex i = container.start(); !container.isDone(i); container.advance(i))
+		{
+			delete container[i];
+		}
+	}
+
 	
 	/** Return the next power of two. 
 	* @see http://graphics.stanford.edu/~seander/bithacks.html
@@ -115,7 +154,7 @@ namespace nv
 	inline uint nextPowerOfTwo( uint x )
 	{
 		nvDebugCheck( x != 0 );
-	#if 1	// On modern CPUs this is supposed to be as fast as using the bsr instruction.
+	#if 1	// On modern CPUs this is as fast as using the bsr instruction.
 		x--;
 		x |= x >> 1;
 		x |= x >> 2;
@@ -137,6 +176,15 @@ namespace nv
 	{
 		return (n & (n-1)) == 0;
 	}
+
+	/// Simple iterator interface.
+	template <typename T>
+	struct Iterator
+	{
+		virtual void advance();
+		virtual bool isDone();
+		virtual T current();
+	};
 
 
 	/**
@@ -204,7 +252,7 @@ namespace nv
 		const T * buffer() const { return m_buffer; }
 	
 		/// Get vector pointer.
-		T * mutableBuffer() { return m_buffer; }
+		T * unsecureBuffer() { return m_buffer; }
 	
 		/// Is vector empty.
 		bool isEmpty() const { return m_size == 0; }

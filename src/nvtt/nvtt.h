@@ -47,7 +47,7 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_VERSION 201
+#define NVTT_VERSION 200
 
 #define NVTT_DECLARE_PIMPL(Class) \
 	private: \
@@ -83,9 +83,6 @@ namespace nvtt
 		Format_BC3n = Format_DXT5n,
 		Format_BC4,     // ATI1
 		Format_BC5,     // 3DC, ATI2
-
-		Format_DXT1n,
-		Format_CTX1,
 	};
 	
 	/// Quality modes.
@@ -140,7 +137,8 @@ namespace nvtt
 	enum InputFormat
 	{
 		InputFormat_BGRA_8UB,
-		InputFormat_RGBA_32F,
+	//	InputFormat_RGBE_8UB,
+	//	InputFormat_BGRA_32F,
 	};
 	
 	/// Mipmap downsampling filters.
@@ -155,10 +153,7 @@ namespace nvtt
 	enum ColorTransform
 	{
 		ColorTransform_None,
-		ColorTransform_Linear,      ///< Not implemented.
-		ColorTransform_Swizzle,     ///< Not implemented.
-		ColorTransform_YCoCg,       ///< Transform into r=Co, g=Cg, b=0, a=Y
-		ColorTransform_ScaledYCoCg, ///< Not implemented.
+		ColorTransform_Linear,
 	};
 	
 	/// Extents rounding mode.
@@ -223,14 +218,10 @@ namespace nvtt
 		// Set color transforms. @@ Not implemented!
 		NVTT_API void setColorTransform(ColorTransform t);
 		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
-		NVTT_API void setSwizzleTransform(int x, int y, int z, int w);
 		
 		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
 		NVTT_API void setRoundMode(RoundMode mode);
-
-		// Set whether or not to premultiply color by alpha
-		NVTT_API void setPremultiplyAlpha(bool b);
 	};
 	
 	

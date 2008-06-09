@@ -24,7 +24,7 @@ __forceinline void nvPrefetch(const void * mem)
 #else // NV_CC_MSVC
 
 // do nothing in other case.
-#define nvPrefetch(ptr)
+#define piPrefetch(ptr)
 
 #endif // NV_CC_MSVC
 

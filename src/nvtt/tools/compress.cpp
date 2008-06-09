@@ -140,8 +140,6 @@ int main(int argc, char *argv[])
 	bool silent = false;
 	bool bc1n = false;
 	nvtt::Format format = nvtt::Format_BC1;
-	bool premultiplyAlpha = false;
-	nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
 
 	const char * externalCompressor = NULL;
 
@@ -174,19 +172,6 @@ int main(int argc, char *argv[])
 		else if (strcmp("-nomips", argv[i]) == 0)
 		{
 			noMipmaps = true;
-		}
-		else if (strcmp("-premula", argv[i]) == 0)
-		{
-			premultiplyAlpha = true;
-		}
-		else if (strcmp("-mipfilter", argv[i]) == 0)
-		{
-			if (i+1 == argc) break;
-			i++;
-
-			if (strcmp("box", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Box;
-			else if (strcmp("triangle", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Triangle;
-			else if (strcmp("kaiser", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Kaiser;
 		}
 
 		// Compression options.
@@ -269,12 +254,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	const uint version = nvtt::version();
-	const uint major = version / 100;
-	const uint minor = version % 100;
-	
-
-	printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor);
+	printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
 
 	if (input.isNull())
 	{
@@ -286,9 +266,7 @@ int main(int argc, char *argv[])
 		printf("  -tonormal\tConvert input to normal map.\n");
 		printf("  -clamp   \tClamp wrapping mode (default).\n");
 		printf("  -repeat  \tRepeat wrapping mode.\n");
-		printf("  -nomips  \tDisable mipmap generation.\n");
-		printf("  -premula \tPremultiply alpha into color channel.\n");
-		printf("  -mipfilter \tMipmap filter. One of the following: box, triangle, kaiser.\n\n");
+		printf("  -nomips  \tDisable mipmap generation.\n\n");
 
 		printf("Compression options:\n");
 		printf("  -fast    \tFast compression.\n");
@@ -395,13 +373,6 @@ int main(int argc, char *argv[])
 		inputOptions.setMipmapGeneration(false);
 	}
 
-	if (premultiplyAlpha)
-	{
-		inputOptions.setPremultiplyAlpha(true);
-		inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
-	}
-	
-	inputOptions.setMipmapFilter(mipmapFilter);
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);

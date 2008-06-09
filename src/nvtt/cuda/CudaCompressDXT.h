@@ -44,13 +44,10 @@ namespace nv
 		void compressDXT1(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 		void compressDXT3(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 		void compressDXT5(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressDXT1n(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressCTX1(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
 	private:
 
 		uint * m_bitmapTable;
-		uint * m_bitmapTableCTX;
 		uint * m_data;
 		uint * m_result;
 		
