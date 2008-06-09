@@ -13,10 +13,10 @@ SET(NVTT_SRCS
 	CompressDXT.cpp
 	CompressRGB.h
 	CompressRGB.cpp
-	FastCompressDXT.h
-	FastCompressDXT.cpp
 	QuickCompressDXT.h
 	QuickCompressDXT.cpp
+	OptimalCompressDXT.h
+	OptimalCompressDXT.cpp
 	SingleColorLookup.h
 	CompressionOptions.h
 	CompressionOptions.cpp

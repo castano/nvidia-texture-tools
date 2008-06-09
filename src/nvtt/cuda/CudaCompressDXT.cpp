@@ -30,6 +30,7 @@
 #include <nvtt/CompressionOptions.h>
 #include <nvtt/OutputOptions.h>
 #include <nvtt/QuickCompressDXT.h>
+#include <nvtt/OptimalCompressDXT.h>
 
 #include "CudaCompressDXT.h"
 #include "CudaUtils.h"
@@ -52,6 +53,7 @@ using namespace nvtt;
 
 extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
+extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 
 #include "Bitmaps.h"	// @@ Rename to BitmapTable.h
@@ -118,20 +120,25 @@ bool CudaCompressor::isValid() const
 
 // @@ This code is very repetitive and needs to be cleaned up.
 
+void CudaCompressor::setImage(const Image * image, nvtt::AlphaMode alphaMode)
+{
+	m_image = image;
+	m_alphaMode = alphaMode;
+}
 
 /// Compress image using CUDA.
-void CudaCompressor::compressDXT1(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+void CudaCompressor::compressDXT1(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
 
 	// Image size in blocks.
-	const uint w = (image->width() + 3) / 4;
-	const uint h = (image->height() + 3) / 4;
+	const uint w = (m_image->width() + 3) / 4;
+	const uint h = (m_image->height() + 3) / 4;
 
 	uint imageSize = w * h * 16 * sizeof(Color32);
     uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);	// @@ Do this in parallel with the GPU, or in the GPU!
+	convertToBlockLinear(m_image, blockLinearImage);	// @@ Do this in parallel with the GPU, or in the GPU!
 
 	const uint blockNum = w * h;
 	const uint compressedSize = blockNum * 8;
@@ -176,7 +183,7 @@ void CudaCompressor::compressDXT1(const Image * image, const OutputOptions::Priv
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
@@ -190,18 +197,18 @@ void CudaCompressor::compressDXT1(const Image * image, const OutputOptions::Priv
 
 
 /// Compress image using CUDA.
-void CudaCompressor::compressDXT3(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
 
 	// Image size in blocks.
-	const uint w = (image->width() + 3) / 4;
-	const uint h = (image->height() + 3) / 4;
+	const uint w = (m_image->width() + 3) / 4;
+	const uint h = (m_image->height() + 3) / 4;
 
 	uint imageSize = w * h * 16 * sizeof(Color32);
     uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);
+	convertToBlockLinear(m_image, blockLinearImage);
 
 	const uint blockNum = w * h;
 	const uint compressedSize = blockNum * 8;
@@ -221,13 +228,20 @@ void CudaCompressor::compressDXT3(const Image * image, const OutputOptions::Priv
 	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
 
 		// Launch kernel.
-		compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		if (m_alphaMode == AlphaMode_Transparency)
+		{
+			compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		}
+		else
+		{
+			compressKernelDXT1_Level4(count, m_data, m_result, m_bitmapTable);
+		}
 
 		// Compress alpha in parallel with the GPU.
 		for (uint i = 0; i < count; i++)
 		{
 			ColorBlock rgba(blockLinearImage + (bn + i) * 16);
-			QuickCompress::compressDXT3A(rgba, alphaBlocks + i);
+			OptimalCompress::compressDXT3A(rgba, alphaBlocks + i);
 		}
 
 		// Check for errors.
@@ -259,7 +273,7 @@ void CudaCompressor::compressDXT3(const Image * image, const OutputOptions::Priv
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(alphaBlocks);
 	free(blockLinearImage);
@@ -274,18 +288,18 @@ void CudaCompressor::compressDXT3(const Image * image, const OutputOptions::Priv
 
 
 /// Compress image using CUDA.
-void CudaCompressor::compressDXT5(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+void CudaCompressor::compressDXT5(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
 
 	// Image size in blocks.
-	const uint w = (image->width() + 3) / 4;
-	const uint h = (image->height() + 3) / 4;
+	const uint w = (m_image->width() + 3) / 4;
+	const uint h = (m_image->height() + 3) / 4;
 
 	uint imageSize = w * h * 16 * sizeof(Color32);
     uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(image, blockLinearImage);
+	convertToBlockLinear(m_image, blockLinearImage);
 
 	const uint blockNum = w * h;
 	const uint compressedSize = blockNum * 8;
@@ -305,7 +319,14 @@ void CudaCompressor::compressDXT5(const Image * image, const OutputOptions::Priv
 	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
 
 		// Launch kernel.
-		compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		if (m_alphaMode == AlphaMode_Transparency)
+		{
+			compressWeightedKernelDXT1(count, m_data, m_result, m_bitmapTable);
+		}
+		else
+		{
+			compressKernelDXT1_Level4(count, m_data, m_result, m_bitmapTable);
+		}
 
 		// Compress alpha in parallel with the GPU.
 		for (uint i = 0; i < count; i++)
@@ -343,7 +364,7 @@ void CudaCompressor::compressDXT5(const Image * image, const OutputOptions::Priv
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(alphaBlocks);
 	free(blockLinearImage);
@@ -357,185 +378,3 @@ void CudaCompressor::compressDXT5(const Image * image, const OutputOptions::Priv
 }
 
 
-
-#if 0
-
-class Task
-{
-public:
-	explicit Task(uint numBlocks) : blockMaxCount(numBlocks), blockCount(0)
-	{
-		// System memory allocations.
-		blockLinearImage = new uint[blockMaxCount * 16];
-		xrefs = new uint[blockMaxCount * 16];
-		
-		// Device memory allocations.
-		cudaMalloc((void**) &d_blockLinearImage, blockMaxCount * 16 * sizeof(uint));
-		cudaMalloc((void**) &d_compressedImage, blockMaxCount * 8U);
-		
-		// @@ Check for allocation errors.
-	}
-	
-	~Task()
-	{
-		delete [] blockLinearImage;
-		delete [] xrefs;
-		
-		cudaFree(d_blockLinearImage);
-		cudaFree(d_compressedImage);
-	}
-	
-	
-	
-	void addColorBlock(const ColorBlock & rgba)
-	{
-		nvDebugCheck(!isFull());
-		
-		// @@ Count unique colors?
-		/*
-		// Convert colors to vectors.
-		Array<Vector3> pointArray(16);
-		
-		for(int i = 0; i < 16; i++) {
-			const Color32 color = rgba.color(i);
-			pointArray.append(Vector3(color.r, color.g, color.b));
-		}
-		
-		// Find best fit line.
-		const Vector3 axis = Fit::bestLine(pointArray).direction();
-		
-		// Project points to axis.
-		float dps[16];
-		uint * order = &xrefs[blockCount * 16];
-		
-		for (uint i = 0; i < 16; ++i)
-		{
-			dps[i] = dot(pointArray[i], axis);
-			order[i] = i;
-		}
-		
-		// Sort them.
-		for (uint i = 0; i < 16; ++i)
-		{
-			for (uint j = i; j > 0 && dps[j] < dps[j - 1]; --j)
-			{
-				swap(dps[j], dps[j - 1]);
-				swap(order[j], order[j - 1]);
-			}
-		}
-		*/
-		// Write sorted colors to blockLinearImage.
-		for(uint i = 0; i < 16; ++i)
-		{
-		//	blockLinearImage[blockCount * 16 + i] = rgba.color(order[i]);
-			blockLinearImage[blockCount * 16 + i] = rgba.color(i);
-		}
-		
-		++blockCount;
-	}
-	
-	bool isFull()
-	{
-		nvDebugCheck(blockCount <= blockMaxCount);
-		return blockCount == blockMaxCount;
-	}
-	
-	void flush(const OutputOptions::Private & outputOptions)
-	{
-		if (blockCount == 0)
-		{
-			// Nothing to do.
-			return;
-		}
-		
-		// Copy input color blocks.
-		cudaMemcpy(d_blockLinearImage, blockLinearImage, blockCount * 64, cudaMemcpyHostToDevice);
-		
-		// Launch kernel.
-		compressKernelDXT1(blockCount, d_blockLinearImage, d_compressedImage, d_bitmaps);
-		
-		// Check for errors.
-		cudaError_t err = cudaGetLastError();
-		if (err != cudaSuccess)
-		{
-			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-			
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
-		}
-		
-		// Copy result to host, overwrite swizzled image.
-		uint * compressedImage = blockLinearImage;
-		cudaMemcpy(compressedImage, d_compressedImage, blockCount * 8, cudaMemcpyDeviceToHost);
-		
-		// @@ Sort block indices.
-		
-		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-		//	outputOptions.outputHandler->writeData(compressedImage, blockCount * 8);
-		}
-
-		blockCount = 0;
-	}
-	
-private:
-	
-	const uint blockMaxCount;
-	uint blockCount;
-	
-	uint * blockLinearImage;
-	uint * xrefs;
-	
-	uint * d_blockLinearImage;
-	uint * d_compressedImage;
-	
-};
-
-
-void nv::cudaCompressDXT1_2(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
-{
-#if defined HAVE_CUDA	
-	const uint w = image->width();
-	const uint h = image->height();
-	
-	const uint blockNum = ((w + 3) / 4) * ((h + 3) / 4);
-	const uint blockMax = 32768; // 49152, 65535
-		
-	setupCompressKernelDXT1(compressionOptions.colorWeight.ptr());
-
-	ColorBlock rgba;
-	Task task(min(blockNum, blockMax));
-
-	clock_t start = clock();
-
-	for (uint y = 0; y < h; y += 4) {
-		for (uint x = 0; x < w; x += 4) {
-			
-			rgba.init(image, x, y);
-			
-			task.addColorBlock(rgba);
-			
-			if (task.isFull())
-			{
-				task.flush(outputOptions);
-			}
-		}
-	}
-	
-	task.flush(outputOptions);
-
-	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
-
-#else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
-#endif
-}
-
-#endif // 0
