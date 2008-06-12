@@ -356,6 +356,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvimage\PixelFormat.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvimage\PsdFile.h"
 				>
 			</File>
