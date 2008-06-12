@@ -532,7 +532,7 @@ DDSHeader::DDSHeader()
 
 	// Store version information on the reserved header attributes.
 	this->reserved[9] = MAKEFOURCC('N', 'V', 'T', 'T');
-	this->reserved[10] = (2 << 16) | (0 << 8) | (3);	// major.minor.revision
+	this->reserved[10] = (2 << 16) | (0 << 8) | (4);	// major.minor.revision
 
 	this->pf.size = 32;
 	this->pf.flags = 0;

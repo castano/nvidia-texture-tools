@@ -1,3 +1,7 @@
+NVIDIA Texture Tools version 2.0.4
+ * Fix error in RGB format output; reported by jonsoh. See issue 49.
+ * Added support RGB format dithering by jonsoh. Fixes issue 50 and 51.
+
 NVIDIA Texture Tools version 2.0.3
  * More accurate DXT3 compressor. Fixes issue 38.
  * Remove legacy compressors. Fix issue 34.
