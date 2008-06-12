@@ -123,7 +123,7 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 			}
 			
 			// Zero padding.
-			for (uint x = w; x < pitch; x++)
+			for (uint x = w * byteCount; x < pitch; x++)
 			{
 				*(dst + x) = 0;
 			}
