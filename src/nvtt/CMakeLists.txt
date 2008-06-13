@@ -85,7 +85,11 @@ TARGET_LINK_LIBRARIES(stress nvcore nvmath nvimage nvtt)
 ADD_EXECUTABLE(nvzoom tools/resize.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
-INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom DESTINATION bin)
+#include_directories("/usr/include/ffmpeg/")
+#ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
+#TARGET_LINK_LIBRARIES(nvmpegenc nvcore nvmath nvimage avcodec z)
+
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvmpegenc DESTINATION bin)
 
 # UI tools
 IF(QT4_FOUND AND NOT MSVC)
