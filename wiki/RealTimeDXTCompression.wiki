@@ -20,6 +20,24 @@ A later [http://developer.nvidia.com/object/real-time-ycocg-dxt-compression.html
 || !GeForce 8800 GTX || 1,690 MP/s || 939 MP/s ||
 || !GeForce 8600 GTS || 520 MP/s || 279 MP/s ||
 
+Peter Uliciansky optimized Waveren's algorithm further and published his results in this thread: [http://developer.nvidia.com/forums/index.php?showtopic=1737 Extreme DXT Compression, New algorithm for real-time DXT compression].
+
+|| *CPU*                   || *DXT1*     || *DXT5*     ||
+|| Intel Pentium 4 2.8 GHz || 241.2 MP/s || 206.5 MP/s ||
+|| Intel Core 2 3.0 GHz    || 910.0 MP/s || 620.4 MP/s ||
+
+These numbers are very impressive and start to get closer to the results of the GPU implementation.
+
+However, the latest GPU implementation also offers higher performance.
+  * http://developer.download.nvidia.com/SDK/10/opengl/samples.html#compress_YCoCgDXT
+  * http://developer.download.nvidia.com/SDK/10/opengl/samples.html#compress_NormalDXT
+
+|| *GPU*             || *DXT1*     || *YCoCg-DXT5* || *BC5*      || *DXT5n*    ||
+|| !GeForce 8800 GTX || 3450 MP/s  || 1880 MP/s    || 5665 MP/s  || 5804 MP/s  ||
+|| !GeForce GTX 280  || 9920 MP/s  || 7900 MP/s    || 12850 MP/s || 13150 MP/s ||
+
+
+
 
 
 Other links:
