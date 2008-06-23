@@ -125,6 +125,8 @@ namespace {
 } // namespace
 
 // Voronoi filling using EDT-4
+// This implementation is based on Danielsson's algorithm published in:
+// "Euclidean Distance Mapping" Per-Erik Danielsson, Computer Graphics and Image Processing, 14, 1980
 void nv::fillVoronoi(FloatImage * img, const BitMap * bmap)
 {
 	nvCheck(img != NULL);
