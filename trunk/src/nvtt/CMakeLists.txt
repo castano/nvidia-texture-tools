@@ -89,7 +89,7 @@ TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 #ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
 #TARGET_LINK_LIBRARIES(nvmpegenc nvcore nvmath nvimage avcodec z)
 
-INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvmpegenc DESTINATION bin)
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom DESTINATION bin)
 
 # UI tools
 IF(QT4_FOUND) # AND NOT MSVC)
