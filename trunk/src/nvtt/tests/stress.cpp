@@ -47,7 +47,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 	
 	virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
 	{
-		assert(size == sizeof(int) * OUTPUT_SIZE);
+		assert(size <= sizeof(int) * OUTPUT_SIZE);
 		assert(width == WIDTH);
 		assert(height == HEIGHT);
 		assert(depth == 1);
