@@ -177,24 +177,36 @@ namespace
 
 	static void * callerAddress(void * secret)
 	{
-#	if NV_OS_DARWIN && NV_CPU_PPC
-		ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->ss.srr0;
-#	elif NV_OS_DARWIN && NV_CPU_X86
-		ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->ss.eip;
-#	elif NV_CPU_X86_64
-		// #define REG_RIP REG_INDEX(rip) // seems to be 16
-		ucontext_t * ucp = (ucontext_t *)secret;
-		return (void *)ucp->uc_mcontext.gregs[REG_RIP];
-#	elif NV_CPU_X86
-		ucontext_t * ucp = (ucontext_t *)secret;
-		return (void *)ucp->uc_mcontext.gregs[14/*REG_EIP*/];
-#	elif NV_CPU_PPC
-		ucontext_t * ucp = (ucontext_t *)secret;
-		return (void *) ucp->uc_mcontext.regs->nip;
+#	if NV_OS_DARWIN
+#		if __DARWIN_UNIX03
+#			if NV_CPU_PPC
+				ucontext_t * ucp = (ucontext_t *)secret;
+				return (void *) ucp->uc_mcontext->__ss.__srr0;
+#			elif NV_CPU_X86
+				ucontext_t * ucp = (ucontext_t *)secret;
+				return (void *) ucp->uc_mcontext->__ss.__eip;
+#			endif
+#		else
+#			if NV_CPU_PPC
+				ucontext_t * ucp = (ucontext_t *)secret;
+				return (void *) ucp->uc_mcontext->ss.srr0;
+#			elif NV_CPU_X86
+				ucontext_t * ucp = (ucontext_t *)secret;
+				return (void *) ucp->uc_mcontext->ss.eip;
+#			endif
+#		endif
 #	else
-		return NULL;
+#		if NV_CPU_X86_64
+			// #define REG_RIP REG_INDEX(rip) // seems to be 16
+			ucontext_t * ucp = (ucontext_t *)secret;
+			return (void *)ucp->uc_mcontext.gregs[REG_RIP];
+#		elif NV_CPU_X86
+			ucontext_t * ucp = (ucontext_t *)secret;
+			return (void *)ucp->uc_mcontext.gregs[14/*REG_EIP*/];
+#		elif NV_CPU_PPC
+			ucontext_t * ucp = (ucontext_t *)secret;
+			return (void *) ucp->uc_mcontext.regs->nip;
+#		endif
 #	endif
 		
 		// How to obtain the instruction pointers in different platforms, from mlton's source code.
