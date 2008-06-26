@@ -12,6 +12,7 @@
     * [ApiDocumentation#Processing_Normal_Maps Processing Normal Maps]
     * [ApiDocumentation#Generating_Normal_Maps Generating Normal Maps]
     * [ApiDocumentation#Image_Resizing Image Resizing]
+    * [ApiDocumentation#Color_Transforms Color Transforms]
   * [ApiDocumentation#Compression_Options Compression Options]
     * [ApiDocumentation#Compression_Formats Compression Formats]
     * [ApiDocumentation#Compression_Quality Compression Quality]
@@ -253,6 +254,69 @@ where `RoundMode` is one of the following:
  * !RoundMode_ToPreviousPowerOfTwo
 
 The default round mode is none.
+
+
+=== Color Transforms ===
+
+The colors of the input image can also be transformed to a different color space. This transform is specified with the following method:
+
+{{{
+void InputOptions::setColorTransform(ColorTransform t);
+}}}
+
+Where `ColorTransform` is one of the following:
+
+{{{
+enum ColorTransform
+{
+    ColorTransform_None,
+    ColorTransform_Linear,
+    ColorTransform_Swizzle,
+};
+}}}
+
+Currently only one transform can be specified at a time. By default no transformation is performed, which is equivalent to `ColorTransform_None`.
+
+Linear color transforms are performed in linear space and before mipmap generation. The transformation of every channel is specified with the following function:
+
+{{{
+void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2, float w3, float offset);
+}}}
+
+For example, to transform the input image to YCbCr color space:
+
+{{{
+Y  =       + 0.299    * R + 0.587    * G + 0.114    * B
+Cb = 128   - 0.168736 * R - 0.331264 * G + 0.5      * B
+Cr = 128   + 0.5      * R - 0.418688 * G - 0.081312 * B
+}}}
+
+You would use the following code:
+
+{{{
+inputOptions.setLinearTransform(0,  0.299,     0.587f,    0.114f,   0);
+inputOptions.setLinearTransform(1, -0.168736, -0.331264,  0.5,      0, 128);
+inputOptions.setLinearTransform(2,  0.5,      -0.418688, -0.081312, 0, 128);
+inputOptions.setLinearTransform(3,  0,         0,         0,        1);
+}}}
+
+If you simply want to swizzle the channels, you can also achieve that with `setLinearTransform`, but it's much more convenient to use the following function:
+
+{{{
+void InputOptions::setSwizzleTransform(int x, int y, int z, int w);
+}}}
+
+Where the indices represent the following channels or values:
+
+|| *index* || *channel/value* ||
+|| 0       || R               ||
+|| 1       || G               ||
+|| 2       || B               ||
+|| 3       || A               || 
+|| 4       || 1.0             ||
+|| 5       || 0.0             ||
+|| 6       || -1.0            ||
+
 
 
 == Compression Options ==
