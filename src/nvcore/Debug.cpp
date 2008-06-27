@@ -178,7 +178,7 @@ namespace
 	static void * callerAddress(void * secret)
 	{
 #	if NV_OS_DARWIN
-#		if __DARWIN_UNIX03
+#		if defined(_STRUCT_MCONTEXT)
 #			if NV_CPU_PPC
 				ucontext_t * ucp = (ucontext_t *)secret;
 				return (void *) ucp->uc_mcontext->__ss.__srr0;
