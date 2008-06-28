@@ -21,16 +21,17 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/Containers.h> // swap
-
-#include <nvmath/Color.h>
+#include "OptimalCompressDXT.h"
+#include "SingleColorLookup.h"
 
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
 
-#include "OptimalCompressDXT.h"
-#include "SingleColorLookup.h"
+#include <nvmath/Color.h>
 
+#include <nvcore/Containers.h> // swap
+
+#include <limits.h>
 
 using namespace nv;
 using namespace OptimalCompress;
