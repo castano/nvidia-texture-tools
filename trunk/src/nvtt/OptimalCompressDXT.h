@@ -26,6 +26,8 @@
 
 #include <nvimage/nvimage.h>
 
+#include <nvmath/Color.h>
+
 namespace nv
 {
 	struct ColorBlock;
