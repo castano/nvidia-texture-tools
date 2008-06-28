@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -201,7 +201,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -356,7 +356,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
