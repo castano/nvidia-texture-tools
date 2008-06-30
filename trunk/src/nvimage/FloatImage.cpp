@@ -242,7 +242,7 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
 }
 
 /// Apply linear transform.
-void FloatImage::transform(uint base_component, const Matrix & m)
+void FloatImage::transform(uint base_component, const Matrix & m, Vector4::Arg offset)
 {
 	nvCheck(base_component + 4 <= m_componentNum);
 
@@ -255,7 +255,7 @@ void FloatImage::transform(uint base_component, const Matrix & m)
 
 	for (uint i = 0; i < size; i++)
 	{
-		Vector4 color = nv::transform(m, Vector4(*r, *g, *b, *a));
+		Vector4 color = nv::transform(m, Vector4(*r, *g, *b, *a)) + offset;
 
 		*r++ = color.x();
 		*g++ = color.y();
@@ -267,14 +267,19 @@ void FloatImage::transform(uint base_component, const Matrix & m)
 void FloatImage::swizzle(uint base_component, uint r, uint g, uint b, uint a)
 {
 	nvCheck(base_component + 4 <= m_componentNum);
+	nvCheck(r < 7 && g < 7 && b < 7 && a < 7);
 
 	const uint size = m_width * m_height;
 
-	float * c[4];
+	float consts[] = { 1.0f, 0.0f, -1.0f };
+	float * c[7];
 	c[0] = this->channel(base_component + 0);
 	c[1] = this->channel(base_component + 1);
 	c[2] = this->channel(base_component + 2);
 	c[3] = this->channel(base_component + 3);
+	c[4] = consts;
+	c[5] = consts + 1;
+	c[6] = consts + 2;
 
 	for (uint i = 0; i < size; i++)
 	{

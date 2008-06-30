@@ -103,6 +103,8 @@ void InputOptions::reset()
 	
 	m.colorTransform = ColorTransform_None;
 	m.linearTransform = Matrix(identity);
+	for (int i = 0; i < 4; i++) m.colorOffsets[i] = 0;
+	for (int i = 0; i < 4; i++) m.swizzleTransform[i] = i;
 
 	m.generateMipmaps = true;
 	m.maxLevel = -1;
@@ -344,16 +346,27 @@ void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2,
 {
 	nvCheck(channel >= 0 && channel < 4);
 
-	Vector4 w(w0, w1, w2, w3);
-	//m.linearTransform.setRow(channel, w);
+	m.linearTransform(0, channel) = w0;
+	m.linearTransform(1, channel) = w1;
+	m.linearTransform(2, channel) = w2;
+	m.linearTransform(3, channel) = w3;
+}
+
+void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2, float w3, float offset)
+{
+	nvCheck(channel >= 0 && channel < 4);
+
+	setLinearTransform(channel, w0, w1, w2, w3);
+
+	m.colorOffsets[channel] = offset;
 }
 
 void InputOptions::setSwizzleTransform(int x, int y, int z, int w)
 {
-	nvCheck(x >= 0 && x < 3);
-	nvCheck(y >= 0 && y < 3);
-	nvCheck(z >= 0 && z < 3);
-	nvCheck(w >= 0 && w < 3);
+	nvCheck(x >= 0 && x <= 6);
+	nvCheck(y >= 0 && y <= 6);
+	nvCheck(z >= 0 && z <= 6);
+	nvCheck(w >= 0 && w <= 6);
 	
 	m.swizzleTransform[0] = x;
 	m.swizzleTransform[1] = y;

@@ -665,7 +665,13 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 			FloatImage * image = mipmap.asFloatImage();
 			nvDebugCheck(image != NULL);
 
-			image->transform(0, inputOptions.linearTransform);
+			Vector4 offset(
+				inputOptions.colorOffsets[0],
+				inputOptions.colorOffsets[1],
+				inputOptions.colorOffsets[2],
+				inputOptions.colorOffsets[3]);
+
+			image->transform(0, inputOptions.linearTransform, offset);
 		}
 		else if (inputOptions.colorTransform == ColorTransform_Swizzle)
 		{
