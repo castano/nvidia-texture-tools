@@ -1,13 +1,13 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvcore/Debug.h>
-#include <nvcore/Ptr.h>
-#include <nvcore/Containers.h> // swap
+#include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
 
 #include <nvmath/Color.h>
 
-#include <nvimage/Image.h>
-#include <nvimage/ImageIO.h>
+#include <nvcore/Debug.h>
+#include <nvcore/Ptr.h>
+#include <nvcore/Containers.h> // swap
 
 
 using namespace nv;

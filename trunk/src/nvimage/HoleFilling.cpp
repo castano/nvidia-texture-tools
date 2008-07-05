@@ -1,12 +1,13 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvcore/Containers.h>
-#include <nvcore/Ptr.h>
+#include <nvimage/HoleFilling.h>
+#include <nvimage/FloatImage.h>
 
 #include <nvmath/nvmath.h>
 
-#include <nvimage/HoleFilling.h>
-#include <nvimage/FloatImage.h>
+#include <nvcore/Containers.h>
+#include <nvcore/Ptr.h>
+
 
 using namespace nv;
 

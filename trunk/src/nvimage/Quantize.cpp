@@ -12,14 +12,14 @@ http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
 @@ This code needs to be reviewed, I'm not sure it's correct.
 */
 
-#include <string.h> // memset
-
-#include <nvcore/Containers.h> // swap
+#include <nvimage/Quantize.h>
+#include <nvimage/Image.h>
 
 #include <nvmath/Color.h>
 
-#include <nvimage/Image.h>
-#include <nvimage/Quantize.h>
+#include <nvcore/Containers.h> // swap
+
+#include <string.h> // memset
 
 using namespace nv;
 

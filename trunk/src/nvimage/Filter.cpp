@@ -33,11 +33,10 @@
  * http://www.dspguide.com/ch16.htm
  */
 
+#include "Filter.h"
 
-#include <nvcore/Containers.h>	// swap
-#include <nvmath/nvmath.h>	// fabs
 #include <nvmath/Vector.h>	// Vector4
-#include <nvimage/Filter.h>
+#include <nvcore/Containers.h>	// swap
 
 using namespace nv;
 

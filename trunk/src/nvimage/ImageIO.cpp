@@ -1,19 +1,19 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
+#include "ImageIO.h"
+#include "Image.h"
+#include "FloatImage.h"
+#include "TgaFile.h"
+#include "PsdFile.h"
+
+#include <nvmath/Color.h>
+
 #include <nvcore/Ptr.h>
 #include <nvcore/Containers.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
 //#include <nvcore/Tokenizer.h>	// @@ Disable temporarily
 #include <nvcore/TextWriter.h>
-
-#include <nvmath/Color.h>
-
-#include "ImageIO.h"
-#include "Image.h"
-#include "FloatImage.h"
-#include "TgaFile.h"
-#include "PsdFile.h"
 
 // Extern
 #if defined(HAVE_JPEG)
