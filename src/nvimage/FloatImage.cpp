@@ -1,14 +1,14 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvcore/Containers.h>
-#include <nvcore/Ptr.h>
+#include "FloatImage.h"
+#include "Filter.h"
+#include "Image.h"
 
 #include <nvmath/Color.h>
 #include <nvmath/Matrix.h>
 
-#include "FloatImage.h"
-#include "Filter.h"
-#include "Image.h"
+#include <nvcore/Containers.h>
+#include <nvcore/Ptr.h>
 
 #include <math.h>
 
