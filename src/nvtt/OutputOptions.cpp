@@ -43,6 +43,7 @@ void OutputOptions::reset()
 	m.outputHandler = NULL;
 	m.errorHandler = NULL;
 	m.outputHeader = true;
+	m.container = Container_DDS;
 }
 
 
@@ -70,6 +71,12 @@ void OutputOptions::setErrorHandler(ErrorHandler * errorHandler)
 void OutputOptions::setOutputHeader(bool outputHeader)
 {
 	m.outputHeader = outputHeader;
+}
+
+/// Set container.
+void OutputOptions::setContainer(Container container)
+{
+	m.container = container;
 }
 
 

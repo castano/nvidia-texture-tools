@@ -323,80 +323,154 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		return true;
 	}
 
-	DDSHeader header;
-	
-	header.setWidth(inputOptions.targetWidth);
-	header.setHeight(inputOptions.targetHeight);
-	
-	int mipmapCount = inputOptions.realMipmapCount();
-	nvDebugCheck(mipmapCount > 0);
-	
-	header.setMipmapCount(mipmapCount);
-	
-	if (inputOptions.textureType == TextureType_2D) {
-		header.setTexture2D();
-	}
-	else if (inputOptions.textureType == TextureType_Cube) {
-		header.setTextureCube();
-	}		
-	/*else if (inputOptions.textureType == TextureType_3D) {
-		header.setTexture3D();
-		header.setDepth(inputOptions.targetDepth);
-	}*/
-	
-	if (compressionOptions.format == Format_RGBA)
+	if (outputOptions.container == Container_DDS || outputOptions.container == Container_DDS10)
 	{
-		header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
-		header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
-	}
-	else
-	{
-		header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
+		DDSHeader header;
+	
+		header.setWidth(inputOptions.targetWidth);
+		header.setHeight(inputOptions.targetHeight);
 		
-		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
-			header.setFourCC('D', 'X', 'T', '1');
-			if (inputOptions.isNormalMap) header.setNormalFlag(true);
-		}
-		else if (compressionOptions.format == Format_DXT3) {
-			header.setFourCC('D', 'X', 'T', '3');
-		}
-		else if (compressionOptions.format == Format_DXT5) {
-			header.setFourCC('D', 'X', 'T', '5');
-		}
-		else if (compressionOptions.format == Format_DXT5n) {
-			header.setFourCC('D', 'X', 'T', '5');
-			if (inputOptions.isNormalMap) header.setNormalFlag(true);
-		}
-		else if (compressionOptions.format == Format_BC4) {
-			header.setFourCC('A', 'T', 'I', '1');
-		}
-		else if (compressionOptions.format == Format_BC5) {
-			header.setFourCC('A', 'T', 'I', '2');
-			if (inputOptions.isNormalMap) header.setNormalFlag(true);
-		}
-		else if (compressionOptions.format == Format_CTX1) {
-			header.setFourCC('C', 'T', 'X', '1');
-			if (inputOptions.isNormalMap) header.setNormalFlag(true);
-		}
-	}
-	
-	// Swap bytes if necessary.
-	header.swapBytes();
-	
-	uint headerSize = 128;
-	if (header.hasDX10Header())
-	{
-		nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
-		headerSize = 128 + 20;
-	}
+		int mipmapCount = inputOptions.realMipmapCount();
+		nvDebugCheck(mipmapCount > 0);
+		
+		header.setMipmapCount(mipmapCount);
 
-	bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
-	if (!writeSucceed && outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_FileWrite);
+		bool supported = true;
+		
+		if (outputOptions.container == Container_DDS10)
+		{
+			if (compressionOptions.format == Format_RGBA)
+			{
+				if (compressionOptions.bitcount == 16)
+				{
+					// B5G6R5_UNORM
+					// B5G5R5A1_UNORM
+					supported = false;
+				}
+				else if (compressionOptions.bitcount == 32)
+				{
+					// B8G8R8A8_UNORM
+					// B8G8R8X8_UNORM
+					// R8G8B8A8_UNORM
+					// R10G10B10A2_UNORM
+					supported = false;
+				}
+				else {
+					supported = false;
+				}			
+			}
+			else
+			{
+				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
+					header.setDX10Format(71);
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_DXT3) {
+					header.setDX10Format(74);
+				}
+				else if (compressionOptions.format == Format_DXT5) {
+					header.setDX10Format(77);
+				}
+				else if (compressionOptions.format == Format_DXT5n) {
+					header.setDX10Format(77);
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_BC4) {
+					header.setDX10Format(80);
+				}
+				else if (compressionOptions.format == Format_BC5) {
+					header.setDX10Format(83);
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else {
+					supported = false;
+				}
+			}
+		}
+		else
+		{
+			if (compressionOptions.format == Format_RGBA)
+			{
+				header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
+				header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+			}
+			else
+			{
+				header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
+				
+				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
+					header.setFourCC('D', 'X', 'T', '1');
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_DXT3) {
+					header.setFourCC('D', 'X', 'T', '3');
+				}
+				else if (compressionOptions.format == Format_DXT5) {
+					header.setFourCC('D', 'X', 'T', '5');
+				}
+				else if (compressionOptions.format == Format_DXT5n) {
+					header.setFourCC('D', 'X', 'T', '5');
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_BC4) {
+					header.setFourCC('A', 'T', 'I', '1');
+				}
+				else if (compressionOptions.format == Format_BC5) {
+					header.setFourCC('A', 'T', 'I', '2');
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_CTX1) {
+					header.setFourCC('C', 'T', 'X', '1');
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else {
+					supported = false;
+				}
+			}
+		}
+		
+		if (!supported)
+		{
+			// This container does not support the requested format.
+			if (outputOptions.errorHandler != NULL)
+			{
+				outputOptions.errorHandler->error(Error_UnsupportedFeature);
+			}
+			
+			return false;
+		}
+		
+		if (inputOptions.textureType == TextureType_2D) {
+			header.setTexture2D();
+		}
+		else if (inputOptions.textureType == TextureType_Cube) {
+			header.setTextureCube();
+		}		
+		/*else if (inputOptions.textureType == TextureType_3D) {
+			header.setTexture3D();
+			header.setDepth(inputOptions.targetDepth);
+		}*/
+		
+		// Swap bytes if necessary.
+		header.swapBytes();
+		
+		uint headerSize = 128;
+		if (header.hasDX10Header())
+		{
+			nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
+			headerSize = 128 + 20;
+		}
+
+		bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
+		if (!writeSucceed && outputOptions.errorHandler != NULL)
+		{
+			outputOptions.errorHandler->error(Error_FileWrite);
+		}
+		
+		return writeSucceed;
 	}
 	
-	return writeSucceed;
+	return true;
 }
 
 
