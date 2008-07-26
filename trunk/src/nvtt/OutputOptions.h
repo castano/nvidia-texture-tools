@@ -64,6 +64,7 @@ namespace nvtt
 		mutable OutputHandler * outputHandler;
 		ErrorHandler * errorHandler;
 		bool outputHeader;
+		Container container;
 		
 		bool openFile() const;
 		void closeFile() const;

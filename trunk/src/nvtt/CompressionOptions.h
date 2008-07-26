@@ -46,6 +46,8 @@ namespace nvtt
 		uint bmask;
 		uint amask;
 		
+		PixelType pixelType;
+		
 		nv::String externalCompressor;
 
 		// Quantization.

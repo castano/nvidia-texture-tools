@@ -87,6 +87,16 @@ namespace nvtt
 		Format_DXT1n,
 		Format_CTX1,
 	};
+
+	/// Pixel types.
+	enum PixelType
+	{
+		PixelType_UnsignedNorm,
+		PixelType_SignedNorm,
+		PixelType_UnsignedInt,
+		PixelType_SignedInt,
+		PixelType_Float,
+	};
 	
 	/// Quality modes.
 	enum Quality
@@ -115,10 +125,25 @@ namespace nvtt
 
 		// Set color mask to describe the RGB/RGBA format.
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
+		
+		// As
+		NVTT_API void setPixelFormat2(unsigned int rsize, unsigned int gsize, unsigned int bsize, unsigned int asize);
+		
+		NVTT_API void setPixelType(PixelType pixelType);
 
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 	};
 
+	/* 
+	// DXGI_FORMAT_R16G16_FLOAT
+	compressionOptions.setPixelType(PixelType_Float);
+	compressionOptions.setPixelFormat2(16, 16, 0, 0);
+	
+	// DXGI_FORMAT_R32G32B32A32_FLOAT
+	compressionOptions.setPixelType(PixelType_Float);
+	compressionOptions.setPixelFormat2(32, 32, 32, 32);
+	*/
+	
 
 	/// Wrap modes.
 	enum WrapMode
@@ -267,6 +292,13 @@ namespace nvtt
 		virtual void error(Error e) = 0;
 	};
 
+	/// Container.
+	enum Container
+	{
+		Container_DDS,
+		Container_DDS10,
+	};
+	
 
 	/// Output Options. This class holds pointers to the interfaces that are used to report the output of 
 	/// the compressor to the user.
@@ -285,6 +317,7 @@ namespace nvtt
 		NVTT_API void setOutputHandler(OutputHandler * outputHandler);
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
 		NVTT_API void setOutputHeader(bool outputHeader);
+		NVTT_API void setContainer(Container container);
 	};
 
 

@@ -1144,6 +1144,27 @@ uint DirectDrawSurface::blockSize() const
 		case FOURCC_RXGB:
 		case FOURCC_ATI2:
 			return 16;
+		case FOURCC_DX10:
+			switch(header.header10.dxgiFormat)
+			{
+				case DXGI_FORMAT_BC1_TYPELESS:
+				case DXGI_FORMAT_BC1_UNORM:
+				case DXGI_FORMAT_BC1_UNORM_SRGB:
+				case DXGI_FORMAT_BC4_TYPELESS:
+				case DXGI_FORMAT_BC4_UNORM:
+				case DXGI_FORMAT_BC4_SNORM:
+					return 8;
+				case DXGI_FORMAT_BC2_TYPELESS:
+				case DXGI_FORMAT_BC2_UNORM:
+				case DXGI_FORMAT_BC2_UNORM_SRGB:
+				case DXGI_FORMAT_BC3_TYPELESS:
+				case DXGI_FORMAT_BC3_UNORM:
+				case DXGI_FORMAT_BC3_UNORM_SRGB:
+				case DXGI_FORMAT_BC5_TYPELESS:
+				case DXGI_FORMAT_BC5_UNORM:
+				case DXGI_FORMAT_BC5_SNORM:
+					return 16;
+			};
 	};
 
 	// Not a block image.
