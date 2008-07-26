@@ -87,10 +87,10 @@ TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
 INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom DESTINATION bin)
 
-include_directories("/usr/include/ffmpeg/")
-ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
-TARGET_LINK_LIBRARIES(nvmpegenc nvcore nvmath nvimage avcodec z)
-INSTALL(TARGETS nvmpegenc DESTINATION bin)
+#include_directories("/usr/include/ffmpeg/")
+#ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
+#TARGET_LINK_LIBRARIES(nvmpegenc nvcore nvmath nvimage avcodec z)
+#INSTALL(TARGETS nvmpegenc DESTINATION bin)
 
 # UI tools
 IF(QT4_FOUND) # AND NOT MSVC)
