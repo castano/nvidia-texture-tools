@@ -176,8 +176,9 @@ namespace nvtt
 			return m_floatImage.ptr();
 		}
 
-		FloatImage * asFloatImage()
+		FloatImage * asMutableFloatImage()
 		{
+			m_inputImage = NULL;
 			return m_floatImage.ptr();
 		}
 
@@ -655,7 +656,7 @@ void Compressor::Private::downsampleMipmap(Mipmap & mipmap, const InputOptions::
 	// Normalize mipmap.
 	if ((inputOptions.isNormalMap || inputOptions.convertToNormalMap) && inputOptions.normalizeMipmaps)
 	{
-		normalizeNormalMap(mipmap.asFloatImage());
+		normalizeNormalMap(mipmap.asMutableFloatImage());
 	}
 }
 
@@ -719,8 +720,8 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 			}
 			else
 			{
-				normalizeNormalMap(mipmap.asFloatImage());
-				mipmap.setImage(mipmap.asFloatImage());
+				normalizeNormalMap(mipmap.asMutableFloatImage());
+				mipmap.setImage(mipmap.asMutableFloatImage());
 			}
 		}
 	}
@@ -736,7 +737,7 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 		// Apply linear transforms in linear space.
 		if (inputOptions.colorTransform == ColorTransform_Linear)
 		{
-			FloatImage * image = mipmap.asFloatImage();
+			FloatImage * image = mipmap.asMutableFloatImage();
 			nvDebugCheck(image != NULL);
 
 			Vector4 offset(
@@ -749,7 +750,7 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 		}
 		else if (inputOptions.colorTransform == ColorTransform_Swizzle)
 		{
-			FloatImage * image = mipmap.asFloatImage();
+			FloatImage * image = mipmap.asMutableFloatImage();
 			nvDebugCheck(image != NULL);
 
 			image->swizzle(0, inputOptions.swizzleTransform[0], inputOptions.swizzleTransform[1], inputOptions.swizzleTransform[2], inputOptions.swizzleTransform[3]);
