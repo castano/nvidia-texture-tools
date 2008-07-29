@@ -3,11 +3,15 @@
 #ifndef NV_IMAGE_FLOATIMAGE_H
 #define NV_IMAGE_FLOATIMAGE_H
 
-#include <stdlib.h> // abs
+#include <nvimage/nvimage.h>
+
+#include <nvmath/Vector.h>
 
 #include <nvcore/Debug.h>
 #include <nvcore/Algorithms.h> // clamp
-#include <nvimage/nvimage.h>
+
+#include <stdlib.h> // abs
+
 
 namespace nv
 {
