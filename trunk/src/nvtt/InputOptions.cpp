@@ -346,10 +346,10 @@ void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2,
 {
 	nvCheck(channel >= 0 && channel < 4);
 
-	m.linearTransform(0, channel) = w0;
-	m.linearTransform(1, channel) = w1;
-	m.linearTransform(2, channel) = w2;
-	m.linearTransform(3, channel) = w3;
+	m.linearTransform(channel, 0) = w0;
+	m.linearTransform(channel, 1) = w1;
+	m.linearTransform(channel, 2) = w2;
+	m.linearTransform(channel, 3) = w3;
 }
 
 void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2, float w3, float offset)
