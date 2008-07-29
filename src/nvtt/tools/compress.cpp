@@ -21,15 +21,18 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/StrLib.h>
-#include <nvcore/StdStream.h>
-
-#include <nvimage/Image.h>
-#include <nvimage/DirectDrawSurface.h>
+#include "cmdline.h"
 
 #include <nvtt/nvtt.h>
 
-#include "cmdline.h"
+#include <nvimage/Image.h>    // @@ It might be a good idea to use FreeImage directly instead of ImageIO.
+#include <nvimage/ImageIO.h>
+#include <nvimage/FloatImage.h>
+#include <nvimage/DirectDrawSurface.h>
+
+#include <nvcore/Ptr.h>
+#include <nvcore/StrLib.h>
+#include <nvcore/StdStream.h>
 
 #include <time.h> // clock
 
@@ -141,6 +144,7 @@ int main(int argc, char *argv[])
 	nvtt::Format format = nvtt::Format_BC1;
 	bool premultiplyAlpha = false;
 	nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
+	bool loadAsFloat = false;
 
 	const char * externalCompressor = NULL;
 
@@ -189,6 +193,10 @@ int main(int argc, char *argv[])
 			if (strcmp("box", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Box;
 			else if (strcmp("triangle", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Triangle;
 			else if (strcmp("kaiser", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Kaiser;
+		}
+		else if (strcmp("-float", argv[i]) == 0)
+		{
+			loadAsFloat = true;
 		}
 
 		// Compression options.
@@ -358,7 +366,7 @@ int main(int argc, char *argv[])
 		{
 			for (uint m = 0; m < mipmapCount; m++)
 			{
-				dds.mipmap(&mipmap, f, m);
+				dds.mipmap(&mipmap, f, m);	// @@ Load as float.
 				
 				inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), 1, f, m);
 			}
@@ -366,16 +374,39 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		// Regular image.
-		nv::Image image;
-		if (!image.load(input))
+		if (nv::strCaseCmp(input.extension(), ".exr") == 0)
 		{
-			fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
-			return 1;
+			loadAsFloat = true;
 		}
-		
-		inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
-		inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
+
+		if (loadAsFloat)
+		{
+			nv::AutoPtr<nv::FloatImage> image(nv::ImageIO::loadFloat(input));
+
+			if (image == NULL)
+			{
+				fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
+				return 1;
+			}
+			
+			inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
+			inputOptions.setTextureLayout(nvtt::TextureType_2D, image->width(), image->height());
+
+			inputOptions.setMipmapData(image->channel(0), image->width(), image->height());
+		}
+		else
+		{
+			// Regular image.
+			nv::Image image;
+			if (!image.load(input))
+			{
+				fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
+				return 1;
+			}
+			
+			inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
+			inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
+		}
 	}
 
 	if (wrapRepeat)
