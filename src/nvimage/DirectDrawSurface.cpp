@@ -570,7 +570,7 @@ void DDSHeader::setHeight(uint h)
 void DDSHeader::setDepth(uint d)
 {
 	this->flags |= DDSD_DEPTH;
-	this->height = d;
+	this->depth = d;
 }
 
 void DDSHeader::setMipmapCount(uint count)
@@ -599,6 +599,7 @@ void DDSHeader::setMipmapCount(uint count)
 void DDSHeader::setTexture2D()
 {
 	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+	this->header10.arraySize = 1;
 }
 
 void DDSHeader::setTexture3D()
@@ -606,6 +607,7 @@ void DDSHeader::setTexture3D()
 	this->caps.caps2 = DDSCAPS2_VOLUME;
 	
 	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+	this->header10.arraySize = 1;
 }
 
 void DDSHeader::setTextureCube()
@@ -798,6 +800,7 @@ bool DirectDrawSurface::isSupported() const
 	
 	if (header.hasDX10Header())
 	{
+		return false;
 	}
 	else
 	{
