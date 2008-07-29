@@ -78,7 +78,7 @@ namespace nv
 		MitchellFilter();
 		virtual float evaluate(float x) const;
 
-		void setParameters(float a, float b);
+		void setParameters(float b, float c);
 
 	private:
 		float p0, p2, p3;
