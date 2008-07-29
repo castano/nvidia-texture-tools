@@ -33,9 +33,6 @@
 
 #include <time.h> // clock
 
-//#define WINDOWS_LEAN_AND_MEAN
-//#include <windows.h> // TIMER
-
 
 struct MyOutputHandler : public nvtt::OutputHandler
 {
@@ -87,7 +84,10 @@ struct MyErrorHandler : public nvtt::ErrorHandler
 {
 	virtual void error(nvtt::Error e)
 	{
+#if _DEBUG
 		nvDebugBreak();
+#endif
+		printf("Error: '%s'\n", nvtt::errorString(e));
 	}
 };
 
@@ -137,13 +137,15 @@ int main(int argc, char *argv[])
 	bool noMipmaps = false;
 	bool fast = false;
 	bool nocuda = false;
-	bool silent = false;
 	bool bc1n = false;
 	nvtt::Format format = nvtt::Format_BC1;
 	bool premultiplyAlpha = false;
 	nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
 
 	const char * externalCompressor = NULL;
+
+	bool silent = false;
+	bool dds10 = false;
 
 	nv::Path input;
 	nv::Path output;
@@ -245,10 +247,14 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// Misc options
+		// Output options
 		else if (strcmp("-silent", argv[i]) == 0)
 		{
 			silent = true;
+		}
+		else if (strcmp("-dds10", argv[i]) == 0)
+		{
+			dds10 = true;
 		}
 
 		else if (argv[i][0] != '-')
@@ -303,6 +309,10 @@ int main(int argc, char *argv[])
 		printf("  -bc4     \tBC4 format (ATI1)\n");
 		printf("  -bc5     \tBC5 format (3Dc/ATI2)\n\n");
 		
+		printf("Output options:\n");
+		printf("  -silent  \tDo not output progress messages\n");
+		printf("  -dds10   \tUse DirectX 10 DDS format\n\n");
+
 		return 1;
 	}
 
@@ -446,30 +456,25 @@ int main(int argc, char *argv[])
 	outputOptions.setOutputHandler(&outputHandler);
 	outputOptions.setErrorHandler(&errorHandler);
 	
+	if (dds10)
+	{
+		outputOptions.setContainer(nvtt::Container_DDS10);
+	}
+	
+
 //	printf("Press ENTER.\n");
 //	fflush(stdout);
 //	getchar();
 
-/*	LARGE_INTEGER temp;
-	QueryPerformanceFrequency((LARGE_INTEGER*) &temp);
-	double freq = ((double) temp.QuadPart) / 1000.0;
-
-    LARGE_INTEGER start_time;
-    QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
-*/
 	clock_t start = clock();
 	
-	compressor.process(inputOptions, compressionOptions, outputOptions);
-/*
-	LARGE_INTEGER end_time;
-	QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
+	bool success = compressor.process(inputOptions, compressionOptions, outputOptions);
 
-	float diff_time = (float) (((double) end_time.QuadPart - (double) start_time.QuadPart) / freq);
-	printf("\rtime taken: %.3f seconds\n", diff_time/1000);
-*/
-
-	clock_t end = clock();
-	printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	if (success)
+	{
+		clock_t end = clock();
+		printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	}
 	
 	return 0;
 }
