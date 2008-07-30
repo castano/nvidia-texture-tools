@@ -114,6 +114,8 @@ namespace nv
 		
 		bool isValid() const;
 		bool isSupported() const;
+
+		bool hasAlpha() const;
 		
 		uint mipmapCount() const;
 		uint width() const;
