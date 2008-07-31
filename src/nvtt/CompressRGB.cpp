@@ -21,16 +21,18 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/Debug.h>
+#include "CompressRGB.h"
+#include "CompressionOptions.h"
+#include "OutputOptions.h"
 
 #include <nvimage/Image.h>
 #include <nvimage/FloatImage.h>
 #include <nvimage/PixelFormat.h>
-#include <nvmath/Color.h>
 
-#include "CompressRGB.h"
-#include "CompressionOptions.h"
-#include "OutputOptions.h"
+#include <nvmath/Color.h>
+#include <nvmath/half.h>
+
+#include <nvcore/Debug.h>
 
 using namespace nv;
 using namespace nvtt;
@@ -194,28 +196,37 @@ void nv::compressRGB(const FloatImage * image, const OutputOptions::Private & ou
 		const float * bchannel = image->scanline(y, 2);
 		const float * achannel = image->scanline(y, 3);
 
+		union FLOAT
+		{
+			float f;
+			uint32 u;
+		};
+
+		uint8 * ptr = dst;
+
 		for (uint x = 0; x < w; x++)
 		{
-			float r = rchannel[x];
-			float g = gchannel[x];
-			float b = bchannel[x];
-			float a = achannel[x];
+			FLOAT r, g, b, a;
+			r.f = rchannel[x];
+			g.f = gchannel[x];
+			b.f = bchannel[x];
+			a.f = achannel[x];
 
-			if (rsize == 32) *((float *)dst) = r;
-			//else if (rsize == 16) *((half *)dst) = half(r);
-			dst += rsize / 8;
+			if (rsize == 32) *((uint32 *)ptr) = r.u;
+			else if (rsize == 16) *((uint16 *)ptr) = half_from_float(r.u);
+			ptr += rsize / 8;
 
-			if (gsize == 32) *((float *)dst) = g;
-			//else if (gsize == 16) *((half *)dst) = half(g);
-			dst += gsize / 8;
+			if (gsize == 32) *((uint32 *)ptr) = g.u;
+			else if (gsize == 16) *((uint16 *)ptr) = half_from_float(g.u);
+			ptr += gsize / 8;
 
-			if (bsize == 32) *((float *)dst) = b;
-			//else if (bsize == 16) *((half *)dst) = half(b);
-			dst += bsize / 8;
+			if (bsize == 32) *((uint32 *)ptr) = b.u;
+			else if (bsize == 16) *((uint16 *)ptr) = half_from_float(b.u);
+			ptr += bsize / 8;
 
-			if (asize == 32) *((float *)dst) = a;
-			//else if (asize == 16) *((half *)dst) = half(a);
-			dst += asize / 8;
+			if (asize == 32) *((uint32 *)ptr) = a.u;
+			else if (asize == 16) *((uint16 *)ptr) = half_from_float(a.u);
+			ptr += asize / 8;
 		}
 
 		if (outputOptions.outputHandler != NULL)

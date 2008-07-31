@@ -51,5 +51,36 @@ void nvttCompressImage(NvttImage * img, NvttFormat format);
 // - Store it along the image, retrieve later explicitely with 'nvttGetCompressedData(img, ...)'
 
 
+// Global functions
+void nvttInitialize(...);
+unsigned int nvttGetVersion();
+const char * nvttGetErrorString(unsigned int error);
+
+// Context object
+void nvttCreateContext();
+void nvttDestroyContext();
+
+void nvttSetParameter1i(unsigned int name, int value);
+
+void nvttSetParameter1f(unsigned int name, float value);
+void nvttSetParameter2f(unsigned int name, float v0, float v1);
+void nvttSetParameter3f(unsigned int name, float v0, float v1, float v2);
+void nvttSetParameter4f(unsigned int name, float v0, float v1, float v2, float v3);
+
+// Image object
+NvttImage * nvttCreateImage();
+void nvttDestroyImage(NvttImage * img);
+
+void nvttSetImageData(NvttImage * image, NvttInputFormat format, unsigned int w, unsigned int h, void * data);
+
+void nvttSetImageParameter1i(NvttImage * image, unsigned int name, int value);
+void nvttSetImageParameter1f(NvttImage * image, unsigned int name, float value);
+
+void nvttResizeImage(NvttImage * image, unsigned int w, unsigned int h);
+void nvttQuantizeImage(NvttImage * image, bool dither, unsigned int rbits, unsigned int gbits, unsigned int bbits, unsigned int abits);
+void nvttCompressImage(NvttImage * image, void * buffer, int size);
+
+
+
 
 #endif // NVTT_EXPERIMENTAL_H

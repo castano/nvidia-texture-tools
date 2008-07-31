@@ -450,11 +450,11 @@ int main(int argc, char *argv[])
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
 
-	if (format == nvtt::Format_RGBA)
+	/*if (format == nvtt::Format_RGBA)
 	{
 		compressionOptions.setPixelType(nvtt::PixelType_Float);
-		compressionOptions.setPixelFormat(32, 32, 32, 32);
-	}
+		compressionOptions.setPixelFormat(16, 16, 16, 16);
+	}*/
 
 	if (fast)
 	{
