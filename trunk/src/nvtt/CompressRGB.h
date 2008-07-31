@@ -29,9 +29,11 @@
 namespace nv
 {
 	class Image;
+	class FloatImage;
 
 	// Pixel format converter.
 	void compressRGB(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
+	void compressRGB(const FloatImage * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
 	
 } // nv namespace
 

@@ -141,7 +141,8 @@ Image * FloatImage::createImageGammaCorrect(float gamma/*= 2.2f*/) const
 /// Allocate a 2d float image of the given format and the given extents.
 void FloatImage::allocate(uint c, uint w, uint h)
 {
-	nvCheck(m_mem == NULL);
+	free();
+
 	m_width = w;
 	m_height = h;
 	m_componentNum = c;
@@ -152,7 +153,6 @@ void FloatImage::allocate(uint c, uint w, uint h)
 /// Free the image, but don't clear the members.
 void FloatImage::free()
 {
-	nvCheck(m_mem != NULL);
 	nv::mem::free( reinterpret_cast<void *>(m_mem) );
 	m_mem = NULL;
 }

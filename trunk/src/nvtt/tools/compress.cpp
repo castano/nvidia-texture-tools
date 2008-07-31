@@ -392,7 +392,10 @@ int main(int argc, char *argv[])
 			inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
 			inputOptions.setTextureLayout(nvtt::TextureType_2D, image->width(), image->height());
 
-			inputOptions.setMipmapData(image->channel(0), image->width(), image->height());
+			for (uint i = 0; i < image->componentNum(); i++)
+			{
+				inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
+			}
 		}
 		else
 		{
@@ -446,6 +449,13 @@ int main(int argc, char *argv[])
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
+
+	if (format == nvtt::Format_RGBA)
+	{
+		compressionOptions.setPixelType(nvtt::PixelType_Float);
+		compressionOptions.setPixelFormat(32, 32, 32, 32);
+	}
+
 	if (fast)
 	{
 		compressionOptions.setQuality(nvtt::Quality_Fastest);
