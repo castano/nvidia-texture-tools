@@ -125,9 +125,7 @@ namespace nvtt
 
 		// Set color mask to describe the RGB/RGBA format.
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
-		
-		// As
-		NVTT_API void setPixelFormat2(unsigned int rsize, unsigned int gsize, unsigned int bsize, unsigned int asize);
+		NVTT_API void setPixelFormat(unsigned char rsize, unsigned char gsize, unsigned char bsize, unsigned char asize);
 		
 		NVTT_API void setPixelType(PixelType pixelType);
 
@@ -220,6 +218,7 @@ namespace nvtt
 		
 		// Set mipmap data. Copies the data.
 		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);
+		NVTT_API bool setMipmapChannelData(const void * data, int channel, int w, int h, int d = 1, int face = 0, int mipmap = 0);
 		
 		// Describe the format of the input.
 		NVTT_API void setFormat(InputFormat format);

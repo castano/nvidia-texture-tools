@@ -654,6 +654,20 @@ void DDSHeader::setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
 	this->pf.amask = 0;
 }
 
+void DDSHeader::setFormatCode(uint32 code)
+{
+	// set fourcc pixel format.
+	this->pf.flags = DDPF_FOURCC;
+	this->pf.fourcc = code;
+	
+	this->pf.bitcount = 0;
+	this->pf.rmask = 0;
+	this->pf.gmask = 0;
+	this->pf.bmask = 0;
+	this->pf.amask = 0;
+}
+
+
 void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 {
 	// Make sure the masks are correct.

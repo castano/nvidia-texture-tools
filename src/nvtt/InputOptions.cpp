@@ -252,6 +252,68 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 }
 
 
+// Copies data 
+bool InputOptions::setMipmapChannelData(const void * data, int channel, int width, int height, int depth /*= 1*/, int face /*= 0*/, int mipLevel /*= 0*/)
+{
+	nvCheck(depth == 1);
+	nvCheck(channel >= 0 && channel < 4);
+	
+	const int idx = face * m.mipmapCount + mipLevel;
+	
+	if (m.images[idx].width != width || m.images[idx].height != height || m.images[idx].depth != depth || m.images[idx].mipLevel != mipLevel || m.images[idx].face != face)
+	{
+		// Invalid dimension or index.
+		return false;
+	}
+	
+	// Allocate image if not allocated already.
+	if (m.inputFormat == InputFormat_BGRA_8UB)
+	{
+		m.images[idx].floatdata = NULL;
+		if (m.images[idx].uint8data == NULL)
+		{
+			m.images[idx].uint8data = new Image();
+		}
+
+		m.images[idx].uint8data->allocate(width, height);
+	}
+	else if (m.inputFormat == InputFormat_RGBA_32F)
+	{
+		m.images[idx].uint8data = NULL;
+		if (m.images[idx].floatdata == NULL)
+		{
+			m.images[idx].floatdata = new FloatImage();
+		}
+
+		m.images[idx].floatdata->allocate(4, width, height);
+	}
+	else
+	{
+		m.images[idx].floatdata = NULL;
+		m.images[idx].uint8data = NULL;
+		return false;
+	}
+
+	// Copy channel data to image.
+	if (m.inputFormat == InputFormat_BGRA_8UB)
+	{
+		// @@ TODO
+	}
+	else if (m.inputFormat == InputFormat_RGBA_32F)
+	{
+		const float * floatData = (const float *)data;
+		float * channelPtr = m.images[idx].floatdata->channel(channel);
+
+		for (int i = 0; i < width * height; i++)
+		{
+			channelPtr[i] = floatData[i];
+		}
+	}
+
+	return true;
+}
+
+
 /// Describe the format of the input.
 void InputOptions::setFormat(InputFormat format)
 {

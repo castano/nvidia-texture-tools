@@ -393,7 +393,49 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 			if (compressionOptions.format == Format_RGBA)
 			{
 				header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
-				header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+
+				if (compressionOptions.bitcount != 0)
+				{
+					header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+				}
+				else
+				{
+					if (compressionOptions.pixelType == PixelType_Float)
+					{
+						if (compressionOptions.rsize == 16 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+						{
+							header.setFormatCode(111); // D3DFMT_R16F
+						}
+						else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+						{
+							header.setFormatCode(112); // D3DFMT_G16R16F
+						}
+						else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16)
+						{
+							header.setFormatCode(113); // D3DFMT_A16B16G16R16F
+						}
+						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+						{
+							header.setFormatCode(114); // D3DFMT_R32F
+						}
+						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+						{
+							header.setFormatCode(115); // D3DFMT_G32R32F
+						}
+						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 32 && compressionOptions.asize == 32)
+						{
+							header.setFormatCode(116); // D3DFMT_A32B32G32R32F
+						}
+						else
+						{
+							supported = false;
+						}
+					}
+					else
+					{
+						supported = false;
+					}
+				}
 			}
 			else
 			{
@@ -503,6 +545,8 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			}
 		}
 		
+		// @@ Do alpha premultiplication and YCoCg transformation here. Allow these operations to be done in floating point.
+
 		quantizeMipmap(mipmap, compressionOptions);
 
 		compressMipmap(mipmap, inputOptions, compressionOptions, outputOptions);
@@ -805,6 +849,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	const Image * image = mipmap.asFixedImage();
 	nvDebugCheck(image != NULL);
 
+	// @@ Use FastCompressor::isSupported(compressionOptions.format) to chose compressor.
+
 	FastCompressor fast;
 	fast.setImage(image, inputOptions.alphaMode);
 
@@ -812,7 +858,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	slow.setImage(image, inputOptions.alphaMode);
 
 
-	if (compressionOptions.format == Format_RGBA || compressionOptions.format == Format_RGB)
+	if (compressionOptions.format == Format_RGBA)
 	{
 		compressRGB(image, outputOptions, compressionOptions);
 	}

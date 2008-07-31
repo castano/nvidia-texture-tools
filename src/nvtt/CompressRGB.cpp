@@ -24,6 +24,7 @@
 #include <nvcore/Debug.h>
 
 #include <nvimage/Image.h>
+#include <nvimage/FloatImage.h>
 #include <nvimage/PixelFormat.h>
 #include <nvmath/Color.h>
 
@@ -66,29 +67,53 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 	const uint w = image->width();
 	const uint h = image->height();
 
-	const uint bitCount = compressionOptions.bitcount;
-	nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
+	uint bitCount;
+	uint rmask, rshift, rsize;
+	uint gmask, gshift, gsize;
+	uint bmask, bshift, bsize;
+	uint amask, ashift, asize;
+
+	if (compressionOptions.bitcount != 0)
+	{
+		bitCount = compressionOptions.bitcount;
+		nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
+
+		rmask = compressionOptions.rmask;
+		gmask = compressionOptions.gmask;
+		bmask = compressionOptions.bmask;
+		amask = compressionOptions.amask;
+
+		PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
+		PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
+		PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
+		PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
+	}
+	else
+	{
+		rsize = compressionOptions.rsize;
+		gsize = compressionOptions.gsize;
+		bsize = compressionOptions.bsize;
+		asize = compressionOptions.asize;
+
+		bitCount = rsize + gsize + bsize + asize;
+		nvCheck(bitCount <= 32);
+
+		ashift = 0;
+		bshift = ashift + asize;
+		gshift = bshift + bsize;
+		rshift = gshift + gsize;
+
+		rmask = ((1 << rsize) - 1) << rshift;
+		gmask = ((1 << gsize) - 1) << gshift;
+		bmask = ((1 << bsize) - 1) << bshift;
+		amask = ((1 << asize) - 1) << ashift;
+	}
 
 	const uint byteCount = bitCount / 8;
 
-	const uint rmask = compressionOptions.rmask;
-	uint rshift, rsize;
-	PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
-	
-	const uint gmask = compressionOptions.gmask;
-	uint gshift, gsize;
-	PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
-	
-	const uint bmask = compressionOptions.bmask;
-	uint bshift, bsize;
-	PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
-	
-	const uint amask = compressionOptions.amask;
-	uint ashift, asize;
-	PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
 
 	// Determine pitch.
-	uint pitch = computePitch(w, compressionOptions.bitcount);
+	uint pitch = computePitch(w, bitCount);
 
 	uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
 
@@ -138,3 +163,66 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 	mem::free(dst);
 }
 
+
+void nv::compressRGB(const FloatImage * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+{
+	nvCheck(image != NULL);
+
+	const uint w = image->width();
+	const uint h = image->height();
+
+	const uint rsize = compressionOptions.rsize;
+	const uint gsize = compressionOptions.gsize;
+	const uint bsize = compressionOptions.bsize;
+	const uint asize = compressionOptions.asize;
+
+	nvCheck(rsize == 0 || rsize == 16 || rsize == 32);
+	nvCheck(gsize == 0 || gsize == 16 || gsize == 32);
+	nvCheck(bsize == 0 || bsize == 16 || bsize == 32);
+	nvCheck(asize == 0 || asize == 16 || asize == 32);
+
+	const uint bitCount = rsize + gsize + bsize + asize;
+	const uint byteCount = bitCount / 8;
+	const uint pitch = w * byteCount;
+
+	uint8 * dst = (uint8 *)mem::malloc(pitch);
+
+	for (uint y = 0; y < h; y++)
+	{
+		const float * rchannel = image->scanline(y, 0);
+		const float * gchannel = image->scanline(y, 1);
+		const float * bchannel = image->scanline(y, 2);
+		const float * achannel = image->scanline(y, 3);
+
+		for (uint x = 0; x < w; x++)
+		{
+			float r = rchannel[x];
+			float g = gchannel[x];
+			float b = bchannel[x];
+			float a = achannel[x];
+
+			if (rsize == 32) *((float *)dst) = r;
+			//else if (rsize == 16) *((half *)dst) = half(r);
+			dst += rsize / 8;
+
+			if (gsize == 32) *((float *)dst) = g;
+			//else if (gsize == 16) *((half *)dst) = half(g);
+			dst += gsize / 8;
+
+			if (bsize == 32) *((float *)dst) = b;
+			//else if (bsize == 16) *((half *)dst) = half(b);
+			dst += bsize / 8;
+
+			if (asize == 32) *((float *)dst) = a;
+			//else if (asize == 16) *((half *)dst) = half(a);
+			dst += asize / 8;
+		}
+
+		if (outputOptions.outputHandler != NULL)
+		{
+			outputOptions.outputHandler->writeData(dst, pitch);
+		}
+	}
+
+	mem::free(dst);
+}
