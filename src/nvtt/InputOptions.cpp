@@ -24,8 +24,9 @@
 #include <string.h> // memcpy
 
 #include <nvcore/Containers.h> // nextPowerOfTwo
-
 #include <nvcore/Memory.h>
+
+#include <nvmath/Color.h>
 
 #include "nvtt.h"
 #include "InputOptions.h"
@@ -273,9 +274,9 @@ bool InputOptions::setMipmapChannelData(const void * data, int channel, int widt
 		if (m.images[idx].uint8data == NULL)
 		{
 			m.images[idx].uint8data = new Image();
+			m.images[idx].uint8data->allocate(width, height);
+			m.images[idx].uint8data->fill(Color32(0,0,0,0));
 		}
-
-		m.images[idx].uint8data->allocate(width, height);
 	}
 	else if (m.inputFormat == InputFormat_RGBA_32F)
 	{
@@ -283,9 +284,11 @@ bool InputOptions::setMipmapChannelData(const void * data, int channel, int widt
 		if (m.images[idx].floatdata == NULL)
 		{
 			m.images[idx].floatdata = new FloatImage();
+			m.images[idx].floatdata->allocate(4, width, height);
+			m.images[idx].floatdata->clear();
 		}
 
-		m.images[idx].floatdata->allocate(4, width, height);
+		
 	}
 	else
 	{
