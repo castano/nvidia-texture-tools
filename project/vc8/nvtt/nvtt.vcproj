@@ -64,10 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib cudart.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\FreeImage;$(CUDA_LIB_PATH)"
+				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage;$(CUDA_LIB_PATH)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
@@ -227,10 +227,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib cudart.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\FreeImage;$(CUDA_LIB_PATH)"
+				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage;$(CUDA_LIB_PATH)"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -392,10 +392,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
+				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
@@ -551,10 +551,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
+				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -692,7 +692,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
-						AdditionalDependencies="CudaMath.h"
+						AdditionalDependencies="CudaMath.h;../SingleColorLookup.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
@@ -712,7 +712,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
-						AdditionalDependencies="CudaMath.h"
+						AdditionalDependencies="CudaMath.h;../SingleColorLookup.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
@@ -733,7 +733,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
-						AdditionalDependencies="CudaMath.h"
+						AdditionalDependencies="CudaMath.h;../SingleColorLookup.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
@@ -752,7 +752,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						CommandLine="$(CUDA_BIN_PATH)\nvcc.exe -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
-						AdditionalDependencies="CudaMath.h"
+						AdditionalDependencies="CudaMath.h;../SingleColorLookup.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
 				</FileConfiguration>
