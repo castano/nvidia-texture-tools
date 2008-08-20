@@ -64,10 +64,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
+				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -220,10 +220,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\FreeImage"
+				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
 				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"

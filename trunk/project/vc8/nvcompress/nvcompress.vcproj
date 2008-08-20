@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
@@ -220,7 +220,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
@@ -377,7 +377,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
@@ -530,7 +530,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="FreeImage.lib"
+				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
