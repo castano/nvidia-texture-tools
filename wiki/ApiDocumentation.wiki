@@ -431,7 +431,7 @@ void CompressionOptions::setQuantization(bool colorDithering, bool alphaDitherin
 
 *TODO* Explain binary alpha, alpha threshold.
 
-*TODO* Dithering is not yet supported when the output is RGBA.
+*TODO* Dithering is not yet supported when the output format is RGBA.
 
 
 == Output Options ==
