@@ -401,7 +401,7 @@ The GPU compressors do not provide exactly the same result as the CPU compressor
 By default, the compression error is measured for each channel uniformly. However, for some images it makes more sense to measure the error in a perceptual color space. This can be achieved with the following function:
 
 {{{
-compressionOptions.setColorWeights(float red, float green, float blue);
+compressionOptions.setColorWeights(float red, float green, float blue, float alpha=1.0f);
 }}}
 
 The choice for the weights of each color channel is subjective. In many cases uniform color weights (1.0, 1.0, 1.0) work very well. A popular choice is to use the NTSC luma encoding weights (0.2126, 0.7152, 0.0722), but I think that blue contributes to our perception more than a 7%. A better choice in my opinion is (3, 4, 2).
