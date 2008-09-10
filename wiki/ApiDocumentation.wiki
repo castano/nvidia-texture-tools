@@ -421,11 +421,15 @@ void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, u
 
 === Quantization ===
 
-*TODO*
+The compressor can dither the colors to the output bitcount before compression or quantization. This generally does not improve the quality of the output image, but in some cases can produce smoother results.
+
+Color and alpha dither can be enabled with the following option:
 
 {{{
 void CompressionOptions::setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 }}}
+
+*TODO* Explain binary alpha, alpha threshold.
 
 
 == Output Options ==
