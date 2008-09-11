@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="nvassemble"
 	ProjectGUID="{3BC6D760-91E8-4FFB-BD0E-F86F367AD8EA}"
+	RootNamespace="nvassemble"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -187,9 +188,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
+				StringPooling="true"
 				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

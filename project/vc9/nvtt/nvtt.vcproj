@@ -67,7 +67,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;$(CUDA_LIB_PATH)"
+				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -203,11 +203,17 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
+				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
+				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include;$(CUDA_INC_PATH)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
+				StringPooling="true"
 				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="0"
@@ -519,10 +525,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				OmitFramePointers="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
+				StringPooling="true"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -835,6 +843,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvmath\Half.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
 				>
 			</File>
@@ -894,6 +906,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\cuda\CudaUtils.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvmath\Half.h"
 				>
 			</File>
 			<File
