@@ -226,11 +226,15 @@ inline uint FloatImage::indexRepeat(int x, int y) const
 
 inline uint FloatImage::indexMirror(int x, int y) const
 {
+	if (m_width == 1) x = 0;
+
 	x = abs(x);
 	while (x >= m_width) {
 		x = abs(m_width + m_width - x - 2);
 	}
 
+	if (m_height == 1) y = 0;
+	
 	y = abs(y);
 	while (y >= m_height) {
 		y = abs(m_height + m_height - y - 2);
