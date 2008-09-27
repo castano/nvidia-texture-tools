@@ -26,10 +26,10 @@
  * http://www.xmission.com/~legalize/zoom.html
  * 
  * Reconstruction Filters in Computer Graphics
- * http://www.mentallandscape.com/Papers_siggraph88.pdf 
+ * http://www.mentallandscape.com/Papers_siggraph88.pdf
  *
  * More references:
- * http://www.worldserver.com/turk/computergraphics/ResamplingFilters.pdf 
+ * http://www.worldserver.com/turk/computergraphics/ResamplingFilters.pdf
  * http://www.dspguide.com/ch16.htm
  */
 
@@ -541,11 +541,16 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength, int samples/*= 32*/)
 {
-	nvCheck(srcLength >= dstLength);	// @@ Upsampling not implemented!
 	nvDebugCheck(samples > 0);
-	
-	const float scale = float(dstLength) / float(srcLength);
+
+	float scale = float(dstLength) / float(srcLength);
 	const float iscale = 1.0f / scale;
+
+	if (scale > 1) {
+		// Upsampling.
+		samples = 1;
+		scale = 1;
+	}
 
 	m_length = dstLength;
 	m_width = f.width() * iscale;
@@ -577,6 +582,7 @@ PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLengt
 			m_data[i * m_windowSize + j] /= total;
 		}
 	}
+
 }
 
 PolyphaseKernel::~PolyphaseKernel()
