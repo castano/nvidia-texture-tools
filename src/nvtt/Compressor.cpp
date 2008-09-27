@@ -571,7 +571,7 @@ void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Priva
 
 	// Resize image. 
 	BoxFilter boxFilter;
-	mipmap.setImage(mipmap.asFloatImage()->downSample(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
+	mipmap.setImage(mipmap.asFloatImage()->resize(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
 }
 
 
