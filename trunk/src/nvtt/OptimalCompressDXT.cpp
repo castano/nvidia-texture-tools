@@ -54,10 +54,22 @@ namespace
 		return d * d;
 	}
 
+	static uint nearestGreen4(uint green, uint maxGreen, uint minGreen)
+	{
+		uint bias = maxGreen + (maxGreen - minGreen) / 6;
+
+		uint index = 0;
+		if (maxGreen - minGreen != 0) index = clamp(3 * (bias - green) / (maxGreen - minGreen), 0U, 3U);
+
+		return (index * minGreen + (3 - index) * maxGreen) / 3;
+	}
 
 	static int computeGreenError(const ColorBlock & rgba, const BlockDXT1 * block, int bestError = INT_MAX)
 	{
 		nvDebugCheck(block != NULL);
+
+	//	uint g0 = (block->col0.g << 2) | (block->col0.g >> 4);
+	//	uint g1 = (block->col1.g << 2) | (block->col1.g >> 4);
 
 		int palette[4];
 		palette[0] = (block->col0.g << 2) | (block->col0.g >> 4);
@@ -76,6 +88,8 @@ namespace
 			error = min(error, greenDistance(green, palette[3]));
 
 			totalError += error;
+
+		//	totalError += nearestGreen4(green, g0, g1);
 
 			if (totalError > bestError)
 			{
@@ -140,6 +154,36 @@ namespace
 		return q2 >> 4;
 	}
 	
+	static uint nearestAlpha8(uint alpha, uint maxAlpha, uint minAlpha)
+	{
+		float bias = maxAlpha + float(maxAlpha - minAlpha) / (2.0f * 7.0f);
+		float scale = 7.0f / float(maxAlpha - minAlpha);
+
+		uint index = (uint)clamp((bias - float(alpha)) * scale, 0.0f, 7.0f);
+
+		return (index * minAlpha + (7 - index) * maxAlpha) / 7;
+	}
+
+	static uint computeAlphaError8(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
+	{
+		int totalError = 0;
+
+		for (uint i = 0; i < 16; i++)
+		{
+			uint8 alpha = rgba.color(i).a;
+
+			totalError += alphaDistance(alpha, nearestAlpha8(alpha, block->alpha0, block->alpha1));
+
+			if (totalError > bestError)
+			{
+				// early out
+				return totalError;
+			}
+		}
+
+		return totalError;
+	}
+
 	static uint computeAlphaError(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
 	{
 		uint8 alphas[8];
@@ -268,7 +312,7 @@ void OptimalCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 	// Get min/max green.
 	for (uint i = 0; i < 16; i++)
 	{
-		uint8 green = rgba.color(i).g >> 2;
+		uint8 green = (rgba.color(i).g + 1) >> 2;
 		ming = min(ming, green);
 		maxg = max(maxg, green);
 
