@@ -94,6 +94,7 @@ namespace nv
 		void setPitch(uint pitch);
 		void setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
 		void setFormatCode(uint code);
+		void setSwizzleCode(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
 		void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 		void setDX10Format(uint format);
 		void setNormalFlag(bool b);
