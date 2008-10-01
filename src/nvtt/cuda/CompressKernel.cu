@@ -21,10 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
+#include <float.h> // FLT_MAX
 
 #include "CudaMath.h"
 
@@ -53,65 +51,57 @@ __device__ inline void swap(T & a, T & b)
 __constant__ float3 kColorMetric = { 1.0f, 1.0f, 1.0f };
 __constant__ float3 kColorMetricSqr = { 1.0f, 1.0f, 1.0f };
 
+// Some kernels read the input through texture.
+texture<uchar4, 2, cudaReadModeNormalizedFloat> tex;
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Sort colors
 ////////////////////////////////////////////////////////////////////////////////
-__device__ void sortColors(const float * values, int * cmp)
+__device__ void sortColors(const float * values, int * ranks)
 {
-	int tid = threadIdx.x;
+#if __DEVICE_EMULATION__
+    if (threadIdx.x == 0)
+    {
+        for (int tid = 0; tid < 16; tid++)
+        {
+            int rank = 0;
+            for (int i = 0; i < 16; i++)
+            {
+                rank += (values[i] < values[tid]);
+            }
+            
+            ranks[tid] = rank;
+        }
 
-#if 1
-	cmp[tid] = (values[0] < values[tid]);
-	cmp[tid] += (values[1] < values[tid]);
-	cmp[tid] += (values[2] < values[tid]);
-	cmp[tid] += (values[3] < values[tid]);
-	cmp[tid] += (values[4] < values[tid]);
-	cmp[tid] += (values[5] < values[tid]);
-	cmp[tid] += (values[6] < values[tid]);
-	cmp[tid] += (values[7] < values[tid]);
-	cmp[tid] += (values[8] < values[tid]);
-	cmp[tid] += (values[9] < values[tid]);
-	cmp[tid] += (values[10] < values[tid]);
-	cmp[tid] += (values[11] < values[tid]);
-	cmp[tid] += (values[12] < values[tid]);
-	cmp[tid] += (values[13] < values[tid]);
-	cmp[tid] += (values[14] < values[tid]);
-	cmp[tid] += (values[15] < values[tid]);
-	
-	// Resolve elements with the same index.
-	if (tid > 0 && cmp[tid] == cmp[0]) ++cmp[tid];
-	if (tid > 1 && cmp[tid] == cmp[1]) ++cmp[tid];
-	if (tid > 2 && cmp[tid] == cmp[2]) ++cmp[tid];
-	if (tid > 3 && cmp[tid] == cmp[3]) ++cmp[tid];
-	if (tid > 4 && cmp[tid] == cmp[4]) ++cmp[tid];
-	if (tid > 5 && cmp[tid] == cmp[5]) ++cmp[tid];
-	if (tid > 6 && cmp[tid] == cmp[6]) ++cmp[tid];
-	if (tid > 7 && cmp[tid] == cmp[7]) ++cmp[tid];
-	if (tid > 8 && cmp[tid] == cmp[8]) ++cmp[tid];
-	if (tid > 9 && cmp[tid] == cmp[9]) ++cmp[tid];
-	if (tid > 10 && cmp[tid] == cmp[10]) ++cmp[tid];
-	if (tid > 11 && cmp[tid] == cmp[11]) ++cmp[tid];
-	if (tid > 12 && cmp[tid] == cmp[12]) ++cmp[tid];
-	if (tid > 13 && cmp[tid] == cmp[13]) ++cmp[tid];
-	if (tid > 14 && cmp[tid] == cmp[14]) ++cmp[tid];
+        // Resolve elements with the same index.
+        for (int i = 0; i < 15; i++)
+        {
+            for (int tid = 0; tid < 16; tid++)
+            {
+                if (tid > i && ranks[tid] == ranks[i]) ++ranks[tid];
+            }
+        }
+    }
 #else
+    const int tid = threadIdx.x;
 
-	cmp[tid] = 0;
+    int rank = 0;
 
-	#pragma unroll
-	for (int i = 0; i < 16; i++)
-	{
-		cmp[tid] += (values[i] < values[tid]);
-	}
+    #pragma unroll
+    for (int i = 0; i < 16; i++)
+    {
+        rank += (values[i] < values[tid]);
+    }
+    
+    ranks[tid] = rank;
 
-	// Resolve elements with the same index.
-	#pragma unroll
-	for (int i = 0; i < 15; i++)
-	{
-		if (tid > 0 && cmp[tid] == cmp[i]) ++cmp[tid];
-	}
+    // Resolve elements with the same index.
+    #pragma unroll
+    for (int i = 0; i < 15; i++)
+    {
+        if (tid > i && ranks[tid] == ranks[i]) ++ranks[tid];
+    }
 #endif
 }
 
@@ -136,9 +126,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
 		
 		// No need to synchronize, 16 < warp size.
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
+		__debugsync();
 		
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
@@ -148,16 +136,73 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		
 		dps[idx] = dot(colors[idx], axis);
 		
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
+		__debugsync();
 		
 		sortColors(dps, xrefs);
 		
 		float3 tmp = colors[idx];
+		__debugsync();
 		colors[xrefs[idx]] = tmp;
 	}
+#if __DEVICE_EMULATION__
+	else
+	{
+		__debugsync();
+		__debugsync();
+		__debugsync();
+	}
+#endif
 }
+
+__device__ void loadColorBlockTex(uint bn, uint w, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
+{
+	const int bid = blockIdx.x;
+	const int idx = threadIdx.x;
+
+	__shared__ float dps[16];
+
+	if (idx < 16)
+	{
+		float x = 4 * ((bn + bid) % w) + idx % 4;
+		float y = 4 * ((bn + bid) / w) + idx / 4;
+
+		// Read color and copy to shared mem.
+		float4 c = tex2D(tex, x, y);
+
+		colors[idx].x = c.z;
+		colors[idx].y = c.y;
+		colors[idx].z = c.x;
+
+		// No need to synchronize, 16 < warp size.
+		__debugsync();
+		
+		// Sort colors along the best fit line.
+		colorSums(colors, sums);
+		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
+		
+		*sameColor = (axis == make_float3(0, 0, 0));
+		
+		dps[idx] = dot(colors[idx], axis);
+		
+		__debugsync();
+		
+		sortColors(dps, xrefs);
+		
+		float3 tmp = colors[idx];
+		__debugsync();
+		colors[xrefs[idx]] = tmp;
+	}
+#if __DEVICE_EMULATION__
+	else
+	{
+		__debugsync();
+		__debugsync();
+		__debugsync();
+	}
+#endif
+
+}
+
 
 __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], float weights[16], int xrefs[16], int * sameColor)
 {
@@ -179,11 +224,8 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		
 		colors[idx] = rawColors[idx] * weights[idx];
 
-		
 		// No need to synchronize, 16 < warp size.
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
+		__debugsync();
 
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
@@ -193,18 +235,24 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 
 		dps[idx] = dot(rawColors[idx], axis);
 		
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
+		__debugsync();
 		
 		sortColors(dps, xrefs);
 		
 		float3 tmp = colors[idx];
-		colors[xrefs[idx]] = tmp;
-		
 		float w = weights[idx];
+		__debugsync();
+		colors[xrefs[idx]] = tmp;
 		weights[xrefs[idx]] = w;
 	}
+#if __DEVICE_EMULATION__
+	else
+	{
+		__debugsync();
+		__debugsync();
+		__debugsync();
+	}
+#endif
 }
 
 __device__ void loadColorBlock(const uint * image, float2 colors[16], float2 sums[16], int xrefs[16], int * sameColor)
@@ -223,9 +271,7 @@ __device__ void loadColorBlock(const uint * image, float2 colors[16], float2 sum
 		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
 		
 		// No need to synchronize, 16 < warp size.
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
+		__debugsync();
 
 		// Sort colors along the best fit line.
 		colorSums(colors, sums);
@@ -235,15 +281,22 @@ __device__ void loadColorBlock(const uint * image, float2 colors[16], float2 sum
 
 		dps[idx] = dot(colors[idx], axis);
 		
-#if __DEVICE_EMULATION__
-		} __debugsync(); if (idx < 16) {
-#endif
+		__debugsync();
 		
 		sortColors(dps, xrefs);
 		
 		float2 tmp = colors[idx];
+		__debugsync();
 		colors[xrefs[idx]] = tmp;
 	}
+#if __DEVICE_EMULATION__
+	else
+	{
+		__debugsync();
+		__debugsync();
+		__debugsync();
+	}
+#endif
 }
 
 
@@ -951,7 +1004,6 @@ __device__ int findMinError(float * errors)
 			}
 		}
 	}
-
 #else
 	for(int d = NUM_THREADS/2; d > 32; d >>= 1)
 	{
@@ -1134,6 +1186,41 @@ __global__ void compressDXT1(const uint * permutations, const uint * image, uint
 		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, result);
 	}
 }
+
+__global__ void compressDXT1_Tex(uint bn, uint w, const uint * permutations, uint2 * result)
+{
+	__shared__ float3 colors[16];
+	__shared__ float3 sums[16];
+	__shared__ int xrefs[16];
+	__shared__ int sameColor;
+	
+	loadColorBlockTex(bn, w, colors, sums, xrefs, &sameColor);
+
+	__syncthreads();
+
+	if (sameColor)
+	{
+		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
+		return;
+	}
+
+	ushort bestStart, bestEnd;
+	uint bestPermutation;
+
+	__shared__ float errors[NUM_THREADS];
+
+	evalAllPermutations(colors, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
+	
+	// Use a parallel reduction to find minimum error.
+	const int minIdx = findMinError(errors);
+	
+	// Only write the result of the winner thread.
+	if (threadIdx.x == minIdx)
+	{
+		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, result);
+	}
+}
+
 
 __global__ void compressLevel4DXT1(const uint * permutations, const uint * image, uint2 * result)
 {
@@ -1452,6 +1539,125 @@ __global__ void compressDXT5(const uint * permutations, const uint * image, uint
 }
 */
 
+/*__device__ void evaluatePalette(uint alpha0, uint alpha1, uint alphas[8])
+{
+	alpha[0] = alpha0;
+	alpha[1] = alpha1;
+	alpha[2] = (6 * alpha[0] + 1 * alpha[1]) / 7;	// bit code 010
+	alpha[3] = (5 * alpha[0] + 2 * alpha[1]) / 7;	// bit code 011
+	alpha[4] = (4 * alpha[0] + 3 * alpha[1]) / 7;	// bit code 100
+	alpha[5] = (3 * alpha[0] + 4 * alpha[1]) / 7;	// bit code 101
+	alpha[6] = (2 * alpha[0] + 5 * alpha[1]) / 7;	// bit code 110
+	alpha[7] = (1 * alpha[0] + 6 * alpha[1]) / 7;	// bit code 111
+}
+
+__device__ uint computeAlphaError(const uint block[16], uint alpha0, uint alpha1, int bestError = INT_MAX)
+{
+	uint8 alphas[8];
+	evaluatePalette(alpha0, alpha1, alphas);
+
+	int totalError = 0;
+
+	for (uint i = 0; i < 16; i++)
+	{
+		uint8 alpha = block[i];
+
+		// @@ It should be possible to do this much faster.
+
+		int minDist = INT_MAX;
+		for (uint p = 0; p < 8; p++)
+		{
+			int dist = alphaDistance(alpha, alphas[p]);
+			minDist = min(dist, minDist);
+		}
+
+
+
+		totalError += minDist;
+
+		if (totalError > bestError)
+		{
+			// early out
+			return totalError;
+		}
+	}
+
+	return totalError;
+}
+
+
+void compressDXT5A(uint alpha[16])
+{
+	// Get min/max alpha.
+	for (uint i = 0; i < 16; i++)
+	{
+		mina = min(mina, alpha[i]);
+		maxa = max(maxa, alpha[i]);
+	}
+
+	dxtBlock->alpha0 = maxa;
+	dxtBlock->alpha1 = mina;
+
+	if (maxa - mina > 8)
+	{
+		int besterror = computeAlphaError(rgba, dxtBlock);
+		int besta0 = maxa;
+		int besta1 = mina;
+
+		// Expand search space a bit.
+		const int alphaExpand = 8;
+		mina = (mina <= alphaExpand) ? 0 : mina - alphaExpand;
+		maxa = (maxa <= 255-alphaExpand) ? 255 : maxa + alphaExpand;
+
+		for (int a0 = mina+9; a0 < maxa; a0++)
+		{
+			for (int a1 = mina; a1 < a0-8; a1++)
+			{
+				nvDebugCheck(a0 - a1 > 8);
+
+				dxtBlock->alpha0 = a0;
+				dxtBlock->alpha1 = a1;
+				int error = computeAlphaError(rgba, dxtBlock, besterror);
+
+				if (error < besterror)
+				{
+					besterror = error;
+					besta0 = a0;
+					besta1 = a1;
+				}
+			}
+		}
+
+		dxtBlock->alpha0 = besta0;
+		dxtBlock->alpha1 = besta1;
+	}
+}
+
+__global__ void compressDXT5n(uint blockNum, uint2 * d_result)
+{
+	uint idx = blockIdx.x * 128 + threadIdx.x;
+
+	if (idx >= blockNum)
+	{
+		return;
+	}
+
+	// @@ Ideally we would load the data to shared mem to achieve coalesced global mem access.
+	// @@ Blocks would require too much shared memory (8k) and limit occupancy.
+
+	// @@ Ideally we should use SIMD processing, multiple threads (4-8) processing the same block.
+	// That simplifies coalescing, and reduces divergence.
+
+	// @@ Experiment with texture. That's probably the most simple approach.
+
+	uint x[16];
+	uint y[16];
+
+
+}
+*/
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Setup kernel
 ////////////////////////////////////////////////////////////////////////////////
@@ -1479,6 +1685,20 @@ extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result
 	compressDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
 }
 
+extern "C" void compressKernelDXT1_Tex(uint bn, uint blockNum, uint w, cudaArray * d_data, uint * d_result, uint * d_bitmaps)
+{
+	// Setup texture
+	tex.normalized = false;
+	tex.filterMode = cudaFilterModePoint;
+	tex.addressMode[0] = cudaAddressModeClamp;
+	tex.addressMode[1] = cudaAddressModeClamp;
+    
+	cudaBindTextureToArray(tex, d_data);
+
+	compressDXT1_Tex<<<blockNum, NUM_THREADS>>>(bn, w, d_bitmaps, (uint2 *)d_result);
+}
+
+
 extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
 	compressLevel4DXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
@@ -1497,4 +1717,17 @@ extern "C" void compressNormalKernelDXT1(uint blockNum, uint * d_data, uint * d_
 extern "C" void compressKernelCTX1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
 	compressCTX1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+}
+
+extern "C" void compressKernelDXT5n(uint blockNum, cudaArray * d_data, uint * d_result)
+{
+	// Setup texture
+	tex.normalized = false;
+	tex.filterMode = cudaFilterModePoint;
+	tex.addressMode[0] = cudaAddressModeClamp;
+	tex.addressMode[1] = cudaAddressModeClamp;
+    
+	cudaBindTextureToArray(tex, d_data);
+
+//	compressDXT5n<<<blockNum/128, 128>>>(blockNum, (uint2 *)d_result);
 }
