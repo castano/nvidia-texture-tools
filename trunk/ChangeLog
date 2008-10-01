@@ -6,7 +6,8 @@ NVIDIA Texture Tools version 2.1.0
  * Add support for YCoCg color transform. Fixes issue 18.
  * Add support for linear and swizzle transforms. Fixes issue 4.
  * Fix loading of EXR files using OpenEXR.
- * Use FreeImage as primary image loading library. Fixes issue 31.
+ * Use FreeImage as primary image loading library. Fixes issue 31. Reverted.
+ * Output swizzle codes like AMD's tools.
 
 NVIDIA Texture Tools version 2.0.3
  * More accurate DXT3 compressor. Fixes issue 38.
