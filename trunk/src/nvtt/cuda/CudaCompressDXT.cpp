@@ -53,6 +53,7 @@ using namespace nvtt;
 
 extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
+extern "C" void compressKernelDXT1_Tex(uint bn, uint blockNum, uint w, cudaArray * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 extern "C" void compressNormalKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
@@ -286,7 +287,7 @@ void CudaCompressor::compressDXT1(const CompressionOptions::Private & compressio
 	}
 
 	clock_t end = clock();
-	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
@@ -297,6 +298,77 @@ void CudaCompressor::compressDXT1(const CompressionOptions::Private & compressio
 	}
 #endif
 }
+
+void CudaCompressor::compressDXT1_Tex(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+{
+	nvDebugCheck(cuda::isHardwarePresent());
+#if defined HAVE_CUDA
+
+    // Allocate image as a cuda array.
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
+
+    cudaArray * d_image;
+	const int imageSize = m_image->width() * m_image->height() * sizeof(uint);
+    cudaMallocArray(&d_image, &channelDesc, m_image->width(), m_image->height()); 
+    cudaMemcpyToArray(d_image, 0, 0, m_image->pixels(), imageSize, cudaMemcpyHostToDevice);
+
+	// Image size in blocks.
+	const uint w = (m_image->width() + 3) / 4;
+	const uint h = (m_image->height() + 3) / 4;
+	const uint blockNum = w * h;
+	const uint compressedSize = blockNum * 8;
+
+	void * h_result = malloc(MAX_BLOCKS * 8);
+
+	clock_t start = clock();
+
+	setupCompressKernel(compressionOptions.colorWeight.ptr());
+	
+	uint bn = 0;
+	while(bn != blockNum)
+	{
+		uint count = min(blockNum - bn, MAX_BLOCKS);
+
+		// Launch kernel.
+		compressKernelDXT1_Tex(bn, count, w, d_image, m_result, m_bitmapTable);
+
+		// Check for errors.
+		cudaError_t err = cudaGetLastError();
+		if (err != cudaSuccess)
+		{
+			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
+
+			if (outputOptions.errorHandler != NULL)
+			{
+				outputOptions.errorHandler->error(Error_CudaError);
+			}
+		}
+
+		// Copy result to host, overwrite swizzled image.
+		cudaMemcpy(h_result, m_result, count * 8, cudaMemcpyDeviceToHost);
+
+		// Output result.
+		if (outputOptions.outputHandler != NULL)
+		{
+			outputOptions.outputHandler->writeData(h_result, count * 8);
+		}
+
+		bn += count;
+	}
+
+	clock_t end = clock();
+	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+
+	free(h_result);
+
+#else
+	if (outputOptions.errorHandler != NULL)
+	{
+		outputOptions.errorHandler->error(Error_CudaError);
+	}
+#endif
+}
+
 
 
 /// Compress image using CUDA.
@@ -617,4 +689,21 @@ void CudaCompressor::compressCTX1(const nvtt::CompressionOptions::Private & comp
 	}
 #endif
 }
+
+
+void CudaCompressor::compressDXT5n(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+{
+	nvDebugCheck(cuda::isHardwarePresent());
+#if defined HAVE_CUDA
+
+	// @@ TODO
+
+#else
+	if (outputOptions.errorHandler != NULL)
+	{
+		outputOptions.errorHandler->error(Error_CudaError);
+	}
+#endif
+}
+
 

@@ -26,7 +26,6 @@
 #ifndef CUDAMATH_H
 #define CUDAMATH_H
 
-#include <float.h>
 
 
 inline __device__ __host__ float3 operator *(float3 a, float3 b)
@@ -211,7 +210,7 @@ inline __device__ bool singleColor(const float3 * colors)
 	bool sameColor = false;
 	for (int i = 0; i < 16; i++)
 	{
-		sameColor &= (colors[idx] == colors[0]);
+		sameColor &= (colors[i] == colors[0]);
 	}
 	return sameColor;
 #else
@@ -232,16 +231,16 @@ inline __device__ bool singleColor(const float3 * colors)
 inline __device__ void colorSums(const float3 * colors, float3 * sums)
 {
 #if __DEVICE_EMULATION__
-	float3 color_sum = make_float3(0.0f, 0.0f, 0.0f);
-	for (int i = 0; i < 16; i++)
-	{
-		color_sum += colors[i];
-	}
+    float3 color_sum = make_float3(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i < 16; i++)
+    {
+        color_sum += colors[i];
+    }
 
-	for (int i = 0; i < 16; i++)
-	{
-		sums[i] = color_sum;
-	}
+    for (int i = 0; i < 16; i++)
+    {
+        sums[i] = color_sum;
+    }
 #else
 
 	const int idx = threadIdx.x;
@@ -327,7 +326,7 @@ inline __device__ __host__ float2 firstEigenVector2D( float matrix[3] )
 inline __device__ void colorSums(const float2 * colors, float2 * sums)
 {
 #if __DEVICE_EMULATION__
-	float2 color_sum = make_float2(0.0f, 0.0f, 0.0f);
+	float2 color_sum = make_float2(0.0f, 0.0f);
 	for (int i = 0; i < 16; i++)
 	{
 		color_sum += colors[i];
@@ -360,7 +359,7 @@ inline __device__ float2 bestFitLine(const float2 * colors, float2 color_sum)
 		float2 a = (colors[i] - color_sum * (1.0f / 16.0f));
 		covariance[0] += a.x * a.x;
 		covariance[1] += a.x * a.y;
-		covariance[3] += a.y * a.y;
+		covariance[2] += a.y * a.y;
 	}
 #else
 
