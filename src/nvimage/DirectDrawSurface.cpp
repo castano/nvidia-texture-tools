@@ -639,15 +639,7 @@ void DDSHeader::setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
 	this->pf.flags = DDPF_FOURCC;
 	this->pf.fourcc = MAKEFOURCC(c0, c1, c2, c3);
 	
-	if (this->pf.fourcc == FOURCC_ATI2)
-	{
-		this->pf.bitcount = FOURCC_A2XY;
-	}
-	else
-	{
-		this->pf.bitcount = 0;
-	}
-	
+	this->pf.bitcount = 0;
 	this->pf.rmask = 0;
 	this->pf.gmask = 0;
 	this->pf.bmask = 0;
@@ -665,6 +657,11 @@ void DDSHeader::setFormatCode(uint32 code)
 	this->pf.gmask = 0;
 	this->pf.bmask = 0;
 	this->pf.amask = 0;
+}
+
+void DDSHeader::setSwizzleCode(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
+{
+	this->pf.bitcount = MAKEFOURCC(c0, c1, c2, c3);
 }
 
 

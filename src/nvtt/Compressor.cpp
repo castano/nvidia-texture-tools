@@ -453,14 +453,21 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 				}
 				else if (compressionOptions.format == Format_DXT5n) {
 					header.setFourCC('D', 'X', 'T', '5');
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+					if (inputOptions.isNormalMap) {
+						header.setNormalFlag(true);
+						header.setSwizzleCode('A', '2', 'D', '5');
+						//header.setSwizzleCode('x', 'G', 'x', 'R');
+					}
 				}
 				else if (compressionOptions.format == Format_BC4) {
 					header.setFourCC('A', 'T', 'I', '1');
 				}
 				else if (compressionOptions.format == Format_BC5) {
 					header.setFourCC('A', 'T', 'I', '2');
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+					if (inputOptions.isNormalMap) {
+						header.setNormalFlag(true);
+						header.setSwizzleCode('A', '2', 'X', 'Y');
+					}
 				}
 				else if (compressionOptions.format == Format_CTX1) {
 					header.setFourCC('C', 'T', 'X', '1');
@@ -905,7 +912,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT1(compressionOptions, outputOptions);
+					//cuda->compressDXT1(compressionOptions, outputOptions);
+					cuda->compressDXT1_Tex(compressionOptions, outputOptions);
 				}
 				else
 				{
@@ -993,7 +1001,16 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				slow.compressDXT5n(compressionOptions, outputOptions);
+				/*if (cudaEnabled)
+				{
+					nvDebugCheck(cudaSupported);
+					cuda->setImage(image, inputOptions.alphaMode);
+					cuda->compressDXT5n(compressionOptions, outputOptions);
+				}
+				else*/
+				{
+					slow.compressDXT5n(compressionOptions, outputOptions);
+				}
 			}
 		}
 		else if (compressionOptions.format == Format_BC4)
