@@ -339,7 +339,7 @@ void OptimalCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 	// Expand search space a bit.
 	const int greenExpand = 4;
 	ming = (ming <= greenExpand) ? 0 : ming - greenExpand;
-	maxg = (maxg <= 63-greenExpand) ? 63 : maxg + greenExpand;
+	maxg = (maxg >= 63-greenExpand) ? 63 : maxg + greenExpand;
 
 	for (int g0 = ming+1; g0 <= maxg; g0++)
 	{
@@ -415,7 +415,7 @@ void OptimalCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dx
 		// Expand search space a bit.
 		const int alphaExpand = 8;
 		mina = (mina <= alphaExpand) ? 0 : mina - alphaExpand;
-		maxa = (maxa <= 255-alphaExpand) ? 255 : maxa + alphaExpand;
+		maxa = (maxa >= 255-alphaExpand) ? 255 : maxa + alphaExpand;
 
 		for (int a0 = mina+9; a0 < maxa; a0++)
 		{
