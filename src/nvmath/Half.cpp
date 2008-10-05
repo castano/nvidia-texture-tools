@@ -73,7 +73,7 @@
 //     uint16       z  = float_to_half( fz );
 //
 
-#include "half.h"
+#include "Half.h"
 #include <stdio.h>
 
 // Load immediate
