@@ -244,7 +244,7 @@ SincFilter::SincFilter(float w) : Filter(w) {}
 
 float SincFilter::evaluate(float x) const
 {
-	return 0.0f;
+	return sincf(PI * x);
 }
 
 
