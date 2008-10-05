@@ -17,7 +17,8 @@ SET(MATH_SRCS
 	TypeSerialization.h TypeSerialization.cpp
 	Sparse.h Sparse.cpp
 	Solver.h Solver.cpp
-	KahanSum.h)
+	KahanSum.h
+	Half.h Half.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
