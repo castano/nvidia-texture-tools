@@ -30,7 +30,7 @@
 #include <nvimage/PixelFormat.h>
 
 #include <nvmath/Color.h>
-#include <nvmath/half.h>
+#include <nvmath/Half.h>
 
 #include <nvcore/Debug.h>
 
