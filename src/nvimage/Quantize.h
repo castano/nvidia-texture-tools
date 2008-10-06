@@ -17,6 +17,9 @@ namespace nv
 		void FloydSteinberg_BinaryAlpha(Image * img, int alpha_threshold = 127);
 		void FloydSteinberg_Alpha4(Image * img);
 
+		void Truncate(Image * image, uint rsize, uint gsize, uint bsize, uint asize);
+		void FloydSteinberg(Image * image, uint rsize, uint gsize, uint bsize, uint asize);
+
 		// @@ Add palette quantization algorithms!
 	}
 }

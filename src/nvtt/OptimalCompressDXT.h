@@ -26,8 +26,6 @@
 
 #include <nvimage/nvimage.h>
 
-#include <nvmath/Color.h>
-
 namespace nv
 {
 	struct ColorBlock;
@@ -41,7 +39,6 @@ namespace nv
 	{
 		void compressDXT1(Color32 rgba, BlockDXT1 * dxtBlock);
 		void compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock);
-		void compressDXT1G(uint8 g, BlockDXT1 * dxtBlock);
 		
 		void compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block);
 		void compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock);

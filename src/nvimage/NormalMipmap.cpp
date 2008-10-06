@@ -1,13 +1,12 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvimage/NormalMipmap.h>
-#include <nvimage/FloatImage.h>
+#include <nvcore/Ptr.h>
 
 #include <nvmath/Montecarlo.h>
 #include <nvmath/SphericalHarmonic.h>
 
-#include <nvcore/Ptr.h>
-
+#include <nvimage/NormalMipmap.h>
+#include <nvimage/FloatImage.h>
 
 using namespace nv;
 

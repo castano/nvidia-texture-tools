@@ -28,7 +28,7 @@
 #endif
 
 #if NV_OS_LINUX && defined(HAVE_EXECINFO_H)
-#	include <execinfo.h> // backtrace
+#	include <execinfo.h>
 #	if NV_CC_GNUC // defined(HAVE_CXXABI_H)
 #		include <cxxabi.h>
 #	endif
@@ -39,13 +39,6 @@
 #	include <sys/types.h>
 #	include <sys/sysctl.h>	// sysctl
 #	include <ucontext.h>
-#	undef HAVE_EXECINFO_H
-#	if defined(HAVE_EXECINFO_H) // only after OSX 10.5
-#		include <execinfo.h> // backtrace
-#		if NV_CC_GNUC // defined(HAVE_CXXABI_H)
-#			include <cxxabi.h>
-#		endif
-#	endif
 #endif
 
 #include <stdexcept> // std::runtime_error
@@ -135,10 +128,6 @@ namespace
 
 #if defined(HAVE_EXECINFO_H) // NV_OS_LINUX
 
-	static bool nvHasStackTrace() {
-		return backtrace != NULL;
-	}
-
 	static void nvPrintStackTrace(void * trace[], int size, int start=0) {
 		char ** string_array = backtrace_symbols(trace, size);
 	
@@ -177,36 +166,24 @@ namespace
 
 	static void * callerAddress(void * secret)
 	{
-#	if NV_OS_DARWIN
-#		if defined(_STRUCT_MCONTEXT)
-#			if NV_CPU_PPC
-				ucontext_t * ucp = (ucontext_t *)secret;
-				return (void *) ucp->uc_mcontext->__ss.__srr0;
-#			elif NV_CPU_X86
-				ucontext_t * ucp = (ucontext_t *)secret;
-				return (void *) ucp->uc_mcontext->__ss.__eip;
-#			endif
-#		else
-#			if NV_CPU_PPC
-				ucontext_t * ucp = (ucontext_t *)secret;
-				return (void *) ucp->uc_mcontext->ss.srr0;
-#			elif NV_CPU_X86
-				ucontext_t * ucp = (ucontext_t *)secret;
-				return (void *) ucp->uc_mcontext->ss.eip;
-#			endif
-#		endif
+#	if NV_OS_DARWIN && NV_CPU_PPC
+		ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext->ss.srr0;
+#	elif NV_OS_DARWIN && NV_CPU_X86
+		ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext->ss.eip;
+#	elif NV_CPU_X86_64
+		// #define REG_RIP REG_INDEX(rip) // seems to be 16
+		ucontext_t * ucp = (ucontext_t *)secret;
+		return (void *)ucp->uc_mcontext.gregs[REG_RIP];
+#	elif NV_CPU_X86
+		ucontext_t * ucp = (ucontext_t *)secret;
+		return (void *)ucp->uc_mcontext.gregs[14/*REG_EIP*/];
+#	elif NV_CPU_PPC
+		ucontext_t * ucp = (ucontext_t *)secret;
+		return (void *) ucp->uc_mcontext.regs->nip;
 #	else
-#		if NV_CPU_X86_64
-			// #define REG_RIP REG_INDEX(rip) // seems to be 16
-			ucontext_t * ucp = (ucontext_t *)secret;
-			return (void *)ucp->uc_mcontext.gregs[REG_RIP];
-#		elif NV_CPU_X86
-			ucontext_t * ucp = (ucontext_t *)secret;
-			return (void *)ucp->uc_mcontext.gregs[14/*REG_EIP*/];
-#		elif NV_CPU_PPC
-			ucontext_t * ucp = (ucontext_t *)secret;
-			return (void *) ucp->uc_mcontext.regs->nip;
-#		endif
+		return NULL;
 #	endif
 		
 		// How to obtain the instruction pointers in different platforms, from mlton's source code.
@@ -251,18 +228,17 @@ namespace
 		}
 		
 #	if defined(HAVE_EXECINFO_H)
-		if (nvHasStackTrace()) // in case of weak linking
-		{
-			void * trace[64];
-			int size = backtrace(trace, 64);
 		
-			if (pnt != NULL) {
-				// Overwrite sigaction with caller's address.
-				trace[1] = pnt;
-			}
-			
-			nvPrintStackTrace(trace, size, 1);
+		void * trace[64];
+		int size = backtrace(trace, 64);
+		
+		if (pnt != NULL) {
+			// Overwrite sigaction with caller's address.
+			trace[1] = pnt;
 		}
+		
+		nvPrintStackTrace(trace, size, 1);
+		
 #	endif // defined(HAVE_EXECINFO_H)
 		
 		exit(0);
@@ -397,12 +373,9 @@ namespace
 #		endif
 
 #		if defined(HAVE_EXECINFO_H)
-			if (nvHasStackTrace())
-			{
-				void * trace[64];
-				int size = backtrace(trace, 64);
-				nvPrintStackTrace(trace, size, 3);
-			}
+			void * trace[64];
+			int size = backtrace(trace, 64);
+			nvPrintStackTrace(trace, size, 3);
 #		endif
 
 			// Exit cleanly.
@@ -449,12 +422,9 @@ void NV_CDECL nvDebug(const char *msg, ...)
 void debug::dumpInfo()
 {
 #if !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H)
-	if (nvHasStackTrace())
-	{
-		void * trace[64];
-		int size = backtrace(trace, 64);
-		nvPrintStackTrace(trace, size, 1);
-	}
+	void * trace[64];
+	int size = backtrace(trace, 64);
+	nvPrintStackTrace(trace, size, 1);
 #endif
 }
 

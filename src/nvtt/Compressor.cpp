@@ -34,7 +34,7 @@
 #include <nvimage/Filter.h>
 #include <nvimage/Quantize.h>
 #include <nvimage/NormalMap.h>
-#include <nvimage/ColorSpace.h>
+#include <nvimage/PixelFormat.h>
 
 #include "Compressor.h"
 #include "InputOptions.h"
@@ -56,7 +56,7 @@ namespace
 	
 	static int blockSize(Format format)
 	{
-		if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
+		if (format == Format_DXT1 || format == Format_DXT1a) {
 			return 8;
 		}
 		else if (format == Format_DXT3) {
@@ -70,9 +70,6 @@ namespace
 		}
 		else if (format == Format_BC5) {
 			return 16;
-		}
-		else if (format == Format_CTX1) {
-			return 8;
 		}
 		return 0;
 	}
@@ -115,11 +112,6 @@ namespace nvtt
 			m_inputImage = inputOptions.image(idx);
 			m_fixedImage = NULL;
 			m_floatImage = NULL;
-			
-			if (const FloatImage * floatImage = inputOptions.floatImage(idx))
-			{
-				m_floatImage = floatImage->clone();
-			}
 		}
 
 		// Assign and take ownership of given image.
@@ -176,9 +168,8 @@ namespace nvtt
 			return m_floatImage.ptr();
 		}
 
-		FloatImage * asMutableFloatImage()
+		FloatImage * asFloatImage()
 		{
-			m_inputImage = NULL;
 			return m_floatImage.ptr();
 		}
 
@@ -324,203 +315,76 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		return true;
 	}
 
-	if (outputOptions.container == Container_DDS || outputOptions.container == Container_DDS10)
-	{
-		DDSHeader header;
+	DDSHeader header;
 	
-		header.setWidth(inputOptions.targetWidth);
-		header.setHeight(inputOptions.targetHeight);
+	header.setWidth(inputOptions.targetWidth);
+	header.setHeight(inputOptions.targetHeight);
+	
+	int mipmapCount = inputOptions.realMipmapCount();
+	nvDebugCheck(mipmapCount > 0);
+	
+	header.setMipmapCount(mipmapCount);
+	
+	if (inputOptions.textureType == TextureType_2D) {
+		header.setTexture2D();
+	}
+	else if (inputOptions.textureType == TextureType_Cube) {
+		header.setTextureCube();
+	}		
+	/*else if (inputOptions.textureType == TextureType_3D) {
+		header.setTexture3D();
+		header.setDepth(inputOptions.targetDepth);
+	}*/
+	
+	if (compressionOptions.format == Format_RGBA)
+	{
+		header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
+		header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+	}
+	else
+	{
+		header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
 		
-		int mipmapCount = inputOptions.realMipmapCount();
-		nvDebugCheck(mipmapCount > 0);
-		
-		header.setMipmapCount(mipmapCount);
-
-		bool supported = true;
-		
-		if (outputOptions.container == Container_DDS10)
-		{
-			if (compressionOptions.format == Format_RGBA)
-			{
-				if (compressionOptions.bitcount == 16)
-				{
-					// B5G6R5_UNORM
-					// B5G5R5A1_UNORM
-					supported = false;
-				}
-				else if (compressionOptions.bitcount == 32)
-				{
-					// B8G8R8A8_UNORM
-					// B8G8R8X8_UNORM
-					// R8G8B8A8_UNORM
-					// R10G10B10A2_UNORM
-					supported = false;
-				}
-				else {
-					supported = false;
-				}			
-			}
-			else
-			{
-				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
-					header.setDX10Format(71);
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
-				}
-				else if (compressionOptions.format == Format_DXT3) {
-					header.setDX10Format(74);
-				}
-				else if (compressionOptions.format == Format_DXT5) {
-					header.setDX10Format(77);
-				}
-				else if (compressionOptions.format == Format_DXT5n) {
-					header.setDX10Format(77);
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
-				}
-				else if (compressionOptions.format == Format_BC4) {
-					header.setDX10Format(80);
-				}
-				else if (compressionOptions.format == Format_BC5) {
-					header.setDX10Format(83);
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
-				}
-				else {
-					supported = false;
-				}
-			}
+		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
+			header.setFourCC('D', 'X', 'T', '1');
+			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
-		else
-		{
-			if (compressionOptions.format == Format_RGBA)
-			{
-				header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
-
-				if (compressionOptions.bitcount != 0)
-				{
-					header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
-				}
-				else
-				{
-					if (compressionOptions.pixelType == PixelType_Float)
-					{
-						if (compressionOptions.rsize == 16 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(111); // D3DFMT_R16F
-						}
-						else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(112); // D3DFMT_G16R16F
-						}
-						else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16)
-						{
-							header.setFormatCode(113); // D3DFMT_A16B16G16R16F
-						}
-						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(114); // D3DFMT_R32F
-						}
-						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(115); // D3DFMT_G32R32F
-						}
-						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 32 && compressionOptions.asize == 32)
-						{
-							header.setFormatCode(116); // D3DFMT_A32B32G32R32F
-						}
-						else
-						{
-							supported = false;
-						}
-					}
-					else
-					{
-						supported = false;
-					}
-				}
-			}
-			else
-			{
-				header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
-				
-				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
-					header.setFourCC('D', 'X', 'T', '1');
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
-				}
-				else if (compressionOptions.format == Format_DXT3) {
-					header.setFourCC('D', 'X', 'T', '3');
-				}
-				else if (compressionOptions.format == Format_DXT5) {
-					header.setFourCC('D', 'X', 'T', '5');
-				}
-				else if (compressionOptions.format == Format_DXT5n) {
-					header.setFourCC('D', 'X', 'T', '5');
-					if (inputOptions.isNormalMap) {
-						header.setNormalFlag(true);
-						header.setSwizzleCode('A', '2', 'D', '5');
-						//header.setSwizzleCode('x', 'G', 'x', 'R');
-					}
-				}
-				else if (compressionOptions.format == Format_BC4) {
-					header.setFourCC('A', 'T', 'I', '1');
-				}
-				else if (compressionOptions.format == Format_BC5) {
-					header.setFourCC('A', 'T', 'I', '2');
-					if (inputOptions.isNormalMap) {
-						header.setNormalFlag(true);
-						header.setSwizzleCode('A', '2', 'X', 'Y');
-					}
-				}
-				else if (compressionOptions.format == Format_CTX1) {
-					header.setFourCC('C', 'T', 'X', '1');
-					if (inputOptions.isNormalMap) header.setNormalFlag(true);
-				}
-				else {
-					supported = false;
-				}
-			}
+		else if (compressionOptions.format == Format_DXT3) {
+			header.setFourCC('D', 'X', 'T', '3');
 		}
-		
-		if (!supported)
-		{
-			// This container does not support the requested format.
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_UnsupportedFeature);
-			}
-			
-			return false;
+		else if (compressionOptions.format == Format_DXT5) {
+			header.setFourCC('D', 'X', 'T', '5');
 		}
-		
-		if (inputOptions.textureType == TextureType_2D) {
-			header.setTexture2D();
+		else if (compressionOptions.format == Format_DXT5n) {
+			header.setFourCC('D', 'X', 'T', '5');
+			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
-		else if (inputOptions.textureType == TextureType_Cube) {
-			header.setTextureCube();
-		}		
-		/*else if (inputOptions.textureType == TextureType_3D) {
-			header.setTexture3D();
-			header.setDepth(inputOptions.targetDepth);
-		}*/
-		
-		// Swap bytes if necessary.
-		header.swapBytes();
-		
-		uint headerSize = 128;
-		if (header.hasDX10Header())
-		{
-			nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
-			headerSize = 128 + 20;
+		else if (compressionOptions.format == Format_BC4) {
+			header.setFourCC('A', 'T', 'I', '1');
 		}
-
-		bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
-		if (!writeSucceed && outputOptions.errorHandler != NULL)
-		{
-			outputOptions.errorHandler->error(Error_FileWrite);
+		else if (compressionOptions.format == Format_BC5) {
+			header.setFourCC('A', 'T', 'I', '2');
+			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
-		
-		return writeSucceed;
 	}
 	
-	return true;
+	// Swap bytes if necessary.
+	header.swapBytes();
+	
+	uint headerSize = 128;
+	if (header.hasDX10Header())
+	{
+		nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
+		headerSize = 128 + 20;
+	}
+
+	bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
+	if (!writeSucceed && outputOptions.errorHandler != NULL)
+	{
+		outputOptions.errorHandler->error(Error_FileWrite);
+	}
+	
+	return writeSucceed;
 }
 
 
@@ -543,6 +407,10 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			outputOptions.outputHandler->beginImage(size, w, h, d, f, m);
 		}
 
+		// @@ Where to do the color transform?
+		// - Color transform may not be linear, so we cannot do before computing mipmaps.
+		// - Should be done in linear space, that is, after gamma correction.
+
 		if (!initMipmap(mipmap, inputOptions, w, h, d, f, m))
 		{
 			if (outputOptions.errorHandler != NULL)
@@ -552,35 +420,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			}
 		}
 		
-		if (compressionOptions.pixelType == PixelType_Float)
-		{
-			mipmap.toFloatImage(inputOptions);
-
-			// @@ Convert to linear space.
-		}
-		else
-		{
-			// Convert linear float image to fixed image ready for compression.
-			mipmap.toFixedImage(inputOptions);
-
-			if (inputOptions.premultiplyAlpha)
-			{
-				premultiplyAlphaMipmap(mipmap, inputOptions);
-			}
-
-			// Apply gamma space color transforms:
-			if (inputOptions.colorTransform == ColorTransform_YCoCg)
-			{
-				ColorSpace::RGBtoYCoCg_R(mipmap.asMutableFixedImage());
-			}
-			else if (inputOptions.colorTransform == ColorTransform_ScaledYCoCg)
-			{
-				// @@ TODO
-				//ColorSpace::RGBtoYCoCg_R(mipmap.asMutableFixedImage());
-			}
-
-			quantizeMipmap(mipmap, compressionOptions);
-		}
+		quantizeMipmap(mipmap, compressionOptions);
 
 		compressMipmap(mipmap, inputOptions, compressionOptions, outputOptions);
 
@@ -628,6 +468,9 @@ bool Compressor::Private::initMipmap(Mipmap & mipmap, const InputOptions::Privat
 		processInputImage(mipmap, inputOptions);
 	}
 
+	// Convert linear float image to fixed image ready for compression.
+	mipmap.toFixedImage(inputOptions);
+
 	return true;
 }
 
@@ -640,7 +483,7 @@ int Compressor::Private::findExactMipmap(const InputOptions::Private & inputOpti
 		
 		if (inputImage.width == int(w) && inputImage.height == int(h) && inputImage.depth == int(d))
 		{
-			if (inputImage.hasValidData())
+			if (inputImage.data != NULL)
 			{
 				return idx;
 			}
@@ -664,7 +507,7 @@ int Compressor::Private::findClosestMipmap(const InputOptions::Private & inputOp
 		int idx = f * inputOptions.mipmapCount + m;
 		const InputOptions::Private::InputImage & inputImage = inputOptions.images[idx];
 
-		if (inputImage.hasValidData())
+		if (inputImage.data != NULL)
 		{
 			int difference = (inputImage.width - w) + (inputImage.height - h) + (inputImage.depth - d);
 
@@ -714,7 +557,7 @@ void Compressor::Private::downsampleMipmap(Mipmap & mipmap, const InputOptions::
 	// Normalize mipmap.
 	if ((inputOptions.isNormalMap || inputOptions.convertToNormalMap) && inputOptions.normalizeMipmaps)
 	{
-		normalizeNormalMap(mipmap.asMutableFloatImage());
+		normalizeNormalMap(mipmap.asFloatImage());
 	}
 }
 
@@ -728,32 +571,9 @@ void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Priva
 
 	// Resize image. 
 	BoxFilter boxFilter;
-	mipmap.setImage(mipmap.asFloatImage()->downSample(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
+	mipmap.setImage(mipmap.asFloatImage()->resize(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
 }
 
-
-void Compressor::Private::premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
-{
-	nvDebugCheck(mipmap.asFixedImage() != NULL);
-
-	Image * image = mipmap.asMutableFixedImage();
-
-	const uint w = image->width();
-	const uint h = image->height();
-
-	const uint count = w * h;
-
-	for (uint i = 0; i < count; ++i)
-	{
-		Color32 c = image->pixel(i);
-
-		c.r = (uint(c.r) * uint(c.a)) >> 8;
-		c.g = (uint(c.g) * uint(c.a)) >> 8;
-		c.b = (uint(c.b) * uint(c.a)) >> 8;
-
-		image->pixel(i) = c;
-	}
-}
 
 // Process an input image: Convert to normal map, normalize, or convert to linear space.
 void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const
@@ -778,40 +598,16 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 			}
 			else
 			{
-				normalizeNormalMap(mipmap.asMutableFloatImage());
-				mipmap.setImage(mipmap.asMutableFloatImage());
+				normalizeNormalMap(mipmap.asFloatImage());
+				mipmap.setImage(mipmap.asFloatImage());
 			}
 		}
 	}
 	else
 	{
-		if (inputOptions.inputGamma != inputOptions.outputGamma ||
-			inputOptions.colorTransform == ColorTransform_Linear ||
-			inputOptions.colorTransform == ColorTransform_Swizzle)
+		if (inputOptions.inputGamma != inputOptions.outputGamma)
 		{
 			mipmap.toFloatImage(inputOptions);
-		}
-
-		// Apply linear transforms in linear space.
-		if (inputOptions.colorTransform == ColorTransform_Linear)
-		{
-			FloatImage * image = mipmap.asMutableFloatImage();
-			nvDebugCheck(image != NULL);
-
-			Vector4 offset(
-				inputOptions.colorOffsets[0],
-				inputOptions.colorOffsets[1],
-				inputOptions.colorOffsets[2],
-				inputOptions.colorOffsets[3]);
-
-			image->transform(0, inputOptions.linearTransform, offset);
-		}
-		else if (inputOptions.colorTransform == ColorTransform_Swizzle)
-		{
-			FloatImage * image = mipmap.asMutableFloatImage();
-			nvDebugCheck(image != NULL);
-
-			image->swizzle(0, inputOptions.swizzleTransform[0], inputOptions.swizzleTransform[1], inputOptions.swizzleTransform[2], inputOptions.swizzleTransform[3]);
 		}
 	}
 }
@@ -822,13 +618,6 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 {
 	nvDebugCheck(mipmap.asFixedImage() != NULL);
 
-	if (compressionOptions.enableColorDithering)
-	{
-		if (compressionOptions.format >= Format_DXT1 && compressionOptions.format <= Format_DXT5)
-		{
-			Quantize::FloydSteinberg_RGB16(mipmap.asMutableFixedImage());
-		}
-	}
 	if (compressionOptions.binaryAlpha)
 	{
 		if (compressionOptions.enableAlphaDithering)
@@ -840,19 +629,50 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 			Quantize::BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
 		}
 	}
-	else
+
+	if (compressionOptions.enableColorDithering || compressionOptions.enableAlphaDithering)
 	{
+		uint rsize = 8;
+		uint gsize = 8;
+		uint bsize = 8;
+		uint asize = 8;
+
+		if (compressionOptions.enableColorDithering)
+		{
+			if (compressionOptions.format >= Format_DXT1 && compressionOptions.format <= Format_DXT5)
+			{
+				rsize = 5;
+				gsize = 6;
+				bsize = 5;
+			}
+			else if (compressionOptions.format == Format_RGB)
+			{
+				uint rshift, gshift, bshift;
+				PixelFormat::maskShiftAndSize(compressionOptions.rmask, &rshift, &rsize);
+				PixelFormat::maskShiftAndSize(compressionOptions.gmask, &gshift, &gsize);
+				PixelFormat::maskShiftAndSize(compressionOptions.bmask, &bshift, &bsize);
+			}
+		}
+
 		if (compressionOptions.enableAlphaDithering)
 		{
 			if (compressionOptions.format == Format_DXT3)
 			{
-				Quantize::Alpha4(mipmap.asMutableFixedImage());
+				asize = 4;
 			}
-			else if (compressionOptions.format == Format_DXT1a)
+			else if (compressionOptions.format == Format_RGB)
 			{
-				Quantize::BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
+				uint ashift;
+				PixelFormat::maskShiftAndSize(compressionOptions.amask, &ashift, &asize);
 			}
 		}
+
+		if (compressionOptions.binaryAlpha)
+		{
+			asize = 8; // Already quantized.
+		}
+
+		Quantize::FloydSteinberg(mipmap.asMutableFixedImage(), rsize, gsize, bsize, asize);
 	}
 }
 
@@ -860,180 +680,132 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 // Compress the given mipmap.
 bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-	if (compressionOptions.format == Format_RGBA)
+	const Image * image = mipmap.asFixedImage();
+	nvDebugCheck(image != NULL);
+
+	FastCompressor fast;
+	fast.setImage(image, inputOptions.alphaMode);
+
+	SlowCompressor slow;
+	slow.setImage(image, inputOptions.alphaMode);
+
+
+	if (compressionOptions.format == Format_RGBA || compressionOptions.format == Format_RGB)
 	{
-		// Pixel format conversion.
-		if (compressionOptions.pixelType == PixelType_Float)
+		compressRGB(image, outputOptions, compressionOptions);
+	}
+	else if (compressionOptions.format == Format_DXT1)
+	{
+#if defined(HAVE_S3QUANT)
+		if (compressionOptions.externalCompressor == "s3")
 		{
-			compressRGB(mipmap.asFloatImage(), outputOptions, compressionOptions);
+			s3CompressDXT1(image, outputOptions);
 		}
 		else
-		{
-			compressRGB(mipmap.asFixedImage(), outputOptions, compressionOptions);
-		}
-	}
-	else
-	{
-		const Image * image = mipmap.asFixedImage();
-		nvDebugCheck(image != NULL);
-
-		// @@ Use FastCompressor::isSupported(compressionOptions.format) to chose compressor.
-
-		FastCompressor fast;
-		fast.setImage(image, inputOptions.alphaMode);
-
-		SlowCompressor slow;
-		slow.setImage(image, inputOptions.alphaMode);
-
-		if (compressionOptions.format == Format_DXT1)
-		{
-#if defined(HAVE_S3QUANT)
-			if (compressionOptions.externalCompressor == "s3")
-			{
-				s3CompressDXT1(image, outputOptions);
-			}
-			else
 #endif
 
 #if defined(HAVE_ATITC)
-			if (compressionOptions.externalCompressor == "ati")
-			{
-				atiCompressDXT1(image, outputOptions);
-			}
-			else
+		if (compressionOptions.externalCompressor == "ati")
+		{
+			atiCompressDXT1(image, outputOptions);
+		}
+		else
 #endif
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT1(outputOptions);
-			}
-			else
-			{
-				if (cudaEnabled)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					//cuda->compressDXT1(compressionOptions, outputOptions);
-					cuda->compressDXT1_Tex(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT1(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_DXT1a)
+		if (compressionOptions.quality == Quality_Fastest)
 		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT1a(outputOptions);
-			}
-			else
-			{
-				if (cudaEnabled)
-				{
-					nvDebugCheck(cudaSupported);
-					/*cuda*/slow.compressDXT1a(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT1a(compressionOptions, outputOptions);
-				}
-			}
+			fast.compressDXT1(outputOptions);
 		}
-		else if (compressionOptions.format == Format_DXT1n)
-		{
-			if (cudaEnabled)
-			{
-				nvDebugCheck(cudaSupported);
-				cuda->setImage(image, inputOptions.alphaMode);	
-				cuda->compressDXT1n(compressionOptions, outputOptions);
-			}
-			else
-			{
-				if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-			}
-		}
-		else if (compressionOptions.format == Format_DXT3)
-		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT3(outputOptions);
-			}
-			else
-			{
-				if (cudaEnabled)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT3(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT3(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_DXT5)
-		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT5(outputOptions);
-			}
-			else
-			{
-				if (cudaEnabled)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT5(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT5(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_DXT5n)
-		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT5n(outputOptions);
-			}
-			else
-			{
-				/*if (cudaEnabled)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT5n(compressionOptions, outputOptions);
-				}
-				else*/
-				{
-					slow.compressDXT5n(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_BC4)
-		{
-			slow.compressBC4(compressionOptions, outputOptions);
-		}
-		else if (compressionOptions.format == Format_BC5)
-		{
-			slow.compressBC5(compressionOptions, outputOptions);
-		}
-		else if (compressionOptions.format == Format_CTX1)
+		else
 		{
 			if (cudaEnabled)
 			{
 				nvDebugCheck(cudaSupported);
 				cuda->setImage(image, inputOptions.alphaMode);
-				cuda->compressCTX1(compressionOptions, outputOptions);
+				cuda->compressDXT1(compressionOptions, outputOptions);
 			}
 			else
 			{
-				if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
+				slow.compressDXT1(compressionOptions, outputOptions);
 			}
 		}
+	}
+	else if (compressionOptions.format == Format_DXT1a)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			fast.compressDXT1a(outputOptions);
+		}
+		else
+		{
+			if (cudaEnabled)
+			{
+				nvDebugCheck(cudaSupported);
+				/*cuda*/slow.compressDXT1a(compressionOptions, outputOptions);
+			}
+			else
+			{
+				slow.compressDXT1a(compressionOptions, outputOptions);
+			}
+		}
+	}
+	else if (compressionOptions.format == Format_DXT3)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			fast.compressDXT3(outputOptions);
+		}
+		else
+		{
+			if (cudaEnabled)
+			{
+				nvDebugCheck(cudaSupported);
+				cuda->setImage(image, inputOptions.alphaMode);
+				cuda->compressDXT3(compressionOptions, outputOptions);
+			}
+			else
+			{
+				slow.compressDXT3(compressionOptions, outputOptions);
+			}
+		}
+	}
+	else if (compressionOptions.format == Format_DXT5)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			fast.compressDXT5(outputOptions);
+		}
+		else
+		{
+			if (cudaEnabled)
+			{
+				nvDebugCheck(cudaSupported);
+				cuda->setImage(image, inputOptions.alphaMode);
+				cuda->compressDXT5(compressionOptions, outputOptions);
+			}
+			else
+			{
+				slow.compressDXT5(compressionOptions, outputOptions);
+			}
+		}
+	}
+	else if (compressionOptions.format == Format_DXT5n)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			fast.compressDXT5n(outputOptions);
+		}
+		else
+		{
+			slow.compressDXT5n(compressionOptions, outputOptions);
+		}
+	}
+	else if (compressionOptions.format == Format_BC4)
+	{
+		slow.compressBC4(compressionOptions, outputOptions);
+	}
+	else if (compressionOptions.format == Format_BC5)
+	{
+		slow.compressBC5(compressionOptions, outputOptions);
 	}
 
 	return true;
@@ -1043,9 +815,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 int Compressor::Private::estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const
 {
 	const Format format = compressionOptions.format;
-
-	uint bitCount = compressionOptions.bitcount;
-	if (format == Format_RGBA && bitCount == 0) bitCount = compressionOptions.rsize + compressionOptions.gsize + compressionOptions.bsize + compressionOptions.asize;
+	const uint bitCount = compressionOptions.bitcount;
 
 	inputOptions.computeTargetExtents();
 	

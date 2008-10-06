@@ -14,7 +14,7 @@ namespace nv
 
 	uint strHash(const char * str, uint h) NV_PURE;
 
-	/// String hash based on Bernstein's hash.
+	/// String hash vased on Bernstein's hash.
 	inline uint strHash(const char * data, uint h = 5381)
 	{
 		uint i;
@@ -213,12 +213,9 @@ namespace nv
 		/// Implement value semantics.
 		String & operator=( const String & str )
 		{
-			if (str.data != data)
-			{
-				release();
-				data = str.data;
-				addRef();
-			}
+			release();
+			data = str.data;
+			addRef();
 			return *this;
 		}
 

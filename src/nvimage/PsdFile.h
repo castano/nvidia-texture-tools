@@ -39,7 +39,7 @@ namespace nv
 		bool isSupported() const
 		{
 			if (version != 1) {
-				nvDebug("*** bad version number %u\n", version);
+				printf("*** bad version number %u\n", version);
 				return false;
 			}
 			if (channel_count > 4) {

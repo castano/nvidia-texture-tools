@@ -26,10 +26,8 @@
 #ifndef SQUISH_SIMD_VE_H
 #define SQUISH_SIMD_VE_H
 
-#ifndef __APPLE_ALTIVEC__
 #include <altivec.h>
 #undef bool
-#endif
 
 namespace squish {
 

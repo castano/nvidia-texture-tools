@@ -79,28 +79,20 @@ TARGET_LINK_LIBRARIES(nvassemble nvcore nvmath nvimage)
 ADD_EXECUTABLE(filtertest tests/filtertest.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(filtertest nvcore nvmath nvimage)
 
-ADD_EXECUTABLE(stress tests/stress.cpp tools/cmdline.h)
-TARGET_LINK_LIBRARIES(stress nvcore nvmath nvimage nvtt)
-
 ADD_EXECUTABLE(nvzoom tools/resize.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
 INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom DESTINATION bin)
 
-#include_directories("/usr/include/ffmpeg/")
-#ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
-#TARGET_LINK_LIBRARIES(nvmpegenc nvcore nvmath nvimage avcodec z)
-#INSTALL(TARGETS nvmpegenc DESTINATION bin)
-
 # UI tools
-IF(QT4_FOUND) # AND NOT MSVC)
+IF(QT4_FOUND AND NOT MSVC)
 	SET(QT_USE_QTOPENGL TRUE)
 	INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 	
 	SET(SRCS
-		tools/ui/main.cpp
-		tools/ui/configdialog.h
-		tools/ui/configdialog.cpp)
+		tools/main.cpp
+		tools/configdialog.h
+		tools/configdialog.cpp)
 
 	SET(LIBS
 		nvtt
@@ -108,12 +100,13 @@ IF(QT4_FOUND) # AND NOT MSVC)
 		${QT_QTGUI_LIBRARY}
 		${QT_QTOPENGL_LIBRARY})
 
-	QT4_WRAP_UI(UICS tools/ui/configdialog.ui)
-	QT4_WRAP_CPP(MOCS tools/ui/configdialog.h)
-	#QT4_ADD_RESOURCES(RCCS tools/ui/configdialog.rc)
+	QT4_WRAP_UI(UICS tools/configdialog.ui)
+	QT4_WRAP_CPP(MOCS tools/configdialog.h)
+	#QT4_ADD_RESOURCES(RCCS tools/configdialog.rc)
 
 	ADD_EXECUTABLE(nvcompressui MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
 	TARGET_LINK_LIBRARIES(nvcompressui ${LIBS})
 
-ENDIF(QT4_FOUND) # AND NOT MSVC)
+ENDIF(QT4_FOUND AND NOT MSVC)
+
 

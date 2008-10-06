@@ -371,9 +371,6 @@ void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compr
 	ColorBlock rgba;
 	BlockDXT5 block;
 	
-	squish::WeightedClusterFit fit;
-	fit.SetMetric(0, 1, 0);
-
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -392,18 +389,7 @@ void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compr
 			}
 			
 			// Compress Y.
-			//OptimalCompress::compressDXT1G(rgba, &block.color);
-
-			/*if (rgba.isSingleColor())
-			{
-				OptimalCompress::compressDXT1G(rgba.color(0), &block.color);
-			}
-			else*/
-			{
-				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
-				fit.SetColourSet(&colours, 0);
-				fit.Compress(&block.color);
-			}
+			OptimalCompress::compressDXT1G(rgba, &block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));

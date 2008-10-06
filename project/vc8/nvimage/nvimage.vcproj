@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -107,7 +107,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -170,7 +170,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -232,7 +232,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;..\..\..\extern\FreeImage"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -286,10 +286,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\ColorSpace.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvimage\DirectDrawSurface.cpp"
 				>
 			</File>
@@ -332,10 +328,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvimage\ColorSpace.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvimage\DirectDrawSurface.h"
 				>
 			</File>
@@ -361,6 +353,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvimage\nvimage.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvimage\PixelFormat.h"
 				>
 			</File>
 			<File

@@ -26,6 +26,7 @@
 #ifndef CUDAMATH_H
 #define CUDAMATH_H
 
+#include <float.h>
 
 
 inline __device__ __host__ float3 operator *(float3 a, float3 b)
@@ -84,69 +85,6 @@ inline __device__ __host__ void operator /=(float3 & b, float f)
 inline __device__ __host__ bool operator ==(float3 a, float3 b)
 {
 	return a.x == b.x && a.y == b.y && a.z == b.z;
-}
-
-
-// float2 operators
-inline __device__ __host__ float2 operator *(float2 a, float2 b)
-{
-    return make_float2(a.x*b.x, a.y*b.y);
-}
-
-inline __device__ __host__ float2 operator *(float f, float2 v)
-{
-    return make_float2(v.x*f, v.y*f);
-}
-
-inline __device__ __host__ float2 operator *(float2 v, float f)
-{
-    return make_float2(v.x*f, v.y*f);
-}
-
-inline __device__ __host__ float2 operator +(float2 a, float2 b)
-{
-    return make_float2(a.x+b.x, a.y+b.y);
-}
-
-inline __device__ __host__ void operator +=(float2 & b, float2 a)
-{
-    b.x += a.x;
-    b.y += a.y;
-}
-
-inline __device__ __host__ float2 operator -(float2 a, float2 b)
-{
-    return make_float2(a.x-b.x, a.y-b.y);
-}
-
-inline __device__ __host__ void operator -=(float2 & b, float2 a)
-{
-    b.x -= a.x;
-    b.y -= a.y;
-}
-
-inline __device__ __host__ float2 operator /(float2 v, float f)
-{
-    float inv = 1.0f / f;
-    return v * inv;
-}
-
-inline __device__ __host__ void operator /=(float2 & b, float f)
-{
-    float inv = 1.0f / f;
-    b.x *= inv;
-	b.y *= inv;
-}
-
-inline __device__ __host__ bool operator ==(float2 a, float2 b)
-{
-	return a.x == b.x && a.y == b.y;
-}
-
-
-inline __device__ __host__ float dot(float2 a, float2 b)
-{
-    return a.x * b.x + a.y * b.y;
 }
 
 inline __device__ __host__ float dot(float3 a, float3 b)
@@ -210,7 +148,7 @@ inline __device__ bool singleColor(const float3 * colors)
 	bool sameColor = false;
 	for (int i = 0; i < 16; i++)
 	{
-		sameColor &= (colors[i] == colors[0]);
+		sameColor &= (colors[idx] == colors[0]);
 	}
 	return sameColor;
 #else
@@ -231,16 +169,16 @@ inline __device__ bool singleColor(const float3 * colors)
 inline __device__ void colorSums(const float3 * colors, float3 * sums)
 {
 #if __DEVICE_EMULATION__
-    float3 color_sum = make_float3(0.0f, 0.0f, 0.0f);
-    for (int i = 0; i < 16; i++)
-    {
-        color_sum += colors[i];
-    }
+	float3 color_sum = make_float3(0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < 16; i++)
+	{
+		color_sum += colors[i];
+	}
 
-    for (int i = 0; i < 16; i++)
-    {
-        sums[i] = color_sum;
-    }
+	for (int i = 0; i < 16; i++)
+	{
+		sums[i] = color_sum;
+	}
 #else
 
 	const int idx = threadIdx.x;
@@ -303,90 +241,6 @@ inline __device__ float3 bestFitLine(const float3 * colors, float3 color_sum, fl
 
 	// Compute first eigen vector.
 	return firstEigenVector(covariance);
-}
-
-// @@ For 2D this may not be the most efficient method. It's a quadratic equation, right?
-inline __device__ __host__ float2 firstEigenVector2D( float matrix[3] )
-{
-	// @@ 8 iterations is probably more than enough.
-
-	float2 v = make_float2(1.0f, 1.0f);
-	for(int i = 0; i < 8; i++) {
-		float x = v.x * matrix[0] + v.y * matrix[1];
-		float y = v.x * matrix[1] + v.y * matrix[2];
-		float m = max(x, y);        
-		float iv = 1.0f / m;
-		if (m == 0.0f) iv = 0.0f;
-		v = make_float2(x*iv, y*iv);
-	}
-
-	return v;
-}
-
-inline __device__ void colorSums(const float2 * colors, float2 * sums)
-{
-#if __DEVICE_EMULATION__
-	float2 color_sum = make_float2(0.0f, 0.0f);
-	for (int i = 0; i < 16; i++)
-	{
-		color_sum += colors[i];
-	}
-
-	for (int i = 0; i < 16; i++)
-	{
-		sums[i] = color_sum;
-	}
-#else
-
-	const int idx = threadIdx.x;
-
-	sums[idx] = colors[idx];
-	sums[idx] += sums[idx^8];
-	sums[idx] += sums[idx^4];
-	sums[idx] += sums[idx^2];
-	sums[idx] += sums[idx^1];
-
-#endif
-}
-
-inline __device__ float2 bestFitLine(const float2 * colors, float2 color_sum)
-{
-	// Compute covariance matrix of the given colors.
-#if __DEVICE_EMULATION__
-	float covariance[3] = {0, 0, 0};
-	for (int i = 0; i < 16; i++)
-	{
-		float2 a = (colors[i] - color_sum * (1.0f / 16.0f));
-		covariance[0] += a.x * a.x;
-		covariance[1] += a.x * a.y;
-		covariance[2] += a.y * a.y;
-	}
-#else
-
-	const int idx = threadIdx.x;
-
-	float2 diff = (colors[idx] - color_sum * (1.0f / 16.0f));
-
-	__shared__ float covariance[16*3];
-
-	covariance[3 * idx + 0] = diff.x * diff.x;
-	covariance[3 * idx + 1] = diff.x * diff.y;
-	covariance[3 * idx + 2] = diff.y * diff.y;
-
-	for(int d = 8; d > 0; d >>= 1)
-	{
-		if (idx < d)
-		{
-			covariance[3 * idx + 0] += covariance[3 * (idx+d) + 0];
-			covariance[3 * idx + 1] += covariance[3 * (idx+d) + 1];
-			covariance[3 * idx + 2] += covariance[3 * (idx+d) + 2];
-		}
-	}
-
-#endif
-
-	// Compute first eigen vector.
-	return firstEigenVector2D(covariance);
 }
 
 

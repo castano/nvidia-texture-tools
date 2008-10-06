@@ -1,6 +1,5 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvcore/Containers.h> // swap
 #include <nvmath/Box.h>
 #include <nvimage/ColorBlock.h>
 #include <nvimage/Image.h>
@@ -114,36 +113,9 @@ void ColorBlock::splatY()
 /// Returns true if the block has a single color.
 bool ColorBlock::isSingleColor() const
 {
-	Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
-	uint u = m_color[0].u & mask.u;
-	
-	for (int i = 1; i < 16; i++)
+	for(int i = 1; i < 16; i++)
 	{
-		if (u != (m_color[i].u & mask.u))
-		{
-			return false;
-		}
-	}
-	
-	return true;
-}
-
-/// Returns true if the block has a single color, ignoring transparent pixels.
-bool ColorBlock::isSingleColorNoAlpha() const
-{
-	Color32 c;
-	int i;
-	for(i = 0; i < 16; i++)
-	{
-		if (m_color[i].a != 0) c = m_color[i];
-	}
-
-	Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
-	uint u = c.u & mask.u;
-
-	for(; i < 16; i++)
-	{
-		if (u != (m_color[i].u & mask.u))
+		if (m_color[0] != m_color[i])
 		{
 			return false;
 		}

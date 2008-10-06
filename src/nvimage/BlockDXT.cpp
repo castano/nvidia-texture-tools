@@ -21,13 +21,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "BlockDXT.h"
-
-#include <nvimage/ColorBlock.h>
-
 #include <nvcore/Stream.h>
-#include <nvcore/Containers.h> // swap
 
+#include "ColorBlock.h"
+#include "BlockDXT.h"
 
 using namespace nv;
 

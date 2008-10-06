@@ -117,35 +117,7 @@ void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, u
 	m.gmask = gmask;
 	m.bmask = bmask;
 	m.amask = amask;
-
-	m.rsize = 0;
-	m.gsize = 0;
-	m.bsize = 0;
-	m.asize = 0;
 }
-
-void CompressionOptions::setPixelFormat(uint8 rsize, uint8 gsize, uint8 bsize, uint8 asize)
-{
-	nvCheck(rsize <= 32 || gsize <= 32 || bsize <= 32 || asize <= 32);
-
-	m.bitcount = 0;
-	m.rmask = 0;
-	m.gmask = 0;
-	m.bmask = 0;
-	m.amask = 0;
-
-	m.rsize = rsize;
-	m.gsize = gsize;
-	m.bsize = bsize;
-	m.asize = asize;
-}
-
-/// Set pixel type.
-void CompressionOptions::setPixelType(PixelType pixelType)
-{
-	m.pixelType = pixelType;
-}
-
 
 /// Use external compressor.
 void CompressionOptions::setExternalCompressor(const char * name)

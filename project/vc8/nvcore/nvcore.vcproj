@@ -335,14 +335,6 @@
 				RelativePath="..\..\..\src\nvcore\StrLib.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextReader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextWriter.h"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

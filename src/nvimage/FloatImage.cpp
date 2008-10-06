@@ -1,14 +1,13 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
+#include <nvcore/Containers.h>
+#include <nvcore/Ptr.h>
+
+#include <nvmath/Color.h>
+
 #include "FloatImage.h"
 #include "Filter.h"
 #include "Image.h"
-
-#include <nvmath/Color.h>
-#include <nvmath/Matrix.h>
-
-#include <nvcore/Containers.h>
-#include <nvcore/Ptr.h>
 
 #include <math.h>
 
@@ -141,8 +140,7 @@ Image * FloatImage::createImageGammaCorrect(float gamma/*= 2.2f*/) const
 /// Allocate a 2d float image of the given format and the given extents.
 void FloatImage::allocate(uint c, uint w, uint h)
 {
-	free();
-
+	nvCheck(m_mem == NULL);
 	m_width = w;
 	m_height = h;
 	m_componentNum = c;
@@ -153,6 +151,7 @@ void FloatImage::allocate(uint c, uint w, uint h)
 /// Free the image, but don't clear the members.
 void FloatImage::free()
 {
+	nvCheck(m_mem != NULL);
 	nv::mem::free( reinterpret_cast<void *>(m_mem) );
 	m_mem = NULL;
 }
@@ -238,57 +237,6 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
 		for(uint i = 0; i < size; i++) {
 			ptr[i] = pow(ptr[i], power);
 		}
-	}
-}
-
-/// Apply linear transform.
-void FloatImage::transform(uint base_component, const Matrix & m, Vector4::Arg offset)
-{
-	nvCheck(base_component + 4 <= m_componentNum);
-
-	const uint size = m_width * m_height;
-
-	float * r = this->channel(base_component + 0);
-	float * g = this->channel(base_component + 1);
-	float * b = this->channel(base_component + 2);
-	float * a = this->channel(base_component + 3);
-
-	for (uint i = 0; i < size; i++)
-	{
-		Vector4 color = nv::transform(m, Vector4(*r, *g, *b, *a)) + offset;
-
-		*r++ = color.x();
-		*g++ = color.y();
-		*b++ = color.z();
-		*a++ = color.w();
-	}
-}
-
-void FloatImage::swizzle(uint base_component, uint r, uint g, uint b, uint a)
-{
-	nvCheck(base_component + 4 <= m_componentNum);
-	nvCheck(r < 7 && g < 7 && b < 7 && a < 7);
-
-	const uint size = m_width * m_height;
-
-	float consts[] = { 1.0f, 0.0f, -1.0f };
-	float * c[7];
-	c[0] = this->channel(base_component + 0);
-	c[1] = this->channel(base_component + 1);
-	c[2] = this->channel(base_component + 2);
-	c[3] = this->channel(base_component + 3);
-	c[4] = consts;
-	c[5] = consts + 1;
-	c[6] = consts + 2;
-
-	for (uint i = 0; i < size; i++)
-	{
-		float tmp[4] = { *c[r], *c[g], *c[b], *c[a] };
-
-		*c[0]++ = tmp[0];
-		*c[1]++ = tmp[1];
-		*c[2]++ = tmp[2];
-		*c[3]++ = tmp[3];
 	}
 }
 
@@ -592,73 +540,18 @@ FloatImage * FloatImage::fastDownSample() const
 	return dst_image.release();
 }
 
-/*
-/// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(const Kernel1 & kernel, WrapMode wm) const
-{
-	const uint w = max(1, m_width / 2);
-	const uint h = max(1, m_height / 2);
-	
-	return downSample(kernel, w, h, wm);
-}
-
-
-/// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(const Kernel1 & kernel, uint w, uint h, WrapMode wm) const
-{
-	nvCheck(!(kernel.windowSize() & 1));	// Make sure that kernel m_width is even.
-
-	AutoPtr<FloatImage> tmp_image( new FloatImage() );
-	tmp_image->allocate(m_componentNum, w, m_height);
-	
-	AutoPtr<FloatImage> dst_image( new FloatImage() );	
-	dst_image->allocate(m_componentNum, w, h);
-	
-	const float xscale = float(m_width) / float(w);
-	const float yscale = float(m_height) / float(h);
-	
-	for(uint c = 0; c < m_componentNum; c++) {
-		float * tmp_channel = tmp_image->channel(c);
-		
-		for(uint y = 0; y < m_height; y++) {
-			for(uint x = 0; x < w; x++) {
-				
-				float sum = this->applyKernelHorizontal(&kernel, uint(x*xscale), y, c, wm);
-				
-				const uint tmp_index = tmp_image->index(x, y);
-				tmp_channel[tmp_index] = sum;
-			}
-		}
-		
-		float * dst_channel = dst_image->channel(c);
-		
-		for(uint y = 0; y < h; y++) {
-			for(uint x = 0; x < w; x++) {
-				
-				float sum = tmp_image->applyKernelVertical(&kernel, uint(x*xscale), uint(y*yscale), c, wm);
-				
-				const uint dst_index = dst_image->index(x, y);
-				dst_channel[dst_index] = sum;
-			}
-		}
-	}
-	
-	return dst_image.release();
-}
-*/
-
 /// Downsample applying a 1D kernel separately in each dimension.
 FloatImage * FloatImage::downSample(const Filter & filter, WrapMode wm) const
 {
 	const uint w = max(1, m_width / 2);
 	const uint h = max(1, m_height / 2);
 
-	return downSample(filter, w, h, wm);
+	return resize(filter, w, h, wm);
 }
 
 
 /// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapMode wm) const
+FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode wm) const
 {
 	// @@ Use monophase filters when frac(m_width / w) == 0
 
@@ -688,7 +581,7 @@ FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapM
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					dst_channel[y * w + x] = tmp_column[y];
@@ -709,7 +602,7 @@ FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapM
 			float * tmp_channel = tmp_image->channel(c);
 
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					tmp_channel[y * w + x] = tmp_column[y];
@@ -865,22 +758,5 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, 
 		
 		output[i] = sum;
 	}
-}
-
-FloatImage* FloatImage::clone() const
-{
-	FloatImage* copy = new FloatImage();
-	copy->m_width = m_width;
-	copy->m_height = m_height;
-	copy->m_componentNum = m_componentNum;
-	copy->m_count = m_count;
-	
-	if(m_mem)
-	{
-		copy->allocate(m_componentNum, m_width, m_height);
-		memcpy(copy->m_mem, m_mem, m_count * sizeof(float));
-	}
-		
-	return copy;
 }
 

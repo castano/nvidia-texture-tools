@@ -12,6 +12,9 @@
   <property name="windowTitle" >
    <string>NVIDIA Texture Tools</string>
   </property>
+  <property name="windowIcon" >
+   <iconset/>
+  </property>
   <property name="sizeGripEnabled" >
    <bool>true</bool>
   </property>
