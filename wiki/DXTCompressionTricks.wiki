@@ -1,5 +1,4 @@
 #summary DXT Compression Tricks
-#labels Featured
 
  * [RealTimeDXTCompression Real-Time DXT Compression]
  * [HighQualityDXTCompression High Quality DXT Compression]
