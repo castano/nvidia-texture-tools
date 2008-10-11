@@ -7,7 +7,7 @@ The NVIDIA Texture Tools use the following third party libraries:
   * [ThirdPartyLegalNotices#libpng libpng]
   * [ThirdPartyLegalNotices#libjpeg libjpeg]
 
-Note, that the NVTT library does not use any of these libraries, the libraries are only used by the command line tools.
+Note, that the NVTT library does not depend any of these libraries; they are only used by the command line tools.
 
 
 = zlib =
