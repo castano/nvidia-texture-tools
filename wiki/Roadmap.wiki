@@ -2,43 +2,29 @@
 
 Here's a rough roadmap for the next releases of the NVIDIA Texture Tools:
 
-= 2.0 =
-== 2.0.3 ==
-
- * Most likely the last 2.0 bug fix release.
-
 = 2.1 =
-
- * Branch creation expected by May 31.
 
 == 2.1.0 ==
 
-Expected release date:
-
- * June 2008 or quickly after the final CUDA 2.0 release.
+ * ~~[http://code.google.com/p/nvidia-texture-tools/issues/detail?id=46 Issue 46]~~
 
 Remaining features:
 
+ * Support for different alpha modes: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=30 Issue 30]
+ * Support for floating point formats: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=27 Issue 27]
+ * Support for YCoCg color transform: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=18 Issue 18]
+
+Possible features:
  * DXT1n support: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=21 Issue 21]
  * CTX1 support: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=21 Issue 21]
- * Support for floating point formats: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=27 Issue 27]
- * Support for different alpha modes: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=30 Issue 30]
- * Support for YCoCg color transform: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=18 Issue 18]
- * Use !FreeImage as primary image loading library: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
 
-Critical issues:
 
- * ~~[http://code.google.com/p/nvidia-texture-tools/issues/detail?id=46 Issue 46]~~
 
 = 2.2 =
 
-Expected release date:
-
- * 2008/Q4
-
 Features:
 
- * Largely driven by developer demand and requests.
+ * Support for DX11 compression formats.
  * Experimental lower level interface.
  * Win64 image loaders: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
  * Better support for DX10 style DDS files: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=41 Issue 41]
@@ -46,10 +32,6 @@ Features:
 
 
 = 2.3 =
-
-Expected release date:
-
- * 2009/Q2
 
 Features:
  
