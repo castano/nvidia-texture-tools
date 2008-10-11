@@ -22,18 +22,25 @@ Optional features:
 
  * DXT1n support: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=21 Issue 21]
  * CTX1 support: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=21 Issue 21]
+ * Add option to disable single color compressor: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=53 Issue 53]
+ * Image viewer (nvdisplay): [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=53 Issue 53]
 
 
 = 2.2 =
 
 Planned features:
 
+ * More CUDA accelerated compressors and image processing operations. [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=29 Issue 29]
  * Support for DX11 compression formats.
- * Experimental lower level interface.
- * Win64 image loaders: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
+ * RGBE output format: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=57 Issue 57]
+ * Simple tone mapping options: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=58 Issue 58]
  * Better support for DX10 style DDS files: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=41 Issue 41]
- * More CUDA accelerated compressors and image processing operations.
+
+Optional features:
+
+ * Win64 image loaders: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
  * Better command line parsing and more command line options.
+ * Experimental lower level interface.
 
 
 = 2.3 =
