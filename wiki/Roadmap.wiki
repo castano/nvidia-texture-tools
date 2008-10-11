@@ -4,8 +4,6 @@ Here's a rough roadmap for the next releases of the NVIDIA Texture Tools:
 
 = 2.1 =
 
-== 2.1.0 ==
-
 Completed features:
  * ~~Support for linear color transforms and swizzles: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=4 Issue 4]~~
  * ~~Higher quality DXT3 compressor: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=38 Issue 38]~~
@@ -28,18 +26,19 @@ Optional features:
 
 = 2.2 =
 
-Features:
+Planned features:
 
  * Support for DX11 compression formats.
  * Experimental lower level interface.
  * Win64 image loaders: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=31 Issue 31]
  * Better support for DX10 style DDS files: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=41 Issue 41]
  * More CUDA accelerated compressors and image processing operations.
+ * Better command line parsing and more command line options.
 
 
 = 2.3 =
 
-Features:
+Planned features:
  
  * Use CUDA driver interface: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=25 Issue 25]
  * Photoshop plugin: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=33 Issue 33]
