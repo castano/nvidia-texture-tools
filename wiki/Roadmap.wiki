@@ -6,7 +6,6 @@ Here's a rough roadmap for the next releases of the NVIDIA Texture Tools:
 
 Completed features:
  * ~~Support for linear color transforms and swizzles: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=4 Issue 4]~~
- * ~~Higher quality DXT3 compressor: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=38 Issue 38]~~
  * ~~Migration to CUDA 2.0: [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=46 Issue 46]~~
  * ~~Support for alpha premultiplication. [http://code.google.com/p/nvidia-texture-tools/issues/detail?id=30 Issue 30]~~
  * ~~Output AMD swizzle codes in DDS headers.~~
