@@ -1,4 +1,5 @@
 #summary NVIDIA Texture Tools Roadmap
+#labels Featured
 
 Here's a rough roadmap for the next releases of the NVIDIA Texture Tools:
 
