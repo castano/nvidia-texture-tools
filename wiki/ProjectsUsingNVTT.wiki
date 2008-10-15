@@ -1,9 +1,10 @@
 #summary Projects using NVIDIA Texture Tools.
+#labels Featured
 
 The NVIDIA Texture Tools (NVTT) are used in many game production pipelines and other projects. Here are brief descriptions of some of them. If you know about any other project or studio using NVTT that is not listed here, please [http://groups.google.com/group/nvidia-texture-tools let us know]!
 
 ----
 
-[http://www.unrealtechnology.com/technology.php Unreal Engine 3]
+[http://www.unrealtechnology.com/technology.php Unreal® Engine 3]
 
-Unreal Engine 3 is a complete development framework for DirectX 10-equipped PCs, Xbox 360® and PLAYSTATION®3, providing the vast array of core technologies, content creation tools, and support infrastructure required by top game studios, advanced visualization and simulation developers and creators of 3D animated content for linear productions.
+Unreal® Engine 3 is a complete development framework for DirectX 10-equipped PCs, Xbox 360® and PLAYSTATION®3, providing the vast array of core technologies, content creation tools, and support infrastructure required by top game studios, advanced visualization and simulation developers and creators of 3D animated content for linear productions.
