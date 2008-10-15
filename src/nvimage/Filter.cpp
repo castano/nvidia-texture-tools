@@ -243,7 +243,7 @@ SincFilter::SincFilter(float w) : Filter(w) {}
 
 float SincFilter::evaluate(float x) const
 {
-	return 0.0f;
+	return sincf(PI * x);
 }
 
 
@@ -540,11 +540,16 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLength, int samples/*= 32*/)
 {
-	nvCheck(srcLength >= dstLength);	// @@ Upsampling not implemented!
 	nvDebugCheck(samples > 0);
-	
-	const float scale = float(dstLength) / float(srcLength);
+
+	float scale = float(dstLength) / float(srcLength);
 	const float iscale = 1.0f / scale;
+
+	if (scale > 1) {
+		// Upsampling.
+		samples = 1;
+		scale = 1;
+	}
 
 	m_length = dstLength;
 	m_width = f.width() * iscale;

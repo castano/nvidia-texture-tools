@@ -73,10 +73,12 @@ int main(int argc, char *argv[])
 
 	float scale = 0.5f;
 	float gamma = 2.2f;
-	nv::Filter * filter = NULL;
+	nv::AutoPtr<nv::Filter> filter;
 	nv::Path input;
 	nv::Path output;
 	
+	nv::FloatImage::WrapMode wrapMode = nv::FloatImage::WrapMode_Mirror;
+
 	// Parse arguments.
 	for (int i = 1; i < argc; i++)
 	{
@@ -108,8 +110,17 @@ int main(int argc, char *argv[])
 			else if (strcmp("lanczos", argv[i]) == 0) filter = new nv::LanczosFilter();
 			else if (strcmp("kaiser", argv[i]) == 0) {
 				filter = new nv::KaiserFilter(3);
-				((nv::KaiserFilter *)filter)->setParameters(4.0f, 1.0f);
+				((nv::KaiserFilter *)filter.ptr())->setParameters(4.0f, 1.0f);
 			}
+		}
+		else if (strcmp("-f", argv[i]) == 0)
+		{
+			if (i+1 == argc) break;
+			i++;
+
+			if (strcmp("mirror", argv[i]) == 0) wrapMode = nv::FloatImage::WrapMode_Mirror;
+			else if (strcmp("repeat", argv[i]) == 0) wrapMode = nv::FloatImage::WrapMode_Repeat;
+			else if (strcmp("clamp", argv[i]) == 0) wrapMode = nv::FloatImage::WrapMode_Clamp;
 		}
 		else if (argv[i][0] != '-')
 		{
@@ -140,6 +151,10 @@ int main(int argc, char *argv[])
 		printf("                * mitchell\n");
 		printf("                * lanczos\n");
 		printf("                * kaiser\n");
+		printf("  -w mode      One of the following: (default = 'mirror')\n");
+		printf("                * mirror\n");
+		printf("                * repeat\n");
+		printf("                * clamp\n");
 
 		return 1;
 	}
@@ -155,14 +170,13 @@ int main(int argc, char *argv[])
 	nv::FloatImage fimage(&image);
 	fimage.toLinear(0, 3, gamma);
 	
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.downSample(*filter, uint(image.width() * scale), uint(image.height() * scale), nv::FloatImage::WrapMode_Mirror));
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(*filter, uint(image.width() * scale), uint(image.height() * scale), wrapMode));
 	
 	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
+	result->setFormat(nv::Image::Format_ARGB);
 
 	nv::StdOutputStream stream(output);
 	nv::ImageIO::saveTGA(stream, result.ptr());	// @@ Add generic save function. Add support for png too.
-	
-	delete filter;
 	
 	return 0;
 }
