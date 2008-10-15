@@ -231,16 +231,16 @@ inline __device__ bool singleColor(const float3 * colors)
 inline __device__ void colorSums(const float3 * colors, float3 * sums)
 {
 #if __DEVICE_EMULATION__
-    float3 color_sum = make_float3(0.0f, 0.0f, 0.0f);
-    for (int i = 0; i < 16; i++)
-    {
-        color_sum += colors[i];
-    }
+	float3 color_sum = make_float3(0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < 16; i++)
+	{
+		color_sum += colors[i];
+	}
 
-    for (int i = 0; i < 16; i++)
-    {
-        sums[i] = color_sum;
-    }
+	for (int i = 0; i < 16; i++)
+	{
+		sums[i] = color_sum;
+	}
 #else
 
 	const int idx = threadIdx.x;

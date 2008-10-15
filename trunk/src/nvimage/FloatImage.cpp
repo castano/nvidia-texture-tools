@@ -592,73 +592,18 @@ FloatImage * FloatImage::fastDownSample() const
 	return dst_image.release();
 }
 
-/*
-/// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(const Kernel1 & kernel, WrapMode wm) const
-{
-	const uint w = max(1, m_width / 2);
-	const uint h = max(1, m_height / 2);
-	
-	return downSample(kernel, w, h, wm);
-}
-
-
-/// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(const Kernel1 & kernel, uint w, uint h, WrapMode wm) const
-{
-	nvCheck(!(kernel.windowSize() & 1));	// Make sure that kernel m_width is even.
-
-	AutoPtr<FloatImage> tmp_image( new FloatImage() );
-	tmp_image->allocate(m_componentNum, w, m_height);
-	
-	AutoPtr<FloatImage> dst_image( new FloatImage() );	
-	dst_image->allocate(m_componentNum, w, h);
-	
-	const float xscale = float(m_width) / float(w);
-	const float yscale = float(m_height) / float(h);
-	
-	for(uint c = 0; c < m_componentNum; c++) {
-		float * tmp_channel = tmp_image->channel(c);
-		
-		for(uint y = 0; y < m_height; y++) {
-			for(uint x = 0; x < w; x++) {
-				
-				float sum = this->applyKernelHorizontal(&kernel, uint(x*xscale), y, c, wm);
-				
-				const uint tmp_index = tmp_image->index(x, y);
-				tmp_channel[tmp_index] = sum;
-			}
-		}
-		
-		float * dst_channel = dst_image->channel(c);
-		
-		for(uint y = 0; y < h; y++) {
-			for(uint x = 0; x < w; x++) {
-				
-				float sum = tmp_image->applyKernelVertical(&kernel, uint(x*xscale), uint(y*yscale), c, wm);
-				
-				const uint dst_index = dst_image->index(x, y);
-				dst_channel[dst_index] = sum;
-			}
-		}
-	}
-	
-	return dst_image.release();
-}
-*/
-
 /// Downsample applying a 1D kernel separately in each dimension.
 FloatImage * FloatImage::downSample(const Filter & filter, WrapMode wm) const
 {
 	const uint w = max(1, m_width / 2);
 	const uint h = max(1, m_height / 2);
 
-	return downSample(filter, w, h, wm);
+	return resize(filter, w, h, wm);
 }
 
 
 /// Downsample applying a 1D kernel separately in each dimension.
-FloatImage * FloatImage::downSample(const Filter & filter, uint w, uint h, WrapMode wm) const
+FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode wm) const
 {
 	// @@ Use monophase filters when frac(m_width / w) == 0
 

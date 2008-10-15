@@ -34,6 +34,7 @@
 #include <nvimage/Filter.h>
 #include <nvimage/Quantize.h>
 #include <nvimage/NormalMap.h>
+#include <nvimage/PixelFormat.h>
 #include <nvimage/ColorSpace.h>
 
 #include "Compressor.h"
@@ -728,7 +729,7 @@ void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Priva
 
 	// Resize image. 
 	BoxFilter boxFilter;
-	mipmap.setImage(mipmap.asFloatImage()->downSample(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
+	mipmap.setImage(mipmap.asFloatImage()->resize(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
 }
 
 
@@ -822,13 +823,6 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 {
 	nvDebugCheck(mipmap.asFixedImage() != NULL);
 
-	if (compressionOptions.enableColorDithering)
-	{
-		if (compressionOptions.format >= Format_DXT1 && compressionOptions.format <= Format_DXT5)
-		{
-			Quantize::FloydSteinberg_RGB16(mipmap.asMutableFixedImage());
-		}
-	}
 	if (compressionOptions.binaryAlpha)
 	{
 		if (compressionOptions.enableAlphaDithering)
@@ -840,19 +834,50 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 			Quantize::BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
 		}
 	}
-	else
+
+	if (compressionOptions.enableColorDithering || compressionOptions.enableAlphaDithering)
 	{
+		uint rsize = 8;
+		uint gsize = 8;
+		uint bsize = 8;
+		uint asize = 8;
+
+		if (compressionOptions.enableColorDithering)
+		{
+			if (compressionOptions.format >= Format_DXT1 && compressionOptions.format <= Format_DXT5)
+			{
+				rsize = 5;
+				gsize = 6;
+				bsize = 5;
+			}
+			else if (compressionOptions.format == Format_RGB)
+			{
+				uint rshift, gshift, bshift;
+				PixelFormat::maskShiftAndSize(compressionOptions.rmask, &rshift, &rsize);
+				PixelFormat::maskShiftAndSize(compressionOptions.gmask, &gshift, &gsize);
+				PixelFormat::maskShiftAndSize(compressionOptions.bmask, &bshift, &bsize);
+			}
+		}
+
 		if (compressionOptions.enableAlphaDithering)
 		{
 			if (compressionOptions.format == Format_DXT3)
 			{
-				Quantize::Alpha4(mipmap.asMutableFixedImage());
+				asize = 4;
 			}
-			else if (compressionOptions.format == Format_DXT1a)
+			else if (compressionOptions.format == Format_RGB)
 			{
-				Quantize::BinaryAlpha(mipmap.asMutableFixedImage(), compressionOptions.alphaThreshold);
+				uint ashift;
+				PixelFormat::maskShiftAndSize(compressionOptions.amask, &ashift, &asize);
 			}
 		}
+
+		if (compressionOptions.binaryAlpha)
+		{
+			asize = 8; // Already quantized.
+		}
+
+		Quantize::FloydSteinberg(mipmap.asMutableFixedImage(), rsize, gsize, bsize, asize);
 	}
 }
 
@@ -912,8 +937,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
-					//cuda->compressDXT1(compressionOptions, outputOptions);
-					cuda->compressDXT1_Tex(compressionOptions, outputOptions);
+					cuda->compressDXT1(compressionOptions, outputOptions);
+					//cuda->compressDXT1_Tex(compressionOptions, outputOptions);
 				}
 				else
 				{
