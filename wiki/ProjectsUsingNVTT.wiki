@@ -1,0 +1,6 @@
+#summary Projects using NVIDIA Texture Tools.
+
+The NVIDIA Texture Tools are used in many game production pipelines and other projects. Here are brief descriptions of some of them. If you know about any other project using NVTT that is not listed here, please [http://groups.google.com/group/nvidia-texture-tools let us know]!
+
+----
+
