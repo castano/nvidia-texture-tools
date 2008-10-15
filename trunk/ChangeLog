@@ -9,6 +9,12 @@ NVIDIA Texture Tools version 2.1.0
  * Use FreeImage as primary image loading library. Fixes issue 31. Reverted.
  * Output swizzle codes like AMD's tools.
 
+NVIDIA Texture Tools version 2.0.4
+ * Fix error in RGB format output; reported by jonsoh. See issue 49.
+ * Added support RGB format dithering by jonsoh. Fixes issue 50 and 51.
+ * Prevent infinite loop in indexMirror when width equal 1. Fixes issue 65.
+ * Implement general scale filter, including upsampling.
+
 NVIDIA Texture Tools version 2.0.3
  * More accurate DXT3 compressor. Fixes issue 38.
  * Remove legacy compressors. Fix issue 34.
