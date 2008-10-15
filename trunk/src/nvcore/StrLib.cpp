@@ -208,11 +208,11 @@ StringBuilder::StringBuilder( const StringBuilder & s ) : m_size(0), m_str(NULL)
 	copy(s);
 }
 
-/** Copy string. */
-StringBuilder::StringBuilder( const char * s )
+// Copy string. 
+/*StringBuilder::StringBuilder( const char * s )
 {
 	copy(s);
-}
+}*/
 
 /** Allocate and copy string. */
 StringBuilder::StringBuilder( int size_hint, const StringBuilder & s) : m_size(size_hint), m_str(NULL)
