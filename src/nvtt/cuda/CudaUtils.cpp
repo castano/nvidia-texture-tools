@@ -52,22 +52,42 @@ static bool isWow32()
 {
 	LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandle("kernel32"), "IsWow64Process");
 
-    BOOL bIsWow64 = FALSE;
+	BOOL bIsWow64 = FALSE;
  
-    if (NULL != fnIsWow64Process)
-    {
-        if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64))
-        {
+	if (NULL != fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64))
+		{
 			// Assume 32 bits.
-            return true;
-        }
-    }
+			return true;
+		}
+	}
 
-    return !bIsWow64;
+	return !bIsWow64;
 }
 
 #endif
 
+#if	NV_OS_WIN32
+
+static bool isCuda20DriverAvailable()
+{
+	bool result = false;
+
+	HINSTANCE nvcuda = LoadLibraryExA( "nvcuda.dll", NULL, 0 );
+	if (nvcuda != NULL)
+	{
+		FARPROC lcuStreamCreate = GetProcAddress( nvcuda, "cuStreamCreate" );
+
+		result = lcuStreamCreate != NULL;
+		
+		FreeLibrary( nvcuda );
+	}
+
+	return result;
+}
+
+#endif
 
 /// Determine if CUDA is available.
 bool nv::cuda::isHardwarePresent()
@@ -89,6 +109,14 @@ bool nv::cuda::isHardwarePresent()
 		{
 			return false;
 		}
+
+		// Make sure that CUDA driver matches CUDA runtime.
+#if NV_OS_WIN32 && CUDART_VERSION >= 2000
+		if (!isCuda20DriverAvailable())
+		{
+			return false;
+		}
+#endif
 
 		// @@ Make sure that warp size == 32
 	}
