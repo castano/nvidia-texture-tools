@@ -22,6 +22,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include <nvcore/Debug.h>
+#include <nvcore/Library.h>
 #include "CudaUtils.h"
 
 #if defined HAVE_CUDA
@@ -68,26 +69,35 @@ static bool isWow32()
 
 #endif
 
-#if	NV_OS_WIN32
 
-static bool isCuda20DriverAvailable()
+static bool isCudaDriverAvailable(uint version)
 {
-	bool result = false;
-
-	HINSTANCE nvcuda = LoadLibraryExA( "nvcuda.dll", NULL, 0 );
-	if (nvcuda != NULL)
+#if NV_OS_WIN32
+	Library nvcuda("nvcuda.dll");
+#else
+	Library nvcuda(NV_LIBRARY_NAME("cuda"));
+#endif
+	
+	if (!nvcuda.isValid())
 	{
-		FARPROC lcuStreamCreate = GetProcAddress( nvcuda, "cuStreamCreate" );
-
-		result = lcuStreamCreate != NULL;
-		
-		FreeLibrary( nvcuda );
+		return false;
+	}
+	
+	if (version > 2000)
+	{
+		void * address = nvcuda.bindSymbol("cuStreamCreate");
+		if (address == NULL) return false;
 	}
 
-	return result;
+	if (version > 2010)
+	{
+		void * address = nvcuda.bindSymbol("cuLoadDataEx");
+		if (address == NULL) return false;
+	}
+	
+	return true;
 }
 
-#endif
 
 /// Determine if CUDA is available.
 bool nv::cuda::isHardwarePresent()
@@ -111,12 +121,10 @@ bool nv::cuda::isHardwarePresent()
 		}
 
 		// Make sure that CUDA driver matches CUDA runtime.
-#if NV_OS_WIN32 && CUDART_VERSION >= 2000
-		if (!isCuda20DriverAvailable())
+		if (!isCudaDriverAvailable(CUDART_VERSION))
 		{
 			return false;
 		}
-#endif
 
 		// @@ Make sure that warp size == 32
 	}
