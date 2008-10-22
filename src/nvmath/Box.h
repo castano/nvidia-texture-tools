@@ -108,7 +108,7 @@ public:
 	float area() const
 	{
 		const Vector3 d = extents();
-		return 4.0f * (d.x()*d.y() + d.x()*d.z() + d.y()*d.z());
+		return 8.0f * (d.x()*d.y() + d.x()*d.z() + d.y()*d.z());
 	}	
 
 	/// Get the volume of the box.
@@ -118,21 +118,20 @@ public:
 		return 8.0f * (d.x() * d.y() * d.z());
 	}
 	
+	/// Return true if the box contains the given point.
+	bool contains(Vector3::Arg p) const
+	{
+		return 
+			m_mins.x() < p.x() && m_mins.y() < p.y() && m_mins.z() < p.z() &&
+			m_maxs.x() > p.x() && m_maxs.y() > p.y() && m_maxs.z() > p.z();
+	}
+
 private:
 
 	Vector3 m_mins;
 	Vector3 m_maxs;
 };
 
-
-/*
-/// Point inside box test.
-inline bool pointInsideBox(const Box & b, Vector3::Arg p) const
-{
-	return (m_mins.x() < p.x() && m_mins.y() < p.y() && m_mins.z() < p.z() &&
-		m_maxs.x() > p.x() && m_maxs.y() > p.y() && m_maxs.z() > p.z());
-}
-*/
 
 
 } // nv namespace
