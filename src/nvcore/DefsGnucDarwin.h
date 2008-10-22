@@ -2,8 +2,7 @@
 #error "Do not include this file directly."
 #endif
 
-#include <stdlib.h>	// uint8_t, int8_t, ...
-
+#include <stdint.h> // uint8_t, int8_t, ...
 
 // Function linkage
 #define DLL_IMPORT
