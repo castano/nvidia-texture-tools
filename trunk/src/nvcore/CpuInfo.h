@@ -6,7 +6,9 @@
 #include <nvcore/nvcore.h>
 
 #if NV_CC_MSVC
+#if _MSC_VER >= 1400
 #	include <intrin.h> // __rdtsc
+#endif
 #endif
 
 
@@ -27,12 +29,23 @@ namespace nv
 	};
 
 #if NV_CC_MSVC
+#if _MSC_VER < 1400
+       inline uint64 rdtsc()
+        {
+		uint64 t;
+		__asm rdtsc 
+		__asm mov DWORD PTR [t], eax 
+		__asm mov DWORD PTR [t+4], edx
+		return t;
+        }	
+#else
 	#pragma intrinsic(__rdtsc)
 
 	inline uint64 rdtsc()
 	{
 		return __rdtsc();
 	}
+#endif
 #endif
 
 #if NV_CC_GNUC
