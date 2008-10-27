@@ -8,3 +8,7 @@ The [http://developer.nvidia.com/object/texture_tools.html NVIDIA Texture Tools]
 [http://www.unrealtechnology.com/technology.php Unreal® Engine 3]
 
 Unreal® Engine 3 is a complete development framework for DirectX 10-equipped PCs, Xbox 360® and PLAYSTATION®3, providing the vast array of core technologies, content creation tools, and support infrastructure required by top game studios, advanced visualization and simulation developers and creators of 3D animated content for linear productions.
+
+[http://forum.celestialmatters.org/viewtopic.php?t=273 Celestia Texture Tools]
+
+Cross-platform tools for making the greatest [http://www.shatters.net/celestia/ Celestia] textures directly from scientific imaging data. Celestia is a free space simulation that lets you explore our universe in three dimensions. Celestia runs on Windows, Linux, and Mac OS X.
