@@ -191,6 +191,9 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 
 		*sameColor = (axis == make_float3(0, 0, 0));
 
+		// Single color compressor needs unweighted colors.
+		if (*sameColor) colors[idx] = rawColors[idx];
+
 		dps[idx] = dot(rawColors[idx], axis);
 		
 #if __DEVICE_EMULATION__
