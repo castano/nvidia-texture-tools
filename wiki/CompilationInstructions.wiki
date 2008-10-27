@@ -76,7 +76,7 @@ and build all (Ctrl + Shift + B).
 
 === CMake + MinGW ===
 
-Note that CUDA does not currently support the MinGW compiler. In order to compile 
+Note that CUDA does not currently support the MinGW compiler. This target is not supported yet, but may work if CUDA is not enabled.
 
 
 == Linux ==
