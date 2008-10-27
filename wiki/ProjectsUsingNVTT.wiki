@@ -1,4 +1,4 @@
-#summary Projects using NVIDIA Texture Tools.
+#summary Projects using the NVIDIA Texture Tools.
 #labels Featured
 
 The [http://developer.nvidia.com/object/texture_tools.html NVIDIA Texture Tools] are being used by many game production pipelines and other projects. Here are brief descriptions of some of them. If you know about any other project or studio using the NVIDIA Texture Tools that is not listed here, please [http://groups.google.com/group/nvidia-texture-tools let us know]!
