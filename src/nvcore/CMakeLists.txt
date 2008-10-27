@@ -19,7 +19,9 @@ SET(CORE_SRCS
 	TextWriter.h
 	TextWriter.cpp
 	Radix.h
-	Radix.cpp)
+	Radix.cpp
+	Library.h
+	Library.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
