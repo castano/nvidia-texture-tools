@@ -11,4 +11,4 @@ Unreal® Engine 3 is a complete development framework for DirectX 10-equipped PC
 
 [http://forum.celestialmatters.org/viewtopic.php?t=273 Celestia Texture Tools]
 
-Cross-platform tools for making the greatest [http://www.shatters.net/celestia/ Celestia] textures directly from scientific imaging data. Celestia is a free space simulation that lets you explore our universe in three dimensions. Celestia runs on Windows, Linux, and Mac OS X.
+Cross-platform tools for making the greatest Celestia textures directly from scientific imaging data. [http://www.shatters.net/celestia/ Celestia] is a free space simulation that lets you explore our universe in three dimensions. Celestia runs on Windows, Linux, and Mac OS X.
