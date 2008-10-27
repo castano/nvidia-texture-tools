@@ -22,6 +22,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include <nvcore/Debug.h>
+#include <nvcore/Library.h>
 #include "CudaUtils.h"
 
 #if defined HAVE_CUDA
@@ -52,21 +53,50 @@ static bool isWow32()
 {
 	LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandle("kernel32"), "IsWow64Process");
 
-    BOOL bIsWow64 = FALSE;
+	BOOL bIsWow64 = FALSE;
  
-    if (NULL != fnIsWow64Process)
-    {
-        if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64))
-        {
+	if (NULL != fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64))
+		{
 			// Assume 32 bits.
-            return true;
-        }
-    }
+			return true;
+		}
+	}
 
-    return !bIsWow64;
+	return !bIsWow64;
 }
 
 #endif
+
+
+static bool isCudaDriverAvailable(uint version)
+{
+#if NV_OS_WIN32
+	Library nvcuda("nvcuda.dll");
+#else
+	Library nvcuda(NV_LIBRARY_NAME("cuda"));
+#endif
+	
+	if (!nvcuda.isValid())
+	{
+		return false;
+	}
+	
+	if (version > 2000)
+	{
+		void * address = nvcuda.bindSymbol("cuStreamCreate");
+		if (address == NULL) return false;
+	}
+
+	if (version > 2010)
+	{
+		void * address = nvcuda.bindSymbol("cuLoadDataEx");
+		if (address == NULL) return false;
+	}
+	
+	return true;
+}
 
 
 /// Determine if CUDA is available.
@@ -86,6 +116,12 @@ bool nv::cuda::isHardwarePresent()
 
 		// deviceProp.name != Device Emulation (CPU)
 		if (deviceProp.major == -1 || deviceProp.minor == -1)
+		{
+			return false;
+		}
+
+		// Make sure that CUDA driver matches CUDA runtime.
+		if (!isCudaDriverAvailable(CUDART_VERSION))
 		{
 			return false;
 		}
