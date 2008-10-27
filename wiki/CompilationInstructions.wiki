@@ -5,8 +5,8 @@
   * [CompilationInstructions#Prerequisites Prerequisites]
   * [CompilationInstructions#Windows Windows]
     * [CompilationInstructions#Visual_Studio_8 Visual Studio 8]
-    * [CompilationInstructions#CMake_\+_Visual_Studio_7 CMake + Visual Studio 7]
-    * [CompilationInstructions#CMake_\+_Visual_Studio_8 CMake + Visual Studio 8]
+    * [CompilationInstructions#CMake_and_Visual_Studio_7 CMake and Visual Studio 7]
+    * [CompilationInstructions#CMake_and_Visual_Studio_8 CMake and Visual Studio 8]
   * [CompilationInstructions#Linux Linux]
   * [CompilationInstructions#Mac_OSX Mac OSX]
 
@@ -43,7 +43,7 @@ Simply open the solution file:
 and build all (Ctrl + Shift + B).
 
 
-=== CMake + Visual Studio 7 ===
+=== CMake and Visual Studio 7 ===
 
 Run the following commands:
 
@@ -58,7 +58,7 @@ open the generated solution file:
 and build all (Ctrl + Shift + B).
 
 
-=== CMake + Visual Studio 8 ===
+=== CMake and Visual Studio 8 ===
 
 Run the following commands:
 
