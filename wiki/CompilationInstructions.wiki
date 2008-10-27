@@ -5,8 +5,8 @@
   * [CompilationInstructions#Prerequisites Prerequisites]
   * [CompilationInstructions#Windows Windows]
     * [CompilationInstructions#Visual_Studio_8 Visual Studio 8]
-    * [CompilationInstructions#CMake_Visual_Studio_7 CMake + Visual Studio 7]
-    * [CompilationInstructions#CMake_Visual_Studio_8 CMake + Visual Studio 8]
+    * [CompilationInstructions#CMake_+_Visual_Studio_7 CMake + Visual Studio 7]
+    * [CompilationInstructions#CMake_+_Visual_Studio_8 CMake + Visual Studio 8]
   * [CompilationInstructions#Linux Linux]
   * [CompilationInstructions#Mac_OSX Mac OSX]
 
