@@ -48,9 +48,11 @@ and build all (Ctrl + Shift + B).
 
 Run the following commands:
 
-`$ mkdir vc7`
-`$ cd vc7`
-`$ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 7 2003 .NET"`
+{{{
+$ mkdir vc7
+$ cd vc7
+$ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 7 2003 .NET"
+}}}
 
 open the generated solution file:
 
@@ -63,9 +65,11 @@ and build all (Ctrl + Shift + B).
 
 Run the following commands:
 
-`$ mkdir vc8`
-`$ cd vc8`
-`$ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 8 2005"`
+{{{
+$ mkdir vc8
+$ cd vc8
+$ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 8 2005"
+}}}
 
 open the generated solution file:
 
@@ -89,9 +93,11 @@ On other distributions you will have to use the corresponding package manager.
 
 Then compile and install the sources as follows:
 
-`$ ./configure`
-`$ make`
-`$ sudo make install`
+{{{
+$ ./configure
+$ make
+$ sudo make install
+}}}
 
 
 == Mac OSX ==
@@ -102,6 +108,8 @@ Install the required libraries as follows:
 
 Then compile and install the sources as follows:
 
-`$ ./configure`
-`$ make`
-`$ sudo make install`
+{{{
+$ ./configure
+$ make
+$ sudo make install
+}}}
