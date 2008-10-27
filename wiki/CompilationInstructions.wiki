@@ -1,6 +1,17 @@
 #summary Instructions to compile NVTT on different platforms
 
-= Prerequisites =
+== Contents ==
+
+  * [CompilationInstructions#Prerequisites Prerequisites]
+  * [CompilationInstructions#Windows Windows]
+    * [CompilationInstructions#Visual_Studio_8 Visual Studio 8]
+    * [CompilationInstructions#CMake_Visual_Studio_7 CMake + Visual Studio 7]
+    * [CompilationInstructions#CMake_Visual_Studio_8 CMake + Visual Studio 8]
+  * [CompilationInstructions#Linux Linux]
+  * [CompilationInstructions#Mac_OSX Mac OSX]
+
+
+== Prerequisites ==
 
 Project files are provided for Visual Studio 8. For all other platforms and targets you will need to install CMake. You can download it from:
 
@@ -18,12 +29,12 @@ In addition to that, the command line tools also need the following libraries:
  * libjpeg
  * ...
 
-Note that the sources already include these libraries precompiled for windows.
+Note that the sources already include these libraries precompiled for 32 bit windows.
 
 
-= Windows =
+== Windows ==
 
-== Visual Studio 8 ==
+=== Visual Studio 8 ===
 
 Simply open the solution file:
 
@@ -31,7 +42,8 @@ Simply open the solution file:
 
 and build all (Ctrl + Shift + B).
 
-== CMake + Visual Studio 7 ==
+
+=== CMake + Visual Studio 7 ===
 
 Run the following commands:
 
@@ -45,7 +57,8 @@ open the generated solution file:
 
 and build all (Ctrl + Shift + B).
 
-== CMake + Visual Studio 8 ==
+
+=== CMake + Visual Studio 8 ===
 
 Run the following commands:
 
@@ -60,11 +73,12 @@ open the generated solution file:
 and build all (Ctrl + Shift + B).
 
 
-== CMake + MinGW ==
+=== CMake + MinGW ===
 
 Note that CUDA does not currently support the MinGW compiler. In order to compile 
 
-= Linux =
+
+== Linux ==
 
 If you are running Debian or Ubuntu you can install the required libraries as follows:
 
@@ -79,8 +93,7 @@ Then compile and install the sources as follows:
 `$ sudo make install`
 
 
-
-= Mac OSX =
+== Mac OSX ==
 
 Install the required libraries as follows:
 
