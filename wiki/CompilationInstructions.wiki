@@ -39,7 +39,9 @@ Note that the sources already include these libraries precompiled for 32 bit win
 
 Simply open the solution file:
 
-`projects/vc8/nvtt.sln`
+{{{
+projects/vc8/nvtt.sln
+}}}
 
 and build all (Ctrl + Shift + B).
 
@@ -56,7 +58,9 @@ $ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 7 2003 .NET"
 
 open the generated solution file:
 
-`vc7/NV.sln`
+{{{
+vc7/NV.sln
+}}}
 
 and build all (Ctrl + Shift + B).
 
@@ -73,7 +77,9 @@ $ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 8 2005"
 
 open the generated solution file:
 
-`vc8/NV.sln`
+{{{
+vc8/NV.sln
+}}}
 
 and build all (Ctrl + Shift + B).
 
@@ -87,7 +93,9 @@ Note that CUDA does not currently support the MinGW compiler. This target is not
 
 If you are running Debian or Ubuntu you can install the required libraries as follows:
 
-`sudo apt-get install ...`
+{{{
+sudo apt-get install ...
+}}}
 
 On other distributions you will have to use the corresponding package manager.
 
@@ -104,7 +112,9 @@ $ sudo make install
 
 Install the required libraries as follows:
 
-`$ sudo port install ...`
+{{{
+$ sudo port install ...
+}}}
 
 Then compile and install the sources as follows:
 
