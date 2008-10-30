@@ -31,6 +31,7 @@ namespace nv
 	{
 		bool isHardwarePresent();
 		int deviceCount();
+		int getFastestDevice();
 		bool setDevice(int i);
 	};
 	
