@@ -153,11 +153,11 @@ int nv::cuda::deviceCount()
 
 int nv::cuda::getFastestDevice()
 {
-	const int device_count = deviceCount();
-
 	int max_gflops_device = 0;
+#if defined HAVE_CUDA	
 	int max_gflops = 0;
 
+	const int device_count = deviceCount();
 	int current_device = 0;
 	while (current_device < device_count)
 	{
@@ -176,7 +176,7 @@ int nv::cuda::getFastestDevice()
 		
 		current_device++;
 	}
-
+#endif
 	return max_gflops_device;
 }
 
