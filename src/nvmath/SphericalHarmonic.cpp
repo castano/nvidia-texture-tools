@@ -82,7 +82,7 @@ namespace
 	
 	template <int l, int m> float legendre(float x);
 	
-	template <> float legendre<0, 0>(float x) {
+	template <> float legendre<0, 0>(float ) {
 		return 1;
 	}
 	
