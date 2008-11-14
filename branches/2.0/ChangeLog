@@ -2,6 +2,8 @@ NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
  * Detect mismatch between CUDA runtime and driver, and disable CUDA in that case.
  * Fix cmake files when compiling NVTT as a shared library.
+ * When linking nvtt dynamically on unix, link all libraries dynamically.
+ * Merge fixes from trunk.
 
 NVIDIA Texture Tools version 2.0.4
  * Fix error in RGB format output; reported by jonsoh. See issue 49.
