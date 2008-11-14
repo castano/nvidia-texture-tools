@@ -19,8 +19,8 @@ namespace nv
 		{
 		}
 		
-		const uint width() const { return m_width; }
-		const uint height() const { return m_height; }
+		uint width() const { return m_width; }
+		uint height() const { return m_height; }
 		
 		bool bitAt(uint x, uint y) const
 		{
@@ -85,7 +85,6 @@ namespace nv
 	};
 
 	NVIMAGE_API void fillVoronoi(FloatImage * img, const BitMap * bmap);
-	NVIMAGE_API void fillBlur(FloatImage * img, const BitMap * bmap);
 	NVIMAGE_API void fillPullPush(FloatImage * img, const BitMap * bmap);
 	
 	NVIMAGE_API void fillExtrapolate(int passCount, FloatImage * img, BitMap * bmap);
