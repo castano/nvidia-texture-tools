@@ -75,7 +75,7 @@ static bool isCudaDriverAvailable(uint version)
 #if NV_OS_WIN32
 	Library nvcuda("nvcuda.dll");
 #else
-	Library nvcuda(NV_LIBRARY_NAME("cuda"));
+	Library nvcuda(NV_LIBRARY_NAME(cuda));
 #endif
 	
 	if (!nvcuda.isValid())
