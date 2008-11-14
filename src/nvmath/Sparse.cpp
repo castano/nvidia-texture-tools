@@ -1,4 +1,4 @@
-// This code is in the public domain -- Ignacio Castaño <castanyo@yahoo.es>
+// This code is in the public domain -- Ignacio Castao <castanyo@yahoo.es>
 
 #include <nvmath/Sparse.h>
 #include <nvmath/KahanSum.h>
@@ -235,7 +235,7 @@ void FullMatrix::madRow(uint y, float alpha, FullVector & v) const
 	const uint count = v.dimension();
 	for (uint i = 0; i < count; i++)
 	{
-		v[i] += m_array[y * count + i];
+		v[i] += alpha * m_array[y * count + i];
 	}
 }
 
