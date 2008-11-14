@@ -136,7 +136,11 @@ namespace
 #if defined(HAVE_EXECINFO_H) // NV_OS_LINUX
 
 	static bool nvHasStackTrace() {
+#if NV_OS_DARWIN
 		return backtrace != NULL;
+#else
+		return true;
+#endif
 	}
 
 	static void nvPrintStackTrace(void * trace[], int size, int start=0) {
