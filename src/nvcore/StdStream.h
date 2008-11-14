@@ -50,7 +50,7 @@ public:
 		virtual void seek( uint pos )
 		{
 			nvDebugCheck(m_fp != NULL);
-			nvDebugCheck(pos >= 0 && pos < size());
+			nvDebugCheck(pos < size());
 			fseek(m_fp, pos, SEEK_SET);
 		}
 		
