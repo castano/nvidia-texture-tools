@@ -223,14 +223,6 @@ void nv::fillVoronoi(FloatImage * img, const BitMap * bmap)
 }
 
 
-void nv::fillBlur(FloatImage * img, const BitMap * bmap)
-{
-	nvCheck(img != NULL);
-	
-	// @@ Apply a 3x3 kernel.
-}
-
-
 static bool downsample(const FloatImage * src, const BitMap * srcMask, const FloatImage ** _dst, const BitMap ** _dstMask)
 {
 	const uint w = src->width();
