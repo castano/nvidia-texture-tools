@@ -42,6 +42,8 @@ const char * nvtt::errorString(Error e)
 			return "Error opening file";
 		case Error_FileWrite:
 			return "Error writing through output handler";
+        case Error_UnsupportedOutputFormat:
+            return "The container file does not support the selected output format";
 	}
 	
 	return "Invalid error";

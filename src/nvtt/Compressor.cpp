@@ -493,7 +493,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 			// This container does not support the requested format.
 			if (outputOptions.errorHandler != NULL)
 			{
-				outputOptions.errorHandler->error(Error_UnsupportedFeature);
+				outputOptions.errorHandler->error(Error_UnsupportedOutputFormat);
 			}
 			
 			return false;

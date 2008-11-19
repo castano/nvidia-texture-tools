@@ -280,6 +280,7 @@ namespace nvtt
 		Error_CudaError,
   		Error_FileOpen,
   		Error_FileWrite,
+        Error_UnsupportedOutputFormat,
 	};
 	
 	/// Error handler.
