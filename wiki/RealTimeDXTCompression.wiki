@@ -26,17 +26,15 @@ Peter Uliciansky optimized Waveren's algorithm further and published his results
 || Intel Pentium 4 2.8 GHz || 241.2 MP/s || 206.5 MP/s ||
 || Intel Core 2 3.0 GHz    || 910.0 MP/s || 620.4 MP/s ||
 
-These numbers are very impressive and start to get closer to the results of the GPU implementation.
+These numbers are very impressive and start to get closer to the results of the GPU implementation. However, as pointed by [http://www.cbloom.com/ Charles Bloom] this implementation has [http://cbloomrants.blogspot.com/2008/11/11-18-08-dxtc.html some errors].
 
-However, the latest GPU implementation also offers higher performance.
+Moreover, the latest GPU implementation also offers higher performance.
   * http://developer.download.nvidia.com/SDK/10/opengl/samples.html#compress_YCoCgDXT
   * http://developer.download.nvidia.com/SDK/10/opengl/samples.html#compress_NormalDXT
 
 || *GPU*             || *DXT1*     || *YCoCg-DXT5* || *BC5*      || *DXT5n*    ||
 || !GeForce 8800 GTX || 3450 MP/s  || 1880 MP/s    || 5665 MP/s  || 5804 MP/s  ||
 || !GeForce GTX 280  || 9920 MP/s  || 7900 MP/s    || 12850 MP/s || 13150 MP/s ||
-
-
 
 
 
