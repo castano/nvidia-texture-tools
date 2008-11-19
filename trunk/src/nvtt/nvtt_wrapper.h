@@ -156,6 +156,7 @@ typedef enum
 	NVTT_Error_Unknown,
 	NVTT_Error_FileOpen,
 	NVTT_Error_FileWrite,
+    NVTT_Error_UnsupportedOutputFormat,
 } NvttError;
 
 typedef enum
