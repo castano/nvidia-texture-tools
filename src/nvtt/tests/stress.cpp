@@ -175,7 +175,7 @@ float rmsError(const Image * a, const Image * b)
         mse += b * b;
     }
 
-    mse /= count * 3;
+    mse /= count;
 
     return sqrtf(mse);
 }
@@ -183,12 +183,65 @@ float rmsError(const Image * a, const Image * b)
 
 int main(int argc, char *argv[])
 {
+	const uint version = nvtt::version();
+	const uint major = version / 100;
+	const uint minor = version % 100;
+	
+	printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007 - 2008\n\n", major, minor);
+	
+	bool fast = false;
+	bool nocuda = false;
+	bool showHelp = false;
+	const char * outPath = "output";
+	
+	// Parse arguments.
+	for (int i = 1; i < argc; i++)
+	{
+		if (strcmp("-fast", argv[i]) == 0)
+		{
+			fast = true;
+		}
+		else if (strcmp("-nocuda", argv[i]) == 0)
+		{
+			nocuda = true;
+		}
+		else if (strcmp("-help", argv[i]) == 0)
+		{
+			showHelp = true;
+		}
+		else if (strcmp("-out", argv[i]) == 0)
+		{
+			if (i+1 < argc && argv[i+1][0] != '-') outPath = argv[i+1];
+		}
+	}
+
+	if (showHelp)
+	{
+		printf("usage: nvtestsuite [options]\n\n");
+		
+		printf("Compression options:\n");
+		printf("  -fast      \tFast compression.\n");
+		printf("  -nocuda    \tDo not use cuda compressor.\n");
+		
+		printf("Output options:\n");
+		printf("  -out <path>\tOutput folder.\n");
+
+		return 1;
+	}	
+	
     nvtt::InputOptions inputOptions;
     inputOptions.setMipmapGeneration(false);
 
     nvtt::CompressionOptions compressionOptions;
     compressionOptions.setFormat(nvtt::Format_BC1);
-    compressionOptions.setQuality(nvtt::Quality_Production);
+	if (fast)
+	{
+		compressionOptions.setQuality(nvtt::Quality_Fastest);
+    }
+	else
+	{
+		compressionOptions.setQuality(nvtt::Quality_Production);
+	}
 
 	nvtt::OutputOptions outputOptions;
     outputOptions.setOutputHeader(false);
@@ -197,8 +250,9 @@ int main(int argc, char *argv[])
 	outputOptions.setOutputHandler(&outputHandler);
 
     nvtt::Compressor compressor;
-	compressor.enableCudaAcceleration(false);
+	compressor.enableCudaAcceleration(!nocuda);
 
+	float totalTime = 0;
     float totalRMS = 0;
 
     for (int i = 0; i < s_fileCount; i++)
@@ -214,18 +268,19 @@ int main(int argc, char *argv[])
         inputOptions.setTextureLayout(nvtt::TextureType_2D, img->width(), img->height());
         inputOptions.setMipmapData(img->pixels(), img->width(), img->height());
 
-        printf("Compressing: '%s'\n", s_fileNames[i]);
+        printf("Compressing: \t'%s'\n", s_fileNames[i]);
 
 		clock_t start = clock();
 
 		compressor.process(inputOptions, compressionOptions, outputOptions);
 
 		clock_t end = clock();
-		printf("  Time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+		printf("  Time: \t%.3f sec\n", float(end-start) / CLOCKS_PER_SEC);
+		totalTime += float(end-start);
 
         AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
 
-        Path outputFileName("output/%s", s_fileNames[i]);
+        Path outputFileName("%s/%s", outPath, s_fileNames[i]);
 		outputFileName.stripExtension();
 		outputFileName.append(".tga");
         if (!ImageIO::save(outputFileName, img_out.ptr()))
@@ -236,13 +291,15 @@ int main(int argc, char *argv[])
         float rms = rmsError(img.ptr(), img_out.ptr());
         totalRMS += rms;
 
-        printf("  RMS: %.4f\n", rms);
+        printf("  RMS:  \t%.4f\n", rms);
     }
 
+	totalTime /= s_fileCount;
     totalRMS /= s_fileCount;
 
     printf("Average Results:\n");
-    printf("  RMS: %.4f\n", totalRMS);
+    printf("  Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
+    printf("  RMS:  \t%.4f\n", totalRMS);
 
 	return EXIT_SUCCESS;
 }
