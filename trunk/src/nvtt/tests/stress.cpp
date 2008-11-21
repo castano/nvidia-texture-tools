@@ -104,7 +104,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
     Image * decompress(nvtt::Format format)
     {
         int bw = (m_width + 3) / 4;
-        int bh = (m_width + 3) / 4;
+        int bh = (m_height + 3) / 4;
 
         AutoPtr<Image> img( new Image() );
         img->allocate(m_width, m_height);
@@ -225,8 +225,13 @@ int main(int argc, char *argv[])
 
         AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
 
-        Path outputFileName("data/%s", s_fileNames[i]);
-        ImageIO::save(outputFileName, img_out.ptr());
+        Path outputFileName("output/%s", s_fileNames[i]);
+		outputFileName.stripExtension();
+		outputFileName.append(".tga");
+        if (!ImageIO::save(outputFileName, img_out.ptr()))
+		{
+			printf("Error saving file '%s'.\n", outputFileName.str());
+		}
 
         float rms = rmsError(img.ptr(), img_out.ptr());
         totalRMS += rms;
