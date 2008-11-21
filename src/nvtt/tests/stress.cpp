@@ -23,10 +23,12 @@
 
 #include <nvtt/nvtt.h>
 #include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
 #include <nvimage/BlockDXT.h>
 #include <nvimage/ColorBlock.h>
 #include <nvcore/Ptr.h>
 #include <nvcore/Debug.h>
+#include <nvcore/StrLib.h>
 
 #include <stdlib.h> // free
 #include <string.h> // memcpy
@@ -222,6 +224,9 @@ int main(int argc, char *argv[])
 		printf("  Time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
         AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
+
+        Path outputFileName("data/%s", s_fileNames[i]);
+        ImageIO::save(outputFileName, img_out.ptr());
 
         float rms = rmsError(img.ptr(), img_out.ptr());
         totalRMS += rms;
