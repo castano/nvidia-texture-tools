@@ -156,7 +156,7 @@ float rmsError(const Image * a, const Image * b)
 
     float mse = 0;
 
-    const uint count = a->width() * b->width();
+    const uint count = a->width() * a->height();
 
     for (uint i = 0; i < count; i++)
     {
