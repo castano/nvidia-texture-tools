@@ -22,54 +22,74 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include <nvtt/nvtt.h>
+#include <nvimage/Image.h>
+#include <nvimage/BlockDXT.h>
+#include <nvimage/ColorBlock.h>
+#include <nvcore/Ptr.h>
+#include <nvcore/Debug.h>
 
-#include <stdio.h> // printf
-#include <stdlib.h> // rand
+#include <stdlib.h> // free
+#include <string.h> // memcpy
 #include <time.h> // clock
-#include <string.h> // memcpy, memcmp
-#include <assert.h>
 
-#define FRAME_COUNT  1000
+/*
+#include <stdio.h> // printf
+*/
 
-#define WIDTH        2048
-#define HEIGHT       2048
-#define INPUT_SIZE   (WIDTH*HEIGHT)
-#define OUTPUT_SIZE  (WIDTH*HEIGHT/16*4)
+using namespace nv;
 
-static int s_input[INPUT_SIZE];
-static int s_reference[OUTPUT_SIZE];
-static int s_output[OUTPUT_SIZE];
-static int s_frame = 0;
+static const char * s_fileNames[] = {
+    "kodim01.png",
+    "kodim02.png",
+    "kodim03.png",
+    "kodim04.png",
+    "kodim05.png",
+    "kodim06.png",
+    "kodim07.png",
+    "kodim08.png",
+    "kodim09.png",
+    "kodim10.png",
+    "kodim11.png",
+    "kodim12.png",
+    "kodim13.png",
+    "kodim14.png",
+    "kodim15.png",
+    "kodim16.png",
+    "kodim17.png",
+    "kodim18.png",
+    "kodim19.png",
+    "kodim20.png",
+    "kodim21.png",
+    "kodim22.png",
+    "kodim23.png",
+    "kodim24.png",
+    "clegg.tif",
+    "frymire.tif",
+    "lena.tif",
+    "monarch.tif",
+    "sail.tif",
+    "serrano.tif",
+    "tulips.tif",
+};
+const int s_fileCount = sizeof(s_fileNames)/sizeof(s_fileNames[0]);
+
 
 struct MyOutputHandler : public nvtt::OutputHandler
 {
-	MyOutputHandler() : m_ptr(NULL) {}
-	
+	MyOutputHandler() : m_data(NULL), m_ptr(NULL) {}
+    ~MyOutputHandler()
+    {
+        free(m_data);
+    }
+
 	virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
 	{
-		assert(size <= sizeof(int) * OUTPUT_SIZE);
-		assert(width == WIDTH);
-		assert(height == HEIGHT);
-		assert(depth == 1);
-		assert(face == 0);
-		assert(miplevel == 0);
-
-		m_ptr = (unsigned char *)s_output;
-
-		if (s_frame == 1)
-		{
-			// Save first result as reference.
-			memcpy(s_reference, s_output, sizeof(int) * OUTPUT_SIZE);
-		}
-		else if (s_frame > 1)
-		{
-			// Compare against reference.
-			if (memcmp(s_output, s_reference, sizeof(int) * OUTPUT_SIZE) != 0)
-			{
-				printf("Compressed image different to original.\n");
-				exit(EXIT_FAILURE);
-			}
-		}
+        m_size = size;
+        m_width = width;
+        m_height = height;
+        free(m_data);
+        m_data = (unsigned char *)malloc(size);
+		m_ptr = m_data;
 	}
 	
 	virtual bool writeData(const void * data, int size)
@@ -79,146 +99,140 @@ struct MyOutputHandler : public nvtt::OutputHandler
 		return true;
 	}
 
-	unsigned char * m_ptr;
+    Image * decompress(nvtt::Format format)
+    {
+        int bw = (m_width + 3) / 4;
+        int bh = (m_width + 3) / 4;
 
+        AutoPtr<Image> img( new Image() );
+        img->allocate(m_width, m_height);
+
+        if (format == nvtt::Format_BC1)
+        {
+            BlockDXT1 * block = (BlockDXT1 *)m_data;
+
+            for (int y = 0; y < bh; y++)
+            {
+                for (int x = 0; x < bw; x++)
+                {
+                    ColorBlock colors;
+                    block->decodeBlock(&colors);
+
+                    for (int yy = 0; yy < 4; yy++)
+                    {
+                        for (int xx = 0; xx < 4; xx++)
+                        {
+                            Color32 c = colors.color(xx, yy);
+
+                            if (x * 4 + xx < m_width && y * 4 + yy < m_height)
+                            {
+                                img->pixel(x * 4 + xx, y * 4 + yy) = c;
+                            }
+                        }
+                    }
+
+                    block++;
+                }
+            }
+        }
+
+        return img.release();
+    }
+
+    int m_size;
+    int m_width;
+    int m_height;
+    unsigned char * m_data;
+	unsigned char * m_ptr;
 };
 
-void precomp()
+
+float rmsError(const Image * a, const Image * b)
 {
-	unsigned int bitmaps[1024];
+    nvCheck(a != NULL);
+    nvCheck(b != NULL);
+    nvCheck(a->width() == b->width());
+    nvCheck(a->height() == b->height());
 
-	int num = 0;
+    float mse = 0;
 
-	printf("const static uint s_bitmapTableCTX[704] =\n{\n");
+    const uint count = a->width() * b->width();
 
-	for (int a = 1; a <= 15; a++)
-	{
-		  for (int b = a; b <= 15; b++)
-		  {
-				for (int c = b; c <= 15; c++)
-				{
-					int indices[16];
+    for (uint i = 0; i < count; i++)
+    {
+        Color32 c0 = a->pixel(i);
+        Color32 c1 = b->pixel(i);
 
-					int i = 0;
-					for(; i < a; i++) {
-						indices[i] = 0;
-					}
-					for(; i < a+b; i++) {
-						indices[i] = 2;
-					}
-					for(; i < a+b+c; i++) {
-						indices[i] = 3;
-					}
-					for(; i < 16; i++) {
-						indices[i] = 1;
-					}
+        int r = c0.r - c1.r;
+        int g = c0.g - c1.g;
+        int b = c0.b - c1.b;
+        //int a = c0.a - c1.a;
 
-					unsigned int bm = 0;
-					for(i = 0; i < 16; i++) {
-						bm |= indices[i] << (i * 2);
-					}
+        mse += r * r;
+        mse += g * g;
+        mse += b * b;
+    }
 
-					printf("\t0x%8X, // %d %d %d %d\n", bm, a-0, b-a, c-b, 16-c);
+    mse /= count * 3;
 
-					bitmaps[num] = bm;
-					num++;
-				}
-		  }
-	}
-
-	// Align to 32: 680 -> 704
-	while (num < 704)
-	{
-		printf("\t0x80000000,\n");
-
-		bitmaps[num] = 0x80000000; // 15 0 0 1;
-		num++;
-	}
-
-	printf("}; // num = %d\n", num);
-
-/*
-	for( int i = imax; i >= 0; --i )
-	{
-		// second cluster [i,j) is one third along
-		for( int m = i; m < 16; ++m )
-		{
-			indices[m] = 2;
-		}
-		const int jmax = ( i == 0 ) ? 15 : 16;
-		for( int j = jmax; j >= i; --j )
-		{
-			// third cluster [j,k) is two thirds along
-			for( int m = j; m < 16; ++m )
-			{
-				indices[m] = 3;
-			}
-			
-			int kmax = ( j == 0 ) ? 15 : 16;
-			for( int k = kmax; k >= j; --k )
-			{
-				// last cluster [k,n) is at the end
-				if( k < 16 )
-				{
-					indices[k] = 1;
-				}
-				
-				uint bitmap = 0;
-				
-				bool hasThree = false;
-				for(int p = 0; p < 16; p++) {
-					bitmap |= indices[p] << (p * 2);
-				}
-				
-				bitmaps[num] = bitmap;
-				num++;
-			}
-		}
-	}
-*/
+    return sqrtf(mse);
 }
+
 
 int main(int argc, char *argv[])
 {
-//	precomp();
+    nvtt::InputOptions inputOptions;
+    inputOptions.setMipmapGeneration(false);
 
-	nvtt::InputOptions inputOptions;
-	inputOptions.setTextureLayout(nvtt::TextureType_2D, WIDTH, HEIGHT);
+    nvtt::CompressionOptions compressionOptions;
+    compressionOptions.setFormat(nvtt::Format_BC1);
+    compressionOptions.setQuality(nvtt::Quality_Production);
 
-	for (int i = 0; i < INPUT_SIZE; i++)
-	{
-		s_input[i] = rand();
-	}
-
-	inputOptions.setMipmapData(s_input, WIDTH, HEIGHT);
-	inputOptions.setMipmapGeneration(false);
-
-	nvtt::CompressionOptions compressionOptions;
-//	compressionOptions.setFormat(nvtt::Format_DXT3);
-//	compressionOptions.setFormat(nvtt::Format_DXT1n);
-//	compressionOptions.setFormat(nvtt::Format_CTX1);
-	
 	nvtt::OutputOptions outputOptions;
-	outputOptions.setOutputHeader(false);
+    outputOptions.setOutputHeader(false);
 
 	MyOutputHandler outputHandler;
 	outputOptions.setOutputHandler(&outputHandler);
 
+    nvtt::Compressor compressor;
+	compressor.enableCudaAcceleration(false);
 
-	nvtt::Compressor compressor;
-//	compressor.enableCudaAcceleration(false);
+    float totalRMS = 0;
 
-	for (s_frame = 0; s_frame < FRAME_COUNT; s_frame++)
-	{
+    for (int i = 0; i < s_fileCount; i++)
+    {
+        AutoPtr<Image> img( new Image() );
+        
+        if (!img->load(s_fileNames[i]))
+        {
+            printf("Input image '%s' not found.\n", s_fileNames[i]);
+            return EXIT_FAILURE;
+        }
+
+        inputOptions.setTextureLayout(nvtt::TextureType_2D, img->width(), img->height());
+        inputOptions.setMipmapData(img->pixels(), img->width(), img->height());
+
+        printf("Compressing: '%s'\n", s_fileNames[i]);
+
 		clock_t start = clock();
-
-		printf("compressing frame %d:\n", s_frame);
 
 		compressor.process(inputOptions, compressionOptions, outputOptions);
 
 		clock_t end = clock();
-		printf("time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
-	}
+		printf("  Time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+
+        AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
+
+        float rms = rmsError(img.ptr(), img_out.ptr());
+        totalRMS += rms;
+
+        printf("  RMS: %.4f\n", rms);
+    }
+
+    totalRMS /= s_fileCount;
+
+    printf("Average Results:\n");
+    printf("  RMS: %.4f\n", totalRMS);
 
 	return EXIT_SUCCESS;
 }
