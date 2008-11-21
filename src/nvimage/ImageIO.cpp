@@ -116,7 +116,7 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 	return NULL;
 }
 
-bool nv::ImageIO::save(const char * fileName, Stream & s, Image * img)
+bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img)
 {
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(s.isSaving());
@@ -131,7 +131,7 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, Image * img)
 	return false;
 }
 
-bool nv::ImageIO::save(const char * fileName, Image * img)
+bool nv::ImageIO::save(const char * fileName, const Image * img)
 {
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(img != NULL);
