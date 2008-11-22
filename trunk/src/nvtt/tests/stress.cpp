@@ -41,37 +41,38 @@
 using namespace nv;
 
 static const char * s_fileNames[] = {
-    "kodim01.png",
-    "kodim02.png",
-    "kodim03.png",
-    "kodim04.png",
-    "kodim05.png",
-    "kodim06.png",
-    "kodim07.png",
-    "kodim08.png",
-    "kodim09.png",
-    "kodim10.png",
-    "kodim11.png",
-    "kodim12.png",
-    "kodim13.png",
-    "kodim14.png",
-    "kodim15.png",
-    "kodim16.png",
-    "kodim17.png",
-    "kodim18.png",
-    "kodim19.png",
-    "kodim20.png",
-    "kodim21.png",
-    "kodim22.png",
-    "kodim23.png",
-    "kodim24.png",
-    "clegg.tif",
-    "frymire.tif",
-    "lena.tif",
-    "monarch.tif",
-    "sail.tif",
-    "serrano.tif",
-    "tulips.tif",
+	"kodim01.png",
+	"kodim02.png",
+	"kodim03.png",
+	"kodim04.png",
+	"kodim05.png",
+	"kodim06.png",
+	"kodim07.png",
+	"kodim08.png",
+	"kodim09.png",
+	"kodim10.png",
+	"kodim11.png",
+	"kodim12.png",
+	"kodim13.png",
+	"kodim14.png",
+	"kodim15.png",
+	"kodim16.png",
+	"kodim17.png",
+	"kodim18.png",
+	"kodim19.png",
+	"kodim20.png",
+	"kodim21.png",
+	"kodim22.png",
+	"kodim23.png",
+	"kodim24.png",
+	"clegg.png",
+	"frymire.png",
+	"lena.png",
+	"monarch.png",
+	"peppers.png",
+	"sail.png",
+	"serrano.png",
+	"tulips.png",
 };
 const int s_fileCount = sizeof(s_fileNames)/sizeof(s_fileNames[0]);
 
@@ -79,18 +80,18 @@ const int s_fileCount = sizeof(s_fileNames)/sizeof(s_fileNames[0]);
 struct MyOutputHandler : public nvtt::OutputHandler
 {
 	MyOutputHandler() : m_data(NULL), m_ptr(NULL) {}
-    ~MyOutputHandler()
-    {
-        free(m_data);
-    }
+	~MyOutputHandler()
+	{
+		free(m_data);
+	}
 
 	virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
 	{
-        m_size = size;
-        m_width = width;
-        m_height = height;
-        free(m_data);
-        m_data = (unsigned char *)malloc(size);
+		m_size = size;
+		m_width = width;
+		m_height = height;
+		free(m_data);
+		m_data = (unsigned char *)malloc(size);
 		m_ptr = m_data;
 	}
 	
@@ -101,83 +102,83 @@ struct MyOutputHandler : public nvtt::OutputHandler
 		return true;
 	}
 
-    Image * decompress(nvtt::Format format)
-    {
-        int bw = (m_width + 3) / 4;
-        int bh = (m_height + 3) / 4;
+	Image * decompress(nvtt::Format format)
+	{
+		int bw = (m_width + 3) / 4;
+		int bh = (m_height + 3) / 4;
 
-        AutoPtr<Image> img( new Image() );
-        img->allocate(m_width, m_height);
+		AutoPtr<Image> img( new Image() );
+		img->allocate(m_width, m_height);
 
-        if (format == nvtt::Format_BC1)
-        {
-            BlockDXT1 * block = (BlockDXT1 *)m_data;
+		if (format == nvtt::Format_BC1)
+		{
+			BlockDXT1 * block = (BlockDXT1 *)m_data;
 
-            for (int y = 0; y < bh; y++)
-            {
-                for (int x = 0; x < bw; x++)
-                {
-                    ColorBlock colors;
-                    block->decodeBlock(&colors);
+			for (int y = 0; y < bh; y++)
+			{
+				for (int x = 0; x < bw; x++)
+				{
+					ColorBlock colors;
+					block->decodeBlock(&colors);
 
-                    for (int yy = 0; yy < 4; yy++)
-                    {
-                        for (int xx = 0; xx < 4; xx++)
-                        {
-                            Color32 c = colors.color(xx, yy);
+					for (int yy = 0; yy < 4; yy++)
+					{
+						for (int xx = 0; xx < 4; xx++)
+						{
+							Color32 c = colors.color(xx, yy);
 
-                            if (x * 4 + xx < m_width && y * 4 + yy < m_height)
-                            {
-                                img->pixel(x * 4 + xx, y * 4 + yy) = c;
-                            }
-                        }
-                    }
+							if (x * 4 + xx < m_width && y * 4 + yy < m_height)
+							{
+								img->pixel(x * 4 + xx, y * 4 + yy) = c;
+							}
+						}
+					}
 
-                    block++;
-                }
-            }
-        }
+					block++;
+				}
+			}
+		}
 
-        return img.release();
-    }
+		return img.release();
+	}
 
-    int m_size;
-    int m_width;
-    int m_height;
-    unsigned char * m_data;
+	int m_size;
+	int m_width;
+	int m_height;
+	unsigned char * m_data;
 	unsigned char * m_ptr;
 };
 
 
 float rmsError(const Image * a, const Image * b)
 {
-    nvCheck(a != NULL);
-    nvCheck(b != NULL);
-    nvCheck(a->width() == b->width());
-    nvCheck(a->height() == b->height());
+	nvCheck(a != NULL);
+	nvCheck(b != NULL);
+	nvCheck(a->width() == b->width());
+	nvCheck(a->height() == b->height());
 
-    float mse = 0;
+	float mse = 0;
 
-    const uint count = a->width() * a->height();
+	const uint count = a->width() * a->height();
 
-    for (uint i = 0; i < count; i++)
-    {
-        Color32 c0 = a->pixel(i);
-        Color32 c1 = b->pixel(i);
+	for (uint i = 0; i < count; i++)
+	{
+		Color32 c0 = a->pixel(i);
+		Color32 c1 = b->pixel(i);
 
-        int r = c0.r - c1.r;
-        int g = c0.g - c1.g;
-        int b = c0.b - c1.b;
-        //int a = c0.a - c1.a;
+		int r = c0.r - c1.r;
+		int g = c0.g - c1.g;
+		int b = c0.b - c1.b;
+		//int a = c0.a - c1.a;
 
-        mse += r * r;
-        mse += g * g;
-        mse += b * b;
-    }
+		mse += r * r;
+		mse += g * g;
+		mse += b * b;
+	}
 
-    mse /= count;
+	mse /= count;
 
-    return sqrtf(mse);
+	return sqrtf(mse);
 }
 
 
@@ -229,46 +230,46 @@ int main(int argc, char *argv[])
 		return 1;
 	}	
 	
-    nvtt::InputOptions inputOptions;
-    inputOptions.setMipmapGeneration(false);
+	nvtt::InputOptions inputOptions;
+	inputOptions.setMipmapGeneration(false);
 
-    nvtt::CompressionOptions compressionOptions;
-    compressionOptions.setFormat(nvtt::Format_BC1);
+	nvtt::CompressionOptions compressionOptions;
+	compressionOptions.setFormat(nvtt::Format_BC1);
 	if (fast)
 	{
 		compressionOptions.setQuality(nvtt::Quality_Fastest);
-    }
+	}
 	else
 	{
 		compressionOptions.setQuality(nvtt::Quality_Production);
 	}
 
 	nvtt::OutputOptions outputOptions;
-    outputOptions.setOutputHeader(false);
+	outputOptions.setOutputHeader(false);
 
 	MyOutputHandler outputHandler;
 	outputOptions.setOutputHandler(&outputHandler);
 
-    nvtt::Compressor compressor;
+	nvtt::Compressor compressor;
 	compressor.enableCudaAcceleration(!nocuda);
 
 	float totalTime = 0;
-    float totalRMS = 0;
+	float totalRMS = 0;
 
-    for (int i = 0; i < s_fileCount; i++)
-    {
-        AutoPtr<Image> img( new Image() );
-        
-        if (!img->load(s_fileNames[i]))
-        {
-            printf("Input image '%s' not found.\n", s_fileNames[i]);
-            return EXIT_FAILURE;
-        }
+	for (int i = 0; i < s_fileCount; i++)
+	{
+		AutoPtr<Image> img( new Image() );
+		
+		if (!img->load(s_fileNames[i]))
+		{
+			printf("Input image '%s' not found.\n", s_fileNames[i]);
+			return EXIT_FAILURE;
+		}
 
-        inputOptions.setTextureLayout(nvtt::TextureType_2D, img->width(), img->height());
-        inputOptions.setMipmapData(img->pixels(), img->width(), img->height());
+		inputOptions.setTextureLayout(nvtt::TextureType_2D, img->width(), img->height());
+		inputOptions.setMipmapData(img->pixels(), img->width(), img->height());
 
-        printf("Compressing: \t'%s'\n", s_fileNames[i]);
+		printf("Compressing: \t'%s'\n", s_fileNames[i]);
 
 		clock_t start = clock();
 
@@ -278,28 +279,28 @@ int main(int argc, char *argv[])
 		printf("  Time: \t%.3f sec\n", float(end-start) / CLOCKS_PER_SEC);
 		totalTime += float(end-start);
 
-        AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
+		AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
 
-        Path outputFileName("%s/%s", outPath, s_fileNames[i]);
+		Path outputFileName("%s/%s", outPath, s_fileNames[i]);
 		outputFileName.stripExtension();
 		outputFileName.append(".tga");
-        if (!ImageIO::save(outputFileName, img_out.ptr()))
+		if (!ImageIO::save(outputFileName, img_out.ptr()))
 		{
 			printf("Error saving file '%s'.\n", outputFileName.str());
 		}
 
-        float rms = rmsError(img.ptr(), img_out.ptr());
-        totalRMS += rms;
+		float rms = rmsError(img.ptr(), img_out.ptr());
+		totalRMS += rms;
 
-        printf("  RMS:  \t%.4f\n", rms);
-    }
+		printf("  RMS:  \t%.4f\n", rms);
+	}
 
 	totalTime /= s_fileCount;
-    totalRMS /= s_fileCount;
+	totalRMS /= s_fileCount;
 
-    printf("Average Results:\n");
-    printf("  Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
-    printf("  RMS:  \t%.4f\n", totalRMS);
+	printf("Average Results:\n");
+	printf("  Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
+	printf("  RMS:  \t%.4f\n", totalRMS);
 
 	return EXIT_SUCCESS;
 }
