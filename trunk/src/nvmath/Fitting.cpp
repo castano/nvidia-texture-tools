@@ -127,7 +127,7 @@ int nv::Compute4Means(int n, const Vector3 * points, const float * weights, Vect
 			float mindist = FLT_MAX;
 			for (int j = 0; j < 4; j++)
 			{
-				float dist = length_squared(cluster[j] - points[i]);
+				float dist = length_squared((cluster[j] - points[i]) * metric);
 				if (dist < mindist)
 				{
 					mindist = dist;
@@ -169,94 +169,3 @@ int nv::Compute4Means(int n, const Vector3 * points, const float * weights, Vect
 	}
 }
 
-/*
-int nv::Compute2Means(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster)
-{
-	Vector3 centroid = ComputeCentroid(n, points, weights, metric);
-	
-	// Compute principal component.
-	Vector3 principal = ComputePrincipalComponent(n, points, weights, metric);
-	
-	// Pick initial solution.
-	int mini, maxi;
-	mini = maxi = 0;
-	
-	float mindps, maxdps;
-	mindps = maxdps = dot(points[0] - centroid, principal);
-	
-	for (int i = 1; i < n; ++i)
-	{
-		float dps = dot(points[i] - centroid, principal);
-		
-		if (dps < mindps) {
-			mindps = dps;
-			mini = i;
-		}
-		else {
-			maxdps = dps;
-			maxi = i;
-		}
-	}
-
-	cluster[0] = points[mini];
-	cluster[3] = points[maxi];
-	//cluster[0] = centroid + mindps * principal;
-	//cluster[1] = centroid + maxdps * principal;
-	cluster[2] = (2 * cluster[0] + cluster[1]) / 3;
-	cluster[3] = (2 * cluster[1] + cluster[0]) / 3;
-
-	// Now we have to iteratively refine the clusters.
-	while (true)
-	{
-		Vector3 newCluster[4] = { Vector3(zero), Vector3(zero), Vector3(zero), Vector3(zero) };
-		float total[4] = {0, 0, 0, 0};
-		
-		for (int i = 0; i < n; ++i)
-		{
-			// Find nearest cluster.
-			int nearest = 0;
-			float mindist = FLT_MAX;
-			for (int j = 0; j < 4; j++)
-			{
-				float dist = length_squared(cluster[j] - points[i]);
-				if (dist < mindist)
-				{
-					mindist = dist;
-					nearest = j;
-				}
-			}
-			
-			newCluster[nearest] += weights[i] * points[i];
-			total[nearest] += weights[i];
-		}
-
-		for (int j = 0; j < 4; j++)
-		{
-			newCluster[j] /= total[j];
-		}
-
-		if ((equal(cluster[0], newCluster[0]) || total[0] == 0) && 
-			(equal(cluster[1], newCluster[1]) || total[1] == 0) && 
-			(equal(cluster[2], newCluster[2]) || total[2] == 0) && 
-			(equal(cluster[3], newCluster[3]) || total[3] == 0))
-		{
-			return (total[0] != 0) + (total[1] != 0) + (total[2] != 0) + (total[3] != 0);
-		}
-
-		cluster[0] = newCluster[0];
-		cluster[1] = newCluster[1];
-		cluster[2] = newCluster[2];
-		cluster[3] = newCluster[3];
-
-		// Sort clusters by weight.
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = i; j > 0 && total[j] > total[j - 1]; j--)
-			{
-				swap( total[j], total[j - 1] );
-				swap( cluster[j], cluster[j - 1] );
-			}
-		}
-	}
-}
-*/
