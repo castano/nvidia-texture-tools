@@ -18,7 +18,8 @@ SET(MATH_SRCS
 	Sparse.h Sparse.cpp
 	Solver.h Solver.cpp
 	KahanSum.h
-	Half.h Half.cpp)
+	Half.h Half.cpp
+	Fitting.h Fitting.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
