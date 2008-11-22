@@ -24,6 +24,7 @@
 #include <nvcore/Containers.h> // swap
 
 #include <nvmath/Color.h>
+#include <nvmath/Fitting.h>
 
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
@@ -452,7 +453,8 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		// read block
 		Vector3 block[16];
 		extractColorBlockRGB(rgba, block);
-		
+
+#if 0		
 		// find min and max colors
 		Vector3 maxColor, minColor;
 		findMinMaxColorsBox(block, 16, &maxColor, &minColor);
@@ -460,6 +462,14 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		selectDiagonal(block, 16, &maxColor, &minColor);
 		
 		insetBBox(&maxColor, &minColor);
+#endif
+		
+		float weights[16] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+		Vector3 cluster[4];
+		Compute4Means(16, block, weights, Vector3(1, 1, 1), cluster);
+		
+		Vector3 maxColor = cluster[0];
+		Vector3 minColor = cluster[3];
 		
 		uint16 color0 = roundAndExpand(&maxColor);
 		uint16 color1 = roundAndExpand(&minColor);
