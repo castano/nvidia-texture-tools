@@ -79,13 +79,13 @@ TARGET_LINK_LIBRARIES(nvassemble nvcore nvmath nvimage)
 ADD_EXECUTABLE(filtertest tests/filtertest.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(filtertest nvcore nvmath nvimage)
 
-ADD_EXECUTABLE(stress tests/stress.cpp tools/cmdline.h)
-TARGET_LINK_LIBRARIES(stress nvcore nvmath nvimage nvtt)
+ADD_EXECUTABLE(nvtestsuite tests/stress.cpp tools/cmdline.h)
+TARGET_LINK_LIBRARIES(nvtestsuite nvcore nvmath nvimage nvtt)
 
 ADD_EXECUTABLE(nvzoom tools/resize.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
-INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom DESTINATION bin)
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvtestsuite DESTINATION bin)
 
 #include_directories("/usr/include/ffmpeg/")
 #ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
