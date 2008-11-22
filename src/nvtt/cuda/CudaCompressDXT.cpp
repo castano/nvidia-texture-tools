@@ -287,7 +287,7 @@ void CudaCompressor::compressDXT1(const CompressionOptions::Private & compressio
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(blockLinearImage);
 
@@ -357,7 +357,7 @@ void CudaCompressor::compressDXT1_Tex(const CompressionOptions::Private & compre
 	}
 
 	clock_t end = clock();
-	printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(h_result);
 
