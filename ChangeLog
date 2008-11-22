@@ -8,6 +8,7 @@ NVIDIA Texture Tools version 2.1.0
  * Fix loading of EXR files using OpenEXR.
  * Use FreeImage as primary image loading library. Fixes issue 31. Reverted.
  * Output swizzle codes like AMD's tools.
+ * Select the fastest CUDA device.
 
 NVIDIA Texture Tools version 2.0.4
  * Fix error in RGB format output; reported by jonsoh. See issue 49.
