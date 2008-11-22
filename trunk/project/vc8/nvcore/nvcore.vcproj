@@ -340,6 +340,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvcore\StdStream.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\Stream.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvcore\StrLib.h"
 				>
 			</File>
