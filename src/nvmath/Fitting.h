@@ -9,11 +9,11 @@
 namespace nv
 {
 
-	Vector3 ComputeCentroid(int n, const Vec3 * points, const float * weights, Vector3::Arg metric, float * covariance);
-	void ComputeCovariance(int n, const Vec3 * points, const float * weights, Vector3::Arg metric, float * covariance);
-	Vector3 ComputePrincipalComponent(int n, const Vec3 * points, const float * weights, Vector3::Arg metric);
+	Vector3 ComputeCentroid(int n, const Vector3 * points, const float * weights, Vector3::Arg metric);
+	void ComputeCovariance(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, float * covariance);
+	Vector3 ComputePrincipalComponent(int n, const Vector3 * points, const float * weights, Vector3::Arg metric);
 
-	void Compute4Means(int n, const Vec3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster);
+	void Compute4Means(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster);
 
 } // nv namespace
 

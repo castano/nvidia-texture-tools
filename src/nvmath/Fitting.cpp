@@ -1,9 +1,14 @@
 // This code is in the public domain -- icastano@gmail.com
 
+#include "Fitting.h"
+
+#include <nvcore/Algorithms.h> // max
+#include <float.h> // FLT_MAX
+
 using namespace nv;
 
 
-Vector3 nv::ComputeCentroid(int n, const Vec3 * points, const float * weights, Vector3::Arg metric, float * covariance)
+Vector3 nv::ComputeCentroid(int n, const Vector3 * points, const float * weights, Vector3::Arg metric)
 {
 	Vector3 centroid(zero);
 	float total = 0.0f;
@@ -19,7 +24,7 @@ Vector3 nv::ComputeCentroid(int n, const Vec3 * points, const float * weights, V
 }
 
 
-void nv::ComputeCovariance(int n, const Vec3 * points, const float * weights, Vector3::Arg metric, float * covariance)
+void nv::ComputeCovariance(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, float * covariance)
 {
 	// compute the centroid
 	Vector3 centroid = ComputeCentroid(n, points, weights, metric);
@@ -35,21 +40,21 @@ void nv::ComputeCovariance(int n, const Vec3 * points, const float * weights, Ve
 		Vector3 a = (points[i] - centroid) * metric;
 		Vector3 b = weights[i]*a;
 		
-		covariance[0] += a.X()*b.X();
-		covariance[1] += a.X()*b.Y();
-		covariance[2] += a.X()*b.Z();
-		covariance[3] += a.Y()*b.Y();
-		covariance[4] += a.Y()*b.Z();
-		covariance[5] += a.Z()*b.Z();
+		covariance[0] += a.x()*b.x();
+		covariance[1] += a.x()*b.y();
+		covariance[2] += a.x()*b.z();
+		covariance[3] += a.y()*b.y();
+		covariance[4] += a.y()*b.z();
+		covariance[5] += a.z()*b.z();
 	}
 }
 
-Vector3 nv::ComputePrincipalComponent(int n, const Vec3 * points, const float * weights, Vector3::Arg metric)
+Vector3 nv::ComputePrincipalComponent(int n, const Vector3 * points, const float * weights, Vector3::Arg metric)
 {
 	float matrix[6];
 	ComputeCovariance(n, points, weights, metric, matrix);
 
-	if (covariance[0] == 0 || covariance[3] == 0 || covariance[5] == 0)
+	if (matrix[0] == 0 || matrix[3] == 0 || matrix[5] == 0)
 	{
 		return Vector3(zero);
 	}
@@ -63,7 +68,7 @@ Vector3 nv::ComputePrincipalComponent(int n, const Vec3 * points, const float * 
 		float y = v.x() * matrix[1] + v.y() * matrix[3] + v.z() * matrix[4];
 		float z = v.x() * matrix[2] + v.y() * matrix[4] + v.z() * matrix[5];
 		
-		float norm = std::max(std::max(x, y), z);
+		float norm = max(max(x, y), z);
 	
 		v = Vector3(x, y, z) / norm;
 	}
@@ -73,7 +78,7 @@ Vector3 nv::ComputePrincipalComponent(int n, const Vec3 * points, const float * 
 
 
 
-void nv::Compute4Means(int n, const Vec3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster)
+void nv::Compute4Means(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster)
 {
 	Vector3 centroid = ComputeCentroid(n, points, weights, metric);
 	
@@ -87,7 +92,7 @@ void nv::Compute4Means(int n, const Vec3 * points, const float * weights, Vector
 	float mindps, maxdps;
 	mindps = maxdps = dot(points[0], principal);
 	
-	for (int i = 1; i < count; ++i)
+	for (int i = 1; i < n; ++i)
 	{
 		float dps = dot(points[i] - centroid, principal);
 		
@@ -112,14 +117,14 @@ void nv::Compute4Means(int n, const Vec3 * points, const float * weights, Vector
 		Vector3 newCluster[4] = { Vector3(zero), Vector3(zero), Vector3(zero), Vector3(zero) };
 		float total[4] = {0, 0, 0, 0};
 		
-		for (int i = 0; i < count; ++i)
+		for (int i = 0; i < n; ++i)
 		{
 			// Find nearest cluster.
 			int nearest = 0;
 			float mindist = FLT_MAX;
 			for (int j = 0; j < 4; j++)
 			{
-				float dist = lengthSquared(cluster[j] - points[i]);
+				float dist = length_squared(cluster[j] - points[i]);
 				if (dist < mindist)
 				{
 					mindist = dist;
