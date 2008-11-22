@@ -31,6 +31,7 @@
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
 #include <nvcore/TextWriter.h>
+#include <nvcore/FileSystem.h>
 
 #include <stdlib.h> // free
 #include <string.h> // memcpy
@@ -269,7 +270,7 @@ int main(int argc, char *argv[])
 	nvtt::Compressor compressor;
 	compressor.enableCudaAcceleration(!nocuda);
 
-    // @@ Create outPath.
+	FileSystem::createDirectory(outPath);
 
 	Path csvFileName("%s/result.csv", outPath);
 	StdOutputStream csvStream(csvFileName);
@@ -349,7 +350,7 @@ int main(int argc, char *argv[])
 			printf("  Diff: \t%.4f (%s)\n", diff, text);
 		}
 
-        fflush(stdout);
+		fflush(stdout);
 	}
 
 	totalRMS /= s_fileCount;
