@@ -29,18 +29,18 @@
 #include <nvcore/Ptr.h>
 #include <nvcore/Debug.h>
 #include <nvcore/StrLib.h>
+#include <nvcore/StdStream.h>
+#include <nvcore/TextWriter.h>
 
 #include <stdlib.h> // free
 #include <string.h> // memcpy
 #include <time.h> // clock
 
-/*
-#include <stdio.h> // printf
-*/
 
 using namespace nv;
 
 static const char * s_fileNames[] = {
+	// Kodak image set
 	"kodim01.png",
 	"kodim02.png",
 	"kodim03.png",
@@ -65,6 +65,7 @@ static const char * s_fileNames[] = {
 	"kodim22.png",
 	"kodim23.png",
 	"kodim24.png",
+	// Waterloo image set
 	"clegg.png",
 	"frymire.png",
 	"lena.png",
@@ -73,6 +74,13 @@ static const char * s_fileNames[] = {
 	"sail.png",
 	"serrano.png",
 	"tulips.png",
+	// Epic image set
+	"Bradley1.png",
+	"Gradient.png",
+	"MoreRocks.png",
+	"Wall.png",
+	"Rainbow.png",
+	"Text.png",
 };
 const int s_fileCount = sizeof(s_fileNames)/sizeof(s_fileNames[0]);
 
@@ -194,6 +202,7 @@ int main(int argc, char *argv[])
 	bool nocuda = false;
 	bool showHelp = false;
 	const char * outPath = "output";
+	const char * regressPath = NULL;
 	
 	// Parse arguments.
 	for (int i = 1; i < argc; i++)
@@ -214,18 +223,25 @@ int main(int argc, char *argv[])
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') outPath = argv[i+1];
 		}
+		else if (strcmp("-regress", argv[i]) == 0)
+		{
+			if (i+1 < argc && argv[i+1][0] != '-') regressPath = argv[i+1];
+		}
 	}
 
 	if (showHelp)
 	{
 		printf("usage: nvtestsuite [options]\n\n");
 		
+		printf("Input options:\n");
+		printf("  -regress <path>\tRegression directory.\n");
+
 		printf("Compression options:\n");
-		printf("  -fast      \tFast compression.\n");
-		printf("  -nocuda    \tDo not use cuda compressor.\n");
+		printf("  -fast          \tFast compression.\n");
+		printf("  -nocuda        \tDo not use cuda compressor.\n");
 		
 		printf("Output options:\n");
-		printf("  -out <path>\tOutput folder.\n");
+		printf("  -out <path>    \tOutput directory.\n");
 
 		return 1;
 	}	
@@ -253,8 +269,16 @@ int main(int argc, char *argv[])
 	nvtt::Compressor compressor;
 	compressor.enableCudaAcceleration(!nocuda);
 
+    // @@ Create outPath.
+
+	Path csvFileName("%s/result.csv", outPath);
+	StdOutputStream csvStream(csvFileName);
+	TextWriter csvWriter(&csvStream);
+
 	float totalTime = 0;
 	float totalRMS = 0;
+	int failedTests = 0;
+	float totalDiff = 0;
 
 	for (int i = 0; i < s_fileCount; i++)
 	{
@@ -293,14 +317,54 @@ int main(int argc, char *argv[])
 		totalRMS += rms;
 
 		printf("  RMS:  \t%.4f\n", rms);
+
+		// Output csv file
+		csvWriter << "\"" << s_fileNames[i] << "\"," << rms << "\n";
+
+		if (regressPath != NULL)
+		{
+			Path regressFileName("%s/%s", regressPath, s_fileNames[i]);
+			regressFileName.stripExtension();
+			regressFileName.append(".tga");
+
+			AutoPtr<Image> img_reg( new Image() );
+			if (!img_reg->load(regressFileName.str()))
+			{
+				printf("Regression image '%s' not found.\n", regressFileName.str());
+				return EXIT_FAILURE;
+			}
+
+			float rms_reg = rmsError(img.ptr(), img_reg.ptr());
+
+			float diff = rms_reg - rms;
+			totalDiff += diff;
+
+			const char * text = "PASSED";
+			if (equal(diff, 0)) text = "PASSED";
+			else if (diff < 0) {
+				text = "FAILED";
+				failedTests++;
+			}
+
+			printf("  Diff: \t%.4f (%s)\n", diff, text);
+		}
+
+        fflush(stdout);
 	}
 
-	totalTime /= s_fileCount;
 	totalRMS /= s_fileCount;
+	totalDiff /= s_fileCount;
 
-	printf("Average Results:\n");
-	printf("  Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
-	printf("  RMS:  \t%.4f\n", totalRMS);
+	printf("Total Results:\n");
+	printf("  Total Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
+	printf("  Average RMS:\t%.4f\n", totalRMS);
+
+	if (regressPath != NULL)
+	{
+		printf("Regression Results:\n");
+		printf("  Diff: %.4f\n", totalDiff);
+		printf("  %d/%d tests failed.\n", failedTests, s_fileCount);
+	}
 
 	return EXIT_SUCCESS;
 }
