@@ -935,6 +935,15 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 #endif
+
+#if defined(HAVE_SQUISH)
+			if (compressionOptions.externalCompressor == "squish")
+			{
+				squishCompressDXT1(image, outputOptions);
+			}
+			else
+#endif
+
 			if (compressionOptions.quality == Quality_Fastest)
 			{
 				fast.compressDXT1(outputOptions);
