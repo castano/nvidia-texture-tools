@@ -26,7 +26,7 @@
 #include "colourfit.h"
 #include "colourset.h"
 
-namespace squish {
+namespace nvsquish {
 
 ColourFit::ColourFit()
 {

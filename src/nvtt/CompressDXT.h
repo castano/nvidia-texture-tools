@@ -81,6 +81,10 @@ namespace nv
 	void atiCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 #endif
 
+#if defined(HAVE_SQUISH)
+	void squishCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+#endif
+
 } // nv namespace
 
 

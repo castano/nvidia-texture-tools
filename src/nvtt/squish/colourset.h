@@ -23,14 +23,14 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef SQUISH_COLOURSET_H
-#define SQUISH_COLOURSET_H
+#ifndef NV_SQUISH_COLOURSET_H
+#define NV_SQUISH_COLOURSET_H
 
 #include "squish.h"
 #include "maths.h"
 #include "simd.h"
 
-namespace squish {
+namespace nvsquish {
 
 /*! @brief Represents a set of block colours
 */

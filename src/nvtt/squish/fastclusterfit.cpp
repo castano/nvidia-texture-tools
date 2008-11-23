@@ -31,7 +31,7 @@
 
 #include "fastclusterlookup.inl"
 
-namespace squish {
+namespace nvsquish {
 
 FastClusterFit::FastClusterFit()
 {
