@@ -30,7 +30,9 @@ SET(CORE_SRCS
 	CpuInfo.cpp
 	Algorithms.h
 	Library.h
-	Library.cpp)
+	Library.cpp
+	FileSystem.h
+	FileSystem.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
