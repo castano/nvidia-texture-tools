@@ -181,7 +181,7 @@ inline static float evaluatePaletteError4(const Vector3 block[16], Vector3::Arg 
 		float d2 = colorDistance(palette[2], block[i]);
 		float d3 = colorDistance(palette[3], block[i]);
 
-        total += min(min(d0, d1), min(d2, d3));
+		total += min(min(d0, d1), min(d2, d3));
 	}
 
 	return total;
@@ -489,61 +489,24 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		Vector3 cluster[4];
 		int count = Compute4Means(16, block, weights, Vector3(1, 1, 1), cluster);
 
-		Vector3 maxColor = cluster[0];
-        Vector3 minColor = cluster[0];
+		Vector3 maxColor, minColor;
+		float bestError = FLT_MAX;
 
-        float bestError = evaluatePaletteError4(block, maxColor, minColor);
+		for (int i = 1; i < 4; i++)
+		{
+			for (int j = 0; j < i; j++)
+			{
+		        uint16 color0 = roundAndExpand(&cluster[i]);
+		        uint16 color1 = roundAndExpand(&cluster[j]);
 
-        if (count >= 2)
-        {
-            float error = evaluatePaletteError4(block, cluster[0], cluster[1]);
-            if (error < bestError) {
-                bestError = error;
-                maxColor = cluster[0];
-                minColor = cluster[1];
-            }
-
-            if (count >= 3)
-            {
-                error = evaluatePaletteError4(block, cluster[0], cluster[2]);
-                if (error < bestError) {
-                    bestError = error;
-                    maxColor = cluster[0];
-                    minColor = cluster[2];
-                }
-
-                error = evaluatePaletteError4(block, cluster[1], cluster[2]);
-                if (error < bestError) {
-                    bestError = error;
-                    maxColor = cluster[1];
-                    minColor = cluster[2];
-                }
-
-                if (count >= 4)
-                {
-                    error = evaluatePaletteError4(block, cluster[0], cluster[3]);
-                    if (error < bestError) {
-                        bestError = error;
-                        maxColor = cluster[0];
-                        minColor = cluster[3];
-                    }
-
-                    error = evaluatePaletteError4(block, cluster[1], cluster[3]);
-                    if (error < bestError) {
-                        bestError = error;
-                        maxColor = cluster[1];
-                        minColor = cluster[3];
-                    }
-
-                    error = evaluatePaletteError4(block, cluster[2], cluster[3]);
-                    if (error < bestError) {
-                        bestError = error;
-                        maxColor = cluster[2];
-                        minColor = cluster[3];
-                    }
-                }
-            }
-        }
+				float error = evaluatePaletteError4(block, cluster[i], cluster[j]);
+				if (error < bestError) {
+					bestError = error;
+					maxColor = cluster[i];
+					minColor = cluster[j];
+				}
+			}
+		}
 #endif
 
 		uint16 color0 = roundAndExpand(&maxColor);
