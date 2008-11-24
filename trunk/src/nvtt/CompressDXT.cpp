@@ -292,6 +292,12 @@ void nv::SlowCompressor::compressDXT3(const CompressionOptions::Private & compre
 	nvsquish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
+    int flags = 0;
+    if (m_alphaMode == AlphaMode_Transparency)
+    {
+        flags = nvsquish::kWeightColourByAlpha;
+    }
+
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -307,7 +313,7 @@ void nv::SlowCompressor::compressDXT3(const CompressionOptions::Private & compre
 			}
 			else
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), nvsquish::kWeightColourByAlpha);
+				nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
 				fit.SetColourSet(&colours, 0);
 				fit.Compress(&block.color);
 			}
@@ -329,6 +335,12 @@ void nv::SlowCompressor::compressDXT5(const CompressionOptions::Private & compre
 
 	nvsquish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
+    int flags = 0;
+    if (m_alphaMode == AlphaMode_Transparency)
+    {
+        flags = nvsquish::kWeightColourByAlpha;
+    }
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
@@ -352,7 +364,7 @@ void nv::SlowCompressor::compressDXT5(const CompressionOptions::Private & compre
 			}
 			else
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), nvsquish::kWeightColourByAlpha);
+				nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
 				fit.SetColourSet(&colours, 0);
 				fit.Compress(&block.color);
 			}
@@ -402,7 +414,7 @@ void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compr
 			}
 			else*/
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), nvsquish::kWeightColourByAlpha);
+				nvsquish::ColourSet colours((uint8 *)rgba.colors(), 0);
 				fit.SetColourSet(&colours, 0);
 				fit.Compress(&block.color);
 			}
