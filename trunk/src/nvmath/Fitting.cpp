@@ -107,8 +107,6 @@ int nv::Compute4Means(int n, const Vector3 * points, const float * weights, Vect
 		}
 	}
 
-	//cluster[0] = points[mini];
-	//cluster[1] = points[maxi];
 	cluster[0] = centroid + mindps * principal;
 	cluster[1] = centroid + maxdps * principal;
 	cluster[2] = (2 * cluster[0] + cluster[1]) / 3;
@@ -141,13 +139,12 @@ int nv::Compute4Means(int n, const Vector3 * points, const float * weights, Vect
 
 		for (int j = 0; j < 4; j++)
 		{
-			newCluster[j] /= total[j];
+            if (total[j] != 0)
+			    newCluster[j] /= total[j];
 		}
 
-		if ((equal(cluster[0], newCluster[0]) || total[0] == 0) && 
-			(equal(cluster[1], newCluster[1]) || total[1] == 0) && 
-			(equal(cluster[2], newCluster[2]) || total[2] == 0) && 
-			(equal(cluster[3], newCluster[3]) || total[3] == 0))
+		if (equal(cluster[0], newCluster[0]) && equal(cluster[1], newCluster[1]) && 
+			equal(cluster[2], newCluster[2]) && equal(cluster[3], newCluster[3]))
 		{
 			return (total[0] != 0) + (total[1] != 0) + (total[2] != 0) + (total[3] != 0);
 		}
