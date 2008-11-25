@@ -17,6 +17,6 @@ Cross-platform tools optimized for accurate processing of *huge* scientific imag
 
 ----
 
-[http://www.blender.org DDS support in Blender], Amorilia 
+[http://www.blender.org DDS support in Blender], _Amorilia_ 
 
 Blender is an open source, cross platform suite of tools for 3D creation. Blender uses the NVIDIA Texture Tools for loading DDS textures since version 2.46.
