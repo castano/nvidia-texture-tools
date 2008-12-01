@@ -3,13 +3,7 @@ ADD_SUBDIRECTORY(poshlib)
 
 SET(CORE_SRCS
 	nvcore.h
-	DefsGnucDarwin.h
-	DefsGnucLinux.h
-	DefsGnucWin32.h
-	DefsVcWin32.h
 	Ptr.h
-	RefCounted.h
-	RefCounted.cpp
 	BitArray.h
 	Memory.h
 	Memory.cpp
@@ -26,13 +20,8 @@ SET(CORE_SRCS
 	TextWriter.cpp
 	Radix.h
 	Radix.cpp
-	CpuInfo.h
-	CpuInfo.cpp
-	Algorithms.h
 	Library.h
-	Library.cpp
-	FileSystem.h
-	FileSystem.cpp)
+	Library.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

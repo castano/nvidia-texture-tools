@@ -8,11 +8,6 @@
 
 #include <stdio.h>	// NULL
 
-#define NV_DECLARE_PTR(Class) \
-	typedef SmartPtr<class Class> Class ## Ptr; \
-	typedef SmartPtr<const class Class> ClassConst ## Ptr
-
-
 namespace nv
 {
 	
@@ -101,23 +96,125 @@ private:
 	T * m_ptr;
 };
 
+#if 0
+/** Reference counted base class to be used with Pointer.
+ *
+ * The only requirement of the Pointer class is that the RefCounted class implements the 
+ * addRef and release methods.
+ */
+class RefCounted
+{
+	NV_FORBID_COPY(RefCounted);
+public:
+
+	/// Ctor.
+	RefCounted() : m_count(0), m_weak_proxy(NULL)
+	{
+		s_total_obj_count++;
+	}
+
+	/// Virtual dtor.
+	virtual ~RefCounted()
+	{
+		nvCheck( m_count == 0 );
+		nvCheck( s_total_obj_count > 0 );
+		s_total_obj_count--;
+	}
+
+
+	/// Increase reference count.
+	uint addRef() const
+	{
+		s_total_ref_count++;
+		m_count++;
+		return m_count;
+	}
+
+
+	/// Decrease reference count and remove when 0.
+	uint release() const
+	{
+		nvCheck( m_count > 0 );
+		
+		s_total_ref_count--;
+		m_count--;
+		if( m_count == 0 ) {
+			releaseWeakProxy();
+			delete this;
+			return 0;
+		}
+		return m_count;
+	}
+
+	/// Get weak proxy.
+	WeakProxy * getWeakProxy() const
+	{
+		if (m_weak_proxy == NULL) {
+			m_weak_proxy = new WeakProxy;
+			m_weak_proxy->AddRef();
+		}
+		return m_weak_proxy;
+	}
+
+	/// Release the weak proxy.	
+	void releaseWeakProxy() const
+	{
+		if (m_weak_proxy != NULL) {
+			m_weak_proxy->NotifyObjectDied();
+			m_weak_proxy->Release();
+			m_weak_proxy = NULL;
+		}
+	}
+
+	/** @name Debug methods: */
+	//@{
+		/// Get reference count.
+		int refCount() const
+		{
+			return m_count;
+		}
+
+		/// Get total number of objects.
+		static int totalObjectCount()
+		{
+			return s_total_obj_count;
+		}
+
+		/// Get total number of references.
+		static int totalReferenceCount()
+		{
+			return s_total_ref_count;
+		}
+	//@}
+
+
+private:
+
+	NVCORE_API static int s_total_ref_count;
+	NVCORE_API static int s_total_obj_count;
+
+	mutable int m_count;
+	mutable WeakProxy * weak_proxy;
+
+};
+#endif
 
 /// Smart pointer template class.
 template <class BaseClass>
-class SmartPtr {
+class Pointer {
 public:
 
 	// BaseClass must implement addRef() and release().
-	typedef SmartPtr<BaseClass>	ThisType;
+	typedef Pointer<BaseClass>	ThisType;
 
 	/// Default ctor.
-	SmartPtr() : m_ptr(NULL) 
+	Pointer() : m_ptr(NULL) 
 	{
 	}
 
 	/** Other type assignment. */
 	template <class OtherBase>
-	SmartPtr( const SmartPtr<OtherBase> & tc )
+	Pointer( const Pointer<OtherBase> & tc )
 	{
 		m_ptr = static_cast<BaseClass *>( tc.ptr() );
 		if( m_ptr ) {
@@ -126,7 +223,7 @@ public:
 	}
 
 	/** Copy ctor. */
-	SmartPtr( const ThisType & bc )
+	Pointer( const ThisType & bc )
 	{
 		m_ptr = bc.ptr();
 		if( m_ptr ) {
@@ -134,8 +231,8 @@ public:
 		}
 	}
 
-	/** Copy cast ctor. SmartPtr(NULL) is valid. */
-	explicit SmartPtr( BaseClass * bc )
+	/** Copy cast ctor. Pointer(NULL) is valid. */
+	explicit Pointer( BaseClass * bc )
 	{
 		m_ptr = bc;
 		if( m_ptr ) {
@@ -144,7 +241,7 @@ public:
 	}
 
 	/** Dtor. */
-	~SmartPtr()
+	~Pointer()
 	{
 		set(NULL);
 	}
@@ -178,7 +275,7 @@ public:
 	//@{
 		/** Other type assignment. */
 		template <class OtherBase>
-		void operator = ( const SmartPtr<OtherBase> & tc )
+		void operator = ( const Pointer<OtherBase> & tc )
 		{
 			set( static_cast<BaseClass *>(tc.ptr()) );
 		}
@@ -201,7 +298,7 @@ public:
 	//@{
 		/** Other type equal comparation. */
 		template <class OtherBase>
-		bool operator == ( const SmartPtr<OtherBase> & other ) const
+		bool operator == ( const Pointer<OtherBase> & other ) const
 		{
 			return m_ptr == other.ptr();
 		}
@@ -220,7 +317,7 @@ public:
 
 		/** Other type not equal comparation. */
 		template <class OtherBase>
-		bool operator != ( const SmartPtr<OtherBase> & other ) const
+		bool operator != ( const Pointer<OtherBase> & other ) const
 		{
 			return m_ptr != other.ptr();
 		}

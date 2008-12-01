@@ -180,7 +180,6 @@ int nv::cuda::getFastestDevice()
 	return max_gflops_device;
 }
 
-
 /// Activate the given devices.
 bool nv::cuda::setDevice(int i)
 {

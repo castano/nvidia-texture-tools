@@ -25,7 +25,7 @@
    
 #include "colourset.h"
 
-namespace nvsquish {
+namespace squish {
 
 // @@ Add flags:
 // - MatchTransparent

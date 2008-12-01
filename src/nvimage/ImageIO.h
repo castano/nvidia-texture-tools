@@ -19,8 +19,8 @@ namespace nv
 		NVIMAGE_API FloatImage * loadFloat(const char * fileName);
 		NVIMAGE_API FloatImage * loadFloat(const char * fileName, Stream & s);
 		
-		NVIMAGE_API bool save(const char * fileName, Stream & s, const Image * img);
-		NVIMAGE_API bool save(const char * fileName, const Image * img);
+		NVIMAGE_API bool save(const char * fileName, Stream & s, Image * img);
+		NVIMAGE_API bool save(const char * fileName, Image * img);
 		NVIMAGE_API bool saveFloat(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 
 		NVIMAGE_API Image * loadTGA(Stream & s);
@@ -47,15 +47,10 @@ namespace nv
 		
 		NVIMAGE_API bool saveFloatEXR(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 #endif
-/*
-		NVIMAGE_API FloatImage * loadFloatPFM(const char * fileName, Stream & s);
-		NVIMAGE_API bool saveFloatPFM(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 
-		// GridFloat is a simple, open format for terrain elevation data.  See http://ned.usgs.gov/Ned/faq.asp.
-		// Expects: 1) fileName will be an ".hdr" header file, 2) there will also exist a corresponding float data
-		// blob in a ".flt" file.  (This is what USGS gives you.)
-		NVIMAGE_API FloatImage * loadGridFloat(const char * fileName, Stream & s);
-*/
+	//	NVIMAGE_API FloatImage * loadFloatPFM(const char * fileName, Stream & s);
+	//	NVIMAGE_API bool saveFloatPFM(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
+
 	} // ImageIO namespace
 	
 } // nv namespace

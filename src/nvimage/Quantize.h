@@ -3,9 +3,6 @@
 #ifndef NV_IMAGE_QUANTIZE_H
 #define NV_IMAGE_QUANTIZE_H
 
-#include <nvimage/nvimage.h>
-
-
 namespace nv
 {
 	class Image;

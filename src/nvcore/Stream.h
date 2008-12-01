@@ -41,17 +41,17 @@ public:
 	ByteOrder byteOrder() const { return m_byteOrder; }
 
 	
-	/// Serialize the given data.
-	virtual uint serialize( void * data, uint len ) = 0;
+	/// Serialize the given data. @@ Should return bytes serialized?
+	virtual void serialize( void * data, int len ) = 0;
 
 	/// Move to the given position in the archive.
-	virtual void seek( uint pos ) = 0;
+	virtual void seek( int pos ) = 0;
 
 	/// Return the current position in the archive.
-	virtual uint tell() const = 0;
+	virtual int tell() const = 0;
 
 	/// Return the current size of the archive.
-	virtual uint size() const = 0;
+	virtual int size() const = 0;
 
 	/// Determine if there has been any error.
 	virtual bool isError() const = 0;
@@ -136,13 +136,13 @@ public:
 protected:
 
 	/// Serialize in the stream byte order.
-	Stream & byteOrderSerialize( void * v, uint len ) {
+	Stream & byteOrderSerialize( void * v, int len ) {
 		if( m_byteOrder == getSystemByteOrder() ) {
 			serialize( v, len );
 		}
 		else {
-			for( uint i = len; i > 0; i-- ) {
-				serialize( (uint8 *)v + i - 1, 1 );
+			for( int i=len-1; i>=0; i-- ) {
+				serialize( (uint8 *)v + i, 1 );
 			}
 		}
 		return *this;

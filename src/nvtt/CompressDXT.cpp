@@ -36,25 +36,22 @@
 
 // squish
 #include "squish/colourset.h"
+//#include "squish/clusterfit.h"
 #include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
 
 
 // s3_quant
 #if defined(HAVE_S3QUANT)
-#include "extern/s3tc/s3_quant.h"
+#include "s3tc/s3_quant.h"
 #endif
 
 // ati tc
 #if defined(HAVE_ATITC)
-#include "extern/atitc/ATI_Compress.h"
+#include "atitc/ATI_Compress.h"
 #endif
 
-// squish
-#if defined(HAVE_SQUISH)
-#include "extern/squish/squish.h"
-#endif
-
+//#include <time.h>
 
 using namespace nv;
 using namespace nvtt;
@@ -208,9 +205,9 @@ void nv::SlowCompressor::compressDXT1(const CompressionOptions::Private & compre
 	ColorBlock rgba;
 	BlockDXT1 block;
 
-	nvsquish::WeightedClusterFit fit;
-	//nvsquish::ClusterFit fit;
-	//nvsquish::FastClusterFit fit;
+	//squish::WeightedClusterFit fit;
+	//squish::ClusterFit fit;
+	squish::FastClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
 	for (uint y = 0; y < h; y += 4) {
@@ -224,8 +221,8 @@ void nv::SlowCompressor::compressDXT1(const CompressionOptions::Private & compre
 			}
 			else
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), 0, true);
-				fit.SetColourSet(&colours, nvsquish::kDxt1);
+				squish::ColourSet colours((uint8 *)rgba.colors(), 0);
+				fit.SetColourSet(&colours, squish::kDxt1);
 				fit.Compress(&block);
 			}
 			
@@ -245,7 +242,7 @@ void nv::SlowCompressor::compressDXT1a(const CompressionOptions::Private & compr
 	ColorBlock rgba;
 	BlockDXT1 block;
 
-	nvsquish::WeightedClusterFit fit;
+	squish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
 	for (uint y = 0; y < h; y += 4) {
@@ -268,8 +265,8 @@ void nv::SlowCompressor::compressDXT1a(const CompressionOptions::Private & compr
 			}
 			else
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), nvsquish::kDxt1|nvsquish::kWeightColourByAlpha);
-				fit.SetColourSet(&colours, nvsquish::kDxt1);
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kDxt1|squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, squish::kDxt1);
 				fit.Compress(&block);
 			}
 			
@@ -289,14 +286,9 @@ void nv::SlowCompressor::compressDXT3(const CompressionOptions::Private & compre
 	ColorBlock rgba;
 	BlockDXT3 block;
 	
-	nvsquish::WeightedClusterFit fit;
+	squish::WeightedClusterFit fit;
+	//squish::FastClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
-
-    int flags = 0;
-    if (m_alphaMode == AlphaMode_Transparency)
-    {
-        flags = nvsquish::kWeightColourByAlpha;
-    }
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
@@ -313,7 +305,7 @@ void nv::SlowCompressor::compressDXT3(const CompressionOptions::Private & compre
 			}
 			else
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
 				fit.SetColourSet(&colours, 0);
 				fit.Compress(&block.color);
 			}
@@ -333,14 +325,8 @@ void nv::SlowCompressor::compressDXT5(const CompressionOptions::Private & compre
 	ColorBlock rgba;
 	BlockDXT5 block;
 
-	nvsquish::WeightedClusterFit fit;
+	squish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
-
-    int flags = 0;
-    if (m_alphaMode == AlphaMode_Transparency)
-    {
-        flags = nvsquish::kWeightColourByAlpha;
-    }
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
@@ -364,7 +350,7 @@ void nv::SlowCompressor::compressDXT5(const CompressionOptions::Private & compre
 			}
 			else
 			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
 				fit.SetColourSet(&colours, 0);
 				fit.Compress(&block.color);
 			}
@@ -385,9 +371,6 @@ void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compr
 	ColorBlock rgba;
 	BlockDXT5 block;
 	
-	nvsquish::WeightedClusterFit fit;
-	fit.SetMetric(0, 1, 0);
-
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
 			
@@ -406,18 +389,7 @@ void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compr
 			}
 			
 			// Compress Y.
-			//OptimalCompress::compressDXT1G(rgba, &block.color);
-
-			/*if (rgba.isSingleColor())
-			{
-				OptimalCompress::compressDXT1G(rgba.color(0), &block.color);
-			}
-			else*/
-			{
-				nvsquish::ColourSet colours((uint8 *)rgba.colors(), 0);
-				fit.SetColourSet(&colours, 0);
-				fit.Compress(&block.color);
-			}
+			OptimalCompress::compressDXT1G(rgba, &block.color);
 			
 			if (outputOptions.outputHandler != NULL) {
 				outputOptions.outputHandler->writeData(&block, sizeof(block));
@@ -623,27 +595,3 @@ void nv::atiCompressDXT1(const Image * image, const OutputOptions::Private & out
 }
 
 #endif // defined(HAVE_ATITC)
-
-#if defined(HAVE_SQUISH)
-
-void nv::squishCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
-{
-	Image img(*image);
-	int count = img.width() * img.height();
-	for (int i = 0; i < count; i++)
-	{
-		Color32 c = img.pixel(i);
-		img.pixel(i) = Color32(c.b, c.g, c.r, c.a);
-	}
-
-	int size = squish::GetStorageRequirements(img.width(), img.height(), squish::kDxt1);
-	void * blocks = malloc(size);
-
-	squish::CompressImage((const squish::u8 *)img.pixels(), img.width(), img.height(), blocks, squish::kDxt1 | squish::kColourClusterFit);
-
-	if (outputOptions.outputHandler != NULL) {
-		outputOptions.outputHandler->writeData(blocks, size);
-	}
-}
-
-#endif // defined(HAVE_SQUISH)

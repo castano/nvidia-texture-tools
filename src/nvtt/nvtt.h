@@ -47,7 +47,7 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_VERSION 201
+#define NVTT_VERSION 200
 
 #define NVTT_DECLARE_PIMPL(Class) \
 	private: \
@@ -83,19 +83,6 @@ namespace nvtt
 		Format_BC3n = Format_DXT5n,
 		Format_BC4,     // ATI1
 		Format_BC5,     // 3DC, ATI2
-
-		Format_DXT1n,
-		Format_CTX1,
-	};
-
-	/// Pixel types.
-	enum PixelType
-	{
-		PixelType_UnsignedNorm,
-		PixelType_SignedNorm,
-		PixelType_UnsignedInt,
-		PixelType_SignedInt,
-		PixelType_Float,
 	};
 	
 	/// Quality modes.
@@ -125,23 +112,10 @@ namespace nvtt
 
 		// Set color mask to describe the RGB/RGBA format.
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
-		NVTT_API void setPixelFormat(unsigned char rsize, unsigned char gsize, unsigned char bsize, unsigned char asize);
-		
-		NVTT_API void setPixelType(PixelType pixelType);
 
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 	};
 
-	/* 
-	// DXGI_FORMAT_R16G16_FLOAT
-	compressionOptions.setPixelType(PixelType_Float);
-	compressionOptions.setPixelFormat2(16, 16, 0, 0);
-	
-	// DXGI_FORMAT_R32G32B32A32_FLOAT
-	compressionOptions.setPixelType(PixelType_Float);
-	compressionOptions.setPixelFormat2(32, 32, 32, 32);
-	*/
-	
 
 	/// Wrap modes.
 	enum WrapMode
@@ -163,7 +137,8 @@ namespace nvtt
 	enum InputFormat
 	{
 		InputFormat_BGRA_8UB,
-		InputFormat_RGBA_32F,
+	//	InputFormat_RGBE_8UB,
+	//	InputFormat_BGRA_32F,
 	};
 	
 	/// Mipmap downsampling filters.
@@ -178,10 +153,7 @@ namespace nvtt
 	enum ColorTransform
 	{
 		ColorTransform_None,
-		ColorTransform_Linear,      ///< Not implemented.
-		ColorTransform_Swizzle,     ///< Not implemented.
-		ColorTransform_YCoCg,       ///< Transform into r=Co, g=Cg, b=0, a=Y
-		ColorTransform_ScaledYCoCg, ///< Not implemented.
+		ColorTransform_Linear,
 	};
 	
 	/// Extents rounding mode.
@@ -218,7 +190,6 @@ namespace nvtt
 		
 		// Set mipmap data. Copies the data.
 		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);
-		NVTT_API bool setMipmapChannelData(const void * data, int channel, int w, int h, int d = 1, int face = 0, int mipmap = 0);
 		
 		// Describe the format of the input.
 		NVTT_API void setFormat(InputFormat format);
@@ -244,18 +215,13 @@ namespace nvtt
 		NVTT_API void setNormalFilter(float sm, float medium, float big, float large);
 		NVTT_API void setNormalizeMipmaps(bool b);
 		
-		// Set color transforms.
+		// Set color transforms. @@ Not implemented!
 		NVTT_API void setColorTransform(ColorTransform t);
 		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
-		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3, float offset);
-		NVTT_API void setSwizzleTransform(int x, int y, int z, int w);
 		
 		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
 		NVTT_API void setRoundMode(RoundMode mode);
-
-		// Set whether or not to premultiply color by alpha
-		NVTT_API void setPremultiplyAlpha(bool b);
 	};
 	
 	
@@ -280,7 +246,6 @@ namespace nvtt
 		Error_CudaError,
   		Error_FileOpen,
   		Error_FileWrite,
-        Error_UnsupportedOutputFormat,
 	};
 	
 	/// Error handler.
@@ -292,13 +257,6 @@ namespace nvtt
 		virtual void error(Error e) = 0;
 	};
 
-	/// Container.
-	enum Container
-	{
-		Container_DDS,
-		Container_DDS10,
-	};
-	
 
 	/// Output Options. This class holds pointers to the interfaces that are used to report the output of 
 	/// the compressor to the user.
@@ -317,7 +275,6 @@ namespace nvtt
 		NVTT_API void setOutputHandler(OutputHandler * outputHandler);
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
 		NVTT_API void setOutputHeader(bool outputHeader);
-		NVTT_API void setContainer(Container container);
 	};
 
 

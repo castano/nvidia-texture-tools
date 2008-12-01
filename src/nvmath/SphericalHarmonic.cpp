@@ -11,10 +11,8 @@ namespace
 	// Basic integer factorial.
 	inline static int factorial( int v )
 	{
-		const static int fac_table[] = { 1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800 };
-
-		if(v <= 11){
-			return fac_table[v];
+		if (v == 0) {
+			return 1;
 		}
 	
 		int result = v;
@@ -82,7 +80,7 @@ namespace
 	
 	template <int l, int m> float legendre(float x);
 	
-	template <> float legendre<0, 0>(float ) {
+	template <> float legendre<0, 0>(float x) {
 		return 1;
 	}
 	

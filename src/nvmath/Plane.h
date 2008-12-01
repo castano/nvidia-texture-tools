@@ -59,7 +59,7 @@ namespace nv
 		return Plane(plane.asVector() * inv);
 	}
 
-	// Get the signed distance from the given point to this plane.
+	// Get the distance from the given point to this plane.
 	inline float distance(Plane::Arg plane, Vector3::Arg point)
 	{
 		return dot(plane.vector(), point) - plane.offset();

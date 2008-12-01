@@ -1,19 +1,19 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include "ImageIO.h"
-#include "Image.h"
-#include "FloatImage.h"
-#include "TgaFile.h"
-#include "PsdFile.h"
-
-#include <nvmath/Color.h>
-
 #include <nvcore/Ptr.h>
 #include <nvcore/Containers.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
 //#include <nvcore/Tokenizer.h>	// @@ Disable temporarily
 #include <nvcore/TextWriter.h>
+
+#include <nvmath/Color.h>
+
+#include "ImageIO.h"
+#include "Image.h"
+#include "FloatImage.h"
+#include "TgaFile.h"
+#include "PsdFile.h"
 
 // Extern
 #if defined(HAVE_JPEG)
@@ -40,10 +40,6 @@ extern "C" {
 #	include <ImfArray.h>
 #endif
 
-#if defined(HAVE_FREEIMAGE)
-#	include <FreeImage.h>
-#endif
-
 using namespace nv;
 
 namespace {
@@ -62,10 +58,6 @@ namespace {
 	
 } // namespace
 
-#if defined(HAVE_FREEIMAGE)
-static Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
-static FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
-#endif
 
 Image * nv::ImageIO::load(const char * fileName)
 {
@@ -86,16 +78,10 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 	nvDebugCheck(s.isLoading());
 
 	const char * extension = Path::extension(fileName);
-
+	
 	if (strCaseCmp(extension, ".tga") == 0) {
 		return ImageIO::loadTGA(s);
 	}
-#if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
-		return loadFreeImage(fif, s);
-	}
-#endif
 #if defined(HAVE_JPEG)
 	if (strCaseCmp(extension, ".jpg") == 0 || strCaseCmp(extension, ".jpeg") == 0) {
 		return loadJPG(s);
@@ -106,17 +92,14 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 		return loadPNG(s);
 	}
 #endif
-	
 	if (strCaseCmp(extension, ".psd") == 0) {
 		return loadPSD(s);
 	}
-
 	// @@ use image plugins?
-
 	return NULL;
 }
 
-bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img)
+bool nv::ImageIO::save(const char * fileName, Stream & s, Image * img)
 {
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(s.isSaving());
@@ -131,7 +114,7 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img)
 	return false;
 }
 
-bool nv::ImageIO::save(const char * fileName, const Image * img)
+bool nv::ImageIO::save(const char * fileName, Image * img)
 {
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(img != NULL);
@@ -174,19 +157,10 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 		return loadFloatEXR(fileName, s);
 	}
 #endif
-#if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
-		return loadFloatFreeImage(fif, s);
-	}
-#endif
 
 /* // @@ Disable temporarily
 	if (strCaseCmp(extension, ".pfm") == 0) {
 		return loadFloatPFM(fileName, s);
-	}
-	if (strCaseCmp(extension, ".hdr") == 0) {
-		return loadGridFloat(fileName, s);
 	}
 */
 
@@ -623,206 +597,6 @@ Image * nv::ImageIO::loadPSD(Stream & s)
 	return img.release();
 }
 
-
-#if defined(HAVE_FREEIMAGE)
-
-unsigned DLL_CALLCONV ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
-{
-	Stream * s = (Stream *) handle;
-	s->serialize(buffer, size * count);
-	return count;
-}
-
-int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
-{
-	Stream * s = (Stream *) handle;
-	
-	switch(origin) {
-		case SEEK_SET :
-			s->seek(offset);
-			break;
-		case SEEK_CUR :
-			s->seek(s->tell() + offset);
-			break;
-		default :
-			return 1;
-	}
-  
-	return 0;
-}
-
-long DLL_CALLCONV TellProc(fi_handle handle)
-{
-	Stream * s = (Stream *) handle;
-	return s->tell();
-}
-
-
-Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
-{
-	nvCheck(!s.isError());
-
-	FreeImageIO io;
-	io.read_proc = ReadProc;
-	io.write_proc = NULL;
-	io.seek_proc = SeekProc;
-	io.tell_proc = TellProc;
-	
-	FIBITMAP * bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)&s, 0);
-	
-	if (bitmap == NULL)
-	{
-		return NULL;
-	}
-	
-	const int w = FreeImage_GetWidth(bitmap);
-	const int h = FreeImage_GetHeight(bitmap);
-	
-	if (FreeImage_GetImageType(bitmap) == FIT_BITMAP)
-	{
-		if (FreeImage_GetBPP(bitmap) != 32)
-		{
-			FIBITMAP * tmp = FreeImage_ConvertTo32Bits(bitmap);
-			FreeImage_Unload(bitmap);
-			bitmap = tmp;
-		}
-	}
-	else
-	{
-		// @@ Use tone mapping?
-		FIBITMAP * tmp = FreeImage_ConvertToType(bitmap, FIT_BITMAP, true);
-		FreeImage_Unload(bitmap);
-		bitmap = tmp;
-	}
-	
-	
-	Image * image = new Image();
-	image->allocate(w, h);
-	
-	// Copy the image over to our internal format, FreeImage has the scanlines bottom to top though.
-	for (int y=0; y < h; y++)
-	{
-		const void * src = FreeImage_GetScanLine(bitmap, h - y - 1);
-		void * dst = image->scanline(y);		
-		
-		memcpy(dst, src, 4 * w);
-	}
-	
-	FreeImage_Unload(bitmap);
-	
-	return image;
-}
-
-FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
-{
-	nvCheck(!s.isError());
-
-	FreeImageIO io;
-	io.read_proc = ReadProc;
-	io.write_proc = NULL;
-	io.seek_proc = SeekProc;
-	io.tell_proc = TellProc;
-	
-	FIBITMAP * bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)&s, 0);
-	
-	if (bitmap == NULL)
-	{
-		return NULL;
-	}
-	
-	const int w = FreeImage_GetWidth(bitmap);
-	const int h = FreeImage_GetHeight(bitmap);
-
-	FREE_IMAGE_TYPE fit = FreeImage_GetImageType(bitmap);
-
-	FloatImage * floatImage = new FloatImage();
-	
-	switch (fit)
-	{
-		case FIT_FLOAT:
-			floatImage->allocate(1, w, h);
-		
-			for (int y=0; y < h; y++)
-			{
-				const float * src = (const float *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-				float * dst = floatImage->scanline(y, 0);
-				
-				for (int x=0; x < w; x++)
-				{
-					dst[x] = src[x];
-				}
-			}
-			break;
-		case FIT_COMPLEX:
-			floatImage->allocate(2, w, h);
-		
-			for (int y=0; y < h; y++)
-			{
-				const FICOMPLEX * src = (const FICOMPLEX *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-
-				float * dst_real = floatImage->scanline(y, 0);
-				float * dst_imag = floatImage->scanline(y, 1);
-				
-				for (int x=0; x < w; x++)
-				{
-					dst_real[x] = (float)src[x].r;
-					dst_imag[x] = (float)src[x].i;
-				}
-			}
-			break;
-		case FIT_RGBF:
-			floatImage->allocate(3, w, h);
-		
-			for (int y=0; y < h; y++)
-			{
-				const FIRGBF * src = (const FIRGBF *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-
-				float * dst_red = floatImage->scanline(y, 0);
-				float * dst_green = floatImage->scanline(y, 1);
-				float * dst_blue = floatImage->scanline(y, 2);
-				
-				for (int x=0; x < w; x++)
-				{
-					dst_red[x] = src[x].red;
-					dst_green[x] = src[x].green;
-					dst_blue[x] = src[x].blue;
-				}
-			}
-			break;
-		case FIT_RGBAF:
-			floatImage->allocate(4, w, h);
-		
-			for (int y=0; y < h; y++)
-			{
-				const FIRGBAF * src = (const FIRGBAF *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-
-				float * dst_red = floatImage->scanline(y, 0);
-				float * dst_green = floatImage->scanline(y, 1);
-				float * dst_blue = floatImage->scanline(y, 2);
-				float * dst_alpha = floatImage->scanline(y, 3);
-				
-				for (int x=0; x < w; x++)
-				{
-					dst_red[x] = src[x].red;
-					dst_green[x] = src[x].green;
-					dst_blue[x] = src[x].blue;
-					dst_alpha[x] = src[x].alpha;
-				}
-			}
-			break;
-		default:
-			delete floatImage;
-			floatImage = NULL;
-	}
-	
-	FreeImage_Unload(bitmap);
-	
-	return floatImage;
-}
-
-#endif // defined(HAVE_FREEIMAGE)
-
-
 #if defined(HAVE_PNG)
 
 static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
@@ -1020,7 +794,7 @@ Image * nv::ImageIO::loadJPG(Stream & s)
 	// Read the entire file.
 	Array<uint8> byte_array;
 	byte_array.resize(s.size());
-	s.serialize(byte_array.mutableBuffer(), s.size());
+	s.serialize(byte_array.unsecureBuffer(), s.size());
 	
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -1315,8 +1089,7 @@ namespace
 		
 		virtual void seekg(Imf::Int64 pos)
 		{
-			nvDebugCheck(pos >= 0 && pos < UINT_MAX);
-			m_stream.seek((uint)pos);
+			m_stream.seek(pos);
 		}
 		
 		virtual void clear()
@@ -1327,23 +1100,6 @@ namespace
 	private:
 		Stream & m_stream;
 	};
-
-	static int channelIndexFromName(const char* name)
-	{
-		char c = tolower(name[0]);
-		switch (c)
-		{
-		default:
-		case 'r':
-			return 0;
-		case 'g':
-			return 1;
-		case 'b':
-			return 2;
-		case 'a':
-			return 3;
-		}
-	}
 
 } // namespace
 
@@ -1378,8 +1134,7 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	uint i = 0;
 	for (Imf::ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it, ++i)
 	{
-		int channelIndex = channelIndexFromName(it.name());
-		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(channelIndex), sizeof(float), sizeof(float) * width));
+		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(i), sizeof(float), sizeof(float) * width));
 	}
 	
 	// Read it.
@@ -1543,77 +1298,6 @@ bool nv::ImageIO::saveFloatPFM(const char * fileName, const FloatImage * fimage,
 	return true;
 }
 
-//#pragma warning(disable : 4996)
-
-NVIMAGE_API FloatImage * nv::ImageIO::loadGridFloat(const char * fileName, Stream & s)
-{
-	nvCheck(s.isLoading());
-	nvCheck(!s.isError());
-
-	Tokenizer parser(&s);
-
-	parser.nextLine();
-
-	if (parser.token() != "ncols")
-	{
-		nvDebug("Failed to find 'ncols' token in file '%s'.\n", fileName);
-		return NULL;
-	}
-
-	parser.nextToken(true);
-	const int nCols = parser.token().toInt(); 
-
-	parser.nextToken(true);
-	if (parser.token() != "nrows")
-	{
-		nvDebug("Failed to find 'nrows' token in file '%s'.\n", fileName);
-		return NULL;
-	}
-
-	parser.nextToken(true);
-	const int nRows = parser.token().toInt();
-
-	/* There's a byte order defined in the header.  We could read it.  However, here we 
-	   just assume that it matches the platform's byte order.
-	// There is then a bunch of data that we don't care about (lat, long definitions, etc).
-	for (int i=0; i!=9; ++i)
-		parser.nextToken(true);
-
-	if (parser.token() != "byteorder")
-		return NULL;
-
-	parser.nextToken(true);
-
-	const Stream::ByteOrder byteOrder = (parser.token() == "LSBFIRST")? Stream::LittleEndian: Stream::BigEndian;
-	*/
-
-	// GridFloat comes in two files: an ASCII header which was parsed above (.hdr) and a big blob
-	// of binary data in a .flt file.
-	Path dataPath(fileName);
-	dataPath.stripExtension();
-	dataPath.append(".flt");
-
-	// Open the binary data.
-	FILE* file = fopen(dataPath.fileName(), "rb");
-	if (!file)
-	{
-		nvDebug("Failed to find GridFloat blob file '%s' corresponding to '%s'.\n", dataPath.fileName(), fileName);
-		return NULL;
-	}
-
-	// Allocate image.
-	AutoPtr<FloatImage> fimage(new FloatImage());
-	fimage->allocate(1, nCols, nRows);
-
-	float * channel = fimage->channel(0);
-
-	// The binary blob is defined to be in row-major order, containing IEEE floats.
-	// So we can just slurp it in.  Theoretically, we ought to use the byte order.
-	const size_t nRead = fread((void*) channel, sizeof(float), nRows * nCols, file);
-	fclose(file);
-
-	return fimage.release();
-}
 #endif
 
 #if 0

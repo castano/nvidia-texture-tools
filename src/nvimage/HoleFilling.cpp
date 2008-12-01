@@ -1,13 +1,12 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvimage/HoleFilling.h>
-#include <nvimage/FloatImage.h>
-
-#include <nvmath/nvmath.h>
-
 #include <nvcore/Containers.h>
 #include <nvcore/Ptr.h>
 
+#include <nvmath/nvmath.h>
+
+#include <nvimage/HoleFilling.h>
+#include <nvimage/FloatImage.h>
 
 using namespace nv;
 
@@ -126,8 +125,6 @@ namespace {
 } // namespace
 
 // Voronoi filling using EDT-4
-// This implementation is based on Danielsson's algorithm published in:
-// "Euclidean Distance Mapping" Per-Erik Danielsson, Computer Graphics and Image Processing, 14, 1980
 void nv::fillVoronoi(FloatImage * img, const BitMap * bmap)
 {
 	nvCheck(img != NULL);
@@ -220,6 +217,14 @@ void nv::fillVoronoi(FloatImage * img, const BitMap * bmap)
 		}
 	}
 
+}
+
+
+void nv::fillBlur(FloatImage * img, const BitMap * bmap)
+{
+	nvCheck(img != NULL);
+	
+	// @@ Apply a 3x3 kernel.
 }
 
 

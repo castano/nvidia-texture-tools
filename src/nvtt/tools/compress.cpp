@@ -21,20 +21,20 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "cmdline.h"
-
-#include <nvtt/nvtt.h>
-
-#include <nvimage/Image.h>    // @@ It might be a good idea to use FreeImage directly instead of ImageIO.
-#include <nvimage/ImageIO.h>
-#include <nvimage/FloatImage.h>
-#include <nvimage/DirectDrawSurface.h>
-
-#include <nvcore/Ptr.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
 
+#include <nvimage/Image.h>
+#include <nvimage/DirectDrawSurface.h>
+
+#include <nvtt/nvtt.h>
+
+#include "cmdline.h"
+
 #include <time.h> // clock
+
+//#define WINDOWS_LEAN_AND_MEAN
+//#include <windows.h> // TIMER
 
 
 struct MyOutputHandler : public nvtt::OutputHandler
@@ -87,10 +87,7 @@ struct MyErrorHandler : public nvtt::ErrorHandler
 {
 	virtual void error(nvtt::Error e)
 	{
-#if _DEBUG
 		nvDebugBreak();
-#endif
-		printf("Error: '%s'\n", nvtt::errorString(e));
 	}
 };
 
@@ -140,16 +137,11 @@ int main(int argc, char *argv[])
 	bool noMipmaps = false;
 	bool fast = false;
 	bool nocuda = false;
+	bool silent = false;
 	bool bc1n = false;
 	nvtt::Format format = nvtt::Format_BC1;
-	bool premultiplyAlpha = false;
-	nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
-	bool loadAsFloat = false;
 
 	const char * externalCompressor = NULL;
-
-	bool silent = false;
-	bool dds10 = false;
 
 	nv::Path input;
 	nv::Path output;
@@ -180,23 +172,6 @@ int main(int argc, char *argv[])
 		else if (strcmp("-nomips", argv[i]) == 0)
 		{
 			noMipmaps = true;
-		}
-		else if (strcmp("-premula", argv[i]) == 0)
-		{
-			premultiplyAlpha = true;
-		}
-		else if (strcmp("-mipfilter", argv[i]) == 0)
-		{
-			if (i+1 == argc) break;
-			i++;
-
-			if (strcmp("box", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Box;
-			else if (strcmp("triangle", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Triangle;
-			else if (strcmp("kaiser", argv[i]) == 0) mipmapFilter = nvtt::MipmapFilter_Kaiser;
-		}
-		else if (strcmp("-float", argv[i]) == 0)
-		{
-			loadAsFloat = true;
 		}
 
 		// Compression options.
@@ -255,14 +230,10 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// Output options
+		// Misc options
 		else if (strcmp("-silent", argv[i]) == 0)
 		{
 			silent = true;
-		}
-		else if (strcmp("-dds10", argv[i]) == 0)
-		{
-			dds10 = true;
 		}
 
 		else if (argv[i][0] != '-')
@@ -283,12 +254,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	const uint version = nvtt::version();
-	const uint major = version / 100;
-	const uint minor = version % 100;
-	
-
-	printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor);
+	printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
 
 	if (input.isNull())
 	{
@@ -300,9 +266,7 @@ int main(int argc, char *argv[])
 		printf("  -tonormal\tConvert input to normal map.\n");
 		printf("  -clamp   \tClamp wrapping mode (default).\n");
 		printf("  -repeat  \tRepeat wrapping mode.\n");
-		printf("  -nomips  \tDisable mipmap generation.\n");
-		printf("  -premula \tPremultiply alpha into color channel.\n");
-		printf("  -mipfilter \tMipmap filter. One of the following: box, triangle, kaiser.\n\n");
+		printf("  -nomips  \tDisable mipmap generation.\n\n");
 
 		printf("Compression options:\n");
 		printf("  -fast    \tFast compression.\n");
@@ -317,10 +281,6 @@ int main(int argc, char *argv[])
 		printf("  -bc4     \tBC4 format (ATI1)\n");
 		printf("  -bc5     \tBC5 format (3Dc/ATI2)\n\n");
 		
-		printf("Output options:\n");
-		printf("  -silent  \tDo not output progress messages\n");
-		printf("  -dds10   \tUse DirectX 10 DDS format\n\n");
-
 		return 1;
 	}
 
@@ -366,7 +326,7 @@ int main(int argc, char *argv[])
 		{
 			for (uint m = 0; m < mipmapCount; m++)
 			{
-				dds.mipmap(&mipmap, f, m);	// @@ Load as float.
+				dds.mipmap(&mipmap, f, m);
 				
 				inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), 1, f, m);
 			}
@@ -374,42 +334,16 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		if (nv::strCaseCmp(input.extension(), ".exr") == 0)
+		// Regular image.
+		nv::Image image;
+		if (!image.load(input))
 		{
-			loadAsFloat = true;
+			fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
+			return 1;
 		}
-
-		if (loadAsFloat)
-		{
-			nv::AutoPtr<nv::FloatImage> image(nv::ImageIO::loadFloat(input));
-
-			if (image == NULL)
-			{
-				fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
-				return 1;
-			}
-			
-			inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
-			inputOptions.setTextureLayout(nvtt::TextureType_2D, image->width(), image->height());
-
-			for (uint i = 0; i < image->componentNum(); i++)
-			{
-				inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
-			}
-		}
-		else
-		{
-			// Regular image.
-			nv::Image image;
-			if (!image.load(input))
-			{
-				fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
-				return 1;
-			}
-			
-			inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
-			inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
-		}
+		
+		inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
+		inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
 	}
 
 	if (wrapRepeat)
@@ -439,23 +373,8 @@ int main(int argc, char *argv[])
 		inputOptions.setMipmapGeneration(false);
 	}
 
-	if (premultiplyAlpha)
-	{
-		inputOptions.setPremultiplyAlpha(true);
-		inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
-	}
-	
-	inputOptions.setMipmapFilter(mipmapFilter);
-
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
-
-	/*if (format == nvtt::Format_RGBA)
-	{
-		compressionOptions.setPixelType(nvtt::PixelType_Float);
-		compressionOptions.setPixelFormat(16, 16, 16, 16);
-	}*/
-
 	if (fast)
 	{
 		compressionOptions.setQuality(nvtt::Quality_Fastest);
@@ -475,6 +394,21 @@ int main(int argc, char *argv[])
 	if (externalCompressor != NULL)
 	{
 		compressionOptions.setExternalCompressor(externalCompressor);
+	}
+
+	if (format == nvtt::Format_RGB)
+	{
+		compressionOptions.setQuantization(true, false, false);
+		//compressionOptions.setPixelFormat(16, 0xF000, 0x0F00, 0x00F0, 0x000F);
+		compressionOptions.setPixelFormat(16, 
+			0x0F00, 
+			0x00F0, 
+			0x000F, 
+			0xF000);
+		//	0x003F0000, 
+		//	0x00003F00, 
+		//	0x0000003F, 
+		//	0x3F000000);
 	}
 
 	
@@ -497,25 +431,30 @@ int main(int argc, char *argv[])
 	outputOptions.setOutputHandler(&outputHandler);
 	outputOptions.setErrorHandler(&errorHandler);
 	
-	if (dds10)
-	{
-		outputOptions.setContainer(nvtt::Container_DDS10);
-	}
-	
-
 //	printf("Press ENTER.\n");
 //	fflush(stdout);
 //	getchar();
 
+/*	LARGE_INTEGER temp;
+	QueryPerformanceFrequency((LARGE_INTEGER*) &temp);
+	double freq = ((double) temp.QuadPart) / 1000.0;
+
+    LARGE_INTEGER start_time;
+    QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
+*/
 	clock_t start = clock();
 	
-	bool success = compressor.process(inputOptions, compressionOptions, outputOptions);
+	compressor.process(inputOptions, compressionOptions, outputOptions);
+/*
+	LARGE_INTEGER end_time;
+	QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
 
-	if (success)
-	{
-		clock_t end = clock();
-		printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
-	}
+	float diff_time = (float) (((double) end_time.QuadPart - (double) start_time.QuadPart) / freq);
+	printf("\rtime taken: %.3f seconds\n", diff_time/1000);
+*/
+
+	clock_t end = clock();
+	printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 	
 	return 0;
 }

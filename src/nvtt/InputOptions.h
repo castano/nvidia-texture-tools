@@ -28,7 +28,6 @@
 #include <nvmath/Vector.h>
 #include <nvmath/Matrix.h>
 #include <nvimage/Image.h>
-#include <nvimage/FloatImage.h>
 #include "nvtt.h"
 
 namespace nvtt
@@ -57,8 +56,6 @@ namespace nvtt
 		// Color transform.
 		ColorTransform colorTransform;
 		nv::Matrix linearTransform;
-		float colorOffsets[4];
-		uint swizzleTransform[4];
 		
 		// Mipmap generation options.
 		bool generateMipmaps;
@@ -81,8 +78,6 @@ namespace nvtt
 		uint maxExtent;
 		RoundMode roundMode;
 		
-		bool premultiplyAlpha;
-
 		// @@ These are computed in nvtt::compress, so they should be mutable or stored elsewhere...
 		mutable uint targetWidth;
 		mutable uint targetHeight;
@@ -96,16 +91,12 @@ namespace nvtt
 		const nv::Image * image(uint face, uint mipmap) const;
 		const nv::Image * image(uint idx) const;
 
-		const nv::FloatImage * floatImage(uint idx) const;
-
 	};
 
 	// Internal image structure.
 	struct InputOptions::Private::InputImage
 	{
 		InputImage() {}
-		
-		bool hasValidData() const { return uint8data != NULL || floatdata != NULL; }
 		
 		int mipLevel;
 		int face;
@@ -114,8 +105,7 @@ namespace nvtt
 		int height;
 		int depth;
 		
-		nv::AutoPtr<nv::Image> uint8data;
-		nv::AutoPtr<nv::FloatImage> floatdata;
+		nv::AutoPtr<nv::Image> data;
 	};
 
 } // nvtt namespace

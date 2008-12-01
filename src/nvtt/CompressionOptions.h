@@ -45,12 +45,6 @@ namespace nvtt
 		uint gmask;
 		uint bmask;
 		uint amask;
-		uint8 rsize;
-		uint8 gsize;
-		uint8 bsize;
-		uint8 asize;
-		
-		PixelType pixelType;
 		
 		nv::String externalCompressor;
 

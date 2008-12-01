@@ -23,8 +23,8 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_SIMD_SSE_H
-#define NV_SQUISH_SIMD_SSE_H
+#ifndef SQUISH_SIMD_SSE_H
+#define SQUISH_SIMD_SSE_H
 
 #include <xmmintrin.h>
 #if ( SQUISH_USE_SSE > 1 )
@@ -35,7 +35,7 @@
 #define SQUISH_SSE_SPLAT( a )										\
 	( ( a ) | ( ( a ) << 2 ) | ( ( a ) << 4 ) | ( ( a ) << 6 ) )
 
-namespace nvsquish {
+namespace squish {
 
 #define VEC4_CONST( X ) Vec4( _mm_set1_ps( X ) )
 

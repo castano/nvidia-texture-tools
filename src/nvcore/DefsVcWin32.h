@@ -72,6 +72,8 @@ typedef uint32              uint;
 #pragma warning(disable : 4711)		// function selected for automatic inlining
 #pragma warning(disable : 4725)		// Pentium fdiv bug
 
+#pragma warning(disable : 4345)		// behavior change: an object of POD type constructed with an initializer of the form () will be default-initialized
+
 #pragma warning(disable : 4786)		// Identifier was truncated and cannot be debugged.
 
 #pragma warning(disable : 4675)		// resolved overload was found by argument-dependent lookup

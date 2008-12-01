@@ -3,20 +3,12 @@
 #ifndef NV_IMAGE_FLOATIMAGE_H
 #define NV_IMAGE_FLOATIMAGE_H
 
-#include <nvimage/nvimage.h>
-
-#include <nvmath/Vector.h>
-
 #include <nvcore/Debug.h>
-#include <nvcore/Algorithms.h> // clamp
-
-#include <stdlib.h> // abs
-
+#include <nvcore/Containers.h> // clamp
+#include <nvimage/nvimage.h>
 
 namespace nv
 {
-class Vector4;
-class Matrix;
 class Image;
 class Filter;
 class Kernel1;
@@ -68,8 +60,6 @@ public:
 	NVIMAGE_API void toGamma(uint base_component, uint num, float gamma = 2.2f);
 	NVIMAGE_API void exponentiate(uint base_component, uint num, float power);
 	
-	NVIMAGE_API void transform(uint base_component, const Matrix & m, const Vector4 & offset);
-	NVIMAGE_API void swizzle(uint base_component, uint r, uint g, uint b, uint a);
 	
 	NVIMAGE_API FloatImage * fastDownSample() const;
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
@@ -118,9 +108,6 @@ public:
 	float sampleLinearRepeat(float x, float y, int c) const;
 	float sampleLinearMirror(float x, float y, int c) const;
 	//@}
-	
-	
-	FloatImage* clone() const;
 	
 public:
 	

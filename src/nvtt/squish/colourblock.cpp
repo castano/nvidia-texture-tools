@@ -25,7 +25,7 @@
    
 #include "colourblock.h"
 
-namespace nvsquish {
+namespace squish {
 
 static int FloatToInt( float a, int limit )
 {
