@@ -151,6 +151,35 @@ int nv::cuda::deviceCount()
 	return 0;
 }
 
+int nv::cuda::getFastestDevice()
+{
+	int max_gflops_device = 0;
+#if defined HAVE_CUDA	
+	int max_gflops = 0;
+
+	const int device_count = deviceCount();
+	int current_device = 0;
+	while (current_device < device_count)
+	{
+		cudaDeviceProp device_properties;
+		cudaGetDeviceProperties(&device_properties, current_device);
+		int gflops = device_properties.multiProcessorCount * device_properties.clockRate;
+
+		if (device_properties.major != -1 && device_properties.minor != -1)
+		{
+			if( gflops > max_gflops )
+			{
+				max_gflops = gflops;
+				max_gflops_device = current_device;
+			}
+		}
+		
+		current_device++;
+	}
+#endif
+	return max_gflops_device;
+}
+
 /// Activate the given devices.
 bool nv::cuda::setDevice(int i)
 {

@@ -211,6 +211,10 @@ Compressor::Compressor() : m(*new Compressor::Private())
 
 	if (m.cudaEnabled)
 	{
+		// Select fastest CUDA device.
+		int device = cuda::getFastestDevice();
+		cuda::setDevice(device);
+		
 		m.cuda = new CudaCompressor();
 
 		if (!m.cuda->isValid())
@@ -237,6 +241,10 @@ void Compressor::enableCudaAcceleration(bool enable)
 
 	if (m.cudaEnabled && m.cuda == NULL)
 	{
+		// Select fastest CUDA device.
+		int device = cuda::getFastestDevice();
+		cuda::setDevice(device);
+		
 		m.cuda = new CudaCompressor();
 		
 		if (!m.cuda->isValid())
