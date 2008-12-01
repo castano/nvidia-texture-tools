@@ -1,7 +1,7 @@
 #summary API Documentation
 #labels Documentation,Featured
 
-== Contents ==
+= Contents =
 
   * [ApiDocumentation#Introduction Introduction]
   * [ApiDocumentation#Usage Usage]
@@ -26,13 +26,15 @@
     * [ApiDocumentation#Reporting_Progress Reporting Progress]
     * [ApiDocumentation#Handling_Errors Handling Errors]
 
-== Introduction ==
+<wiki:toc max_depth="2" />
+
+= Introduction =
 
 The NVIDIA Texture Tools library (NVTT for short) is a C++ library that allows you to create textures compressed in any of the DX10 texture formats, and apply certain transformations to them such as mipmap generation, and normal map conversion.
 
 There are also bindings for other languages, see [LanguageBindings].
 
-== Usage ==
+= Usage =
 
 By default NVTT is compiled as a shared library. To use it in your application you only have to link it implicitly. With gcc that's achieved using `-lnvtt`, and with Visual Studio you have to add `nvtt.lib` to the Linker -> Input -> Additional Dependencies field of the project settings. For compilation instructions see [CompilationInstructions].
 
@@ -72,12 +74,12 @@ compressor.process(inputOptions, compressionOptions, outputOptions);
 }}}
 
 
-== Input Options ==
+= Input Options =
 
 The `InputOptions` class describes the images that compose the compressed texture, and several image processing operations that can be applied to them.
 
 
-=== Specifying Input Images ===
+== Specifying Input Images ==
 
 Before specifying the image data, the layout of the texture has to be defined. This is done with the following method:
 
@@ -107,7 +109,7 @@ Again, since 3D textures are not supported, the depth argument should always be 
 *TODO*: explain how the size of the mipmaps is computed, specially for non powers of two.
 
 
-=== Mipmap Generation ===
+== Mipmap Generation ==
 
 Each of the faces of the surface is composed of a mipmap chain. You can provide each of these images explicitely with the `setMipmapData` method, but you can also disable mipmap generation or let the library compute the mipmaps procedurally. The following method provides some control over this process:
 
