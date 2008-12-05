@@ -380,8 +380,8 @@ Not all the compressors are GPU accelerated. Some formats can be compressed rela
 ||      || *GPU Accelerated* ||
 || BC1  || Yes               ||
 || BC1a ||                   ||
-|| BC2  || Yes               ||
-|| BC3  || Yes               ||
+|| BC2  || Color only        ||
+|| BC3  || Color only        ||
 || BC3n ||                   ||
 || BC4  ||                   ||
 || BC5  ||                   ||
