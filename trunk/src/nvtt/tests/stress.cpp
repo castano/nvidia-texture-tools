@@ -26,7 +26,6 @@
 #include <nvimage/ImageIO.h>
 #include <nvimage/BlockDXT.h>
 #include <nvimage/ColorBlock.h>
-#include <nvmath/KahanSum.h>
 #include <nvcore/Ptr.h>
 #include <nvcore/Debug.h>
 #include <nvcore/StrLib.h>
@@ -167,7 +166,7 @@ float rmsError(const Image * a, const Image * b)
 	nvCheck(a->width() == b->width());
 	nvCheck(a->height() == b->height());
 
-	KahanSum mse;
+	int mse = 0;
 
 	const uint count = a->width() * a->height();
 
@@ -181,12 +180,12 @@ float rmsError(const Image * a, const Image * b)
 		int b = c0.b - c1.b;
 		//int a = c0.a - c1.a;
 
-		mse.add(r * r);
-		mse.add(g * g);
-		mse.add(b * b);
+		mse += r * r;
+		mse += g * g;
+		mse += b * b;
 	}
 
-	return sqrtf(mse.sum() / count);
+	return sqrtf(float(mse) / count);
 }
 
 
@@ -244,7 +243,7 @@ int main(int argc, char *argv[])
 		printf("  -out <path>    \tOutput directory.\n");
 
 		return 1;
-	}	
+	}
 	
 	nvtt::InputOptions inputOptions;
 	inputOptions.setMipmapGeneration(false);
