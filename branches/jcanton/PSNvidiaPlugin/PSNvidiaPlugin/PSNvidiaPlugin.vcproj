@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="PSNvidiaPlugin"
 	ProjectGUID="{61EA6F36-06FE-4F79-88CD-621B6058C48C}"
 	RootNamespace="PSNvidiaPlugin"
@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="D:\ICastano\Pruebas\photoshopapi\photoshop;D:\ICastano\Pruebas\photoshopapi\adm;D:\ICastano\Pruebas\photoshopapi\pica_sp;D:\ICastano\Pruebas\photoshopapi\common\includes;C:\Qt\4.4.3\include"
+				AdditionalIncludeDirectories="C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\photoshop;C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\adm;C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\pica_sp;C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\common\includes;C:\Qt\4.4.3\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PSNVIDIAPLUGIN_EXPORTS"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
@@ -57,7 +57,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="D:\ICastano\Pruebas\PSNvidiaPlugin\PSNvidiaPlugin\Debug"
+				AdditionalIncludeDirectories="C:\Users\Khronos\Development\NVidia\ICastano\jcanton\PSNvidiaPlugin\PSNvidiaPlugin\Debug"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
