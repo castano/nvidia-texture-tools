@@ -83,13 +83,13 @@ static bool isCudaDriverAvailable(uint version)
 		return false;
 	}
 	
-	if (version > 2000)
+	if (version >= 2000)
 	{
 		void * address = nvcuda.bindSymbol("cuStreamCreate");
 		if (address == NULL) return false;
 	}
 
-	if (version > 2010)
+	if (version >= 2010)
 	{
 		void * address = nvcuda.bindSymbol("cuLoadDataEx");
 		if (address == NULL) return false;
