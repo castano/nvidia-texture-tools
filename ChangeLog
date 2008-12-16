@@ -1,3 +1,6 @@
+NVIDIA Texture Tools version 2.0.6
+ * Fix version checking.
+
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
  * Detect mismatch between CUDA runtime and driver, and disable CUDA in that case.
