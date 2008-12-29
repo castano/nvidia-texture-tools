@@ -208,48 +208,11 @@ StringBuilder::StringBuilder( const StringBuilder & s ) : m_size(0), m_str(NULL)
 	copy(s);
 }
 
-// Copy string. 
-/*StringBuilder::StringBuilder( const char * s )
+/** Copy string. */
+StringBuilder::StringBuilder( const char * s )
 {
 	copy(s);
-}*/
-
-/** Allocate and copy string. */
-StringBuilder::StringBuilder( int size_hint, const StringBuilder & s) : m_size(size_hint), m_str(NULL)
-{
-	nvDebugCheck(m_size > 0);
-	m_str = strAlloc(m_size);
-	copy(s);
 }
-
-/** Allocate and format string. */
-StringBuilder::StringBuilder( const char * fmt, ... ) : m_size(0), m_str(NULL)
-{
-	nvDebugCheck(fmt != NULL);
-	va_list arg;
-	va_start( arg, fmt );
-
-	format( fmt, arg );
-
-	va_end( arg );
-}
-
-/** Allocate and format string. */
-StringBuilder::StringBuilder( int size_hint, const char * fmt, ... ) : m_size(size_hint), m_str(NULL)
-{
-	nvDebugCheck(m_size > 0);	
-	nvDebugCheck(fmt != NULL);
-	
-	m_str = strAlloc(m_size);
-
-	va_list arg;
-	va_start( arg, fmt );
-
-	format( fmt, arg );
-
-	va_end( arg );
-}
-
 
 /** Delete the string. */
 StringBuilder::~StringBuilder()
@@ -278,8 +241,7 @@ StringBuilder & StringBuilder::format( const char * fmt, ... )
 /** Format a string safely. */
 StringBuilder & StringBuilder::format( const char * fmt, va_list arg )
 {
-	nvCheck(fmt != NULL);
-	nvCheck(m_size >= 0);
+	nvDebugCheck(fmt != NULL);
 
 	if( m_size == 0 ) {
 		m_size = 64;
@@ -327,8 +289,7 @@ StringBuilder & StringBuilder::format( const char * fmt, va_list arg )
 /** Append a string. */
 StringBuilder & StringBuilder::append( const char * s )
 {
-	nvCheck(s != NULL);
-	nvCheck(m_size >= 0);
+	nvDebugCheck(s != NULL);
 
 	const uint slen = uint(strlen( s ));
 
@@ -472,31 +433,6 @@ void StringBuilder::reset()
 	m_size = 0;
 	strFree( m_str );
 	m_str = NULL;
-}
-
-
-Path::Path(const char * fmt, ...)
-{
-	nvDebugCheck( fmt != NULL );
-
-	va_list arg;
-	va_start( arg, fmt );
-
-	format( fmt, arg );
-
-	va_end( arg );
-}
-
-Path::Path(int size_hint, const char * fmt, ...) : StringBuilder(size_hint)
-{
-	nvDebugCheck( fmt != NULL );
-
-	va_list arg;
-	va_start( arg, fmt );
-
-	format( fmt, arg );
-
-	va_end( arg );
 }
 
 

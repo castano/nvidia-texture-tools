@@ -18,6 +18,15 @@ namespace nv
 	// CPU Information.
 	class CpuInfo
 	{
+	protected:
+		static int cpu();
+
+	private:
+		// Cache of the CPU data
+		static uint m_cpu;
+		static uint m_procCount;
+
+	public:
 		static uint processorCount();
 		static uint coreCount();
 
@@ -25,7 +34,6 @@ namespace nv
 		static bool hasSSE();
 		static bool hasSSE2();
 		static bool hasSSE3();
-
 	};
 
 #if NV_CC_MSVC
