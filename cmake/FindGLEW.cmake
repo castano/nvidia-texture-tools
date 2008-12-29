@@ -12,13 +12,25 @@ IF (WIN32)
 		$ENV{PROGRAMFILES}/GLEW/include
 		${PROJECT_SOURCE_DIR}/src/nvgl/glew/include
 		DOC "The directory where GL/glew.h resides")
-	FIND_LIBRARY( GLEW_LIBRARY
-		NAMES glew GLEW glew32 glew32s
-		PATHS
-		$ENV{PROGRAMFILES}/GLEW/lib
-		${PROJECT_SOURCE_DIR}/src/nvgl/glew/bin
-		${PROJECT_SOURCE_DIR}/src/nvgl/glew/lib
-		DOC "The GLEW library")
+	IF (NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
+		FIND_LIBRARY( GLEW_LIBRARY
+			NAMES glew64 glew64s
+			PATHS
+			$ENV{PROGRAMFILES}/GLEW/lib
+			${PROJECT_SOURCE_DIR}/src/nvgl/glew/bin
+	    	${PROJECT_SOURCE_DIR}/src/nvgl/glew/lib
+			DOC "The GLEW library (64-bit)"
+		)
+	ELSE(NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
+		FIND_LIBRARY( GLEW_LIBRARY
+			NAMES glew GLEW glew32 glew32s
+			PATHS
+			$ENV{PROGRAMFILES}/GLEW/lib
+			${PROJECT_SOURCE_DIR}/src/nvgl/glew/bin
+	    	${PROJECT_SOURCE_DIR}/src/nvgl/glew/lib
+			DOC "The GLEW library"
+		)
+	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
 ELSE (WIN32)
 	FIND_PATH( GLEW_INCLUDE_PATH GL/glew.h
 		/usr/include

@@ -1,6 +1,7 @@
 # - try to find glut library and include files
 #  GLUT_INCLUDE_DIR, where to find GL/glut.h, etc.
 #  GLUT_LIBRARIES, the libraries to link against
+#  GLUT_DEFINITIONS - You should ADD_DEFINITIONS(${GLUT_DEFINITIONS}) before compiling code that includes png library files.
 #  GLUT_FOUND, If false, do not try to use GLUT.
 # Also defined, but not for general use are:
 #  GLUT_glut_LIBRARY = the full path to the glut library.
@@ -8,6 +9,10 @@
 #  GLUT_Xi_LIBRARY   = the full path to the Xi Library.
 
 IF (WIN32)
+
+  # By default the GLUT include tries to autolink using #pragma directives, but those
+  # interfere with the other cmake definitions
+  SET (GLUT_DEFINITIONS -DGLUT_NO_LIB_PRAGMA)
 
   IF(CYGWIN)
 
