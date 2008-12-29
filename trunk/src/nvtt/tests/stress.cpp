@@ -270,7 +270,8 @@ int main(int argc, char *argv[])
 
 	FileSystem::createDirectory(outPath);
 
-	Path csvFileName("%s/result.csv", outPath);
+	Path csvFileName;
+	csvFileName.format("%s/result.csv", outPath);
 	StdOutputStream csvStream(csvFileName);
 	TextWriter csvWriter(&csvStream);
 
@@ -304,7 +305,8 @@ int main(int argc, char *argv[])
 
 		AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
 
-		Path outputFileName("%s/%s", outPath, s_fileNames[i]);
+		Path outputFileName;
+		outputFileName.format("%s/%s", outPath, s_fileNames[i]);
 		outputFileName.stripExtension();
 		outputFileName.append(".tga");
 		if (!ImageIO::save(outputFileName, img_out.ptr()))
@@ -322,7 +324,8 @@ int main(int argc, char *argv[])
 
 		if (regressPath != NULL)
 		{
-			Path regressFileName("%s/%s", regressPath, s_fileNames[i]);
+			Path regressFileName;
+			regressFileName.format("%s/%s", regressPath, s_fileNames[i]);
 			regressFileName.stripExtension();
 			regressFileName.append(".tga");
 
