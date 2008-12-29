@@ -247,7 +247,7 @@ inline uint FloatImage::indexMirror(int x, int y) const
 	}
 
 	if (m_height == 1) y = 0;
-	
+
 	y = abs(y);
 	while (y >= m_height) {
 		y = abs(m_height + m_height - y - 2);
