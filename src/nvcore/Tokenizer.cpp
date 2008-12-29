@@ -8,7 +8,7 @@
 #include <stdlib.h>	// atof, atoi
 
 #if NV_CC_MSVC
-#if 0 // This doesn't work on MSVC for x64
+#if defined NV_CPU_X86
 /* vsscanf for Win32
  * Written 5/2003 by <mgix@mgix.com>
  * This code is in the Public Domain
@@ -56,8 +56,38 @@ static int vsscanf(const char * buffer, const char * format, va_list argPtr)
 	}
 	return result;
 }
+#elif defined NV_CPU_X86_64
+
+/* Prototype of the helper assembly function */
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+int vsscanf_proxy_win64(const char * buffer, const char * format, va_list argPtr, __int64 count);
+
+#ifdef __cplusplus
+}
 #endif
+
+/* MASM64 version of the above vsscanf */
+static int vsscanf(const char * buffer, const char * format, va_list argPtr)
+{
+	// Get an upper bound for the # of args
+	__int64 count = 0;
+	const char *p = format;
+	while(1) {
+		char c = *(p++);
+		if(c==0) break;
+		if(c=='%' && (p[0]!='*' && p[0]!='%')) ++count;
+	}
+	return vsscanf_proxy_win64(buffer, format, argPtr, count);
+}
+
+/*#error vsscanf doesn't work on MSVC for x64*/
+#else
+#error Unknown processor for MSVC
+#endif
+#endif // NV_CC_MSVC
 
 using namespace nv;
 

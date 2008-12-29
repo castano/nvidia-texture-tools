@@ -34,11 +34,11 @@ class AutoPtr
 	NV_FORBID_HEAPALLOC();
 public:
 	
-	/// Default ctor.
-	AutoPtr() : m_ptr(NULL) { }
-	
 	/// Ctor.
-	explicit AutoPtr( T * p ) : m_ptr(p) { }
+	AutoPtr(T * p = NULL) : m_ptr(p) { }
+
+	template <class Q>
+	AutoPtr(Q * p) : m_ptr(static_cast<T *>(p)) { }
 	
 	/** Dtor. Deletes owned pointer. */
 	~AutoPtr() {

@@ -12,16 +12,15 @@
 
 #elif NV_CC_MSVC 
 
-#if NV_CPU_X86
+// Uses SSE Intrinsics for both x86 and x86_64
+#include <xmmintrin.h>
+
 __forceinline void nvPrefetch(const void * mem)
 {
-	__asm mov ecx, mem
-	__asm prefetcht0 [ecx];
-//	__asm prefetchnta [ecx];
+	_mm_prefetch(static_cast<const char*>(mem), _MM_HINT_T0);	/* prefetcht0  */
+//	_mm_prefetch(static_cast<const char*>(mem), _MM_HINT_NTA);	/* prefetchnta */
 }
-#endif // NV_CPU_X86
-
-#else // NV_CC_MSVC
+#else
 
 // do nothing in other case.
 #define nvPrefetch(ptr)

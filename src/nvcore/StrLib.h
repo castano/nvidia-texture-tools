@@ -45,11 +45,8 @@ namespace nv
 	
 		StringBuilder();
 		explicit StringBuilder( int size_hint );
-		//StringBuilder( const char * str );
+		StringBuilder( const char * str );
 		StringBuilder( const StringBuilder & );
-		StringBuilder( int size_hint, const StringBuilder & );	
-		StringBuilder( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-		StringBuilder( int size_hint, const char * format, ... ) __attribute__((format (printf, 3, 4)));
 	
 		~StringBuilder();
 	
@@ -120,24 +117,17 @@ namespace nv
 		char * m_str;
 		
 	};
-	
 
-	/// Path string.
+
+	/// Path string. @@ This should be called PathBuilder.
 	class NVCORE_CLASS Path : public StringBuilder
 	{
 	public:
 		Path() : StringBuilder() {}
 		explicit Path(int size_hint) : StringBuilder(size_hint) {}
-		//Path(const char * str) : StringBuilder((const char *)str) {}
+		Path( const char * str ) : StringBuilder(str) {}
 		Path(const StringBuilder & str) : StringBuilder(str) {}
-		Path(int size_hint, const StringBuilder & str) : StringBuilder(size_hint, str) {}	
-		Path(const char * format, ...) __attribute__((format (printf, 2, 3)));
-		Path(int size_hint, const char * format, ...) __attribute__((format (printf, 3, 4)));
 		
-		Path & operator=( const char * s ) {
-			return (Path &)copy(s);
-		}
-
 		const char * fileName() const;
 		const char * extension() const;
 		
@@ -145,11 +135,11 @@ namespace nv
 		
 		void stripFileName();
 		void stripExtension();
-		
+
 		// statics
-		NVCORE_API static char separator();
-		NVCORE_API static const char * fileName(const char *);
-		NVCORE_API static const char * extension(const char *);
+		static char separator();
+		static const char * fileName(const char *);
+		static const char * extension(const char *);
 	};
 	
 	
