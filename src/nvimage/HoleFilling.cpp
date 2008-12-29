@@ -11,6 +11,27 @@
 
 using namespace nv;
 
+float BitMap::sampleLinearClamp(float x, float y) const
+{
+	const float fracX = x - floor(x);
+	const float fracY = y - floor(y);
+	
+	const uint ix0 = ::clamp(uint(floor(x)), 0U, m_width-1);
+	const uint iy0 = ::clamp(uint(floor(y)), 0U, m_height-1);
+	const uint ix1 = ::clamp(uint(floor(x))+1, 0U, m_width-1);
+	const uint iy1 = ::clamp(uint(floor(y))+1, 0U, m_height-1);
+
+	float f1 = bitAt(ix0, iy0);
+	float f2 = bitAt(ix1, iy0);
+	float f3 = bitAt(ix0, iy1);
+	float f4 = bitAt(ix1, iy1);
+
+	float i1 = lerp(f1, f2, fracX);
+	float i2 = lerp(f3, f4, fracX);
+
+	return lerp(i1, i2, fracY);
+}
+
 
 // This is a variation of Sapiro's inpainting method.
 void nv::fillExtrapolate(int passCount, FloatImage * img, BitMap * bmap)
@@ -26,6 +47,7 @@ void nv::fillExtrapolate(int passCount, FloatImage * img, BitMap * bmap)
 	nvCheck(bmap->height() == uint(h));
 
 	AutoPtr<BitMap> newbmap(new BitMap(w, h));
+	newbmap->clearAll();
 
 	for(int p = 0; p < passCount; p++)
 	{
@@ -210,11 +232,13 @@ void nv::fillVoronoi(FloatImage * img, const BitMap * bmap)
 		for( x = 0; x < w; x++ ) {
 			const int sx = edm[y * w + x].x;
 			const int sy = edm[y * w + x].y;
-			nvDebugCheck(sx < w && sy < h);
-			
-			if( sx != x || sy != y ) {
-				for(int c = 0; c < count; c++ ) {
-					img->setPixel(img->pixel(sx, sy, c), x, y, c);
+
+			if (sx < w && sy < h)
+			{
+				if (sx != x || sy != y)	{
+					for(int c = 0; c < count; c++ ) {
+						img->setPixel(img->pixel(sx, sy, c), x, y, c);
+					}
 				}
 			}
 		}
@@ -247,7 +271,9 @@ static bool downsample(const FloatImage * src, const BitMap * srcMask, const Flo
 
 	FloatImage * dst = new FloatImage();
 	dst->allocate(count, nw, nh);
+
 	BitMap * dstMask = new BitMap(nw, nh);
+	dstMask->clearAll();
 
 	for(uint c = 0; c < count; c++) {
 		for(uint y = 0; y < nh; y++) {
@@ -341,6 +367,80 @@ void nv::fillPullPush(FloatImage * img, const BitMap * bmap)
 						img->setPixel(mipmaps[l]->pixel(sx, sy, c), x, y, c);
 					}
 					break;
+				}
+
+				sx /= 2;
+				sy /= 2;
+			}
+		}
+	}
+
+	// Don't delete the original image and mask.
+	mipmaps[0] = NULL;
+	mipmapMasks[0] = NULL;
+
+	// Delete the mipmaps.
+	deleteAll(mipmaps);
+	deleteAll(mipmapMasks);
+}
+
+// It looks much cooler with trilinear filtering
+void nv::fillPullPushLinear(FloatImage * img, const BitMap * bmap)
+{
+	nvCheck(img != NULL);
+
+	const uint count = img->componentNum();
+	const uint w = img->width();
+	const uint h = img->height();
+	const uint num = log2(max(w,h));
+
+	// Build mipmap chain.
+	Array<const FloatImage *> mipmaps(num);
+	Array<const BitMap *> mipmapMasks(num);
+
+	mipmaps.append(img);
+	mipmapMasks.append(bmap);
+
+	const FloatImage * current;
+	const BitMap * currentMask;
+
+	// Compute mipmap chain.
+	while(downsample(mipmaps.back(), mipmapMasks.back(), &current, &currentMask))
+	{
+		mipmaps.append(current);
+		mipmapMasks.append(currentMask);
+	}
+
+	// Sample mipmaps until non-hole is found.
+	for(uint y = 0; y < h; y++) {
+		for(uint x = 0; x < w; x++) {
+
+			float sx = x;
+			float sy = y;
+
+			float coverageSum = 0.0f;
+
+			const uint levelCount = mipmaps.count();
+			for (uint l = 0; l < levelCount; l++)
+			{
+				const float fx = sx / mipmaps[l]->width();
+				const float fy = sy / mipmaps[l]->height();
+
+				float coverage = mipmapMasks[l]->sampleLinearClamp(sx, sy);
+
+				if (coverage > 0.0f)
+				{
+					// Sample mipmaps[l](sx, sy) and copy to img(x, y)
+					for(uint c = 0; c < count; c++) {
+						img->addPixel((1 - coverageSum) * mipmaps[l]->sampleLinearClamp(fx, fy, c), x, y, c);
+					}
+
+					coverageSum += coverage;
+					
+					if (coverageSum >= 1.0f)
+					{
+						break;
+					}
 				}
 
 				sx /= 2;
@@ -654,6 +754,7 @@ void nv::fillQuadraticExtrapolate(int passCount, FloatImage * img, BitMap * bmap
 	nvCheck(bmap->height() == uint(h));
 
 	AutoPtr<BitMap> newbmap( new BitMap(w, h) );
+	newbmap->clearAll();
 
 	float * coverageChannel = NULL;
 	if (coverageIndex != -1)
