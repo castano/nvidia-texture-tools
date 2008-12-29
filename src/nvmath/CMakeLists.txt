@@ -8,6 +8,7 @@ SET(MATH_SRCS
 	Plane.h Plane.cpp
 	Box.h
 	Color.h
+	Frustum.h Frustum.cpp
 	Montecarlo.h Montecarlo.cpp
 	Random.h Random.cpp
 	SphericalHarmonic.h SphericalHarmonic.cpp
@@ -19,7 +20,8 @@ SET(MATH_SRCS
 	Solver.h Solver.cpp
 	KahanSum.h
 	Half.h Half.cpp
-	Fitting.h Fitting.cpp)
+	Fitting.h Fitting.cpp
+	Bezier.h Bezier.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

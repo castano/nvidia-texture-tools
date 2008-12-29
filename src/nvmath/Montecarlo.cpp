@@ -30,15 +30,8 @@ void SampleDistribution::redistributeRandom(const Distribution dist)
 	{
 		float x = m_rand.getFloat();
 		float y = m_rand.getFloat();
-		
-		// Map uniform distribution in the square to the (hemi)sphere.
-		if( dist == Distribution_Uniform ) {
-			m_sampleArray[i].setUV(acosf(1 - 2 * x), 2 * PI * y);
-		}
-		else {
-			nvDebugCheck(dist == Distribution_Cosine);
-			m_sampleArray[i].setUV(acosf(sqrtf(x)), 2 * PI * y);
-		}
+
+		setSample(i, dist, x, y);
 	}
 }
 
@@ -55,15 +48,8 @@ void SampleDistribution::redistributeStratified(const Distribution dist)
 		for(uint u = 0; u < sqrtSampleCount; u++, i++) {
 			float x = (u + m_rand.getFloat()) / float(sqrtSampleCount);
 			float y = (v + m_rand.getFloat()) / float(sqrtSampleCount);
-			
-			// Map uniform distribution in the square to the (hemi)sphere.
-			if( dist == Distribution_Uniform ) {
-				m_sampleArray[i].setUV(acosf(1 - 2 * x), 2 * PI * y);
-			}
-			else {
-				nvDebugCheck(dist == Distribution_Cosine);
-				m_sampleArray[i].setUV(acosf(sqrtf(x)), 2 * PI * y);
-			}
+		
+			setSample(i, dist, x, y);
 		}
 	}
 }
@@ -141,14 +127,7 @@ void SampleDistribution::redistributeNRook(const Distribution dist)
 		float x = (i + m_rand.getFloat()) / sampleCount;
 		float y = (cells[i] + m_rand.getFloat()) / sampleCount;
 
-		// Map uniform distribution in the square to the (hemi)sphere.
-		if( dist == Distribution_Uniform ) {
-			m_sampleArray[i].setUV(acosf(1 - 2 * x), 2 * PI * y);
-		}
-		else {
-			nvDebugCheck(dist == Distribution_Cosine);
-			m_sampleArray[i].setUV(acosf(sqrtf(x)), 2 * PI * y);
-		}
+		setSample(i, dist, x, y);
 	}
 
 	delete [] cells;

@@ -7,6 +7,7 @@
 #include <nvmath/Quaternion.h>
 #include <nvmath/Basis.h>
 #include <nvmath/Box.h>
+#include <nvmath/Plane.h>
 
 #include <nvmath/TypeSerialization.h>
 
@@ -80,3 +81,7 @@ Stream & nv::operator<< (Stream & s, Box & box)
 	return s << box.m_mins << box.m_maxs;
 }
 
+Stream & nv::operator<< (Stream & s, Plane & plane)
+{
+	return s << plane.asVector();
+}

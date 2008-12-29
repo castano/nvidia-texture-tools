@@ -1,4 +1,4 @@
-// This code is in the public domain -- Ignacio Castao <castanyo@yahoo.es>
+// This code is in the public domain -- Ignacio Castaño <castanyo@yahoo.es>
 
 #include <nvmath/Sparse.h>
 #include <nvmath/KahanSum.h>
@@ -235,7 +235,7 @@ void FullMatrix::madRow(uint y, float alpha, FullVector & v) const
 	const uint count = v.dimension();
 	for (uint i = 0; i < count; i++)
 	{
-		v[i] += alpha * m_array[y * count + i];
+		v[i] += m_array[y * count + i];
 	}
 }
 
@@ -432,8 +432,11 @@ void SparseMatrix::setCoefficient(uint x, uint y, float f)
 		}
 	}
 
-	Coefficient c = { x, f };
-	m_array[y].append( c );
+	if (f != 0.0f)
+	{
+		Coefficient c = { x, f };
+		m_array[y].append( c );
+	}
 }
 
 void SparseMatrix::addCoefficient(uint x, uint y, float f)
@@ -441,18 +444,21 @@ void SparseMatrix::addCoefficient(uint x, uint y, float f)
 	nvDebugCheck( x < width() );
 	nvDebugCheck( y < height() );
 
-	const uint count = m_array[y].count();
-	for (uint i = 0; i < count; i++)
+	if (f != 0.0f)
 	{
-		if (m_array[y][i].x == x) 
+		const uint count = m_array[y].count();
+		for (uint i = 0; i < count; i++)
 		{
-			m_array[y][i].v += f;
-			return;
+			if (m_array[y][i].x == x) 
+			{
+				m_array[y][i].v += f;
+				return;
+			}
 		}
-	}
 
-	Coefficient c = { x, f };
-	m_array[y].append( c );
+		Coefficient c = { x, f };
+		m_array[y].append( c );
+	}
 }
 
 void SparseMatrix::mulCoefficient(uint x, uint y, float f)
@@ -470,8 +476,11 @@ void SparseMatrix::mulCoefficient(uint x, uint y, float f)
 		}
 	}
 
-	Coefficient c = { x, f };
-	m_array[y].append( c );
+	if (f != 0.0f)
+	{
+		Coefficient c = { x, f };
+		m_array[y].append( c );
+	}
 }
 
 
@@ -753,6 +762,32 @@ static float dotColumnColumn(int y, const SparseMatrix & A, int x, const SparseM
 }
 
 
+void nv::transpose(const SparseMatrix & A, SparseMatrix & B)
+{
+	nvDebugCheck(A.width() == B.height());
+	nvDebugCheck(B.width() == A.height());
+
+	const uint w = A.width();
+	for (uint x = 0; x < w; x++)
+	{
+		B.clearRow(x);
+	}
+
+	const uint h = A.height();
+	for (uint y = 0; y < h; y++)
+	{
+		const Array<SparseMatrix::Coefficient> & row = A.getRow(y);
+
+		const uint count = row.count();
+		for (uint i = 0; i < count; i++)
+		{
+			const SparseMatrix::Coefficient & c = row[i];
+			nvDebugCheck(c.x < w);
+
+			B.setCoefficient(y, c.x, c.v);
+		}
+	}
+}
 
 // C = A * B
 void nv::mult(const SparseMatrix & A, const SparseMatrix & B, SparseMatrix & C)
@@ -814,13 +849,9 @@ void nv::sgemm(float alpha, Transpose TA, const SparseMatrix & A, Transpose TB, 
 				c += alpha * dotRowRow(y, A, x, B);
 			}
 
-			if (c != 0.0f)
-			{
-				C.setCoefficient(x, y, c);
-			}
+			C.setCoefficient(x, y, c);
 		}
 	}
-
 }
 
 // C = At * A

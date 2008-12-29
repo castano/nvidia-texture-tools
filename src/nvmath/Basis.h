@@ -12,8 +12,10 @@ namespace nv
 
 	/// Basis class to compute tangent space basis, ortogonalizations and to
 	/// transform vectors from one space to another.
-	struct Basis
+	class Basis
 	{
+	public:
+
 		/// Create a null basis.
 		Basis() : tangent(0, 0, 0), bitangent(0, 0, 0), normal(0, 0, 0) {}
 

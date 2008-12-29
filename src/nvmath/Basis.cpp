@@ -27,7 +27,8 @@ void Basis::orthonormalize(float epsilon /*= NV_EPSILON*/)
 	tangent -= normal * dot(normal, tangent);
 	tangent = ::normalize(tangent, epsilon);
 
-	bitangent -= normal * dot(normal, bitangent) + tangent * dot(tangent, bitangent);
+	bitangent -= normal * dot(normal, bitangent);
+	bitangent -= tangent * dot(tangent, bitangent);
 	bitangent = ::normalize(bitangent, epsilon);
 }
 
@@ -91,7 +92,15 @@ void Basis::robustOrthonormalize(float epsilon /*= NV_EPSILON*/)
 			tangent = nv::normalize(tangent);
 			bitangent = nv::normalize(bitangent);
 			
-			Vector3 bisector = nv::normalize(tangent + bitangent);
+			Vector3 bisector;
+			if (length(tangent + bitangent) < epsilon) 
+			{
+				bisector = tangent;
+			}
+			else 
+			{
+				bisector = nv::normalize(tangent + bitangent);
+			}
 			Vector3 axis = cross(bisector, normal);
 			
 			nvDebugCheck(isNormalized(axis, epsilon));
