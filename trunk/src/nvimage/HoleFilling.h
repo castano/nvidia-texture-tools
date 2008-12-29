@@ -22,6 +22,8 @@ namespace nv
 		uint width() const { return m_width; }
 		uint height() const { return m_height; }
 		
+		float sampleLinearClamp(float x, float y) const;
+
 		bool bitAt(uint x, uint y) const
 		{
 			nvDebugCheck(x < m_width && y < m_height);
@@ -86,6 +88,7 @@ namespace nv
 
 	NVIMAGE_API void fillVoronoi(FloatImage * img, const BitMap * bmap);
 	NVIMAGE_API void fillPullPush(FloatImage * img, const BitMap * bmap);
+	NVIMAGE_API void fillPullPushLinear(FloatImage * img, const BitMap * bmap);
 	
 	NVIMAGE_API void fillExtrapolate(int passCount, FloatImage * img, BitMap * bmap);
 	NVIMAGE_API void fillQuadraticExtrapolate(int passCount, FloatImage * img, BitMap * bmap, int coverageIndex = -1);
