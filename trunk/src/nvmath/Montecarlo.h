@@ -23,23 +23,26 @@ public:
 
 	// Distribution functions.
 	enum Distribution {
-		Distribution_Uniform,
-		Distribution_Cosine
+		Distribution_UniformSphere,
+		Distribution_UniformHemisphere,
+		Distribution_CosineHemisphere
 	};
 	
 	/// Constructor.
-	SampleDistribution(int num)
+	SampleDistribution(uint num)
 	{
 		m_sampleArray.resize(num);
 	}
+
+	uint count() const { return m_sampleArray.count(); }
 	
-	void redistribute(Method method=Method_NRook, Distribution dist=Distribution_Cosine);
+	void redistribute(Method method=Method_NRook, Distribution dist=Distribution_CosineHemisphere);
 	
 	/// Get parametric coordinates of the sample.
-	Vector2 sample(int i) { return m_sampleArray[i].uv; }
+	Vector2 sample(int i) const { return m_sampleArray[i].uv; }
 	
 	/// Get sample direction.
-	Vector3 sampleDir(int i) { return m_sampleArray[i].dir; }
+	Vector3 sampleDir(int i) const { return m_sampleArray[i].dir; }
 
 	/// Get number of samples.
 	uint sampleCount() const { return m_sampleArray.count(); }
@@ -70,6 +73,22 @@ private:
 		Vector2 uv;
 		Vector3 dir;
 	};
+
+	inline void setSample(uint i, Distribution dist, float x, float y)
+	{
+		// Map uniform distribution in the square to desired domain.
+		if( dist == Distribution_UniformSphere ) {
+			m_sampleArray[i].setUV(acosf(1 - 2 * x), 2 * PI * y);
+		}
+		else if( dist == Distribution_UniformHemisphere ) {
+			m_sampleArray[i].setUV(acosf(x), 2 * PI * y);
+		}
+		else {
+			nvDebugCheck(dist == Distribution_CosineHemisphere);
+			m_sampleArray[i].setUV(acosf(sqrtf(x)), 2 * PI * y);
+		}
+	}
+
 	
 	/// Random seed.
 	MTRand m_rand;

@@ -175,6 +175,8 @@ namespace nv
 
 	};
 
+	NVMATH_API void transpose(const SparseMatrix & A, SparseMatrix & B);
+
 	NVMATH_API void mult(const SparseMatrix & M, const FullVector & x, FullVector & y);
 	NVMATH_API void mult(Transpose TM, const SparseMatrix & M, const FullVector & x, FullVector & y);
 

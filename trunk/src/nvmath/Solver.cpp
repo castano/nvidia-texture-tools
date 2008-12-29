@@ -44,7 +44,15 @@ namespace
 
 		void apply(const FullVector & x, FullVector & y) const
 		{
-			y *= x;
+			nvDebugCheck(x.dimension() == m_inverseDiagonal.dimension());
+			nvDebugCheck(y.dimension() == m_inverseDiagonal.dimension());
+
+			// @@ Wrap vector component-wise product into a separate function.
+			const uint D = x.dimension();
+			for (uint i = 0; i < D; i++)
+			{
+				y[i] = m_inverseDiagonal[i] * x[i];
+			}
 		}
 
 	private:
@@ -69,11 +77,16 @@ void nv::LeastSquaresSolver(const SparseMatrix & A, const FullVector & b, FullVe
 
 	const uint D = A.width();
 
+	SparseMatrix At(A.height(), A.width());
+	transpose(A, At);
+
 	FullVector Atb(D);
-	mult(Transposed, A, b, Atb);
+	//mult(Transposed, A, b, Atb);
+	mult(At, b, Atb);
 
 	SparseMatrix AtA(D);
-	mult(Transposed, A, NoTransposed, A, AtA);
+	//mult(Transposed, A, NoTransposed, A, AtA);
+	mult(At, A, AtA);
 
 	SymmetricSolver(AtA, Atb, x, epsilon);
 }
@@ -182,10 +195,10 @@ void nv::SymmetricSolver(const SparseMatrix & A, const FullVector & b, FullVecto
 	nvDebugCheck(A.height() == b.dimension());
 	nvDebugCheck(b.dimension() == x.dimension());
 
-//	JacobiPreconditioner jacobi(A, true);
+	JacobiPreconditioner jacobi(A, true);
+	ConjugateGradientSolver(jacobi, A, b, x, epsilon);
 
-//	ConjugateGradientSolver(jacobi, A, b, x, epsilon);
-	ConjugateGradientSolver(A, b, x, epsilon);
+//	ConjugateGradientSolver(A, b, x, epsilon);
 }
 
 
@@ -280,9 +293,9 @@ void nv::SymmetricSolver(const SparseMatrix & A, const FullVector & b, FullVecto
 
 		beta = delta_new / delta_old;
 
-		// p = r + beta·p
-		copy(r, p);
-		saxpy(beta, p, r);
+		// p = beta·p + r
+		scal(beta, p);
+		saxpy(1, r, p);
 	}
 
 	return i;
@@ -358,8 +371,8 @@ void nv::SymmetricSolver(const SparseMatrix & A, const FullVector & b, FullVecto
 		beta = delta_new / delta_old;
 
 		// p = s + beta·p
-		copy(s, p);
-		saxpy(beta, p, s);
+		scal(beta, p);
+		saxpy(1, s, p);
 	}
 
 	return i;

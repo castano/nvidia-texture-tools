@@ -27,6 +27,7 @@ public:
 	Vector2(Vector2::Arg v);
 	
 	const Vector2 & operator=(Vector2::Arg v);
+	void setComponent(uint idx, scalar f);
 	
 	scalar x() const;
 	scalar y() const;
@@ -116,6 +117,7 @@ public:
 	const Vector3 & xyz() const;
 
 	scalar component(uint idx) const;
+	void setComponent(uint idx, scalar f);
 
 	const scalar * ptr() const;
 
@@ -161,6 +163,14 @@ inline scalar Vector2::component(uint idx) const
 	nvAssume(false);
 	return 0.0f;
 }
+
+inline void Vector2::setComponent(uint idx, float f)
+{
+	nvDebugCheck(idx < 2);
+	if (idx == 0) m_x = f;
+	else if (idx == 1) m_y = f;
+}
+
 
 inline const scalar * Vector2::ptr() const
 {
@@ -360,6 +370,15 @@ inline scalar Vector4::component(uint idx) const
 	if (idx == 3) return w();
 	nvAssume(false);
 	return 0.0f;
+}
+
+inline void Vector4::setComponent(uint idx, float f)
+{
+	nvDebugCheck(idx < 4);
+	if (idx == 0) m_x = f;
+	else if (idx == 1) m_y = f;
+	else if (idx == 2) m_z = f;
+	else if (idx == 3) m_w = f;
 }
 
 inline const scalar * Vector4::ptr() const
