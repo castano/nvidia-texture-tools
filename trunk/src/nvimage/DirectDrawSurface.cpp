@@ -638,7 +638,7 @@ void DDSHeader::setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
 	// set fourcc pixel format.
 	this->pf.flags = DDPF_FOURCC;
 	this->pf.fourcc = MAKEFOURCC(c0, c1, c2, c3);
-	
+
 	this->pf.bitcount = 0;
 	this->pf.rmask = 0;
 	this->pf.gmask = 0;
