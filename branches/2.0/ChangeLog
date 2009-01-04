@@ -1,5 +1,6 @@
 NVIDIA Texture Tools version 2.0.6
- * Fix version checking.
+ * Fix dll version checking.
+ * Include correct runtime headers.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
