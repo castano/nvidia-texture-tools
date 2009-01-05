@@ -396,21 +396,6 @@ int main(int argc, char *argv[])
 		compressionOptions.setExternalCompressor(externalCompressor);
 	}
 
-	if (format == nvtt::Format_RGB)
-	{
-		compressionOptions.setQuantization(true, false, false);
-		//compressionOptions.setPixelFormat(16, 0xF000, 0x0F00, 0x00F0, 0x000F);
-		compressionOptions.setPixelFormat(16, 
-			0x0F00, 
-			0x00F0, 
-			0x000F, 
-			0xF000);
-		//	0x003F0000, 
-		//	0x00003F00, 
-		//	0x0000003F, 
-		//	0x3F000000);
-	}
-
 	
 	MyErrorHandler errorHandler;
 	MyOutputHandler outputHandler(output);
