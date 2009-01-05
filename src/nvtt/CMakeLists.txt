@@ -24,6 +24,7 @@ SET(NVTT_SRCS
 	InputOptions.cpp
 	OutputOptions.h
 	OutputOptions.cpp
+	Texture.h Texture.cpp
 	cuda/CudaUtils.h
 	cuda/CudaUtils.cpp
 	cuda/CudaMath.h
