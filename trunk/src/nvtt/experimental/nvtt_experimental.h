@@ -4,14 +4,30 @@
 
 #include <nvtt/nvtt.h>
 
-typedef struct NvttImage NvttImage;
+typedef struct NvttTexture NvttTexture;
+typedef struct NvttOutputOptions NvttOutputOptions;
 
-NvttImage * nvttCreateImage();
-void nvttDestroyImage(NvttImage * img);
 
-void nvttSetImageData(NvttImage * img, NvttInputFormat format, uint w, uint h, void * data);
+// Global functions
+void nvttInitialize(...);
+unsigned int nvttGetVersion();
+const char * nvttGetErrorString(unsigned int error);
 
-void nvttCompressImage(NvttImage * img, NvttFormat format);
+
+// Texture functions
+NvttTexture * nvttCreateTexture();
+void nvttDestroyTexture(NvttTexture * tex);
+
+void nvttSetTexture2D(NvttTexture * tex, NvttInputFormat format, uint w, uint h, uint idx, void * data);
+
+void nvttResize(NvttTexture * img, uint w, uint h);
+unsigned int nvttDownsample(NvttTexture * img);
+
+void nvttOutputCompressed(NvttTexture * img, NvttOutputFormat format);
+void nvttOutputPixelFormat(NvttTexture * img, NvttOutputFormat format);
+
+
+
 
 // How to control the compression parameters?
 
@@ -50,6 +66,7 @@ void nvttCompressImage(NvttImage * img, NvttFormat format);
 // - Return it explicitely from nvttCompressImage.
 // - Store it along the image, retrieve later explicitely with 'nvttGetCompressedData(img, ...)'
 
+/*
 
 // Global functions
 void nvttInitialize(...);
@@ -80,7 +97,7 @@ void nvttResizeImage(NvttImage * image, unsigned int w, unsigned int h);
 void nvttQuantizeImage(NvttImage * image, bool dither, unsigned int rbits, unsigned int gbits, unsigned int bbits, unsigned int abits);
 void nvttCompressImage(NvttImage * image, void * buffer, int size);
 
-
+*/
 
 
 #endif // NVTT_EXPERIMENTAL_H

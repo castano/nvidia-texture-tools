@@ -49,10 +49,13 @@
 
 #define NVTT_VERSION 201
 
-#define NVTT_DECLARE_PIMPL(Class) \
+#define NVTT_FORBID_COPY(Class) \
 	private: \
 		Class(const Class &); \
 		void operator=(const Class &); \
+	public: \
+
+#define NVTT_DECLARE_PIMPL(Class) \
 	public: \
 		struct Private; \
 		Private & m
@@ -61,6 +64,9 @@
 // Public interface.
 namespace nvtt
 {
+	// Forward declarations.
+	struct Texture;
+	
 	/// Supported compression formats.
 	enum Format
 	{
@@ -110,6 +116,7 @@ namespace nvtt
 	/// Compression options. This class describes the desired compression format and other compression settings.
 	struct CompressionOptions
 	{
+		NVTT_FORBID_COPY(CompressionOptions);
 		NVTT_DECLARE_PIMPL(CompressionOptions);
 
 		NVTT_API CompressionOptions();
@@ -174,6 +181,15 @@ namespace nvtt
 		MipmapFilter_Kaiser,    ///< Kaiser-windowed Sinc filter is the best downsampling filter.
 	};
 	
+	/// Texture resize filters.
+	enum ResizeFilter
+	{
+		ResizeFilter_Box,
+		ResizeFilter_Triangle,
+		ResizeFilter_Kaiser,
+		ResizeFilter_Mitchell,
+	};
+	
 	/// Color transformation.
 	enum ColorTransform
 	{
@@ -204,6 +220,7 @@ namespace nvtt
 	/// Input options. Specify format and layout of the input texture.
 	struct InputOptions
 	{
+		NVTT_FORBID_COPY(InputOptions);
 		NVTT_DECLARE_PIMPL(InputOptions);
 
 		NVTT_API InputOptions();
@@ -304,6 +321,7 @@ namespace nvtt
 	/// the compressor to the user.
 	struct OutputOptions
 	{
+		NVTT_FORBID_COPY(OutputOptions);
 		NVTT_DECLARE_PIMPL(OutputOptions);
 
 		NVTT_API OutputOptions();
@@ -324,6 +342,7 @@ namespace nvtt
 	/// Texture compressor.
 	struct Compressor
 	{
+		NVTT_FORBID_COPY(Compressor);
 		NVTT_DECLARE_PIMPL(Compressor);
 
 		NVTT_API Compressor();
@@ -337,15 +356,53 @@ namespace nvtt
 		
 		// Estimate the size of compressing the input with the given options.
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
+
+		NVTT_API void outputCompressed(const Texture & tex, const OutputOptions & outputOptions);
 	};
+
 	
-	
+	/// Texture data.
+	struct Texture
+	{
+		NVTT_DECLARE_PIMPL(Texture);
+
+		NVTT_API Texture();
+		NVTT_API ~Texture();
+
+		Texture(const Texture & tex);
+		void operator=(const Texture & tex);
+
+		NVTT_API bool load(const char * fileName); // @@ Input callbacks?
+
+		NVTT_API void setType(TextureType type);
+		NVTT_API void setTexture2D(InputFormat format, int w, int h, int idx, void * data);
+
+		// Resizing
+		NVTT_API void resize(int w, int h, ResizeFilter filter);
+		NVTT_API bool buildMipmap(MipmapFilter filter);
+
+		// Color transforms.
+		NVTT_API void toLinear(float gamma);
+		NVTT_API void toGamma(float gamma);
+		NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
+		NVTT_API void swizzle(int r, int g, int b, int a);
+		NVTT_API void scaleBias(int channel, float scale, float bias);
+		NVTT_API void normalize();
+		NVTT_API void blend(float r, float g, float b, float a);
+		NVTT_API void premultiplyAlpha();
+	};
+
+
 	// Return string for the given error code.
 	NVTT_API const char * errorString(Error e);
 
 	// Return NVTT version.
 	NVTT_API unsigned int version();
 
+	// Set callbacks.
+	//NVTT_API void setErrorCallback(ErrorCallback callback);
+	//NVTT_API void setMemoryCallbacks(...);	
+	
 } // nvtt namespace
 
 #endif // NV_TT_H

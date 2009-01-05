@@ -1,16 +1,16 @@
 
 #include "nvtt_experimental.h"
 
-struct NvttImage
+struct NvttTexture
 {
-	NvttImage() :
+	NvttTexture() :
 		m_constant(false),
 		m_image(NULL),
 		m_floatImage(NULL)
 	{
 	}
 	
-	~NvttImage()
+	~NvttTexture()
 	{
 		if (m_constant && m_image) m_image->unwrap();
 		delete m_image;
@@ -22,14 +22,14 @@ struct NvttImage
 	FloatImage * m_floatImage;
 };
 
-NvttImage * nvttCreateImage() 
+NvttTexture * nvttCreateTexture() 
 {
-	return new NvttImage();
+	return new NvttTexture();
 }
 	
-void nvttDestroyImage(NvttImage * img)
+void nvttDestroyTexture(NvttTexture * tex)
 {
-	delete img;
+	delete tex;
 }
 
 void nvttSetImageData(NvttImage * img, NvttInputFormat format, uint w, uint h, void * data)
