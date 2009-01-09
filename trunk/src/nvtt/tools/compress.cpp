@@ -33,8 +33,8 @@
 #include <nvcore/Ptr.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
-
-#include <time.h> // clock
+#include <nvcore/FileSystem.h>
+#include <nvcore/Timer.h>
 
 
 struct MyOutputHandler : public nvtt::OutputHandler
@@ -324,7 +324,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// @@ Make sure input file exists.
+	// Make sure input file exists.
+	if (!nv::FileSystem::exists(input.str()))
+	{
+		fprintf(stderr, "The file '%s' does not exist.\n", input.str());
+		return 1;
+	}
 	
 	// Set input options.
 	nvtt::InputOptions inputOptions;
@@ -501,20 +506,19 @@ int main(int argc, char *argv[])
 	{
 		outputOptions.setContainer(nvtt::Container_DDS10);
 	}
-	
 
 //	printf("Press ENTER.\n");
 //	fflush(stdout);
 //	getchar();
 
-	clock_t start = clock();
+	Timer timer;
+	timer.start();
 	
 	bool success = compressor.process(inputOptions, compressionOptions, outputOptions);
 
 	if (success)
 	{
-		clock_t end = clock();
-		printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+		printf("\rtime taken: %.3f seconds\n", float(timer.elapsed()) / 1000.0f);
 	}
 	
 	return 0;
