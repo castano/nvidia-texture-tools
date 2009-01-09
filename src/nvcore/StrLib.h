@@ -125,8 +125,8 @@ namespace nv
 	public:
 		Path() : StringBuilder() {}
 		explicit Path(int size_hint) : StringBuilder(size_hint) {}
-		Path( const char * str ) : StringBuilder(str) {}
-		Path(const StringBuilder & str) : StringBuilder(str) {}
+		Path(const char * str) : StringBuilder(str) {}
+		Path(const Path & path) : StringBuilder(path) {}
 		
 		const char * fileName() const;
 		const char * extension() const;
