@@ -209,7 +209,7 @@ StringBuilder::StringBuilder( const StringBuilder & s ) : m_size(0), m_str(NULL)
 }
 
 /** Copy string. */
-StringBuilder::StringBuilder( const char * s )
+StringBuilder::StringBuilder( const char * s ) : m_size(0), m_str(NULL)
 {
 	copy(s);
 }
