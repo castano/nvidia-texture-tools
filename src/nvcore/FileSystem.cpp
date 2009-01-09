@@ -17,8 +17,9 @@ using namespace nv;
 bool FileSystem::exists(const char * path)
 {
 #if NV_OS_UNIX
-	struct stat buf;
-	return stat(path, &buf) == 0;
+	return access(path, F_OK|R_OK) == 0;
+	//struct stat buf;
+	//return stat(path, &buf) == 0;
 #else
 	if (FILE * fp = fopen(path, "r"))
 	{
