@@ -47,7 +47,8 @@ namespace nv
 		bool isFourColorMode() const;
 	
 		uint evaluatePalette(Color32 color_array[4]) const;
-		uint evaluatePaletteFast(Color32 color_array[4]) const;
+		uint evaluatePaletteNV5x(Color32 color_array[4]) const;
+
 		void evaluatePalette3(Color32 color_array[4]) const;
 		void evaluatePalette4(Color32 color_array[4]) const;
 		
