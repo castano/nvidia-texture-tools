@@ -91,7 +91,7 @@ static bool isCudaDriverAvailable(uint version)
 
 	if (version >= 2010)
 	{
-		void * address = nvcuda.bindSymbol("cuLoadDataEx");
+		void * address = nvcuda.bindSymbol("cuModuleLoadDataEx");
 		if (address == NULL) return false;
 	}
 	
