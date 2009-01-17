@@ -1,6 +1,10 @@
 NVIDIA Texture Tools version 2.0.6
  * Fix dll version checking.
  * Include correct runtime headers.
+ * Detect CUDA 2.1 correctly.
+ * Print CUDA detection message in nvcompress.
+ * Compile squish with -fPIC. Fixes issue 74.
+ * Merge changes from trunk to fix warnings under gcc 4.3.2.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
