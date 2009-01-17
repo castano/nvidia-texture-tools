@@ -47,25 +47,25 @@ public:
 
 	/** @name Stream implementation. */
 	//@{
-		virtual void seek( int pos )
+		virtual void seek( uint pos )
 		{
 			nvDebugCheck(m_fp != NULL);
-			nvDebugCheck(pos >= 0 && pos < size());
+			nvDebugCheck(pos < size());
 			fseek(m_fp, pos, SEEK_SET);
 		}
 		
-		virtual int tell() const
+		virtual uint tell() const
 		{
 			nvDebugCheck(m_fp != NULL);
 			return ftell(m_fp);
 		}
 		
-		virtual int size() const
+		virtual uint size() const
 		{
 			nvDebugCheck(m_fp != NULL);
-			int pos = ftell(m_fp);
+			uint pos = ftell(m_fp);
 			fseek(m_fp, 0, SEEK_END);
-			int end = ftell(m_fp);
+			uint end = ftell(m_fp);
 			fseek(m_fp, pos, SEEK_SET);
 			return end;
 		}
@@ -117,11 +117,11 @@ public:
 	/** @name Stream implementation. */
 	//@{
 		/// Write data.
-		virtual void serialize( void * data, int len )
+		virtual uint serialize( void * data, uint len )
 		{
 			nvDebugCheck(data != NULL);
 			nvDebugCheck(m_fp != NULL);
-			fwrite(data, len, 1, m_fp);
+			return (uint)fwrite(data, 1, len, m_fp);
 		}
 		
 		virtual bool isLoading() const
@@ -156,11 +156,11 @@ public:
 	/** @name Stream implementation. */
 	//@{
 		/// Read data.
-		virtual void serialize( void * data, int len )
+		virtual uint serialize( void * data, uint len )
 		{
 			nvDebugCheck(data != NULL);
 			nvDebugCheck(m_fp != NULL);
-			fread(data, len, 1, m_fp);
+			return (uint)fread(data, 1, len, m_fp);
 		}
 		
 		virtual bool isLoading() const
@@ -184,33 +184,40 @@ class NVCORE_CLASS MemoryInputStream : public Stream
 public:
 
 	/// Ctor.
-	MemoryInputStream( const uint8 * mem, int size ) : 
+	MemoryInputStream( const uint8 * mem, uint size ) : 
 		m_mem(mem), m_ptr(mem), m_size(size) { }
 
 	/** @name Stream implementation. */
 	//@{
 		/// Read data.
-		virtual void serialize( void * data, int len )
+		virtual uint serialize( void * data, uint len )
 		{
 			nvDebugCheck(data != NULL);
 			nvDebugCheck(!isError());
+
+			uint left = m_size - tell();
+			if (len > left) len = left;
+			
 			memcpy( data, m_ptr, len );
 			m_ptr += len;
+				
+			return len;
 		}
 		
-		virtual void seek( int pos )
+		virtual void seek( uint pos )
 		{
 			nvDebugCheck(!isError());
 			m_ptr = m_mem + pos;
 			nvDebugCheck(!isError());
 		}
 		
-		virtual int tell() const
+		virtual uint tell() const
 		{
-			return int(m_ptr - m_mem);
+			nvDebugCheck(m_ptr >= m_mem);
+			return uint(m_ptr - m_mem);
 		}
 		
-		virtual int size() const
+		virtual uint size() const
 		{
 			return m_size;
 		}
@@ -252,7 +259,7 @@ private:
 
 	const uint8 * m_mem;
 	const uint8 * m_ptr;
-	int m_size;
+	uint m_size;
 
 };
 
@@ -286,17 +293,19 @@ public:
 	/** @name Stream implementation. */
 	//@{
 		/// Read data.
-		virtual void serialize( void * data, int len )
+		virtual uint serialize( void * data, uint len )
 		{
 			nvDebugCheck(data != NULL);
-			m_s->serialize( data, len );
+			len = m_s->serialize( data, len );
 			
 			if( m_s->isError() ) {
 				throw std::exception();
 			}
+
+			return len;
 		}
 		
-		virtual void seek( int pos )
+		virtual void seek( uint pos )
 		{
 			m_s->seek( pos );
 			
@@ -305,12 +314,12 @@ public:
 			}
 		}
 		
-		virtual int tell() const
+		virtual uint tell() const
 		{
 			return m_s->tell();
 		}
 		
-		virtual int size() const
+		virtual uint size() const
 		{
 			return m_s->size();
 		}
