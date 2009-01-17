@@ -408,6 +408,16 @@ int main(int argc, char *argv[])
 	nvtt::Compressor compressor;
 	compressor.enableCudaAcceleration(!nocuda);
 
+	printf("CUDA acceleration ");
+	if (compressor.isCudaAccelerationEnabled())
+	{
+		printf("ENABLED\n\n");
+	}
+	else
+	{
+		printf("DISABLED\n\n");
+	}	
+	
 	outputHandler.setTotal(compressor.estimateSize(inputOptions, compressionOptions));
 	outputHandler.setDisplayProgress(!silent);
 
