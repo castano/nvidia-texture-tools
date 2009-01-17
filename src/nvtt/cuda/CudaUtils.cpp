@@ -26,7 +26,7 @@
 #include "CudaUtils.h"
 
 #if defined HAVE_CUDA
-#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>
 #endif
 
 using namespace nv;
