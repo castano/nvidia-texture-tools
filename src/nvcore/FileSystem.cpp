@@ -4,7 +4,9 @@
 #include <nvcore/nvcore.h>
 
 #if NV_OS_WIN32
-#include <direct.h>
+//#include <shlwapi.h> // PathFileExists
+#include <windows.h> // GetFileAttributes
+#include <direct.h> // _mkdir
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -20,6 +22,10 @@ bool FileSystem::exists(const char * path)
 	return access(path, F_OK|R_OK) == 0;
 	//struct stat buf;
 	//return stat(path, &buf) == 0;
+#elif NV_OS_WIN32
+    // PathFileExists requires linking to shlwapi.lib
+    //return PathFileExists(path) != 0;
+    return GetFileAttributes(path) != 0xFFFFFFFF;
 #else
 	if (FILE * fp = fopen(path, "r"))
 	{
