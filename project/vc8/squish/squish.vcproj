@@ -344,6 +344,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\squish\squish.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\squish\weightedclusterfit.h"
 				>
 			</File>
