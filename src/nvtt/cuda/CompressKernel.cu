@@ -305,13 +305,23 @@ __device__ void loadColorBlock(const uint * image, float2 colors[16], float2 sum
 ////////////////////////////////////////////////////////////////////////////////
 inline __device__ float3 roundAndExpand565(float3 v, ushort * w)
 {
+#if 0
+	uint x = __float2uint_rn(__saturatef(v.x) * 31.0f);
+	uint y = __float2uint_rn(__saturatef(v.y) * 63.0f);
+	uint z = __float2uint_rn(__saturatef(v.z) * 31.0f);
+	*w = (x << 11) | (y << 5) | z;
+	v.x = __uint2float_rn(x) * 1.0f / 31.0f;
+	v.y = __uint2float_rn(y) * 1.0f / 63.0f;
+	v.z = __uint2float_rn(z) * 1.0f / 31.0f;
+#else
 	v.x = rintf(__saturatef(v.x) * 31.0f);
 	v.y = rintf(__saturatef(v.y) * 63.0f);
 	v.z = rintf(__saturatef(v.z) * 31.0f);
 	*w = ((ushort)v.x << 11) | ((ushort)v.y << 5) | (ushort)v.z;
-	v.x *= 0.03227752766457f; // approximate integer bit expansion.
-	v.y *= 0.01583151765563f;
-	v.z *= 0.03227752766457f;
+	v.x *= 1.0f / 31.0f;
+	v.y *= 1.0f / 63.0f;
+	v.z *= 1.0f / 31.0f;
+#endif
 	return v;
 }
 
@@ -320,8 +330,8 @@ inline __device__ float2 roundAndExpand56(float2 v, ushort * w)
 	v.x = rintf(__saturatef(v.x) * 31.0f);
 	v.y = rintf(__saturatef(v.y) * 63.0f);
 	*w = ((ushort)v.x << 11) | ((ushort)v.y << 5);
-	v.x *= 0.03227752766457f; // approximate integer bit expansion.
-	v.y *= 0.01583151765563f;
+	v.x *= 1.0f / 31.0f;
+	v.y *= 1.0f / 63.0f;
 	return v;
 }
 
