@@ -282,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvcore\FileSystem.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvcore\Library.cpp"
 				>
 			</File>
@@ -317,6 +321,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvcore\DefsVcWin32.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\FileSystem.h"
 				>
 			</File>
 			<File
