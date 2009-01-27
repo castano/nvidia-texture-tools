@@ -8,6 +8,8 @@ IF(WIN32)
 	SET(GNUWIN32 "${NV_SOURCE_DIR}/extern/gnuwin32")
 	SET(CMAKE_INCLUDE_PATH "${GNUWIN32}/include")
 	SET(CMAKE_LIBRARY_PATH "${GNUWIN32}/lib")
+	
+	SET(GLUT_ROOT_PATH "${NV_SOURCE_DIR}/extern/glut")
 ENDIF(WIN32)
 
 INCLUDE(${NV_CMAKE_DIR}/OptimalOptions.cmake)
