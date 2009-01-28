@@ -12,6 +12,10 @@
 
 #include <math.h>
 
+// This value is to prevent division by zero when weighting kernels by alpha.
+#define ALPHA_EPSILON (1.0f / 256.0f)
+
+
 using namespace nv;
 
 namespace 
@@ -601,6 +605,15 @@ FloatImage * FloatImage::downSample(const Filter & filter, WrapMode wm) const
 	return resize(filter, w, h, wm);
 }
 
+/// Downsample applying a 1D kernel separately in each dimension.
+FloatImage * FloatImage::downSample(const Filter & filter, WrapMode wm, uint alpha) const
+{
+	const uint w = max(1, m_width / 2);
+	const uint h = max(1, m_height / 2);
+
+	return resize(filter, w, h, wm, alpha);
+}
+
 
 /// Downsample applying a 1D kernel separately in each dimension.
 FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode wm) const
@@ -672,10 +685,51 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 	return dst_image.release();
 }
 
+/// Downsample applying a 1D kernel separately in each dimension.
+FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const
+{
+	nvCheck(alpha < m_componentNum);
+
+	AutoPtr<FloatImage> tmp_image( new FloatImage() );
+	AutoPtr<FloatImage> dst_image( new FloatImage() );	
+	
+	PolyphaseKernel xkernel(filter, m_width, w, 32);
+	PolyphaseKernel ykernel(filter, m_height, h, 32);
+	
+	{
+		tmp_image->allocate(m_componentNum, w, m_height);
+		dst_image->allocate(m_componentNum, w, h);
+		
+		Array<float> tmp_column(h);
+		tmp_column.resize(h);
+		
+		for (uint c = 0; c < m_componentNum; c++)
+		{
+			float * tmp_channel = tmp_image->channel(c);
+			
+			for (uint y = 0; y < m_height; y++) {
+				this->applyKernelHorizontal(xkernel, y, c, alpha, wm, tmp_channel + y * w);
+			}
+			
+			float * dst_channel = dst_image->channel(c);
+			
+			for (uint x = 0; x < w; x++) {
+				tmp_image->applyKernelVertical(ykernel, x, c, alpha, wm, tmp_column.mutableBuffer());
+				
+				for (uint y = 0; y < h; y++) {
+					dst_channel[y * w + x] = tmp_column[y];
+				}
+			}
+		}
+	}
+	
+	return dst_image.release();
+}
+
 
 
 /// Apply 2D kernel at the given coordinates and return result.
-float FloatImage::applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode wm) const
+float FloatImage::applyKernel(const Kernel2 * k, int x, int y, uint c, WrapMode wm) const
 {
 	nvDebugCheck(k != NULL);
 	
@@ -704,7 +758,7 @@ float FloatImage::applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode w
 
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-float FloatImage::applyKernelVertical(const Kernel1 * k, int x, int y, int c, WrapMode wm) const
+float FloatImage::applyKernelVertical(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const
 {
 	nvDebugCheck(k != NULL);
 	
@@ -726,7 +780,7 @@ float FloatImage::applyKernelVertical(const Kernel1 * k, int x, int y, int c, Wr
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
-float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, WrapMode wm) const
+float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const
 {
 	nvDebugCheck(k != NULL);
 	
@@ -749,7 +803,7 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, 
 
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, WrapMode wm, float * output) const
+void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, WrapMode wm, float * output) const
 {
 	const uint length = k.length();
 	const float scale = float(length) / float(m_height);
@@ -781,7 +835,7 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, int c, Wr
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
-void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, WrapMode wm, float * output) const
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, WrapMode wm, float * output) const
 {
 	const uint length = k.length();
 	const float scale = float(length) / float(m_width);
@@ -809,6 +863,79 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, 
 		}
 		
 		output[i] = sum;
+	}
+}
+
+
+/// Apply 1D vertical kernel at the given coordinates and return result.
+void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, uint a, WrapMode wm, float * output) const
+{
+	const uint length = k.length();
+	const float scale = float(length) / float(m_height);
+	const float iscale = 1.0f / scale;
+
+	const float width = k.width();
+	const int windowSize = k.windowSize();
+
+	const float * channel = this->channel(c);
+	const float * alpha = this->channel(a);
+
+	for (uint i = 0; i < length; i++)
+	{
+		const float center = (0.5f + i) * iscale;
+		
+		const int left = (int)floorf(center - width);
+		const int right = (int)ceilf(center + width);
+		nvCheck(right - left <= windowSize);
+		
+		float alphaSum = 0;
+		float sum = 0;
+		for (int j = 0; j < windowSize; ++j)
+		{
+			const int idx = this->index(x, j+left, wm);
+			
+			float alphaFactor = alpha[idx] + ALPHA_EPSILON;
+			alphaSum += alphaFactor;
+			sum += k.valueAt(i, j) * channel[idx] * alphaFactor;
+		}
+		
+		output[i] = sum / alphaSum;
+	}
+}
+
+/// Apply 1D horizontal kernel at the given coordinates and return result.
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * output) const
+{
+	const uint length = k.length();
+	const float scale = float(length) / float(m_width);
+	const float iscale = 1.0f / scale;
+
+	const float width = k.width();
+	const int windowSize = k.windowSize();
+
+	const float * channel = this->channel(c);
+	const float * alpha = this->channel(a);
+
+	for (uint i = 0; i < length; i++)
+	{
+		const float center = (0.5f + i) * iscale;
+		
+		const int left = (int)floorf(center - width);
+		const int right = (int)ceilf(center + width);
+		nvDebugCheck(right - left <= windowSize);
+		
+        float alphaSum = 0.0f;
+		float sum = 0;
+		for (int j = 0; j < windowSize; ++j)
+		{
+			const int idx = this->index(left + j, y, wm);
+
+			float alphaFactor = alpha[idx] + ALPHA_EPSILON;
+			alphaSum += alphaFactor;
+			sum += k.valueAt(i, j) * channel[idx] * alphaFactor;
+		}
+		
+		output[i] = sum / alphaSum;
 	}
 }
 
