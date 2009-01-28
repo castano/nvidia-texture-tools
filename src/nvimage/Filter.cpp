@@ -504,7 +504,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 		for (int i = 0; i < 7; i++) {
 			for (int e = 0; e < 7; e++) {
-				m_data[i * 9 + e + 1] += elements[i * 7 + e] * scale.z();
+				m_data[(i + 1) * 9 + e + 1] += elements[i * 7 + e] * scale.z();
 			}
 		}
 	}
@@ -519,7 +519,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 		for (int i = 0; i < 5; i++) {
 			for (int e = 0; e < 5; e++) {
-				m_data[i * 9 + e + 2] += elements[i * 5 + e] * scale.y();
+				m_data[(i + 2) * 9 + e + 2] += elements[i * 5 + e] * scale.y();
 			}
 		}
 	}
@@ -532,7 +532,7 @@ void Kernel2::initBlendedSobel(const Vector4 & scale)
 
 		for (int i = 0; i < 3; i++) {
 			for (int e = 0; e < 3; e++) {
-				m_data[i * 9 + e + 3] += elements[i * 3 + e] * scale.x();
+				m_data[(i + 3) * 9 + e + 3] += elements[i * 3 + e] * scale.x();
 			}
 		}
 	}
