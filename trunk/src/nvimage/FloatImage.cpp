@@ -12,9 +12,6 @@
 
 #include <math.h>
 
-// This value is to prevent division by zero when weighting kernels by alpha.
-#define ALPHA_EPSILON (1.0f / 256.0f)
-
 
 using namespace nv;
 
@@ -710,7 +707,12 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			for (uint y = 0; y < m_height; y++) {
 				this->applyKernelHorizontal(xkernel, y, c, alpha, wm, tmp_channel + y * w);
 			}
-			
+		}
+
+		// Process all channels before applying vertical kernel to make sure alpha has been computed.
+
+		for (uint c = 0; c < m_componentNum; c++)
+		{
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
@@ -803,7 +805,7 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, uint c,
 
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, WrapMode wm, float * output) const
+void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, WrapMode wm, float * __restrict output) const
 {
 	const uint length = k.length();
 	const float scale = float(length) / float(m_height);
@@ -835,7 +837,7 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, W
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
-void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, WrapMode wm, float * output) const
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, WrapMode wm, float * __restrict output) const
 {
 	const uint length = k.length();
 	const float scale = float(length) / float(m_width);
@@ -868,7 +870,7 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c,
 
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, uint a, WrapMode wm, float * output) const
+void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, uint a, WrapMode wm, float * __restrict output) const
 {
 	const uint length = k.length();
 	const float scale = float(length) / float(m_height);
@@ -888,23 +890,23 @@ void FloatImage::applyKernelVertical(const PolyphaseKernel & k, int x, uint c, u
 		const int right = (int)ceilf(center + width);
 		nvCheck(right - left <= windowSize);
 		
-		float alphaSum = 0;
+		float norm = 0;
 		float sum = 0;
 		for (int j = 0; j < windowSize; ++j)
 		{
 			const int idx = this->index(x, j+left, wm);
 			
-			float alphaFactor = alpha[idx] + ALPHA_EPSILON;
-			alphaSum += alphaFactor;
-			sum += k.valueAt(i, j) * channel[idx] * alphaFactor;
+			float w = k.valueAt(i, j) * (alpha[idx] + (1.0f / 256.0f));
+			norm += w;
+			sum += w * channel[idx];
 		}
 		
-		output[i] = sum / alphaSum;
+		output[i] = sum / norm;
 	}
 }
 
 /// Apply 1D horizontal kernel at the given coordinates and return result.
-void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * output) const
+void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * __restrict output) const
 {
 	const uint length = k.length();
 	const float scale = float(length) / float(m_width);
@@ -924,18 +926,18 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c,
 		const int right = (int)ceilf(center + width);
 		nvDebugCheck(right - left <= windowSize);
 		
-        float alphaSum = 0.0f;
+		float norm = 0.0f;
 		float sum = 0;
 		for (int j = 0; j < windowSize; ++j)
 		{
 			const int idx = this->index(left + j, y, wm);
 
-			float alphaFactor = alpha[idx] + ALPHA_EPSILON;
-			alphaSum += alphaFactor;
-			sum += k.valueAt(i, j) * channel[idx] * alphaFactor;
+			float w = k.valueAt(i, j) * (alpha[idx] + (1.0f / 256.0f));
+			norm += w;
+			sum += w * channel[idx];
 		}
 		
-		output[i] = sum / alphaSum;
+		output[i] = sum / norm;
 	}
 }
 
