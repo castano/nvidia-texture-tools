@@ -701,23 +701,47 @@ void Compressor::Private::downsampleMipmap(Mipmap & mipmap, const InputOptions::
 	mipmap.toFloatImage(inputOptions);
 
 	const FloatImage * floatImage = mipmap.asFloatImage();
+	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)inputOptions.wrapMode;
 	
-	if (inputOptions.mipmapFilter == MipmapFilter_Box)
+	if (inputOptions.alphaMode == AlphaMode_Transparency)
 	{
-		// Use fast downsample.
-		mipmap.setImage(floatImage->fastDownSample());
+		if (inputOptions.mipmapFilter == MipmapFilter_Box)
+		{
+			BoxFilter filter;
+			mipmap.setImage(floatImage->downSample(filter, wrapMode, 3));
+		}
+		else if (inputOptions.mipmapFilter == MipmapFilter_Triangle)
+		{
+			TriangleFilter filter;
+			mipmap.setImage(floatImage->downSample(filter, wrapMode, 3));
+		}
+		else /*if (inputOptions.mipmapFilter == MipmapFilter_Kaiser)*/
+		{
+			nvDebugCheck(inputOptions.mipmapFilter == MipmapFilter_Kaiser);
+			KaiserFilter filter(inputOptions.kaiserWidth);
+			filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
+			mipmap.setImage(floatImage->downSample(filter, wrapMode, 3));
+		}
 	}
-	else if (inputOptions.mipmapFilter == MipmapFilter_Triangle)
+	else
 	{
-		TriangleFilter filter;
-		mipmap.setImage(floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode));
-	}
-	else /*if (inputOptions.mipmapFilter == MipmapFilter_Kaiser)*/
-	{
-		nvDebugCheck(inputOptions.mipmapFilter == MipmapFilter_Kaiser);
-		KaiserFilter filter(inputOptions.kaiserWidth);
-		filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-		mipmap.setImage(floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode));
+		if (inputOptions.mipmapFilter == MipmapFilter_Box)
+		{
+			// Use fast downsample.
+			mipmap.setImage(floatImage->fastDownSample());
+		}
+		else if (inputOptions.mipmapFilter == MipmapFilter_Triangle)
+		{
+			TriangleFilter filter;
+			mipmap.setImage(floatImage->downSample(filter, wrapMode));
+		}
+		else /*if (inputOptions.mipmapFilter == MipmapFilter_Kaiser)*/
+		{
+			nvDebugCheck(inputOptions.mipmapFilter == MipmapFilter_Kaiser);
+			KaiserFilter filter(inputOptions.kaiserWidth);
+			filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
+			mipmap.setImage(floatImage->downSample(filter, wrapMode));
+		}
 	}
 	
 	// Normalize mipmap.
@@ -737,7 +761,15 @@ void Compressor::Private::scaleMipmap(Mipmap & mipmap, const InputOptions::Priva
 
 	// Resize image. 
 	BoxFilter boxFilter;
-	mipmap.setImage(mipmap.asFloatImage()->resize(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
+
+	if (inputOptions.alphaMode == AlphaMode_Transparency)
+	{
+		mipmap.setImage(mipmap.asFloatImage()->resize(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode, 3));
+	}
+	else
+	{
+		mipmap.setImage(mipmap.asFloatImage()->resize(boxFilter, w, h, (FloatImage::WrapMode)inputOptions.wrapMode));
+	}
 }
 
 
