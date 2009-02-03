@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 				((nv::KaiserFilter *)filter.ptr())->setParameters(4.0f, 1.0f);
 			}
 		}
-		else if (strcmp("-f", argv[i]) == 0)
+		else if (strcmp("-w", argv[i]) == 0)
 		{
 			if (i+1 == argc) break;
 			i++;
