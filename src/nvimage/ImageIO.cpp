@@ -106,7 +106,7 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 		return loadPNG(s);
 	}
 #endif
-	
+
 	if (strCaseCmp(extension, ".psd") == 0) {
 		return loadPSD(s);
 	}
@@ -212,17 +212,27 @@ bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, ui
 	}
 #endif
 
-/* // @@ Disable Temporarily
+	// @@ Disable Temporarily
 	if (strCaseCmp(extension, ".pfm") == 0)
 	{
 //		return ImageIO::saveFloatPFM(fileName, fimage, base_component, num_components);
 	}
-*/
 
-	if (num_components == 3 || num_components == 4)
+	//if (num_components == 3 || num_components == 4)
+	if (num_components <= 4)
 	{
 		AutoPtr<Image> image(fimage->createImage(base_component, num_components));
 		nvCheck(image != NULL);
+
+		if (num_components == 1)
+		{
+			Color32 * c = image->pixels();
+			const uint count = image->width() * image->height();
+			for (uint i = 0; i < count; i++)
+			{
+				c[i].b = c[i].g = c[i].r;
+			}
+		}
 
 		if (num_components == 4)
 		{
