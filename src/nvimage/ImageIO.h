@@ -5,6 +5,9 @@
 
 #include <nvimage/nvimage.h>
 
+#include <string>
+#include <map>
+
 namespace nv
 {
 	class Image;
@@ -30,6 +33,7 @@ namespace nv
 
 #if defined(HAVE_PNG)
 		NVIMAGE_API Image * loadPNG(Stream & s);
+		NVIMAGE_API bool savePNG(Stream & s, const Image * img);
 #endif
 
 #if defined(HAVE_JPEG)
