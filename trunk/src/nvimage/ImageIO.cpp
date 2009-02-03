@@ -1004,7 +1004,7 @@ static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t leng
 
 static void user_write_flush(png_structp png_ptr) { }
 
-bool nv::ImageIO::savePNG(Stream & s, const Image * img)
+bool nv::ImageIO::savePNG(Stream & s, const Image * img, const PngCommentsMap & comments)
 {
 	nvCheck(!s.isError());
 	nvCheck(img != NULL);
@@ -1052,21 +1052,21 @@ bool nv::ImageIO::savePNG(Stream & s, const Image * img)
 	}
 	png_set_rows(png_ptr, info_ptr, row_data);
 
-	png_text* text = 0;
-	/*if (comments.size() > 0)
+	png_text * text = NULL;
+	if (comments.size() > 0)
 	{
 		text = new png_text[comments.size()];
 		memset(text, 0, comments.size() * sizeof(png_text));
 		int n = 0;
-		for (PngCommentsType::const_iterator comment = comments.begin(); comment != comments.end(); comment++)
+		foreach (i, comments)
 		{
 			text[n].compression = PNG_TEXT_COMPRESSION_NONE;
-			text[n].key = const_cast<char*> (comment->first.c_str());
-			text[n].text = const_cast<char*> (comment->second.c_str());
+			text[n].key = const_cast<char*> (comments[i].key.str());
+			text[n].text = const_cast<char*> (comments[i].value.str());
 			n++;
 		}
 		png_set_text(png_ptr, info_ptr, text, comments.size());
-	}*/
+	}
 
 	png_write_png(png_ptr, info_ptr,
 		// component order is BGR(A)

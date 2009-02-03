@@ -5,8 +5,8 @@
 
 #include <nvimage/nvimage.h>
 
-#include <string>
-#include <map>
+#include <nvcore/StrLib.h>
+
 
 namespace nv
 {
@@ -33,7 +33,8 @@ namespace nv
 
 #if defined(HAVE_PNG)
 		NVIMAGE_API Image * loadPNG(Stream & s);
-		NVIMAGE_API bool savePNG(Stream & s, const Image * img);
+		typedef HashMap<String, String> PngCommentsMap;
+		NVIMAGE_API bool savePNG(Stream & s, const Image * img, const PngCommentsMap & comments = PngCommentsMap());
 #endif
 
 #if defined(HAVE_JPEG)
