@@ -127,6 +127,11 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img)
 	if (strCaseCmp(extension, ".tga") == 0) {
 		return ImageIO::saveTGA(s, img);
 	}
+#if defined(HAVE_PNG)
+	if (strCaseCmp(extension, ".png") == 0) {
+		return ImageIO::savePNG(s, img);
+	}
+#endif
 
 	return false;
 }
@@ -983,6 +988,100 @@ Image * nv::ImageIO::loadPNG(Stream & s)
 	}*/
 
 	return img.release();
+}
+
+static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	nvDebugCheck(png_ptr != NULL);
+	
+	Stream * s = (Stream *)png_ptr->io_ptr;
+	s->serialize(data, (int)length);
+	
+	if (s->isError()) {
+		png_error(png_ptr, "Write Error");
+	}
+}
+
+static void user_write_flush(png_structp png_ptr) { }
+
+bool nv::ImageIO::savePNG(Stream & s, const Image * img)
+{
+	nvCheck(!s.isError());
+	nvCheck(img != NULL);
+	nvCheck(img->pixels() != NULL);
+	
+	// Set up a write buffer and check the library version
+	png_structp png_ptr;
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (png_ptr == NULL) {
+		return false;
+	}
+
+	// Allocate/initialize a memory block for the image information
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	if (info_ptr == NULL) {
+		png_destroy_write_struct(&png_ptr, NULL);
+		return false;
+	}
+
+	// Set up the error handling
+	if (setjmp(png_jmpbuf(png_ptr))) {
+		png_destroy_write_struct(&png_ptr, &info_ptr);
+		return false;
+	}
+
+	// Set up the I/O functions.
+	png_set_write_fn(png_ptr, (void*)&s, user_write_data, user_write_flush);
+
+	// Set image header information
+	int color_type = PNG_COLOR_TYPE_RGB;
+	switch(img->format())
+	{
+		case Image::Format_RGB:		color_type = PNG_COLOR_TYPE_RGB; break;
+		case Image::Format_ARGB:	color_type = PNG_COLOR_TYPE_RGBA; break;
+	}
+	png_set_IHDR(png_ptr, info_ptr, img->width(), img->height(),
+		8, color_type, PNG_INTERLACE_NONE,
+		PNG_COMPRESSION_TYPE_DEFAULT,
+		PNG_FILTER_TYPE_DEFAULT);
+
+	// Set image data
+	png_bytep * row_data = new png_bytep[sizeof(png_byte) * img->height()];
+	for (uint i = 0; i < img->height(); i++) {
+		row_data[i] = (png_byte*)img->scanline (i);
+	}
+	png_set_rows(png_ptr, info_ptr, row_data);
+
+	png_text* text = 0;
+	/*if (comments.size() > 0)
+	{
+		text = new png_text[comments.size()];
+		memset(text, 0, comments.size() * sizeof(png_text));
+		int n = 0;
+		for (PngCommentsType::const_iterator comment = comments.begin(); comment != comments.end(); comment++)
+		{
+			text[n].compression = PNG_TEXT_COMPRESSION_NONE;
+			text[n].key = const_cast<char*> (comment->first.c_str());
+			text[n].text = const_cast<char*> (comment->second.c_str());
+			n++;
+		}
+		png_set_text(png_ptr, info_ptr, text, comments.size());
+	}*/
+
+	png_write_png(png_ptr, info_ptr,
+		// component order is BGR(A)
+		PNG_TRANSFORM_BGR
+		// Strip alpha byte for RGB images
+		| (img->format() == Image::Format_RGB ? PNG_TRANSFORM_STRIP_FILLER : 0),
+		NULL);
+	
+	// Finish things up
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+
+	delete [] row_data;
+	delete [] text;
+
+	return true;
 }
 
 #endif // defined(HAVE_PNG)
