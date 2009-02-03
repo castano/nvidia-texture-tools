@@ -121,6 +121,9 @@ FIND_PACKAGE(Qt4)
 # Threads
 FIND_PACKAGE(Threads)
 
+# gconftool-2
+FIND_PROGRAM(GCONFTOOL2 gconftool-2)
+
 # configuration file
 INCLUDE(CheckIncludeFiles)
 
@@ -131,6 +134,9 @@ CHECK_INCLUDE_FILES(execinfo.h HAVE_EXECINFO_H)
 CHECK_INCLUDE_FILES(malloc.h HAVE_MALLOC_H)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nvconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/nvconfig.h)
+IF(GCONFTOOL2)
+	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nvtt/tools/nvtt-thumbnailer.schema.in ${CMAKE_CURRENT_BINARY_DIR}/nvtt/tools/nvtt-thumbnailer.schema)
+ENDIF(GCONFTOOL2)
 
 #INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/nvconfig.h DESTINATION include)
 
