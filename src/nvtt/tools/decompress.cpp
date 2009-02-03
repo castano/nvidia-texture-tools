@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 	bool forcenormal = false;
 	bool mipmaps = false;
 	bool faces = false;
+	bool savePNG = false;
 
 	nv::Path input;
 	nv::Path output;
@@ -60,6 +61,19 @@ int main(int argc, char *argv[])
 		{
 			faces = true;
 		}
+		else if (strcmp("-format", argv[i]) == 0)
+		{
+			if (i+1 == argc) break;
+			i++;
+
+			if (strcmp("png", argv[i]) == 0) savePNG = true;
+			else if (strcmp("tga", argv[i]) == 0) savePNG = false;
+			else
+			{
+				fprintf(stderr, "Unsupported output format '%s', defaulting to 'tga'.\n", argv[i]);
+				savePNG = false;
+			}
+		}
 		else if (argv[i][0] != '-')
 		{
 			input = argv[i];
@@ -71,8 +85,6 @@ int main(int argc, char *argv[])
 			else
 			{
 				output.copy(input.str());
-				output.stripExtension();
-				output.append(".tga");
 			}
 
 			break;
@@ -85,16 +97,17 @@ int main(int argc, char *argv[])
 	{
 		printf("usage: nvdecompress [options] infile [outfile]\n\n");
 
-		printf("Note: the .tga extension is forced on outfile\n\n");
+		printf("Note: the .tga or .png extension is forced on outfile\n\n");
 
 		printf("Input options:\n");
-		printf("  -forcenormal \tThe input image is a normal map.\n");
-		printf("  -mipmaps     \tDecompress all mipmaps.\n");
-		printf("  -faces       \tDecompress all faces.\n");
+		printf("  -forcenormal    \tThe input image is a normal map.\n");
+		printf("  -mipmaps        \tDecompress all mipmaps.\n");
+		printf("  -faces          \tDecompress all faces.\n");
+		printf("  -format <format>\tOutput format ('tga' or 'png').\n");
 
  		return 1;
  	}
-	
+
 	// Load surface.
 	nv::DirectDrawSurface dds(input);
 	if (!dds.isValid())
@@ -155,7 +168,7 @@ int main(int argc, char *argv[])
 			name.copy(output);
 			if (faces) name.appendFormat("_face%d", f);
 			if (mipmaps) name.appendFormat("_mipmap%d", m);
-			name.append(".tga");
+			name.append(savePNG ? ".png" : ".tga");
 			
 			nv::StdOutputStream stream(name.str());
 			if (stream.isError()) {
@@ -163,7 +176,10 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			
-			nv::ImageIO::saveTGA(stream, &mipmap);
+			if (savePNG)
+				nv::ImageIO::savePNG(stream, &mipmap);
+			else
+				nv::ImageIO::saveTGA(stream, &mipmap);
 		}
 	}
 
