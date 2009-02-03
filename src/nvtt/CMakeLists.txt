@@ -88,6 +88,19 @@ TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
 INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvtestsuite DESTINATION bin)
 
+ADD_EXECUTABLE(nv-gnome-thumbnailer tools/thumbnailer.cpp tools/cmdline.h)
+TARGET_LINK_LIBRARIES(nv-gnome-thumbnailer nvcore nvmath nvimage)
+  
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvtestsuite nv-gnome-thumbnailer DESTINATION bin)
+ 
+IF(GCONFTOOL2)
+ 	INSTALL(CODE "MESSAGE(STATUS \"Installing thumbnailer schema\")")
+ 	#gconftool-2 --get-default-source
+ 	INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${GCONFTOOL2} --get-default-source OUTPUT_VARIABLE GCONF_CONFIG_SOURCE OUTPUT_STRIP_TRAILING_WHITESPACE)")
+ 	INSTALL(CODE "set(ENV{GCONF_CONFIG_SOURCE} \"\${GCONF_CONFIG_SOURCE}\")")
+ 	INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${GCONFTOOL2} --makefile-install-rule ${CMAKE_CURRENT_BINARY_DIR}/tools/nvtt-thumbnailer.schema)")
+ENDIF(GCONFTOOL2)
+
 #include_directories("/usr/include/ffmpeg/")
 #ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
 #TARGET_LINK_LIBRARIES(nvmpegenc nvcore nvmath nvimage avcodec z)
