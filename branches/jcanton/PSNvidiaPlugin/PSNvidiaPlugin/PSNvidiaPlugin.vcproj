@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\photoshop;C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\adm;C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\pica_sp;C:\Users\Khronos\Development\NVidia\ICastano\jcanton\photoshopapi\common\includes;C:\Qt\4.4.3\include"
+				AdditionalIncludeDirectories="..\..\photoshopapi\photoshop;..\..\photoshopapi\adm;..\..\photoshopapi\pica_sp;..\..\photoshopapi\common\includes;&quot;$(QTDIR)\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;PSNVIDIAPLUGIN_EXPORTS"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
@@ -64,8 +64,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="C:\Qt\4.4.3\lib\qtmain.lib C:\Qt\4.4.3\lib\QtCore4.lib C:\Qt\4.4.3\lib\QtGui4.lib"
-				OutputFile="C:\Program Files\Adobe\Adobe Photoshop CS2\Plug-Ins\File Formats\$(ProjectName).8bi"
+				AdditionalDependencies="$(QTDIR)\lib\qtmain.lib $(QTDIR)\lib\QtCore4.lib $(QTDIR)\lib\QtGui4.lib"
+				OutputFile="..\Debug\$(ProjectName).8bi"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -209,6 +209,14 @@
 			<File
 				RelativePath=".\DDSFormatPlugin.rc"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						AdditionalIncludeDirectories="&quot;C:\Documents and Settings\Administrator\Desktop\NVidia\jcanton\PSNvidiaPlugin\PSNvidiaPlugin\Debug&quot;"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\resource.h"
