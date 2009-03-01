@@ -14,15 +14,12 @@ SET(IMAGE_SRCS
 	ColorBlock.cpp
 	BlockDXT.h
 	BlockDXT.cpp
-	HoleFilling.h
-	HoleFilling.cpp
 	DirectDrawSurface.h
 	DirectDrawSurface.cpp
 	Quantize.h
 	Quantize.cpp
 	NormalMap.h
 	NormalMap.cpp
-	NormalMipmap.h
 	PsdFile.h
 	TgaFile.h
 	ColorSpace.h

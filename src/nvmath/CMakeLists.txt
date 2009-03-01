@@ -7,7 +7,6 @@ SET(MATH_SRCS
 	Plane.h Plane.cpp
 	Box.h
 	Color.h
-	Random.h Random.cpp
 	Half.h Half.cpp
 	Fitting.h Fitting.cpp)
 
