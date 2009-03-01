@@ -4,57 +4,14 @@
 
 #include <nvcore/Algorithms.h> // max
 #include <nvcore/Containers.h> // swap
+
 #include <float.h> // FLT_MAX
 
 using namespace nv;
 
-
-Vector3 nv::ComputeCentroid(int n, const Vector3 * points, const float * weights, Vector3::Arg metric)
+// @@ Move to EigenSolver.h
+static inline Vector3 firstEigenVector_PowerMethod(const float *__restrict matrix)
 {
-	Vector3 centroid(zero);
-	float total = 0.0f;
-
-	for (int i = 0; i < n; i++)
-	{
-		total += weights[i];
-		centroid += weights[i]*points[i];
-	}
-	centroid /= total;
-
-	return centroid;
-}
-
-
-void nv::ComputeCovariance(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, float * covariance)
-{
-	// compute the centroid
-	Vector3 centroid = ComputeCentroid(n, points, weights, metric);
-
-	// compute covariance matrix
-	for (int i = 0; i < 6; i++)
-	{
-		covariance[i] = 0.0f;
-	}
-
-	for (int i = 0; i < n; i++)
-	{
-		Vector3 a = (points[i] - centroid) * metric;
-		Vector3 b = weights[i]*a;
-		
-		covariance[0] += a.x()*b.x();
-		covariance[1] += a.x()*b.y();
-		covariance[2] += a.x()*b.z();
-		covariance[3] += a.y()*b.y();
-		covariance[4] += a.y()*b.z();
-		covariance[5] += a.z()*b.z();
-	}
-}
-
-Vector3 nv::ComputePrincipalComponent(int n, const Vector3 * points, const float * weights, Vector3::Arg metric)
-{
-	float matrix[6];
-	ComputeCovariance(n, points, weights, metric, matrix);
-
 	if (matrix[0] == 0 || matrix[3] == 0 || matrix[5] == 0)
 	{
 		return Vector3(zero);
@@ -78,13 +35,135 @@ Vector3 nv::ComputePrincipalComponent(int n, const Vector3 * points, const float
 }
 
 
-
-int nv::Compute4Means(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster)
+Vector3 nv::Fit::computeCentroid(int n, const Vector3 *__restrict points)
 {
-	Vector3 centroid = ComputeCentroid(n, points, weights, metric);
-	
+	Vector3 centroid(zero);
+
+	for (int i = 0; i < n; i++)
+	{
+		centroid += points[i];
+	}
+	centroid /= float(n);
+
+	return centroid;
+}
+
+Vector3 nv::Fit::computeCentroid(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
+{
+	Vector3 centroid(zero);
+	float total = 0.0f;
+
+	for (int i = 0; i < n; i++)
+	{
+		total += weights[i];
+		centroid += weights[i]*points[i];
+	}
+	centroid /= total;
+
+	return centroid;
+}
+
+
+Vector3 nv::Fit::computeCovariance(int n, const Vector3 *__restrict points, float *__restrict covariance)
+{
+	// compute the centroid
+	Vector3 centroid = computeCentroid(n, points);
+
+	// compute covariance matrix
+	for (int i = 0; i < 6; i++)
+	{
+		covariance[i] = 0.0f;
+	}
+
+	for (int i = 0; i < n; i++)
+	{
+		Vector3 v = points[i] - centroid;
+		
+		covariance[0] += v.x() * v.x();
+		covariance[1] += v.x() * v.y();
+		covariance[2] += v.x() * v.z();
+		covariance[3] += v.y() * v.y();
+		covariance[4] += v.y() * v.z();
+		covariance[5] += v.z() * v.z();
+	}
+
+	return centroid;
+}
+
+Vector3 nv::Fit::computeCovariance(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric, float *__restrict covariance)
+{
+	// compute the centroid
+	Vector3 centroid = computeCentroid(n, points, weights, metric);
+
+	// compute covariance matrix
+	for (int i = 0; i < 6; i++)
+	{
+		covariance[i] = 0.0f;
+	}
+
+	for (int i = 0; i < n; i++)
+	{
+		Vector3 a = (points[i] - centroid) * metric;
+		Vector3 b = weights[i]*a;
+		
+		covariance[0] += a.x()*b.x();
+		covariance[1] += a.x()*b.y();
+		covariance[2] += a.x()*b.z();
+		covariance[3] += a.y()*b.y();
+		covariance[4] += a.y()*b.z();
+		covariance[5] += a.z()*b.z();
+	}
+
+	return centroid;
+}
+
+Vector3 nv::Fit::computePrincipalComponent(int n, const Vector3 *__restrict points)
+{
+	float matrix[6];
+	computeCovariance(n, points, matrix);
+
+	return firstEigenVector_PowerMethod(matrix);
+}
+
+Vector3 nv::Fit::computePrincipalComponent(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
+{
+	float matrix[6];
+	computeCovariance(n, points, weights, metric, matrix);
+
+	return firstEigenVector_PowerMethod(matrix);
+}
+
+
+Plane nv::Fit::bestPlane(int n, const Vector3 *__restrict points)
+{
+	// compute the centroid and covariance
+	float matrix[6];
+	Vector3 centroid = computeCovariance(n, points, matrix);
+
+	if (matrix[0] == 0 || matrix[3] == 0 || matrix[5] == 0)
+	{
+		// If no plane defined, then return a horizontal plane.
+		return Plane(Vector3(0, 0, 1), centroid);
+	}
+
+#pragma message(NV_FILE_LINE "TODO: need to write an eigensolver!")
+
+	// - Numerical Recipes in C is a good reference. Householder transforms followed by QL decomposition seems to be the best approach.
+	// - The one from magic-tools is now LGPL. For the 3D case it uses a cubic root solver, which is not very accurate.
+	// - Charles' Galaxy3 contains an implementation of the tridiagonalization method, but is under BPL.
+
+	//EigenSolver3 solver(matrix);
+
+	return Plane();
+}
+
+
+int nv::Fit::compute4Means(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric, Vector3 *__restrict cluster)
+{
 	// Compute principal component.
-	Vector3 principal = ComputePrincipalComponent(n, points, weights, metric);
+	float matrix[6];
+	Vector3 centroid = computeCovariance(n, points, weights, metric, matrix);
+	Vector3 principal = firstEigenVector_PowerMethod(matrix);
 	
 	// Pick initial solution.
 	int mini, maxi;

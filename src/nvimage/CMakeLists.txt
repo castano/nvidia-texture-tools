@@ -23,7 +23,6 @@ SET(IMAGE_SRCS
 	NormalMap.h
 	NormalMap.cpp
 	NormalMipmap.h
-	NormalMipmap.cpp
 	PsdFile.h
 	TgaFile.h
 	ColorSpace.h

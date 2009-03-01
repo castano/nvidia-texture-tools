@@ -8,10 +8,6 @@
 
 #include <stdio.h>	// NULL
 
-#define NV_DECLARE_PTR(Class) \
-	typedef SmartPtr<class Class> Class ## Ptr; \
-	typedef SmartPtr<const class Class> ClassConst ## Ptr
-
 
 namespace nv
 {
@@ -54,6 +50,15 @@ public:
 			m_ptr = p;
 		}
 	}
+
+	template <class Q>
+    void operator=( Q * p ) {
+		if (p != m_ptr)
+		{
+			delete m_ptr;
+			m_ptr = static_cast<T *>(p);
+		}
+    }
 
 	/** Member access. */
 	T * operator -> () const {

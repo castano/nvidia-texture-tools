@@ -3,17 +3,18 @@
 #ifndef NV_CORE_FILESYSTEM_H
 #define NV_CORE_FILESYSTEM_H
 
+#include <nvcore/nvcore.h>
 
 namespace nv
 {
 
-    namespace FileSystem
-    {
+	namespace FileSystem
+	{
 
-        bool exists(const char * path);
-        bool createDirectory(const char * path);
+		NVCORE_API bool exists(const char * path);
+		NVCORE_API bool createDirectory(const char * path);
 
-    } // FileSystem namespace
+	} // FileSystem namespace
 
 } // nv namespace
 

@@ -5,16 +5,26 @@
 
 #include <nvmath/nvmath.h>
 #include <nvmath/Vector.h>
+#include <nvmath/Plane.h>
 
 namespace nv
 {
+	namespace Fit
+	{
+		Vector3 computeCentroid(int n, const Vector3 * points);
+		Vector3 computeCentroid(int n, const Vector3 * points, const float * weights, Vector3::Arg metric);
 
-	Vector3 ComputeCentroid(int n, const Vector3 * points, const float * weights, Vector3::Arg metric);
-	void ComputeCovariance(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, float * covariance);
-	Vector3 ComputePrincipalComponent(int n, const Vector3 * points, const float * weights, Vector3::Arg metric);
+		Vector3 computeCovariance(int n, const Vector3 * points, float * covariance);
+		Vector3 computeCovariance(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, float * covariance);
 
-	// Returns number of clusters [1-4].
-	int Compute4Means(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster);
+		Vector3 computePrincipalComponent(int n, const Vector3 * points);
+		Vector3 computePrincipalComponent(int n, const Vector3 * points, const float * weights, Vector3::Arg metric);
+
+		Plane bestPlane(int n, const Vector3 * points);
+
+		// Returns number of clusters [1-4].
+		int compute4Means(int n, const Vector3 * points, const float * weights, Vector3::Arg metric, Vector3 * cluster);
+	}
 
 } // nv namespace
 

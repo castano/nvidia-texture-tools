@@ -1,5 +1,4 @@
 PROJECT(nvcore)
-ADD_SUBDIRECTORY(poshlib)
 
 SET(CORE_SRCS
 	nvcore.h
@@ -18,14 +17,6 @@ SET(CORE_SRCS
 	Containers.h
 	StrLib.h
 	StrLib.cpp
-	Stream.h
-	StdStream.h
-	TextReader.h
-	TextReader.cpp
-	TextWriter.h
-	TextWriter.cpp
-	Tokenizer.h
-	Tokenizer.cpp
 	Radix.h
 	Radix.cpp
 	CpuInfo.h
@@ -34,6 +25,14 @@ SET(CORE_SRCS
 	Timer.h
 	Library.h
 	Library.cpp
+	Stream.h
+	StdStream.h
+	TextReader.h
+	TextReader.cpp
+	TextWriter.h
+	TextWriter.cpp
+	Tokenizer.h
+	Tokenizer.cpp
 	FileSystem.h
 	FileSystem.cpp)
 
@@ -66,7 +65,7 @@ IF(MSVC AND NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
 					 ARGS  /nologo /Fo ${VSSCANF_ASM_OBJ} /c /Cx ${VSSCANF_ASM_SRC}
   )
 ENDIF(MSVC AND NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
-	
+
 # targets
 ADD_DEFINITIONS(-DNVCORE_EXPORTS)
 
