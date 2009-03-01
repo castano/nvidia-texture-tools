@@ -1,6 +1,6 @@
-// This code is in the public domain -- castanyo@yahoo.es
+// This code is in the public domain -- castano@gmail.com
 
-#include <nvcore/Tokenizer.h>
+#include "Tokenizer.h"
 #include <nvcore/StrLib.h>
 
 #include <stdio.h> // vsscanf

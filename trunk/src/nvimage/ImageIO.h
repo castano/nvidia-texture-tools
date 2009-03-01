@@ -52,7 +52,7 @@ namespace nv
 		
 		NVIMAGE_API bool saveFloatEXR(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 #endif
-/*
+
 		NVIMAGE_API FloatImage * loadFloatPFM(const char * fileName, Stream & s);
 		NVIMAGE_API bool saveFloatPFM(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
 
@@ -60,7 +60,7 @@ namespace nv
 		// Expects: 1) fileName will be an ".hdr" header file, 2) there will also exist a corresponding float data
 		// blob in a ".flt" file.  (This is what USGS gives you.)
 		NVIMAGE_API FloatImage * loadGridFloat(const char * fileName, Stream & s);
-*/
+
 	} // ImageIO namespace
 	
 } // nv namespace

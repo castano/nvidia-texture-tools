@@ -6,6 +6,11 @@
 #include <nvcore/nvcore.h>
 #include <nvcore/Debug.h>
 
+#define NV_DECLARE_PTR(Class) \
+	template <class T> class SmartPtr; \
+	typedef SmartPtr<class Class> Class ## Ptr; \
+	typedef SmartPtr<const class Class> Class ## ConstPtr
+
 
 namespace nv
 {

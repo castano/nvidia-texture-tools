@@ -179,20 +179,29 @@ namespace nv
 		}
 	
 	
-		/// Const and save vector access.
+		/// Const element access.
 		const T & operator[]( uint index ) const
 		{
 			nvDebugCheck(index < m_size);
 			return m_buffer[index];
 		}
-	
-		/// Safe vector access.
+		const T & at( uint index ) const
+		{
+			nvDebugCheck(index < m_size);
+			return m_buffer[index];
+		}
+
+		/// Element access.
 		T & operator[] ( uint index )
 		{
 			nvDebugCheck(index < m_size);
 			return m_buffer[index];
 		}
-	
+		T & at( uint index )
+		{
+			nvDebugCheck(index < m_size);
+			return m_buffer[index];
+		}
 	
 		/// Get vector size.
 		uint size() const { return m_size; }
@@ -285,15 +294,22 @@ namespace nv
 			return m_buffer[0];
 		}
 		
-		/// Check if the given element is contained in the array.
-		bool contains(const T & e) const
+		/// Return index of the 
+		bool find(const T & element, uint * index)
 		{
 			for (uint i = 0; i < m_size; i++) {
-				if (m_buffer[i] == e) return true;
+				if (index != NULL) *index = i;
+				return true;
 			}
 			return false;
 		}
-		
+
+		/// Check if the given element is contained in the array.
+		bool contains(const T & e) const
+		{
+			return find(e, NULL);
+		}
+
 		/// Remove the element at the given index. This is an expensive operation!
 		void removeAt( uint index )
 		{
@@ -479,9 +495,10 @@ namespace nv
 		}
 		
 		/// Assignment operator.
-		void operator=( const Array<T> & a )
+		Array<T> & operator=( const Array<T> & a )
 		{
 			copy( a.m_buffer, a.m_size );
+			return *this;
 		}
 		
 		/*

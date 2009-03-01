@@ -86,7 +86,10 @@ TARGET_LINK_LIBRARIES(nvtestsuite nvcore nvmath nvimage nvtt)
 ADD_EXECUTABLE(nvzoom tools/resize.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
-INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvtestsuite DESTINATION bin)
+ADD_EXECUTABLE(driverapitest tests/driverapi.cpp)
+TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage)
+
+INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nvtestsuite driverapitest DESTINATION bin)
 
 ADD_EXECUTABLE(nv-gnome-thumbnailer tools/thumbnailer.cpp tools/cmdline.h)
 TARGET_LINK_LIBRARIES(nv-gnome-thumbnailer nvcore nvmath nvimage)

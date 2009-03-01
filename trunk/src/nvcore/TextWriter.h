@@ -1,11 +1,10 @@
-// This code is in the public domain -- castanyo@yahoo.es
+// This code is in the public domain -- castano@gmail.com
 
-#ifndef NVCORE_TEXTWRITER_H
-#define NVCORE_TEXTWRITER_H
+#ifndef NV_CORE_TEXTWRITER_H
+#define NV_CORE_TEXTWRITER_H
 
-#include <nvcore/nvcore.h>
-#include <nvcore/Stream.h>
 #include <nvcore/StrLib.h>
+#include <nvcore/Stream.h>
 
 namespace nv
 {

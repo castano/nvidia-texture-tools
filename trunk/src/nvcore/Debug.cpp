@@ -405,7 +405,7 @@ namespace
 			{
 				void * trace[64];
 				int size = backtrace(trace, 64);
-				nvPrintStackTrace(trace, size, 3);
+				nvPrintStackTrace(trace, size, 2);
 			}
 #		endif
 

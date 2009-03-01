@@ -12,7 +12,7 @@
 #include <nvcore/Containers.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
-//#include <nvcore/Tokenizer.h>	// @@ Disable temporarily
+#include <nvcore/Tokenizer.h>
 #include <nvcore/TextWriter.h>
 
 // Extern
@@ -186,14 +186,12 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 	}
 #endif
 
-/* // @@ Disable temporarily
 	if (strCaseCmp(extension, ".pfm") == 0) {
 		return loadFloatPFM(fileName, s);
 	}
 	if (strCaseCmp(extension, ".hdr") == 0) {
 		return loadGridFloat(fileName, s);
 	}
-*/
 
 	return NULL;
 }
@@ -1534,7 +1532,6 @@ bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage,
 
 #endif // defined(HAVE_OPENEXR)
 
-#if 0 // @@ Disable temporarily.
 
 FloatImage * nv::ImageIO::loadFloatPFM(const char * fileName, Stream & s)
 {
@@ -1723,7 +1720,6 @@ NVIMAGE_API FloatImage * nv::ImageIO::loadGridFloat(const char * fileName, Strea
 
 	return fimage.release();
 }
-#endif
 
 #if 0
 
