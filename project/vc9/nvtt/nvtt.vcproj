@@ -24,6 +24,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -104,6 +105,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -183,6 +185,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -270,6 +273,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
@@ -350,6 +354,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -430,6 +435,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -505,6 +511,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
@@ -588,6 +595,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -759,11 +767,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\Compressor.cpp"
+				RelativePath="..\..\..\src\nvtt\CompressRGB.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressRGB.cpp"
+				RelativePath="..\..\..\src\nvtt\Context.cpp"
 				>
 			</File>
 			<File
@@ -889,11 +897,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\Compressor.h"
+				RelativePath="..\..\..\src\nvtt\CompressRGB.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressRGB.h"
+				RelativePath="..\..\..\src\nvtt\Context.h"
 				>
 			</File>
 			<File
