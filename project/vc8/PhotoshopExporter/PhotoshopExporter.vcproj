@@ -20,6 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -95,6 +96,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>

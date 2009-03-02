@@ -21,6 +21,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -64,7 +65,7 @@
 				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib;$(FreeImageDir)"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -99,6 +100,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -168,6 +170,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -206,7 +209,7 @@
 				AdditionalDependencies="FreeImage.lib jpeg.lib libpng.lib tiff.lib zlib.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;..\..\..\extern\FreeImage"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib;$(FreeImageDir)"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -240,6 +243,7 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
