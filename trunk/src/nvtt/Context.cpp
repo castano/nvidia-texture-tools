@@ -951,6 +951,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		SlowCompressor slow;
 		slow.setImage(image, inputOptions.alphaMode);
 
+		const bool useCuda = cudaEnabled && image->width() * image->height() >= 1024;
+
 		if (compressionOptions.format == Format_DXT1)
 		{
 #if defined(HAVE_S3QUANT)
@@ -983,7 +985,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				if (cudaEnabled)
+				if (useCuda)
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
@@ -1004,7 +1006,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				if (cudaEnabled)
+				if (useCuda)
 				{
 					nvDebugCheck(cudaSupported);
 					/*cuda*/slow.compressDXT1a(compressionOptions, outputOptions);
@@ -1017,7 +1019,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else if (compressionOptions.format == Format_DXT1n)
 		{
-			if (cudaEnabled)
+			if (useCuda)
 			{
 				nvDebugCheck(cudaSupported);
 				cuda->setImage(image, inputOptions.alphaMode);	
@@ -1036,7 +1038,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				if (cudaEnabled)
+				if (useCuda)
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
@@ -1056,7 +1058,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				if (cudaEnabled)
+				if (useCuda)
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
@@ -1076,7 +1078,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			}
 			else
 			{
-				/*if (cudaEnabled)
+				/*if (useCuda)
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
@@ -1098,7 +1100,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else if (compressionOptions.format == Format_CTX1)
 		{
-			if (cudaEnabled)
+			if (useCuda)
 			{
 				nvDebugCheck(cudaSupported);
 				cuda->setImage(image, inputOptions.alphaMode);
