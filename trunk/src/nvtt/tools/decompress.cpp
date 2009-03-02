@@ -66,8 +66,11 @@ int main(int argc, char *argv[])
 			if (i+1 == argc) break;
 			i++;
 
+#ifdef HAVE_PNG
 			if (strcmp("png", argv[i]) == 0) savePNG = true;
-			else if (strcmp("tga", argv[i]) == 0) savePNG = false;
+			else 
+#endif
+			if (strcmp("tga", argv[i]) == 0) savePNG = false;
 			else
 			{
 				fprintf(stderr, "Unsupported output format '%s', defaulting to 'tga'.\n", argv[i]);
@@ -176,10 +179,16 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			
+#ifdef HAVE_PNG
 			if (savePNG)
+			{
 				nv::ImageIO::savePNG(stream, &mipmap);
+			}
 			else
+#endif
+			{
 				nv::ImageIO::saveTGA(stream, &mipmap);
+			}
 		}
 	}
 
