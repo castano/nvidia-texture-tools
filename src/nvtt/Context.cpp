@@ -21,6 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include "Context.h"
+
 #include <nvtt/nvtt.h>
 
 #include <nvcore/Memory.h>
@@ -37,7 +39,6 @@
 #include <nvimage/PixelFormat.h>
 #include <nvimage/ColorSpace.h>
 
-#include "Compressor.h"
 #include "InputOptions.h"
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
