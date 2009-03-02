@@ -339,7 +339,7 @@ namespace nvtt
 	};
 
 
-	/// Texture compressor.
+	/// Context.
 	struct Compressor
 	{
 		NVTT_FORBID_COPY(Compressor);
@@ -359,6 +359,9 @@ namespace nvtt
 
 		NVTT_API void outputCompressed(const Texture & tex, const OutputOptions & outputOptions);
 	};
+
+	// "Compressor" is deprecated. This should have been called "Context"
+	typedef Compressor Context;
 
 	
 	/// Texture data.

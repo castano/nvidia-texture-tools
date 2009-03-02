@@ -265,8 +265,8 @@ int main(int argc, char *argv[])
 	MyOutputHandler outputHandler;
 	outputOptions.setOutputHandler(&outputHandler);
 
-	nvtt::Compressor compressor;
-	compressor.enableCudaAcceleration(!nocuda);
+	nvtt::Context context;
+	context.enableCudaAcceleration(!nocuda);
 
 	FileSystem::createDirectory(outPath);
 
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
 
 		clock_t start = clock();
 
-		compressor.process(inputOptions, compressionOptions, outputOptions);
+		context.process(inputOptions, compressionOptions, outputOptions);
 
 		clock_t end = clock();
 		printf("  Time: \t%.3f sec\n", float(end-start) / CLOCKS_PER_SEC);

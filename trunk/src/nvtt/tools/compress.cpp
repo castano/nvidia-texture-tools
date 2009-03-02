@@ -491,11 +491,11 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	nvtt::Compressor compressor;
-	compressor.enableCudaAcceleration(!nocuda);
+	nvtt::Context context;
+	context.enableCudaAcceleration(!nocuda);
 
 	printf("CUDA acceleration ");
-	if (compressor.isCudaAccelerationEnabled())
+	if (context.isCudaAccelerationEnabled())
 	{
 		printf("ENABLED\n\n");
 	}
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
 		printf("DISABLED\n\n");
 	}
 	
-	outputHandler.setTotal(compressor.estimateSize(inputOptions, compressionOptions));
+	outputHandler.setTotal(context.estimateSize(inputOptions, compressionOptions));
 	outputHandler.setDisplayProgress(!silent);
 
 	nvtt::OutputOptions outputOptions;
@@ -524,7 +524,7 @@ int main(int argc, char *argv[])
 	Timer timer;
 	timer.start();
 	
-	bool success = compressor.process(inputOptions, compressionOptions, outputOptions);
+	bool success = context.process(inputOptions, compressionOptions, outputOptions);
 
 	if (success)
 	{
