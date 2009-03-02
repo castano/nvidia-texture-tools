@@ -21,13 +21,6 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/Memory.h>
-
-#include <nvimage/Image.h>
-#include <nvimage/ColorBlock.h>
-#include <nvimage/BlockDXT.h>
-
-#include "nvtt.h"
 #include "CompressDXT.h"
 #include "QuickCompressDXT.h"
 #include "OptimalCompressDXT.h"
@@ -38,6 +31,14 @@
 #include "squish/colourset.h"
 #include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
+
+#include <nvtt/nvtt.h>
+
+#include <nvcore/Memory.h>
+
+#include <nvimage/Image.h>
+#include <nvimage/ColorBlock.h>
+#include <nvimage/BlockDXT.h>
 
 
 // s3_quant
