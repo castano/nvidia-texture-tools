@@ -406,10 +406,14 @@ namespace nv
 		s << pf.flags;
 		s << pf.fourcc;
 		s << pf.bitcount;
-		s << pf.rmask;
-		s << pf.gmask;
-		s << pf.bmask;
-		s << pf.amask;
+		s.serialize(&pf.rmask, sizeof(pf.rmask));
+		s.serialize(&pf.gmask, sizeof(pf.gmask));
+		s.serialize(&pf.bmask, sizeof(pf.bmask));
+		s.serialize(&pf.amask, sizeof(pf.amask));
+	//	s << pf.rmask;
+	//	s << pf.gmask;
+	//	s << pf.bmask;
+	//	s << pf.amask;
 		return s;
 	}
 
@@ -445,7 +449,9 @@ namespace nv
 		s << header.pitch;
 		s << header.depth;
 		s << header.mipmapcount;
-		s.serialize(header.reserved, 11 * sizeof(uint));
+		for (int i = 0; i < 11; i++) {
+			s << header.reserved[i];
+		}
 		s << header.pf;
 		s << header.caps;
 		s << header.notused;
@@ -1042,6 +1048,8 @@ void DirectDrawSurface::readLinearImage(Image * img)
 	PixelFormat::maskShiftAndSize(header.pf.amask, &ashift, &asize);
 
 	uint byteCount = (header.pf.bitcount + 7) / 8;
+
+#pragma message("Support floating point linear images and other FOURCC codes.")
 
 	// Read linear RGB images.
 	for (uint y = 0; y < h; y++)
