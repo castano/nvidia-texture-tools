@@ -5,13 +5,15 @@ TARGET_LINK_LIBRARIES(filtertest nvcore nvmath nvimage)
 ADD_EXECUTABLE(nvtestsuite stress.cpp)
 TARGET_LINK_LIBRARIES(nvtestsuite nvcore nvmath nvimage nvtt)
 
-ADD_EXECUTABLE(driverapitest driverapi.cpp)
-TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage)
+IF (CUDA_FOUND)
+	ADD_EXECUTABLE(driverapitest driverapi.cpp)
+	TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage)
+ENDIF (CUDA_FOUND)
 
 ADD_EXECUTABLE(imperativeapi imperativeapi.cpp)
 TARGET_LINK_LIBRARIES(imperativeapi nvcore nvmath nvimage nvtt)
 
-INSTALL(TARGETS nvtestsuite driverapitest DESTINATION bin)
+INSTALL(TARGETS nvtestsuite DESTINATION bin)
  
 #include_directories("/usr/include/ffmpeg/")
 #ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)

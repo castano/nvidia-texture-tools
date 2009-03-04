@@ -31,7 +31,7 @@
 #undef bool
 #endif
 
-namespace squish {
+namespace nvsquish {
 
 #define VEC4_CONST( X ) Vec4( ( vector float )( X ) )
 

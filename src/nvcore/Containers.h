@@ -595,18 +595,43 @@ namespace nv
 	template<typename T, typename U, typename hash_functor = hash<T> >
 	class NVCORE_CLASS HashMap
 	{
-		NV_FORBID_COPY(HashMap)
 	public:
 
 		/// Default ctor.
 		HashMap() : entry_count(0), size_mask(-1), table(NULL) { }
+
+		// Copy ctor.
+		HashMap(const HashMap & map) : entry_count(0), size_mask(-1), table(NULL)
+		{
+			operator = (map);
+		}
 
 		/// Ctor with size hint.
 		explicit HashMap(int size_hint) : entry_count(0), size_mask(-1), table(NULL) { setCapacity(size_hint); }
 
 		/// Dtor.
 		~HashMap() { clear(); }
-	
+
+		// Assignment operator.
+		void operator= (const HashMap & map)
+		{
+			clear();
+
+			if (entry_count > 0)
+			{
+				entry_count = map.entry_count;
+				size_mask = map.size_mask;
+
+				const uint size = uint(size_mask + 1);
+				table = (Entry *)nv::mem::malloc(sizeof(Entry) * size);
+
+				// Copy elements using copy ctor.
+				for (uint i = 0; i < size; i++)
+				{
+					new (table + i) Entry(map.table[i]);
+				}
+			}
+		}
 	
 		/// Set a new or existing value under the key, to the value.
 		void set(const T& key, const U& value)
