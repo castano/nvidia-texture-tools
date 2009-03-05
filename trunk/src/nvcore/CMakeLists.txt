@@ -2,30 +2,24 @@ PROJECT(nvcore)
 
 SET(CORE_SRCS
 	nvcore.h
+	Algorithms.h
+	Containers.h
+	Debug.h Debug.cpp
 	DefsGnucDarwin.h
 	DefsGnucLinux.h
 	DefsGnucWin32.h
 	DefsVcWin32.h
+	FileSystem.h FileSystem.cpp
+	Library.h Library.cpp
+	Memory.h Memory.cpp
 	Ptr.h
-	Memory.h
-	Memory.cpp
-	Debug.h
-	Debug.cpp
-	Containers.h
-	StrLib.h
-	StrLib.cpp
-	Algorithms.h
-	Timer.h
-	Library.h
-	Library.cpp
+	RefCounted.h RefCounted.cpp
+	StrLib.h StrLib.cpp
 	Stream.h
 	StdStream.h
-	TextReader.h
-	TextReader.cpp
-	TextWriter.h
-	TextWriter.cpp
-	FileSystem.h
-	FileSystem.cpp)
+	TextReader.h TextReader.cpp
+	TextWriter.h TextWriter.cpp
+	Timer.h)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
