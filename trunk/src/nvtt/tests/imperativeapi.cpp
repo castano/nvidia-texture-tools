@@ -25,10 +25,27 @@
 
 #include <stdlib.h>
 
-//using namespace nv;
 
 int main(int argc, char *argv[])
 {
+	nvtt::CompressionOptions compressionOptions;
+	nvtt::OutputOptions outputOptions;
+
+	nvtt::Context context;
+	nvtt::Texture texture = context.createTexture();
+
+	texture.load("kodim01.png");
+
+	float gamma = 2.2;
+	texture.toLinear(gamma);
+
+	while (texture.buildNextMipmap(nvtt::MipmapFilter_Box))
+	{
+		nvtt::Texture tmp = texture;
+		tmp.toGamma(gamma);
+		//tmp.compress(compressionOptions, outputOptions);
+	}
+
 	return EXIT_SUCCESS;
 }
 
