@@ -53,7 +53,7 @@
 	private: \
 		Class(const Class &); \
 		void operator=(const Class &); \
-	public: \
+	public:
 
 #define NVTT_DECLARE_PIMPL(Class) \
 	public: \
@@ -358,6 +358,8 @@ namespace nvtt
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
 
 		NVTT_API void outputCompressed(const Texture & tex, const OutputOptions & outputOptions);
+
+		NVTT_API Texture createTexture();
 	};
 
 	// "Compressor" is deprecated. This should have been called "Context"
@@ -367,13 +369,11 @@ namespace nvtt
 	/// Texture data.
 	struct Texture
 	{
-		NVTT_DECLARE_PIMPL(Texture);
-
 		NVTT_API Texture();
+		NVTT_API Texture(const Texture & tex);
 		NVTT_API ~Texture();
 
-		Texture(const Texture & tex);
-		void operator=(const Texture & tex);
+		NVTT_API void operator=(const Texture & tex);
 
 		NVTT_API bool load(const char * fileName); // @@ Input callbacks?
 
@@ -382,7 +382,7 @@ namespace nvtt
 
 		// Resizing
 		NVTT_API void resize(int w, int h, ResizeFilter filter);
-		NVTT_API bool buildMipmap(MipmapFilter filter);
+		NVTT_API bool buildNextMipmap(MipmapFilter filter);
 
 		// Color transforms.
 		NVTT_API void toLinear(float gamma);
@@ -393,6 +393,10 @@ namespace nvtt
 		NVTT_API void normalize();
 		NVTT_API void blend(float r, float g, float b, float a);
 		NVTT_API void premultiplyAlpha();
+
+	private:
+		struct Private;
+		Private * m;
 	};
 
 

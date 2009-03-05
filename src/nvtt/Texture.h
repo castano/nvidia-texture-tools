@@ -27,6 +27,7 @@
 #include "nvtt.h"
 
 #include <nvcore/Containers.h>
+#include <nvcore/RefCounted.h>
 
 #include <nvimage/Image.h>
 #include <nvimage/FloatImage.h>
@@ -34,7 +35,7 @@
 namespace nvtt
 {
 
-	struct Texture::Private
+	struct Texture::Private : public nv::RefCounted
 	{
 		TextureType type;
 		nv::Array<nv::FloatImage> imageArray;
