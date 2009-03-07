@@ -43,7 +43,9 @@ int main(int argc, char *argv[])
 	{
 		nvtt::Texture tmp = texture;
 		tmp.toGamma(gamma);
-		//tmp.compress(compressionOptions, outputOptions);
+
+	//	context.process(tmp, compressionOptions, outputOptions);
+	//	tmp.process(compressionOptions, outputOptions);
 	}
 
 	return EXIT_SUCCESS;
