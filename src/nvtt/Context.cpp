@@ -286,6 +286,11 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 	return m.estimateSize(inputOptions.m, compressionOptions.m);
 }
 
+/// Estimate the size of compressing the input with the given options.
+Texture Compressor::createTexture()
+{
+	return *new Texture();
+}
 
 
 

@@ -246,7 +246,7 @@ namespace nvtt
 		// Set gamma settings.
 		NVTT_API void setGamma(float inputGamma, float outputGamma);
 		
-		// Set texture wrappign mode.
+		// Set texture wrapping mode.
 		NVTT_API void setWrapMode(WrapMode mode);
 		
 		// Set mipmapping options.
@@ -357,8 +357,6 @@ namespace nvtt
 		// Estimate the size of compressing the input with the given options.
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
 
-		NVTT_API void outputCompressed(const Texture & tex, const OutputOptions & outputOptions);
-
 		NVTT_API Texture createTexture();
 	};
 
@@ -375,13 +373,19 @@ namespace nvtt
 
 		NVTT_API void operator=(const Texture & tex);
 
-		NVTT_API bool load(const char * fileName); // @@ Input callbacks?
-
+		// Texture parameters.
 		NVTT_API void setType(TextureType type);
+		NVTT_API void setWrapMode(WrapMode mode);
+		NVTT_API void setAlphaMode(AlphaMode alphaMode);
+		NVTT_API void setNormalMap(bool isNormalMap);
+
+		// Texture data.
+		NVTT_API bool load(const char * fileName);
 		NVTT_API void setTexture2D(InputFormat format, int w, int h, int idx, void * data);
 
-		// Resizing
+		// Resizing methods.
 		NVTT_API void resize(int w, int h, ResizeFilter filter);
+		NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
 		NVTT_API bool buildNextMipmap(MipmapFilter filter);
 
 		// Color transforms.
@@ -390,11 +394,21 @@ namespace nvtt
 		NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
 		NVTT_API void swizzle(int r, int g, int b, int a);
 		NVTT_API void scaleBias(int channel, float scale, float bias);
-		NVTT_API void normalize();
 		NVTT_API void blend(float r, float g, float b, float a);
 		NVTT_API void premultiplyAlpha();
+		NVTT_API void toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale);
+
+		// Set normal map options.
+		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
+		NVTT_API void toHeightMap();
+		NVTT_API void normalizeNormals();
+
+		// Compress.
+		NVTT_API void process(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
 
 	private:
+		void detach();
+
 		struct Private;
 		Private * m;
 	};

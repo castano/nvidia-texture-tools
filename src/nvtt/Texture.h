@@ -37,7 +37,28 @@ namespace nvtt
 
 	struct Texture::Private : public nv::RefCounted
 	{
+		Private()
+		{
+			type = TextureType_2D;
+			wrapMode = WrapMode_Mirror;
+			alphaMode = AlphaMode_None;
+			isNormalMap = false;
+		}
+		Private(const Private & p)
+		{
+			type = p.type;
+			wrapMode = p.wrapMode;
+			alphaMode = p.alphaMode;
+			isNormalMap = p.isNormalMap;
+
+			imageArray = p.imageArray;
+		}
+
 		TextureType type;
+		WrapMode wrapMode;
+		AlphaMode alphaMode;
+		bool isNormalMap;
+
 		nv::Array<nv::FloatImage> imageArray;
 	};
 
