@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="$(QTDIR)\lib\qtmain.lib $(QTDIR)\lib\QtCore4.lib $(QTDIR)\lib\QtGui4.lib"
-				OutputFile="..\Debug\$(ProjectName).8bi"
+				OutputFile="C:\Program Files\Adobe\Adobe Photoshop CS2\Plug-Ins\File Formats\$(ProjectName).8bi"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
