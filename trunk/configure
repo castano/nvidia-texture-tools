@@ -65,6 +65,10 @@ all:
 	@make --no-print-directory -C build-$build/
 install:
 	@make install --no-print-directory -C build-$build/
+package:
+	@make package --no-print-directory -C build-$build/
+test:
+	@make test --no-print-directory -C build-$build/
 clean:
 	@make clean --no-print-directory -C build-$build/
 distclean:

@@ -45,3 +45,11 @@ bool FileSystem::createDirectory(const char * path)
 #endif
 }
 
+bool FileSystem::changeDirectory(const char * path)
+{
+#if NV_OS_WIN32
+    return _chdir(path) != -1;
+#else
+    return chdir(path) != -1;
+#endif
+}

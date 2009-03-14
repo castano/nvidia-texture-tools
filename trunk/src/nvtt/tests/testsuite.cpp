@@ -40,8 +40,8 @@
 
 using namespace nv;
 
-static const char * s_fileNames[] = {
-	// Kodak image set
+// Kodak image set
+static const char * s_kodakImageSet[] = {
 	"kodim01.png",
 	"kodim02.png",
 	"kodim03.png",
@@ -66,7 +66,10 @@ static const char * s_fileNames[] = {
 	"kodim22.png",
 	"kodim23.png",
 	"kodim24.png",
-	// Waterloo image set
+};
+
+// Waterloo image set
+static const char * s_waterlooImageSet[] = {
 	"clegg.png",
 	"frymire.png",
 	"lena.png",
@@ -75,7 +78,10 @@ static const char * s_fileNames[] = {
 	"sail.png",
 	"serrano.png",
 	"tulips.png",
-	// Epic image set
+};
+
+// Epic image set
+static const char * s_epicImageSet[] = {
 	"Bradley1.png",
 	"Gradient.png",
 	"MoreRocks.png",
@@ -83,7 +89,19 @@ static const char * s_fileNames[] = {
 	"Rainbow.png",
 	"Text.png",
 };
-const int s_fileCount = sizeof(s_fileNames)/sizeof(s_fileNames[0]);
+
+struct ImageSet
+{
+	const char ** fileNames;
+	int fileCount;
+};
+
+static ImageSet s_imageSets[] = {
+	{s_kodakImageSet, sizeof(s_kodakImageSet)/sizeof(s_kodakImageSet[0])},
+	{s_waterlooImageSet, sizeof(s_waterlooImageSet)/sizeof(s_waterlooImageSet[0])},
+	{s_epicImageSet, sizeof(s_epicImageSet)/sizeof(s_epicImageSet[0])},
+};
+const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
 
 struct MyOutputHandler : public nvtt::OutputHandler
@@ -197,16 +215,25 @@ int main(int argc, char *argv[])
 	
 	printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007 - 2008\n\n", major, minor);
 	
+	int set = 0;
 	bool fast = false;
 	bool nocuda = false;
 	bool showHelp = false;
+	const char * basePath = "";
 	const char * outPath = "output";
 	const char * regressPath = NULL;
 	
 	// Parse arguments.
 	for (int i = 1; i < argc; i++)
 	{
-		if (strcmp("-fast", argv[i]) == 0)
+		if (strcmp("-set", argv[i]) == 0)
+		{
+			if (i+1 < argc && argv[i+1][0] != '-') {
+				set = atoi(argv[i+1]);
+				i++;
+			}
+		}
+		else if (strcmp("-fast", argv[i]) == 0)
 		{
 			fast = true;
 		}
@@ -218,13 +245,26 @@ int main(int argc, char *argv[])
 		{
 			showHelp = true;
 		}
+		else if (strcmp("-path", argv[i]) == 0)
+		{
+			if (i+1 < argc && argv[i+1][0] != '-') {
+				basePath = argv[i+1];
+				i++;
+			}
+		}
 		else if (strcmp("-out", argv[i]) == 0)
 		{
-			if (i+1 < argc && argv[i+1][0] != '-') outPath = argv[i+1];
+			if (i+1 < argc && argv[i+1][0] != '-') {
+				outPath = argv[i+1];
+				i++;
+			}
 		}
 		else if (strcmp("-regress", argv[i]) == 0)
 		{
-			if (i+1 < argc && argv[i+1][0] != '-') regressPath = argv[i+1];
+			if (i+1 < argc && argv[i+1][0] != '-') {
+				regressPath = argv[i+1];
+				i++;
+			}
 		}
 	}
 
@@ -233,6 +273,8 @@ int main(int argc, char *argv[])
 		printf("usage: nvtestsuite [options]\n\n");
 		
 		printf("Input options:\n");
+		printf("  -path <path>\tInput image path.\n");
+		printf("  -set [0:2]\tImage set.\n");
 		printf("  -regress <path>\tRegression directory.\n");
 
 		printf("Compression options:\n");
@@ -268,6 +310,7 @@ int main(int argc, char *argv[])
 	nvtt::Context context;
 	context.enableCudaAcceleration(!nocuda);
 
+	FileSystem::changeDirectory(basePath);
 	FileSystem::createDirectory(outPath);
 
 	Path csvFileName;
@@ -280,20 +323,23 @@ int main(int argc, char *argv[])
 	int failedTests = 0;
 	float totalDiff = 0;
 
-	for (int i = 0; i < s_fileCount; i++)
+	const char ** fileNames = s_imageSets[set].fileNames;
+	int fileCount = s_imageSets[set].fileCount;
+
+	for (int i = 0; i < fileCount; i++)
 	{
 		AutoPtr<Image> img( new Image() );
 		
-		if (!img->load(s_fileNames[i]))
+		if (!img->load(fileNames[i]))
 		{
-			printf("Input image '%s' not found.\n", s_fileNames[i]);
+			printf("Input image '%s' not found.\n", fileNames[i]);
 			return EXIT_FAILURE;
 		}
 
 		inputOptions.setTextureLayout(nvtt::TextureType_2D, img->width(), img->height());
 		inputOptions.setMipmapData(img->pixels(), img->width(), img->height());
 
-		printf("Compressing: \t'%s'\n", s_fileNames[i]);
+		printf("Compressing: \t'%s'\n", fileNames[i]);
 
 		clock_t start = clock();
 
@@ -306,9 +352,9 @@ int main(int argc, char *argv[])
 		AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
 
 		Path outputFileName;
-		outputFileName.format("%s/%s", outPath, s_fileNames[i]);
+		outputFileName.format("%s/%s", outPath, fileNames[i]);
 		outputFileName.stripExtension();
-		outputFileName.append(".tga");
+		outputFileName.append(".png");
 		if (!ImageIO::save(outputFileName, img_out.ptr()))
 		{
 			printf("Error saving file '%s'.\n", outputFileName.str());
@@ -320,14 +366,14 @@ int main(int argc, char *argv[])
 		printf("  RMSE:  \t%.4f\n", rmse);
 
 		// Output csv file
-		csvWriter << "\"" << s_fileNames[i] << "\"," << rmse << "\n";
+		csvWriter << "\"" << fileNames[i] << "\"," << rmse << "\n";
 
 		if (regressPath != NULL)
 		{
 			Path regressFileName;
-			regressFileName.format("%s/%s", regressPath, s_fileNames[i]);
+			regressFileName.format("%s/%s", regressPath, fileNames[i]);
 			regressFileName.stripExtension();
-			regressFileName.append(".tga");
+			regressFileName.append(".png");
 
 			AutoPtr<Image> img_reg( new Image() );
 			if (!img_reg->load(regressFileName.str()))
@@ -354,8 +400,8 @@ int main(int argc, char *argv[])
 		fflush(stdout);
 	}
 
-	totalRMSE /= s_fileCount;
-	totalDiff /= s_fileCount;
+	totalRMSE /= fileCount;
+	totalDiff /= fileCount;
 
 	printf("Total Results:\n");
 	printf("  Total Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
@@ -365,7 +411,7 @@ int main(int argc, char *argv[])
 	{
 		printf("Regression Results:\n");
 		printf("  Diff: %.4f\n", totalDiff);
-		printf("  %d/%d tests failed.\n", failedTests, s_fileCount);
+		printf("  %d/%d tests failed.\n", failedTests, fileCount);
 	}
 
 	return EXIT_SUCCESS;
