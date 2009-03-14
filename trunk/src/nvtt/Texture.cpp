@@ -223,11 +223,11 @@ void Texture::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 		}
 
 		// Scale extents without changing aspect ratio.
-		uint maxwh = max(w, h);
+		int maxwh = max(w, h);
 		if (maxExtent != 0 && maxwh > maxExtent)
 		{
-			w = max((w * maxExtent) / maxwh, 1U);
-			h = max((h * maxExtent) / maxwh, 1U);
+			w = max((w * maxExtent) / maxwh, 1);
+			h = max((h * maxExtent) / maxwh, 1);
 		}
 
 		// Round to power of two.
@@ -253,8 +253,21 @@ void Texture::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 
 bool Texture::buildNextMipmap(MipmapFilter filter)
 {
-	detach();
+	if (m->imageArray.count() > 0)
+	{
+		int w = m->imageArray[0].width();
+		int h = m->imageArray[0].height();
 
+		nvDebugCheck(w > 0);
+		nvDebugCheck(h > 0);
+
+        if (w == 1 && h == 1)
+        {
+            return false;
+        }
+    }
+
+    detach();
 
 	foreach(i, m->imageArray)
 	{
@@ -302,6 +315,8 @@ bool Texture::buildNextMipmap(MipmapFilter filter)
 			}
 		}
 	}
+
+    return true;
 }
 
 // Color transforms.
