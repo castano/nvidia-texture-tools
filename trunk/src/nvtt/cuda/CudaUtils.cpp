@@ -26,12 +26,14 @@
 #include "CudaUtils.h"
 
 #if defined HAVE_CUDA
+#include <cuda.h>
 #include <cuda_runtime_api.h>
 #endif
 
 using namespace nv;
 using namespace cuda;
 
+/* @@ Move this to win32 utils or somewhere else.
 #if NV_OS_WIN32
 
 #define WINDOWS_LEAN_AND_MEAN
@@ -68,10 +70,9 @@ static bool isWow32()
 }
 
 #endif
+*/
 
-#include <stdio.h>
-
-static bool isCudaDriverAvailable(uint version)
+static bool isCudaDriverAvailable(int version)
 {
 #if NV_OS_WIN32
 	Library nvcuda("nvcuda.dll");
@@ -96,7 +97,20 @@ static bool isCudaDriverAvailable(uint version)
 		if (address == NULL) return false;
 	}
 	
-	return true;
+	if (version >= 2020)
+	{
+		typedef CUresult (CUDAAPI * PFCU_DRIVERGETVERSION)(int * version);
+
+		PFCU_DRIVERGETVERSION driverGetVersion = (PFCU_DRIVERGETVERSION)nvcuda.bindSymbol("cuDriverGetVersion");
+		if (driverGetVersion == NULL) return false;
+
+		int driverVersion;
+		if (driverGetVersion(&driverVersion) != CUDA_SUCCESS) return false;
+
+		return driverVersion >= version;
+	}
+
+	return false;
 }
 
 
@@ -155,7 +169,7 @@ int nv::cuda::deviceCount()
 int nv::cuda::getFastestDevice()
 {
 	int max_gflops_device = 0;
-#if defined HAVE_CUDA	
+#if defined HAVE_CUDA
 	int max_gflops = 0;
 
 	const int device_count = deviceCount();
