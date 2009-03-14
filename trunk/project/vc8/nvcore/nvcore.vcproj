@@ -298,6 +298,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvcore\RefCounted.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvcore\StrLib.cpp"
 				>
 			</File>
@@ -353,6 +357,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvcore\Ptr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\RefCounted.h"
 				>
 			</File>
 			<File
