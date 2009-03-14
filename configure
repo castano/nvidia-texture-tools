@@ -53,7 +53,7 @@ echo "-- Configuring nvidia-texture-tools "`cat VERSION`
 
 mkdir -p ./build-$build
 cd ./build-$build
-$CMAKE .. -DCMAKE_BUILD_TYPE=$build -DCMAKE_INSTALL_PREFIX=$prefix -G "Unix Makefiles" || exit 1
+$CMAKE .. -DNVTT_SHARED=1 -DCMAKE_BUILD_TYPE=$build -DCMAKE_INSTALL_PREFIX=$prefix -G "Unix Makefiles" || exit 1
 cd ..
 
 echo ""
