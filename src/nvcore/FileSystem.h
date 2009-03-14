@@ -13,6 +13,7 @@ namespace nv
 
 		NVCORE_API bool exists(const char * path);
 		NVCORE_API bool createDirectory(const char * path);
+		NVCORE_API bool changeDirectory(const char * path);
 
 	} // FileSystem namespace
 
