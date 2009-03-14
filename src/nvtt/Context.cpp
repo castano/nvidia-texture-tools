@@ -956,7 +956,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		SlowCompressor slow;
 		slow.setImage(image, inputOptions.alphaMode);
 
-		const bool useCuda = cudaEnabled && image->width() * image->height() >= 1024;
+		const bool useCuda = cudaEnabled && image->width() * image->height() >= 512;
 
 		if (compressionOptions.format == Format_DXT1)
 		{
