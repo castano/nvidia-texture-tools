@@ -33,3 +33,23 @@ ENDIF(NVTT_SHARED)
 ADD_SUBDIRECTORY(extern)
 
 ADD_SUBDIRECTORY(src)
+
+INSTALL(FILES 
+	NVIDIA_Texture_Tools_LICENSE.txt
+	NVIDIA_Texture_Tools_README.txt
+	ChangeLog 
+	DESTINATION .)
+
+# Add packaging support
+INCLUDE(InstallRequiredSystemLibraries)
+SET(CPACK_GENERATOR "TGZ;DEB")
+SET(CPACK_PACKAGE_NAME "nvidia-texture-tools")
+SET(CPACK_PACKAGE_VERSION "2.1.0")
+SET(CPACK_PACKAGE_CONTACT "Ignacio Castaño <icastano@nvidia.com>")
+SET(CPACK_PACKAGE_VENDOR "NVIDIA Corporation")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPU-accelerated Texture Tools with support for DirectX 10 texture formats")
+
+SET(CPACK_PACKAGE_ICON "${NV_SOURCE_DIR}/project/vc8/nvcompress/nvidia.ico")
+
+SET(CPACK_RESOURCE_FILE_LICENSE "${NV_SOURCE_DIR}/NVIDIA_Texture_Tools_LICENSE.txt")
+INCLUDE(CPack)
