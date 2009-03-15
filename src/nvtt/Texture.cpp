@@ -27,6 +27,7 @@
 #include <nvmath/Matrix.h>
 
 #include <nvimage/Filter.h>
+#include <nvimage/ImageIO.h>
 
 using namespace nv;
 using namespace nvtt;
@@ -126,8 +127,19 @@ void Texture::setNormalMap(bool isNormalMap)
 
 bool Texture::load(const char * fileName)
 {
-	// @@ Not implemented.
-	return false;
+	// @@ Add support for DDS textures!
+
+	AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
+
+	if (img == NULL)
+	{
+		return false;
+	}
+
+	m->imageArray.resize(1);
+	m->imageArray[0] = img.release();
+
+	return true;
 }
 
 void Texture::setTexture2D(InputFormat format, int w, int h, int idx, void * data)
@@ -140,7 +152,7 @@ void Texture::resize(int w, int h, ResizeFilter filter)
 {
 	if (m->imageArray.count() > 0)
 	{
-		if (w == m->imageArray[0].width() && h == m->imageArray[0].height()) return;
+		if (w == m->imageArray[0]->width() && h == m->imageArray[0]->height()) return;
 	}
 
 	// @TODO: if cubemap, make sure w == h.
@@ -156,25 +168,25 @@ void Texture::resize(int w, int h, ResizeFilter filter)
 			if (filter == ResizeFilter_Box)
 			{
 				BoxFilter filter;
-				m->imageArray[i].resize(filter, w, h, wrapMode, 3);
+				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
 			}
 			else if (filter == ResizeFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i].resize(filter, w, h, wrapMode, 3);
+				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
 			}
 			else if (filter == ResizeFilter_Kaiser)
 			{
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i].resize(filter, w, h, wrapMode, 3);
+				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
 			}
 			else //if (filter == ResizeFilter_Mitchell)
 			{
 				nvDebugCheck(filter == ResizeFilter_Mitchell);
 				MitchellFilter filter;
-				m->imageArray[i].resize(filter, w, h, wrapMode, 3);
+				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
 			}
 		}
 		else
@@ -182,25 +194,25 @@ void Texture::resize(int w, int h, ResizeFilter filter)
 			if (filter == ResizeFilter_Box)
 			{
 				BoxFilter filter;
-				m->imageArray[i].resize(filter, w, h, wrapMode);
+				m->imageArray[i]->resize(filter, w, h, wrapMode);
 			}
 			else if (filter == ResizeFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i].resize(filter, w, h, wrapMode);
+				m->imageArray[i]->resize(filter, w, h, wrapMode);
 			}
 			else if (filter == ResizeFilter_Kaiser)
 			{
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i].resize(filter, w, h, wrapMode);
+				m->imageArray[i]->resize(filter, w, h, wrapMode);
 			}
 			else //if (filter == ResizeFilter_Mitchell)
 			{
 				nvDebugCheck(filter == ResizeFilter_Mitchell);
 				MitchellFilter filter;
-				m->imageArray[i].resize(filter, w, h, wrapMode);
+				m->imageArray[i]->resize(filter, w, h, wrapMode);
 			}
 		}
 	}
@@ -210,8 +222,8 @@ void Texture::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 {
 	if (m->imageArray.count() > 0)
 	{
-		int w = m->imageArray[0].width();
-		int h = m->imageArray[0].height();
+		int w = m->imageArray[0]->width();
+		int h = m->imageArray[0]->height();
 
 		nvDebugCheck(w > 0);
 		nvDebugCheck(h > 0);
@@ -255,8 +267,8 @@ bool Texture::buildNextMipmap(MipmapFilter filter)
 {
 	if (m->imageArray.count() > 0)
 	{
-		int w = m->imageArray[0].width();
-		int h = m->imageArray[0].height();
+		int w = m->imageArray[0]->width();
+		int h = m->imageArray[0]->height();
 
 		nvDebugCheck(w > 0);
 		nvDebugCheck(h > 0);
@@ -278,12 +290,12 @@ bool Texture::buildNextMipmap(MipmapFilter filter)
 			if (filter == MipmapFilter_Box)
 			{
 				BoxFilter filter;
-				m->imageArray[i].downSample(filter, wrapMode, 3);
+				m->imageArray[i]->downSample(filter, wrapMode, 3);
 			}
 			else if (filter == MipmapFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i].downSample(filter, wrapMode, 3);
+				m->imageArray[i]->downSample(filter, wrapMode, 3);
 			}
 			else if (filter == MipmapFilter_Kaiser)
 			{
@@ -291,19 +303,19 @@ bool Texture::buildNextMipmap(MipmapFilter filter)
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i].downSample(filter, wrapMode, 3);
+				m->imageArray[i]->downSample(filter, wrapMode, 3);
 			}
 		}
 		else
 		{
 			if (filter == MipmapFilter_Box)
 			{
-				m->imageArray[i].fastDownSample();
+				m->imageArray[i]->fastDownSample();
 			}
 			else if (filter == MipmapFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i].downSample(filter, wrapMode);
+				m->imageArray[i]->downSample(filter, wrapMode);
 			}
 			else //if (filter == MipmapFilter_Kaiser)
 			{
@@ -311,7 +323,7 @@ bool Texture::buildNextMipmap(MipmapFilter filter)
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i].downSample(filter, wrapMode);
+				m->imageArray[i]->downSample(filter, wrapMode);
 			}
 		}
 	}
@@ -328,7 +340,7 @@ void Texture::toLinear(float gamma)
 
 	foreach(i, m->imageArray)
 	{
-		m->imageArray[i].toLinear(0, 3, gamma);
+		m->imageArray[i]->toLinear(0, 3, gamma);
 	}
 }
 
@@ -340,7 +352,7 @@ void Texture::toGamma(float gamma)
 
 	foreach(i, m->imageArray)
 	{
-		m->imageArray[i].toGamma(0, 3, gamma);
+		m->imageArray[i]->toGamma(0, 3, gamma);
 	}
 }
 
@@ -358,7 +370,7 @@ void Texture::transform(const float w0[4], const float w1[4], const float w2[4],
 
 	foreach(i, m->imageArray)
 	{
-		m->imageArray[i].transform(0, xform, voffset);
+		m->imageArray[i]->transform(0, xform, voffset);
 	}
 }
 
@@ -370,7 +382,7 @@ void Texture::swizzle(int r, int g, int b, int a)
 
 	foreach(i, m->imageArray)
 	{
-		m->imageArray[i].swizzle(0, r, g, b, a);
+		m->imageArray[i]->swizzle(0, r, g, b, a);
 	}
 }
 
@@ -382,7 +394,7 @@ void Texture::scaleBias(int channel, float scale, float bias)
 
 	foreach(i, m->imageArray)
 	{
-		m->imageArray[i].scaleBias(channel, 1, scale, bias);
+		m->imageArray[i]->scaleBias(channel, 1, scale, bias);
 	}
 }
 
@@ -392,7 +404,7 @@ void Texture::normalizeNormals()
 
 	foreach(i, m->imageArray)
 	{
-		m->imageArray[i].normalize(0);
+		m->imageArray[i]->normalize(0);
 	}
 }
 

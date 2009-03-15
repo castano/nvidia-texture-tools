@@ -179,16 +179,7 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			
-#ifdef HAVE_PNG
-			if (savePNG)
-			{
-				nv::ImageIO::savePNG(stream, &mipmap);
-			}
-			else
-#endif
-			{
-				nv::ImageIO::saveTGA(stream, &mipmap);
-			}
+			nv::ImageIO::save(name, stream, &mipmap);
 		}
 	}
 

@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
 	nv::Image image;
 	if (!loadImage(image, input)) return 1;
 
-	nv::ImageIO::PngCommentsMap pngComments;
-	pngComments.add("Thumb::Image::Width", nv::StringBuilder().number (image.width()));
-	pngComments.add("Thumb::Image::Height", nv::StringBuilder().number (image.height()));
+	nv::ImageIO::ImageMetaData metaData;
+	metaData.tagMap.add("Thumb::Image::Width", nv::StringBuilder().number (image.width()));
+	metaData.tagMap.add("Thumb::Image::Height", nv::StringBuilder().number (image.height()));
 
 	if ((image.width() > size) || (image.height() > size))
 	{
@@ -145,12 +145,12 @@ int main(int argc, char *argv[])
 		result->setFormat(nv::Image::Format_ARGB);
 
 		nv::StdOutputStream stream(output);
-		nv::ImageIO::savePNG(stream, result.ptr(), pngComments);
+		nv::ImageIO::save(output, stream, result.ptr(), &metaData);
 	}
 	else
 	{
 		nv::StdOutputStream stream(output);
-		nv::ImageIO::savePNG(stream, &image, pngComments);
+		nv::ImageIO::save(output, stream, &image, &metaData);
 	}
 	
 	return 0;

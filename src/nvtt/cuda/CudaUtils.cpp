@@ -72,8 +72,10 @@ static bool isWow32()
 #endif
 */
 
+
 static bool isCudaDriverAvailable(int version)
 {
+#if defined HAVE_CUDA
 #if NV_OS_WIN32
 	Library nvcuda("nvcuda.dll");
 #else
@@ -109,9 +111,11 @@ static bool isCudaDriverAvailable(int version)
 
 		return driverVersion >= version;
 	}
+#endif // HAVE_CUDA
 
 	return false;
 }
+
 
 
 /// Determine if CUDA is available.
