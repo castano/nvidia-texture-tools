@@ -28,6 +28,7 @@
 
 #include <nvcore/Containers.h>
 #include <nvcore/RefCounted.h>
+#include <nvcore/Ptr.h>
 
 #include <nvimage/Image.h>
 #include <nvimage/FloatImage.h>
@@ -59,7 +60,7 @@ namespace nvtt
 		AlphaMode alphaMode;
 		bool isNormalMap;
 
-		nv::Array<nv::FloatImage> imageArray;
+		nv::Array<nv::FloatImage *> imageArray;
 	};
 
 	

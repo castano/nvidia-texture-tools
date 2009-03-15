@@ -29,7 +29,10 @@
 int main(int argc, char *argv[])
 {
 	nvtt::CompressionOptions compressionOptions;
+	compressionOptions.setFormat(nvtt::Format_BC1);
+
 	nvtt::OutputOptions outputOptions;
+	outputOptions.setFileName("output.dds");
 
 	nvtt::Context context;
 	nvtt::Texture texture = context.createTexture();
