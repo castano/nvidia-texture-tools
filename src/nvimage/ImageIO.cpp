@@ -472,7 +472,7 @@ FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 	return floatImage;
 }
 
-#else defined(HAVE_FREEIMAGE)
+#else // defined(HAVE_FREEIMAGE)
 
 /// Load TGA image.
 Image * nv::ImageIO::loadTGA(Stream & s)
