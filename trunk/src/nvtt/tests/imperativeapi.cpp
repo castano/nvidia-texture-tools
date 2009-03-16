@@ -35,20 +35,20 @@ int main(int argc, char *argv[])
 	outputOptions.setFileName("output.dds");
 
 	nvtt::Context context;
-	nvtt::Texture texture = context.createTexture();
+	nvtt::TexImage image = context.createTexImage();
 
-	texture.load("kodim01.png");
+	image.load("kodim01.png");
 
 	float gamma = 2.2;
-	texture.toLinear(gamma);
+	image.toLinear(gamma);
 
-	while (texture.buildNextMipmap(nvtt::MipmapFilter_Box))
+	while (image.buildNextMipmap(nvtt::MipmapFilter_Box))
 	{
-		nvtt::Texture tmp = texture;
-		tmp.toGamma(gamma);
+		nvtt::TexImage tmpImage = image;
+		tmpImage.toGamma(gamma);
 
-	//	context.process(tmp, compressionOptions, outputOptions);
-	//	tmp.process(compressionOptions, outputOptions);
+		context.outputCompressed(tmpImage, compressionOptions, outputOptions);
+	//	tmpImage.outputCompressed(compressionOptions, outputOptions);
 	}
 
 	return EXIT_SUCCESS;

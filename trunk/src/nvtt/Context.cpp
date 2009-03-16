@@ -286,10 +286,32 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 	return m.estimateSize(inputOptions.m, compressionOptions.m);
 }
 
-/// Estimate the size of compressing the input with the given options.
-Texture Compressor::createTexture()
+/// Create a texture.
+TexImage Compressor::createTexImage()
 {
-	return *new Texture();
+	return *new TexImage();
+}
+
+/// Estimate the size of compressing the given texture.
+int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions)
+{
+	const CompressionOptions::Private & co = compressionOptions.m;
+
+	const Format format = co.format;
+
+	uint bitCount = co.bitcount;
+	if (format == Format_RGBA && bitCount == 0) bitCount = co.rsize + co.gsize + co.bsize + co.asize;
+
+	const uint w = tex.width();
+	const uint h = tex.height();
+	const uint d = tex.depth();
+	const uint faceCount = tex.faceCount();
+
+	return faceCount * computeImageSize(w, h, d, bitCount, format);
+}
+
+void Compressor::outputCompressed(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
+{
 }
 
 

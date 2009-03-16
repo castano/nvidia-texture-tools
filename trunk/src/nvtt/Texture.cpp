@@ -25,9 +25,11 @@
 
 #include <nvmath/Vector.h>
 #include <nvmath/Matrix.h>
+#include <nvmath/Color.h>
 
 #include <nvimage/Filter.h>
 #include <nvimage/ImageIO.h>
+#include <nvimage/NormalMap.h>
 
 using namespace nv;
 using namespace nvtt;
@@ -57,48 +59,60 @@ namespace
 }
 
 
-Texture::Texture() : m(new Texture::Private())
+TexImage::TexImage() : m(new TexImage::Private())
 {
 }
 
-Texture::Texture(const Texture & tex) : m(tex.m)
+TexImage::TexImage(const TexImage & tex) : m(tex.m)
 {
 	m->addRef();
 }
 
-Texture::~Texture()
+TexImage::~TexImage()
 {
 	m->release();
 	m = NULL;
 }
 
-void Texture::operator=(const Texture & tex)
+void TexImage::operator=(const TexImage & tex)
 {
 	tex.m->addRef();
 	m = tex.m;
 	m->release();
 }
 
-void Texture::detach()
+void TexImage::detach()
 {
 	if (m->refCount() > 1)
 	{
-		m = new Texture::Private(*m);
+		m = new TexImage::Private(*m);
 		m->addRef();
 		nvDebugCheck(m->refCount() == 1);
 	}
 }
 
-void Texture::setType(TextureType type)
+void TexImage::setTextureType(TextureType type)
 {
 	if (m->type != type)
 	{
 		detach();
+
 		m->type = type;
+
+		if (type == TextureType_2D)
+		{
+			// @@ Free images.
+			m->imageArray.resize(1, NULL);
+		}
+		else
+		{
+			nvCheck (type == TextureType_Cube);
+			m->imageArray.resize(6, NULL);
+		}
 	}
 }
 
-void Texture::setWrapMode(WrapMode wrapMode)
+void TexImage::setWrapMode(WrapMode wrapMode)
 {
 	if (m->wrapMode != wrapMode)
 	{
@@ -107,7 +121,7 @@ void Texture::setWrapMode(WrapMode wrapMode)
 	}
 }
 
-void Texture::setAlphaMode(AlphaMode alphaMode)
+void TexImage::setAlphaMode(AlphaMode alphaMode)
 {
 	if (m->alphaMode != alphaMode)
 	{
@@ -116,7 +130,7 @@ void Texture::setAlphaMode(AlphaMode alphaMode)
 	}
 }
 
-void Texture::setNormalMap(bool isNormalMap)
+void TexImage::setNormalMap(bool isNormalMap)
 {
 	if (m->isNormalMap != isNormalMap)
 	{
@@ -125,7 +139,55 @@ void Texture::setNormalMap(bool isNormalMap)
 	}
 }
 
-bool Texture::load(const char * fileName)
+int TexImage::width() const
+{
+	if (m->imageArray.count() > 0)
+	{
+		return m->imageArray[0]->width();
+	}
+	return 0;
+}
+
+int TexImage::height() const
+{
+	if (m->imageArray.count() > 0)
+	{
+		return m->imageArray[0]->height();
+	}
+	return 0;
+}
+
+int TexImage::depth() const
+{
+	return 0;
+}
+
+int TexImage::faceCount() const
+{
+	return m->imageArray.count();
+}
+
+TextureType TexImage::textureType() const
+{
+	return m->type;
+}
+
+WrapMode TexImage::wrapMode() const
+{
+	return m->wrapMode;
+}
+
+AlphaMode TexImage::alphaMode() const
+{
+	return m->alphaMode;
+}
+
+bool TexImage::isNormalMap() const
+{
+	return m->isNormalMap;
+}
+
+bool TexImage::load(const char * fileName)
 {
 	// @@ Add support for DDS textures!
 
@@ -136,26 +198,142 @@ bool Texture::load(const char * fileName)
 		return false;
 	}
 
+	detach();
+
 	m->imageArray.resize(1);
 	m->imageArray[0] = img.release();
 
 	return true;
 }
 
-void Texture::setTexture2D(InputFormat format, int w, int h, int idx, void * data)
+bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict data)
 {
-	// @@ Not implemented.
+	if (idx >= m->imageArray.count())
+	{
+		return false;
+	}
+
+	FloatImage * img = m->imageArray[idx];
+	if (img->width() != w || img->height() != h)
+	{
+		return false;
+	}
+
+	detach();
+
+	const int count = w * h;
+
+	float * restrict rdst = img->channel(0);
+	float * restrict gdst = img->channel(1);
+	float * restrict bdst = img->channel(2);
+	float * restrict adst = img->channel(3);
+
+	if (format == InputFormat_BGRA_8UB)
+	{
+		const Color32 * src = (const Color32 *)data;
+
+		try {
+			for (int i = 0; i < count; i++)
+			{
+				rdst[i] = src[i].r;
+				gdst[i] = src[i].g;
+				bdst[i] = src[i].b;
+				adst[i] = src[i].a;
+			}
+		}
+		catch(...) {
+			return false;
+		}
+	}
+	else if (format == InputFormat_RGBA_32F)
+	{
+		const float * src = (const float *)data;
+
+		try {
+			for (int i = 0; i < count; i++)
+			{
+				rdst[i] = src[4 * i + 0];
+				gdst[i] = src[4 * i + 1];
+				bdst[i] = src[4 * i + 2];
+				adst[i] = src[4 * i + 3];
+			}
+		}
+		catch(...) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
+bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict r, const void * restrict g, const void * restrict b, const void * restrict a)
+{
+	if (idx >= m->imageArray.count())
+	{
+		return false;
+	}
 
-void Texture::resize(int w, int h, ResizeFilter filter)
+	FloatImage * img = m->imageArray[idx];
+	if (img->width() != w || img->height() != h)
+	{
+		return false;
+	}
+
+	detach();
+
+	const int count = w * h;
+
+	float * restrict rdst = img->channel(0);
+	float * restrict gdst = img->channel(1);
+	float * restrict bdst = img->channel(2);
+	float * restrict adst = img->channel(3);
+
+	if (format == InputFormat_BGRA_8UB)
+	{
+		const uint8 * restrict rsrc = (const uint8 *)r;
+		const uint8 * restrict gsrc = (const uint8 *)g;
+		const uint8 * restrict bsrc = (const uint8 *)b;
+		const uint8 * restrict asrc = (const uint8 *)a;
+
+		try {
+			for (int i = 0; i < count; i++) rdst[i] = float(rsrc[i]) / 255.0f;
+			for (int i = 0; i < count; i++) gdst[i] = float(gsrc[i]) / 255.0f;
+			for (int i = 0; i < count; i++) bdst[i] = float(bsrc[i]) / 255.0f;
+			for (int i = 0; i < count; i++) adst[i] = float(asrc[i]) / 255.0f;
+		}
+		catch(...) {
+			return false;
+		}
+	}
+	else if (format == InputFormat_RGBA_32F)
+	{
+		const float * rsrc = (const float *)r;
+		const float * gsrc = (const float *)g;
+		const float * bsrc = (const float *)b;
+		const float * asrc = (const float *)a;
+
+		try {
+			memcpy(rdst, rsrc, count * sizeof(float));
+			memcpy(gdst, gsrc, count * sizeof(float));
+			memcpy(bdst, bsrc, count * sizeof(float));
+			memcpy(adst, asrc, count * sizeof(float));
+		}
+		catch(...) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void TexImage::resize(int w, int h, ResizeFilter filter)
 {
 	if (m->imageArray.count() > 0)
 	{
 		if (w == m->imageArray[0]->width() && h == m->imageArray[0]->height()) return;
 	}
 
-	// @TODO: if cubemap, make sure w == h.
+	// @@ TODO: if cubemap, make sure w == h.
 
 	detach();
 
@@ -218,7 +396,7 @@ void Texture::resize(int w, int h, ResizeFilter filter)
 	}
 }
 
-void Texture::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
+void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 {
 	if (m->imageArray.count() > 0)
 	{
@@ -263,7 +441,7 @@ void Texture::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 	}
 }
 
-bool Texture::buildNextMipmap(MipmapFilter filter)
+bool TexImage::buildNextMipmap(MipmapFilter filter)
 {
 	if (m->imageArray.count() > 0)
 	{
@@ -332,7 +510,7 @@ bool Texture::buildNextMipmap(MipmapFilter filter)
 }
 
 // Color transforms.
-void Texture::toLinear(float gamma)
+void TexImage::toLinear(float gamma)
 {
 	if (equal(gamma, 1.0f)) return;
 
@@ -344,7 +522,7 @@ void Texture::toLinear(float gamma)
 	}
 }
 
-void Texture::toGamma(float gamma)
+void TexImage::toGamma(float gamma)
 {
 	if (equal(gamma, 1.0f)) return;
 
@@ -356,7 +534,7 @@ void Texture::toGamma(float gamma)
 	}
 }
 
-void Texture::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
+void TexImage::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
 {
 	detach();
 
@@ -374,7 +552,7 @@ void Texture::transform(const float w0[4], const float w1[4], const float w2[4],
 	}
 }
 
-void Texture::swizzle(int r, int g, int b, int a)
+void TexImage::swizzle(int r, int g, int b, int a)
 {
 	if (r == 0 && g == 1 && b == 2 && a == 3) return;
 
@@ -386,7 +564,7 @@ void Texture::swizzle(int r, int g, int b, int a)
 	}
 }
 
-void Texture::scaleBias(int channel, float scale, float bias)
+void TexImage::scaleBias(int channel, float scale, float bias)
 {
 	if (equal(scale, 1.0f) && equal(bias, 0.0f)) return;
 
@@ -398,17 +576,7 @@ void Texture::scaleBias(int channel, float scale, float bias)
 	}
 }
 
-void Texture::normalizeNormals()
-{
-	detach();
-
-	foreach(i, m->imageArray)
-	{
-		m->imageArray[i]->normalize(0);
-	}
-}
-
-void Texture::blend(float r, float g, float b, float a)
+void TexImage::blend(float r, float g, float b, float a)
 {
 	detach();
 
@@ -418,7 +586,7 @@ void Texture::blend(float r, float g, float b, float a)
 	}
 }
 
-void Texture::premultiplyAlpha()
+void TexImage::premultiplyAlpha()
 {
 	detach();
 
@@ -426,3 +594,43 @@ void Texture::premultiplyAlpha()
 }
 
 
+void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale)
+{
+	detach();
+
+	// @@ Not implemented.
+}
+
+// Set normal map options.
+void TexImage::toNormalMap(float sm, float medium, float big, float large)
+{
+	detach();
+
+
+	// @@ Not implemented.
+}
+
+void TexImage::toHeightMap()
+{
+	detach();
+
+	// @@ Not implemented.
+}
+
+void TexImage::normalizeNormalMap()
+{
+	//nvCheck(m->isNormalMap);
+
+	detach();
+
+	foreach(i, m->imageArray)
+	{
+		nv::normalizeNormalMap(m->imageArray[i]);
+	}
+}
+
+// Compress.
+void TexImage::outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
+{
+	// @@ Not implemented.
+}

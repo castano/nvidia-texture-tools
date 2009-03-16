@@ -65,7 +65,7 @@
 namespace nvtt
 {
 	// Forward declarations.
-	struct Texture;
+	struct TexImage;
 	
 	/// Supported compression formats.
 	enum Format
@@ -357,31 +357,45 @@ namespace nvtt
 		// Estimate the size of compressing the input with the given options.
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
 
-		NVTT_API Texture createTexture();
+		// TexImage api
+		NVTT_API TexImage createTexImage();
+		NVTT_API int estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions);
+		NVTT_API void outputCompressed(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
 	};
 
 	// "Compressor" is deprecated. This should have been called "Context"
 	typedef Compressor Context;
 
 	
-	/// Texture data.
-	struct Texture
+	/// A texture mipmap.
+	struct TexImage
 	{
-		NVTT_API Texture();
-		NVTT_API Texture(const Texture & tex);
-		NVTT_API ~Texture();
+		NVTT_API TexImage();
+		NVTT_API TexImage(const TexImage & tex);
+		NVTT_API ~TexImage();
 
-		NVTT_API void operator=(const Texture & tex);
+		NVTT_API void operator=(const TexImage & tex);
 
 		// Texture parameters.
-		NVTT_API void setType(TextureType type);
+		NVTT_API void setTextureType(TextureType type);
 		NVTT_API void setWrapMode(WrapMode mode);
 		NVTT_API void setAlphaMode(AlphaMode alphaMode);
 		NVTT_API void setNormalMap(bool isNormalMap);
 
+		// Accessors.
+		NVTT_API int width() const;
+		NVTT_API int height() const;
+		NVTT_API int depth() const;
+		NVTT_API int faceCount() const;
+		NVTT_API TextureType textureType() const;
+		NVTT_API WrapMode wrapMode() const;
+		NVTT_API AlphaMode alphaMode() const;
+		NVTT_API bool isNormalMap() const;
+
 		// Texture data.
 		NVTT_API bool load(const char * fileName);
-		NVTT_API void setTexture2D(InputFormat format, int w, int h, int idx, void * data);
+		NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * data);
+		NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * r, const void * g, const void * b, const void * a);
 
 		// Resizing methods.
 		NVTT_API void resize(int w, int h, ResizeFilter filter);
@@ -401,10 +415,10 @@ namespace nvtt
 		// Set normal map options.
 		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
 		NVTT_API void toHeightMap();
-		NVTT_API void normalizeNormals();
+		NVTT_API void normalizeNormalMap();
 
 		// Compress.
-		NVTT_API void process(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
+		NVTT_API void outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
 
 	private:
 		void detach();
