@@ -56,6 +56,10 @@ namespace nvtt
 
 			imageArray = p.imageArray;
 		}
+		~Private()
+		{
+			// @@ Free images.
+		}
 
 		TextureType type;
 		WrapMode wrapMode;

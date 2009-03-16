@@ -590,15 +590,26 @@ void TexImage::scaleBias(int channel, float scale, float bias)
 	}
 }
 
-void TexImage::blend(float r, float g, float b, float a)
+void TexImage::blend(float red, float green, float blue, float alpha)
 {
 	detach();
 
 	foreach(i, m->imageArray)
 	{
-		if (m->imageArray[i] == NULL) continue;
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
 
-		// @@ Not implemented.
+		float * restrict r = img->channel(0);
+		float * restrict g = img->channel(0);
+		float * restrict b = img->channel(0);
+
+		const int count = img->width() * img->height();
+		for (int i = 0; i < count; i++)
+		{
+			r[i] = lerp(r[i], red, alpha);
+			g[i] = lerp(g[i], green, alpha);
+			b[i] = lerp(b[i], blue, alpha);
+		}
 	}
 }
 
@@ -608,9 +619,21 @@ void TexImage::premultiplyAlpha()
 
 	foreach(i, m->imageArray)
 	{
-		if (m->imageArray[i] == NULL) continue;
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
 
-		// @@ Not implemented.
+		float * restrict r = img->channel(0);
+		float * restrict g = img->channel(0);
+		float * restrict b = img->channel(0);
+		float * restrict a = img->channel(0);
+
+		const int count = img->width() * img->height();
+		for (int i = 0; i < count; i++)
+		{
+			r[i] *= a[i];
+			g[i] *= a[i];
+			b[i] *= a[i];
+		}
 	}
 }
 
@@ -636,7 +659,6 @@ void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, fl
 		float * restrict a = img->channel(0);
 
 		const int count = img->width() * img->height();
-
 		for (int i = 0; i < count; i++)
 		{
 			float grey = r[i] * redScale + g[i] * greenScale + b[i] * blueScale + a[i] * alphaScale;
