@@ -35,11 +35,12 @@ ADD_SUBDIRECTORY(extern)
 
 ADD_SUBDIRECTORY(src)
 
+# These files should only be installed when creating packages.
 INSTALL(FILES 
 	NVIDIA_Texture_Tools_LICENSE.txt
 	NVIDIA_Texture_Tools_README.txt
 	ChangeLog 
-	DESTINATION .)
+	DESTINATION share/doc/nvtt)
 
 # Add packaging support
 INCLUDE(InstallRequiredSystemLibraries)
