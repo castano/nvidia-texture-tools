@@ -337,9 +337,11 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 
 	detach();
 
+	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
+
 	foreach(i, m->imageArray)
 	{
-		FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
+		if (m->imageArray[i] == NULL) continue;
 
 		if (m->alphaMode == AlphaMode_Transparency)
 		{
@@ -459,9 +461,11 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 
     detach();
 
+	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
+
 	foreach(i, m->imageArray)
 	{
-		FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
+		if (m->imageArray[i] == NULL) continue;
 
 		if (m->alphaMode == AlphaMode_Transparency)
 		{
@@ -518,6 +522,8 @@ void TexImage::toLinear(float gamma)
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		m->imageArray[i]->toLinear(0, 3, gamma);
 	}
 }
@@ -530,6 +536,8 @@ void TexImage::toGamma(float gamma)
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		m->imageArray[i]->toGamma(0, 3, gamma);
 	}
 }
@@ -548,6 +556,8 @@ void TexImage::transform(const float w0[4], const float w1[4], const float w2[4]
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		m->imageArray[i]->transform(0, xform, voffset);
 	}
 }
@@ -560,6 +570,8 @@ void TexImage::swizzle(int r, int g, int b, int a)
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		m->imageArray[i]->swizzle(0, r, g, b, a);
 	}
 }
@@ -572,6 +584,8 @@ void TexImage::scaleBias(int channel, float scale, float bias)
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		m->imageArray[i]->scaleBias(channel, 1, scale, bias);
 	}
 }
@@ -582,6 +596,8 @@ void TexImage::blend(float r, float g, float b, float a)
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		// @@ Not implemented.
 	}
 }
@@ -590,7 +606,12 @@ void TexImage::premultiplyAlpha()
 {
 	detach();
 
-	// @@ Not implemented.
+	foreach(i, m->imageArray)
+	{
+		if (m->imageArray[i] == NULL) continue;
+
+		// @@ Not implemented.
+	}
 }
 
 
@@ -598,7 +619,30 @@ void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, fl
 {
 	detach();
 
-	// @@ Not implemented.
+	foreach(i, m->imageArray)
+	{
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
+
+		float sum = redScale + greenScale + blueScale + alphaScale;
+		redScale /= sum;
+		greenScale /= sum;
+		blueScale /= sum;
+		alphaScale /= sum;
+
+		float * restrict r = img->channel(0);
+		float * restrict g = img->channel(0);
+		float * restrict b = img->channel(0);
+		float * restrict a = img->channel(0);
+
+		const int count = img->width() * img->height();
+
+		for (int i = 0; i < count; i++)
+		{
+			float grey = r[i] * redScale + g[i] * greenScale + b[i] * blueScale + a[i] * alphaScale;
+			a[i] = b[i] = g[i] = r[i] = grey;
+		}
+	}
 }
 
 // Set normal map options.
@@ -606,15 +650,24 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
 {
 	detach();
 
+	foreach(i, m->imageArray)
+	{
+		if (m->imageArray[i] == NULL) continue;
 
-	// @@ Not implemented.
+		// @@ Not implemented.
+	}
 }
 
 void TexImage::toHeightMap()
 {
 	detach();
 
-	// @@ Not implemented.
+	foreach(i, m->imageArray)
+	{
+		if (m->imageArray[i] == NULL) continue;
+
+		// @@ Not implemented.
+	}
 }
 
 void TexImage::normalizeNormalMap()
@@ -625,6 +678,8 @@ void TexImage::normalizeNormalMap()
 
 	foreach(i, m->imageArray)
 	{
+		if (m->imageArray[i] == NULL) continue;
+
 		nv::normalizeNormalMap(m->imageArray[i]);
 	}
 }
@@ -632,5 +687,10 @@ void TexImage::normalizeNormalMap()
 // Compress.
 void TexImage::outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
 {
-	// @@ Not implemented.
+	foreach(i, m->imageArray)
+	{
+		if (m->imageArray[i] == NULL) continue;
+
+		// @@ Not implemented.
+	}
 }
