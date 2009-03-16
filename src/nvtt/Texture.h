@@ -36,7 +36,7 @@
 namespace nvtt
 {
 
-	struct Texture::Private : public nv::RefCounted
+	struct TexImage::Private : public nv::RefCounted
 	{
 		Private()
 		{
@@ -44,6 +44,8 @@ namespace nvtt
 			wrapMode = WrapMode_Mirror;
 			alphaMode = AlphaMode_None;
 			isNormalMap = false;
+
+			imageArray.resize(1, NULL);
 		}
 		Private(const Private & p)
 		{
