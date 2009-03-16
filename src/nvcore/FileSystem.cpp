@@ -4,6 +4,7 @@
 #include <nvcore/nvcore.h>
 
 #if NV_OS_WIN32
+#define _CRT_NONSTDC_NO_WARNINGS // _chdir is defined deprecated, but that's a bug, chdir is deprecated, _chdir is *not*.
 //#include <shlwapi.h> // PathFileExists
 #include <windows.h> // GetFileAttributes
 #include <direct.h> // _mkdir
