@@ -339,7 +339,7 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 
 	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -463,7 +463,7 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 
 	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -520,7 +520,7 @@ void TexImage::toLinear(float gamma)
 
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -534,7 +534,7 @@ void TexImage::toGamma(float gamma)
 
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -554,7 +554,7 @@ void TexImage::transform(const float w0[4], const float w1[4], const float w2[4]
 
 	Vector4 voffset(offset[0], offset[1], offset[2], offset[3]);
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -568,7 +568,7 @@ void TexImage::swizzle(int r, int g, int b, int a)
 
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -582,7 +582,7 @@ void TexImage::scaleBias(int channel, float scale, float bias)
 
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -590,25 +590,27 @@ void TexImage::scaleBias(int channel, float scale, float bias)
 	}
 }
 
-void TexImage::blend(float red, float green, float blue, float alpha)
+void TexImage::blend(float red, float green, float blue, float alpha, float t)
 {
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		FloatImage * img = m->imageArray[i];
 		if (img == NULL) continue;
 
 		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(0);
-		float * restrict b = img->channel(0);
+		float * restrict g = img->channel(1);
+		float * restrict b = img->channel(2);
+		float * restrict a = img->channel(3);
 
 		const int count = img->width() * img->height();
 		for (int i = 0; i < count; i++)
 		{
-			r[i] = lerp(r[i], red, alpha);
-			g[i] = lerp(g[i], green, alpha);
-			b[i] = lerp(b[i], blue, alpha);
+			r[i] = lerp(r[i], red, t);
+			g[i] = lerp(g[i], green, t);
+			b[i] = lerp(b[i], blue, t);
+			a[i] = lerp(a[i], alpha, t);
 		}
 	}
 }
@@ -617,15 +619,15 @@ void TexImage::premultiplyAlpha()
 {
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		FloatImage * img = m->imageArray[i];
 		if (img == NULL) continue;
 
 		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(0);
-		float * restrict b = img->channel(0);
-		float * restrict a = img->channel(0);
+		float * restrict g = img->channel(1);
+		float * restrict b = img->channel(2);
+		float * restrict a = img->channel(3);
 
 		const int count = img->width() * img->height();
 		for (int i = 0; i < count; i++)
@@ -642,7 +644,7 @@ void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, fl
 {
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		FloatImage * img = m->imageArray[i];
 		if (img == NULL) continue;
@@ -654,9 +656,9 @@ void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, fl
 		alphaScale /= sum;
 
 		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(0);
-		float * restrict b = img->channel(0);
-		float * restrict a = img->channel(0);
+		float * restrict g = img->channel(1);
+		float * restrict b = img->channel(2);
+		float * restrict a = img->channel(3);
 
 		const int count = img->width() * img->height();
 		for (int i = 0; i < count; i++)
@@ -667,12 +669,79 @@ void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, fl
 	}
 }
 
+// Draw colored border.
+void TexImage::setBorder(float r, float g, float b, float a)
+{
+	detach();
+
+	foreach (i, m->imageArray)
+	{
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
+
+		const int w = img->width();
+		const int h = img->height();
+
+		for (int i = 0; i < w; i++)
+		{
+			img->setPixel(r, i, 0, 0);
+			img->setPixel(g, i, 0, 1);
+			img->setPixel(b, i, 0, 2);
+			img->setPixel(a, i, 0, 3);
+
+			img->setPixel(r, i, h-1, 0);
+			img->setPixel(g, i, h-1, 1);
+			img->setPixel(b, i, h-1, 2);
+			img->setPixel(a, i, h-1, 3);
+		}
+
+		for (int i = 0; i < h; i++)
+		{
+			img->setPixel(r, 0, i, 0);
+			img->setPixel(g, 0, i, 1);
+			img->setPixel(b, 0, i, 2);
+			img->setPixel(a, 0, i, 3);
+
+			img->setPixel(r, w-1, i, 0);
+			img->setPixel(g, w-1, i, 1);
+			img->setPixel(b, w-1, i, 2);
+			img->setPixel(a, w-1, i, 3);
+		}
+	}
+}
+
+// Fill image with the given color.
+void TexImage::fill(float red, float green, float blue, float alpha)
+{
+	detach();
+
+	foreach (i, m->imageArray)
+	{
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
+
+		float * restrict r = img->channel(0);
+		float * restrict g = img->channel(1);
+		float * restrict b = img->channel(2);
+		float * restrict a = img->channel(3);
+
+		const int count = img->width() * img->height();
+		for (int i = 0; i < count; i++)
+		{
+			r[i] = red;
+			g[i] = green;
+			b[i] = blue;
+			a[i] = alpha;
+		}
+	}
+}
+
 // Set normal map options.
 void TexImage::toNormalMap(float sm, float medium, float big, float large)
 {
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -684,7 +753,7 @@ void TexImage::toHeightMap()
 {
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -698,7 +767,7 @@ void TexImage::normalizeNormalMap()
 
 	detach();
 
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
@@ -709,7 +778,7 @@ void TexImage::normalizeNormalMap()
 // Compress.
 void TexImage::outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
 {
-	foreach(i, m->imageArray)
+	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 

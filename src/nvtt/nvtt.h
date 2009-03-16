@@ -408,9 +408,11 @@ namespace nvtt
 		NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
 		NVTT_API void swizzle(int r, int g, int b, int a);
 		NVTT_API void scaleBias(int channel, float scale, float bias);
-		NVTT_API void blend(float r, float g, float b, float a);
+		NVTT_API void blend(float r, float g, float b, float a, float t);
 		NVTT_API void premultiplyAlpha();
 		NVTT_API void toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale);
+		NVTT_API void setBorder(float r, float g, float b, float a);
+		NVTT_API void fill(float r, float g, float b, float a);
 
 		// Set normal map options.
 		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
