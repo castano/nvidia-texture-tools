@@ -55,8 +55,8 @@ namespace nv
 		static Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
 		static FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
 
-		static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags/*=NULL*/);
-		static bool saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img);
+		static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags);
+		static bool saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img, uint base_component, uint num_components);
 
 	#else // defined(HAVE_FREEIMAGE)
 
@@ -148,15 +148,14 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, con
 	nvDebugCheck(s.isSaving());
 	nvDebugCheck(img != NULL);
 
-	const char * extension = Path::extension(fileName);
-
 #if defined(HAVE_FREEIMAGE)
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
 	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsWriting(fif)) {
-#pragma message(NV_FILE_LINE "TODO: implement saveFreeImage")
-		//return saveFreeImage(fif, s, img, tags);
+		return saveFreeImage(fif, s, img, tags);
 	}
 #else
+	const char * extension = Path::extension(fileName);
+
 	if (strCaseCmp(extension, ".tga") == 0) {
 		return saveTGA(s, img);
 	}
@@ -224,30 +223,23 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 	return NULL;
 }
 
-
-bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
+bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage * fimage, uint baseComponent, uint componentCount)
 {
-	const char * extension = Path::extension(fileName);
+	if (componentCount == 0)
+	{
+		componentCount = fimage->componentNum() - baseComponent;
+	}
+	if (baseComponent + componentCount < fimage->componentNum())
+	{
+		return false;
+	}
 
 #if defined(HAVE_FREEIMAGE)
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
 	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsWriting(fif)) {
-#pragma message(NV_FILE_LINE "TODO: Implement saveFloatFreeImage")
-		//return saveFloatFreeImage(fif, s);
-		return false;
+		return saveFloatFreeImage(fif, s, fimage, baseComponent, componentCount);
 	}
 #else // defined(HAVE_FREEIMAGE)
-#if defined(HAVE_OPENEXR)
-	if (strCaseCmp(extension, ".exr") == 0) {
-		return saveFloatEXR(fileName, fimage, base_component, num_components);
-	}
-#endif
-#if defined(HAVE_TIFF)
-	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
-		return saveFloatTIFF(fileName, fimage, base_component, num_components);
-	}
-#endif
-
 	//if (num_components == 3 || num_components == 4)
 	if (num_components <= 4)
 	{
@@ -272,20 +264,51 @@ bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, ui
 		return ImageIO::save(fileName, image.ptr());
 	}
 #endif // defined(HAVE_FREEIMAGE)
+}
 
-	return false;
+bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount)
+{
+	const char * extension = Path::extension(fileName);
+
+#if !defined(HAVE_FREEIMAGE)
+#if defined(HAVE_OPENEXR)
+	if (strCaseCmp(extension, ".exr") == 0) {
+		return saveFloatEXR(fileName, fimage, baseComponent, componentCount);
+	}
+#endif
+#if defined(HAVE_TIFF)
+	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
+		return saveFloatTIFF(fileName, fimage, baseComponent, componentCount);
+	}
+#endif
+#endif // defined(HAVE_FREEIMAGE)
+
+	StdInputStream stream(fileName);
+
+	if (stream.isError()) {
+		return false;
+	}
+
+	return saveFloat(fileName, stream, fimage, baseComponent, componentCount);
 }
 
 #if defined(HAVE_FREEIMAGE)
 
-unsigned DLL_CALLCONV ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
+static unsigned DLL_CALLCONV ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
 {
 	Stream * s = (Stream *) handle;
 	s->serialize(buffer, size * count);
 	return count;
 }
 
-int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
+static unsigned DLL_CALLCONV WriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
+{
+	Stream * s = (Stream *) handle;
+	s->serialize(buffer, size * count);
+	return count;
+}
+
+static int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
 {
 	Stream * s = (Stream *) handle;
 
@@ -303,7 +326,7 @@ int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
 	return 0;
 }
 
-long DLL_CALLCONV TellProc(fi_handle handle)
+static long DLL_CALLCONV TellProc(fi_handle handle)
 {
 	Stream * s = (Stream *) handle;
 	return s->tell();
@@ -471,6 +494,90 @@ FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 
 	return floatImage;
 }
+
+bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags)
+{
+	nvCheck(!s.isError());
+
+	FreeImageIO io;
+	io.read_proc = NULL;
+	io.write_proc = WriteProc;
+	io.seek_proc = SeekProc;
+	io.tell_proc = TellProc;
+
+	const uint w = img->width();
+	const uint h = img->height();
+
+	FIBITMAP * bitmap = FreeImage_Allocate(w, h, 32);
+
+	for (uint i = 0; i < h; i++)
+	{
+		uint8 * scanline = FreeImage_GetScanLine(bitmap, i);
+		memcpy(scanline, img->scanline(h - i - 1), w * sizeof(Color32));
+	}
+
+	if (tags != NULL)
+	{
+#pragma message(NV_FILE_LINE "TODO: Save image metadata")
+		//FreeImage_SetMetadata(
+	}
+
+	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0);
+
+	FreeImage_Unload(bitmap);
+
+	return result;
+}
+
+bool nv::ImageIO::saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img, uint baseComponent, uint componentCount)
+{
+	nvCheck(!s.isError());
+
+	FreeImageIO io;
+	io.read_proc = NULL;
+	io.write_proc = WriteProc;
+	io.seek_proc = SeekProc;
+	io.tell_proc = TellProc;
+
+	const uint w = img->width();
+	const uint h = img->height();
+
+	FREE_IMAGE_TYPE type;
+	if (componentCount == 1)
+	{
+		type = FIT_FLOAT;
+	}
+	else if (componentCount == 3)
+	{
+		type = FIT_RGBF;
+	}
+	else if (componentCount == 4)
+	{
+		type = FIT_RGBAF;
+	}
+
+	FIBITMAP * bitmap = FreeImage_AllocateT(type, w, h);
+
+	for (uint y = 0; y < h; y++)
+	{
+		float * scanline = (float *)FreeImage_GetScanLine(bitmap, y);
+
+		for (uint x = 0; x < w; x++)
+		{
+			for (uint c = 0; c < componentCount; c++)
+			{
+				scanline[x * componentCount + c] = img->pixel(x, y, baseComponent + c);
+			}
+		}
+	}
+
+	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0);
+
+	FreeImage_Unload(bitmap);
+
+	return result;
+}
+
 
 #else // defined(HAVE_FREEIMAGE)
 
