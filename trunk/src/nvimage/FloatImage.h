@@ -76,9 +76,6 @@ public:
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
-
-	//NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
-	//NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
 	//@}
 
 	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, uint c, WrapMode wm) const;
