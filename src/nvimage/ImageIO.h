@@ -27,9 +27,11 @@ namespace nv
 		NVIMAGE_API FloatImage * loadFloat(const char * fileName);
 		NVIMAGE_API FloatImage * loadFloat(const char * fileName, Stream & s);
 		
-		NVIMAGE_API bool save(const char * fileName, Stream & s, const Image * img, const ImageMetaData * tags=NULL);
 		NVIMAGE_API bool save(const char * fileName, const Image * img, const ImageMetaData * tags=NULL);
-		NVIMAGE_API bool saveFloat(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
+		NVIMAGE_API bool save(const char * fileName, Stream & s, const Image * img, const ImageMetaData * tags=NULL);
+
+		NVIMAGE_API bool saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount);
+		NVIMAGE_API bool saveFloat(const char * fileName, Stream & s, const FloatImage * fimage, uint baseComponent, uint componentCount);
 
 	} // ImageIO namespace
 	
