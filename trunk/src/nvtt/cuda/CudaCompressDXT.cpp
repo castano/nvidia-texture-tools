@@ -90,20 +90,34 @@ CudaCompressor::CudaCompressor() : m_bitmapTable(NULL), m_bitmapTableCTX(NULL), 
 #if defined HAVE_CUDA
     // Allocate and upload bitmaps.
     cudaMalloc((void**) &m_bitmapTable, 992 * sizeof(uint));
+	cudaError_t err = cudaGetLastError();
+	if (err != cudaSuccess) {
+		fprintf(stderr, "CUDA Error: %s\n", cudaGetErrorString(err));
+		fflush(stderr);
+		nvDebugBreak();
+	}
+
 	if (m_bitmapTable != NULL)
 	{
 		cudaMemcpy(m_bitmapTable, s_bitmapTable, 992 * sizeof(uint), cudaMemcpyHostToDevice);
+		if (cudaGetLastError() != cudaSuccess) nvDebugBreak();
 	}
 
     cudaMalloc((void**) &m_bitmapTableCTX, 704 * sizeof(uint));
+	if (cudaGetLastError() != cudaSuccess) nvDebugBreak();
+
 	if (m_bitmapTableCTX != NULL)
 	{
 		cudaMemcpy(m_bitmapTableCTX, s_bitmapTableCTX, 704 * sizeof(uint), cudaMemcpyHostToDevice);
+		if (cudaGetLastError() != cudaSuccess) nvDebugBreak();
 	}
 
 	// Allocate scratch buffers.
     cudaMalloc((void**) &m_data, MAX_BLOCKS * 64U);
+	if (cudaGetLastError() != cudaSuccess) nvDebugBreak();
+
     cudaMalloc((void**) &m_result, MAX_BLOCKS * 8U);
+	if (cudaGetLastError() != cudaSuccess) nvDebugBreak();
 #endif
 }
 
@@ -114,14 +128,17 @@ CudaCompressor::~CudaCompressor()
 	cudaFree(m_data);
 	cudaFree(m_result);
 	cudaFree(m_bitmapTable);
+	cudaFree(m_bitmapTableCTX);
 #endif
 }
 
 bool CudaCompressor::isValid() const
 {
 #if defined HAVE_CUDA
-	if (cudaGetLastError() != cudaSuccess)
+	cudaError_t err = cudaGetLastError();
+	if (err != cudaSuccess)
    	{
+		nvDebug("*** CUDA Error: %s\n", cudaGetErrorString(err));
 		return false;
 	}
 #endif

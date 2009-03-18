@@ -84,19 +84,26 @@ static bool isCudaDriverAvailable(int version)
 	
 	if (!nvcuda.isValid())
 	{
+		nvDebug("*** CUDA driver not found.\n");
 		return false;
 	}
 	
 	if (version >= 2000)
 	{
 		void * address = nvcuda.bindSymbol("cuStreamCreate");
-		if (address == NULL) return false;
+		if (address == NULL) {
+			nvDebug("*** CUDA driver version < 2.0.\n");
+			return false;
+		}
 	}
 
 	if (version >= 2010)
 	{
 		void * address = nvcuda.bindSymbol("cuModuleLoadDataEx");
-		if (address == NULL) return false;
+		if (address == NULL) {
+			nvDebug("*** CUDA driver version < 2.1.\n");
+			return false;
+		}
 	}
 	
 	if (version >= 2020)
@@ -104,16 +111,23 @@ static bool isCudaDriverAvailable(int version)
 		typedef CUresult (CUDAAPI * PFCU_DRIVERGETVERSION)(int * version);
 
 		PFCU_DRIVERGETVERSION driverGetVersion = (PFCU_DRIVERGETVERSION)nvcuda.bindSymbol("cuDriverGetVersion");
-		if (driverGetVersion == NULL) return false;
+		if (driverGetVersion == NULL) {
+			nvDebug("*** CUDA driver version < 2.2.\n");
+			return false;
+		}
 
 		int driverVersion;
-		if (driverGetVersion(&driverVersion) != CUDA_SUCCESS) return false;
+		CUresult err = driverGetVersion(&driverVersion);
+		if (err != CUDA_SUCCESS) {
+			nvDebug("*** Error querying driver version: '%s'.\n", cudaGetErrorString((cudaError_t)err));
+			return false;
+		}
 
 		return driverVersion >= version;
 	}
 #endif // HAVE_CUDA
 
-	return false;
+	return true;
 }
 
 
@@ -121,10 +135,13 @@ static bool isCudaDriverAvailable(int version)
 bool nv::cuda::isHardwarePresent()
 {
 #if defined HAVE_CUDA
-#if NV_OS_WIN32
-	//if (isWindowsVista()) return false;
-	//if (isWindowsVista() || !isWow32()) return false;
-#endif
+	// Make sure that CUDA driver matches CUDA runtime.
+	if (!isCudaDriverAvailable(CUDART_VERSION))
+	{
+		nvDebug("CUDA driver not available for CUDA runtime %d\n", CUDART_VERSION);
+		return false;
+	}
+
 	int count = deviceCount();
 	if (count == 1)
 	{
@@ -137,15 +154,9 @@ bool nv::cuda::isHardwarePresent()
 		{
 			return false;
 		}
-
-		// Make sure that CUDA driver matches CUDA runtime.
-		if (!isCudaDriverAvailable(CUDART_VERSION))
-		{
-			return false;
-		}
-
-		// @@ Make sure that warp size == 32
 	}
+
+	// @@ Make sure that warp size == 32
 
 	return count > 0;
 #else
@@ -205,8 +216,24 @@ bool nv::cuda::setDevice(int i)
 	nvCheck(i < deviceCount());
 #if defined HAVE_CUDA
 	cudaError_t result = cudaSetDevice(i);
+
+	if (result != cudaSuccess) {
+		nvDebug("*** CUDA Error: %s\n", cudaGetErrorString(result));
+	}
+
 	return result == cudaSuccess;
 #else
 	return false;
+#endif
+}
+
+void nv::cuda::exit()
+{
+#if defined HAVE_CUDA
+	cudaError_t result = cudaThreadExit();
+
+	if (result != cudaSuccess) {
+		nvDebug("*** CUDA Error: %s\n", cudaGetErrorString(result));
+	}
 #endif
 }
