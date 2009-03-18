@@ -48,19 +48,37 @@
 #define IS_NEGATIVE_FLOAT(x)	(IR(x)&SIGN_BITMASK)
 */
 
-inline float sqrt_assert(const float f)
+inline double sqrt_assert(const double f)
+{
+	nvDebugCheck(f >= 0.0f);
+	return sqrt(f);
+}
+
+inline float sqrtf_assert(const float f)
 {
 	nvDebugCheck(f >= 0.0f);
 	return sqrtf(f);
 }
 
-inline float acos_assert(const float f)
+inline double acos_assert(const double f)
+{
+	nvDebugCheck(f >= -1.0f && f <= 1.0f);
+	return acos(f);
+}
+
+inline float acosf_assert(const float f)
 {
 	nvDebugCheck(f >= -1.0f && f <= 1.0f);
 	return acosf(f);
 }
 
-inline float asin_assert(const float f)
+inline double asin_assert(const double f)
+{
+	nvDebugCheck(f >= -1.0f && f <= 1.0f);
+	return asin(f);
+}
+
+inline float asinf_assert(const float f)
 {
 	nvDebugCheck(f >= -1.0f && f <= 1.0f);
 	return asinf(f);
@@ -68,11 +86,11 @@ inline float asin_assert(const float f)
 
 // Replace default functions with asserting ones.
 #define sqrt sqrt_assert
-#define sqrtf sqrt_assert
+#define sqrtf sqrtf_assert
 #define acos acos_assert
-#define acosf acos_assert
+#define acosf acosf_assert
 #define asin asin_assert
-#define asinf asin_assert
+#define asinf asinf_assert
 
 #if NV_OS_WIN32
 #include <float.h>
@@ -134,6 +152,11 @@ inline float lerp(float f0, float f1, float t)
 {
 	const float s = 1.0f - t;
 	return f0 * s + f1 * t;
+}
+
+inline float square(float f)
+{
+	return f * f;
 }
 
 } // nv

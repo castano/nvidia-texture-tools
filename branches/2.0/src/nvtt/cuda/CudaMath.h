@@ -148,7 +148,7 @@ inline __device__ bool singleColor(const float3 * colors)
 	bool sameColor = false;
 	for (int i = 0; i < 16; i++)
 	{
-		sameColor &= (colors[idx] == colors[0]);
+		sameColor &= (colors[i] == colors[0]);
 	}
 	return sameColor;
 #else

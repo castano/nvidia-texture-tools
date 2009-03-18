@@ -824,13 +824,13 @@ namespace nv
 		}
 	
 		/// Number of entries in the hash.
-		int	size()
+		int	size() const
 		{
 			return entry_count;
 		}
 	
 		/// Number of entries in the hash.
-		int	count()
+		int	count() const
 		{
 			return size();
 		}

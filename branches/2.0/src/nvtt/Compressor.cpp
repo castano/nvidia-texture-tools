@@ -697,6 +697,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 	SlowCompressor slow;
 	slow.setImage(image, inputOptions.alphaMode);
 
+	const bool useCuda = cudaEnabled && image->width() * image->height() >= 512;
 
 	if (compressionOptions.format == Format_RGBA || compressionOptions.format == Format_RGB)
 	{
@@ -725,7 +726,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else
 		{
-			if (cudaEnabled)
+			if (useCuda)
 			{
 				nvDebugCheck(cudaSupported);
 				cuda->setImage(image, inputOptions.alphaMode);
@@ -745,7 +746,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else
 		{
-			if (cudaEnabled)
+			if (useCuda)
 			{
 				nvDebugCheck(cudaSupported);
 				/*cuda*/slow.compressDXT1a(compressionOptions, outputOptions);
@@ -764,7 +765,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else
 		{
-			if (cudaEnabled)
+			if (useCuda)
 			{
 				nvDebugCheck(cudaSupported);
 				cuda->setImage(image, inputOptions.alphaMode);
@@ -784,7 +785,7 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else
 		{
-			if (cudaEnabled)
+			if (useCuda)
 			{
 				nvDebugCheck(cudaSupported);
 				cuda->setImage(image, inputOptions.alphaMode);
