@@ -228,6 +228,7 @@ Compressor::Compressor() : m(*new Compressor::Private())
 Compressor::~Compressor()
 {
 	delete &m;
+	cuda::exit();
 }
 
 
