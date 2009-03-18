@@ -3,12 +3,20 @@
 #ifndef NV_IMAGE_FLOATIMAGE_H
 #define NV_IMAGE_FLOATIMAGE_H
 
+#include <nvimage/nvimage.h>
+
+#include <nvmath/Vector.h>
+
 #include <nvcore/Debug.h>
 #include <nvcore/Containers.h> // clamp
-#include <nvimage/nvimage.h>
+
+#include <stdlib.h> // abs
+
 
 namespace nv
 {
+class Vector4;
+class Matrix;
 class Image;
 class Filter;
 class Kernel1;
@@ -60,20 +68,22 @@ public:
 	NVIMAGE_API void toGamma(uint base_component, uint num, float gamma = 2.2f);
 	NVIMAGE_API void exponentiate(uint base_component, uint num, float power);
 	
-	
+
 	NVIMAGE_API FloatImage * fastDownSample() const;
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
+	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
 
-	//NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
-	//NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
+	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
 	//@}
 
-	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, int c, WrapMode wm) const;
-	NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
-	NVIMAGE_API float applyKernelHorizontal(const Kernel1 * k, int x, int y, int c, WrapMode wm) const;
-	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, int c, WrapMode wm, float * output) const;
-	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, int c, WrapMode wm, float * output) const;
+	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, uint c, WrapMode wm) const;
+	NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const;
+	NVIMAGE_API float applyKernelHorizontal(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const;
+	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, uint c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, uint c, uint a, WrapMode wm, float * output) const;
+	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * output) const;
 	
 	
 	uint width() const { return m_width; }
@@ -108,6 +118,9 @@ public:
 	float sampleLinearRepeat(float x, float y, int c) const;
 	float sampleLinearMirror(float x, float y, int c) const;
 	//@}
+	
+	
+	FloatImage* clone() const;
 	
 public:
 	
@@ -234,7 +247,7 @@ inline uint FloatImage::indexMirror(int x, int y) const
 	}
 
 	if (m_height == 1) y = 0;
-	
+
 	y = abs(y);
 	while (y >= m_height) {
 		y = abs(m_height + m_height - y - 2);

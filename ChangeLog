@@ -1,9 +1,13 @@
 NVIDIA Texture Tools version 2.0.6
  * Fix dll version checking.
- * Detect CUDA 2.1 correctly.
+ * Detect CUDA 2.1 and future CUDA versions correctly.
  * Print CUDA detection message in nvcompress.
+ * Select the fastest CUDA device.
  * Compile squish with -fPIC. Fixes issue 74.
- * Merge changes from trunk to fix warnings under gcc 4.3.2.
+ * Fix warnings under gcc 4.3.2.
+ * Fix nvzoom option typo by Frank Richter. Fixes issue 81.
+ * Do not use CUDA to compress small mipmaps. Fixes issue 76.
+ * Compute mipmaps of semi-transparent images correctly.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
