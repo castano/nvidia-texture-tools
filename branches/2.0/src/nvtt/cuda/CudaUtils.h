@@ -33,6 +33,7 @@ namespace nv
 		int deviceCount();
 		int getFastestDevice();
 		bool setDevice(int i);
+		void exit();
 	};
 	
 } // nv namespace

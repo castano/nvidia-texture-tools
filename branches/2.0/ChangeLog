@@ -8,6 +8,7 @@ NVIDIA Texture Tools version 2.0.6
  * Fix nvzoom option typo by Frank Richter. Fixes issue 81.
  * Do not use CUDA to compress small mipmaps. Fixes issue 76.
  * Compute mipmaps of semi-transparent images correctly.
+ * Shutdown CUDA properly. Fixes issue 83.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
