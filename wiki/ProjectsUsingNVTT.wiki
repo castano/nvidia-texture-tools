@@ -7,18 +7,18 @@ The [http://developer.nvidia.com/object/texture_tools.html NVIDIA Texture Tools]
 
   * [http://www.unrealtechnology.com/technology.php Unreal® Engine 3], _Epic Games Inc._
 
-Unreal® Engine 3 is a complete development framework for DirectX 10-equipped PCs, Xbox 360® and PLAYSTATION®3, providing the vast array of core technologies, content creation tools, and support infrastructure required by top game studios, advanced visualization and simulation developers and creators of 3D animated content for linear productions.
+  Unreal® Engine 3 is a complete development framework for DirectX 10-equipped PCs, Xbox 360® and PLAYSTATION®3, providing the vast array of core technologies, content creation tools, and support infrastructure required by top game studios, advanced visualization and simulation developers and creators of 3D animated content for linear productions.
 
   * [http://forum.celestialmatters.org/viewtopic.php?t=273 F-TexTools 2.0 / NmTools 2.0], _Fridger Schrempp, Robert Skuridin_
 
-Cross-platform tools optimized for accurate processing of huge scientific imaging data on regular computers, and generate textures that can be visualized in [http://www.shatters.net/celestia/ Celestia], a free space simulation that lets you explore our universe in three dimensions.
+  Cross-platform tools optimized for accurate processing of huge scientific imaging data on regular computers, and generate textures that can be visualized in [http://www.shatters.net/celestia/ Celestia], a free space simulation that lets you explore our universe in three dimensions.
 
   * [http://www.blender.org Blender], _Amorilia_ 
 
-Blender is an open source, cross platform suite of tools for 3D creation. Since [http://www.blender.org/development/release-logs/blender-246/ version 2.46] Blender supports loading of DDS textures by using the NVIDIA Texture Tool's source code.
+  Blender is an open source, cross platform suite of tools for 3D creation. Since [http://www.blender.org/development/release-logs/blender-246/ version 2.46] Blender supports loading of DDS textures by using the NVIDIA Texture Tool's source code.
 
   * [http://www.wolfire.com/overgrowth Overgrowth], _[http://www.wolfire.com/overgrowth Wolfire Games]_
 
-Overgrowth is a 3d action-adventure game for Mac, Windows, and Linux, coming soon from the independent game studio, Wolfire Games.
+  Overgrowth is a 3d action-adventure game for Mac, Windows, and Linux, coming soon from the independent game studio, Wolfire Games.
 
   * [http://rigsofrods.com/ Rigs Of Rods]
