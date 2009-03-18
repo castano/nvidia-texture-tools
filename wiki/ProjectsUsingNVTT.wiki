@@ -21,4 +21,7 @@ The [http://developer.nvidia.com/object/texture_tools.html NVIDIA Texture Tools]
 
   Overgrowth is a 3d action-adventure game for Mac, Windows, and Linux, coming soon from the independent game studio, Wolfire Games.
 
-  * [http://rigsofrods.com/ Rigs Of Rods]
+  * [http://rigsofrods.com/ Rigs Of Rods], _Pierre-Michel Ricordel_
+
+  Rigs of Rods (also known as RoR), is a truck, car, airplane and boat simulator.
+
