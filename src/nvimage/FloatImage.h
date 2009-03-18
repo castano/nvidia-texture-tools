@@ -75,6 +75,7 @@ public:
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
+
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
 	//@}
 

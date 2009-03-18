@@ -8,12 +8,27 @@ NVIDIA Texture Tools version 2.1.0
  * Fix loading of EXR files using OpenEXR.
  * Use FreeImage as primary image loading library. Fixes issue 31. Reverted.
  * Output swizzle codes like AMD's tools.
- * Select the fastest CUDA device.
  * Added support for saving PNGs by Frank Richter. Fixes issue 79 and 80.
  * Added gnome thumbnailer by Frank Richter. Fixes issue 82.
  * Cleanup sources removing files that are not strictly required.
+
+NVIDIA Texture Tools version 2.0.6
+ * Fix dll version checking.
+ * Detect CUDA 2.1 and future CUDA versions correctly.
+ * Print CUDA detection message in nvcompress.
+ * Select the fastest CUDA device.
+ * Compile squish with -fPIC. Fixes issue 74.
+ * Fix warnings under gcc 4.3.2.
+ * Fix nvzoom option typo by Frank Richter. Fixes issue 81.
+ * Do not use CUDA to compress small mipmaps. Fixes issue 76.
  * Compute mipmaps of semi-transparent images correctly.
- * Do not use CUDA to compress small mipmaps.
+
+NVIDIA Texture Tools version 2.0.5
+ * Fix error in single color compressor. Fixes issue 66.
+ * Detect mismatch between CUDA runtime and driver, and disable CUDA in that case.
+ * Fix cmake files when compiling NVTT as a shared library.
+ * When linking nvtt dynamically on unix, link all libraries dynamically.
+ * Select fastest CUDA device.
 
 NVIDIA Texture Tools version 2.0.4
  * Fix error in RGB format output; reported by jonsoh. See issue 49.
