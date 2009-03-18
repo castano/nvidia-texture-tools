@@ -26,10 +26,10 @@
  * http://www.xmission.com/~legalize/zoom.html
  * 
  * Reconstruction Filters in Computer Graphics
- * http://www.mentallandscape.com/Papers_siggraph88.pdf 
+ * http://www.mentallandscape.com/Papers_siggraph88.pdf
  *
  * More references:
- * http://www.worldserver.com/turk/computergraphics/ResamplingFilters.pdf 
+ * http://www.worldserver.com/turk/computergraphics/ResamplingFilters.pdf
  * http://www.dspguide.com/ch16.htm
  */
 

@@ -117,7 +117,6 @@ static bool isCudaDriverAvailable(int version)
 }
 
 
-
 /// Determine if CUDA is available.
 bool nv::cuda::isHardwarePresent()
 {
