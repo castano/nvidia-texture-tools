@@ -84,7 +84,7 @@ struct Error
 	{
 		mabse /= samples;
 		mse /= samples;
-		rmse = sqrt(mse);
+		rmse = sqrtf(mse);
 		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
 	}
 
@@ -134,7 +134,7 @@ struct NormalError
 		{
 			ade /= samples;
 			mse /= samples * 3;
-			rmse = sqrt(mse);
+			rmse = sqrtf(mse);
 			psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
 		}
 	}
