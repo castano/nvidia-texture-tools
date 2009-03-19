@@ -989,10 +989,10 @@ void DirectDrawSurface::readLinearImage(Image * img)
 			stream->serialize(&c, byteCount);
 
 			Color32 pixel(0, 0, 0, 0xFF);
-			pixel.r = PixelFormat::convert(c >> rshift, rsize, 8);
-			pixel.g = PixelFormat::convert(c >> gshift, gsize, 8);
-			pixel.b = PixelFormat::convert(c >> bshift, bsize, 8);
-			pixel.a = PixelFormat::convert(c >> ashift, asize, 8);
+			pixel.r = PixelFormat::convert((c & header.pf.rmask) >> rshift, rsize, 8);
+			pixel.g = PixelFormat::convert((c & header.pf.gmask) >> gshift, gsize, 8);
+			pixel.b = PixelFormat::convert((c & header.pf.bmask) >> bshift, bsize, 8);
+			pixel.a = PixelFormat::convert((c & header.pf.amask) >> ashift, asize, 8);
 
 			img->pixel(x, y) = pixel;
 		}
