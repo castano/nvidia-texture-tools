@@ -90,6 +90,21 @@ static const char * s_epicImageSet[] = {
 	"Text.png",
 };
 
+// Farbrausch
+static const char * s_farbrauschImageSet[] = {
+	"t.2d.pn02.bmp",
+	"t.aircondition.01.bmp",
+	"t.bricks.02.bmp",
+	"t.bricks.05.bmp",
+	"t.concrete.cracked.01.bmp",
+	"t.envi.colored02.bmp",
+	"t.envi.colored03.bmp",
+	"t.font.01.bmp",
+	"t.sewers.01.bmp",
+	"t.train.03.bmp",
+	"t.yello.01.bmp",
+};
+
 struct ImageSet
 {
 	const char ** fileNames;
@@ -100,6 +115,7 @@ static ImageSet s_imageSets[] = {
 	{s_kodakImageSet, sizeof(s_kodakImageSet)/sizeof(s_kodakImageSet[0])},
 	{s_waterlooImageSet, sizeof(s_waterlooImageSet)/sizeof(s_waterlooImageSet[0])},
 	{s_epicImageSet, sizeof(s_epicImageSet)/sizeof(s_epicImageSet[0])},
+	{s_farbrauschImageSet, sizeof(s_farbrauschImageSet)/sizeof(s_farbrauschImageSet[0])},
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
