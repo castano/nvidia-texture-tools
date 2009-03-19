@@ -23,14 +23,14 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_MATHS_H
-#define NV_SQUISH_MATHS_H
+#ifndef SQUISH_MATHS_H
+#define SQUISH_MATHS_H
 
 #include <cmath>
 #include <algorithm>
 #include "config.h"
 
-namespace nvsquish {
+namespace squish {
 
 class Vec3
 {

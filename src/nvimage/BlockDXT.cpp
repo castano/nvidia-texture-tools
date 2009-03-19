@@ -21,13 +21,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "BlockDXT.h"
-
-#include <nvimage/ColorBlock.h>
-
 #include <nvcore/Stream.h>
-#include <nvcore/Containers.h> // swap
 
+#include "ColorBlock.h"
+#include "BlockDXT.h"
 
 using namespace nv;
 
@@ -93,51 +90,6 @@ uint BlockDXT1::evaluatePalette(Color32 color_array[4]) const
 	}
 }
 
-
-uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
-{
-	// Does bit expansion before interpolation.
-	color_array[0].b = col0.b * 22 / 8;
-	color_array[0].g = (col0.g << 2) | (col0.g >> 4);
-	color_array[0].r = col0.r * 22 / 8;
-	color_array[0].a = 0xFF;
-	
-	color_array[1].r = col1.r * 22 / 8;
-	color_array[1].g = (col1.g << 2) | (col1.g >> 4);
-	color_array[1].b = col1.b * 22 / 8;
-	color_array[1].a = 0xFF;
-	
-	if( col0.u > col1.u ) {
-		// Four-color block: derive the other two colors.
-		color_array[2].r = (2 * col0.r + col1.r) * 22 / 8;
-		color_array[2].g = (256 * color_array[0].g + (color_array[1].g - color_array[0].g)/4 + 128 + (color_array[1].g - color_array[0].g) * 80) / 256;
-		color_array[2].b = (2 * col0.b + col1.b) * 22 / 8;
-		color_array[2].a = 0xFF;
-		
-		color_array[3].r = (2 * col1.r + col0.r) * 22 / 8;
-		color_array[3].g = (256 * color_array[1].g + (color_array[0].g - color_array[1].g)/4 + 128 + (color_array[0].g - color_array[1].g) * 80) / 256;
-		color_array[3].b = (2 * col1.b + col0.b) * 22 / 8;
-		color_array[3].a = 0xFF;
-		
-		return 4;
-	}
-	else {
-		// Three-color block: derive the other color.
-		color_array[2].r = (col0.r + col1.r) * 33 / 8;
-		color_array[2].g = (256 * color_array[0].g + (color_array[1].g - color_array[0].g)/4 + 128 + (color_array[1].g - color_array[0].g) * 128) / 256;
-		color_array[2].b = (col0.b + col1.b) * 33 / 8;
-		color_array[2].a = 0xFF;
-		
-		// Set all components to 0 to match DXT specs.
-		color_array[3].r = 0x00; // color_array[2].r;
-		color_array[3].g = 0x00; // color_array[2].g;
-		color_array[3].b = 0x00; // color_array[2].b;
-		color_array[3].a = 0x00;
-		
-		return 3;
-	}
-}
-
 // Evaluate palette assuming 3 color block.
 void BlockDXT1::evaluatePalette3(Color32 color_array[4]) const
 {
@@ -189,6 +141,95 @@ void BlockDXT1::evaluatePalette4(Color32 color_array[4]) const
 	color_array[3].a = 0xFF;
 }
 
+
+/* Jason Dorie's code.
+// ----------------------------------------------------------------------------
+// Build palette for a 3 color + traparent black block
+// ----------------------------------------------------------------------------
+void DXTCGen::BuildCodes3(cbVector *pVects, cbVector &v1, cbVector &v2)
+{
+	//pVects[0] = v1;
+	//pVects[2] = v2;
+	//pVects[1][0] = v1[0];
+	//pVects[1][1] = (BYTE)( ((long)v1[1] + (long)v2[1]) / 2 );
+	//pVects[1][2] = (BYTE)( ((long)v1[2] + (long)v2[2]) / 2 );
+	//pVects[1][3] = (BYTE)( ((long)v1[3] + (long)v2[3]) / 2 );
+
+	__asm {
+		mov			ecx, dword ptr pVects
+		mov			eax, dword ptr v1
+		mov			ebx, dword ptr v2
+
+		movd		mm0, [eax]
+		movd		mm1, [ebx]
+		pxor		mm2, mm2
+		nop
+
+		movd		[ecx], mm0
+		movd		[ecx+8], mm1
+
+		punpcklbw	mm0, mm2
+		punpcklbw	mm1, mm2
+
+		paddw		mm0, mm1
+		psrlw		mm0, 1
+
+		packuswb	mm0, mm0
+		movd		[ecx+4], mm0
+	}
+	// *(long *)&pVects[1] = r1;
+}
+
+__int64 ScaleOneThird = 0x5500550055005500;
+
+// ----------------------------------------------------------------------------
+// Build palette for a 4 color block
+// ----------------------------------------------------------------------------
+void DXTCGen::BuildCodes4(cbVector *pVects, cbVector &v1, cbVector &v2)
+{
+// 	pVects[0] = v1;
+// 	pVects[3] = v2;
+// 
+// 	pVects[1][0] = v1[0];
+// 	pVects[1][1] = (BYTE)( ((long)v1[1] * 2 + (long)v2[1]) / 3 );
+// 	pVects[1][2] = (BYTE)( ((long)v1[2] * 2 + (long)v2[2]) / 3 );
+// 	pVects[1][3] = (BYTE)( ((long)v1[3] * 2 + (long)v2[3]) / 3 );
+// 
+// 	pVects[2][0] = v1[0];
+// 	pVects[2][1] = (BYTE)( ((long)v2[1] * 2 + (long)v1[1]) / 3 );
+// 	pVects[2][2] = (BYTE)( ((long)v2[2] * 2 + (long)v1[2]) / 3 );
+// 	pVects[2][3] = (BYTE)( ((long)v2[3] * 2 + (long)v1[3]) / 3 );
+
+	__asm {
+		mov			ecx, dword ptr pVects
+		mov			eax, dword ptr v1
+		mov			ebx, dword ptr v2
+
+		movd		mm0, [eax]
+		movd		mm1, [ebx]
+
+		pxor		mm2, mm2
+		movd		[ecx], mm0
+		movd		[ecx+12], mm1
+
+		punpcklbw	mm0, mm2
+		punpcklbw	mm1, mm2
+		movq		mm3, mm0		// mm3 = v0
+
+		paddw		mm0, mm1		// mm0 = v0 + v1
+		paddw		mm3, mm3		// mm3 = v0*2
+
+		paddw		mm0, mm1		// mm0 = v0 + v1*2
+		paddw		mm1, mm3		// mm1 = v0*2 + v1
+
+		pmulhw		mm0, ScaleOneThird
+		pmulhw		mm1, ScaleOneThird
+		packuswb	mm1, mm0
+
+		movq		[ecx+4], mm1
+	}
+}
+*/
 
 void BlockDXT1::decodeBlock(ColorBlock * block) const
 {

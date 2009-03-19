@@ -22,7 +22,7 @@
 
 
 // Platform definitions
-#include <posh.h>
+#include "poshlib/posh.h"
 
 // OS:
 // NV_OS_WIN32
@@ -126,9 +126,6 @@
 #define NV_DO_STRING_JOIN2(arg1, arg2) arg1 ## arg2
 #define NV_STRING_JOIN3(arg1, arg2, arg3) NV_DO_STRING_JOIN3(arg1, arg2, arg3)
 #define NV_DO_STRING_JOIN3(arg1, arg2, arg3) arg1 ## arg2 ## arg3
-#define NV_STRING2(x) #x
-#define NV_STRING(x) NV_STRING2(x)
-#define NV_FILE_LINE __FILE__ "(" NV_STRING(__LINE__) ") : "
 
 // Startup initialization macro.
 #define NV_AT_STARTUP(some_code) \

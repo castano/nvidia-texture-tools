@@ -30,7 +30,7 @@
 #include <cfloat>
 
 
-namespace nvsquish {
+namespace squish {
 
 WeightedClusterFit::WeightedClusterFit()
 {
@@ -131,13 +131,10 @@ float WeightedClusterFit::GetBestError() const
 
 void WeightedClusterFit::Compress3( void* block )
 {
-    int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
 	Vec4 const zero = VEC4_CONST(0.0f);
 	Vec4 const half(0.5f, 0.5f, 0.5f, 0.25f);
 	Vec4 const two = VEC4_CONST(2.0);
-	Vec4 const grid( 31.0f, 63.0f, 31.0f, 0.0f );
-	Vec4 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
 	 
 	// declare variables
 	Vec4 beststart = VEC4_CONST( 0.0f );
@@ -149,11 +146,11 @@ void WeightedClusterFit::Compress3( void* block )
 	int b0 = 0, b1 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= count; c0++)
+	for( int c0 = 0; c0 <= 16; c0++)
 	{	
 		Vec4 x1 = zero;
 		
-		for( int c1 = 0; c1 <= count-c0; c1++)
+		for( int c1 = 0; c1 <= 16-c0; c1++)
 		{
 			Vec4 const x2 = m_xsum - x1 - x0;
 			
@@ -176,21 +173,24 @@ void WeightedClusterFit::Compress3( void* block )
 			Vec4 a = NegativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
 			Vec4 b = NegativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
 			
-			// clamp to the grid
+			// clamp the output to [0, 1]
 			a = Min( one, Max( zero, a ) );
 			b = Min( one, Max( zero, b ) );
+			
+			// clamp to the grid
+			Vec4 const grid( 31.0f, 63.0f, 31.0f, 0.0f );
+			Vec4 const gridrcp( 0.03227752766457f, 0.01583151765563f, 0.03227752766457f, 0.0f );
 			a = Truncate( MultiplyAdd( grid, a, half ) ) * gridrcp;
 			b = Truncate( MultiplyAdd( grid, b, half ) ) * gridrcp;
 			
-			// compute the error (we skip the constant xxsum)
-			Vec4 e1 = MultiplyAdd( a*a, alpha2_sum, b*b*beta2_sum );
-			Vec4 e2 = NegativeMultiplySubtract( a, alphax_sum, a*b*alphabeta_sum );
-			Vec4 e3 = NegativeMultiplySubtract( b, betax_sum, e2 );
-			Vec4 e4 = MultiplyAdd( two, e3, e1 );
-
+			// compute the error
+			Vec4 e1 = MultiplyAdd( a, alphax_sum, b*betax_sum );
+			Vec4 e2 = MultiplyAdd( a*a, alpha2_sum, b*b*beta2_sum );
+			Vec4 e3 = MultiplyAdd( a*b*alphabeta_sum - e1, two, e2 );
+			
 			// apply the metric to the error term
-			Vec4 e5 = e4 * m_metricSqr;
-			Vec4 error = e5.SplatX() + e5.SplatY() + e5.SplatZ();
+			Vec4 e4 = e3 * m_metricSqr;
+			Vec4 error = e4.SplatX() + e4.SplatY() + e4.SplatZ();
 			
 			// keep the solution if it wins
 			if( CompareAnyLessThan( error, besterror ) )
@@ -221,17 +221,17 @@ void WeightedClusterFit::Compress3( void* block )
 			for(; i < b0+b1; i++) {
 				bestindices[i] = 2;
 			}
-			for(; i < count; i++) {
+			for(; i < 16; i++) {
 				bestindices[i] = 1;
 			}
 		}
 		
 		// remap the indices
 		u8 ordered[16];
-		for( int i = 0; i < count; ++i )
+		for( int i = 0; i < 16; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
-		m_colours->RemapIndices( ordered, bestindices );
+		m_colours->RemapIndices( ordered, bestindices ); // Set alpha indices.
 
 
 		// save the block
@@ -244,16 +244,12 @@ void WeightedClusterFit::Compress3( void* block )
 
 void WeightedClusterFit::Compress4( void* block )
 {
-    int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
 	Vec4 const zero = VEC4_CONST(0.0f);
 	Vec4 const half = VEC4_CONST(0.5f);
 	Vec4 const two = VEC4_CONST(2.0);
 	Vec4 const onethird( 1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f, 1.0f/9.0f );
 	Vec4 const twothirds( 2.0f/3.0f, 2.0f/3.0f, 2.0f/3.0f, 4.0f/9.0f );
-    Vec4 const twonineths = VEC4_CONST( 2.0f/9.0f );
-	Vec4 const grid( 31.0f, 63.0f, 31.0f, 0.0f );
-	Vec4 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
 	
 	// declare variables
 	Vec4 beststart = VEC4_CONST( 0.0f );
@@ -264,30 +260,30 @@ void WeightedClusterFit::Compress4( void* block )
 	int b0 = 0, b1 = 0, b2 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= count; c0++)
+	for( int c0 = 0; c0 <= 16; c0++)
 	{	
 		Vec4 x1 = zero;
 		
-		for( int c1 = 0; c1 <= count-c0; c1++)
+		for( int c1 = 0; c1 <= 16-c0; c1++)
 		{	
 			Vec4 x2 = zero;
 			
-			for( int c2 = 0; c2 <= count-c0-c1; c2++)
+			for( int c2 = 0; c2 <= 16-c0-c1; c2++)
 			{
 				Vec4 const x3 = m_xsum - x2 - x1 - x0;
 				
 				//Vec3 const alphax_sum = x0 + x1 * (2.0f / 3.0f) + x2 * (1.0f / 3.0f);
 				//float const alpha2_sum = w0 + w1 * (4.0f/9.0f) + w2 * (1.0f/9.0f);
-                Vec4 const alphax_sum = MultiplyAdd(x2, onethird, MultiplyAdd(x1, twothirds, x0)); // alphax_sum, alpha2_sum
+				Vec4 const alphax_sum = x0 + MultiplyAdd(x1, twothirds, x2 * onethird); // alphax_sum, alpha2_sum
 				Vec4 const alpha2_sum = alphax_sum.SplatW();
 				
 				//Vec3 const betax_sum = x3 + x2 * (2.0f / 3.0f) + x1 * (1.0f / 3.0f);
 				//float const beta2_sum = w3 + w2 * (4.0f/9.0f) + w1 * (1.0f/9.0f);
-				Vec4 const betax_sum = MultiplyAdd(x2, twothirds, MultiplyAdd(x1, onethird, x3)); // betax_sum, beta2_sum
+				Vec4 const betax_sum = x3 + MultiplyAdd(x2, twothirds, x1 * onethird); // betax_sum, beta2_sum
 				Vec4 const beta2_sum = betax_sum.SplatW();
 				
-				//float const alphabeta_sum = (w1 + w2) * (2.0f/9.0f);
-                Vec4 const alphabeta_sum = twonineths*( x1 + x2 ).SplatW(); // alphabeta_sum
+				//float const alphabeta_sum = w1 * (2.0f/9.0f) + w2 * (2.0f/9.0f);
+				Vec4 const alphabeta_sum = two * (x1 * onethird + x2 * onethird).SplatW(); // alphabeta_sum
 				
 				// float const factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
 				Vec4 const factor = Reciprocal( NegativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum) );
@@ -295,21 +291,24 @@ void WeightedClusterFit::Compress4( void* block )
 				Vec4 a = NegativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
 				Vec4 b = NegativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
 				
-				// clamp to the grid
+				// clamp the output to [0, 1]
 				a = Min( one, Max( zero, a ) );
 				b = Min( one, Max( zero, b ) );
+				
+				// clamp to the grid
+				Vec4 const grid( 31.0f, 63.0f, 31.0f, 0.0f );
+				Vec4 const gridrcp( 0.03227752766457f, 0.01583151765563f, 0.03227752766457f, 0.0f );
 				a = Truncate( MultiplyAdd( grid, a, half ) ) * gridrcp;
 				b = Truncate( MultiplyAdd( grid, b, half ) ) * gridrcp;
 				
-				// compute the error (we skip the constant xxsum)
-				Vec4 e1 = MultiplyAdd( a*a, alpha2_sum, b*b*beta2_sum );
-				Vec4 e2 = NegativeMultiplySubtract( a, alphax_sum, a*b*alphabeta_sum );
-				Vec4 e3 = NegativeMultiplySubtract( b, betax_sum, e2 );
-				Vec4 e4 = MultiplyAdd( two, e3, e1 );
-
+				// compute the error
+				Vec4 e1 = MultiplyAdd( a, alphax_sum, b*betax_sum );
+				Vec4 e2 = MultiplyAdd( a*a, alpha2_sum, b*b*beta2_sum );
+				Vec4 e3 = MultiplyAdd( a*b*alphabeta_sum - e1, two, e2 );
+				
 				// apply the metric to the error term
-				Vec4 e5 = e4 * m_metricSqr;
-				Vec4 error = e5.SplatX() + e5.SplatY() + e5.SplatZ();
+				Vec4 e4 = e3 * m_metricSqr;
+				Vec4 error = e4.SplatX() + e4.SplatY() + e4.SplatZ();
 				
 				// keep the solution if it wins
 				if( CompareAnyLessThan( error, besterror ) )
@@ -347,20 +346,18 @@ void WeightedClusterFit::Compress4( void* block )
 			for(; i < b0+b1+b2; i++) {
 				bestindices[i] = 3;
 			}
-			for(; i < count; i++) {
+			for(; i < 16; i++) {
 				bestindices[i] = 1;
 			}
 		}
 		
 		// remap the indices
 		u8 ordered[16];
-		for( int i = 0; i < count; ++i )
+		for( int i = 0; i < 16; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
-        m_colours->RemapIndices( ordered, bestindices );
-
 		// save the block
-		WriteColourBlock4( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );
+		WriteColourBlock4( beststart.GetVec3(), bestend.GetVec3(), ordered, block );
 		
 		// save the error
 		m_besterror = besterror;
@@ -371,13 +368,6 @@ void WeightedClusterFit::Compress4( void* block )
 
 void WeightedClusterFit::Compress3( void* block )
 {
-    int const count = m_colours->GetCount();
-	Vec3 const one( 1.0f );
-	Vec3 const zero( 0.0f );
-	Vec3 const half( 0.5f );
-    Vec3 const grid( 31.0f, 63.0f, 31.0f );
-    Vec3 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
-
 	// declare variables
 	Vec3 beststart( 0.0f );
 	Vec3 bestend( 0.0f );
@@ -389,12 +379,12 @@ void WeightedClusterFit::Compress3( void* block )
 	int b0 = 0, b1 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= count; c0++)
+	for( int c0 = 0; c0 <= 16; c0++)
 	{	
 		Vec3 x1(0.0f);
 		float w1 = 0.0f;
 		
-		for( int c1 = 0; c1 <= count-c0; c1++)
+		for( int c1 = 0; c1 <= 16-c0; c1++)
 		{	
 			float w2 = m_wsum - w0 - w1;
 			
@@ -410,9 +400,16 @@ void WeightedClusterFit::Compress3( void* block )
 			Vec3 a = (alphax_sum*beta2_sum - betax_sum*alphabeta_sum) * factor;
 			Vec3 b = (betax_sum*alpha2_sum - alphax_sum*alphabeta_sum) * factor;
 			
-			// clamp to the grid
+			// clamp the output to [0, 1]
+			Vec3 const one( 1.0f );
+			Vec3 const zero( 0.0f );
 			a = Min( one, Max( zero, a ) );
 			b = Min( one, Max( zero, b ) );
+			
+			// clamp to the grid
+			Vec3 const grid( 31.0f, 63.0f, 31.0f );
+			Vec3 const gridrcp( 0.03227752766457f, 0.01583151765563f, 0.03227752766457f );
+			Vec3 const half( 0.5f );
 			a = Floor( grid*a + half )*gridrcp;
 			b = Floor( grid*b + half )*gridrcp;
 			
@@ -453,20 +450,18 @@ void WeightedClusterFit::Compress3( void* block )
 			for(; i < b0+b1; i++) {
 				bestindices[i] = 2;
 			}
-			for(; i < count; i++) {
+			for(; i < 16; i++) {
 				bestindices[i] = 1;
 			}
 		}
 		
 		// remap the indices
 		u8 ordered[16];
-		for( int i = 0; i < count; ++i )
+		for( int i = 0; i < 16; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
-        m_colours->RemapIndices( ordered, bestindices );
-
 		// save the block
-		WriteColourBlock3( beststart, bestend, bestindices, block );
+		WriteColourBlock3( beststart, bestend, ordered, block );
 		
 		// save the error
 		m_besterror = besterror;
@@ -475,13 +470,6 @@ void WeightedClusterFit::Compress3( void* block )
 
 void WeightedClusterFit::Compress4( void* block )
 {
-    int const count = m_colours->GetCount();
-	Vec3 const one( 1.0f );
-	Vec3 const zero( 0.0f );
-	Vec3 const half( 0.5f );
-	Vec3 const grid( 31.0f, 63.0f, 31.0f );
-	Vec3 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
-
 	// declare variables
 	Vec3 beststart( 0.0f );
 	Vec3 bestend( 0.0f );
@@ -492,17 +480,17 @@ void WeightedClusterFit::Compress4( void* block )
 	int b0 = 0, b1 = 0, b2 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= count; c0++)
+	for( int c0 = 0; c0 <= 16; c0++)
 	{	
 		Vec3 x1(0.0f);
 		float w1 = 0.0f;
 		
-		for( int c1 = 0; c1 <= count-c0; c1++)
+		for( int c1 = 0; c1 <= 16-c0; c1++)
 		{	
 			Vec3 x2(0.0f);
 			float w2 = 0.0f;
 			
-			for( int c2 = 0; c2 <= count-c0-c1; c2++)
+			for( int c2 = 0; c2 <= 16-c0-c1; c2++)
 			{
 				float w3 = m_wsum - w0 - w1 - w2;
 				
@@ -517,9 +505,16 @@ void WeightedClusterFit::Compress4( void* block )
 				Vec3 a = ( alphax_sum*beta2_sum - betax_sum*alphabeta_sum )*factor;
 				Vec3 b = ( betax_sum*alpha2_sum - alphax_sum*alphabeta_sum )*factor;
 				
-				// clamp to the grid
+				// clamp the output to [0, 1]
+				Vec3 const one( 1.0f );
+				Vec3 const zero( 0.0f );
 				a = Min( one, Max( zero, a ) );
 				b = Min( one, Max( zero, b ) );
+				
+				// clamp to the grid
+				Vec3 const grid( 31.0f, 63.0f, 31.0f );
+				Vec3 const gridrcp( 0.03227752766457f, 0.01583151765563f, 0.03227752766457f );
+				Vec3 const half( 0.5f );
 				a = Floor( grid*a + half )*gridrcp;
 				b = Floor( grid*b + half )*gridrcp;
 				
@@ -568,20 +563,18 @@ void WeightedClusterFit::Compress4( void* block )
 			for(; i < b0+b1+b2; i++) {
 				bestindices[i] = 3;
 			}
-			for(; i < count; i++) {
+			for(; i < 16; i++) {
 				bestindices[i] = 1;
 			}
 		}
 		
 		// remap the indices
 		u8 ordered[16];
-		for( int i = 0; i < count; ++i )
+		for( int i = 0; i < 16; ++i )
 			ordered[m_order[i]] = bestindices[i];
-
-        m_colours->RemapIndices( ordered, bestindices );
 		
 		// save the block
-		WriteColourBlock4( beststart, bestend, bestindices, block );
+		WriteColourBlock4( beststart, bestend, ordered, block );
 
 		// save the error
 		m_besterror = besterror;

@@ -14,16 +14,18 @@ SET(IMAGE_SRCS
 	ColorBlock.cpp
 	BlockDXT.h
 	BlockDXT.cpp
+	HoleFilling.h
+	HoleFilling.cpp
 	DirectDrawSurface.h
 	DirectDrawSurface.cpp
 	Quantize.h
 	Quantize.cpp
 	NormalMap.h
 	NormalMap.cpp
+	NormalMipmap.h
+	NormalMipmap.cpp
 	PsdFile.h
-	TgaFile.h
-	ColorSpace.h
-	ColorSpace.cpp)
+	TgaFile.h)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -46,11 +48,6 @@ IF(OPENEXR_FOUND)
 	SET(LIBS ${LIBS} ${OPENEXR_LIBRARIES})
 	INCLUDE_DIRECTORIES(${OPENEXR_INCLUDE_PATHS})
 ENDIF(OPENEXR_FOUND)
-
-IF(FREEIMAGE_FOUND)
-	SET(LIBS ${LIBS} ${FREEIMAGE_LIBRARIES})
-	INCLUDE_DIRECTORIES(${FREEIMAGE_INCLUDE_PATH})
-ENDIF(FREEIMAGE_FOUND)
 
 # targets
 ADD_DEFINITIONS(-DNVIMAGE_EXPORTS)

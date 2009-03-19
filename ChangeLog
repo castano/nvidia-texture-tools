@@ -1,17 +1,3 @@
-NVIDIA Texture Tools version 2.1.0
- * CTX1 CUDA compressor.
- * DXT1n CUDA compressor.
- * Support alpha premultiplication by Charles Nicholson. See issue 30.
- * Improved decompressor tool submitted by Amorilia. See issue 41.
- * Add support for YCoCg color transform. Fixes issue 18.
- * Add support for linear and swizzle transforms. Fixes issue 4.
- * Fix loading of EXR files using OpenEXR.
- * Use FreeImage as primary image loading library. Fixes issue 31. Reverted.
- * Output swizzle codes like AMD's tools.
- * Added support for saving PNGs by Frank Richter. Fixes issue 79 and 80.
- * Added gnome thumbnailer by Frank Richter. Fixes issue 82.
- * Cleanup sources removing files that are not strictly required.
-
 NVIDIA Texture Tools version 2.0.6
  * Fix dll version checking.
  * Detect CUDA 2.1 and future CUDA versions correctly.
@@ -22,6 +8,9 @@ NVIDIA Texture Tools version 2.0.6
  * Fix nvzoom option typo by Frank Richter. Fixes issue 81.
  * Do not use CUDA to compress small mipmaps. Fixes issue 76.
  * Compute mipmaps of semi-transparent images correctly.
+ * Shutdown CUDA properly. Fixes issue 83.
+ * Fix pixel format converions. Fixes issue 87.
+ * Update single color compression tables. Fixes issue 85.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.

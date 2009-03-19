@@ -24,8 +24,6 @@ public:
 	Matrix(zero_t);
 	Matrix(identity_t);
 	Matrix(const Matrix & m);
-	Matrix(Vector4::Arg v0, Vector4::Arg v1, Vector4::Arg v2, Vector4::Arg v3);
-	Matrix(const scalar m[]);	// m is assumed to contain 16 elements
 
 	scalar data(uint idx) const;
 	scalar & data(uint idx);
@@ -74,21 +72,6 @@ inline Matrix::Matrix(const Matrix & m)
 {
 	for(int i = 0; i < 16; i++) {
 		m_data[i] = m.m_data[i];
-	}
-}
-
-inline Matrix::Matrix(Vector4::Arg v0, Vector4::Arg v1, Vector4::Arg v2, Vector4::Arg v3)
-{
-	m_data[ 0] = v0.x(); m_data[ 1] = v0.y(); m_data[ 2] = v0.z(); m_data[ 3] = v0.w();
-	m_data[ 4] = v1.x(); m_data[ 5] = v1.y(); m_data[ 6] = v1.z(); m_data[ 7] = v1.w();
-	m_data[ 8] = v2.x(); m_data[ 9] = v2.y(); m_data[10] = v2.z(); m_data[11] = v2.w();
-	m_data[12] = v3.x(); m_data[13] = v3.y(); m_data[14] = v3.z(); m_data[15] = v3.w();
-}
-
-inline Matrix::Matrix(const scalar m[])
-{
-	for(int i = 0; i < 16; i++) {
-		m_data[i] = m[i];
 	}
 }
 
@@ -349,7 +332,7 @@ inline Matrix transpose(Matrix::Arg m)
 	Matrix r;
 	for (int i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < 4; i++)
 		{
 			r(i, j) = m(j, i);
 		}

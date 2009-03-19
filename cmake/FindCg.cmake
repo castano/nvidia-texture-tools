@@ -10,6 +10,7 @@
 # 
 
 # On OSX default to using the framework version of Cg.
+
 IF (APPLE)
   INCLUDE(${CMAKE_ROOT}/Modules/CMakeFindFrameworks.cmake)
   SET(CG_FRAMEWORK_INCLUDES)
@@ -37,25 +38,13 @@ IF (APPLE)
     )
 ELSE (APPLE)
   IF (WIN32)
- 
-    # When compiling 64-bit programs, the binaries and libs are in bin.x64 and lib.x64 directories,
-	
-	# This will have only effect for 64bit versions of cmake, when running the default 32bit version
-	# both ProgramFiles and ProgramFiles(x86) point to the same place in Win64
-	SET(PFx86_VARNAME "ProgramFiles(x86)")
-    SET(PFx86 $ENV{${PFx86_VARNAME}})
-	
-	# Let's play safe in case we are cross compiling to 64 bit: for cgc it doesn't really matter
-	FIND_PROGRAM( CG_COMPILER cgc
-      $ENV{CG_BIN64_PATH}
-	  $ENV{CG_BIN_PATH}
+    FIND_PROGRAM( CG_COMPILER cgc
+      $ENV{CG_BIN_PATH}
       $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/bin
-	  $ENV{PFx86}/NVIDIA\ Corporation/Cg/bin
       $ENV{PROGRAMFILES}/Cg
       ${PROJECT_SOURCE_DIR}/../Cg
       DOC "The Cg Compiler"
-    )
-
+      )
     IF (CG_COMPILER)
       GET_FILENAME_COMPONENT(CG_COMPILER_DIR ${CG_COMPILER} PATH)
       GET_FILENAME_COMPONENT(CG_COMPILER_SUPER_DIR ${CG_COMPILER_DIR} PATH)
@@ -72,59 +61,27 @@ ELSE (APPLE)
       ${CG_COMPILER_DIR}
       DOC "The directory where Cg/cg.h resides"
       )
-	
-	IF (NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
-      FIND_LIBRARY( CG_LIBRARY
-        NAMES Cg
-        PATHS
-        $ENV{CG_LIB64_PATH}
-        $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/lib.x64
-		$ENV{PFx86}/NVIDIA\ Corporation/Cg/lib.x64
-        $ENV{PROGRAMFILES}/Cg
-        $ENV{PFx86}/Cg
-        ${PROJECT_SOURCE_DIR}/../Cg
-        ${CG_COMPILER_SUPER_DIR}/lib.x64
-        ${CG_COMPILER_DIR}
-        DOC "The Cg runtime library (64-bit)"
-        )
-      FIND_LIBRARY( CG_GL_LIBRARY
-        NAMES CgGL
-        PATHS
-		$ENV{CG_LIB64_PATH}
-        $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/lib.x64
-		$ENV{PFx86}/NVIDIA\ Corporation/Cg/lib.x64
-        $ENV{PROGRAMFILES}/Cg
-		$ENV{PFx86}/Cg
-        ${PROJECT_SOURCE_DIR}/../Cg
-        ${CG_COMPILER_SUPER_DIR}/lib.x64
-        ${CG_COMPILER_DIR}
-        DOC "The Cg GL runtime library (64-bit)"
-        )
-	ELSE(NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
-      FIND_LIBRARY( CG_LIBRARY
-        NAMES Cg
-        PATHS
-        $ENV{CG_LIB_PATH}
-        $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/lib
-        $ENV{PROGRAMFILES}/Cg
-        ${PROJECT_SOURCE_DIR}/../Cg
-        ${CG_COMPILER_SUPER_DIR}/lib
-        ${CG_COMPILER_DIR}
-        DOC "The Cg runtime library"
-        )
-      FIND_LIBRARY( CG_GL_LIBRARY
-        NAMES CgGL
-        PATHS
-		$ENV{CG_LIB_PATH}
-        $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/lib
-        $ENV{PROGRAMFILES}/Cg
-        ${PROJECT_SOURCE_DIR}/../Cg
-        ${CG_COMPILER_SUPER_DIR}/lib
-        ${CG_COMPILER_DIR}
-        DOC "The Cg GL runtime library"
-        )
-	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
-
+    FIND_LIBRARY( CG_LIBRARY
+      NAMES Cg
+      PATHS
+      $ENV{CG_LIB_PATH}
+      $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/lib
+      $ENV{PROGRAMFILES}/Cg
+      ${PROJECT_SOURCE_DIR}/../Cg
+      ${CG_COMPILER_SUPER_DIR}/lib
+      ${CG_COMPILER_DIR}
+      DOC "The Cg runtime library"
+      )
+    FIND_LIBRARY( CG_GL_LIBRARY
+      NAMES CgGL
+      PATHS
+      $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/lib
+      $ENV{PROGRAMFILES}/Cg
+      ${PROJECT_SOURCE_DIR}/../Cg
+      ${CG_COMPILER_SUPER_DIR}/lib
+      ${CG_COMPILER_DIR}
+      DOC "The Cg runtime library"
+      )
   ELSE (WIN32)
     FIND_PROGRAM( CG_COMPILER cgc
       /usr/bin

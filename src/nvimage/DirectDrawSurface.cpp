@@ -21,15 +21,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include <nvcore/Debug.h>
+#include <nvcore/Containers.h> // max
+#include <nvcore/StdStream.h>
+
 #include <nvimage/DirectDrawSurface.h>
 #include <nvimage/ColorBlock.h>
 #include <nvimage/Image.h>
 #include <nvimage/BlockDXT.h>
 #include <nvimage/PixelFormat.h>
-
-#include <nvcore/Debug.h>
-#include <nvcore/Containers.h> // max
-#include <nvcore/StdStream.h>
 
 #include <string.h> // memset
 
@@ -406,14 +406,10 @@ namespace nv
 		s << pf.flags;
 		s << pf.fourcc;
 		s << pf.bitcount;
-		s.serialize(&pf.rmask, sizeof(pf.rmask));
-		s.serialize(&pf.gmask, sizeof(pf.gmask));
-		s.serialize(&pf.bmask, sizeof(pf.bmask));
-		s.serialize(&pf.amask, sizeof(pf.amask));
-	//	s << pf.rmask;
-	//	s << pf.gmask;
-	//	s << pf.bmask;
-	//	s << pf.amask;
+		s << pf.rmask;
+		s << pf.gmask;
+		s << pf.bmask;
+		s << pf.amask;
 		return s;
 	}
 
@@ -449,9 +445,7 @@ namespace nv
 		s << header.pitch;
 		s << header.depth;
 		s << header.mipmapcount;
-		for (int i = 0; i < 11; i++) {
-			s << header.reserved[i];
-		}
+		s.serialize(header.reserved, 11 * sizeof(uint));
 		s << header.pf;
 		s << header.caps;
 		s << header.notused;
@@ -538,7 +532,7 @@ DDSHeader::DDSHeader()
 
 	// Store version information on the reserved header attributes.
 	this->reserved[9] = MAKEFOURCC('N', 'V', 'T', 'T');
-	this->reserved[10] = (2 << 16) | (1 << 8) | (0);	// major.minor.revision
+	this->reserved[10] = (2 << 16) | (0 << 8) | (6);	// major.minor.revision
 
 	this->pf.size = 32;
 	this->pf.flags = 0;
@@ -576,7 +570,7 @@ void DDSHeader::setHeight(uint h)
 void DDSHeader::setDepth(uint d)
 {
 	this->flags |= DDSD_DEPTH;
-	this->depth = d;
+	this->height = d;
 }
 
 void DDSHeader::setMipmapCount(uint count)
@@ -605,7 +599,6 @@ void DDSHeader::setMipmapCount(uint count)
 void DDSHeader::setTexture2D()
 {
 	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
-	this->header10.arraySize = 1;
 }
 
 void DDSHeader::setTexture3D()
@@ -613,7 +606,6 @@ void DDSHeader::setTexture3D()
 	this->caps.caps2 = DDSCAPS2_VOLUME;
 	
 	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
-	this->header10.arraySize = 1;
 }
 
 void DDSHeader::setTextureCube()
@@ -644,32 +636,21 @@ void DDSHeader::setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
 	// set fourcc pixel format.
 	this->pf.flags = DDPF_FOURCC;
 	this->pf.fourcc = MAKEFOURCC(c0, c1, c2, c3);
-
-	this->pf.bitcount = 0;
-	this->pf.rmask = 0;
-	this->pf.gmask = 0;
-	this->pf.bmask = 0;
-	this->pf.amask = 0;
-}
-
-void DDSHeader::setFormatCode(uint32 code)
-{
-	// set fourcc pixel format.
-	this->pf.flags = DDPF_FOURCC;
-	this->pf.fourcc = code;
 	
-	this->pf.bitcount = 0;
+	if (this->pf.fourcc == FOURCC_ATI2)
+	{
+		this->pf.bitcount = FOURCC_A2XY;
+	}
+	else
+	{
+		this->pf.bitcount = 0;
+	}
+	
 	this->pf.rmask = 0;
 	this->pf.gmask = 0;
 	this->pf.bmask = 0;
 	this->pf.amask = 0;
 }
-
-void DDSHeader::setSwizzleCode(uint8 c0, uint8 c1, uint8 c2, uint8 c3)
-{
-	this->pf.bitcount = MAKEFOURCC(c0, c1, c2, c3);
-}
-
 
 void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 {
@@ -817,16 +798,6 @@ bool DirectDrawSurface::isSupported() const
 	
 	if (header.hasDX10Header())
 	{
-		if (header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM ||
-			header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
-			header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM ||
-			header.header10.dxgiFormat == DXGI_FORMAT_BC4_UNORM ||
-			header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM)
-		{
-			return true;
-		}
-
-		return false;
 	}
 	else
 	{
@@ -870,40 +841,6 @@ bool DirectDrawSurface::isSupported() const
 	return true;
 }
 
-bool DirectDrawSurface::hasAlpha() const
-{
-	if (header.hasDX10Header())
-	{
-		// @@ TODO: Update with all formats.
-		return 
-			header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM ||
-			header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
-			header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM;
-	}
-	else
-	{
-		if (header.pf.flags & DDPF_RGB) 
-		{
-			return header.pf.amask != 0;
-		}
-		else if (header.pf.flags & DDPF_FOURCC)
-		{
-			if (header.pf.fourcc == FOURCC_RXGB ||
-				header.pf.fourcc == FOURCC_ATI1 ||
-				header.pf.fourcc == FOURCC_ATI2 ||
-				header.pf.flags & DDPF_NORMAL)
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-}
 
 uint DirectDrawSurface::mipmapCount() const
 {
@@ -999,31 +936,14 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 	}
 	
 	img->allocate(w, h);
-
-	if (hasAlpha())
+	
+	if (header.pf.flags & DDPF_RGB) 
 	{
-		img->setFormat(Image::Format_ARGB);
+		readLinearImage(img);
 	}
-	else
+	else if (header.pf.flags & DDPF_FOURCC)
 	{
-		img->setFormat(Image::Format_RGB);
-	}
-
-	if (header.hasDX10Header())
-	{
-		// So far only block formats supported.
 		readBlockImage(img);
-	}
-	else
-	{
-		if (header.pf.flags & DDPF_RGB) 
-		{
-			readLinearImage(img);
-		}
-		else if (header.pf.flags & DDPF_FOURCC)
-		{
-			readBlockImage(img);
-		}
 	}
 }
 
@@ -1049,7 +969,16 @@ void DirectDrawSurface::readLinearImage(Image * img)
 
 	uint byteCount = (header.pf.bitcount + 7) / 8;
 
-#pragma message("Support floating point linear images and other FOURCC codes.")
+	// set image format: RGB or ARGB
+	// alpha channel exists if and only if the alpha mask is non-zero
+	if (header.pf.amask == 0)
+ 	{
+		img->setFormat(Image::Format_RGB);
+	}
+	else
+	{
+		img->setFormat(Image::Format_ARGB);
+	}
 
 	// Read linear RGB images.
 	for (uint y = 0; y < h; y++)
@@ -1074,6 +1003,19 @@ void DirectDrawSurface::readBlockImage(Image * img)
 {
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(img != NULL);
+
+	// set image format: RGB or ARGB
+	if (header.pf.fourcc == FOURCC_RXGB ||
+		header.pf.fourcc == FOURCC_ATI1 ||
+		header.pf.fourcc == FOURCC_ATI2 ||
+		header.pf.flags & DDPF_NORMAL)
+	{
+		img->setFormat(Image::Format_RGB);
+	}
+	else
+	{
+		img->setFormat(Image::Format_ARGB);
+	}
 
 	const uint w = img->width();
 	const uint h = img->height();
@@ -1119,33 +1061,20 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 	nvDebugCheck(stream != NULL);
 	nvDebugCheck(rgba != NULL);
 	
-	uint fourcc = header.pf.fourcc;
-
-	// Map DX10 block formats to fourcc codes.
-	if (header.hasDX10Header())
-	{
-		if (header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM) fourcc = FOURCC_DXT1;
-		if (header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM) fourcc = FOURCC_DXT3;
-		if (header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM) fourcc = FOURCC_DXT5;
-		if (header.header10.dxgiFormat == DXGI_FORMAT_BC4_UNORM) fourcc = FOURCC_ATI1;
-		if (header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM) fourcc = FOURCC_ATI2;
-	}
-
-
-	if (fourcc == FOURCC_DXT1)
+	if (header.pf.fourcc == FOURCC_DXT1)
 	{
 		BlockDXT1 block;
 		*stream << block;
 		block.decodeBlock(rgba);
 	}
-	else if (fourcc == FOURCC_DXT2 ||
+	else if (header.pf.fourcc == FOURCC_DXT2 ||
 	    header.pf.fourcc == FOURCC_DXT3)
 	{
 		BlockDXT3 block;
 		*stream << block;
 		block.decodeBlock(rgba);
 	}
-	else if (fourcc == FOURCC_DXT4 ||
+	else if (header.pf.fourcc == FOURCC_DXT4 ||
 	    header.pf.fourcc == FOURCC_DXT5 ||
 	    header.pf.fourcc == FOURCC_RXGB)
 	{
@@ -1153,7 +1082,7 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 		*stream << block;
 		block.decodeBlock(rgba);
 		
-		if (fourcc == FOURCC_RXGB)
+		if (header.pf.fourcc == FOURCC_RXGB)
 		{
 			// Swap R & A.
 			for (int i = 0; i < 16; i++)
@@ -1165,13 +1094,13 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 			}
 		}
 	}
-	else if (fourcc == FOURCC_ATI1)
+	else if (header.pf.fourcc == FOURCC_ATI1)
 	{
 		BlockATI1 block;
 		*stream << block;
 		block.decodeBlock(rgba);
 	}
-	else if (fourcc == FOURCC_ATI2)
+	else if (header.pf.fourcc == FOURCC_ATI2)
 	{
 		BlockATI2 block;
 		*stream << block;
@@ -1181,7 +1110,7 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 	// If normal flag set, convert to normal.
 	if (header.pf.flags & DDPF_NORMAL)
 	{
-		if (fourcc == FOURCC_ATI2)
+		if (header.pf.fourcc == FOURCC_ATI2)
 		{
 			for (int i = 0; i < 16; i++)
 			{
@@ -1189,7 +1118,7 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 				c = buildNormal(c.r, c.g);
 			}
 		}
-		else if (fourcc == FOURCC_DXT5)
+		else if (header.pf.fourcc == FOURCC_DXT5)
 		{
 			for (int i = 0; i < 16; i++)
 			{
@@ -1215,27 +1144,6 @@ uint DirectDrawSurface::blockSize() const
 		case FOURCC_RXGB:
 		case FOURCC_ATI2:
 			return 16;
-		case FOURCC_DX10:
-			switch(header.header10.dxgiFormat)
-			{
-				case DXGI_FORMAT_BC1_TYPELESS:
-				case DXGI_FORMAT_BC1_UNORM:
-				case DXGI_FORMAT_BC1_UNORM_SRGB:
-				case DXGI_FORMAT_BC4_TYPELESS:
-				case DXGI_FORMAT_BC4_UNORM:
-				case DXGI_FORMAT_BC4_SNORM:
-					return 8;
-				case DXGI_FORMAT_BC2_TYPELESS:
-				case DXGI_FORMAT_BC2_UNORM:
-				case DXGI_FORMAT_BC2_UNORM_SRGB:
-				case DXGI_FORMAT_BC3_TYPELESS:
-				case DXGI_FORMAT_BC3_UNORM:
-				case DXGI_FORMAT_BC3_UNORM_SRGB:
-				case DXGI_FORMAT_BC5_TYPELESS:
-				case DXGI_FORMAT_BC5_UNORM:
-				case DXGI_FORMAT_BC5_SNORM:
-					return 16;
-			};
 	};
 
 	// Not a block image.

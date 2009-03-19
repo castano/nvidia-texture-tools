@@ -1,23 +1,21 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
+#include <nvcore/Ptr.h>
+#include <nvcore/Containers.h>
+#include <nvcore/StrLib.h>
+#include <nvcore/StdStream.h>
+//#include <nvcore/Tokenizer.h>	// @@ Disable temporarily
+#include <nvcore/TextWriter.h>
+
+#include <nvmath/Color.h>
+
 #include "ImageIO.h"
 #include "Image.h"
 #include "FloatImage.h"
 #include "TgaFile.h"
 #include "PsdFile.h"
 
-#include <nvmath/Color.h>
-
-#include <nvcore/Ptr.h>
-#include <nvcore/Containers.h>
-#include <nvcore/StrLib.h>
-#include <nvcore/StdStream.h>
-
 // Extern
-#if defined(HAVE_FREEIMAGE)
-#	include <FreeImage.h>
-#else
-
 #if defined(HAVE_JPEG)
 extern "C" {
 #	include <jpeglib.h>
@@ -42,58 +40,24 @@ extern "C" {
 #	include <ImfArray.h>
 #endif
 
-#endif // defined(HAVE_FREEIMAGE)
-
 using namespace nv;
 
-namespace nv
-{
-	namespace ImageIO
-	{
-	#if defined(HAVE_FREEIMAGE)
+namespace {
 
-		static Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
-		static FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
+	// Array of image load plugins.
+//	static HashMap<String, ImageInput_Plugin> s_plugin_load_map;
 
-		static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags);
-		static bool saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img, uint base_component, uint num_components);
+	// Array of image save plugins.
+//	static HashMap<String, ImageOutput_Plugin> s_plugin_save_map;
+	
+	struct Color555 {
+		uint16 b : 5;
+		uint16 g : 5;
+		uint16 r : 5;
+	};
+	
+} // namespace
 
-	#else // defined(HAVE_FREEIMAGE)
-
-		struct Color555 {
-			uint16 b : 5;
-			uint16 g : 5;
-			uint16 r : 5;
-		};
-
-		static Image * loadTGA(Stream & s);
-		static bool saveTGA(Stream & s, const Image * img);
-
-		static Image * loadPSD(Stream & s);
-
-	#if defined(HAVE_PNG)
-		static Image * loadPNG(Stream & s);
-		static bool savePNG(Stream & s, const Image * img, const ImageMetaData * tags);
-	#endif
-
-	#if defined(HAVE_JPEG)
-		static Image * loadJPG(Stream & s);
-	#endif
-
-	#if defined(HAVE_TIFF)
-		static FloatImage * loadFloatTIFF(const char * fileName, Stream & s);
-		static bool saveFloatTIFF(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
-	#endif
-
-	#if defined(HAVE_OPENEXR)
-		static FloatImage * loadFloatEXR(const char * fileName, Stream & s);
-		static bool saveFloatEXR(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components);
-	#endif
-
-	#endif // defined(HAVE_FREEIMAGE)
-
-	} // ImageIO namespace
-} // nv namespace
 
 Image * nv::ImageIO::load(const char * fileName)
 {
@@ -114,15 +78,9 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 	nvDebugCheck(s.isLoading());
 
 	const char * extension = Path::extension(fileName);
-
-#if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
-		return loadFreeImage(fif, s);
-	}
-#else // defined(HAVE_FREEIMAGE)
+	
 	if (strCaseCmp(extension, ".tga") == 0) {
-		return loadTGA(s);
+		return ImageIO::loadTGA(s);
 	}
 #if defined(HAVE_JPEG)
 	if (strCaseCmp(extension, ".jpg") == 0 || strCaseCmp(extension, ".jpeg") == 0) {
@@ -137,39 +95,26 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 	if (strCaseCmp(extension, ".psd") == 0) {
 		return loadPSD(s);
 	}
-#endif // defined(HAVE_FREEIMAGE)
-
+	// @@ use image plugins?
 	return NULL;
 }
 
-bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, const ImageMetaData * tags/*=NULL*/)
+bool nv::ImageIO::save(const char * fileName, Stream & s, Image * img)
 {
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(s.isSaving());
 	nvDebugCheck(img != NULL);
 
-#if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsWriting(fif)) {
-		return saveFreeImage(fif, s, img, tags);
-	}
-#else
 	const char * extension = Path::extension(fileName);
 
 	if (strCaseCmp(extension, ".tga") == 0) {
-		return saveTGA(s, img);
+		return ImageIO::saveTGA(s, img);
 	}
-#if defined(HAVE_PNG)
-	if (strCaseCmp(extension, ".png") == 0) {
-		return savePNG(s, img, tags);
-	}
-#endif
-#endif
 
 	return false;
 }
 
-bool nv::ImageIO::save(const char * fileName, const Image * img, const ImageMetaData * tags/*=NULL*/)
+bool nv::ImageIO::save(const char * fileName, Image * img)
 {
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(img != NULL);
@@ -180,7 +125,7 @@ bool nv::ImageIO::save(const char * fileName, const Image * img, const ImageMeta
 		return false;
 	}
 
-	return ImageIO::save(fileName, stream, img, tags);
+	return ImageIO::save(fileName, stream, img);
 }
 
 FloatImage * nv::ImageIO::loadFloat(const char * fileName)
@@ -201,14 +146,7 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 	nvDebugCheck(fileName != NULL);
 
 	const char * extension = Path::extension(fileName);
-
-#if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
-		return loadFloatFreeImage(fif, s);
-	}
-#else // defined(HAVE_FREEIMAGE)
-#pragma message(NV_FILE_LINE "TODO: Load TIFF and EXR files from stream.")
+	
 #if defined(HAVE_TIFF)
 	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
 		return loadFloatTIFF(fileName, s);
@@ -219,370 +157,58 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 		return loadFloatEXR(fileName, s);
 	}
 #endif
-#endif // defined(HAVE_FREEIMAGE)
+
+/* // @@ Disable temporarily
+	if (strCaseCmp(extension, ".pfm") == 0) {
+		return loadFloatPFM(fileName, s);
+	}
+*/
 
 	return NULL;
 }
 
-bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage * fimage, uint baseComponent, uint componentCount)
-{
-	if (componentCount == 0)
-	{
-		componentCount = fimage->componentNum() - baseComponent;
-	}
-	if (baseComponent + componentCount < fimage->componentNum())
-	{
-		return false;
-	}
 
-#if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsWriting(fif)) {
-		return saveFloatFreeImage(fif, s, fimage, baseComponent, componentCount);
-	}
-#else // defined(HAVE_FREEIMAGE)
-	//if (componentCount == 3 || componentCount == 4)
-	if (componentCount <= 4)
+bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
+{
+	const char * extension = Path::extension(fileName);
+
+#if defined(HAVE_OPENEXR)
+	if (strCaseCmp(extension, ".exr") == 0)
 	{
-		AutoPtr<Image> image(fimage->createImage(baseComponent, componentCount));
+		return ImageIO::saveFloatEXR(fileName, fimage, base_component, num_components);
+	}
+#endif
+
+#if defined(HAVE_TIFF)
+	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0)
+	{
+		return ImageIO::saveFloatTIFF(fileName, fimage, base_component, num_components);
+	}
+#endif
+
+/* // @@ Disable Temporarily
+	if (strCaseCmp(extension, ".pfm") == 0)
+	{
+//		return ImageIO::saveFloatPFM(fileName, fimage, base_component, num_components);
+	}
+*/
+
+	if (num_components == 3 || num_components == 4)
+	{
+		AutoPtr<Image> image(fimage->createImage(base_component, num_components));
 		nvCheck(image != NULL);
 
-		if (componentCount == 1)
-		{
-			Color32 * c = image->pixels();
-			const uint count = image->width() * image->height();
-			for (uint i = 0; i < count; i++)
-			{
-				c[i].b = c[i].g = c[i].r;
-			}
-		}
-
-		if (componentCount == 4)
+		if (num_components == 4)
 		{
 			image->setFormat(Image::Format_ARGB);
 		}
 
 		return ImageIO::save(fileName, image.ptr());
 	}
-#endif // defined(HAVE_FREEIMAGE)
 
-    return false;
+	return false;
 }
 
-bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount)
-{
-	const char * extension = Path::extension(fileName);
-
-#if !defined(HAVE_FREEIMAGE)
-#if defined(HAVE_OPENEXR)
-	if (strCaseCmp(extension, ".exr") == 0) {
-		return saveFloatEXR(fileName, fimage, baseComponent, componentCount);
-	}
-#endif
-#if defined(HAVE_TIFF)
-	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
-		return saveFloatTIFF(fileName, fimage, baseComponent, componentCount);
-	}
-#endif
-#endif // defined(HAVE_FREEIMAGE)
-
-	StdInputStream stream(fileName);
-
-	if (stream.isError()) {
-		return false;
-	}
-
-	return saveFloat(fileName, stream, fimage, baseComponent, componentCount);
-}
-
-#if defined(HAVE_FREEIMAGE)
-
-static unsigned DLL_CALLCONV ReadProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
-{
-	Stream * s = (Stream *) handle;
-	s->serialize(buffer, size * count);
-	return count;
-}
-
-static unsigned DLL_CALLCONV WriteProc(void *buffer, unsigned size, unsigned count, fi_handle handle)
-{
-	Stream * s = (Stream *) handle;
-	s->serialize(buffer, size * count);
-	return count;
-}
-
-static int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
-{
-	Stream * s = (Stream *) handle;
-
-	switch(origin) {
-		case SEEK_SET :
-			s->seek(offset);
-			break;
-		case SEEK_CUR :
-			s->seek(s->tell() + offset);
-			break;
-		default :
-			return 1;
-	}
-
-	return 0;
-}
-
-static long DLL_CALLCONV TellProc(fi_handle handle)
-{
-	Stream * s = (Stream *) handle;
-	return s->tell();
-}
-
-
-Image * nv::ImageIO::loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
-{
-	nvCheck(!s.isError());
-
-	FreeImageIO io;
-	io.read_proc = ReadProc;
-	io.write_proc = NULL;
-	io.seek_proc = SeekProc;
-	io.tell_proc = TellProc;
-
-	FIBITMAP * bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)&s, 0);
-
-	if (bitmap == NULL)
-	{
-		return NULL;
-	}
-
-	const int w = FreeImage_GetWidth(bitmap);
-	const int h = FreeImage_GetHeight(bitmap);
-
-	if (FreeImage_GetImageType(bitmap) == FIT_BITMAP)
-	{
-		if (FreeImage_GetBPP(bitmap) != 32)
-		{
-			FIBITMAP * tmp = FreeImage_ConvertTo32Bits(bitmap);
-			FreeImage_Unload(bitmap);
-			bitmap = tmp;
-		}
-	}
-	else
-	{
-		// @@ Use tone mapping?
-		FIBITMAP * tmp = FreeImage_ConvertToType(bitmap, FIT_BITMAP, true);
-		FreeImage_Unload(bitmap);
-		bitmap = tmp;
-	}
-
-
-	Image * image = new Image();
-	image->allocate(w, h);
-
-	// Copy the image over to our internal format, FreeImage has the scanlines bottom to top though.
-	for (int y=0; y < h; y++)
-	{
-		const void * src = FreeImage_GetScanLine(bitmap, h - y - 1);
-		void * dst = image->scanline(y);
-
-		memcpy(dst, src, 4 * w);
-	}
-
-	FreeImage_Unload(bitmap);
-
-	return image;
-}
-
-FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
-{
-	nvCheck(!s.isError());
-
-	FreeImageIO io;
-	io.read_proc = ReadProc;
-	io.write_proc = NULL;
-	io.seek_proc = SeekProc;
-	io.tell_proc = TellProc;
-
-	FIBITMAP * bitmap = FreeImage_LoadFromHandle(fif, &io, (fi_handle)&s, 0);
-
-	if (bitmap == NULL)
-	{
-		return NULL;
-	}
-
-	const int w = FreeImage_GetWidth(bitmap);
-	const int h = FreeImage_GetHeight(bitmap);
-
-	FREE_IMAGE_TYPE fit = FreeImage_GetImageType(bitmap);
-
-	FloatImage * floatImage = new FloatImage();
-
-	switch (fit)
-	{
-		case FIT_FLOAT:
-			floatImage->allocate(1, w, h);
-
-			for (int y=0; y < h; y++)
-			{
-				const float * src = (const float *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-				float * dst = floatImage->scanline(y, 0);
-
-				for (int x=0; x < w; x++)
-				{
-					dst[x] = src[x];
-				}
-			}
-			break;
-		case FIT_COMPLEX:
-			floatImage->allocate(2, w, h);
-
-			for (int y=0; y < h; y++)
-			{
-				const FICOMPLEX * src = (const FICOMPLEX *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-
-				float * dst_real = floatImage->scanline(y, 0);
-				float * dst_imag = floatImage->scanline(y, 1);
-
-				for (int x=0; x < w; x++)
-				{
-					dst_real[x] = (float)src[x].r;
-					dst_imag[x] = (float)src[x].i;
-				}
-			}
-			break;
-		case FIT_RGBF:
-			floatImage->allocate(3, w, h);
-
-			for (int y=0; y < h; y++)
-			{
-				const FIRGBF * src = (const FIRGBF *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-
-				float * dst_red = floatImage->scanline(y, 0);
-				float * dst_green = floatImage->scanline(y, 1);
-				float * dst_blue = floatImage->scanline(y, 2);
-
-				for (int x=0; x < w; x++)
-				{
-					dst_red[x] = src[x].red;
-					dst_green[x] = src[x].green;
-					dst_blue[x] = src[x].blue;
-				}
-			}
-			break;
-		case FIT_RGBAF:
-			floatImage->allocate(4, w, h);
-
-			for (int y=0; y < h; y++)
-			{
-				const FIRGBAF * src = (const FIRGBAF *)FreeImage_GetScanLine(bitmap, h - y - 1 );
-
-				float * dst_red = floatImage->scanline(y, 0);
-				float * dst_green = floatImage->scanline(y, 1);
-				float * dst_blue = floatImage->scanline(y, 2);
-				float * dst_alpha = floatImage->scanline(y, 3);
-
-				for (int x=0; x < w; x++)
-				{
-					dst_red[x] = src[x].red;
-					dst_green[x] = src[x].green;
-					dst_blue[x] = src[x].blue;
-					dst_alpha[x] = src[x].alpha;
-				}
-			}
-			break;
-		default:
-			delete floatImage;
-			floatImage = NULL;
-	}
-
-	FreeImage_Unload(bitmap);
-
-	return floatImage;
-}
-
-bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags)
-{
-	nvCheck(!s.isError());
-
-	FreeImageIO io;
-	io.read_proc = NULL;
-	io.write_proc = WriteProc;
-	io.seek_proc = SeekProc;
-	io.tell_proc = TellProc;
-
-	const uint w = img->width();
-	const uint h = img->height();
-
-	FIBITMAP * bitmap = FreeImage_Allocate(w, h, 32);
-
-	for (uint i = 0; i < h; i++)
-	{
-		uint8 * scanline = FreeImage_GetScanLine(bitmap, i);
-		memcpy(scanline, img->scanline(h - i - 1), w * sizeof(Color32));
-	}
-
-	if (tags != NULL)
-	{
-#pragma message(NV_FILE_LINE "TODO: Save image metadata")
-		//FreeImage_SetMetadata(
-	}
-
-	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0);
-
-	FreeImage_Unload(bitmap);
-
-	return result;
-}
-
-bool nv::ImageIO::saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img, uint baseComponent, uint componentCount)
-{
-	nvCheck(!s.isError());
-
-	FreeImageIO io;
-	io.read_proc = NULL;
-	io.write_proc = WriteProc;
-	io.seek_proc = SeekProc;
-	io.tell_proc = TellProc;
-
-	const uint w = img->width();
-	const uint h = img->height();
-
-	FREE_IMAGE_TYPE type;
-	if (componentCount == 1)
-	{
-		type = FIT_FLOAT;
-	}
-	else if (componentCount == 3)
-	{
-		type = FIT_RGBF;
-	}
-	else if (componentCount == 4)
-	{
-		type = FIT_RGBAF;
-	}
-
-	FIBITMAP * bitmap = FreeImage_AllocateT(type, w, h);
-
-	for (uint y = 0; y < h; y++)
-	{
-		float * scanline = (float *)FreeImage_GetScanLine(bitmap, y);
-
-		for (uint x = 0; x < w; x++)
-		{
-			for (uint c = 0; c < componentCount; c++)
-			{
-				scanline[x * componentCount + c] = img->pixel(x, y, baseComponent + c);
-			}
-		}
-	}
-
-	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0);
-
-	FreeImage_Unload(bitmap);
-
-	return result;
-}
-
-
-#else // defined(HAVE_FREEIMAGE)
 
 /// Load TGA image.
 Image * nv::ImageIO::loadTGA(Stream & s)
@@ -606,7 +232,7 @@ Image * nv::ImageIO::loadTGA(Stream & s)
 			// no break is intended!
 		case TGA_TYPE_INDEXED:
 			if( tga.colormap_type!=1 || tga.colormap_size!=24 || tga.colormap_length>256 ) {
-				nvDebug( "*** loadTGA: Error, only 24bit paletted images are supported.\n" );
+				nvDebug( "*** ImageIO::loadTGA: Error, only 24bit paletted images are supported.\n" );
 				return false;
 			}
 			pal = true;
@@ -627,7 +253,7 @@ Image * nv::ImageIO::loadTGA(Stream & s)
 			break;
 
 		default:
-			nvDebug( "*** loadTGA: Error, unsupported image type.\n" );
+			nvDebug( "*** ImageIO::loadTGA: Error, unsupported image type.\n" );
 			return false;
 	}
 
@@ -976,10 +602,10 @@ Image * nv::ImageIO::loadPSD(Stream & s)
 static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
 {
 	nvDebugCheck(png_ptr != NULL);
-
+	
 	Stream * s = (Stream *)png_ptr->io_ptr;
 	s->serialize(data, (int)length);
-
+	
 	if (s->isError()) {
 		png_error(png_ptr, "Read Error");
 	}
@@ -989,7 +615,7 @@ static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t lengt
 Image * nv::ImageIO::loadPNG(Stream & s)
 {
 	nvCheck(!s.isError());
-
+	
 	// Set up a read buffer and check the library version
 	png_structp png_ptr;
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -1112,7 +738,7 @@ Image * nv::ImageIO::loadPNG(Stream & s)
 		Color32 c = img->pixel(i);
 		img->pixel(i) = Color32(c.b, c.g, c.r, c.a);
 	}
-
+	
 	// Compute alpha channel if needed.
 	/*if( img->flags & PI_IU_BUMPMAP || img->flags & PI_IU_ALPHAMAP ) {
 		if( img->flags & PI_IF_HAS_COLOR && !(img->flags & PI_IF_HAS_ALPHA)) {
@@ -1121,100 +747,6 @@ Image * nv::ImageIO::loadPNG(Stream & s)
 	}*/
 
 	return img.release();
-}
-
-static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
-{
-	nvDebugCheck(png_ptr != NULL);
-
-	Stream * s = (Stream *)png_ptr->io_ptr;
-	s->serialize(data, (int)length);
-
-	if (s->isError()) {
-		png_error(png_ptr, "Write Error");
-	}
-}
-
-static void user_write_flush(png_structp png_ptr) { }
-
-bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * tags/*=NULL*/)
-{
-	nvCheck(!s.isError());
-	nvCheck(img != NULL);
-	nvCheck(img->pixels() != NULL);
-
-	// Set up a write buffer and check the library version
-	png_structp png_ptr;
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (png_ptr == NULL) {
-		return false;
-	}
-
-	// Allocate/initialize a memory block for the image information
-	png_infop info_ptr = png_create_info_struct(png_ptr);
-	if (info_ptr == NULL) {
-		png_destroy_write_struct(&png_ptr, NULL);
-		return false;
-	}
-
-	// Set up the error handling
-	if (setjmp(png_jmpbuf(png_ptr))) {
-		png_destroy_write_struct(&png_ptr, &info_ptr);
-		return false;
-	}
-
-	// Set up the I/O functions.
-	png_set_write_fn(png_ptr, (void*)&s, user_write_data, user_write_flush);
-
-	// Set image header information
-	int color_type = PNG_COLOR_TYPE_RGB;
-	switch(img->format())
-	{
-		case Image::Format_RGB:		color_type = PNG_COLOR_TYPE_RGB; break;
-		case Image::Format_ARGB:	color_type = PNG_COLOR_TYPE_RGBA; break;
-	}
-	png_set_IHDR(png_ptr, info_ptr, img->width(), img->height(),
-		8, color_type, PNG_INTERLACE_NONE,
-		PNG_COMPRESSION_TYPE_DEFAULT,
-		PNG_FILTER_TYPE_DEFAULT);
-
-	// Set image data
-	png_bytep * row_data = new png_bytep[sizeof(png_byte) * img->height()];
-	for (uint i = 0; i < img->height(); i++) {
-		row_data[i] = (png_byte*)img->scanline (i);
-	}
-	png_set_rows(png_ptr, info_ptr, row_data);
-
-	png_text * text = NULL;
-    if (tags != NULL && tags->tagMap.count() > 0)
-	{
-		text = new png_text[tags->tagMap.count()];
-		memset(text, 0, tags->tagMap.count() * sizeof(png_text));
-		int n = 0;
-		foreach (i, tags->tagMap)
-		{
-			text[n].compression = PNG_TEXT_COMPRESSION_NONE;
-			text[n].key = const_cast<char*> (tags->tagMap[i].key.str());
-			text[n].text = const_cast<char*> (tags->tagMap[i].value.str());
-			n++;
-		}
-		png_set_text(png_ptr, info_ptr, text, tags->tagMap.count());
-	}
-
-	png_write_png(png_ptr, info_ptr,
-		// component order is BGR(A)
-		PNG_TRANSFORM_BGR
-		// Strip alpha byte for RGB images
-		| (img->format() == Image::Format_RGB ? PNG_TRANSFORM_STRIP_FILLER : 0),
-		NULL);
-
-	// Finish things up
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-
-	delete [] row_data;
-	delete [] text;
-
-	return true;
 }
 
 #endif // defined(HAVE_PNG)
@@ -1258,12 +790,12 @@ static void term_source (j_decompress_ptr /*cinfo*/){
 Image * nv::ImageIO::loadJPG(Stream & s)
 {
 	nvCheck(!s.isError());
-
+	
 	// Read the entire file.
 	Array<uint8> byte_array;
 	byte_array.resize(s.size());
-	s.serialize(byte_array.mutableBuffer(), s.size());
-
+	s.serialize(byte_array.unsecureBuffer(), s.size());
+	
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
@@ -1345,7 +877,7 @@ static toff_t tiffSeekProc(thandle_t h, toff_t offset, int whence)
 {
 	Stream * s = (Stream *)h;
 	nvDebugCheck(s != NULL);
-
+	
 	if (!s->isSeekable())
 	{
 		return (toff_t)-1;
@@ -1394,16 +926,16 @@ static void tiffUnmapFileProc(thandle_t, tdata_t, toff_t)
 FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 {
 	nvCheck(!s.isError());
-
+	
 	TIFF * tif = TIFFOpen(fileName, "r");
 	//TIFF * tif = TIFFClientOpen(fileName, "r", &s, tiffReadWriteProc, tiffReadWriteProc, tiffSeekProc, tiffCloseProc, tiffSizeProc, tiffMapFileProc, tiffUnmapFileProc);
-
+	
 	if (!tif)
 	{
 		nvDebug("Can't open '%s' for reading\n", fileName);
 		return NULL;
 	}
-
+	
 	::uint16 spp, bpp, format;
 	::uint32 width, height;
 	TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
@@ -1411,28 +943,28 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 	TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bpp);
 	TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
 	TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &format);
-
+	
 	if (bpp != 8 && bpp != 16 && bpp != 32) {
 		nvDebug("Can't load '%s', only 1 sample per pixel supported\n", fileName);
 		TIFFClose(tif);
 		return NULL;
 	}
-
+	
 	AutoPtr<FloatImage> fimage(new FloatImage());
 	fimage->allocate(spp, width, height);
-
+	
 	int linesize = TIFFScanlineSize(tif);
 	tdata_t buf = (::uint8 *)nv::mem::malloc(linesize);
-
-	for (uint y = 0; y < height; y++)
+	
+	for (uint y = 0; y < height; y++) 
 	{
 		TIFFReadScanline(tif, buf, y, 0);
 
-		for (uint c=0; c<spp; c++ )
+		for (uint c=0; c<spp; c++ ) 
 		{
 			float * dst = fimage->scanline(y, c);
 
-			for(uint x = 0; x < width; x++)
+			for(uint x = 0; x < width; x++) 
 			{
 				if (bpp == 8)
 				{
@@ -1460,9 +992,9 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 	}
 
 	nv::mem::free(buf);
-
+	
 	TIFFClose(tif);
-
+	
 	return fimage.release();
 }
 
@@ -1471,7 +1003,7 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 	nvCheck(fileName != NULL);
 	nvCheck(fimage != NULL);
 	nvCheck(base_component + num_components <= fimage->componentNum());
-
+	
 	const int iW = fimage->width();
 	const int iH = fimage->height();
 	const int iC = num_components;
@@ -1490,8 +1022,8 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 	TIFFSetField(image, TIFFTAG_SAMPLESPERPIXEL, iC);
 	TIFFSetField(image, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
 	TIFFSetField(image, TIFFTAG_BITSPERSAMPLE, 32);
-
-	uint32 rowsperstrip = TIFFDefaultStripSize(image, (uint32)-1);
+	
+	uint32 rowsperstrip = TIFFDefaultStripSize(image, (uint32)-1); 
 
 	TIFFSetField(image, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
 	TIFFSetField(image, TIFFTAG_COMPRESSION, COMPRESSION_PACKBITS);
@@ -1506,7 +1038,7 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 	float * scanline = new float[iW * iC];
 	for (int y = 0; y < iH; y++)
 	{
-		for (int c = 0; c < iC; c++)
+		for (int c = 0; c < iC; c++) 
 		{
 			const float * src = fimage->scanline(y, base_component + c);
 			for (int x = 0; x < iW; x++) scanline[x * iC + c] = src[x];
@@ -1537,55 +1069,37 @@ namespace
 		{
 			nvDebugCheck(s.isLoading());
 		}
-
+		
 		virtual bool read(char c[], int n)
 		{
 			m_stream.serialize(c, n);
-
+			
 			if (m_stream.isError())
 			{
 				throw Iex::InputExc("I/O error.");
 			}
-
+			
 			return m_stream.isAtEnd();
 		}
-
+		
 		virtual Imf::Int64 tellg()
 		{
 			return m_stream.tell();
 		}
-
+		
 		virtual void seekg(Imf::Int64 pos)
 		{
-			nvDebugCheck(pos >= 0 && pos < UINT_MAX);
-			m_stream.seek((uint)pos);
+			m_stream.seek(pos);
 		}
-
+		
 		virtual void clear()
 		{
 			m_stream.clearError();
 		}
-
+		
 	private:
 		Stream & m_stream;
 	};
-
-	static int channelIndexFromName(const char* name)
-	{
-		char c = tolower(name[0]);
-		switch (c)
-		{
-		default:
-		case 'r':
-			return 0;
-		case 'g':
-			return 1;
-		case 'b':
-			return 2;
-		case 'a':
-			return 3;
-		}
-	}
 
 } // namespace
 
@@ -1603,31 +1117,30 @@ FloatImage * nv::ImageIO::loadFloatEXR(const char * fileName, Stream & s)
 	int height = box.max.x - box.min.y + 1;
 
 	const Imf::ChannelList & channels = inputFile.header().channels();
-
+	
 	// Count channels.
 	uint channelCount= 0;
 	for (Imf::ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it)
 	{
 		channelCount++;
 	}
-
+	
 	// Allocate FloatImage.
 	AutoPtr<FloatImage> fimage(new FloatImage());
 	fimage->allocate(channelCount, width, height);
-
+	
 	// Describe image's layout with a framebuffer.
 	Imf::FrameBuffer frameBuffer;
 	uint i = 0;
 	for (Imf::ChannelList::ConstIterator it = channels.begin(); it != channels.end(); ++it, ++i)
 	{
-		int channelIndex = channelIndexFromName(it.name());
-		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(channelIndex), sizeof(float), sizeof(float) * width));
+		frameBuffer.insert(it.name(), Imf::Slice(Imf::FLOAT, (char *)fimage->channel(i), sizeof(float), sizeof(float) * width));
 	}
-
+	
 	// Read it.
 	inputFile.setFrameBuffer (frameBuffer);
 	inputFile.readPixels (box.min.y, box.max.y);
-
+	
 	return fimage.release();
 }
 
@@ -1637,34 +1150,360 @@ bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage,
 	nvCheck(fimage != NULL);
 	nvCheck(base_component + num_components <= fimage->componentNum());
 	nvCheck(num_components > 0 && num_components <= 4);
-
+	
 	const int w = fimage->width();
 	const int h = fimage->height();
-
+	
 	const char * channelNames[] = {"R", "G", "B", "A"};
-
-	Imf::Header header (w, h);
-
+	
+    Imf::Header header (w, h);
+	
 	for (uint c = 0; c < num_components; c++)
 	{
 		header.channels().insert(channelNames[c], Imf::Channel(Imf::FLOAT));
 	}
-
-	Imf::OutputFile file(fileName, header);
-	Imf::FrameBuffer frameBuffer;
-
+	
+    Imf::OutputFile file(fileName, header);
+    Imf::FrameBuffer frameBuffer;
+    
 	for (uint c = 0; c < num_components; c++)
 	{
 		char * channel = (char *) fimage->channel(base_component + c);
 		frameBuffer.insert(channelNames[c], Imf::Slice(Imf::FLOAT, channel, sizeof(float), sizeof(float) * w));
 	}
-
+	
 	file.setFrameBuffer(frameBuffer);
 	file.writePixels(h);
-
+	
 	return true;
 }
 
 #endif // defined(HAVE_OPENEXR)
 
-#endif // defined(HAVE_FREEIMAGE)
+#if 0 // @@ Disable temporarily.
+
+FloatImage * nv::ImageIO::loadFloatPFM(const char * fileName, Stream & s)
+{
+	nvCheck(s.isLoading());
+	nvCheck(!s.isError());
+
+	Tokenizer parser(&s);
+
+	parser.nextToken();
+
+	bool grayscale;
+	if (parser.token() == "PF")
+	{
+		grayscale = false;
+	}
+	else if (parser.token() == "Pf")
+	{
+		grayscale = true;
+	}
+	else
+	{
+		// Invalid file.
+		return NULL;
+	}
+
+	parser.nextLine();
+	
+	int width = parser.token().toInt(); parser.nextToken();
+	int height = parser.token().toInt();
+
+	parser.nextLine();
+
+	float scaleFactor = parser.token().toFloat();
+
+	if (scaleFactor >= 0)
+	{
+		s.setByteOrder(Stream::BigEndian);
+	}
+	else
+	{
+		s.setByteOrder(Stream::LittleEndian);
+	}
+	scaleFactor = fabsf(scaleFactor);
+
+	// Allocate image.
+	AutoPtr<FloatImage> fimage(new FloatImage());
+
+	if (grayscale)
+	{
+		fimage->allocate(1, width, height);
+
+		float * channel = fimage->channel(0);
+
+		for (int i = 0; i < width * height; i++)
+		{
+			s << channel[i];
+		}
+	}
+	else
+	{
+		fimage->allocate(3, width, height);
+
+		float * rchannel = fimage->channel(0);
+		float * gchannel = fimage->channel(1);
+		float * bchannel = fimage->channel(2);
+
+		for (int i = 0; i < width * height; i++)
+		{
+			s << rchannel[i] << gchannel[i] << bchannel[i];
+		}
+	}
+
+	return fimage.release();
+}
+
+bool nv::ImageIO::saveFloatPFM(const char * fileName, const FloatImage * fimage, uint base_component, uint num_components)
+{
+	nvCheck(fileName != NULL);
+	nvCheck(fimage != NULL);
+	nvCheck(fimage->componentNum() <= base_component + num_components);
+	nvCheck(num_components == 1 || num_components == 3);
+
+	StdOutputStream stream(fileName);
+	TextWriter writer(&stream);
+
+	if (num_components == 1) writer.write("Pf\n");
+	else /*if (num_components == 3)*/ writer.write("PF\n");
+
+	int w = fimage->width();
+	int h = fimage->height();
+	writer.write("%d %d\n", w, h);
+	writer.write("%f\n", -1.0f);	// little endian with 1.0 scale.
+
+	if (num_components == 1)
+	{
+		float * channel = const_cast<float *>(fimage->channel(0));
+
+		for (int i = 0; i < w * h; i++)
+		{
+			stream << channel[i];
+		}
+	}
+	else
+	{
+		float * rchannel = const_cast<float *>(fimage->channel(0));
+		float * gchannel = const_cast<float *>(fimage->channel(1));
+		float * bchannel = const_cast<float *>(fimage->channel(2));
+
+		for (int i = 0; i < w * h; i++)
+		{
+			stream << rchannel[i] << gchannel[i] << bchannel[i];
+		}
+	}
+
+	return true;
+}
+
+#endif
+
+#if 0
+
+/** Save PNG*/
+static bool SavePNG(const PiImage * img, const char * name) {
+	nvCheck( img != NULL );
+	nvCheck( img->mem != NULL );
+
+	if( piStrCmp(piExtension(name), ".png" ) != 0 ) {
+		return false;
+	}
+	
+	if( img->flags & PI_IT_CUBEMAP ) {
+		nvDebug("*** Cannot save cubemaps as PNG.");
+		return false;
+	}
+	if( img->flags & PI_IT_DDS ) {
+		nvDebug("*** Cannot save DDS surface as PNG.");
+		return false;
+	}
+
+	nvDebug( "--- Saving '%s'.\n", name );
+	
+	PiAutoPtr<PiStream> ar( PiFileSystem::CreateFileWriter( name ) );
+	if( ar == NULL ) {
+		nvDebug( "*** SavePNG: Error, cannot save file '%s'.\n", name );
+		return false;
+	}
+
+/*
+public class PNGEnc {
+
+    public static function encode(img:BitmapData):ByteArray {
+        // Create output byte array
+        var png:ByteArray = new ByteArray();
+        // Write PNG signature
+        png.writeUnsignedInt(0x89504e47);
+        png.writeUnsignedInt(0x0D0A1A0A);
+        // Build IHDR chunk
+        var IHDR:ByteArray = new ByteArray();
+        IHDR.writeInt(img.width);
+        IHDR.writeInt(img.height);
+        IHDR.writeUnsignedInt(0x08060000); // 32bit RGBA
+        IHDR.writeByte(0);
+        writeChunk(png,0x49484452,IHDR);
+        // Build IDAT chunk
+        var IDAT:ByteArray= new ByteArray();
+        for(var i:int=0;i < img.height;i++) {
+            // no filter
+            IDAT.writeByte(0);
+            var p:uint;
+            if ( !img.transparent ) {
+                for(var j:int=0;j < img.width;j++) {
+                    p = img.getPixel(j,i);
+                    IDAT.writeUnsignedInt(
+                        uint(((p&0xFFFFFF) << 8)|0xFF));
+                }
+            } else {
+                for(var j:int=0;j < img.width;j++) {
+                    p = img.getPixel32(j,i);
+                    IDAT.writeUnsignedInt(
+                        uint(((p&0xFFFFFF) << 8)|
+                        (shr(p,24))));
+                }
+            }
+        }
+        IDAT.compress();
+        writeChunk(png,0x49444154,IDAT);
+        // Build IEND chunk
+        writeChunk(png,0x49454E44,null);
+        // return PNG
+        return png;
+    }
+
+    private static var crcTable:Array;
+    private static var crcTableComputed:Boolean = false;
+
+    private static function writeChunk(png:ByteArray, 
+            type:uint, data:ByteArray) {
+        if (!crcTableComputed) {
+            crcTableComputed = true;
+            crcTable = [];
+            for (var n:uint = 0; n < 256; n++) {
+                var c:uint = n;
+                for (var k:uint = 0; k < 8; k++) {
+                    if (c & 1) {
+                        c = uint(uint(0xedb88320) ^ 
+                            uint(c >>> 1));
+                    } else {
+                        c = uint(c >>> 1);
+                    }
+                }
+                crcTable[n] = c;
+            }
+        }
+        var len:uint = 0;
+        if (data != null) {
+            len = data.length;
+        }
+        png.writeUnsignedInt(len);
+        var p:uint = png.position;
+        png.writeUnsignedInt(type);
+        if ( data != null ) {
+            png.writeBytes(data);
+        }
+        var e:uint = png.position;
+        png.position = p;
+        var c:uint = 0xffffffff;
+        for (var i:int = 0; i < (e-p); i++) {
+            c = uint(crcTable[
+                (c ^ png.readUnsignedByte()) & 
+                uint(0xff)] ^ uint(c >>> 8));
+        }
+        c = uint(c^uint(0xffffffff));
+        png.position = e;
+        png.writeUnsignedInt(c);
+    }
+}
+*/
+}
+
+#endif // 0
+
+#if 0
+
+
+namespace ImageIO {
+
+	/** Init ImageIO plugins. */
+	void InitPlugins() {
+	//	AddInputPlugin( "", LoadANY );
+		AddInputPlugin( "tga", LoadTGA );
+#if HAVE_PNG
+		AddInputPlugin( "png", LoadPNG );
+#endif
+#if HAVE_JPEG
+		AddInputPlugin( "jpg", LoadJPG );
+#endif
+		AddInputPlugin( "dds", LoadDDS );
+		
+		AddOutputPlugin( "tga", SaveTGA );
+	}
+	
+	/** Reset ImageIO plugins. */
+	void ResetPlugins() {
+		s_plugin_load_map.Clear();
+		s_plugin_save_map.Clear();
+	}
+	
+	/** Add an input plugin. */
+	void AddInputPlugin( const char * ext, ImageInput_Plugin plugin ) {
+		s_plugin_load_map.Add(ext, plugin);
+	}
+	
+	/** Add an output plugin. */
+	void AddOutputPlugin( const char * ext, ImageOutput_Plugin plugin ) {
+		s_plugin_save_map.Add(ext, plugin);
+	}
+
+	
+	bool Load(PiImage * img, const char * name, PiStream & stream) {
+			
+		// Get name extension.
+		const char * extension = piExtension(name);
+		
+		// Skip the dot.
+		if( *extension == '.' ) {
+			extension++;
+		}
+		
+		// Lookup plugin in the map.
+		ImageInput_Plugin plugin = NULL;
+		if( s_plugin_load_map.Get(extension, &plugin) ) {
+			return plugin(img, stream);
+		}
+		
+		/*foreach(i, s_plugin_load_map) {
+			nvDebug("%s %s %d\n", s_plugin_load_map[i].key.GetStr(), extension, 0 == strcmp(extension, s_plugin_load_map[i].key));
+		}
+		
+		nvDebug("No plugin found for '%s' %d.\n", extension, s_plugin_load_map.Size());*/
+		
+		return false;
+	}
+
+	bool Save(const PiImage * img, const char * name, PiStream & stream) {
+				
+		// Get name extension.
+		const char * extension = piExtension(name);
+		
+		// Skip the dot.
+		if( *extension == '.' ) {
+			extension++;
+		}
+		
+		// Lookup plugin in the map.
+		ImageOutput_Plugin plugin = NULL;
+		if( s_plugin_save_map.Get(extension, &plugin) ) {
+			return plugin(img, stream);
+		}
+		
+		return false;
+	}
+	
+} // ImageIO
+
+#endif // 0
+

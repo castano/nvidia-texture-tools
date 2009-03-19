@@ -28,7 +28,7 @@
 #include "colourblock.h"
 #include <cfloat>
 
-namespace nvsquish {
+namespace squish {
 
 ClusterFit::ClusterFit()
 {

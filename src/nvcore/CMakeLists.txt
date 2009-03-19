@@ -1,25 +1,27 @@
 PROJECT(nvcore)
+ADD_SUBDIRECTORY(poshlib)
 
 SET(CORE_SRCS
 	nvcore.h
-	Algorithms.h
-	Containers.h
-	Debug.h Debug.cpp
-	DefsGnucDarwin.h
-	DefsGnucLinux.h
-	DefsGnucWin32.h
-	DefsVcWin32.h
-	FileSystem.h FileSystem.cpp
-	Library.h Library.cpp
-	Memory.h Memory.cpp
 	Ptr.h
-	RefCounted.h RefCounted.cpp
-	StrLib.h StrLib.cpp
+	BitArray.h
+	Memory.h
+	Memory.cpp
+	Debug.h
+	Debug.cpp
+	Containers.h
+	StrLib.h
+	StrLib.cpp
 	Stream.h
 	StdStream.h
-	TextReader.h TextReader.cpp
-	TextWriter.h TextWriter.cpp
-	Timer.h)
+	TextReader.h
+	TextReader.cpp
+	TextWriter.h
+	TextWriter.cpp
+	Radix.h
+	Radix.cpp
+	Library.h
+	Library.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

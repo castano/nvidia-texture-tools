@@ -242,57 +242,6 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
 	}
 }
 
-/// Apply linear transform.
-void FloatImage::transform(uint base_component, const Matrix & m, Vector4::Arg offset)
-{
-	nvCheck(base_component + 4 <= m_componentNum);
-
-	const uint size = m_width * m_height;
-
-	float * r = this->channel(base_component + 0);
-	float * g = this->channel(base_component + 1);
-	float * b = this->channel(base_component + 2);
-	float * a = this->channel(base_component + 3);
-
-	for (uint i = 0; i < size; i++)
-	{
-		Vector4 color = nv::transform(m, Vector4(*r, *g, *b, *a)) + offset;
-
-		*r++ = color.x();
-		*g++ = color.y();
-		*b++ = color.z();
-		*a++ = color.w();
-	}
-}
-
-void FloatImage::swizzle(uint base_component, uint r, uint g, uint b, uint a)
-{
-	nvCheck(base_component + 4 <= m_componentNum);
-	nvCheck(r < 7 && g < 7 && b < 7 && a < 7);
-
-	const uint size = m_width * m_height;
-
-	float consts[] = { 1.0f, 0.0f, -1.0f };
-	float * c[7];
-	c[0] = this->channel(base_component + 0);
-	c[1] = this->channel(base_component + 1);
-	c[2] = this->channel(base_component + 2);
-	c[3] = this->channel(base_component + 3);
-	c[4] = consts;
-	c[5] = consts + 1;
-	c[6] = consts + 2;
-
-	for (uint i = 0; i < size; i++)
-	{
-		float tmp[4] = { *c[r], *c[g], *c[b], *c[a] };
-
-		*c[0]++ = tmp[0];
-		*c[1]++ = tmp[1];
-		*c[2]++ = tmp[2];
-		*c[3]++ = tmp[3];
-	}
-}
-
 float FloatImage::sampleNearest(const float x, const float y, const int c, const WrapMode wm) const
 {
 	if( wm == WrapMode_Clamp ) return sampleNearestClamp(x, y, c);
@@ -643,7 +592,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					dst_channel[y * w + x] = tmp_column[y];
@@ -664,7 +613,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			float * tmp_channel = tmp_image->channel(c);
 
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					tmp_channel[y * w + x] = tmp_column[y];
@@ -716,7 +665,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, alpha, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, alpha, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					dst_channel[y * w + x] = tmp_column[y];
