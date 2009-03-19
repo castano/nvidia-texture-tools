@@ -73,7 +73,7 @@ namespace nv
 
 	#if defined(HAVE_PNG)
 		static Image * loadPNG(Stream & s);
-		static bool savePNG(Stream & s, const Image * img, const PngCommentsMap & comments = PngCommentsMap());
+		static bool savePNG(Stream & s, const Image * img, const ImageMetaData * tags);
 	#endif
 
 	#if defined(HAVE_JPEG)
@@ -241,13 +241,13 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 		return saveFloatFreeImage(fif, s, fimage, baseComponent, componentCount);
 	}
 #else // defined(HAVE_FREEIMAGE)
-	//if (num_components == 3 || num_components == 4)
-	if (num_components <= 4)
+	//if (componentCount == 3 || componentCount == 4)
+	if (componentCount <= 4)
 	{
-		AutoPtr<Image> image(fimage->createImage(base_component, num_components));
+		AutoPtr<Image> image(fimage->createImage(baseComponent, componentCount));
 		nvCheck(image != NULL);
 
-		if (num_components == 1)
+		if (componentCount == 1)
 		{
 			Color32 * c = image->pixels();
 			const uint count = image->width() * image->height();
@@ -257,7 +257,7 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 			}
 		}
 
-		if (num_components == 4)
+		if (componentCount == 4)
 		{
 			image->setFormat(Image::Format_ARGB);
 		}
@@ -265,6 +265,8 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 		return ImageIO::save(fileName, image.ptr());
 	}
 #endif // defined(HAVE_FREEIMAGE)
+
+    return false;
 }
 
 bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount)
@@ -1184,19 +1186,19 @@ bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * t
 	png_set_rows(png_ptr, info_ptr, row_data);
 
 	png_text * text = NULL;
-	if (tags != NULL && tags->count() > 0)
+    if (tags != NULL && tags->tagMap.count() > 0)
 	{
-		text = new png_text[tags->count()];
-		memset(text, 0, tags->count() * sizeof(png_text));
+		text = new png_text[tags->tagMap.count()];
+		memset(text, 0, tags->tagMap.count() * sizeof(png_text));
 		int n = 0;
-		foreach (i, *tags)
+		foreach (i, tags->tagMap)
 		{
 			text[n].compression = PNG_TEXT_COMPRESSION_NONE;
-			text[n].key = const_cast<char*> ((*tags)[i].key.str());
-			text[n].text = const_cast<char*> ((*tags([i].value.str());
+			text[n].key = const_cast<char*> (tags->tagMap[i].key.str());
+			text[n].text = const_cast<char*> (tags->tagMap[i].value.str());
 			n++;
 		}
-		png_set_text(png_ptr, info_ptr, text, tags->count());
+		png_set_text(png_ptr, info_ptr, text, tags->tagMap.count());
 	}
 
 	png_write_png(png_ptr, info_ptr,
