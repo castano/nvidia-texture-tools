@@ -10,6 +10,7 @@ NVIDIA Texture Tools version 2.0.6
  * Compute mipmaps of semi-transparent images correctly.
  * Shutdown CUDA properly. Fixes issue 83.
  * Fix pixel format converions. Fixes issue 87.
+ * Update single color compression tables. Fixes issue 85.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
