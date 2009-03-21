@@ -1049,7 +1049,7 @@ void DirectDrawSurface::readLinearImage(Image * img)
 
 	uint byteCount = (header.pf.bitcount + 7) / 8;
 
-#pragma message("Support floating point linear images and other FOURCC codes.")
+#pragma message(NV_FILE_LINE "TODO: Support floating point linear images and other FOURCC codes.")
 
 	// Read linear RGB images.
 	for (uint y = 0; y < h; y++)
