@@ -5,24 +5,24 @@
 #include <stdio.h>
 
 // Typedefs
-typedef CUresult CUDAAPI (*cuInitPtr)( unsigned int Flags );	
+typedef CUresult (CUDAAPI * cuInitPtr)( unsigned int Flags );	
 
-typedef CUresult  CUDAAPI (*cuDeviceGetPtr)(CUdevice *device, int ordinal);
-typedef CUresult  CUDAAPI (*cuDeviceGetCountPtr)(int *count);
-typedef CUresult  CUDAAPI (*cuDeviceGetNamePtr)(char *name, int len, CUdevice dev);
-typedef CUresult  CUDAAPI (*cuDeviceComputeCapabilityPtr)(int *major, int *minor, CUdevice dev);
-typedef CUresult  CUDAAPI (*cuDeviceTotalMemPtr)(unsigned int *bytes, CUdevice dev);
-typedef CUresult  CUDAAPI (*cuDeviceGetPropertiesPtr)(CUdevprop *prop, CUdevice dev);
-typedef CUresult  CUDAAPI (*cuDeviceGetAttributePtr)(int *pi, CUdevice_attribute attrib, CUdevice dev);
+typedef CUresult  (CUDAAPI * cuDeviceGetPtr)(CUdevice *device, int ordinal);
+typedef CUresult  (CUDAAPI * cuDeviceGetCountPtr)(int *count);
+typedef CUresult  (CUDAAPI * cuDeviceGetNamePtr)(char *name, int len, CUdevice dev);
+typedef CUresult  (CUDAAPI * cuDeviceComputeCapabilityPtr)(int *major, int *minor, CUdevice dev);
+typedef CUresult  (CUDAAPI * cuDeviceTotalMemPtr)(unsigned int *bytes, CUdevice dev);
+typedef CUresult  (CUDAAPI * cuDeviceGetPropertiesPtr)(CUdevprop *prop, CUdevice dev);
+typedef CUresult  (CUDAAPI * cuDeviceGetAttributePtr)(int *pi, CUdevice_attribute attrib, CUdevice dev);
 
-typedef CUresult  CUDAAPI (*cuCtxCreatePtr)(CUcontext *pctx, unsigned int flags, CUdevice dev );
-typedef CUresult  CUDAAPI (*cuCtxDestroyPtr)( CUcontext ctx );
-typedef CUresult  CUDAAPI (*cuCtxAttachPtr)(CUcontext *pctx, unsigned int flags);
-typedef CUresult  CUDAAPI (*cuCtxDetachPtr)(CUcontext ctx);
-typedef CUresult  CUDAAPI (*cuCtxPushCurrentPtr)( CUcontext ctx );
-typedef CUresult  CUDAAPI (*cuCtxPopCurrentPtr)( CUcontext *pctx );
-typedef CUresult  CUDAAPI (*cuCtxGetDevicePtr)(CUdevice *device);
-typedef CUresult  CUDAAPI (*cuCtxSynchronizePtr)(void);
+typedef CUresult  (CUDAAPI * cuCtxCreatePtr)(CUcontext *pctx, unsigned int flags, CUdevice dev );
+typedef CUresult  (CUDAAPI * cuCtxDestroyPtr)( CUcontext ctx );
+typedef CUresult  (CUDAAPI * cuCtxAttachPtr)(CUcontext *pctx, unsigned int flags);
+typedef CUresult  (CUDAAPI * cuCtxDetachPtr)(CUcontext ctx);
+typedef CUresult  (CUDAAPI * cuCtxPushCurrentPtr)( CUcontext ctx );
+typedef CUresult  (CUDAAPI * cuCtxPopCurrentPtr)( CUcontext *pctx );
+typedef CUresult  (CUDAAPI * cuCtxGetDevicePtr)(CUdevice *device);
+typedef CUresult  (CUDAAPI * cuCtxSynchronizePtr)(void);
 
 
 // A compressor inits CUDA and creates a context for each device.
