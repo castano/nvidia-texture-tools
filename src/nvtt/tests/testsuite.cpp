@@ -119,6 +119,11 @@ static ImageSet s_imageSets[] = {
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
+enum Decoder
+{
+	Decoder_Reference,
+	Decoder_NVIDIA,
+};
 
 struct MyOutputHandler : public nvtt::OutputHandler
 {
@@ -145,7 +150,7 @@ struct MyOutputHandler : public nvtt::OutputHandler
 		return true;
 	}
 
-	Image * decompress(nvtt::Format format)
+	Image * decompress(nvtt::Format format, Decoder decoder)
 	{
 		int bw = (m_width + 3) / 4;
 		int bh = (m_height + 3) / 4;
@@ -162,7 +167,12 @@ struct MyOutputHandler : public nvtt::OutputHandler
 				for (int x = 0; x < bw; x++)
 				{
 					ColorBlock colors;
-					block->decodeBlock(&colors);
+					if (decoder == Decoder_Reference) {
+						block->decodeBlock(&colors);
+					}
+					else if (decoder == Decoder_NVIDIA) {
+						block->decodeBlockNV5x(&colors);
+					}
 
 					for (int yy = 0; yy < 4; yy++)
 					{
@@ -235,6 +245,7 @@ int main(int argc, char *argv[])
 	bool fast = false;
 	bool nocuda = false;
 	bool showHelp = false;
+	Decoder decoder = Decoder_Reference;
 	const char * basePath = "";
 	const char * outPath = "output";
 	const char * regressPath = NULL;
@@ -246,6 +257,13 @@ int main(int argc, char *argv[])
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') {
 				set = atoi(argv[i+1]);
+				i++;
+			}
+		}
+		else if (strcmp("-dec", argv[i]) == 0)
+		{
+			if (i+1 < argc && argv[i+1][0] != '-') {
+				decoder = (Decoder)atoi(argv[i+1]);
 				i++;
 			}
 		}
@@ -289,9 +307,16 @@ int main(int argc, char *argv[])
 		printf("usage: nvtestsuite [options]\n\n");
 		
 		printf("Input options:\n");
-		printf("  -path <path>\tInput image path.\n");
-		printf("  -set [0:2]\tImage set.\n");
+		printf("  -path <path>   \tInput image path.\n");
 		printf("  -regress <path>\tRegression directory.\n");
+		printf("  -set [0:2]     \tImage set.\n");
+		printf("    0:           \tKodak.\n");
+		printf("    1:           \tWaterloo.\n");
+		printf("    2:           \tEpic.\n");
+		printf("    3:           \tFarbrausch.\n");
+		printf("  -dec x         \tDecompressor.\n");
+		printf("    0:           \tReference.\n");
+		printf("    1:           \tNVIDIA.\n");
 
 		printf("Compression options:\n");
 		printf("  -fast          \tFast compression.\n");
@@ -365,7 +390,7 @@ int main(int argc, char *argv[])
 		printf("  Time: \t%.3f sec\n", float(end-start) / CLOCKS_PER_SEC);
 		totalTime += float(end-start);
 
-		AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1) );
+		AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1, decoder) );
 
 		Path outputFileName;
 		outputFileName.format("%s/%s", outPath, fileNames[i]);

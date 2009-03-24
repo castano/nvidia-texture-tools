@@ -53,6 +53,7 @@ namespace nv
 		void evaluatePalette4(Color32 color_array[4]) const;
 		
 		void decodeBlock(ColorBlock * block) const;
+		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void setIndices(int * idx);
 
