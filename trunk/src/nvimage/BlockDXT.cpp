@@ -39,9 +39,9 @@ using namespace nv;
 uint BlockDXT1::evaluatePalette(Color32 color_array[4]) const
 {
 	// Does bit expansion before interpolation.
-	color_array[0].b = (col0.b << 3) | (col0.b >> 2);
-	color_array[0].g = (col0.g << 2) | (col0.g >> 4);
 	color_array[0].r = (col0.r << 3) | (col0.r >> 2);
+	color_array[0].g = (col0.g << 2) | (col0.g >> 4);
+	color_array[0].b = (col0.b << 3) | (col0.b >> 2);
 	color_array[0].a = 0xFF;
 	
 	// @@ Same as above, but faster?
@@ -97,14 +97,14 @@ uint BlockDXT1::evaluatePalette(Color32 color_array[4]) const
 uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
 {
 	// Does bit expansion before interpolation.
-	color_array[0].b = col0.b * 22 / 8;
+	color_array[0].r = (3 * col0.r * 22) / 8;
 	color_array[0].g = (col0.g << 2) | (col0.g >> 4);
-	color_array[0].r = col0.r * 22 / 8;
+	color_array[0].b = (3 * col0.b * 22) / 8;
 	color_array[0].a = 0xFF;
-	
-	color_array[1].r = col1.r * 22 / 8;
+
+	color_array[1].r = (3 * col1.r * 22) / 8;
 	color_array[1].g = (col1.g << 2) | (col1.g >> 4);
-	color_array[1].b = col1.b * 22 / 8;
+	color_array[1].b = (3 * col1.b * 22) / 8;
 	color_array[1].a = 0xFF;
 	
 	if( col0.u > col1.u ) {
@@ -117,8 +117,8 @@ uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
 		color_array[3].r = (2 * col1.r + col0.r) * 22 / 8;
 		color_array[3].g = (256 * color_array[1].g + (color_array[0].g - color_array[1].g)/4 + 128 + (color_array[0].g - color_array[1].g) * 80) / 256;
 		color_array[3].b = (2 * col1.b + col0.b) * 22 / 8;
-		color_array[3].a = 0xFF;
 		
+		color_array[3].a = 0xFF;
 		return 4;
 	}
 	else {
@@ -206,6 +206,25 @@ void BlockDXT1::decodeBlock(ColorBlock * block) const
 		}
 	}	
 }
+
+void BlockDXT1::decodeBlockNV5x(ColorBlock * block) const
+{
+	nvDebugCheck(block != NULL);
+
+	// Decode color block.
+	Color32 color_array[4];
+	evaluatePalette(color_array);
+	evaluatePaletteNV5x(color_array);
+
+	// Write color block.
+	for( uint j = 0; j < 4; j++ ) {
+		for( uint i = 0; i < 4; i++ ) {
+			uint idx = (row[j] >> (2 * i)) & 3;
+			block->color(i, j) = color_array[idx];
+		}
+	}
+}
+
 
 void BlockDXT1::setIndices(int * idx)
 {
