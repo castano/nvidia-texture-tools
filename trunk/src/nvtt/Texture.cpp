@@ -208,7 +208,7 @@ bool TexImage::load(const char * fileName)
 
 bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict data)
 {
-	if (idx >= m->imageArray.count())
+	if (idx < 0 || uint(idx) >= m->imageArray.count())
 	{
 		return false;
 	}
@@ -268,7 +268,7 @@ bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void 
 
 bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict r, const void * restrict g, const void * restrict b, const void * restrict a)
 {
-	if (idx >= m->imageArray.count())
+	if (idx < 0 || uint(idx) >= m->imageArray.count())
 	{
 		return false;
 	}
