@@ -18,7 +18,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="..\Binaries\Debug"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
@@ -57,7 +57,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				AdditionalIncludeDirectories="C:\Users\Khronos\Development\NVidia\ICastano\jcanton\PSNvidiaPlugin\PSNvidiaPlugin\Debug"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)Debug&quot;"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="$(QTDIR)\lib\qtmain.lib $(QTDIR)\lib\QtCore4.lib $(QTDIR)\lib\QtGui4.lib"
-				OutputFile="C:\Program Files\Adobe\Adobe Photoshop CS2\Plug-Ins\File Formats\$(ProjectName).8bi"
+				OutputFile="$(OutDir)\$(ProjectName).8bi"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -97,7 +97,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="..\Binaries\Release"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="1"
@@ -122,6 +122,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="..\..\photoshopapi\photoshop;..\..\photoshopapi\adm;..\..\photoshopapi\pica_sp;..\..\photoshopapi\common\includes;&quot;$(QTDIR)\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;PSNVIDIAPLUGIN_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -134,12 +135,15 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)Release&quot;"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="$(QTDIR)\lib\qtmain.lib $(QTDIR)\lib\QtCore4.lib $(QTDIR)\lib\QtGui4.lib"
+				OutputFile="$(OutDir)\$(ProjectName).8bi"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -202,6 +206,16 @@
 						Name="VCCustomBuildTool"
 						Description="Compiling PiPL resource..."
 						CommandLine="cl /I..\..\PhotoshopAPI\PICA_SP /I..\..\PhotoshopAPI\Photoshop   /I..\..\PhotoshopAPI\Resources /I..\..\PhotoshopAPI\common\includes /I..\..\PhotoshopAPI\common\resources /EP /DMSWindows=1 /Tc&quot;$(InputPath)&quot; &gt; &quot;$(IntDir)\$(InputName).rr&quot;&#x0D;&#x0A;..\..\resources\cnvtpipl &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.pipl&#x0D;&#x0A;del &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr&#x0D;&#x0A;"
+						Outputs="$(IntDir)\$(InputName).pipl"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Compiling PiPL resource..."
+						CommandLine="cl /I..\..\PhotoshopAPI\PICA_SP /I..\..\PhotoshopAPI\Photoshop   /I..\..\PhotoshopAPI\Resources /I..\..\PhotoshopAPI\common\includes /I..\..\PhotoshopAPI\common\resources /EP /DMSWindows=1 /Tc&quot;$(InputPath)&quot; &gt; &quot;$(IntDir)\$(InputName).rr&quot;&#x0D;&#x0A;..\..\resources\cnvtpipl &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.pipl&#x0D;&#x0A;del &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr"
 						Outputs="$(IntDir)\$(InputName).pipl"
 					/>
 				</FileConfiguration>
