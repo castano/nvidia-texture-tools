@@ -112,7 +112,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				OmitFramePointers="true"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..\..\..\extern\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
