@@ -275,7 +275,7 @@ int PSFormatPlugin::GlobalsSize ()
 
 void PSFormatPlugin::InitGlobals ()
 {
-	// override hook - PSFormatGlobals are set up in AllocateGlobals()
+	// override hook
 }
 
 //-------------------------------------------------------------------------------

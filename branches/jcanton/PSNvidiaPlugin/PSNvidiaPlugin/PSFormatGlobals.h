@@ -87,6 +87,7 @@ struct FormatRecord;
 //	GlobalsSize() and InitGlobals() to account for your additional fields.
 //
 
+
 struct PSFormatGlobals
 {
 

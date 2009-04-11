@@ -152,11 +152,11 @@ class PSFormatPlugin
 		virtual void				DoFilterFile			();
 
 
-			//-------------------------------------------------------------------
-			//	Globals - valid upon entry into every override hook
-			//	except DoAbout().  May actually be a pointer to your
-			//	subclass of PSFormatGlobals.
-			//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		//	Globals - valid upon entry into every override hook
+		//	except DoAbout().  May actually be a pointer to your
+		//	subclass of PSFormatGlobals.
+		//-------------------------------------------------------------------
 
 		PSFormatGlobals*			mGlobals;
 		short*						mResult;

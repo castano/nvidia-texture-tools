@@ -28,6 +28,8 @@
 #pragma once
 
 #include "PSFormatPlugin.h"
+#include "DDSFormatGlobals.h"
+
 #include "PIDefines.h"
 #include "PITypes.h"
 
@@ -47,33 +49,27 @@ class DDSFormatPlugin : public PSFormatPlugin
 
 		// access to our Globals struct
 	
- 		/*inline EXRFormatGlobals* Globals		()
+ 		inline DDSFormatGlobals* Globals		()
  		{
- 			return (EXRFormatGlobals*) mGlobals;
- 		}*/
+ 			return (DDSFormatGlobals*) mGlobals;
+ 		}
 
 		
 		// PSFormatPlugin Overrides
 				
-		//virtual int		GlobalsSize				();
-		//virtual void	InitGlobals				();
+		virtual int		GlobalsSize				();
+		virtual void	InitGlobals				();
 
 		virtual void	DoAbout					(AboutRecord* inAboutRec);
 			
-		//virtual void	DoReadStart				();
-		//virtual void	DoReadContinue			();
-		//virtual void	DoReadFinish			();
+		virtual void	DoReadPrepare			();
+		virtual void	DoReadStart				();
+		virtual void	DoReadContinue			();
+		virtual void	DoReadFinish			();
 			
 		//virtual void	DoOptionsStart			();
 		//virtual void	DoEstimateStart			();
  		//virtual void	DoWriteStart			();
-
-
-		// UI methods
-
-		//bool 	DoImportPreviewDlog 	();
-		//bool 	DoExportSettingsDlog 	();
-
 };
 
 

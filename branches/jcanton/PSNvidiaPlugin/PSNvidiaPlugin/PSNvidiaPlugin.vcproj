@@ -219,7 +219,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Compiling PiPL resource..."
-						CommandLine="cl /I..\..\PhotoshopAPI\PICA_SP /I..\..\PhotoshopAPI\Photoshop   /I..\..\PhotoshopAPI\Resources /I..\..\PhotoshopAPI\common\includes /I..\..\PhotoshopAPI\common\resources /EP /DMSWindows=1 /Tc&quot;$(InputPath)&quot; &gt; &quot;$(IntDir)\$(InputName).rr&quot;&#x0D;&#x0A;..\..\resources\cnvtpipl &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.pipl&#x0D;&#x0A;del &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr"
+						CommandLine="cl /I..\..\PhotoshopAPI\PICA_SP /I..\..\PhotoshopAPI\Photoshop   /I..\..\PhotoshopAPI\Resources /I..\..\PhotoshopAPI\common\includes /I..\..\PhotoshopAPI\common\resources /EP /DMSWindows=1 /Tc&quot;$(InputPath)&quot; &gt; &quot;$(IntDir)\$(InputName).rr&quot;&#x0D;&#x0A;..\..\resources\cnvtpipl &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.pipl&#x0D;&#x0A;del &quot;$(IntDir)&quot;\\&quot;$(InputName)&quot;.rr&#x0D;&#x0A;"
 						Outputs="$(IntDir)\$(InputName).pipl"
 					/>
 				</FileConfiguration>
@@ -245,6 +245,10 @@
 			Name="Source Files"
 			>
 			<File
+				RelativePath=".\DDSFormatGlobals.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DDSFormatPlugin.cpp"
 				>
 			</File>
@@ -256,6 +260,10 @@
 		<Filter
 			Name="Header Files"
 			>
+			<File
+				RelativePath=".\DDSFormatGlobals.h"
+				>
+			</File>
 			<File
 				RelativePath=".\DDSFormatPlugin.h"
 				>
