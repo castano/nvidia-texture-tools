@@ -60,40 +60,40 @@ DDSFormatPlugin::~DDSFormatPlugin ()
 
 void DDSFormatPlugin::DoAbout (AboutRecord* inAboutRec)
 {
-	QtHelpers::QtIntialize();
+	//QtHelpers::QtIntialize();
 
-	QWidget *window = new QWidget();
-	window->resize(320,240);
-	window->show();
-	
-	QPushButton *button = new QPushButton("Qt Button", window);
-	button->move(100, 100);
-	button->show();
+	//QWidget *window = new QWidget();
+	//window->resize(320,240);
+	//window->show();
+	//
+	//QPushButton *button = new QPushButton("Qt Button", window);
+	//button->move(100, 100);
+	//button->show();
 
-	HWND hwnd = (HWND)((PlatformData*)inAboutRec->platformData)->hwnd;
-	SetParent(window->winId(), hwnd);
+	//HWND hwnd = (HWND)((PlatformData*)inAboutRec->platformData)->hwnd;
+	//SetParent(window->winId(), hwnd);
 
-	qApp->exec();
+	//qApp->exec();
 
-	QtHelpers::QtShutdown();
+	//QtHelpers::QtShutdown();
 
 	//Using Adobe Dialog Manager (ADM)
- //	if (inAboutRec != NULL && inAboutRec->sSPBasic != NULL)
- //  {
- //     ADMBasicSuite6* basicSuite = NULL;
- //       
- //		inAboutRec->sSPBasic->AcquireSuite (kADMBasicSuite, kADMBasicSuiteVersion6, (const void**) &basicSuite);
+ 	if (inAboutRec != NULL && inAboutRec->sSPBasic != NULL)
+   {
+      ADMBasicSuite6* basicSuite = NULL;
+        
+ 		inAboutRec->sSPBasic->AcquireSuite (kADMBasicSuite, kADMBasicSuiteVersion6, (const void**) &basicSuite);
 
- //       if (basicSuite != NULL)
- //       {                      
- //           basicSuite->MessageAlert ("Nvidia texture tool\n\n"
- //                                     "Plug-in by Ignacio Castaño, Javier Cantón\n"
- //                                     "www.nvidia.com");
+        if (basicSuite != NULL)
+        {                      
+            basicSuite->MessageAlert ("Nvidia texture tool\n\n"
+                                      "Plug-in by Ignacio Castaño, Javier Cantón\n"
+                                      "www.nvidia.com");
 
- //           inAboutRec->sSPBasic->ReleaseSuite (kADMBasicSuite, kADMBasicSuiteVersion6);
- //           basicSuite = NULL;
- //       }
- //   }
+            inAboutRec->sSPBasic->ReleaseSuite (kADMBasicSuite, kADMBasicSuiteVersion6);
+            basicSuite = NULL;
+        }
+    }
 }
 
 //-------------------------------------------------------------------------------

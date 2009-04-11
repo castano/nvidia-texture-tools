@@ -93,6 +93,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copy Files to photoshop plugins folder"
+				CommandLine="copy $(OutDir)\PSNvidiaPlugin.8bi &quot;C:\Program Files\Adobe\Adobe Photoshop CS2\Plug-Ins\File Formats&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -171,6 +173,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copy Files to photoshop plugins folder"
+				CommandLine="copy PSNvidiaPlugin.8bi &quot;C:\Program Files\Adobe\Adobe Photoshop CS2\Plug-Ins\File Formats&quot;"
 			/>
 		</Configuration>
 	</Configurations>
