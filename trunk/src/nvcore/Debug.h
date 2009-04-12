@@ -115,6 +115,7 @@ namespace nv
 	{
 		NVCORE_API void dumpInfo();
 	
+		// These functions are not thread safe.
 		NVCORE_API void setMessageHandler( MessageHandler * messageHandler );
 		NVCORE_API void resetMessageHandler();
 	
