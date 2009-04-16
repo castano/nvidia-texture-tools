@@ -681,10 +681,17 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 	nvCheck((gmask & amask) == 0);
 	nvCheck((bmask & amask) == 0);
 
-	this->pf.flags = DDPF_RGB;
-
-	if (amask != 0) {
-		this->pf.flags |= DDPF_ALPHAPIXELS;
+	if (rmask != 0 || gmask != 0 || bmask != 0)
+	{
+		this->pf.flags = DDPF_RGB;
+		
+		if (amask != 0) {
+			this->pf.flags |= DDPF_ALPHAPIXELS;
+		}
+	}
+	else if (amask != 0)
+	{
+		this->pf.flags |= DDPF_ALPHA;
 	}
 
 	if (bitcount == 0)
@@ -724,6 +731,12 @@ void DDSHeader::setNormalFlag(bool b)
 {
 	if (b) this->pf.flags |= DDPF_NORMAL;
 	else this->pf.flags &= ~DDPF_NORMAL;
+}
+
+void DDSHeader::setHasAlphaFlag(bool b)
+{
+	if (b) this->pf.flags |= DDPF_ALPHAPIXELS;
+	else this->pf.flags &= ~DDPF_ALPHAPIXELS;
 }
 
 void DDSHeader::swapBytes()
@@ -883,7 +896,7 @@ bool DirectDrawSurface::hasAlpha() const
 {
 	if (header.hasDX10Header())
 	{
-		// @@ TODO: Update with all formats.
+#pragma message(NV_FILE_LINE "Update hasAlpha to handle all DX10 formats.")
 		return 
 			header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM ||
 			header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
@@ -906,6 +919,7 @@ bool DirectDrawSurface::hasAlpha() const
 			}
 			else
 			{
+				// @@ Here we could check the ALPHA_PIXELS flag, but nobody sets it.
 				return true;
 			}
 		}
@@ -990,6 +1004,13 @@ void DirectDrawSurface::setNormalFlag(bool b)
 	nvDebugCheck(isValid());
 	header.setNormalFlag(b);
 }
+
+void DirectDrawSurface::setHasAlphaFlag(bool b)
+{
+	nvDebugCheck(isValid());
+	header.setHasAlphaFlag(b);
+}
+
 
 void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 {

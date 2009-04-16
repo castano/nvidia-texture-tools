@@ -414,6 +414,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 			{
 				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
 					header.setDX10Format(71);
+					if (compressionOptions.format == Format_DXT1a) header.setHasAlphaFlag(true);
 					if (inputOptions.isNormalMap) header.setNormalFlag(true);
 				}
 				else if (compressionOptions.format == Format_DXT3) {
