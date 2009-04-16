@@ -62,7 +62,7 @@ void ColorBlock::init(const Image * img, uint x, uint y)
 	nvDebugCheck(bw != 0);
 	nvDebugCheck(bh != 0);
 
-	static int remainder[] = {
+	static const int remainder[] = {
 		0, 0, 0, 0,
 		0, 1, 0, 1,
 		0, 1, 2, 0,
