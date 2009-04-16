@@ -878,6 +878,10 @@
 				RelativePath="..\..\..\src\nvtt\QuickCompressDXT.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\Texture.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -946,6 +950,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\Texture.h"
 				>
 			</File>
 		</Filter>

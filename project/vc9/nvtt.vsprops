@@ -18,7 +18,7 @@
 	/>
 	<UserMacro
 		Name="GnuWinDir"
-		Value="$(SolutionDir)..\..\extern\gnuwin"
+		Value="$(SolutionDir)..\..\extern\gnuwin32"
 	/>
 	<UserMacro
 		Name="FreeImageDir"
