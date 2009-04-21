@@ -291,11 +291,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvcore\FileSystem.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvcore\Library.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvcore\Memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\RefCounted.cpp"
 				>
 			</File>
 			<File
@@ -333,6 +341,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvcore\FileSystem.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvcore\Library.h"
 				>
 			</File>
@@ -350,6 +362,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvcore\Ptr.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvcore\RefCounted.h"
 				>
 			</File>
 			<File
