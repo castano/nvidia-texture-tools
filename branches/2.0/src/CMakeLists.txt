@@ -105,7 +105,8 @@ ENDIF(OPENEXR_FOUND)
 FIND_PACKAGE(Qt4)
 
 # Threads
-FIND_PACKAGE(Threads)
+FIND_PACKAGE(Threads REQUIRED)
+MESSAGE(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
 
 # configuration file
 INCLUDE(CheckIncludeFiles)
