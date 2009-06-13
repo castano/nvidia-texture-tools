@@ -87,7 +87,10 @@ struct MyErrorHandler : public nvtt::ErrorHandler
 {
 	virtual void error(nvtt::Error e)
 	{
+#if _DEBUG
 		nvDebugBreak();
+#endif
+		printf("Error: '%s'\n", nvtt::errorString(e));
 	}
 };
 
@@ -254,7 +257,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
+	const uint version = nvtt::version();
+	const uint major = version / 100;
+	const uint minor = version % 100;
+	
+
+	printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor);
 
 	if (input.isNull())
 	{
@@ -430,27 +438,12 @@ int main(int argc, char *argv[])
 //	fflush(stdout);
 //	getchar();
 
-/*	LARGE_INTEGER temp;
-	QueryPerformanceFrequency((LARGE_INTEGER*) &temp);
-	double freq = ((double) temp.QuadPart) / 1000.0;
-
-    LARGE_INTEGER start_time;
-    QueryPerformanceCounter((LARGE_INTEGER*) &start_time);
-*/
 	clock_t start = clock();
 	
 	if (!compressor.process(inputOptions, compressionOptions, outputOptions))
 	{
 		return EXIT_FAILURE;
 	}
-	
-/*
-	LARGE_INTEGER end_time;
-	QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
-
-	float diff_time = (float) (((double) end_time.QuadPart - (double) start_time.QuadPart) / freq);
-	printf("\rtime taken: %.3f seconds\n", diff_time/1000);
-*/
 
 	clock_t end = clock();
 	printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
