@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
 		printf("  -bc4     \tBC4 format (ATI1)\n");
 		printf("  -bc5     \tBC5 format (3Dc/ATI2)\n\n");
 		
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	// @@ Make sure input file exists.
@@ -296,13 +296,13 @@ int main(int argc, char *argv[])
 		if (!dds.isValid())
 		{
 			fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
-			return 1;
+			return EXIT_FAILURE;
 		}
 		
 		if (!dds.isSupported() || dds.isTexture3D())
 		{
 			fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
-			return 1;
+			return EXIT_FAILURE;
 		}
 		
 		uint faceCount;
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
 		if (!image.load(input))
 		{
 			fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
-			return 1;
+			return EXIT_FAILURE;
 		}
 		
 		inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
@@ -402,7 +402,7 @@ int main(int argc, char *argv[])
 	if (outputHandler.stream->isError())
 	{
 		fprintf(stderr, "Error opening '%s' for writting\n", output.str());
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	nvtt::Compressor compressor;
@@ -439,7 +439,11 @@ int main(int argc, char *argv[])
 */
 	clock_t start = clock();
 	
-	compressor.process(inputOptions, compressionOptions, outputOptions);
+	if (!compressor.process(inputOptions, compressionOptions, outputOptions))
+	{
+		return EXIT_FAILURE;
+	}
+	
 /*
 	LARGE_INTEGER end_time;
 	QueryPerformanceCounter((LARGE_INTEGER*) &end_time);
@@ -451,6 +455,6 @@ int main(int argc, char *argv[])
 	clock_t end = clock();
 	printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 	
-	return 0;
+	return EXIT_SUCCESS;
 }
 
