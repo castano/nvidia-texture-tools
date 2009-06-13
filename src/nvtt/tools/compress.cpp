@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
 		printf("  -silent  \tDo not output progress messages\n");
 		printf("  -dds10   \tUse DirectX 10 DDS format\n\n");
 
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	// Make sure input file exists.
@@ -347,13 +347,13 @@ int main(int argc, char *argv[])
 		if (!dds.isValid())
 		{
 			fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
-			return 1;
+			return EXIT_FAILURE;
 		}
 		
 		if (!dds.isSupported() || dds.isTexture3D())
 		{
 			fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
-			return 1;
+			return EXIT_FAILURE;
 		}
 		
 		uint faceCount;
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
 			if (image == NULL)
 			{
 				fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
-				return 1;
+				return EXIT_FAILURE;
 			}
 			
 			inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
@@ -503,7 +503,7 @@ int main(int argc, char *argv[])
 	if (outputHandler.stream->isError())
 	{
 		fprintf(stderr, "Error opening '%s' for writting\n", output.str());
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	nvtt::Context context;
@@ -539,13 +539,13 @@ int main(int argc, char *argv[])
 	Timer timer;
 	timer.start();
 	
-	bool success = context.process(inputOptions, compressionOptions, outputOptions);
-
-	if (success)
+	if (!context.process(inputOptions, compressionOptions, outputOptions))
 	{
-		printf("\rtime taken: %.3f seconds\n", float(timer.elapsed()) / 1000.0f);
+		return EXIT_FAILURE;
 	}
+
+	printf("\rtime taken: %.3f seconds\n", float(timer.elapsed()) / 1000.0f);
 	
-	return 0;
+	return EXIT_SUCCESS;
 }
 
