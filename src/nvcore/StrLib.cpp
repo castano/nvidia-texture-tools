@@ -545,8 +545,6 @@ const char * Path::extension(const char * str)
 }
 
 
-// static
-String String::s_null(String::null);
 
 /// Clone this string
 String String::clone() const
@@ -557,13 +555,13 @@ String String::clone() const
 
 void String::setString(const char * str)
 {
-	if( str == NULL ) {
-		data = s_null.data;
+	if (str == NULL) {
+		data = NULL;
 	}
 	else {
 		allocString( str );
+		addRef();
 	}
-	addRef();
 }
 
 void String::setString(const char * str, int length)
@@ -576,11 +574,11 @@ void String::setString(const char * str, int length)
 
 void String::setString(const StringBuilder & str)
 {
-	if( str.str() == NULL ) {
-		data = s_null.data;
+	if (str.str() == NULL) {
+		data =	NULL;
 	}
 	else {
 		allocString(str);
+		addRef();
 	}
-	addRef();
 }	

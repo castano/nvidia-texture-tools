@@ -151,15 +151,14 @@ namespace nv
 		/// Constructs a null string. @sa isNull()
 		String()
 		{
-			data = s_null.data;
-			addRef();
+			data = NULL;
 		}
 
 		/// Constructs a shared copy of str.
 		String(const String & str)
 		{
 			data = str.data;
-			addRef();
+			if (data != NULL) addRef();
 		}
 
 		/// Constructs a shared string from a standard string.
@@ -256,7 +255,7 @@ namespace nv
 		}
 	
 		/// Returns true if this string is the null string.
-		bool isNull() const { nvDebugCheck(data != NULL); return data == s_null.data; }
+		bool isNull() const { return data == NULL; }
 	
 		/// Return the exact length.
 		uint length() const { nvDebugCheck(data != NULL); return uint(strlen(data)); }
@@ -265,44 +264,45 @@ namespace nv
 		uint hash() const { nvDebugCheck(data != NULL); return strHash(data); }
 	
 		/// const char * cast operator.
-		operator const char * () const { nvDebugCheck(data != NULL); return data; }
+		operator const char * () const { return data; }
 	
 		/// Get string pointer.
-		const char * str() const { nvDebugCheck(data != NULL); return data; }
+		const char * str() const { return data; }
 	
 
 	private:
 
-		enum null_t { null };
-		
-		// Private constructor for null string.
-		String(null_t) {
-			setString("");
-		}
-
 		// Add reference count.
-		void addRef() {
-			nvDebugCheck(data != NULL);
-			setRefCount(getRefCount() + 1);
-		}
-		
-		// Decrease reference count.
-		void release() {
-			nvDebugCheck(data != NULL);
-
-			const uint16 count = getRefCount();
-			setRefCount(count - 1);
-			if( count - 1 == 0 ) {
-				mem::free(data - 2);
-				data = NULL;
+		void addRef()
+		{
+			if (data != NULL)
+			{
+				setRefCount(getRefCount() + 1);
 			}
 		}
 		
-		uint16 getRefCount() const {
+		// Decrease reference count.
+		void release()
+		{
+			if (data != NULL)
+			{
+				const uint16 count = getRefCount();
+				setRefCount(count - 1);
+				if (count - 1 == 0) {
+					mem::free(data - 2);
+					data = NULL;
+				}
+			}
+		}
+		
+		uint16 getRefCount() const
+		{
+			nvDebugCheck(data != NULL);
 			return *reinterpret_cast<const uint16 *>(data - 2);
 		}
 		
 		void setRefCount(uint16 count) {
+			nvDebugCheck(data != NULL);
 			nvCheck(count < 0xFFFF);
 			*reinterpret_cast<uint16 *>(const_cast<char *>(data - 2)) = uint16(count);
 		}
@@ -340,8 +340,6 @@ namespace nv
 		}
 	
 	private:
-
-		NVCORE_API static String s_null;
 
 		const char * data;
 		
