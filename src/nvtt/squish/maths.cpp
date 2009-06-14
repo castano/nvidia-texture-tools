@@ -94,7 +94,8 @@ Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 	const int NUM = 8;
 
 	Vec3 v(1, 1, 1);
-	for (int i = 0; i < POWER_ITERATION_COUNT; i++) {
+	for (int i = 0; i < POWER_ITERATION_COUNT; i++)
+	{
 		float x = v.X() * matrix[0] + v.Y() * matrix[1] + v.Z() * matrix[2];
 		float y = v.X() * matrix[1] + v.Y() * matrix[3] + v.Z() * matrix[4];
 		float z = v.X() * matrix[2] + v.Y() * matrix[4] + v.Z() * matrix[5];
