@@ -91,8 +91,6 @@ Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 
 Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 {
-	const int NUM = 8;
-
 	Vec3 v(1, 1, 1);
 	for (int i = 0; i < POWER_ITERATION_COUNT; i++)
 	{
