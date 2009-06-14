@@ -1,6 +1,7 @@
 NVIDIA Texture Tools version 2.0.7
  * Output correct exit codes. Fixes issue 92.
  * Fix thread-safety errors. Fixes issue 90.
+ * Add SIMD power method. Fixes issue 94.
 
 NVIDIA Texture Tools version 2.0.6
  * Fix dll version checking.
