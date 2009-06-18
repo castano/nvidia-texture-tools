@@ -1,6 +1,6 @@
 #summary High Quality DXT Compression Techniques
 
-Charles Bloom provides [http://cbloomrants.blogspot.com/2009/06/06-17-09-dxtc-more-followup.html a summary of some of this techniques].
+Charles Bloom compares [http://cbloomrants.blogspot.com/2009/06/06-17-09-dxtc-more-followup.html some of these techniques] in more detail.
 
 
 === YCoCg-DXT5 ===
