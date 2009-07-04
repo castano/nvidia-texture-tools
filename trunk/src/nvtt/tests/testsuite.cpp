@@ -105,17 +105,42 @@ static const char * s_farbrauschImageSet[] = {
 	"t.yello.01.bmp",
 };
 
+// Lugaru
+static const char * s_lugaruImageSet[] = {
+	"lugaru-blood.png",
+	"lugaru-bush.png",
+	"lugaru-cursor.png",
+	"lugaru-hawk.png",
+};
+
+// Quake3
+static const char * s_quake3ImageSet[] = {
+	"q3-blocks15cgeomtrn.tga",
+	"q3-blocks17bloody.tga",
+	"q3-dark_tin2.tga",
+	"q3-fan_grate.tga",
+	"q3-fan.tga",
+	"q3-metal2_2.tga",
+	"q3-panel_glo.tga",
+	"q3-proto_fence.tga",
+	"q3-wires02.tga",
+};
+
+
 struct ImageSet
 {
 	const char ** fileNames;
 	int fileCount;
+	nvtt::Format format;
 };
 
 static ImageSet s_imageSets[] = {
-	{s_kodakImageSet, sizeof(s_kodakImageSet)/sizeof(s_kodakImageSet[0])},
-	{s_waterlooImageSet, sizeof(s_waterlooImageSet)/sizeof(s_waterlooImageSet[0])},
-	{s_epicImageSet, sizeof(s_epicImageSet)/sizeof(s_epicImageSet[0])},
-	{s_farbrauschImageSet, sizeof(s_farbrauschImageSet)/sizeof(s_farbrauschImageSet[0])},
+	{s_kodakImageSet, sizeof(s_kodakImageSet)/sizeof(s_kodakImageSet[0]), nvtt::Format_DXT1},
+	{s_waterlooImageSet, sizeof(s_waterlooImageSet)/sizeof(s_waterlooImageSet[0]), nvtt::Format_DXT1},
+	{s_epicImageSet, sizeof(s_epicImageSet)/sizeof(s_epicImageSet[0]), nvtt::Format_DXT1},
+	{s_farbrauschImageSet, sizeof(s_farbrauschImageSet)/sizeof(s_farbrauschImageSet[0]), nvtt::Format_DXT1},
+	{s_lugaruImageSet, sizeof(s_lugaruImageSet)/sizeof(s_lugaruImageSet[0]), nvtt::Format_DXT5},
+	{s_quake3ImageSet, sizeof(s_quake3ImageSet)/sizeof(s_quake3ImageSet[0]), nvtt::Format_DXT5},
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
@@ -341,6 +366,9 @@ int main(int argc, char *argv[])
 	{
 		compressionOptions.setQuality(nvtt::Quality_Production);
 	}
+
+	compressionOptions.setFormat(s_imageSets[set].format);
+
 
 	nvtt::OutputOptions outputOptions;
 	outputOptions.setOutputHeader(false);
