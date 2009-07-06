@@ -182,7 +182,6 @@ namespace nv
 		/// Dtor.
 		~String()
 		{
-			nvDebugCheck(data != NULL);
 			release();
 		}
 
@@ -219,10 +218,11 @@ namespace nv
 		/// Equal operator.
 		bool operator==( const String & str ) const
 		{
-			nvDebugCheck(data != NULL);
-			nvDebugCheck(str.data != NULL);
 			if( str.data == data ) {
 				return true;
+			}
+			if ((data == NULL) != (str.data == NULL)) {
+				return false;
 			}
 			return strcmp(data, str.data) == 0;
 		}
@@ -230,18 +230,21 @@ namespace nv
 		/// Equal operator.
 		bool operator==( const char * str ) const
 		{
-			nvDebugCheck(data != NULL);
 			nvCheck(str != NULL);	// Use isNull!
+			if (data == NULL) {
+				return false;
+			}
 			return strcmp(data, str) == 0;
 		}
 
 		/// Not equal operator.
 		bool operator!=( const String & str ) const
 		{
-			nvDebugCheck(data != NULL);
-			nvDebugCheck(str.data != NULL);
 			if( str.data == data ) {
 				return false;
+			}
+			if ((data == NULL) != (str.data == NULL)) {
+				return true;
 			}
 			return strcmp(data, str.data) != 0;
 		}
@@ -249,8 +252,10 @@ namespace nv
 		/// Not equal operator.
 		bool operator!=( const char * str ) const
 		{
-			nvDebugCheck(data != NULL);
 			nvCheck(str != NULL);	// Use isNull!
+			if (data == NULL) {
+				return false;
+			}
 			return strcmp(data, str) != 0;
 		}
 	
