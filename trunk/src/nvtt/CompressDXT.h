@@ -79,10 +79,19 @@ namespace nv
 	
 #if defined(HAVE_ATITC)
 	void atiCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+	void atiCompressDXT5(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 #endif
 
 #if defined(HAVE_SQUISH)
 	void squishCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+#endif
+
+#if defined(HAVE_D3DX)
+	void d3dxCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
+#endif
+
+#if defined(HAVE_D3DX)
+	void stbCompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions);
 #endif
 
 } // nv namespace

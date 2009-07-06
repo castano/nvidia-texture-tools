@@ -1020,6 +1020,22 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 			else
 #endif
 
+#if defined(HAVE_D3DX)
+			if (compressionOptions.externalCompressor == "d3dx")
+			{
+				d3dxCompressDXT1(image, outputOptions);
+			}
+			else
+#endif
+
+#if defined(HAVE_D3DX)
+			if (compressionOptions.externalCompressor == "stb")
+			{
+				stbCompressDXT1(image, outputOptions);
+			}
+			else
+#endif
+
 			if (compressionOptions.quality == Quality_Fastest)
 			{
 				fast.compressDXT1(outputOptions);
@@ -1030,8 +1046,8 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 				{
 					nvDebugCheck(cudaSupported);
 					cuda->setImage(image, inputOptions.alphaMode);
+					//cuda->compressDXT1(compressionOptions, outputOptions);
 					cuda->compressDXT1(compressionOptions, outputOptions);
-					//cuda->compressDXT1_Tex(compressionOptions, outputOptions);
 				}
 				else
 				{
@@ -1093,6 +1109,13 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		}
 		else if (compressionOptions.format == Format_DXT5)
 		{
+#if defined(HAVE_ATITC)
+			if (compressionOptions.externalCompressor == "ati")
+			{
+				atiCompressDXT5(image, outputOptions);
+			}
+			else
+#endif
 			if (compressionOptions.quality == Quality_Fastest)
 			{
 				fast.compressDXT5(outputOptions);
