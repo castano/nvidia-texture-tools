@@ -525,7 +525,7 @@ bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image *
 		//FreeImage_SetMetadata(
 	}
 
-	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0);
+	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0) != 0;
 
 	FreeImage_Unload(bitmap);
 
@@ -574,7 +574,7 @@ bool nv::ImageIO::saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Fl
 		}
 	}
 
-	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0);
+	bool result = FreeImage_SaveToHandle(fif, bitmap, &io, (fi_handle)&s, 0) != 0;
 
 	FreeImage_Unload(bitmap);
 
