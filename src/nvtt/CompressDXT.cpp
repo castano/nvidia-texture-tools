@@ -43,17 +43,32 @@
 
 // s3_quant
 #if defined(HAVE_S3QUANT)
-#include "extern/s3tc/s3_quant.h"
+#include "s3tc/s3_quant.h"
 #endif
 
 // ati tc
 #if defined(HAVE_ATITC)
-#include "extern/atitc/ATI_Compress.h"
+typedef int BOOL;
+typedef _W64 unsigned long ULONG_PTR;
+typedef ULONG_PTR DWORD_PTR;
+#include "atitc/ATI_Compress.h"
 #endif
 
 // squish
 #if defined(HAVE_SQUISH)
-#include "extern/squish/squish.h"
+//#include "squish/squish.h"
+#include "squish-1.10/squish.h"
+#endif
+
+// d3dx
+#if defined(HAVE_D3DX)
+#include <d3dx9.h>
+#endif
+
+// stb
+#if defined(HAVE_STB)
+#define STB_DEFINE
+#include "stb/stb_dxt.h"
 #endif
 
 
@@ -293,11 +308,11 @@ void nv::SlowCompressor::compressDXT3(const CompressionOptions::Private & compre
 	nvsquish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
-    int flags = 0;
-    if (m_alphaMode == AlphaMode_Transparency)
-    {
-        flags = nvsquish::kWeightColourByAlpha;
-    }
+	int flags = 0;
+	if (m_alphaMode == AlphaMode_Transparency)
+	{
+		flags = nvsquish::kWeightColourByAlpha;
+	}
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
@@ -337,11 +352,11 @@ void nv::SlowCompressor::compressDXT5(const CompressionOptions::Private & compre
 	nvsquish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
-    int flags = 0;
-    if (m_alphaMode == AlphaMode_Transparency)
-    {
-        flags = nvsquish::kWeightColourByAlpha;
-    }
+	int flags = 0;
+	if (m_alphaMode == AlphaMode_Transparency)
+	{
+		flags = nvsquish::kWeightColourByAlpha;
+	}
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
@@ -498,7 +513,7 @@ void nv::SlowCompressor::compressBC5(const CompressionOptions::Private & compres
 
 #if defined(HAVE_S3QUANT)
 
-void nv::s3CompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
+void nv::s3CompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
 {
 	const uint w = image->width();
 	const uint h = image->height();
@@ -584,8 +599,6 @@ void nv::s3CompressDXT1(const Image * image, const nvtt::OutputOptions::Private 
 			}
 		}
 	}
-
-	printf("error = %f\n", error/((w+3)/4 * (h+3)/4));
 }
 
 #endif // defined(HAVE_S3QUANT)
@@ -621,6 +634,40 @@ void nv::atiCompressDXT1(const Image * image, const OutputOptions::Private & out
 	if (outputOptions.outputHandler != NULL) {
 		outputOptions.outputHandler->writeData(destTexture.pData, destTexture.dwDataSize);
 	}
+
+	mem::free(destTexture.pData);
+}
+
+void nv::atiCompressDXT5(const Image * image, const OutputOptions::Private & outputOptions)
+{
+	// Init source texture
+	ATI_TC_Texture srcTexture;
+	srcTexture.dwSize = sizeof(srcTexture);
+	srcTexture.dwWidth = image->width();
+	srcTexture.dwHeight = image->height();
+	srcTexture.dwPitch = image->width() * 4;
+	srcTexture.format = ATI_TC_FORMAT_ARGB_8888;
+	srcTexture.dwDataSize = ATI_TC_CalculateBufferSize(&srcTexture);
+	srcTexture.pData = (ATI_TC_BYTE*) image->pixels();
+
+	// Init dest texture
+	ATI_TC_Texture destTexture;
+	destTexture.dwSize = sizeof(destTexture);
+	destTexture.dwWidth = image->width();
+	destTexture.dwHeight = image->height();
+	destTexture.dwPitch = 0;
+	destTexture.format = ATI_TC_FORMAT_DXT5;
+	destTexture.dwDataSize = ATI_TC_CalculateBufferSize(&destTexture);
+	destTexture.pData = (ATI_TC_BYTE*) mem::malloc(destTexture.dwDataSize);
+
+	// Compress
+	ATI_TC_ConvertTexture(&srcTexture, &destTexture, NULL, NULL, NULL, NULL);
+
+	if (outputOptions.outputHandler != NULL) {
+		outputOptions.outputHandler->writeData(destTexture.pData, destTexture.dwDataSize);
+	}
+
+	mem::free(destTexture.pData);
 }
 
 #endif // defined(HAVE_ATITC)
@@ -638,13 +685,100 @@ void nv::squishCompressDXT1(const Image * image, const OutputOptions::Private & 
 	}
 
 	int size = squish::GetStorageRequirements(img.width(), img.height(), squish::kDxt1);
-	void * blocks = malloc(size);
+	void * blocks = mem::malloc(size);
 
 	squish::CompressImage((const squish::u8 *)img.pixels(), img.width(), img.height(), blocks, squish::kDxt1 | squish::kColourClusterFit);
 
 	if (outputOptions.outputHandler != NULL) {
 		outputOptions.outputHandler->writeData(blocks, size);
 	}
+
+	mem::free(blocks);
 }
 
 #endif // defined(HAVE_SQUISH)
+
+
+#if defined(HAVE_D3DX)
+
+void nv::d3dxCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
+{
+	IDirect3D9 * d3d = Direct3DCreate9(D3D_SDK_VERSION);
+
+	D3DPRESENT_PARAMETERS presentParams;
+	ZeroMemory(&presentParams, sizeof(presentParams));
+	presentParams.Windowed = TRUE;
+	presentParams.SwapEffect = D3DSWAPEFFECT_COPY;
+	presentParams.BackBufferWidth = 8;
+	presentParams.BackBufferHeight = 8;
+	presentParams.BackBufferFormat = D3DFMT_UNKNOWN;
+
+	HRESULT err;
+
+	IDirect3DDevice9 * device = NULL;
+	err = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, GetDesktopWindow(), D3DCREATE_SOFTWARE_VERTEXPROCESSING, &presentParams, &device);
+
+	IDirect3DTexture9 * texture = NULL;
+	err = D3DXCreateTexture(device, image->width(), image->height(), 1, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &texture);
+	
+	IDirect3DSurface9 * surface = NULL;
+	err = texture->GetSurfaceLevel(0, &surface);
+
+	RECT rect;
+	rect.left = 0; 
+	rect.top = 0; 
+	rect.bottom = image->height();
+	rect.right = image->width();
+
+	err = D3DXLoadSurfaceFromMemory(surface, NULL, NULL, image->pixels(), D3DFMT_A8R8G8B8, image->width() * sizeof(Color32), NULL, &rect, D3DX_DEFAULT, 0);
+
+	if (err != D3DERR_INVALIDCALL && err != D3DXERR_INVALIDDATA)
+	{
+		D3DLOCKED_RECT rect;
+		ZeroMemory(&rect, sizeof(rect));
+
+		err = surface->LockRect(&rect, NULL, D3DLOCK_READONLY);
+
+		if (outputOptions.outputHandler != NULL) {
+			int size = rect.Pitch * ((image->height() + 3) / 4);
+			outputOptions.outputHandler->writeData(rect.pBits, size);
+		}
+
+		err = surface->UnlockRect();
+	}
+
+	surface->Release();
+	device->Release();
+	d3d->Release();
+}
+
+#endif // defined(HAVE_D3DX)
+
+
+#if defined(HAVE_STB)
+
+void nv::stbCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
+{
+	const uint w = image->width();
+	const uint h = image->height();
+	
+	float error = 0.0f;
+
+	BlockDXT1 dxtBlock;
+	ColorBlock block;
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			block.init(image, x, y);
+			block.swizzleSTB();
+
+			stb_compress_dxt_block((unsigned char *)&dxtBlock, (unsigned char *)block.colors(), 0, 0);
+
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&dxtBlock, sizeof(dxtBlock));
+			}
+		}
+	}
+}
+
+#endif // defined(HAVE_STB)
