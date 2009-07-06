@@ -93,6 +93,15 @@ void ColorBlock::swizzleDXT5n()
 	}
 }
 
+void ColorBlock::swizzleSTB()
+{
+	for(int i = 0; i < 16; i++)
+	{
+		Color32 c = m_color[i];
+		m_color[i] = Color32(c.b, c.g, c.r, c.a);
+	}
+}
+
 void ColorBlock::splatX()
 {
 	for(int i = 0; i < 16; i++)

@@ -20,6 +20,7 @@ namespace nv
 		void init(const Image * img, uint x, uint y);
 		
 		void swizzleDXT5n();
+		void swizzleSTB();
 		void splatX();
 		void splatY();
 		
