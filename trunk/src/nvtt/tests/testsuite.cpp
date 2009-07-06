@@ -32,10 +32,10 @@
 #include <nvcore/StdStream.h>
 #include <nvcore/TextWriter.h>
 #include <nvcore/FileSystem.h>
+#include <nvcore/Timer.h>
 
 #include <stdlib.h> // free
 #include <string.h> // memcpy
-#include <time.h> // clock
 
 
 using namespace nv;
@@ -216,6 +216,40 @@ struct MyOutputHandler : public nvtt::OutputHandler
 				}
 			}
 		}
+		else if (format == nvtt::Format_BC3)
+		{
+			BlockDXT5 * block = (BlockDXT5 *)m_data;
+
+			for (int y = 0; y < bh; y++)
+			{
+				for (int x = 0; x < bw; x++)
+				{
+					ColorBlock colors;
+					if (decoder == Decoder_Reference) {
+						block->decodeBlock(&colors);
+					}
+					else if (decoder == Decoder_NVIDIA) {
+						block->decodeBlockNV5x(&colors);
+					}
+
+					for (int yy = 0; yy < 4; yy++)
+					{
+						for (int xx = 0; xx < 4; xx++)
+						{
+							Color32 c = colors.color(xx, yy);
+
+							if (x * 4 + xx < m_width && y * 4 + yy < m_height)
+							{
+								img->pixel(x * 4 + xx, y * 4 + yy) = c;
+							}
+						}
+					}
+
+					block++;
+				}
+			}
+		}
+
 
 		return img.release();
 	}
@@ -235,7 +269,7 @@ float rmsError(const Image * a, const Image * b)
 	nvCheck(a->width() == b->width());
 	nvCheck(a->height() == b->height());
 
-	int mse = 0;
+	double mse = 0;
 
 	const uint count = a->width() * a->height();
 
@@ -247,14 +281,14 @@ float rmsError(const Image * a, const Image * b)
 		int r = c0.r - c1.r;
 		int g = c0.g - c1.g;
 		int b = c0.b - c1.b;
-		//int a = c0.a - c1.a;
+		int a = c0.a - c1.a;
 
-		mse += r * r;
-		mse += g * g;
-		mse += b * b;
+		mse += double(r * r * c0.a) / 255;
+		mse += double(g * g * c0.a) / 255;
+		mse += double(b * b * c0.a) / 255;
 	}
 
-	return sqrtf(float(mse) / count);
+	return float(sqrt(mse / count));
 }
 
 
@@ -355,6 +389,7 @@ int main(int argc, char *argv[])
 	
 	nvtt::InputOptions inputOptions;
 	inputOptions.setMipmapGeneration(false);
+	inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(nvtt::Format_BC1);
@@ -366,6 +401,10 @@ int main(int argc, char *argv[])
 	{
 		compressionOptions.setQuality(nvtt::Quality_Production);
 	}
+	//compressionOptions.setExternalCompressor("ati");
+	//compressionOptions.setExternalCompressor("squish");
+	//compressionOptions.setExternalCompressor("d3dx");
+	//compressionOptions.setExternalCompressor("stb");
 
 	compressionOptions.setFormat(s_imageSets[set].format);
 
@@ -395,6 +434,8 @@ int main(int argc, char *argv[])
 	const char ** fileNames = s_imageSets[set].fileNames;
 	int fileCount = s_imageSets[set].fileCount;
 
+	Timer timer;
+
 	for (int i = 0; i < fileCount; i++)
 	{
 		AutoPtr<Image> img( new Image() );
@@ -410,15 +451,15 @@ int main(int argc, char *argv[])
 
 		printf("Compressing: \t'%s'\n", fileNames[i]);
 
-		clock_t start = clock();
+		timer.start();
 
 		context.process(inputOptions, compressionOptions, outputOptions);
 
-		clock_t end = clock();
-		printf("  Time: \t%.3f sec\n", float(end-start) / CLOCKS_PER_SEC);
-		totalTime += float(end-start);
+		timer.stop();
+		printf("  Time: \t%.3f sec\n", float(timer.elapsed()) / 1000);
+		totalTime += float(timer.elapsed()) / 1000;
 
-		AutoPtr<Image> img_out( outputHandler.decompress(nvtt::Format_BC1, decoder) );
+		AutoPtr<Image> img_out( outputHandler.decompress(s_imageSets[set].format, decoder) );
 
 		Path outputFileName;
 		outputFileName.format("%s/%s", outPath, fileNames[i]);
@@ -473,7 +514,7 @@ int main(int argc, char *argv[])
 	totalDiff /= fileCount;
 
 	printf("Total Results:\n");
-	printf("  Total Time: \t%.3f sec\n", totalTime / CLOCKS_PER_SEC);
+	printf("  Total Time: \t%.3f sec\n", totalTime);
 	printf("  Average RMSE:\t%.4f\n", totalRMSE);
 
 	if (regressPath != NULL)
