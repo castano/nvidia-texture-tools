@@ -58,7 +58,10 @@ namespace nvtt
 		}
 		~Private()
 		{
-			// @@ Free images.
+			const uint count = imageArray.count();
+			for (uint i = 0; i < count; i++) {
+				delete imageArray[i];
+			}
 		}
 
 		TextureType type;

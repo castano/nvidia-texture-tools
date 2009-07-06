@@ -92,6 +92,7 @@ namespace nvtt
 
 		Format_DXT1n,
 		Format_CTX1,
+		Format_YCoCg_DXT5,
 	};
 
 	/// Pixel types.
@@ -297,7 +298,7 @@ namespace nvtt
 		Error_CudaError,
   		Error_FileOpen,
   		Error_FileWrite,
-        Error_UnsupportedOutputFormat,
+		Error_UnsupportedOutputFormat,
 	};
 	
 	/// Error handler.
@@ -367,6 +368,13 @@ namespace nvtt
 	typedef Compressor Context;
 
 	
+	/// DXT decoder.
+	enum Decoder
+	{
+		Decoder_Reference,
+		Decoder_NV5x,
+	};
+
 	/// A texture mipmap.
 	struct TexImage
 	{
@@ -394,8 +402,10 @@ namespace nvtt
 
 		// Texture data.
 		NVTT_API bool load(const char * fileName);
+		NVTT_API bool save(const char * fileName) const;
 		NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * data);
 		NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * r, const void * g, const void * b, const void * a);
+		NVTT_API bool setImage2D(Format format, Decoder decoder, int w, int h, int idx, const void * data);
 
 		// Resizing methods.
 		NVTT_API void resize(int w, int h, ResizeFilter filter);
@@ -420,7 +430,13 @@ namespace nvtt
 		NVTT_API void normalizeNormalMap();
 
 		// Compress.
-		NVTT_API void outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
+		//NVTT_API void outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
+
+		// Error compare.
+		NVTT_API float rootMeanSquaredError_rgb(const TexImage & reference) const;
+		NVTT_API float rootMeanSquaredError_alpha(const TexImage & reference) const;
+		NVTT_API float structuralSimilarityError_rgb(const TexImage & reference) const;
+		NVTT_API float structuralSimilarityError_alpha(const TexImage & reference) const;
 
 	private:
 		void detach();
