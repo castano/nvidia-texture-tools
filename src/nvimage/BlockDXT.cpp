@@ -213,7 +213,6 @@ void BlockDXT1::decodeBlockNV5x(ColorBlock * block) const
 
 	// Decode color block.
 	Color32 color_array[4];
-	evaluatePalette(color_array);
 	evaluatePaletteNV5x(color_array);
 
 	// Write color block.
@@ -444,7 +443,17 @@ void BlockDXT5::decodeBlock(ColorBlock * block) const
 	
 	// Decode alpha.
 	alpha.decodeBlock(block);
+}
 
+void BlockDXT5::decodeBlockNV5x(ColorBlock * block) const
+{
+	nvDebugCheck(block != NULL);
+	
+	// Decode color.
+	color.decodeBlockNV5x(block);
+	
+	// Decode alpha.
+	alpha.decodeBlock(block);
 }
 
 /// Flip DXT5 block vertically.
