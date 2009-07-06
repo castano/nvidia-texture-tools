@@ -280,15 +280,6 @@ void ClusterFit::Compress4( void* block )
 					m_beta[k] = m_weights[k];
 				}
 
-				/*unsigned int permutation = 0;
-				for(int p = 0; p < 16; p++) {
-					permutation |= indices[p] << (p * 2);
-				}
-				if (debug) printf("%X:\t", permutation);
-
-				if (debug && permutation == 0x55FFFFAA) __debugbreak();
-				*/
-
 				// solve a least squares problem to place the endpoints
 #if SQUISH_USE_SIMD
 				Vec4 start, end;
