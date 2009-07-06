@@ -56,8 +56,246 @@ texture<uchar4, 2, cudaReadModeNormalizedFloat> tex;
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Color helpers
+////////////////////////////////////////////////////////////////////////////////
+
+__device__ inline uint float_to_u8(float value)
+{
+    return min(max(__float2int_rn((255 * value + 0.5f) / (1.0f + 1.0f/255.0f)), 0), 255);
+}
+
+__device__ inline uint float_to_u6(float value)
+{
+    return min(max(__float2int_rn((63 * value + 0.5f) / (1.0f + 1.0f/63.0f)), 0), 63);
+}
+
+__device__ inline uint float_to_u5(float value)
+{
+    return min(max(__float2int_rn((31 * value + 0.5f) / (1.0f + 1.0f/31.0f)), 0), 31);
+}
+
+__device__ inline float u8_to_float(uint value)
+{
+    return __saturatef(__uint2float_rn(value) / 255.0f);
+    //return (value) / 255.0f;
+}
+
+__device__ float3 color32ToFloat3(uint c)
+{
+    float3 color;
+	color.z = u8_to_float((c >> 0) & 0xFF);
+	color.y = u8_to_float((c >> 8) & 0xFF);
+	color.x = u8_to_float((c >> 16) & 0xFF);
+    return color;
+}
+
+__device__ int3 color16ToInt3(ushort c)
+{
+    int3 color;
+
+    color.z = ((c >> 0) & 0x1F);
+    color.z = (color.z << 3) | (color.z >> 2);
+
+    color.y = ((c >> 5) & 0x3F);
+    color.y = (color.y << 2) | (color.y >> 4);
+
+    color.x = ((c >> 11) & 0x1F);
+    color.x = (color.x << 3) | (color.x >> 2);
+    
+    return color;
+}
+
+__device__ float3 color16ToFloat3(ushort c)
+{
+    int3 color = color16ToInt3(c);
+    return make_float3(color.x, color.y, color.z) * (1.0f / 255.0f);
+}
+
+__device__ int3 float3ToInt3(float3 c)
+{
+    return make_int3(c.x * 255, c.y * 255, c.z * 255);
+}
+
+__device__ float3 int3ToFloat3(int3 c)
+{
+    return make_float3(float_to_u8(c.x), float_to_u8(c.y), float_to_u8(c.z));
+}
+
+
+__device__ int colorDistance(int3 c0, int3 c1)
+{
+    int dx = c0.x-c1.x;
+    int dy = c0.y-c1.y;
+    int dz = c0.z-c1.z;
+    return __mul24(dx, dx) + __mul24(dy, dy) + __mul24(dz, dz);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Round color to RGB565 and expand
+////////////////////////////////////////////////////////////////////////////////
+
+
+#if 0
+__device__ inline uint float_to_u8(float value)
+{
+    //uint result;
+    //asm("cvt.sat.rni.u8.f32 %0, %1;" : "=r" (result) : "f" (value));
+    //return result;
+    //return __float2uint_rn(__saturatef(value) * 255.0f);
+    
+    int result = __float2int_rn((255 * value + 0.5f) / (1.0f + 1.0f/255.0f));
+    result = max(result, 0);
+    result = min(result, 255);
+    return result;
+}
+
+__device__ inline float u8_to_float(uint value)
+{
+    //float result;
+    //asm("cvt.sat.rn.f32.u8 %0, %1;" : "=f" (result) : "r" (value)); // this is wrong!
+    //return result;
+    return __saturatef(__uint2float_rn(value) / 255.0f);
+}
+
+inline __device__ float3 roundAndExpand565(float3 v, ushort * w)
+{
+	uint x = float_to_u8(v.x) >> 3;
+	uint y = float_to_u8(v.y) >> 2;
+	uint z = float_to_u8(v.z) >> 3;
+	*w = (x << 11) | (y << 5) | z;
+	v.x = u8_to_float((x << 3) | (x >> 2));
+	v.y = u8_to_float((y << 2) | (y >> 4));
+	v.z = u8_to_float((z << 3) | (z >> 2));
+//	v.x = u8_to_float(x) * 255.0f / 31.0f;
+//	v.y = u8_to_float(y) * 255.0f / 63.0f;
+//	v.z = u8_to_float(z) * 255.0f / 31.0f;
+	return v;
+}
+#else
+
+inline __device__ float3 roundAndExpand565(float3 v, ushort * w)
+{
+	uint x = __float2uint_rn(__saturatef(v.x) * 31.0f);
+	uint y = __float2uint_rn(__saturatef(v.y) * 63.0f);
+	uint z = __float2uint_rn(__saturatef(v.z) * 31.0f);
+
+	//uint x = float_to_u5(v.x);
+    //uint y = float_to_u6(v.y);
+    //uint z = float_to_u5(v.z);
+
+	*w = (x << 11) | (y << 5) | z;
+	
+    v.x = __uint2float_rn(x) * 1.0f / 31.0f;
+	v.y = __uint2float_rn(y) * 1.0f / 63.0f;
+	v.z = __uint2float_rn(z) * 1.0f / 31.0f;
+
+	//v.x = u8_to_float((x << 3) | (x >> 2));
+	//v.y = u8_to_float((y << 2) | (y >> 4));
+	//v.z = u8_to_float((z << 3) | (z >> 2));
+
+    return v;
+}
+#endif
+inline __device__ float2 roundAndExpand56(float2 v, ushort * w)
+{
+	uint x = __float2uint_rn(__saturatef(v.x) * 31.0f);
+	uint y = __float2uint_rn(__saturatef(v.y) * 63.0f);
+	*w = (x << 11) | (y << 5);
+	v.x = __uint2float_rn(x) * 1.0f / 31.0f;
+	v.y = __uint2float_rn(y) * 1.0f / 63.0f;
+	return v;
+}
+
+inline __device__ float2 roundAndExpand88(float2 v, ushort * w)
+{
+	uint x = __float2uint_rn(__saturatef(v.x) * 255.0f);
+	uint y = __float2uint_rn(__saturatef(v.y) * 255.0f);
+	*w = (x << 8) | y;
+	v.x = __uint2float_rn(x) * 1.0f / 255.0f;
+	v.y = __uint2float_rn(y) * 1.0f / 255.0f;
+	return v;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Block errors
+////////////////////////////////////////////////////////////////////////////////
+
+__device__ float3 blockError4(const float3 * colors, uint permutation, float3 a, float3 b)
+{
+    float3 error = make_float3(0.0f, 0.0f, 0.0f);
+
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
+
+		float beta = (bits & 1);
+		if (bits & 2) beta = (1 + beta) / 3.0f;
+		float alpha = 1.0f - beta;
+
+        float3 diff = colors[i] - (a*alpha + b*beta);
+
+        error += diff*diff;
+    }
+
+    return error;
+}
+
+__device__ float3 blockError4(const float3 * colors, uint permutation, ushort c0, ushort c1)
+{
+    float3 error = make_float3(0.0f, 0.0f, 0.0f);
+    
+    int3 color0 = color16ToInt3(c0);
+    int3 color1 = color16ToInt3(c1);
+
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
+
+		int beta = (bits & 1);
+		if (bits & 2) beta = (1 + beta);
+		float alpha = 3 - beta;
+
+        int3 color;
+        color.x = (color0.x * alpha + color1.x * beta) / 3;
+        color.y = (color0.y * alpha + color1.y * beta) / 3;
+        color.z = (color0.z * alpha + color1.z * beta) / 3;
+
+        float3 diff = colors[i] - int3ToFloat3(color);
+
+        error += diff*diff;
+    }
+
+    return error;
+}
+
+
+__device__ float3 blockError3(const float3 * colors, uint permutation, float3 a, float3 b)
+{
+    float3 error = make_float3(0.0f, 0.0f, 0.0f);
+
+	for (int i = 0; i < 16; i++)
+	{
+		const uint bits = permutation >> (2*i);
+
+		float beta = (bits & 1);
+		if (bits & 2) beta = 0.5f;
+		float alpha = 1.0f - beta;
+
+        float3 diff = colors[i] - (a*alpha + b*beta);
+
+        error += diff*diff;
+    }
+
+    return error;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Sort colors
 ////////////////////////////////////////////////////////////////////////////////
+
 __device__ void sortColors(const float * values, int * ranks)
 {
 #if __DEVICE_EMULATION__
@@ -100,7 +338,7 @@ __device__ void sortColors(const float * values, int * ranks)
     #pragma unroll
     for (int i = 0; i < 15; i++)
     {
-        if (tid > i && ranks[tid] == ranks[i]) ++ranks[tid];
+        if ((tid > i) & (ranks[tid] == ranks[i])) ++ranks[tid];
     }
 #endif
 }
@@ -109,6 +347,7 @@ __device__ void sortColors(const float * values, int * ranks)
 ////////////////////////////////////////////////////////////////////////////////
 // Load color block to shared mem
 ////////////////////////////////////////////////////////////////////////////////
+
 __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
@@ -121,9 +360,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		// Read color and copy to shared mem.
 		uint c = image[(bid) * 16 + idx];
 		
-		colors[idx].z = ((c >> 0) & 0xFF) * (1.0f / 255.0f);
-		colors[idx].y = ((c >> 8) & 0xFF) * (1.0f / 255.0f);
-		colors[idx].x = ((c >> 16) & 0xFF) * (1.0f / 255.0f);
+		colors[idx] = color32ToFloat3(c);
 		
 		// No need to synchronize, 16 < warp size.
 		__debugsync();
@@ -163,7 +400,7 @@ __device__ void loadColorBlockTex(uint bn, uint w, float3 colors[16], float3 sum
 
 	if (idx < 16)
 	{
-		float x = 4 * ((bn + bid) % w) + idx % 4;
+		float x = 4 * ((bn + bid) % w) + idx % 4; // @@ Avoid mod and div by using 2D grid?
 		float y = 4 * ((bn + bid) / w) + idx / 4;
 
 		// Read color and copy to shared mem.
@@ -301,42 +538,6 @@ __device__ void loadColorBlock(const uint * image, float2 colors[16], float2 sum
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Round color to RGB565 and expand
-////////////////////////////////////////////////////////////////////////////////
-inline __device__ float3 roundAndExpand565(float3 v, ushort * w)
-{
-	uint x = __float2uint_rn(__saturatef(v.x) * 31.0f);
-	uint y = __float2uint_rn(__saturatef(v.y) * 63.0f);
-	uint z = __float2uint_rn(__saturatef(v.z) * 31.0f);
-	*w = (x << 11) | (y << 5) | z;
-	v.x = __uint2float_rn(x) * 1.0f / 31.0f;
-	v.y = __uint2float_rn(y) * 1.0f / 63.0f;
-	v.z = __uint2float_rn(z) * 1.0f / 31.0f;
-	return v;
-}
-
-inline __device__ float2 roundAndExpand56(float2 v, ushort * w)
-{
-	uint x = __float2uint_rn(__saturatef(v.x) * 31.0f);
-	uint y = __float2uint_rn(__saturatef(v.y) * 63.0f);
-	*w = (x << 11) | (y << 5);
-	v.x = __uint2float_rn(x) * 1.0f / 31.0f;
-	v.y = __uint2float_rn(y) * 1.0f / 63.0f;
-	return v;
-}
-
-inline __device__ float2 roundAndExpand88(float2 v, ushort * w)
-{
-	uint x = __float2uint_rn(__saturatef(v.x) * 255.0f);
-	uint y = __float2uint_rn(__saturatef(v.y) * 255.0f);
-	*w = (x << 8) | y;
-	v.x = __uint2float_rn(x) * 1.0f / 255.0f;
-	v.y = __uint2float_rn(y) * 1.0f / 255.0f;
-	return v;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // Evaluate permutations
 ////////////////////////////////////////////////////////////////////////////////
 __device__ float evalPermutation4(const float3 * colors, uint permutation, ushort * start, ushort * end)
@@ -457,6 +658,8 @@ __device__ float evalPermutation4(const float3 * colors, float3 color_sum, uint 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
 
+    //float3 e = blockError4(colors, permutation, *start, *end);
+
 	return (1.0f / 9.0f) * dot(e, kColorMetricSqr);
 }
 
@@ -492,6 +695,8 @@ __device__ float evalPermutation3(const float3 * colors, float3 color_sum, uint 
 
 	// compute the error
 	float3 e = a * a * alpha2_sum + b * b * beta2_sum + 2.0f * (a * b * alphabeta_sum - a * alphax_sum - b * betax_sum);
+
+    //float3 e = blockError3(colors, permutation, a, b);
 
 	return (1.0f / 4.0f) * dot(e, kColorMetricSqr);
 }
@@ -1086,6 +1291,102 @@ __device__ void saveBlockDXT1(ushort start, ushort end, uint permutation, int xr
 	result[bid].y = indices;
 }
 
+__device__ void saveBlockDXT1_Parallel(uint endpoints, float3 colors[16], int xrefs[16], uint * result)
+{
+    const int tid = threadIdx.x;
+	const int bid = blockIdx.x;
+
+    if (tid < 16)
+    {
+        int3 color = float3ToInt3(colors[xrefs[tid]]);
+
+        ushort endpoint0 = endpoints & 0xFFFF;
+        ushort endpoint1 = endpoints >> 16;
+
+	    int3 palette[4];
+	    palette[0] = color16ToInt3(endpoint0);
+	    palette[1] = color16ToInt3(endpoint1);
+
+        int d0 = colorDistance(palette[0], color);
+        int d1 = colorDistance(palette[1], color);
+
+        uint index;
+        if (endpoint0 > endpoint1) 
+        {
+	        palette[2].x = (2 * palette[0].x + palette[1].x) / 3;
+            palette[2].y = (2 * palette[0].y + palette[1].y) / 3;
+            palette[2].z = (2 * palette[0].z + palette[1].z) / 3;
+
+	        palette[3].x = (2 * palette[1].x + palette[0].x) / 3;
+            palette[3].y = (2 * palette[1].y + palette[0].y) / 3;
+            palette[3].z = (2 * palette[1].z + palette[0].z) / 3;
+            
+		    int d2 = colorDistance(palette[2], color);
+		    int d3 = colorDistance(palette[3], color);
+
+            // Compute the index that best fit color.
+		    uint b0 = d0 > d3;
+		    uint b1 = d1 > d2;
+		    uint b2 = d0 > d2;
+		    uint b3 = d1 > d3;
+		    uint b4 = d2 > d3;
+    		
+		    uint x0 = b1 & b2;
+		    uint x1 = b0 & b3;
+		    uint x2 = b0 & b4;
+    		
+            index = (x2 | ((x0 | x1) << 1));
+        }
+        else {
+	        palette[2].x = (palette[0].x + palette[1].x) / 2;
+            palette[2].y = (palette[0].y + palette[1].y) / 2;
+            palette[2].z = (palette[0].z + palette[1].z) / 2;
+
+       		int d2 = colorDistance(palette[2], color);
+
+            index = 0;
+            if (d1 < d0 && d1 < d2) index = 1;
+            else if (d2 < d0) index = 2;
+        }
+
+        __shared__ uint indices[16];
+
+        indices[tid] = index << (2 * tid);
+        if (tid < 8) indices[tid] |= indices[tid+8];
+        if (tid < 4) indices[tid] |= indices[tid+4];
+        if (tid < 2) indices[tid] |= indices[tid+2];
+        if (tid < 1) indices[tid] |= indices[tid+1];
+
+        if (tid < 2) {
+            result[2 * bid + tid] = tid == 0 ? endpoints : indices[0];
+        }
+    }
+}
+
+__device__ void saveBlockDXT1_Parallel(uint endpoints, uint permutation, int xrefs[16], uint * result)
+{
+    const int tid = threadIdx.x;    
+	const int bid = blockIdx.x;
+
+    if (tid < 16)
+    {
+	    // Reorder permutation.
+        uint index = ((permutation >> (2 * xrefs[tid])) & 3) << (2 * tid);
+        __shared__ uint indices[16];
+
+        indices[tid] = index;
+        if (tid < 8) indices[tid] |= indices[tid+8];
+        if (tid < 4) indices[tid] |= indices[tid+4];
+        if (tid < 2) indices[tid] |= indices[tid+2];
+        if (tid < 1) indices[tid] |= indices[tid+1];
+    	
+        if (tid < 2) {
+            result[2 * bid + tid] = tid == 0 ? endpoints : indices[0];
+        }
+    }
+}
+
+
 __device__ void saveBlockCTX1(ushort start, ushort end, uint permutation, int xrefs[16], uint2 * result)
 {
 	saveBlockDXT1(start, end, permutation, xrefs, result);
@@ -1207,18 +1508,26 @@ __global__ void compressDXT1_Tex(uint bn, uint w, const uint * permutations, uin
 	ushort bestStart, bestEnd;
 	uint bestPermutation;
 
-	__shared__ float errors[NUM_THREADS];
+    __shared__ float errors[NUM_THREADS];
+   	evalAllPermutations(colors, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
+    
+    // Use a parallel reduction to find minimum error.
+    const int minIdx = findMinError(errors);
 
-	evalAllPermutations(colors, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
-	
-	// Use a parallel reduction to find minimum error.
-	const int minIdx = findMinError(errors);
-	
+    __shared__ uint s_bestEndPoints;
+    __shared__ uint s_bestPermutation;
+
 	// Only write the result of the winner thread.
 	if (threadIdx.x == minIdx)
 	{
-		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, result);
+		s_bestEndPoints = (bestEnd << 16) | bestStart;
+        s_bestPermutation = (bestStart != bestEnd) ? bestPermutation : 0;
 	}
+
+    __syncthreads();
+
+    saveBlockDXT1_Parallel(s_bestEndPoints, colors, xrefs, (uint *)result);
+    //saveBlockDXT1_Parallel(s_bestEndPoints, s_bestPermutation, xrefs, (uint *)result);
 }
 
 
