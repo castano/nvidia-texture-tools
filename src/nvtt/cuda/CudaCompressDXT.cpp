@@ -240,74 +240,6 @@ void CudaCompressor::compressDXT1(const CompressionOptions::Private & compressio
 	nvDebugCheck(cuda::isHardwarePresent());
 #if defined HAVE_CUDA
 
-	// Image size in blocks.
-	const uint w = (m_image->width() + 3) / 4;
-	const uint h = (m_image->height() + 3) / 4;
-
-	uint imageSize = w * h * 16 * sizeof(Color32);
-    uint * blockLinearImage = (uint *) malloc(imageSize);
-	convertToBlockLinear(m_image, blockLinearImage);	// @@ Do this in parallel with the GPU, or in the GPU!
-
-	const uint blockNum = w * h;
-	const uint compressedSize = blockNum * 8;
-
-	clock_t start = clock();
-
-	setupCompressKernel(compressionOptions.colorWeight.ptr());
-	
-	// TODO: Add support for multiple GPUs.
-	uint bn = 0;
-	while(bn != blockNum)
-	{
-		uint count = min(blockNum - bn, MAX_BLOCKS);
-
-	    cudaMemcpy(m_data, blockLinearImage + bn * 16, count * 64, cudaMemcpyHostToDevice);
-
-		// Launch kernel.
-		compressKernelDXT1(count, m_data, m_result, m_bitmapTable);
-
-		// Check for errors.
-		cudaError_t err = cudaGetLastError();
-		if (err != cudaSuccess)
-		{
-			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
-		}
-
-		// Copy result to host, overwrite swizzled image.
-		cudaMemcpy(blockLinearImage, m_result, count * 8, cudaMemcpyDeviceToHost);
-
-		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(blockLinearImage, count * 8);
-		}
-
-		bn += count;
-	}
-
-	clock_t end = clock();
-	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
-
-	free(blockLinearImage);
-
-#else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
-#endif
-}
-
-void CudaCompressor::compressDXT1_Tex(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
-{
-	nvDebugCheck(cuda::isHardwarePresent());
-#if defined HAVE_CUDA
-
     // Allocate image as a cuda array.
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
 
@@ -316,18 +248,19 @@ void CudaCompressor::compressDXT1_Tex(const CompressionOptions::Private & compre
     cudaMallocArray(&d_image, &channelDesc, m_image->width(), m_image->height()); 
     cudaMemcpyToArray(d_image, 0, 0, m_image->pixels(), imageSize, cudaMemcpyHostToDevice);
 
+
 	// Image size in blocks.
 	const uint w = (m_image->width() + 3) / 4;
 	const uint h = (m_image->height() + 3) / 4;
 	const uint blockNum = w * h;
 	const uint compressedSize = blockNum * 8;
 
-	void * h_result = malloc(MAX_BLOCKS * 8);
+	void * h_result = malloc(min(blockNum, MAX_BLOCKS) * 8);
 
-	clock_t start = clock();
+	//clock_t start = clock();
 
 	setupCompressKernel(compressionOptions.colorWeight.ptr());
-	
+
 	uint bn = 0;
 	while(bn != blockNum)
 	{
@@ -360,7 +293,7 @@ void CudaCompressor::compressDXT1_Tex(const CompressionOptions::Private & compre
 		bn += count;
 	}
 
-	clock_t end = clock();
+	//clock_t end = clock();
 	//printf("\rCUDA time taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
 
 	free(h_result);

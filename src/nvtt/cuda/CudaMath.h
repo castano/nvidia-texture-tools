@@ -181,6 +181,16 @@ inline __device__ __host__ float3 normalize(float3 v)
     return make_float3(v.x * len, v.y * len, v.z * len);
 }
 
+inline __device__ __host__ float3 lerp(float3 a, float3 b, float t)
+{
+    const float s = 1.0f - t;
+    return make_float3(s * a.x + t * b.x, s * a.y + t * b.y, s * a.z + t * b.z);
+}
+
+inline __device__ __host__ float lengthSquared(float3 a)
+{
+    return dot(a, a);
+}
 
 
 

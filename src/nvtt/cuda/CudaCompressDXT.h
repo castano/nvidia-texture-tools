@@ -42,7 +42,6 @@ namespace nv
 		void setImage(const Image * image, nvtt::AlphaMode alphaMode);
 
 		void compressDXT1(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-		void compressDXT1_Tex(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 		void compressDXT3(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 		void compressDXT5(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 		void compressDXT1n(const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
