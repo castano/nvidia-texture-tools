@@ -55,6 +55,12 @@ void CompressionOptions::reset()
 	m.rmask = 0x00FF0000;
 	m.amask = 0xFF000000;
 
+	m.rsize = 8;
+	m.gsize = 8;
+	m.bsize = 8;
+	m.asize = 8;
+	m.pixelType = PixelType_UnsignedNorm;
+
 	m.enableColorDithering = false;
 	m.enableAlphaDithering = false;
 	m.binaryAlpha = false;
