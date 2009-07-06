@@ -30,6 +30,8 @@
 #include <nvimage/Filter.h>
 #include <nvimage/ImageIO.h>
 #include <nvimage/NormalMap.h>
+#include <nvimage/BlockDXT.h>
+#include <nvimage/ColorBlock.h>
 
 using namespace nv;
 using namespace nvtt;
@@ -206,6 +208,20 @@ bool TexImage::load(const char * fileName)
 	return true;
 }
 
+bool TexImage::save(const char * fileName) const
+{
+	// @@ Add support for DDS textures?
+
+	if (m->imageArray.count() == 0)
+	{
+		return false;
+	}
+	else
+	{
+		return ImageIO::saveFloat(fileName, m->imageArray[0], 0, 4);
+	}
+}
+
 bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict data)
 {
 	if (idx < 0 || uint(idx) >= m->imageArray.count())
@@ -325,6 +341,118 @@ bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void 
 
 	return true;
 }
+
+bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx, const void * data)
+{
+	if (idx < 0 || uint(idx) >= m->imageArray.count())
+	{
+		return false;
+	}
+
+	if (format != nvtt::Format_BC1 && format != nvtt::Format_BC3)
+	{
+		return false;
+	}
+
+	FloatImage * img = m->imageArray[idx];
+	if (img->width() != w || img->height() != h)
+	{
+		return false;
+	}
+
+	detach();
+
+	const int count = w * h;
+
+	int bw = (w + 3) / 4;
+	int bh = (h + 3) / 4;
+
+	float * restrict rdst = img->channel(0);
+	float * restrict gdst = img->channel(1);
+	float * restrict bdst = img->channel(2);
+	float * restrict adst = img->channel(3);
+
+	try {
+		if (format == nvtt::Format_BC1)
+		{
+			BlockDXT1 * block = (BlockDXT1 *)data;
+
+			for (int y = 0; y < bh; y++)
+			{
+				for (int x = 0; x < bw; x++)
+				{
+					ColorBlock colors;
+					if (decoder == Decoder_Reference) {
+						block->decodeBlock(&colors);
+					}
+					else if (decoder == Decoder_NV5x) {
+						block->decodeBlockNV5x(&colors);
+					}
+
+					for (int yy = 0; yy < 4; yy++)
+					{
+						for (int xx = 0; xx < 4; xx++)
+						{
+							Color32 c = colors.color(xx, yy);
+
+							if (x * 4 + xx < w && y * 4 + yy < h)
+							{
+								img->setPixel(float(c.r) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 0);
+								img->setPixel(float(c.g) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 1);
+								img->setPixel(float(c.b) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 2);
+								img->setPixel(float(c.a) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 3);
+							}
+						}
+					}
+
+					block++;
+				}
+			}
+		}
+		else if (format == nvtt::Format_BC3)
+		{
+			BlockDXT5 * block = (BlockDXT5 *)data;
+
+			for (int y = 0; y < bh; y++)
+			{
+				for (int x = 0; x < bw; x++)
+				{
+					ColorBlock colors;
+					if (decoder == Decoder_Reference) {
+						block->decodeBlock(&colors);
+					}
+					else if (decoder == Decoder_NV5x) {
+						block->decodeBlockNV5x(&colors);
+					}
+
+					for (int yy = 0; yy < 4; yy++)
+					{
+						for (int xx = 0; xx < 4; xx++)
+						{
+							Color32 c = colors.color(xx, yy);
+
+							if (x * 4 + xx < w && y * 4 + yy < h)
+							{
+								img->setPixel(float(c.r) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 0);
+								img->setPixel(float(c.g) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 1);
+								img->setPixel(float(c.b) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 2);
+								img->setPixel(float(c.a) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 3);
+							}
+						}
+					}
+
+					block++;
+				}
+			}
+		}
+	}
+	catch(...) {
+		return false;
+	}
+
+	return true;
+}
+
 
 void TexImage::resize(int w, int h, ResizeFilter filter)
 {
@@ -453,13 +581,13 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 		nvDebugCheck(w > 0);
 		nvDebugCheck(h > 0);
 
-        if (w == 1 && h == 1)
-        {
-            return false;
-        }
-    }
+		if (w == 1 && h == 1)
+		{
+			return false;
+		}
+	}
 
-    detach();
+	detach();
 
 	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
@@ -510,7 +638,7 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 		}
 	}
 
-    return true;
+	return true;
 }
 
 // Color transforms.
@@ -776,7 +904,7 @@ void TexImage::normalizeNormalMap()
 }
 
 // Compress.
-void TexImage::outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
+/*void TexImage::outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
 {
 	foreach (i, m->imageArray)
 	{
@@ -784,4 +912,113 @@ void TexImage::outputCompressed(const CompressionOptions & compressionOptions, c
 
 		// @@ Not implemented.
 	}
+}*/
+
+float TexImage::rootMeanSquaredError_rgb(const TexImage & reference) const
+{
+	int totalCount = 0;
+	double mse = 0;
+
+	const int faceCount = this->faceCount();
+	if (faceCount != reference.faceCount()) {
+		return FLT_MAX;
+	}
+
+	for (int f = 0; f < faceCount; f++)
+	{
+		const FloatImage * img = m->imageArray[f];
+		const FloatImage * ref = reference.m->imageArray[f];
+
+		if (img == NULL || ref == NULL) {
+			return FLT_MAX;
+		}
+
+		nvCheck(img->componentNum() == 4);
+		nvCheck(ref->componentNum() == 4);
+
+		const uint count = img->width() * img->height();
+		totalCount += count;
+
+		for (uint i = 0; i < count; i++)
+		{
+			float r0 = img->pixel(4 * i + count * 0);
+			float g0 = img->pixel(4 * i + count * 1);
+			float b0 = img->pixel(4 * i + count * 2);
+			float a0 = img->pixel(4 * i + count * 3);
+			float r1 = ref->pixel(4 * i + count * 0);
+			float g1 = ref->pixel(4 * i + count * 1);
+			float b1 = ref->pixel(4 * i + count * 2);
+			float a1 = ref->pixel(4 * i + count * 3);
+
+			float r = r0 - r1;
+			float g = g0 - g1;
+			float b = b0 - b1;
+			float a = a0 - a1;
+
+			if (reference.alphaMode() == nvtt::AlphaMode_Transparency)
+			{
+				mse += double(r * r * a1) / 255.0;
+				mse += double(g * g * a1) / 255.0;
+				mse += double(b * b * a1) / 255.0;
+			}
+			else
+			{
+				mse += r * r;
+				mse += g * g;
+				mse += b * b;
+			}
+		}
+	}
+
+	return float(sqrt(mse / totalCount));
 }
+
+float TexImage::rootMeanSquaredError_alpha(const TexImage & reference) const
+{
+	int totalCount = 0;
+	double mse = 0;
+
+	const int faceCount = this->faceCount();
+	if (faceCount != reference.faceCount()) {
+		return FLT_MAX;
+	}
+
+	for (int f = 0; f < faceCount; f++)
+	{
+		const FloatImage * img = m->imageArray[f];
+		const FloatImage * ref = reference.m->imageArray[f];
+
+		if (img == NULL || ref == NULL) {
+			return FLT_MAX;
+		}
+
+		nvCheck(img->componentNum() == 4);
+		nvCheck(ref->componentNum() == 4);
+
+		const uint count = img->width() * img->height();
+		totalCount += count;
+
+		for (uint i = 0; i < count; i++)
+		{
+			float a0 = img->pixel(4 * i + count * 3);
+			float a1 = ref->pixel(4 * i + count * 3);
+
+			float a = a0 - a1;
+
+			mse += a * a;
+		}
+	}
+
+	return float(sqrt(mse / totalCount));
+}
+
+float TexImage::structuralSimilarityError_rgb(const TexImage & reference) const
+{
+	return 0.0f;
+}
+
+float TexImage::structuralSimilarityError_alpha(const TexImage & reference) const
+{
+	return 0.0f;
+}
+
