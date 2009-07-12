@@ -25,3 +25,6 @@ The [http://developer.nvidia.com/object/texture_tools.html NVIDIA Texture Tools]
 
   Rigs of Rods (also known as RoR), is a truck, car, airplane and boat simulator.
 
+  * [http://www.aardolino.com/MELscripts.html NVIDIA Texture Tools for Maya], _Alessandro Ardolino_
+
+  A Mel interface to convert any Maya textures to DDS using the industry standard tools from NVIDIA.
