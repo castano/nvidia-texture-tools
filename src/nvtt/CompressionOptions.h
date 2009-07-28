@@ -59,6 +59,12 @@ namespace nvtt
 		bool enableAlphaDithering;
 		bool binaryAlpha;
 		int alphaThreshold;			// reference value used for binary alpha quantization.
+
+		uint getBitCount() const
+		{
+			if (bitcount != 0) return bitcount;
+			else return rsize + gsize + bsize + asize;
+		}
 	};
 
 } // nvtt namespace

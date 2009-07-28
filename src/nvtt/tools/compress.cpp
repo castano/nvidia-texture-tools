@@ -308,7 +308,8 @@ int main(int argc, char *argv[])
 		printf("  -repeat    \tRepeat wrapping mode.\n");
 		printf("  -nomips    \tDisable mipmap generation.\n");
 		printf("  -premula   \tPremultiply alpha into color channel.\n");
-		printf("  -mipfilter \tMipmap filter. One of the following: box, triangle, kaiser.\n\n");
+		printf("  -mipfilter \tMipmap filter. One of the following: box, triangle, kaiser.\n");
+		printf("  -float     \tLoad as floating point image.\n\n");
 
 		printf("Compression options:\n");
 		printf("  -fast    \tFast compression.\n");
@@ -470,11 +471,13 @@ int main(int argc, char *argv[])
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
 
-	/*if (format == nvtt::Format_RGBA)
+	if (format == nvtt::Format_RGBA)
 	{
-		compressionOptions.setPixelType(nvtt::PixelType_Float);
-		compressionOptions.setPixelFormat(16, 16, 16, 16);
-	}*/
+	//	compressionOptions.setPixelType(nvtt::PixelType_Float);
+	//	compressionOptions.setPixelFormat(16, 16, 16, 16);
+		compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
+		compressionOptions.setPixelFormat(16, 0, 0, 0);
+	}
 
 	if (fast)
 	{
