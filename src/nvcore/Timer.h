@@ -15,13 +15,13 @@ public:
 	Timer() {}
 	
 	void start() { m_start = clock(); }
-    void stop() { m_stop = clock(); }
+	void stop() { m_stop = clock(); }
 
 	int elapsed() const { return (1000 * (m_stop - m_start)) / CLOCKS_PER_SEC; }
 	
 private:
 	clock_t m_start;
-    clock_t m_stop;
+	clock_t m_stop;
 };
 
 #else
@@ -35,21 +35,21 @@ class NVCORE_CLASS Timer
 {
 public:
 	Timer() {
-        // get the tick frequency from the OS
-        QueryPerformanceFrequency((LARGE_INTEGER*) &m_frequency);
-    }
+		// get the tick frequency from the OS
+		QueryPerformanceFrequency((LARGE_INTEGER*) &m_frequency);
+	}
 	
 	void start() { QueryPerformanceCounter((LARGE_INTEGER*) &m_start); }
-    void stop() { QueryPerformanceCounter((LARGE_INTEGER*) &m_stop); }
+	void stop() { QueryPerformanceCounter((LARGE_INTEGER*) &m_stop); }
 
 	int elapsed() const {
-        return (int)1000 * ((double)m_stop.QuadPart - (double)m_start.QuadPart) / (double)m_frequency.QuadPart;
-    }
+		return (int)1000 * ((double)m_stop.QuadPart - (double)m_start.QuadPart) / (double)m_frequency.QuadPart;
+	}
 	
 private:
-    LARGE_INTEGER  m_frequency;
-    LARGE_INTEGER  m_start;
-    LARGE_INTEGER  m_stop;
+	LARGE_INTEGER  m_frequency;
+	LARGE_INTEGER  m_start;
+	LARGE_INTEGER  m_stop;
 
 };
 
