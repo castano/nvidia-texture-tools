@@ -392,13 +392,25 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		{
 			if (compressionOptions.format == Format_RGBA)
 			{
-				if (compressionOptions.bitcount == 16)
-				{
-					// B5G6R5_UNORM
-					// B5G5R5A1_UNORM
-					supported = false;
+				int bitcount = compressionOptions.bitcount;
+				if (bitcount == 0) {
+					bitcount = compressionOptions.rsize + compressionOptions.gsize + compressionOptions.bsize + compressionOptions.asize;
 				}
-				else if (compressionOptions.bitcount == 32)
+
+				if (bitcount == 16)
+				{
+					if (compressionOptions.rsize == 16)
+					{
+						header.setDX10Format(56); // R16_UNORM
+					}
+					else
+					{
+						// B5G6R5_UNORM
+						// B5G5R5A1_UNORM
+						supported = false;
+					}
+				}
+				else if (bitcount == 32)
 				{
 					// B8G8R8A8_UNORM
 					// B8G8R8X8_UNORM
@@ -443,44 +455,63 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		{
 			if (compressionOptions.format == Format_RGBA)
 			{
-				header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
+				// Get output bit count.
+				header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.getBitCount()));
 
-				if (compressionOptions.bitcount != 0)
+				if (compressionOptions.pixelType == PixelType_Float)
 				{
-					header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
-				}
-				else
-				{
-					if (compressionOptions.pixelType == PixelType_Float)
+					if (compressionOptions.rsize == 16 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
 					{
-						if (compressionOptions.rsize == 16 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(111); // D3DFMT_R16F
-						}
-						else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(112); // D3DFMT_G16R16F
-						}
-						else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16)
-						{
-							header.setFormatCode(113); // D3DFMT_A16B16G16R16F
-						}
-						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(114); // D3DFMT_R32F
-						}
-						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
-						{
-							header.setFormatCode(115); // D3DFMT_G32R32F
-						}
-						else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 32 && compressionOptions.asize == 32)
-						{
-							header.setFormatCode(116); // D3DFMT_A32B32G32R32F
-						}
-						else
-						{
-							supported = false;
-						}
+						header.setFormatCode(111); // D3DFMT_R16F
+					}
+					else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(112); // D3DFMT_G16R16F
+					}
+					else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16)
+					{
+						header.setFormatCode(113); // D3DFMT_A16B16G16R16F
+					}
+					else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(114); // D3DFMT_R32F
+					}
+					else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(115); // D3DFMT_G32R32F
+					}
+					else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 32 && compressionOptions.asize == 32)
+					{
+						header.setFormatCode(116); // D3DFMT_A32B32G32R32F
+					}
+					else
+					{
+						supported = false;
+					}
+				}
+				else // Fixed point
+				{
+					const uint bitcount = compressionOptions.getBitCount();
+
+					if (compressionOptions.bitcount != 0)
+					{
+						// Masks already computed.
+						header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+					}
+					else if (bitcount <= 32)
+					{
+						// Compute pixel format masks.
+						const uint ashift = 0;
+						const uint bshift = ashift + compressionOptions.asize;
+						const uint gshift = bshift + compressionOptions.bsize;
+						const uint rshift = gshift + compressionOptions.gsize;
+
+						const uint rmask = ((1 << compressionOptions.rsize) - 1) << rshift;
+						const uint gmask = ((1 << compressionOptions.gsize) - 1) << gshift;
+						const uint bmask = ((1 << compressionOptions.bsize) - 1) << bshift;
+						const uint amask = ((1 << compressionOptions.asize) - 1) << ashift;
+
+						header.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
 					}
 					else
 					{
@@ -590,7 +621,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 	{
 		if (outputOptions.outputHandler)
 		{
-			int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.format);
+			int size = computeImageSize(w, h, d, compressionOptions.getBitCount(), compressionOptions.format);
 			outputOptions.outputHandler->beginImage(size, w, h, d, f, m);
 		}
 
