@@ -431,6 +431,20 @@ FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 				}
 			}
 			break;
+		case FIT_UINT16:
+			floatImage->allocate(1, w, h);
+
+			for (int y=0; y < h; y++)
+			{
+				const uint16 * src = (const uint16 *)FreeImage_GetScanLine(bitmap, h - y - 1 );
+				float * dst = floatImage->scanline(y, 0);
+
+				for (int x=0; x < w; x++)
+				{
+					dst[x] = float(src[x]) / 65535;
+				}
+			}
+			break;
 		case FIT_COMPLEX:
 			floatImage->allocate(2, w, h);
 
