@@ -325,11 +325,13 @@ Where the indices represent the following channels or values:
 
 === Compression Formats ===
 
-NVTT supports all the Direct3D10 block compression formats and some variations that use these formats to represent normals or to represent colors with higher quality. The compression format is specified as follows:
+NVTT supports all the !Direct3D10 block compression formats and some variations that use these formats to represent normals or to represent colors with higher quality. The compression format is specified as follows:
 
 {{{
 compressionOptions.setFormat(Format_BC1);
 }}}
+
+The supported block compression formats are the following:
 
   * BC1 (DXT1)
     This is the default block compression format. By default the 1 bit alpha channel is not used.
