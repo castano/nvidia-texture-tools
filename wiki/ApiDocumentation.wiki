@@ -325,16 +325,25 @@ Where the indices represent the following channels or values:
 
 === Compression Formats ===
 
-*TODO*
+NVTT supports all the Direct3D10 block compression formats and some variations that use these formats to represent normals or to represent colors with higher quality. The compression format is specified as follows:
 
-  * RGB, RGBA
-  * DXT1, BC1
-  * DXT1a, BC1a
-  * DXT3, BC2
-  * DXT5, BC3
-  * DXT5n, BC3n
+{{{
+compressionOptions.setFormat(Format_BC1);
+}}}
+
+  * BC1 (DXT1)
+    This is the default block compression format. By default the 1 bit alpha channel is not used.
+  * BC1a (DXT1a)
+    This is a variation of BC1 that supports binary alpha.
+  * BC2 (DXT3)
+    This is a block compression format similar to BC1, but with an explicit 3 bit alpha channel.
+  * BC3 (DXT5)
+    This is a block compression format similar to BC1, but with a compressed alpha channel.
+  * BC3n (DXT5nm)
+    This is a variation of BC3 that is used to represent normal maps by encoding the X and Y components as follows: R=1, G=Y, B=0, A=X, this swizzle is used to facilitate decompression using [http://code.google.com/p/nvidia-texture-tools/wiki/NormalMapCompression#Capcon%27s_DXT_trick Capcon's DXT decompression trick]
   * BC4
-  * BC5, LATC, RGTC
+  * BC5 (LATC, RGTC)
+
 
 === Compression Quality ===
 
