@@ -460,7 +460,7 @@ For example, to select the RGB 5:6:5 output format you would use the following c
 compressionOptions.setPixelFormat(16, 0x001F, 0x07E0, 0xF800, 0);
 }}}
 
-The second function assumes that the colors are in RGBA order and that there are no padding bits between color components. However, colors don't have any size limitation. This function is specially useful to output floating point color formats, whose size is generally greater than 32 bits.
+The second function is only available in NVTT 2.0. It assumes that the colors are in RGBA order and that there are no padding bits between color components. However, colors don't have any size limitation. This function is specially useful to output floating point color formats, whose size is generally greater than 32 bits.
 
 To indicate that the desired output is in floating point, you should use the following function:
 
