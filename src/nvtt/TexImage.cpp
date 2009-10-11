@@ -21,7 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "Texture.h"
+#include "TexImage.h"
 
 #include <nvmath/Vector.h>
 #include <nvmath/Matrix.h>
@@ -32,6 +32,8 @@
 #include <nvimage/NormalMap.h>
 #include <nvimage/BlockDXT.h>
 #include <nvimage/ColorBlock.h>
+
+#include <float.h>
 
 using namespace nv;
 using namespace nvtt;
