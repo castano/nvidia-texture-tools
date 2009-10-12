@@ -349,19 +349,24 @@ namespace nvtt
 		NVTT_API Compressor();
 		NVTT_API ~Compressor();
 
+		// Context settings.
 		NVTT_API void enableCudaAcceleration(bool enable);
 		NVTT_API bool isCudaAccelerationEnabled() const;
 
-		// Main entrypoint of the compression library.
+		// InputOptions api.
 		NVTT_API bool process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-		
-		// Estimate the size of compressing the input with the given options.
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
 
-		// TexImage api
-		NVTT_API TexImage createTexImage();
-		NVTT_API int estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions);
-		NVTT_API void outputCompressed(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
+		// RAW api.
+		NVTT_API bool compress2D(InputFormat format, int w, int h, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+		//ßNVTT_API bool compress3D(InputFormat format, int w, int h, int d, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+		NVTT_API int estimateSize(int w, int h, int d, const CompressionOptions & compressionOptions) const;
+
+		// TexImage api.
+		NVTT_API TexImage createTexImage() const;
+		NVTT_API bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+		NVTT_API bool compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+		NVTT_API int estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions) const;
 	};
 
 	// "Compressor" is deprecated. This should have been called "Context"
@@ -399,6 +404,7 @@ namespace nvtt
 		NVTT_API WrapMode wrapMode() const;
 		NVTT_API AlphaMode alphaMode() const;
 		NVTT_API bool isNormalMap() const;
+		NVTT_API int countMipmaps() const;
 
 		// Texture data.
 		NVTT_API bool load(const char * fileName);
@@ -429,14 +435,9 @@ namespace nvtt
 		NVTT_API void toHeightMap();
 		NVTT_API void normalizeNormalMap();
 
-		// Compress.
-		//NVTT_API void outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions);
-
 		// Error compare.
 		NVTT_API float rootMeanSquaredError_rgb(const TexImage & reference) const;
 		NVTT_API float rootMeanSquaredError_alpha(const TexImage & reference) const;
-		NVTT_API float structuralSimilarityError_rgb(const TexImage & reference) const;
-		NVTT_API float structuralSimilarityError_alpha(const TexImage & reference) const;
 
 	private:
 		void detach();
