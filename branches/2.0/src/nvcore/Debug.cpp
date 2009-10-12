@@ -38,7 +38,7 @@
 #	include <unistd.h>	// getpid
 #	include <sys/types.h>
 #	include <sys/sysctl.h>	// sysctl
-#	include <ucontext.h>
+#	include <sys/ucontext.h>
 #	undef HAVE_EXECINFO_H
 #	if defined(HAVE_EXECINFO_H) // only after OSX 10.5
 #		include <execinfo.h> // backtrace
