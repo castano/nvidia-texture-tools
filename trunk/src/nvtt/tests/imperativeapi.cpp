@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
 
 	image.load("kodim01.png");
 
+	context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);
+
 	float gamma = 2.2;
 	image.toLinear(gamma);
 
@@ -47,8 +49,8 @@ int main(int argc, char *argv[])
 		nvtt::TexImage tmpImage = image;
 		tmpImage.toGamma(gamma);
 
-		context.outputCompressed(tmpImage, compressionOptions, outputOptions);
-	//	tmpImage.outputCompressed(compressionOptions, outputOptions);
+		context.compress(tmpImage, compressionOptions, outputOptions);
+	//	tmpImage.compress(compressionOptions, outputOptions);
 	}
 
 	return EXIT_SUCCESS;

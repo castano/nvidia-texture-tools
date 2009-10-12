@@ -279,7 +279,7 @@ void Compressor::enableCudaAcceleration(bool enable)
 	}
 }
 
-/// Check if CUDA acceleration is enabled.
+/// Return true if CUDA acceleration is enabled, false otherwise.
 bool Compressor::isCudaAccelerationEnabled() const
 {
 	return m.cudaEnabled;
@@ -299,14 +299,13 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 	return m.estimateSize(inputOptions.m, compressionOptions.m);
 }
 
-/// Create a texture.
-TexImage Compressor::createTexImage()
+// RAW api.
+bool Compressor::compress2D(InputFormat format, int w, int h, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-	return *new TexImage();
+	// @@ Make sure type of input format matches compression format.
 }
 
-/// Estimate the size of compressing the given texture.
-int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions)
+int Compressor::estimateSize(int w, int h, int d, const CompressionOptions & compressionOptions) const
 {
 	const CompressionOptions::Private & co = compressionOptions.m;
 
@@ -315,17 +314,39 @@ int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & co
 	uint bitCount = co.bitcount;
 	if (format == Format_RGBA && bitCount == 0) bitCount = co.rsize + co.gsize + co.bsize + co.asize;
 
+	return computeImageSize(w, h, d, bitCount, format);
+}
+
+
+
+/// Create a TexImage.
+TexImage Compressor::createTexImage() const
+{
+	return *new TexImage();
+}
+
+
+bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+{
+	m.outputHeader(tex, mipmapCount, compressionOptions.m, outputOptions.m);
+}
+
+bool Compressor::compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+{
+	// @@ Convert to fixed point and call compress2D for each face.
+}
+
+/// Estimate the size of compressing the given texture.
+int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions) const
+{
 	const uint w = tex.width();
 	const uint h = tex.height();
 	const uint d = tex.depth();
 	const uint faceCount = tex.faceCount();
 
-	return faceCount * computeImageSize(w, h, d, bitCount, format);
+	return faceCount * estimateSize(w, h, d, compressionOptions);
 }
 
-void Compressor::outputCompressed(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
-{
-}
 
 
 
@@ -602,6 +623,247 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		return writeSucceed;
 	}
 	
+	return true;
+}
+
+bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+{
+	if (tex.width() <= 0 || tex.height() <= 0 || tex.depth() <= 0 || mipmapCount <= 0)
+	{
+#pragma message(NV_FILE_LINE "Set invalid argument error")
+		return false;
+	}
+
+	if (outputOptions.outputHandler == NULL || !outputOptions.outputHeader)
+	{
+		return true;
+	}
+
+	// Output DDS header.
+	if (outputOptions.container == Container_DDS || outputOptions.container == Container_DDS10)
+	{
+		DDSHeader header;
+
+		header.setWidth(tex.width());
+		header.setHeight(tex.height());
+		header.setMipmapCount(mipmapCount);
+
+		bool supported = true;
+
+		if (outputOptions.container == Container_DDS10)
+		{
+			if (compressionOptions.format == Format_RGBA)
+			{
+				int bitcount = compressionOptions.bitcount;
+				if (bitcount == 0) {
+					bitcount = compressionOptions.rsize + compressionOptions.gsize + compressionOptions.bsize + compressionOptions.asize;
+				}
+
+				if (bitcount == 16)
+				{
+					if (compressionOptions.rsize == 16)
+					{
+						header.setDX10Format(56); // R16_UNORM
+					}
+					else
+					{
+						// B5G6R5_UNORM
+						// B5G5R5A1_UNORM
+						supported = false;
+					}
+				}
+				else if (bitcount == 32)
+				{
+					// B8G8R8A8_UNORM
+					// B8G8R8X8_UNORM
+					// R8G8B8A8_UNORM
+					// R10G10B10A2_UNORM
+					supported = false;
+				}
+				else {
+					supported = false;
+				}
+			}
+			else
+			{
+				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
+					header.setDX10Format(71);
+					if (compressionOptions.format == Format_DXT1a) header.setHasAlphaFlag(true);
+					if (tex.isNormalMap()) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_DXT3) {
+					header.setDX10Format(74);
+				}
+				else if (compressionOptions.format == Format_DXT5) {
+					header.setDX10Format(77);
+				}
+				else if (compressionOptions.format == Format_DXT5n) {
+					header.setDX10Format(77);
+					if (tex.isNormalMap()) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_BC4) {
+					header.setDX10Format(80);
+				}
+				else if (compressionOptions.format == Format_BC5) {
+					header.setDX10Format(83);
+					if (tex.isNormalMap()) header.setNormalFlag(true);
+				}
+				else {
+					supported = false;
+				}
+			}
+		}
+		else
+		{
+			if (compressionOptions.format == Format_RGBA)
+			{
+				// Get output bit count.
+				header.setPitch(computePitch(tex.width(), compressionOptions.getBitCount()));
+
+				if (compressionOptions.pixelType == PixelType_Float)
+				{
+					if (compressionOptions.rsize == 16 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(111); // D3DFMT_R16F
+					}
+					else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(112); // D3DFMT_G16R16F
+					}
+					else if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16)
+					{
+						header.setFormatCode(113); // D3DFMT_A16B16G16R16F
+					}
+					else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 0 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(114); // D3DFMT_R32F
+					}
+					else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 0 && compressionOptions.asize == 0)
+					{
+						header.setFormatCode(115); // D3DFMT_G32R32F
+					}
+					else if (compressionOptions.rsize == 32 && compressionOptions.gsize == 32 && compressionOptions.bsize == 32 && compressionOptions.asize == 32)
+					{
+						header.setFormatCode(116); // D3DFMT_A32B32G32R32F
+					}
+					else
+					{
+						supported = false;
+					}
+				}
+				else // Fixed point
+				{
+					const uint bitcount = compressionOptions.getBitCount();
+
+					if (compressionOptions.bitcount != 0)
+					{
+						// Masks already computed.
+						header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+					}
+					else if (bitcount <= 32)
+					{
+						// Compute pixel format masks.
+						const uint ashift = 0;
+						const uint bshift = ashift + compressionOptions.asize;
+						const uint gshift = bshift + compressionOptions.bsize;
+						const uint rshift = gshift + compressionOptions.gsize;
+
+						const uint rmask = ((1 << compressionOptions.rsize) - 1) << rshift;
+						const uint gmask = ((1 << compressionOptions.gsize) - 1) << gshift;
+						const uint bmask = ((1 << compressionOptions.bsize) - 1) << bshift;
+						const uint amask = ((1 << compressionOptions.asize) - 1) << ashift;
+
+						header.setPixelFormat(bitcount, rmask, gmask, bmask, amask);
+					}
+					else
+					{
+						supported = false;
+					}
+				}
+			}
+			else
+			{
+				header.setLinearSize(computeImageSize(tex.width(), tex.height(), tex.depth(), compressionOptions.bitcount, compressionOptions.format));
+
+				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
+					header.setFourCC('D', 'X', 'T', '1');
+					if (tex.isNormalMap()) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_DXT3) {
+					header.setFourCC('D', 'X', 'T', '3');
+				}
+				else if (compressionOptions.format == Format_DXT5) {
+					header.setFourCC('D', 'X', 'T', '5');
+				}
+				else if (compressionOptions.format == Format_DXT5n) {
+					header.setFourCC('D', 'X', 'T', '5');
+					if (tex.isNormalMap()) {
+						header.setNormalFlag(true);
+						header.setSwizzleCode('A', '2', 'D', '5');
+						//header.setSwizzleCode('x', 'G', 'x', 'R');
+					}
+				}
+				else if (compressionOptions.format == Format_BC4) {
+					header.setFourCC('A', 'T', 'I', '1');
+				}
+				else if (compressionOptions.format == Format_BC5) {
+					header.setFourCC('A', 'T', 'I', '2');
+					if (tex.isNormalMap()) {
+						header.setNormalFlag(true);
+						header.setSwizzleCode('A', '2', 'X', 'Y');
+					}
+				}
+				else if (compressionOptions.format == Format_CTX1) {
+					header.setFourCC('C', 'T', 'X', '1');
+					if (tex.isNormalMap()) header.setNormalFlag(true);
+				}
+				else {
+					supported = false;
+				}
+			}
+		}
+
+		if (!supported)
+		{
+			// This container does not support the requested format.
+			if (outputOptions.errorHandler != NULL)
+			{
+				outputOptions.errorHandler->error(Error_UnsupportedOutputFormat);
+			}
+
+			return false;
+		}
+
+		if (tex.textureType() == TextureType_2D) {
+			header.setTexture2D();
+		}
+		else if (tex.textureType() == TextureType_Cube) {
+			header.setTextureCube();
+		}
+		/*else if (tex.textureType() == TextureType_3D) {
+			header.setTexture3D();
+			header.setDepth(tex.depth());
+		}*/
+
+		// Swap bytes if necessary.
+		header.swapBytes();
+
+		uint headerSize = 128;
+		if (header.hasDX10Header())
+		{
+			nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
+			headerSize = 128 + 20;
+		}
+
+		bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
+		if (!writeSucceed && outputOptions.errorHandler != NULL)
+		{
+			outputOptions.errorHandler->error(Error_FileWrite);
+		}
+
+		return writeSucceed;
+	}
+
 	return true;
 }
 

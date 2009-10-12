@@ -60,6 +60,44 @@ namespace
 			return pp2;
 		}
 	}
+
+#pragma message(NV_FILE_LINE "Move these functions to a common location")
+	static int blockSize(Format format)
+	{
+		if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
+			return 8;
+		}
+		else if (format == Format_DXT3) {
+			return 16;
+		}
+		else if (format == Format_DXT5 || format == Format_DXT5n) {
+			return 16;
+		}
+		else if (format == Format_BC4) {
+			return 8;
+		}
+		else if (format == Format_BC5) {
+			return 16;
+		}
+		else if (format == Format_CTX1) {
+			return 8;
+		}
+		return 0;
+	}
+
+	static uint countMipmaps(int w, int h, int d)
+	{
+		uint mipmap = 0;
+
+		while (w != 1 || h != 1 || d != 1) {
+			w = max(1, w / 2);
+			h = max(1, h / 2);
+			d = max(1, d / 2);
+			mipmap++;
+		}
+
+		return mipmap + 1;
+	}
 }
 
 
@@ -191,9 +229,15 @@ bool TexImage::isNormalMap() const
 	return m->isNormalMap;
 }
 
+int TexImage::countMipmaps() const
+{
+	return ::countMipmaps(width(), height(), depth());
+}
+
+
 bool TexImage::load(const char * fileName)
 {
-	// @@ Add support for DDS textures!
+#pragma message(NV_FILE_LINE "Add support for DDS textures in TexImage::load")
 
 	AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
 
@@ -351,7 +395,7 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 		return false;
 	}
 
-	if (format != nvtt::Format_BC1 && format != nvtt::Format_BC3)
+	if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3)
 	{
 		return false;
 	}
@@ -366,85 +410,72 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 
 	const int count = w * h;
 
-	int bw = (w + 3) / 4;
-	int bh = (h + 3) / 4;
+	const int bw = (w + 3) / 4;
+	const int bh = (h + 3) / 4;
 
-	float * restrict rdst = img->channel(0);
-	float * restrict gdst = img->channel(1);
-	float * restrict bdst = img->channel(2);
-	float * restrict adst = img->channel(3);
+	const uint bs = blockSize(format);
+
+	const uint8 * ptr = (const uint8 *)data;
 
 	try {
-		if (format == nvtt::Format_BC1)
+		for (int y = 0; y < bh; y++)
 		{
-			BlockDXT1 * block = (BlockDXT1 *)data;
-
-			for (int y = 0; y < bh; y++)
+			for (int x = 0; x < bw; x++)
 			{
-				for (int x = 0; x < bw; x++)
+				ColorBlock colors;
+
+				if (format == nvtt::Format_BC1)
 				{
-					ColorBlock colors;
+					const BlockDXT1 * block = (const BlockDXT1 *)ptr;
+
 					if (decoder == Decoder_Reference) {
 						block->decodeBlock(&colors);
 					}
 					else if (decoder == Decoder_NV5x) {
 						block->decodeBlockNV5x(&colors);
 					}
-
-					for (int yy = 0; yy < 4; yy++)
-					{
-						for (int xx = 0; xx < 4; xx++)
-						{
-							Color32 c = colors.color(xx, yy);
-
-							if (x * 4 + xx < w && y * 4 + yy < h)
-							{
-								img->setPixel(float(c.r) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 0);
-								img->setPixel(float(c.g) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 1);
-								img->setPixel(float(c.b) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 2);
-								img->setPixel(float(c.a) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 3);
-							}
-						}
-					}
-
-					block++;
 				}
-			}
-		}
-		else if (format == nvtt::Format_BC3)
-		{
-			BlockDXT5 * block = (BlockDXT5 *)data;
-
-			for (int y = 0; y < bh; y++)
-			{
-				for (int x = 0; x < bw; x++)
+				else if (format == nvtt::Format_BC2)
 				{
-					ColorBlock colors;
+					const BlockDXT3 * block = (const BlockDXT3 *)ptr;
+
+#pragma message(NV_FILE_LINE "Add NV5x decoder to DXT3 block")
+					//if (decoder == Decoder_Reference) {
+						block->decodeBlock(&colors);
+					//}
+					//else if (decoder == Decoder_NV5x) {
+					//	block->decodeBlockNV5x(&colors);
+					//}
+				}
+				else if (format == nvtt::Format_BC3)
+				{
+					const BlockDXT5 * block = (const BlockDXT5 *)ptr;
+
 					if (decoder == Decoder_Reference) {
 						block->decodeBlock(&colors);
 					}
 					else if (decoder == Decoder_NV5x) {
 						block->decodeBlockNV5x(&colors);
 					}
+				}
 
-					for (int yy = 0; yy < 4; yy++)
+				for (int yy = 0; yy < 4; yy++)
+				{
+					for (int xx = 0; xx < 4; xx++)
 					{
-						for (int xx = 0; xx < 4; xx++)
-						{
-							Color32 c = colors.color(xx, yy);
+						Color32 c = colors.color(xx, yy);
 
-							if (x * 4 + xx < w && y * 4 + yy < h)
-							{
-								img->setPixel(float(c.r) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 0);
-								img->setPixel(float(c.g) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 1);
-								img->setPixel(float(c.b) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 2);
-								img->setPixel(float(c.a) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 3);
-							}
+						if (x * 4 + xx < w && y * 4 + yy < h)
+						{
+							img->setPixel(float(c.r) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 0);
+							img->setPixel(float(c.g) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 1);
+							img->setPixel(float(c.b) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 2);
+							img->setPixel(float(c.a) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 3);
 						}
 					}
-
-					block++;
 				}
+
+				ptr += bs;
 			}
 		}
 	}
@@ -1012,15 +1043,5 @@ float TexImage::rootMeanSquaredError_alpha(const TexImage & reference) const
 	}
 
 	return float(sqrt(mse / totalCount));
-}
-
-float TexImage::structuralSimilarityError_rgb(const TexImage & reference) const
-{
-	return 0.0f;
-}
-
-float TexImage::structuralSimilarityError_alpha(const TexImage & reference) const
-{
-	return 0.0f;
 }
 

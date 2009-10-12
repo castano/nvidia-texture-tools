@@ -46,6 +46,8 @@ namespace nvtt
 		bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 		int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
 
+		bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions);
+
 	private:
 
 		bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
