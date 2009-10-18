@@ -62,8 +62,11 @@ namespace nvtt
 
 		uint getBitCount() const
 		{
-			if (bitcount != 0) return bitcount;
-			else return rsize + gsize + bsize + asize;
+			if (format == Format_RGBA) {
+				if (bitcount != 0) return bitcount;
+				else return rsize + gsize + bsize + asize;
+			}
+			return 0;
 		}
 	};
 

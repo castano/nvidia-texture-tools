@@ -61,7 +61,8 @@ namespace
 		}
 	}
 
-#pragma message(NV_FILE_LINE "Move these functions to a common location")
+#pragma message(NV_FILE_LINE "TODO: Move these functions to a common location.")
+
 	static int blockSize(Format format)
 	{
 		if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
@@ -107,20 +108,20 @@ TexImage::TexImage() : m(new TexImage::Private())
 
 TexImage::TexImage(const TexImage & tex) : m(tex.m)
 {
-	m->addRef();
+	if (m != NULL) m->addRef();
 }
 
 TexImage::~TexImage()
 {
-	m->release();
+	if (m != NULL) m->release();
 	m = NULL;
 }
 
 void TexImage::operator=(const TexImage & tex)
 {
-	tex.m->addRef();
+	if (tex.m != NULL) tex.m->addRef();
+	if (m != NULL) m->release();
 	m = tex.m;
-	m->release();
 }
 
 void TexImage::detach()
@@ -140,6 +141,12 @@ void TexImage::setTextureType(TextureType type)
 		detach();
 
 		m->type = type;
+
+		// Free images. @@ Use AutoPtr?
+		foreach (i, m->imageArray)
+		{
+			delete m->imageArray[i];
+		}
 
 		if (type == TextureType_2D)
 		{
@@ -237,7 +244,7 @@ int TexImage::countMipmaps() const
 
 bool TexImage::load(const char * fileName)
 {
-#pragma message(NV_FILE_LINE "Add support for DDS textures in TexImage::load")
+#pragma message(NV_FILE_LINE "TODO: Add support for DDS textures in TexImage::load().")
 
 	AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
 
@@ -268,7 +275,7 @@ bool TexImage::save(const char * fileName) const
 	}
 }
 
-bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict data)
+bool TexImage::setImage2D(nvtt::InputFormat format, int w, int h, int idx, const void * restrict data)
 {
 	if (idx < 0 || uint(idx) >= m->imageArray.count())
 	{

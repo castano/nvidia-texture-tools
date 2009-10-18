@@ -33,6 +33,9 @@ OutputOptions::OutputOptions() : m(*new OutputOptions::Private())
 
 OutputOptions::~OutputOptions()
 {
+	// Cleanup output handler.
+	setOutputHandler(NULL);
+
 	delete &m;
 }
 
@@ -50,14 +53,24 @@ void OutputOptions::reset()
 /// Set output file name.
 void OutputOptions::setFileName(const char * fileName)
 {
-	m.fileName = fileName;
+	m.fileName = fileName; // @@ Do we need to record filename?
 	m.outputHandler = NULL;
+
+	DefaultOutputHandler * oh = new DefaultOutputHandler(fileName);
+	if (!oh->stream.isError())
+	{
+		m.outputHandler = oh;
+	}
 }
 
 /// Set output handler.
 void OutputOptions::setOutputHandler(OutputHandler * outputHandler)
 {
-	m.fileName.reset();
+	if (!m.fileName.isNull())
+	{
+		delete m.outputHandler;
+		m.fileName.reset();
+	}
 	m.outputHandler = outputHandler;
 }
 
@@ -80,30 +93,13 @@ void OutputOptions::setContainer(Container container)
 }
 
 
-bool OutputOptions::Private::openFile() const
+bool OutputOptions::Private::hasValidOutputHandler() const
 {
 	if (!fileName.isNull())
 	{
-		nvCheck(outputHandler == NULL);
-		
-		DefaultOutputHandler * oh = new DefaultOutputHandler(fileName.str());
-		if (oh->stream.isError())
-		{
-			return false;
-		}
-		
-		outputHandler = oh;
+		return outputHandler != NULL;
 	}
 	
 	return true;
-}
-
-void OutputOptions::Private::closeFile() const
-{
-	if (!fileName.isNull())
-	{
-		delete outputHandler;
-		outputHandler = NULL;
-	}
 }
 
