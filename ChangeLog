@@ -12,6 +12,11 @@ NVIDIA Texture Tools version 2.1.0
  * Added gnome thumbnailer by Frank Richter. Fixes issue 82.
  * Cleanup sources removing files that are not strictly required.
 
+NVIDIA Texture Tools version 2.0.7
+ * Output correct exit codes. Fixes issue 92.
+ * Fix thread-safety errors. Fixes issue 90.
+ * Add SIMD power method. Fixes issue 94.
+
 NVIDIA Texture Tools version 2.0.6
  * Fix dll version checking.
  * Detect CUDA 2.1 and future CUDA versions correctly.
@@ -22,6 +27,9 @@ NVIDIA Texture Tools version 2.0.6
  * Fix nvzoom option typo by Frank Richter. Fixes issue 81.
  * Do not use CUDA to compress small mipmaps. Fixes issue 76.
  * Compute mipmaps of semi-transparent images correctly.
+ * Shutdown CUDA properly. Fixes issue 83.
+ * Fix pixel format converions. Fixes issue 87.
+ * Update single color compression tables. Fixes issue 85.
 
 NVIDIA Texture Tools version 2.0.5
  * Fix error in single color compressor. Fixes issue 66.
