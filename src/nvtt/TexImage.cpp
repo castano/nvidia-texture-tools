@@ -758,6 +758,21 @@ void TexImage::scaleBias(int channel, float scale, float bias)
 	}
 }
 
+void TexImage::packNormal()
+{
+	scaleBias(0, 0.5f, 0.5f);
+	scaleBias(1, 0.5f, 0.5f);
+	scaleBias(2, 0.5f, 0.5f);
+}
+
+void TexImage::expandNormal()
+{
+	scaleBias(0, 2.0f, -1.0f);
+	scaleBias(1, 2.0f, -1.0f);
+	scaleBias(2, 2.0f, -1.0f);
+}
+
+
 void TexImage::blend(float red, float green, float blue, float alpha, float t)
 {
 	detach();
@@ -909,12 +924,22 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
 {
 	detach();
 
+	const Vector4 filterWeights(sm, medium, big, large);
+
 	foreach (i, m->imageArray)
 	{
 		if (m->imageArray[i] == NULL) continue;
 
-		// @@ Not implemented.
+		const FloatImage * img = m->imageArray[i];
+		m->imageArray[i] = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
+
+#pragma messsage(NV_FILE_LINE "Pack and expand normals explicitly")
+		m->imageArray[i]->packNormals(0);
+
+		delete img;
 	}
+
+	m->isNormalMap = true;
 }
 
 void TexImage::toHeightMap()
@@ -927,6 +952,8 @@ void TexImage::toHeightMap()
 
 		// @@ Not implemented.
 	}
+
+	m->isNormalMap = false;
 }
 
 void TexImage::normalizeNormalMap()
@@ -942,17 +969,6 @@ void TexImage::normalizeNormalMap()
 		nv::normalizeNormalMap(m->imageArray[i]);
 	}
 }
-
-// Compress.
-/*void TexImage::outputCompressed(const CompressionOptions & compressionOptions, const OutputOptions & outputOptions)
-{
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
-
-		// @@ Not implemented.
-	}
-}*/
 
 float TexImage::rootMeanSquaredError_rgb(const TexImage & reference) const
 {
