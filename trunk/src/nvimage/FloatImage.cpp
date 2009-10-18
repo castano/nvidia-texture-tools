@@ -187,12 +187,12 @@ void FloatImage::normalize(uint base_component)
 
 void FloatImage::packNormals(uint base_component)
 {
-	scaleBias(base_component, 3, 0.5f, 1.0f);
+	scaleBias(base_component, 3, 0.5f, 0.5f);
 }
 
 void FloatImage::expandNormals(uint base_component)
 {
-	scaleBias(base_component, 3, 2, -0.5);
+	scaleBias(base_component, 3, 2.0f, -1.0f);
 }
 
 void FloatImage::scaleBias(uint base_component, uint num, float scale, float bias)
@@ -203,7 +203,7 @@ void FloatImage::scaleBias(uint base_component, uint num, float scale, float bia
 		float * ptr = this->channel(base_component + c);
 		
 		for(uint i = 0; i < size; i++) {
-			ptr[i] = scale * (ptr[i] + bias);
+			ptr[i] = scale * ptr[i] + bias;
 		}
 	}
 }
