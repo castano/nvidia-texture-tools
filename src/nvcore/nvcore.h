@@ -131,7 +131,11 @@
 #define NV_DO_STRING_JOIN3(arg1, arg2, arg3) arg1 ## arg2 ## arg3
 #define NV_STRING2(x) #x
 #define NV_STRING(x) NV_STRING2(x)
+#if NV_CC_GNUC
+#define NV_FILE_LINE __FILE__ ":" NV_STRING(__LINE__) ": "
+#else
 #define NV_FILE_LINE __FILE__ "(" NV_STRING(__LINE__) ") : "
+#endif
 
 // Startup initialization macro.
 #define NV_AT_STARTUP(some_code) \
