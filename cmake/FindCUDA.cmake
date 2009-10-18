@@ -32,6 +32,10 @@
 # tools. It should work on linux, windows, and mac and should be reasonably
 # up to date with cuda releases.
 #
+# This script makes use of the standard find_package arguments of <VERSION>,
+# REQUIRED and QUIET.  CUDA_FOUND will report if an acceptable version of CUDA
+# was found.
+#
 # The script will prompt the user to specify CUDA_TOOLKIT_ROOT_DIR if the
 # prefix cannot be determined by the location of nvcc in the system path. To
 # use a different installed version of the toolkit set the environment variable
@@ -94,7 +98,8 @@
 #    All of the specified source files and generated .cpp files are compiled
 #    using the standard CMake compiler, so the normal INCLUDE_DIRECTORIES,
 #    LINK_DIRECTORIES, and TARGET_LINK_LIBRARIES can be used to affect their
-#    build and link.
+#    build and link.  In addition CUDA_INCLUDE_DIRS is added automatically added
+#    to include_directories().
 #
 # CUDA_ADD_EXECUTABLE( cuda_target file0 file1 ... [OPTIONS ...] )
 # -- Same as CUDA_ADD_LIBRARY except that an exectuable is created.
@@ -175,7 +180,8 @@
 # CUDA_VERSION
 # CUDA_VERSION_STRING   -- CUDA_VERSION_MAJOR.CUDA_VERSION_MINOR
 #
-# CUDA_INCLUDE_DIRS     -- Include directory for cuda headers.
+# CUDA_INCLUDE_DIRS     -- Include directory for cuda headers.  Added automatically
+#                          for CUDA_ADD_EXECUTABLE and CUDA_ADD_LIBRARY.
 # CUDA_LIBRARIES        -- Cuda RT library.
 # CUDA_CUT_INCLUDE_DIR  -- Include directory for cuda SDK headers (cutil.h).
 # CUDA_CUT_LIBRARIES    -- SDK libraries.
@@ -424,8 +430,6 @@ find_program(CUDA_NVCC_EXECUTABLE
 find_program(CUDA_NVCC_EXECUTABLE nvcc)
 mark_as_advanced(CUDA_NVCC_EXECUTABLE)
 
-message("CUDA_VERSION = ${CUDA_VERSION}")
-
 if(CUDA_NVCC_EXECUTABLE AND NOT CUDA_VERSION)
   # Compute the version.
   exec_program(${CUDA_NVCC_EXECUTABLE} ARGS "--version" OUTPUT_VARIABLE NVCC_OUT)
@@ -434,8 +438,6 @@ if(CUDA_NVCC_EXECUTABLE AND NOT CUDA_VERSION)
   set(CUDA_VERSION "${CUDA_VERSION_MAJOR}.${CUDA_VERSION_MINOR}" CACHE STRING "Version of CUDA as computed from nvcc.")
   mark_as_advanced(CUDA_VERSION)
 endif()
-
-message("CUDA_VERSION = ${CUDA_VERSION}")
 
 # Always set this convenience variable
 set(CUDA_VERSION_STRING "${CUDA_VERSION}")
@@ -671,6 +673,23 @@ macro(CUDA_PARSE_NVCC_OPTIONS _option_prefix)
 endmacro()
 
 ##############################################################################
+# Helper to add the include directory for CUDA only once
+function(CUDA_ADD_CUDA_INCLUDE_ONCE)
+  get_directory_property(_include_directories INCLUDE_DIRECTORIES)
+  set(_add TRUE)
+  if(_include_directories)
+    foreach(dir ${_include_directories})
+      if("${dir}" STREQUAL "${CUDA_INCLUDE_DIRS}")
+        set(_add FALSE)
+      endif()
+    endforeach()
+  endif()
+  if(_add)
+    include_directories(${CUDA_INCLUDE_DIRS})
+  endif()
+endfunction()
+
+##############################################################################
 # This helper macro populates the following variables and setups up custom
 # commands and targets to invoke the nvcc compiler to generate C or PTX source
 # dependant upon the format parameter.  The compiler is invoked once with -M
@@ -896,6 +915,14 @@ macro(CUDA_WRAP_SRCS cuda_target format generated_files)
         set(verbose_output OFF)
       endif()
 
+      # Create up the comment string
+      file(RELATIVE_PATH generated_file_relative_path "${CMAKE_BINARY_DIR}" "${generated_file}")
+      if(compile_to_ptx)
+        set(cuda_build_comment_string "Building NVCC ptx file ${generated_file_relative_path}")
+      else()
+        set(cuda_build_comment_string "Building NVCC (${cuda_build_type}) object ${generated_file_relative_path}")
+      endif()
+
       # Build the generated file and dependency file ##########################
       add_custom_command(
         OUTPUT ${generated_file}
@@ -910,7 +937,7 @@ macro(CUDA_WRAP_SRCS cuda_target format generated_files)
           -D "generated_file:STRING=${generated_file}"
           -D "generated_cubin_file:STRING=${generated_cubin_file}"
           -P "${custom_target_script}"
-        COMMENT "Building (${cuda_build_type}) NVCC ${source_file}: ${generated_file}"
+        COMMENT "${cuda_build_comment_string}"
         )
 
       # Make sure the build system knows the file is generated.
@@ -952,6 +979,8 @@ endmacro(CUDA_WRAP_SRCS)
 ###############################################################################
 macro(CUDA_ADD_LIBRARY cuda_target)
 
+  CUDA_ADD_CUDA_INCLUDE_ONCE()
+
   # Separate the sources from the options
   CUDA_GET_SOURCES_AND_OPTIONS(_sources _options ${ARGN})
   # Create custom commands and targets for each file.
@@ -983,6 +1012,8 @@ endmacro(CUDA_ADD_LIBRARY cuda_target)
 ###############################################################################
 ###############################################################################
 macro(CUDA_ADD_EXECUTABLE cuda_target)
+
+  CUDA_ADD_CUDA_INCLUDE_ONCE()
 
   # Separate the sources from the options
   CUDA_GET_SOURCES_AND_OPTIONS(_sources _options ${ARGN})
@@ -1077,7 +1108,12 @@ macro(CUDA_BUILD_CLEAN_TARGET)
   # Call this after you add all your CUDA targets, and you will get a convience
   # target.  You should also make clean after running this target to get the
   # build system to generate all the code again.
-  add_custom_target(CleanCudaDepends
+
+  set(cuda_clean_target_name clean_cuda_depends)
+  if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    string(TOUPPER ${cuda_clean_target_name} cuda_clean_target_name)
+  endif()
+  add_custom_target(${cuda_clean_target_name}
     COMMAND ${CMAKE_COMMAND} -E remove ${CUDA_ADDITIONAL_CLEAN_FILES})
 
   # Clear out the variable, so the next time we configure it will be empty.
