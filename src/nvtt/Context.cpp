@@ -311,8 +311,7 @@ int Compressor::estimateSize(int w, int h, int d, const CompressionOptions & com
 
 	const Format format = co.format;
 
-	uint bitCount = co.bitcount;
-	if (format == Format_RGBA && bitCount == 0) bitCount = co.rsize + co.gsize + co.bsize + co.asize;
+	uint bitCount = co.getBitCount();
 
 	return computeImageSize(w, h, d, bitCount, format);
 }
@@ -325,7 +324,6 @@ TexImage Compressor::createTexImage() const
 	return *new TexImage();
 }
 
-
 bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
 	m.outputHeader(tex, mipmapCount, compressionOptions.m, outputOptions.m);
@@ -336,7 +334,6 @@ bool Compressor::compress(const TexImage & tex, const CompressionOptions & compr
 	// @@ Convert to fixed point and call compress2D for each face.
 }
 
-/// Estimate the size of compressing the given texture.
 int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions) const
 {
 	const uint w = tex.width();
@@ -348,8 +345,6 @@ int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & co
 }
 
 
-
-
 bool Compressor::Private::compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	// Make sure enums match.
@@ -358,12 +353,14 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 	nvStaticCheck(FloatImage::WrapMode_Repeat == (FloatImage::WrapMode)WrapMode_Repeat);
 
 	// Get output handler.
-	if (!outputOptions.openFile())
+	if (!outputOptions.hasValidOutputHandler())
 	{
 		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_FileOpen);
 		return false;
 	}
-	
+
+#pragma message(NV_FILE_LINE "TODO: If DefaultOutputHandler, then seek begining of the file.")
+
 	inputOptions.computeTargetExtents();
 	
 	// Output DDS header.
@@ -380,8 +377,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 		}
 	}
 
-	outputOptions.closeFile();
-	
 	return true;
 }
 
@@ -630,7 +625,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
 {
 	if (tex.width() <= 0 || tex.height() <= 0 || tex.depth() <= 0 || mipmapCount <= 0)
 	{
-#pragma message(NV_FILE_LINE "Set invalid argument error")
+#pragma message(NV_FILE_LINE "TODO: Set invalid argument error.")
 		return false;
 	}
 

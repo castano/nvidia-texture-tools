@@ -52,7 +52,7 @@ namespace nvtt
 			//return !stream.isError();
 			return true;
 		}
-		
+
 		nv::StdOutputStream stream;
 	};
 	
@@ -61,13 +61,12 @@ namespace nvtt
 	{
 		nv::Path fileName;
 		
-		mutable OutputHandler * outputHandler;
+		OutputHandler * outputHandler;
 		ErrorHandler * errorHandler;
 		bool outputHeader;
 		Container container;
 		
-		bool openFile() const;
-		void closeFile() const;
+		bool hasValidOutputHandler() const;
 	};
 
 	
