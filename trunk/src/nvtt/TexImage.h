@@ -47,7 +47,7 @@ namespace nvtt
 
 			imageArray.resize(1, NULL);
 		}
-		Private(const Private & p)
+		Private(const Private & p) // Copy ctor. inits refcount to 0.
 		{
 			type = p.type;
 			wrapMode = p.wrapMode;
