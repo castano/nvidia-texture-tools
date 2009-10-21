@@ -896,7 +896,7 @@ bool DirectDrawSurface::hasAlpha() const
 {
 	if (header.hasDX10Header())
 	{
-#pragma message(NV_FILE_LINE "Update hasAlpha to handle all DX10 formats.")
+#pragma message(NV_FILE_LINE "TODO: Update hasAlpha to handle all DX10 formats.")
 		return 
 			header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM ||
 			header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
