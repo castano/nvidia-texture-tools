@@ -222,6 +222,7 @@ Compressor::Compressor() : m(*new Compressor::Private())
 
 	if (m.cudaEnabled)
 	{
+#pragma message(NV_FILE_LINE "FIXME: This code is duplicated below.")
 		// Select fastest CUDA device.
 		int device = cuda::getFastestDevice();
 		if (!cuda::setDevice(device))
@@ -231,7 +232,7 @@ Compressor::Compressor() : m(*new Compressor::Private())
 		}
 		else
 		{
-			m.cuda = new CudaCompressor();
+			m.cuda = new CudaContext();
 
 			if (!m.cuda->isValid())
 			{
@@ -268,7 +269,7 @@ void Compressor::enableCudaAcceleration(bool enable)
 		}
 		else
 		{
-			m.cuda = new CudaCompressor();
+			m.cuda = new CudaContext();
 
 			if (!m.cuda->isValid())
 			{
@@ -292,17 +293,18 @@ bool Compressor::process(const InputOptions & inputOptions, const CompressionOpt
 	return m.compress(inputOptions.m, compressionOptions.m, outputOptions.m);
 }
 
-
 /// Estimate the size of compressing the input with the given options.
 int Compressor::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const
 {
 	return m.estimateSize(inputOptions.m, compressionOptions.m);
 }
 
+
 // RAW api.
 bool Compressor::compress2D(InputFormat format, int w, int h, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-	// @@ Make sure type of input format matches compression format.
+#pragma message(NV_FILE_LINE "TODO: Implement raw compress api")
+	return false;
 }
 
 int Compressor::estimateSize(int w, int h, int d, const CompressionOptions & compressionOptions) const
@@ -324,16 +326,21 @@ TexImage Compressor::createTexImage() const
 	return *new TexImage();
 }
 
+
 bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-	m.outputHeader(tex, mipmapCount, compressionOptions.m, outputOptions.m);
+	return m.outputHeader(tex, mipmapCount, compressionOptions.m, outputOptions.m);
 }
 
 bool Compressor::compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
+#pragma message(NV_FILE_LINE "TODO: Implement TexImage compress api")
+
 	// @@ Convert to fixed point and call compress2D for each face.
+	return false;
 }
 
+/// Estimate the size of compressing the given texture.
 int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions) const
 {
 	const uint w = tex.width();
@@ -343,6 +350,8 @@ int Compressor::estimateSize(const TexImage & tex, const CompressionOptions & co
 
 	return faceCount * estimateSize(w, h, d, compressionOptions);
 }
+
+
 
 
 bool Compressor::Private::compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
@@ -358,9 +367,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_FileOpen);
 		return false;
 	}
-
-#pragma message(NV_FILE_LINE "TODO: If DefaultOutputHandler, then seek begining of the file.")
-
+	
 	inputOptions.computeTargetExtents();
 	
 	// Output DDS header.
@@ -625,7 +632,10 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
 {
 	if (tex.width() <= 0 || tex.height() <= 0 || tex.depth() <= 0 || mipmapCount <= 0)
 	{
-#pragma message(NV_FILE_LINE "TODO: Set invalid argument error.")
+		if (outputOptions.errorHandler != NULL)
+		{
+			outputOptions.errorHandler->error(Error_InvalidInput);
+		}
 		return false;
 	}
 
@@ -1252,6 +1262,182 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 }
 
 
+CompressorInterface * Compressor::Private::chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const
+{
+	if (compressionOptions.format == Format_DXT1)
+	{
+#if defined(HAVE_S3QUANT)
+		if (compressionOptions.externalCompressor == "s3") return new S3CompressorDXT1;
+		else
+#endif
+
+#if defined(HAVE_ATITC)
+		if (compressionOptions.externalCompressor == "ati") return new AtiCompressorDXT1;
+		else
+#endif
+
+#if defined(HAVE_SQUISH)
+		if (compressionOptions.externalCompressor == "squish") return new SquishCompressorDXT1;
+		else
+#endif
+
+#if defined(HAVE_D3DX)
+		if (compressionOptions.externalCompressor == "d3dx") return new D3DXCompressorDXT1;
+		else
+#endif
+
+#if defined(HAVE_D3DX)
+		if (compressionOptions.externalCompressor == "stb") return new StbCompressorDXT1;
+		else
+#endif
+
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			return new FastCompressorDXT1;
+		}
+
+		return new NormalCompressorDXT1;
+	}
+	else if (compressionOptions.format == Format_DXT1a)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			return new FastCompressorDXT1a;
+		}
+
+		return new NormalCompressorDXT1a;
+	}
+	else if (compressionOptions.format == Format_DXT1n)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_DXT3)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			return new FastCompressorDXT3;
+		}
+
+		return new NormalCompressorDXT3;
+	}
+	else if (compressionOptions.format == Format_DXT5)
+	{
+#if defined(HAVE_ATITC)
+		if (compressionOptions.externalCompressor == "ati") return new AtiCompressorDXT5;
+		else
+#endif
+
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			return new FastCompressorDXT5;
+		}
+
+		return new NormalCompressorDXT5;
+	}
+	else if (compressionOptions.format == Format_DXT5n)
+	{
+		if (compressionOptions.quality == Quality_Fastest)
+		{
+			return new FastCompressorDXT5n;
+		}
+
+		return new NormalCompressorDXT5n;
+	}
+	else if (compressionOptions.format == Format_BC4)
+	{
+		if (compressionOptions.quality == Quality_Fastest || compressionOptions.quality == Quality_Normal)
+		{
+			return new FastCompressorBC4;
+		}
+
+		return new ProductionCompressorBC4;
+	}
+	else if (compressionOptions.format == Format_BC5)
+	{
+		if (compressionOptions.quality == Quality_Fastest || compressionOptions.quality == Quality_Normal)
+		{
+			return new FastCompressorBC5;
+		}
+
+		return new ProductionCompressorBC5;
+	}
+	else if (compressionOptions.format == Format_CTX1)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_BC6)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_BC7)
+	{
+		// Not supported.
+	}
+
+	return NULL;
+}
+
+
+CompressorInterface * Compressor::Private::chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const
+{
+	nvDebugCheck(cudaSupported);
+
+	if (compressionOptions.quality == Quality_Fastest)
+	{
+		// Do not use CUDA compressors in fastest quality mode.
+		return NULL;
+	}
+
+	if (compressionOptions.format == Format_DXT1)
+	{
+		return new CudaCompressorDXT1(*cuda);
+	}
+	else if (compressionOptions.format == Format_DXT1a)
+	{
+#pragma message(NV_FILE_LINE "TODO: Implement CUDA DXT1a compressor.")
+	}
+	else if (compressionOptions.format == Format_DXT1n)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_DXT3)
+	{
+		return new CudaCompressorDXT3(*cuda);
+	}
+	else if (compressionOptions.format == Format_DXT5)
+	{
+		return new CudaCompressorDXT5(*cuda);
+	}
+	else if (compressionOptions.format == Format_DXT5n)
+	{
+		// @@ Return CUDA compressor.
+	}
+	else if (compressionOptions.format == Format_BC4)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_BC5)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_CTX1)
+	{
+		// @@ Return CUDA compressor.
+	}
+	else if (compressionOptions.format == Format_BC6)
+	{
+		// Not supported.
+	}
+	else if (compressionOptions.format == Format_BC7)
+	{
+		// Not supported.
+	}
+
+	return NULL;
+}
+
+
+
 // Compress the given mipmap.
 bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
@@ -1272,196 +1458,26 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 		const Image * image = mipmap.asFixedImage();
 		nvDebugCheck(image != NULL);
 
-		// @@ Use FastCompressor::isSupported(compressionOptions.format) to chose compressor.
-
-		FastCompressor fast;
-		fast.setImage(image, inputOptions.alphaMode);
-
-		SlowCompressor slow;
-		slow.setImage(image, inputOptions.alphaMode);
-
-		const bool useCuda = cudaEnabled && image->width() * image->height() >= 512;
-
-		if (compressionOptions.format == Format_DXT1)
+		// Decide what compressor to use.
+		CompressorInterface * compressor = NULL;
+		if (cudaEnabled && image->width() * image->height() >= 512)
 		{
-#if defined(HAVE_S3QUANT)
-			if (compressionOptions.externalCompressor == "s3")
-			{
-				s3CompressDXT1(image, outputOptions);
-			}
-			else
-#endif
-
-#if defined(HAVE_ATITC)
-			if (compressionOptions.externalCompressor == "ati")
-			{
-				atiCompressDXT1(image, outputOptions);
-			}
-			else
-#endif
-
-#if defined(HAVE_SQUISH)
-			if (compressionOptions.externalCompressor == "squish")
-			{
-				squishCompressDXT1(image, outputOptions);
-			}
-			else
-#endif
-
-#if defined(HAVE_D3DX)
-			if (compressionOptions.externalCompressor == "d3dx")
-			{
-				d3dxCompressDXT1(image, outputOptions);
-			}
-			else
-#endif
-
-#if defined(HAVE_D3DX)
-			if (compressionOptions.externalCompressor == "stb")
-			{
-				stbCompressDXT1(image, outputOptions);
-			}
-			else
-#endif
-
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT1(outputOptions);
-			}
-			else
-			{
-				if (useCuda)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					//cuda->compressDXT1(compressionOptions, outputOptions);
-					cuda->compressDXT1(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT1(compressionOptions, outputOptions);
-				}
-			}
+			compressor = chooseGpuCompressor(compressionOptions);
 		}
-		else if (compressionOptions.format == Format_DXT1a)
+		if (compressor == NULL)
 		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT1a(outputOptions);
-			}
-			else
-			{
-				if (useCuda)
-				{
-					nvDebugCheck(cudaSupported);
-					/*cuda*/slow.compressDXT1a(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT1a(compressionOptions, outputOptions);
-				}
-			}
+			compressor = chooseCpuCompressor(compressionOptions);
 		}
-		else if (compressionOptions.format == Format_DXT1n)
+
+		if (compressor == NULL)
 		{
-			if (useCuda)
-			{
-				nvDebugCheck(cudaSupported);
-				cuda->setImage(image, inputOptions.alphaMode);	
-				cuda->compressDXT1n(compressionOptions, outputOptions);
-			}
-			else
-			{
-				if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-			}
+			if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
 		}
-		else if (compressionOptions.format == Format_DXT3)
+		else
 		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT3(outputOptions);
-			}
-			else
-			{
-				if (useCuda)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT3(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT3(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_DXT5)
-		{
-#if defined(HAVE_ATITC)
-			if (compressionOptions.externalCompressor == "ati")
-			{
-				atiCompressDXT5(image, outputOptions);
-			}
-			else
-#endif
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT5(outputOptions);
-			}
-			else
-			{
-				if (useCuda)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT5(compressionOptions, outputOptions);
-				}
-				else
-				{
-					slow.compressDXT5(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_DXT5n)
-		{
-			if (compressionOptions.quality == Quality_Fastest)
-			{
-				fast.compressDXT5n(outputOptions);
-			}
-			else
-			{
-				/*if (useCuda)
-				{
-					nvDebugCheck(cudaSupported);
-					cuda->setImage(image, inputOptions.alphaMode);
-					cuda->compressDXT5n(compressionOptions, outputOptions);
-				}
-				else*/
-				{
-					slow.compressDXT5n(compressionOptions, outputOptions);
-				}
-			}
-		}
-		else if (compressionOptions.format == Format_BC4)
-		{
-			slow.compressBC4(compressionOptions, outputOptions);
-		}
-		else if (compressionOptions.format == Format_BC5)
-		{
-			slow.compressBC5(compressionOptions, outputOptions);
-		}
-		else if (compressionOptions.format == Format_CTX1)
-		{
-			if (useCuda)
-			{
-				nvDebugCheck(cudaSupported);
-				cuda->setImage(image, inputOptions.alphaMode);
-				cuda->compressCTX1(compressionOptions, outputOptions);
-			}
-			else
-			{
-				if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-			}
+			compressor->compress(InputFormat_BGRA_8UB, inputOptions.alphaMode, image->width(), image->height(), (void *)image->pixels(), compressionOptions, outputOptions);
+
+			delete compressor;
 		}
 	}
 

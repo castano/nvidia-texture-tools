@@ -93,6 +93,9 @@ namespace nvtt
 		Format_DXT1n,
 		Format_CTX1,
 		Format_YCoCg_DXT5,
+
+		Format_BC6,
+		Format_BC7,
 	};
 
 	/// Pixel types.

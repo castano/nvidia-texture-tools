@@ -296,6 +296,51 @@ __device__ float3 blockError3(const float3 * colors, uint permutation, float3 a,
 // Sort colors
 ////////////////////////////////////////////////////////////////////////////////
 
+// @@ Experimental code to avoid duplicate colors for faster compression.
+// We could first sort along the best fit line and only compare colors that have the same projection.
+// The hardest part is to maintain the indices to map packed/sorted colors to the input colors.
+// We also need to update several functions that assume the number of colors is fixed to 16.
+// And compute different bit maps for the different color counts.
+// This is a fairly high amount of work.
+__device__ int packColors(float3 * values, float * weights, int * ranks)
+{
+    const int tid = threadIdx.x;
+
+	__shared__ int count;
+	count = 0;
+
+	bool alive = true;
+
+	// Append this 
+	for (int i = 0; i < 16; i++)
+	{
+		// One thread leads on each iteration.
+		if (tid == i) {
+
+			// If thread alive, then append element.
+			if (alive) {
+				values[count] = values[i];
+				weights[count] = weights[i];
+				count++;
+			}
+
+			// Otherwise update weight.
+			else {
+				weights[ranks[i]] += weights[i];
+			}
+		}
+
+		// Kill all threads that have the same element and record rank.
+		if (values[i] == values[tid]) {
+			alive = false;
+			ranks[tid] = count - 1;
+		}
+	}
+
+	return count;
+}
+
+
 __device__ void sortColors(const float * values, int * ranks)
 {
 #if __DEVICE_EMULATION__
@@ -343,12 +388,60 @@ __device__ void sortColors(const float * values, int * ranks)
 #endif
 }
 
+__device__ void sortColors(const float * values, int * ranks, int count)
+{
+#if __DEVICE_EMULATION__
+    if (threadIdx.x == 0)
+    {
+        for (int tid = 0; tid < count; tid++)
+        {
+            int rank = 0;
+            for (int i = 0; i < count; i++)
+            {
+                rank += (values[i] < values[tid]);
+            }
+            
+            ranks[tid] = rank;
+        }
+
+        // Resolve elements with the same index.
+        for (int i = 0; i < count-1; i++)
+        {
+            for (int tid = 0; tid < count; tid++)
+            {
+                if (tid > i && ranks[tid] == ranks[i]) ++ranks[tid];
+            }
+        }
+    }
+#else
+    const int tid = threadIdx.x;
+
+    int rank = 0;
+
+    #pragma unroll
+    for (int i = 0; i < count; i++)
+    {
+        rank += (values[i] < values[tid]);
+    }
+    
+    ranks[tid] = rank;
+
+    // Resolve elements with the same index.
+    #pragma unroll
+    for (int i = 0; i < count-1; i++)
+    {
+        if ((tid > i) & (ranks[tid] == ranks[i])) ++ranks[tid];
+    }
+#endif
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Load color block to shared mem
 ////////////////////////////////////////////////////////////////////////////////
 
-__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
+/*__device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
@@ -389,9 +482,9 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 		__debugsync();
 	}
 #endif
-}
+}*/
 
-__device__ void loadColorBlockTex(uint bn, uint w, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
+__device__ void loadColorBlockTex(uint firstBlock, uint width, float3 colors[16], float3 sums[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
 	const int idx = threadIdx.x;
@@ -400,8 +493,8 @@ __device__ void loadColorBlockTex(uint bn, uint w, float3 colors[16], float3 sum
 
 	if (idx < 16)
 	{
-		float x = 4 * ((bn + bid) % w) + idx % 4; // @@ Avoid mod and div by using 2D grid?
-		float y = 4 * ((bn + bid) / w) + idx / 4;
+		float x = 4 * ((firstBlock + bid) % width) + idx % 4; // @@ Avoid mod and div by using 2D grid?
+		float y = 4 * ((firstBlock + bid) / width) + idx / 4;
 
 		// Read color and copy to shared mem.
 		float4 c = tex2D(tex, x, y);
@@ -437,10 +530,107 @@ __device__ void loadColorBlockTex(uint bn, uint w, float3 colors[16], float3 sum
 		__debugsync();
 	}
 #endif
-
 }
 
+/*
+__device__ void loadColorBlockTex(uint firstBlock, uint w, float3 colors[16], float3 sums[16], float weights[16], int xrefs[16], int * sameColor)
+{
+	const int bid = blockIdx.x;
+	const int idx = threadIdx.x;
 
+	__shared__ float dps[16];
+
+	if (idx < 16)
+	{
+		float x = 4 * ((firstBlock + bid) % w) + idx % 4; // @@ Avoid mod and div by using 2D grid?
+		float y = 4 * ((firstBlock + bid) / w) + idx / 4;
+
+		// Read color and copy to shared mem.
+		float4 c = tex2D(tex, x, y);
+
+		colors[idx].x = c.z;
+		colors[idx].y = c.y;
+		colors[idx].z = c.x;
+		weights[idx] = 1;
+
+		int count = packColors(colors, weights);
+		if (idx < count)
+		{
+			// Sort colors along the best fit line.
+			colorSums(colors, sums);
+			float3 axis = bestFitLine(colors, sums[0], kColorMetric);
+			
+			*sameColor = (axis == make_float3(0, 0, 0));
+			
+			dps[idx] = dot(colors[idx], axis);
+			
+			sortColors(dps, xrefs);
+			
+			float3 tmp = colors[idx];
+			colors[xrefs[idx]] = tmp;
+		}
+	}
+}
+*/
+
+__device__ void loadColorBlockTex(uint firstBlock, uint width, float3 colors[16], float3 sums[16], float weights[16], int xrefs[16], int * sameColor)
+{
+	const int bid = blockIdx.x;
+	const int idx = threadIdx.x;
+
+	__shared__ float3 rawColors[16];
+	__shared__ float dps[16];
+
+	if (idx < 16)
+	{
+		float x = 4 * ((firstBlock + bid) % width) + idx % 4; // @@ Avoid mod and div by using 2D grid?
+		float y = 4 * ((firstBlock + bid) / width) + idx / 4;
+
+		// Read color and copy to shared mem.
+		float4 c = tex2D(tex, x, y);
+
+		rawColors[idx].x = c.z;
+		rawColors[idx].y = c.y;
+		rawColors[idx].z = c.x;
+		weights[idx] = c.w;
+
+		colors[idx] = rawColors[idx] * weights[idx];
+
+		// No need to synchronize, 16 < warp size.
+		__debugsync();
+		
+		// Sort colors along the best fit line.
+		colorSums(colors, sums);
+		float3 axis = bestFitLine(colors, sums[0], kColorMetric);
+		
+		*sameColor = (axis == make_float3(0, 0, 0));
+		
+		// Single color compressor needs unweighted colors.
+		if (*sameColor) colors[idx] = rawColors[idx];
+
+		dps[idx] = dot(colors[idx], axis);
+		
+		__debugsync();
+		
+		sortColors(dps, xrefs);
+		
+		float3 tmp = colors[idx];
+		float w = weights[idx];
+		__debugsync();
+		colors[xrefs[idx]] = tmp;
+		weights[xrefs[idx]] = w;
+	}
+#if __DEVICE_EMULATION__
+	else
+	{
+		__debugsync();
+		__debugsync();
+		__debugsync();
+	}
+#endif
+}
+
+/*
 __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sums[16], float weights[16], int xrefs[16], int * sameColor)
 {
 	const int bid = blockIdx.x;
@@ -494,6 +684,7 @@ __device__ void loadColorBlock(const uint * image, float3 colors[16], float3 sum
 	}
 #endif
 }
+*/
 
 __device__ void loadColorBlock(const uint * image, float2 colors[16], float2 sums[16], int xrefs[16], int * sameColor)
 {
@@ -1457,48 +1648,15 @@ __device__ void saveSingleColorBlockCTX1(float2 color, uint2 * result)
 ////////////////////////////////////////////////////////////////////////////////
 // Compress color block
 ////////////////////////////////////////////////////////////////////////////////
-__global__ void compressDXT1(const uint * permutations, const uint * image, uint2 * result)
+
+__global__ void compressDXT1(uint firstBlock, uint w, const uint * permutations, uint2 * result)
 {
 	__shared__ float3 colors[16];
 	__shared__ float3 sums[16];
 	__shared__ int xrefs[16];
 	__shared__ int sameColor;
 	
-	loadColorBlock(image, colors, sums, xrefs, &sameColor);
-
-	__syncthreads();
-
-	if (sameColor)
-	{
-		if (threadIdx.x == 0) saveSingleColorBlockDXT1(colors[0], result);
-		return;
-	}
-
-	ushort bestStart, bestEnd;
-	uint bestPermutation;
-
-	__shared__ float errors[NUM_THREADS];
-
-	evalAllPermutations(colors, sums[0], permutations, bestStart, bestEnd, bestPermutation, errors);
-	
-	// Use a parallel reduction to find minimum error.
-	const int minIdx = findMinError(errors);
-	
-	// Only write the result of the winner thread.
-	if (threadIdx.x == minIdx)
-	{
-		saveBlockDXT1(bestStart, bestEnd, bestPermutation, xrefs, result);
-	}
-}
-
-__global__ void compressDXT1_Tex(uint bn, uint w, const uint * permutations, uint2 * result)
-{
-	__shared__ float3 colors[16];
-	__shared__ float3 sums[16];
-	__shared__ int xrefs[16];
-	__shared__ int sameColor;
-	
-	loadColorBlockTex(bn, w, colors, sums, xrefs, &sameColor);
+	loadColorBlockTex(firstBlock, w, colors, sums, xrefs, &sameColor);
 
 	__syncthreads();
 
@@ -1534,14 +1692,14 @@ __global__ void compressDXT1_Tex(uint bn, uint w, const uint * permutations, uin
 }
 
 
-__global__ void compressLevel4DXT1(const uint * permutations, const uint * image, uint2 * result)
+__global__ void compressLevel4DXT1(uint firstBlock, uint w, const uint * permutations, uint2 * result)
 {
 	__shared__ float3 colors[16];
 	__shared__ float3 sums[16];
 	__shared__ int xrefs[16];
 	__shared__ int sameColor;
 	
-	loadColorBlock(image, colors, sums, xrefs, &sameColor);
+	loadColorBlockTex(firstBlock, w, colors, sums, xrefs, &sameColor);
 
 	__syncthreads();
 
@@ -1568,7 +1726,7 @@ __global__ void compressLevel4DXT1(const uint * permutations, const uint * image
 	}
 }
 
-__global__ void compressWeightedDXT1(const uint * permutations, const uint * image, uint2 * result)
+__global__ void compressWeightedDXT1(uint firstBlock, uint w, const uint * permutations, uint2 * result)
 {
 	__shared__ float3 colors[16];
 	__shared__ float3 sums[16];
@@ -1576,7 +1734,7 @@ __global__ void compressWeightedDXT1(const uint * permutations, const uint * ima
 	__shared__ int xrefs[16];
 	__shared__ int sameColor;
 	
-	loadColorBlock(image, colors, sums, weights, xrefs, &sameColor);
+	loadColorBlockTex(firstBlock, w, colors, sums, weights, xrefs, &sameColor);
 	
 	__syncthreads();
 
@@ -1987,17 +2145,7 @@ extern "C" void setupCompressKernel(const float weights[3])
 	cudaMemcpyToSymbol(kColorMetricSqr, weightsSqr, sizeof(float) * 3, 0);
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Launch kernel
-////////////////////////////////////////////////////////////////////////////////
-
-extern "C" void compressKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
-{
-	compressDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
-}
-
-extern "C" void compressKernelDXT1_Tex(uint bn, uint blockNum, uint w, cudaArray * d_data, uint * d_result, uint * d_bitmaps)
+extern "C" void bindTextureToArray(cudaArray * d_data)
 {
 	// Setup texture
 	tex.normalized = false;
@@ -2006,21 +2154,61 @@ extern "C" void compressKernelDXT1_Tex(uint bn, uint blockNum, uint w, cudaArray
 	tex.addressMode[1] = cudaAddressModeClamp;
     
 	cudaBindTextureToArray(tex, d_data);
-
-	compressDXT1_Tex<<<blockNum, NUM_THREADS>>>(bn, w, d_bitmaps, (uint2 *)d_result);
 }
 
 
-extern "C" void compressKernelDXT1_Level4(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
+
+////////////////////////////////////////////////////////////////////////////////
+// Launch kernel
+////////////////////////////////////////////////////////////////////////////////
+
+// DXT1 compressors:
+extern "C" void compressKernelDXT1(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
 {
-	compressLevel4DXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+	compressDXT1<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
 }
 
-extern "C" void compressWeightedKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
+extern "C" void compressKernelDXT1_Level4(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
 {
-	compressWeightedDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
+	compressLevel4DXT1<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
 }
 
+extern "C" void compressWeightedKernelDXT1(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
+{
+	compressWeightedDXT1<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
+}
+
+// @@ DXT1a compressors.
+
+
+// @@ DXT3 compressors:
+extern "C" void compressKernelDXT3(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
+{
+	//compressDXT3<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
+}
+
+extern "C" void compressWeightedKernelDXT3(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
+{
+	//compressWeightedDXT3<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
+}
+
+
+// @@ DXT5 compressors.
+extern "C" void compressKernelDXT5(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
+{
+	//compressDXT5<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
+}
+
+extern "C" void compressWeightedKernelDXT5(uint firstBlock, uint blockNum, uint w, uint * d_result, uint * d_bitmaps)
+{
+	//compressWeightedDXT5<<<blockNum, NUM_THREADS>>>(firstBlock, w, d_bitmaps, (uint2 *)d_result);
+}
+
+
+
+
+
+/*
 extern "C" void compressNormalKernelDXT1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps)
 {
 	compressNormalDXT1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
@@ -2030,16 +2218,10 @@ extern "C" void compressKernelCTX1(uint blockNum, uint * d_data, uint * d_result
 {
 	compressCTX1<<<blockNum, NUM_THREADS>>>(d_bitmaps, d_data, (uint2 *)d_result);
 }
-
+*/
+/*
 extern "C" void compressKernelDXT5n(uint blockNum, cudaArray * d_data, uint * d_result)
 {
-	// Setup texture
-	tex.normalized = false;
-	tex.filterMode = cudaFilterModePoint;
-	tex.addressMode[0] = cudaAddressModeClamp;
-	tex.addressMode[1] = cudaAddressModeClamp;
-    
-	cudaBindTextureToArray(tex, d_data);
-
 //	compressDXT5n<<<blockNum/128, 128>>>(blockNum, (uint2 *)d_result);
 }
+*/
