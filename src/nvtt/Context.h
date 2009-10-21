@@ -27,6 +27,7 @@
 #include <nvcore/Ptr.h>
 
 #include <nvtt/cuda/CudaCompressDXT.h>
+#include <nvtt/CompressDXT.h>
 
 #include "nvtt.h"
 
@@ -44,6 +45,9 @@ namespace nvtt
 		Private() {}
 
 		bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+
+		bool compress(const void * data, int width, int height, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+
 		int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
 
 		bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions);
@@ -51,6 +55,10 @@ namespace nvtt
 	private:
 
 		bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+
+		nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
+		nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
+
 		bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 		bool initMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f, uint m) const;
@@ -71,7 +79,7 @@ namespace nvtt
 		bool cudaSupported;
 		bool cudaEnabled;
 
-		nv::AutoPtr<nv::CudaCompressor> cuda;
+		nv::AutoPtr<nv::CudaContext> cuda;
 
 	};
 
