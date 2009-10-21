@@ -263,7 +263,7 @@ bool TexImage::load(const char * fileName)
 
 bool TexImage::save(const char * fileName) const
 {
-	// @@ Add support for DDS textures?
+#pragma message(NV_FILE_LINE "TODO: Add support for DDS textures in TexImage::save")
 
 	if (m->imageArray.count() == 0)
 	{
@@ -402,6 +402,8 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 		return false;
 	}
 
+#pragma message(NV_FILE_LINE "TODO: Add support for all compressed formats in TexImage::setImage2D.")
+
 	if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3)
 	{
 		return false;
@@ -446,13 +448,12 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 				{
 					const BlockDXT3 * block = (const BlockDXT3 *)ptr;
 
-#pragma message(NV_FILE_LINE "Add NV5x decoder to DXT3 block")
-					//if (decoder == Decoder_Reference) {
+					if (decoder == Decoder_Reference) {
 						block->decodeBlock(&colors);
-					//}
-					//else if (decoder == Decoder_NV5x) {
-					//	block->decodeBlockNV5x(&colors);
-					//}
+					}
+					else if (decoder == Decoder_NV5x) {
+						block->decodeBlockNV5x(&colors);
+					}
 				}
 				else if (format == nvtt::Format_BC3)
 				{
