@@ -205,9 +205,9 @@ void nv::SlowCompressor::compressDXT1(const CompressionOptions::Private & compre
 	ColorBlock rgba;
 	BlockDXT1 block;
 
-	//squish::WeightedClusterFit fit;
+	squish::WeightedClusterFit fit;
 	//squish::ClusterFit fit;
-	squish::FastClusterFit fit;
+	//squish::FastClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
 	for (uint y = 0; y < h; y += 4) {
@@ -221,7 +221,7 @@ void nv::SlowCompressor::compressDXT1(const CompressionOptions::Private & compre
 			}
 			else
 			{
-				squish::ColourSet colours((uint8 *)rgba.colors(), 0);
+				squish::ColourSet colours((uint8 *)rgba.colors(), 0, true);
 				fit.SetColourSet(&colours, squish::kDxt1);
 				fit.Compress(&block);
 			}
