@@ -263,6 +263,14 @@ void BlockDXT3::decodeBlock(ColorBlock * block) const
 	alpha.decodeBlock(block);
 }
 
+void BlockDXT3::decodeBlockNV5x(ColorBlock * block) const
+{
+	nvDebugCheck(block != NULL);
+	
+	color.decodeBlockNV5x(block);
+	alpha.decodeBlock(block);
+}
+
 void AlphaBlockDXT3::decodeBlock(ColorBlock * block) const
 {
 	nvDebugCheck(block != NULL);

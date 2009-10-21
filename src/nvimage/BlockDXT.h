@@ -107,6 +107,7 @@ namespace nv
 		BlockDXT1 color;
 		
 		void decodeBlock(ColorBlock * block) const;
+		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void flip4();
 		void flip2();
