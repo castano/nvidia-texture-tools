@@ -17,7 +17,7 @@ public:
 	void start() { m_start = clock(); }
 	void stop() { m_stop = clock(); }
 
-	int elapsed() const { return (1000 * (m_stop - m_start)) / CLOCKS_PER_SEC; }
+	float elapsed() const { return float(m_stop - m_start) / CLOCKS_PER_SEC; }
 	
 private:
 	clock_t m_start;
