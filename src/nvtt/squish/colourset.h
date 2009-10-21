@@ -37,7 +37,7 @@ namespace nvsquish {
 class ColourSet
 {
 public:
-	ColourSet( u8 const* rgba, int flags, bool createMinimalSet = false );
+	ColourSet( u8 const* rgba, int flags, bool createMinimalSet = true );
 
 	int GetCount() const { return m_count; }
 	Vec3 const* GetPoints() const { return m_points; }
