@@ -8,10 +8,16 @@
 #define HAVE_MALLOC_H
 
 #if !defined(_M_X64)
-#define HAVE_PNG
-#define HAVE_JPEG
-#define HAVE_TIFF
-//#define HAVE_FREEIMAGE
+//#define HAVE_PNG
+//#define HAVE_JPEG
+//#define HAVE_TIFF
+#define HAVE_FREEIMAGE
 #endif
+
+#define HAVE_ATITC
+#define HAVE_D3DX
+#define HAVE_SQUISH
+#define HAVE_STB
+
 
 #endif // NV_CONFIG
