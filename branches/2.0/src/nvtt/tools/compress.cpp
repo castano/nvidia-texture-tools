@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		printf("DISABLED\n\n");
-	}	
+	}
 	
 	outputHandler.setTotal(compressor.estimateSize(inputOptions, compressionOptions));
 	outputHandler.setDisplayProgress(!silent);

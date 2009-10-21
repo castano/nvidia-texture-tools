@@ -131,6 +131,7 @@ float WeightedClusterFit::GetBestError() const
 
 void WeightedClusterFit::Compress3( void* block )
 {
+	int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
 	Vec4 const zero = VEC4_CONST(0.0f);
 	Vec4 const half(0.5f, 0.5f, 0.5f, 0.25f);
@@ -146,11 +147,11 @@ void WeightedClusterFit::Compress3( void* block )
 	int b0 = 0, b1 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= 16; c0++)
+	for( int c0 = 0; c0 <= count; c0++)
 	{	
 		Vec4 x1 = zero;
 		
-		for( int c1 = 0; c1 <= 16-c0; c1++)
+		for( int c1 = 0; c1 <= count-c0; c1++)
 		{
 			Vec4 const x2 = m_xsum - x1 - x0;
 			
@@ -228,7 +229,7 @@ void WeightedClusterFit::Compress3( void* block )
 		
 		// remap the indices
 		u8 ordered[16];
-		for( int i = 0; i < 16; ++i )
+		for( int i = 0; i < count; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
 		m_colours->RemapIndices( ordered, bestindices ); // Set alpha indices.
@@ -244,6 +245,7 @@ void WeightedClusterFit::Compress3( void* block )
 
 void WeightedClusterFit::Compress4( void* block )
 {
+	int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
 	Vec4 const zero = VEC4_CONST(0.0f);
 	Vec4 const half = VEC4_CONST(0.5f);
@@ -260,15 +262,15 @@ void WeightedClusterFit::Compress4( void* block )
 	int b0 = 0, b1 = 0, b2 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= 16; c0++)
+	for( int c0 = 0; c0 <= count; c0++)
 	{	
 		Vec4 x1 = zero;
 		
-		for( int c1 = 0; c1 <= 16-c0; c1++)
+		for( int c1 = 0; c1 <= count-c0; c1++)
 		{	
 			Vec4 x2 = zero;
 			
-			for( int c2 = 0; c2 <= 16-c0-c1; c2++)
+			for( int c2 = 0; c2 <= count-c0-c1; c2++)
 			{
 				Vec4 const x3 = m_xsum - x2 - x1 - x0;
 				
@@ -353,7 +355,7 @@ void WeightedClusterFit::Compress4( void* block )
 		
 		// remap the indices
 		u8 ordered[16];
-		for( int i = 0; i < 16; ++i )
+		for( int i = 0; i < count; ++i )
 			ordered[m_order[i]] = bestindices[i];
 		
 		// save the block
