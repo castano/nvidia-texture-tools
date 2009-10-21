@@ -142,22 +142,25 @@ void TexImage::setTextureType(TextureType type)
 
 		m->type = type;
 
-		// Free images. @@ Use AutoPtr?
-		foreach (i, m->imageArray)
-		{
-			delete m->imageArray[i];
-		}
-
+		int count = 0;
 		if (type == TextureType_2D)
 		{
-			// @@ Free images.
-			m->imageArray.resize(1, NULL);
+			count = 1;
 		}
 		else
 		{
 			nvCheck (type == TextureType_Cube);
-			m->imageArray.resize(6, NULL);
+			count = 6;
 		}
+
+		// Delete all but the first 'count' images.
+		const uint imageCount = m->imageArray.count();
+		for (uint i = count; i < imageCount; i++)
+		{
+			delete m->imageArray[i];
+		}
+
+		m->imageArray.resize(count, NULL);
 	}
 }
 
@@ -208,7 +211,7 @@ int TexImage::height() const
 
 int TexImage::depth() const
 {
-	return 0;
+	return 1;
 }
 
 int TexImage::faceCount() const
@@ -495,6 +498,8 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 }
 
 
+#pragma message(NV_FILE_LINE "TODO: provide a TexImage::resize that can override filter width and parameters.")
+
 void TexImage::resize(int w, int h, ResizeFilter filter)
 {
 	if (m->imageArray.count() > 0)
@@ -502,7 +507,11 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 		if (w == m->imageArray[0]->width() && h == m->imageArray[0]->height()) return;
 	}
 
-	// @@ TODO: if cubemap, make sure w == h.
+	if (m->type == TextureType_Cube)
+	{
+#pragma message(NV_FILE_LINE "Output error when image is cubemap and w != h.")
+		h = w;
+	}
 
 	detach();
 
@@ -510,7 +519,9 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 
 	foreach (i, m->imageArray)
 	{
-		if (m->imageArray[i] == NULL) continue;
+		FloatImage * img = m->imageArray[i];
+
+		if (img == NULL) continue;
 
 		if (m->alphaMode == AlphaMode_Transparency)
 		{
@@ -606,6 +617,12 @@ void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 		{
 			w = previousPowerOfTwo(w);
 			h = previousPowerOfTwo(h);
+		}
+
+		// Make sure cube faces are square.
+		if (m->type == TextureType_Cube)
+		{
+			w = h = max(w, h);
 		}
 
 		resize(w, h, filter);
@@ -951,7 +968,7 @@ void TexImage::toHeightMap()
 	{
 		if (m->imageArray[i] == NULL) continue;
 
-		// @@ Not implemented.
+#pragma message(NV_FILE_LINE "Implement TexImage::toHeightMap")
 	}
 
 	m->isNormalMap = false;
