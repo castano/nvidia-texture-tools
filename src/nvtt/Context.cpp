@@ -917,6 +917,8 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 				premultiplyAlphaMipmap(mipmap, inputOptions);
 			}
 
+#pragma message(NV_FILE_LINE "TODO: All color transforms should be done here!")
+
 			// Apply gamma space color transforms:
 			if (inputOptions.colorTransform == ColorTransform_YCoCg)
 			{
@@ -927,6 +929,28 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 				// @@ TODO
 				//ColorSpace::RGBtoYCoCg_R(mipmap.asMutableFixedImage());
 			}
+
+			/*// Apply linear transforms in linear space.
+			if (inputOptions.colorTransform == ColorTransform_Linear)
+			{
+				FloatImage * image = mipmap.asMutableFloatImage();
+				nvDebugCheck(image != NULL);
+
+				Vector4 offset(
+					inputOptions.colorOffsets[0],
+					inputOptions.colorOffsets[1],
+					inputOptions.colorOffsets[2],
+					inputOptions.colorOffsets[3]);
+
+				image->transform(0, inputOptions.linearTransform, offset);
+			}
+			else if (inputOptions.colorTransform == ColorTransform_Swizzle)
+			{
+				FloatImage * image = mipmap.asMutableFloatImage();
+				nvDebugCheck(image != NULL);
+
+				image->swizzle(0, inputOptions.swizzleTransform[0], inputOptions.swizzleTransform[1], inputOptions.swizzleTransform[2], inputOptions.swizzleTransform[3]);
+			}*/
 
 			quantizeMipmap(mipmap, compressionOptions);
 		}
@@ -1173,7 +1197,9 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 			mipmap.toFloatImage(inputOptions);
 		}
 
-		// Apply linear transforms in linear space.
+#pragma message(NV_FILE_LINE "FIXME: Do not perform color transforms here!")
+
+		/*// Apply linear transforms in linear space.
 		if (inputOptions.colorTransform == ColorTransform_Linear)
 		{
 			FloatImage * image = mipmap.asMutableFloatImage();
@@ -1193,7 +1219,7 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 			nvDebugCheck(image != NULL);
 
 			image->swizzle(0, inputOptions.swizzleTransform[0], inputOptions.swizzleTransform[1], inputOptions.swizzleTransform[2], inputOptions.swizzleTransform[3]);
-		}
+		}*/
 	}
 }
 
