@@ -58,9 +58,7 @@ void ColorBlock::init(const Image * img, uint x, uint y)
 	
 	const uint bw = min(img->width() - x, 4U);
 	const uint bh = min(img->height() - y, 4U);
-
-	nvDebugCheck(bw != 0);
-	nvDebugCheck(bh != 0);
+	nvDebugCheck(bw != 0 && bh != 0);
 
 	static const int remainder[] = {
 		0, 0, 0, 0,
@@ -83,42 +81,82 @@ void ColorBlock::init(const Image * img, uint x, uint y)
 	}
 }
 
-
-void ColorBlock::swizzleDXT5n()
+void ColorBlock::init(uint w, uint h, uint * data, uint x, uint y)
 {
-	for(int i = 0; i < 16; i++)
+	nvDebugCheck(data != NULL);
+
+	const uint bw = min(w - x, 4U);
+	const uint bh = min(h - y, 4U);
+	nvDebugCheck(bw != 0 && bh != 0);
+
+	// Blocks that are smaller than 4x4 are handled by repeating the pixels.
+	// @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
+
+	for (uint i = 0; i < 4; i++)
+	{
+		const int by = i % bh;
+		
+		for (uint e = 0; e < 4; e++)
+		{
+			const int bx = e % bw;
+			const uint idx = (y + by) * w + x + bx;
+
+			color(e, i).u = data[idx];
+		}
+	}
+}
+
+void ColorBlock::init(uint w, uint h, float * data, uint x, uint y)
+{
+	nvDebugCheck(data != NULL);
+
+	const uint bw = min(w - x, 4U);
+	const uint bh = min(h - y, 4U);
+	nvDebugCheck(bw != 0 && bh != 0);
+
+	// Blocks that are smaller than 4x4 are handled by repeating the pixels.
+	// @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
+
+	for (uint i = 0; i < 4; i++)
+	{
+		const uint by = i % bh;
+		
+		for (uint e = 0; e < 4; e++)
+		{
+			const uint bx = e % bw;
+			const uint idx = ((y + by) * w + x + bx) * 4;
+			
+			Color32 & c = color(e, i);
+			c.r = uint8(255 * clamp(data[idx + 0], 0.0f, 1.0f));
+			c.g = uint8(255 * clamp(data[idx + 1], 0.0f, 1.0f));
+			c.b = uint8(255 * clamp(data[idx + 2], 0.0f, 1.0f));
+			c.a = uint8(255 * clamp(data[idx + 3], 0.0f, 1.0f));
+		}
+	}
+}
+
+static inline uint8 component(Color32 c, uint i)
+{
+	if (i == 0) return c.r;
+	if (i == 1) return c.g;
+	if (i == 2) return c.b;
+	if (i == 3) return c.a;
+	if (i == 4) return 0xFF;
+	return 0;
+}
+
+void ColorBlock::swizzle(uint x, uint y, uint z, uint w)
+{
+	for (int i = 0; i < 16; i++)
 	{
 		Color32 c = m_color[i];
-		m_color[i] = Color32(0xFF, c.g, 0, c.r);
+		m_color[i].r = component(c, x);
+		m_color[i].g = component(c, y);
+		m_color[i].b = component(c, z);
+		m_color[i].a = component(c, w);
 	}
 }
 
-void ColorBlock::swizzleSTB()
-{
-	for(int i = 0; i < 16; i++)
-	{
-		Color32 c = m_color[i];
-		m_color[i] = Color32(c.b, c.g, c.r, c.a);
-	}
-}
-
-void ColorBlock::splatX()
-{
-	for(int i = 0; i < 16; i++)
-	{
-		uint8 x = m_color[i].r;
-		m_color[i] = Color32(x, x, x, x);
-	}
-}
-
-void ColorBlock::splatY()
-{
-	for(int i = 0; i < 16; i++)
-	{
-		uint8 y = m_color[i].g;
-		m_color[i] = Color32(y, y, y, y);
-	}
-}
 
 /// Returns true if the block has a single color.
 bool ColorBlock::isSingleColor() const

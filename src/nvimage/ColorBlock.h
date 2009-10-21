@@ -18,11 +18,10 @@ namespace nv
 		ColorBlock(const Image * img, uint x, uint y);
 		
 		void init(const Image * img, uint x, uint y);
+		void init(uint w, uint h, uint * data, uint x, uint y);
+		void init(uint w, uint h, float * data, uint x, uint y);
 		
-		void swizzleDXT5n();
-		void swizzleSTB();
-		void splatX();
-		void splatY();
+		void swizzle(uint x, uint y, uint z, uint w); // 0=r, 1=g, 2=b, 3=a, 4=0xFF, 5=0
 		
 		bool isSingleColor() const;
 		bool isSingleColorNoAlpha() const;
