@@ -470,6 +470,11 @@ int main(int argc, char *argv[])
 
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(format);
+	
+	if (format == nvtt::Format_BC2) {
+		// Dither alpha when using BC2.
+		compressionOptions.setQuantization(false, true, false);
+	}
 
 	if (format == nvtt::Format_RGBA)
 	{
@@ -546,8 +551,9 @@ int main(int argc, char *argv[])
 	{
 		return EXIT_FAILURE;
 	}
+	timer.stop();
 
-	printf("\rtime taken: %.3f seconds\n", float(timer.elapsed()) / 1000.0f);
+	printf("\rtime taken: %.3f seconds\n", timer.elapsed());
 	
 	return EXIT_SUCCESS;
 }
