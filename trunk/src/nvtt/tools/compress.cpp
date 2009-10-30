@@ -478,10 +478,11 @@ int main(int argc, char *argv[])
 
 	if (format == nvtt::Format_RGBA)
 	{
+		// @@ Edit this to choose the desired pixel format:
 	//	compressionOptions.setPixelType(nvtt::PixelType_Float);
 	//	compressionOptions.setPixelFormat(16, 16, 16, 16);
-		compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
-		compressionOptions.setPixelFormat(16, 0, 0, 0);
+	//	compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
+	//	compressionOptions.setPixelFormat(16, 0, 0, 0);
 	}
 
 	if (fast)
