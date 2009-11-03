@@ -509,7 +509,7 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 
 	if (m->type == TextureType_Cube)
 	{
-#pragma message(NV_FILE_LINE "Output error when image is cubemap and w != h.")
+#pragma message(NV_FILE_LINE "TODO: Output error when image is cubemap and w != h.")
 		h = w;
 	}
 
@@ -951,7 +951,7 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
 		const FloatImage * img = m->imageArray[i];
 		m->imageArray[i] = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
 
-#pragma messsage(NV_FILE_LINE "Pack and expand normals explicitly")
+#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly")
 		m->imageArray[i]->packNormals(0);
 
 		delete img;
@@ -968,7 +968,7 @@ void TexImage::toHeightMap()
 	{
 		if (m->imageArray[i] == NULL) continue;
 
-#pragma message(NV_FILE_LINE "Implement TexImage::toHeightMap")
+#pragma message(NV_FILE_LINE "TODO: Implement TexImage::toHeightMap")
 	}
 
 	m->isNormalMap = false;
