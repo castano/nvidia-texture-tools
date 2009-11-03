@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="nvtt-testsuite"
-	ProjectGUID="{317B694E-B5C1-42A6-956F-FC12B69175A6}"
+	ProjectGUID="{4B3DF7E1-7541-4351-BEC0-9AEB41BA5D33}"
 	RootNamespace="stress"
 	Keyword="Win32Proj"
 	>
