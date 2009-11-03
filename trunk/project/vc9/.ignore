@@ -1,0 +1,13 @@
+nvtt.suo
+nvtt.ncb
+release.win32
+debug.win32
+release.x64
+debug.x64
+release (no cuda).win32
+debug (no cuda).win32
+release (no cuda).x64
+debug (no cuda).x64
+Release
+Debug
+*.icastano.user
