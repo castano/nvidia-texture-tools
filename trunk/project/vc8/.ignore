@@ -1,4 +1,7 @@
 nvtt.suo
 nvtt.ncb
-release*
-debug*
+release.win32
+debug.win32
+Release
+Debug
+*.icastano.user
