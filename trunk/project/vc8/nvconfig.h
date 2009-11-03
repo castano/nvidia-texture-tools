@@ -14,10 +14,10 @@
 #define HAVE_FREEIMAGE
 #endif
 
-#define HAVE_ATITC
-#define HAVE_D3DX
-#define HAVE_SQUISH
-#define HAVE_STB
+//#define HAVE_ATITC
+//#define HAVE_D3DX
+//#define HAVE_SQUISH
+//#define HAVE_STB
 
 
 #endif // NV_CONFIG
