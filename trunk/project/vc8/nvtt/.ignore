@@ -1,0 +1,22 @@
+Debug
+Debug (no cuda)
+Release
+Release (no cuda)
+*.icastano.user
+*.gpu
+*.ii
+*.stub.h
+*.stub.c
+*.pdb
+*.cubin
+*.hash
+*.cudafe1.cpp
+*.cudafe1.c
+*.cudafe2.c
+*.cu.cpp
+*.cu.c
+*.fatbin.c
+*.ptx
+*.linkinfo
+*.cpp2.i
+*.cpp3.i
