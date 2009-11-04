@@ -53,7 +53,7 @@ using namespace nvtt;
 
 namespace
 {
-	
+
 	static int blockSize(Format format)
 	{
 		if (format == Format_DXT1 || format == Format_DXT1a) {
@@ -121,7 +121,7 @@ namespace nvtt
 			m_fixedImage = NULL;
 			m_floatImage = image;
 		}
-		
+
 
 		// Convert linear float image to fixed image ready for compression.
 		void toFixedImage(const InputOptions::Private & inputOptions)
@@ -153,7 +153,7 @@ namespace nvtt
 				if (inputOptions.isNormalMap)
 				{
 					// Expand normals to [-1, 1] range.
-				//	floatImage->expandNormals(0);
+					//	floatImage->expandNormals(0);
 				}
 				else if (inputOptions.inputGamma != 1.0f)
 				{
@@ -193,7 +193,7 @@ namespace nvtt
 			return m_fixedImage.ptr();
 		}
 
-		
+
 	private:
 		const Image * m_inputImage;
 		AutoPtr<Image> m_fixedImage;
@@ -207,28 +207,16 @@ Compressor::Compressor() : m(*new Compressor::Private())
 {
 	// CUDA initialization.
 	m.cudaSupported = cuda::isHardwarePresent();
-	m.cudaEnabled = m.cudaSupported;
+	m.cudaEnabled = false;
+	m.cudaDevice = -1;
 
-	if (m.cudaEnabled)
-	{
-		// Select fastest CUDA device.
-		int device = cuda::getFastestDevice();
-		cuda::setDevice(device);
-		
-		m.cuda = new CudaCompressor();
-
-		if (!m.cuda->isValid())
-		{
-			m.cudaEnabled = false;
-			m.cuda = NULL;
-		}
-	}
+	enableCudaAcceleration(m.cudaSupported);
 }
 
 Compressor::~Compressor()
 {
+	enableCudaAcceleration(false);
 	delete &m;
-	cuda::exit();
 }
 
 
@@ -237,21 +225,33 @@ void Compressor::enableCudaAcceleration(bool enable)
 {
 	if (m.cudaSupported)
 	{
-		m.cudaEnabled = enable;
-	}
-
-	if (m.cudaEnabled && m.cuda == NULL)
-	{
-		// Select fastest CUDA device.
-		int device = cuda::getFastestDevice();
-		cuda::setDevice(device);
-		
-		m.cuda = new CudaCompressor();
-		
-		if (!m.cuda->isValid())
+		if (m.cudaEnabled && !enable)
 		{
 			m.cudaEnabled = false;
 			m.cuda = NULL;
+
+			if (m.cudaDevice != -1)
+			{
+				// Exit device.
+				cuda::exitDevice();
+			}
+		}
+		else if (!m.cudaEnabled && enable)
+		{
+			// Init the CUDA device. This may return -1 if CUDA was already initialized by the app.
+			m.cudaEnabled = cuda::initDevice(&m.cudaDevice);
+
+			if (m.cudaEnabled)
+			{
+				// Create compressor if initialization succeeds.
+				m.cuda = new CudaCompressor();
+
+				// But cleanup if failed.
+				if (!m.cuda->isValid())
+				{
+					enableCudaAcceleration(false);
+				}
+			}
 		}
 	}
 }
@@ -292,9 +292,9 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_FileOpen);
 		return false;
 	}
-	
+
 	inputOptions.computeTargetExtents();
-	
+
 	// Output DDS header.
 	if (!outputHeader(inputOptions, compressionOptions, outputOptions))
 	{
@@ -310,7 +310,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 	}
 
 	outputOptions.closeFile();
-	
+
 	return true;
 }
 
@@ -325,15 +325,15 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	}
 
 	DDSHeader header;
-	
+
 	header.setWidth(inputOptions.targetWidth);
 	header.setHeight(inputOptions.targetHeight);
-	
+
 	int mipmapCount = inputOptions.realMipmapCount();
 	nvDebugCheck(mipmapCount > 0);
-	
+
 	header.setMipmapCount(mipmapCount);
-	
+
 	if (inputOptions.textureType == TextureType_2D) {
 		header.setTexture2D();
 	}
@@ -341,10 +341,10 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		header.setTextureCube();
 	}		
 	/*else if (inputOptions.textureType == TextureType_3D) {
-		header.setTexture3D();
-		header.setDepth(inputOptions.targetDepth);
+	header.setTexture3D();
+	header.setDepth(inputOptions.targetDepth);
 	}*/
-	
+
 	if (compressionOptions.format == Format_RGBA)
 	{
 		header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
@@ -353,7 +353,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	else
 	{
 		header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
-		
+
 		if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a) {
 			header.setFourCC('D', 'X', 'T', '1');
 			if (inputOptions.isNormalMap) header.setNormalFlag(true);
@@ -376,10 +376,10 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 			if (inputOptions.isNormalMap) header.setNormalFlag(true);
 		}
 	}
-	
+
 	// Swap bytes if necessary.
 	header.swapBytes();
-	
+
 	uint headerSize = 128;
 	if (header.hasDX10Header())
 	{
@@ -392,7 +392,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 	{
 		outputOptions.errorHandler->error(Error_FileWrite);
 	}
-	
+
 	return writeSucceed;
 }
 
@@ -428,7 +428,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 				return false;
 			}
 		}
-		
+
 		quantizeMipmap(mipmap, compressionOptions);
 
 		compressMipmap(mipmap, inputOptions, compressionOptions, outputOptions);
@@ -438,7 +438,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 		h = max(1U, h / 2);
 		d = max(1U, d / 2);
 	}
-	
+
 	return true;
 }
 
@@ -489,7 +489,7 @@ int Compressor::Private::findExactMipmap(const InputOptions::Private & inputOpti
 	{
 		int idx = f * inputOptions.mipmapCount + m;
 		const InputOptions::Private::InputImage & inputImage = inputOptions.images[idx];
-		
+
 		if (inputImage.width == int(w) && inputImage.height == int(h) && inputImage.depth == int(d))
 		{
 			if (inputImage.data != NULL)
@@ -544,7 +544,7 @@ void Compressor::Private::downsampleMipmap(Mipmap & mipmap, const InputOptions::
 	mipmap.toFloatImage(inputOptions);
 
 	const FloatImage * floatImage = mipmap.asFloatImage();
-	
+
 	if (inputOptions.mipmapFilter == MipmapFilter_Box)
 	{
 		// Use fast downsample.
@@ -562,7 +562,7 @@ void Compressor::Private::downsampleMipmap(Mipmap & mipmap, const InputOptions::
 		filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 		mipmap.setImage(floatImage->downSample(filter, (FloatImage::WrapMode)inputOptions.wrapMode));
 	}
-	
+
 	// Normalize mipmap.
 	if ((inputOptions.isNormalMap || inputOptions.convertToNormalMap) && inputOptions.normalizeMipmaps)
 	{
@@ -590,7 +590,7 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
 	if (inputOptions.convertToNormalMap)
 	{
 		mipmap.toFixedImage(inputOptions);
-		
+
 		Vector4 heightScale = inputOptions.heightFactors;
 		mipmap.setImage(createNormalMap(mipmap.asFixedImage(), (FloatImage::WrapMode)inputOptions.wrapMode, heightScale, inputOptions.bumpFrequencyScale));
 	}
@@ -715,29 +715,29 @@ bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptio
 #endif
 
 #if defined(HAVE_ATITC)
-		if (compressionOptions.externalCompressor == "ati")
-		{
-			atiCompressDXT1(image, outputOptions);
-		}
-		else
-#endif
-		if (compressionOptions.quality == Quality_Fastest)
-		{
-			fast.compressDXT1(outputOptions);
-		}
-		else
-		{
-			if (useCuda)
+			if (compressionOptions.externalCompressor == "ati")
 			{
-				nvDebugCheck(cudaSupported);
-				cuda->setImage(image, inputOptions.alphaMode);
-				cuda->compressDXT1(compressionOptions, outputOptions);
+				atiCompressDXT1(image, outputOptions);
 			}
 			else
-			{
-				slow.compressDXT1(compressionOptions, outputOptions);
-			}
-		}
+#endif
+				if (compressionOptions.quality == Quality_Fastest)
+				{
+					fast.compressDXT1(outputOptions);
+				}
+				else
+				{
+					if (useCuda)
+					{
+						nvDebugCheck(cudaSupported);
+						cuda->setImage(image, inputOptions.alphaMode);
+						cuda->compressDXT1(compressionOptions, outputOptions);
+					}
+					else
+					{
+						slow.compressDXT1(compressionOptions, outputOptions);
+					}
+				}
 	}
 	else if (compressionOptions.format == Format_DXT1a)
 	{
@@ -828,27 +828,27 @@ int Compressor::Private::estimateSize(const InputOptions::Private & inputOptions
 	const uint bitCount = compressionOptions.bitcount;
 
 	inputOptions.computeTargetExtents();
-	
+
 	uint mipmapCount = inputOptions.realMipmapCount();
-	
+
 	int size = 0;
-	
+
 	for (uint f = 0; f < inputOptions.faceCount; f++)
 	{
 		uint w = inputOptions.targetWidth;
 		uint h = inputOptions.targetHeight;
 		uint d = inputOptions.targetDepth;
-		
+
 		for (uint m = 0; m < mipmapCount; m++)
 		{
 			size += computeImageSize(w, h, d, bitCount, format);
-			
+
 			// Compute extents of next mipmap:
 			w = max(1U, w / 2);
 			h = max(1U, h / 2);
 			d = max(1U, d / 2);
 		}
 	}
-	
+
 	return size;
 }

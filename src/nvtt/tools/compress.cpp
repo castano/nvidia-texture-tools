@@ -33,6 +33,9 @@
 
 #include <time.h> // clock
 
+#include <c:\CUDA\include\cuda_runtime.h>
+#pragma comment(lib, "c:\\CUDA\\lib\\cudart.lib")
+
 //#define WINDOWS_LEAN_AND_MEAN
 //#include <windows.h> // TIMER
 
@@ -412,6 +415,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error opening '%s' for writting\n", output.str());
 		return EXIT_FAILURE;
 	}
+
+	cudaSetDevice(0);
 
 	nvtt::Compressor compressor;
 	compressor.enableCudaAcceleration(!nocuda);

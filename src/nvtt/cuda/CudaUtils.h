@@ -32,8 +32,10 @@ namespace nv
 		bool isHardwarePresent();
 		int deviceCount();
 		int getFastestDevice();
-		bool setDevice(int i);
-		void exit();
+		bool isValidDevice(int i);
+
+		bool initDevice(int * device_ptr);
+		void exitDevice();
 	};
 	
 } // nv namespace
