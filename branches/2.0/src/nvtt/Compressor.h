@@ -63,10 +63,12 @@ namespace nvtt
 		bool compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 
+
 	public:
 
 		bool cudaSupported;
 		bool cudaEnabled;
+		int cudaDevice;
 
 		nv::AutoPtr<nv::CudaCompressor> cuda;
 

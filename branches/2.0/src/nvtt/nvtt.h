@@ -194,7 +194,7 @@ namespace nvtt
 		// Describe the format of the input.
 		NVTT_API void setFormat(InputFormat format);
 		
-		// Set the way the input alpha channel is interpreted. @@ Not implemented!
+		// Set the way the input alpha channel is interpreted.
 		NVTT_API void setAlphaMode(AlphaMode alphaMode);
 		
 		// Set gamma settings.
