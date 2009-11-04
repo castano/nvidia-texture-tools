@@ -23,21 +23,21 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_COLOURSET_H
-#define NV_SQUISH_COLOURSET_H
+#ifndef SQUISH_COLOURSET_H
+#define SQUISH_COLOURSET_H
 
 #include "squish.h"
 #include "maths.h"
 #include "simd.h"
 
-namespace nvsquish {
+namespace squish {
 
 /*! @brief Represents a set of block colours
 */
 class ColourSet
 {
 public:
-	ColourSet( u8 const* rgba, int flags, bool createMinimalSet = true );
+	ColourSet( u8 const* rgba, int flags, bool createMinimalSet = false );
 
 	int GetCount() const { return m_count; }
 	Vec3 const* GetPoints() const { return m_points; }

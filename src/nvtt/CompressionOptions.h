@@ -45,12 +45,6 @@ namespace nvtt
 		uint gmask;
 		uint bmask;
 		uint amask;
-		uint8 rsize;
-		uint8 gsize;
-		uint8 bsize;
-		uint8 asize;
-		
-		PixelType pixelType;
 		
 		nv::String externalCompressor;
 
@@ -59,15 +53,6 @@ namespace nvtt
 		bool enableAlphaDithering;
 		bool binaryAlpha;
 		int alphaThreshold;			// reference value used for binary alpha quantization.
-
-		uint getBitCount() const
-		{
-			if (format == Format_RGBA) {
-				if (bitcount != 0) return bitcount;
-				else return rsize + gsize + bsize + asize;
-			}
-			return 0;
-		}
 	};
 
 } // nvtt namespace

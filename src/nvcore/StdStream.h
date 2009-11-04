@@ -1,7 +1,5 @@
-// This code is in the public domain -- castano@gmail.com
-
-#ifndef NV_CORE_STDSTREAM_H
-#define NV_CORE_STDSTREAM_H
+#ifndef NV_STDSTREAM_H
+#define NV_STDSTREAM_H
 
 #include <nvcore/Stream.h>
 
@@ -368,4 +366,4 @@ private:
 } // nv namespace
 
 
-#endif // NV_CORE_STDSTREAM_H
+#endif // NV_STDSTREAM_H

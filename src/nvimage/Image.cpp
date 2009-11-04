@@ -1,13 +1,12 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvimage/Image.h>
-#include <nvimage/ImageIO.h>
+#include <nvcore/Debug.h>
+#include <nvcore/Ptr.h>
 
 #include <nvmath/Color.h>
 
-#include <nvcore/Debug.h>
-#include <nvcore/Ptr.h>
-#include <nvcore/Containers.h> // swap
+#include <nvimage/Image.h>
+#include <nvimage/ImageIO.h>
 
 
 using namespace nv;
@@ -41,7 +40,7 @@ void Image::allocate(uint w, uint h)
 {
 	m_width = w;
 	m_height = h;
-	m_data = (Color32 *)nv::mem::realloc(m_data, w * h * sizeof(Color32));
+	m_data = (Color32 *)realloc(m_data, w * h * sizeof(Color32));
 }
 
 bool Image::load(const char * name)

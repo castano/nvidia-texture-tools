@@ -428,8 +428,8 @@ namespace Nvidia.TextureTools
 		[DllImport("nvtt", CharSet = CharSet.Ansi), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsFileName(IntPtr outputOptions, string fileName);
 
-		//[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		//private extern static void nvttSetOutputOptionsErrorHandler(IntPtr outputOptions, ErrorHandler errorHandler);
+		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		private extern static void nvttSetOutputOptionsErrorHandler(IntPtr outputOptions, ErrorHandler errorHandler);
 
 		private void ErrorCallback(Error error)
 		{
@@ -449,7 +449,7 @@ namespace Nvidia.TextureTools
 		public OutputOptions()
 		{
 			options = nvttCreateOutputOptions();
-			//nvttSetOutputOptionsErrorHandler(options, new ErrorHandler(ErrorCallback));
+			nvttSetOutputOptionsErrorHandler(options, new ErrorHandler(ErrorCallback));
 		}
 		~OutputOptions()
 		{

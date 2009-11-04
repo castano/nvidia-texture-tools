@@ -23,11 +23,11 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_H
-#define NV_SQUISH_H
+#ifndef SQUISH_H
+#define SQUISH_H
 
 //! All squish API functions live in this namespace.
-namespace nvsquish {
+namespace squish {
 
 // -----------------------------------------------------------------------------
 

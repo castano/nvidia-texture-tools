@@ -4,11 +4,14 @@ SET(MATH_SRCS
 	nvmath.h
 	Vector.h
 	Matrix.h
-	Plane.h Plane.cpp
+	Quaternion.h
 	Box.h
 	Color.h
-	Half.h Half.cpp
-	Fitting.h Fitting.cpp)
+	Montecarlo.h Montecarlo.cpp
+	Random.h Random.cpp
+	SphericalHarmonic.h SphericalHarmonic.cpp
+	Basis.h Basis.cpp
+	Triangle.h Triangle.cpp TriBox.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

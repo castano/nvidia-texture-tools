@@ -21,18 +21,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include <nvcore/Debug.h>
+
+#include <nvimage/Image.h>
+#include <nvimage/PixelFormat.h>
+#include <nvmath/Color.h>
+
 #include "CompressRGB.h"
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
-
-#include <nvimage/Image.h>
-#include <nvimage/FloatImage.h>
-#include <nvimage/PixelFormat.h>
-
-#include <nvmath/Color.h>
-#include <nvmath/Half.h>
-
-#include <nvcore/Debug.h>
 
 using namespace nv;
 using namespace nvtt;
@@ -69,53 +66,29 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 	const uint w = image->width();
 	const uint h = image->height();
 
-	uint bitCount;
-	uint rmask, rshift, rsize;
-	uint gmask, gshift, gsize;
-	uint bmask, bshift, bsize;
-	uint amask, ashift, asize;
-
-	if (compressionOptions.bitcount != 0)
-	{
-		bitCount = compressionOptions.bitcount;
-		nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
-
-		rmask = compressionOptions.rmask;
-		gmask = compressionOptions.gmask;
-		bmask = compressionOptions.bmask;
-		amask = compressionOptions.amask;
-
-		PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
-		PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
-		PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
-		PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
-	}
-	else
-	{
-		rsize = compressionOptions.rsize;
-		gsize = compressionOptions.gsize;
-		bsize = compressionOptions.bsize;
-		asize = compressionOptions.asize;
-
-		bitCount = rsize + gsize + bsize + asize;
-		nvCheck(bitCount <= 32);
-
-		ashift = 0;
-		bshift = ashift + asize;
-		gshift = bshift + bsize;
-		rshift = gshift + gsize;
-
-		rmask = ((1 << rsize) - 1) << rshift;
-		gmask = ((1 << gsize) - 1) << gshift;
-		bmask = ((1 << bsize) - 1) << bshift;
-		amask = ((1 << asize) - 1) << ashift;
-	}
+	const uint bitCount = compressionOptions.bitcount;
+	nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
 
 	const uint byteCount = bitCount / 8;
 
+	const uint rmask = compressionOptions.rmask;
+	uint rshift, rsize;
+	PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
+	
+	const uint gmask = compressionOptions.gmask;
+	uint gshift, gsize;
+	PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
+	
+	const uint bmask = compressionOptions.bmask;
+	uint bshift, bsize;
+	PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
+	
+	const uint amask = compressionOptions.amask;
+	uint ashift, asize;
+	PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
 
 	// Determine pitch.
-	uint pitch = computePitch(w, bitCount);
+	uint pitch = computePitch(w, compressionOptions.bitcount);
 
 	uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
 
@@ -165,75 +138,3 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 	mem::free(dst);
 }
 
-
-void nv::compressRGB(const FloatImage * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
-{
-	nvCheck(image != NULL);
-
-	const uint w = image->width();
-	const uint h = image->height();
-
-	const uint rsize = compressionOptions.rsize;
-	const uint gsize = compressionOptions.gsize;
-	const uint bsize = compressionOptions.bsize;
-	const uint asize = compressionOptions.asize;
-
-	nvCheck(rsize == 0 || rsize == 16 || rsize == 32);
-	nvCheck(gsize == 0 || gsize == 16 || gsize == 32);
-	nvCheck(bsize == 0 || bsize == 16 || bsize == 32);
-	nvCheck(asize == 0 || asize == 16 || asize == 32);
-
-	const uint bitCount = rsize + gsize + bsize + asize;
-	const uint byteCount = bitCount / 8;
-	const uint pitch = w * byteCount;
-
-	uint8 * dst = (uint8 *)mem::malloc(pitch);
-
-	for (uint y = 0; y < h; y++)
-	{
-		const float * rchannel = image->scanline(y, 0);
-		const float * gchannel = image->scanline(y, 1);
-		const float * bchannel = image->scanline(y, 2);
-		const float * achannel = image->scanline(y, 3);
-
-		union FLOAT
-		{
-			float f;
-			uint32 u;
-		};
-
-		uint8 * ptr = dst;
-
-		for (uint x = 0; x < w; x++)
-		{
-			FLOAT r, g, b, a;
-			r.f = rchannel[x];
-			g.f = gchannel[x];
-			b.f = bchannel[x];
-			a.f = achannel[x];
-
-			if (rsize == 32) *((uint32 *)ptr) = r.u;
-			else if (rsize == 16) *((uint16 *)ptr) = half_from_float(r.u);
-			ptr += rsize / 8;
-
-			if (gsize == 32) *((uint32 *)ptr) = g.u;
-			else if (gsize == 16) *((uint16 *)ptr) = half_from_float(g.u);
-			ptr += gsize / 8;
-
-			if (bsize == 32) *((uint32 *)ptr) = b.u;
-			else if (bsize == 16) *((uint16 *)ptr) = half_from_float(b.u);
-			ptr += bsize / 8;
-
-			if (asize == 32) *((uint32 *)ptr) = a.u;
-			else if (asize == 16) *((uint16 *)ptr) = half_from_float(a.u);
-			ptr += asize / 8;
-		}
-
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(dst, pitch);
-		}
-	}
-
-	mem::free(dst);
-}

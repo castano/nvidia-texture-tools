@@ -21,6 +21,13 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include <nvcore/Memory.h>
+
+#include <nvimage/Image.h>
+#include <nvimage/ColorBlock.h>
+#include <nvimage/BlockDXT.h>
+
+#include "nvtt.h"
 #include "CompressDXT.h"
 #include "QuickCompressDXT.h"
 #include "OptimalCompressDXT.h"
@@ -29,16 +36,9 @@
 
 // squish
 #include "squish/colourset.h"
+//#include "squish/clusterfit.h"
 #include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
-
-#include <nvtt/nvtt.h>
-
-#include <nvcore/Memory.h>
-
-#include <nvimage/Image.h>
-#include <nvimage/ColorBlock.h>
-#include <nvimage/BlockDXT.h>
 
 
 // s3_quant
@@ -48,349 +48,432 @@
 
 // ati tc
 #if defined(HAVE_ATITC)
-typedef int BOOL;
-typedef _W64 unsigned long ULONG_PTR;
-typedef ULONG_PTR DWORD_PTR;
 #include "atitc/ATI_Compress.h"
 #endif
 
-// squish
-#if defined(HAVE_SQUISH)
-//#include "squish/squish.h"
-#include "squish-1.10/squish.h"
-#endif
-
-// d3dx
-#if defined(HAVE_D3DX)
-#include <d3dx9.h>
-#endif
-
-// stb
-#if defined(HAVE_STB)
-#define STB_DEFINE
-#include "stb/stb_dxt.h"
-#endif
-
-#pragma message(NV_FILE_LINE "FIXME: Define HAVE_OPENMP from cmake.")
-#define HAVE_OPENMP
-#include <omp.h>
+//#include <time.h>
 
 using namespace nv;
 using namespace nvtt;
 
 
-void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+nv::FastCompressor::FastCompressor() : m_image(NULL), m_alphaMode(AlphaMode_None)
 {
-	const uint bs = blockSize();
-	const uint bw = (w + 3) / 4;
-	const uint bh = (h + 3) / 4;
-	const uint size = bs * bw * bh;
+}
 
-#if defined(HAVE_OPENMP)
-	bool singleThreaded = false;
-#else
-	bool singleThreaded = true;
-#endif
+nv::FastCompressor::~FastCompressor()
+{
+}
 
-	// Use a single thread to compress small textures.
-	if (bw * bh < 16) singleThreaded = true;
+void nv::FastCompressor::setImage(const Image * image, nvtt::AlphaMode alphaMode)
+{
+	m_image = image;
+	m_alphaMode = alphaMode;
+}
 
-	if (singleThreaded)
-	{
-		nvDebugCheck(bs <= 16);
-		uint8 mem[16];
+void nv::FastCompressor::compressDXT1(const OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT1 block;
 
-		for (int y = 0; y < int(h); y += 4) {
-			for (uint x = 0; x < w; x += 4) {
-
-				ColorBlock rgba;
-				if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-					rgba.init(w, h, (uint *)data, x, y);
-				}
-				else {
-					nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
-					rgba.init(w, h, (float *)data, x, y);
-				}
-
-				compressBlock(rgba, alphaMode, compressionOptions, mem);
-
-				if (outputOptions.outputHandler != NULL) {
-					outputOptions.outputHandler->writeData(mem, bs);
-				}
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			rgba.init(m_image, x, y);
+			
+			QuickCompress::compressDXT1(rgba, &block);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
 			}
 		}
 	}
-#if defined(HAVE_OPENMP)
-	else
-	{
-		uint8 * mem = new uint8[size];
+}
 
-	#pragma omp parallel
-		{
-	#pragma omp for
-			for (int i = 0; i < int(bw*bh); i++)
-			{
-				const uint x = i % bw;
-				const uint y = i / bw;
 
-				ColorBlock rgba;
-				if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-					rgba.init(w, h, (uint *)data, 4*x, 4*y);
-				}
-				else {
-					nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
-					rgba.init(w, h, (float *)data, 4*x, 4*y);
-				}
+void nv::FastCompressor::compressDXT1a(const OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT1 block;
 
-				uint8 * ptr = mem + (y * bw + x) * bs;
-				compressBlock(rgba, alphaMode, compressionOptions, ptr);
-			} // omp for
-		} // omp parallel
-
-		if (outputOptions.outputHandler != NULL) {
-			outputOptions.outputHandler->writeData(mem, size);
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			rgba.init(m_image, x, y);
+			
+			QuickCompress::compressDXT1a(rgba, &block);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
 		}
-
-		delete [] mem;
 	}
-#endif
 }
 
 
-void FastCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void nv::FastCompressor::compressDXT3(const nvtt::OutputOptions::Private & outputOptions)
 {
-	BlockDXT1 * block = new(output) BlockDXT1;
-	QuickCompress::compressDXT1(rgba, block);
-}
-
-void FastCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockDXT1 * block = new(output) BlockDXT1;
-	QuickCompress::compressDXT1a(rgba, block);
-}
-
-void FastCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockDXT3 * block = new(output) BlockDXT3;
-	QuickCompress::compressDXT3(rgba, block);
-}
-
-void FastCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockDXT5 * block = new(output) BlockDXT5;
-	QuickCompress::compressDXT5(rgba, block);
-}
-
-void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	rgba.swizzle(4, 1, 5, 0); // 0xFF, G, 0, R
-
-	BlockDXT5 * block = new(output) BlockDXT5;
-	QuickCompress::compressDXT5(rgba, block);
-}
-
-void FastCompressorBC4::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockATI1 * block = new(output) BlockATI1;
+	const uint w = m_image->width();
+	const uint h = m_image->height();
 	
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	QuickCompress::compressDXT5A(rgba, &block->alpha);
+	ColorBlock rgba;
+	BlockDXT3 block;
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			rgba.init(m_image, x, y);
+
+			QuickCompress::compressDXT3(rgba, &block);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
 }
 
-void FastCompressorBC5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+
+void nv::FastCompressor::compressDXT5(const nvtt::OutputOptions::Private & outputOptions)
 {
-	BlockATI2 * block = new(output) BlockATI2;
+	const uint w = m_image->width();
+	const uint h = m_image->height();
 	
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	QuickCompress::compressDXT5A(rgba, &block->x);
-	
-	rgba.swizzle(0, 1, 2, 1); // Copy green to alpha
-	QuickCompress::compressDXT5A(rgba, &block->y);
+	ColorBlock rgba;
+	BlockDXT5 block;
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			rgba.init(m_image, x, y);
+			
+			QuickCompress::compressDXT5(rgba, &block, 0);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
 }
 
 
-void NormalCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void nv::FastCompressor::compressDXT5n(const nvtt::OutputOptions::Private & outputOptions)
 {
-	nvsquish::WeightedClusterFit fit;
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT5 block;
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			rgba.init(m_image, x, y);
+			
+			rgba.swizzleDXT5n();
+
+			QuickCompress::compressDXT5(rgba, &block, 0);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
+
+
+nv::SlowCompressor::SlowCompressor() : m_image(NULL), m_alphaMode(AlphaMode_None)
+{
+}
+
+nv::SlowCompressor::~SlowCompressor()
+{
+}
+
+void nv::SlowCompressor::setImage(const Image * image, nvtt::AlphaMode alphaMode)
+{
+	m_image = image;
+	m_alphaMode = alphaMode;
+}
+
+void nv::SlowCompressor::compressDXT1(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT1 block;
+
+	squish::WeightedClusterFit fit;
+	//squish::ClusterFit fit;
+	//squish::FastClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
 
-	if (rgba.isSingleColor())
-	{
-		BlockDXT1 * block = new(output) BlockDXT1;
-		OptimalCompress::compressDXT1(rgba.color(0), block);
-	}
-	else
-	{
-		nvsquish::ColourSet colours((uint8 *)rgba.colors(), 0);
-		fit.SetColourSet(&colours, nvsquish::kDxt1);
-		fit.Compress(output);
-	}
-}
-
-
-void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	bool anyAlpha = false;
-	bool allAlpha = true;
-		
-	for (uint i = 0; i < 16; i++)
-	{
-		if (rgba.color(i).a < 128) anyAlpha = true;
-		else allAlpha = false;
-	}
-
-	const bool isSingleColor = rgba.isSingleColor();
-		
-	if ((!anyAlpha && isSingleColor || allAlpha))
-	{
-		BlockDXT1 * block = new(output) BlockDXT1;
-		OptimalCompress::compressDXT1a(rgba.color(0), block);
-	}
-	else
-	{
-		nvsquish::WeightedClusterFit fit;
-		fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
-
-		int flags = nvsquish::kDxt1;
-		if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
-
-		nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
-		fit.SetColourSet(&colours, nvsquish::kDxt1);
-
-		fit.Compress(output);
-	}
-}
-
-
-void NormalCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockDXT3 * block = new(output) BlockDXT3;
-
-	// Compress explicit alpha.
-	OptimalCompress::compressDXT3A(rgba, &block->alpha);
-
-	// Compress color.
-	if (rgba.isSingleColor())
-	{
-		OptimalCompress::compressDXT1(rgba.color(0), &block->color);
-	}
-	else
-	{
-		nvsquish::WeightedClusterFit fit;
-		fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
-
-		int flags = 0;
-		if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
-
-		nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
-		fit.SetColourSet(&colours, 0);
-		fit.Compress(&block->color);
-	}
-}
-
-
-void NormalCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockDXT5 * block = new(output) BlockDXT5;
-
-	// Compress alpha.
-	if (compressionOptions.quality == Quality_Highest)
-	{
-		OptimalCompress::compressDXT5A(rgba, &block->alpha);
-	}
-	else
-	{
-		QuickCompress::compressDXT5A(rgba, &block->alpha);
-	}
-
-	// Compress color.
-	if (rgba.isSingleColor())
-	{
-		OptimalCompress::compressDXT1(rgba.color(0), &block->color);
-	}
-	else
-	{
-		nvsquish::WeightedClusterFit fit;
-		fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
-
-		int flags = 0;
-		if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
-
-		nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
-		fit.SetColourSet(&colours, 0);
-		fit.Compress(&block->color);
-	}
-}
-
-
-void NormalCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	rgba.swizzle(4, 1, 5, 0); // 0xFF, G, 0, R
-
-	BlockDXT5 * block = new(output) BlockDXT5;
-
-	// Compress X.
-	if (compressionOptions.quality == Quality_Highest)
-	{
-		OptimalCompress::compressDXT5A(rgba, &block->alpha);
-	}
-	else
-	{
-		QuickCompress::compressDXT5A(rgba, &block->alpha);
-	}
-
-	// Compress Y.
-	if (compressionOptions.quality == Quality_Highest)
-	{
-		OptimalCompress::compressDXT1G(rgba, &block->color);
-	}
-	else
-	{
-		if (rgba.isSingleColor())
-		{
-			OptimalCompress::compressDXT1G(rgba.color(0), &block->color);
-		}
-		else
-		{
-			nvsquish::WeightedClusterFit fit;
-			fit.SetMetric(0, 1, 0);
-
-			int flags = 0;
-			if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
-
-			nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
-			fit.SetColourSet(&colours, 0);
-			fit.Compress(&block->color);
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(m_image, x, y);
+			
+			if (rgba.isSingleColor())
+			{
+				OptimalCompress::compressDXT1(rgba.color(0), &block);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), 0, true);
+				fit.SetColourSet(&colours, squish::kDxt1);
+				fit.Compress(&block);
+			}
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
 		}
 	}
 }
 
 
-void ProductionCompressorBC4::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void nv::SlowCompressor::compressDXT1a(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
-	BlockATI1 * block = new(output) BlockATI1;
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT1 block;
 
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	OptimalCompress::compressDXT5A(rgba, &block->alpha);
+	squish::WeightedClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(m_image, x, y);
+			
+			bool anyAlpha = false;
+			bool allAlpha = true;
+			
+			for (uint i = 0; i < 16; i++)
+			{
+				if (rgba.color(i).a < 128) anyAlpha = true;
+				else allAlpha = false;
+			}
+			
+			if ((!anyAlpha && rgba.isSingleColor() || allAlpha))
+			{
+				OptimalCompress::compressDXT1a(rgba.color(0), &block);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kDxt1|squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, squish::kDxt1);
+				fit.Compress(&block);
+			}
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
 }
 
-void ProductionCompressorBC5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+
+void nv::SlowCompressor::compressDXT3(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
-	BlockATI2 * block = new(output) BlockATI2;
+	const uint w = m_image->width();
+	const uint h = m_image->height();
 	
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	OptimalCompress::compressDXT5A(rgba, &block->x);
+	ColorBlock rgba;
+	BlockDXT3 block;
 	
-	rgba.swizzle(0, 1, 2, 1); // Copy green to alpha
-	OptimalCompress::compressDXT5A(rgba, &block->y);
+	squish::WeightedClusterFit fit;
+	//squish::FastClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(m_image, x, y);
+			
+			// Compress explicit alpha.
+			OptimalCompress::compressDXT3A(rgba, &block.alpha);
+
+			// Compress color.
+			if (rgba.isSingleColor())
+			{
+				OptimalCompress::compressDXT1(rgba.color(0), &block.color);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, 0);
+				fit.Compress(&block.color);
+			}
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
 }
 
+void nv::SlowCompressor::compressDXT5(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT5 block;
+
+	squish::WeightedClusterFit fit;
+	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(m_image, x, y);
+
+			// Compress alpha.
+			if (compressionOptions.quality == Quality_Highest)
+			{
+				OptimalCompress::compressDXT5A(rgba, &block.alpha);
+			}
+			else
+			{
+				QuickCompress::compressDXT5A(rgba, &block.alpha);
+			}
+		
+			// Compress color.
+			if (rgba.isSingleColor())
+			{
+				OptimalCompress::compressDXT1(rgba.color(0), &block.color);
+			}
+			else
+			{
+				squish::ColourSet colours((uint8 *)rgba.colors(), squish::kWeightColourByAlpha);
+				fit.SetColourSet(&colours, 0);
+				fit.Compress(&block.color);
+			}
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
+
+
+void nv::SlowCompressor::compressDXT5n(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	BlockDXT5 block;
+	
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(m_image, x, y);
+			
+			rgba.swizzleDXT5n();			
+			
+			// Compress X.
+			if (compressionOptions.quality == Quality_Highest)
+			{
+				OptimalCompress::compressDXT5A(rgba, &block.alpha);
+			}
+			else
+			{
+				QuickCompress::compressDXT5A(rgba, &block.alpha);
+			}
+			
+			// Compress Y.
+			OptimalCompress::compressDXT1G(rgba, &block.color);
+			
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
+
+
+void nv::SlowCompressor::compressBC4(const CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+	
+	ColorBlock rgba;
+	AlphaBlockDXT5 block;
+	
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			rgba.init(m_image, x, y);
+
+			if (compressionOptions.quality == Quality_Highest)
+			{
+				OptimalCompress::compressDXT5A(rgba, &block);
+			}
+			else
+			{
+				QuickCompress::compressDXT5A(rgba, &block);
+			}
+
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
+
+
+void nv::SlowCompressor::compressBC5(const CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+{
+	const uint w = m_image->width();
+	const uint h = m_image->height();
+
+	ColorBlock xcolor;
+	ColorBlock ycolor;
+
+	BlockATI2 block;
+
+	for (uint y = 0; y < h; y += 4) {
+		for (uint x = 0; x < w; x += 4) {
+			
+			xcolor.init(m_image, x, y);
+			xcolor.splatX();
+			
+			ycolor.init(m_image, x, y);
+			ycolor.splatY();
+
+			if (compressionOptions.quality == Quality_Highest)
+			{
+				OptimalCompress::compressDXT5A(xcolor, &block.x);
+				OptimalCompress::compressDXT5A(ycolor, &block.y);
+			}
+			else
+			{
+				QuickCompress::compressDXT5A(xcolor, &block.x);
+				QuickCompress::compressDXT5A(ycolor, &block.y);
+			}
+
+			if (outputOptions.outputHandler != NULL) {
+				outputOptions.outputHandler->writeData(&block, sizeof(block));
+			}
+		}
+	}
+}
 
 
 #if defined(HAVE_S3QUANT)
 
-void S3CompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void nv::s3CompressDXT1(const Image * image, const nvtt::OutputOptions::Private & outputOptions)
 {
+	const uint w = image->width();
+	const uint h = image->height();
+	
 	float error = 0.0f;
 
 	BlockDXT1 dxtBlock3;
@@ -399,7 +482,7 @@ void S3CompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode a
 
 	for (uint y = 0; y < h; y += 4) {
 		for (uint x = 0; x < w; x += 4) {
-			block.init(inputFormat, w, h, data, x, y);
+			block.init(image, x, y);
 
 			// Init rgb block.
 			RGBBlock rgbBlock;
@@ -472,6 +555,8 @@ void S3CompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode a
 			}
 		}
 	}
+
+	printf("error = %f\n", error/((w+3)/4 * (h+3)/4));
 }
 
 #endif // defined(HAVE_S3QUANT)
@@ -479,82 +564,25 @@ void S3CompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode a
 
 #if defined(HAVE_ATITC)
 
-void AtiCompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void nv::atiCompressDXT1(const Image * image, const OutputOptions::Private & outputOptions)
 {
 	// Init source texture
 	ATI_TC_Texture srcTexture;
 	srcTexture.dwSize = sizeof(srcTexture);
-	srcTexture.dwWidth = w;
-	srcTexture.dwHeight = h;
-	if (inputFormat == nvtt::InputFormat_BGRA_8UB)
-	{
-		srcTexture.dwPitch = w * 4;
-		srcTexture.format = ATI_TC_FORMAT_ARGB_8888;
-	}
-	else
-	{
-		srcTexture.dwPitch = w * 16;
-		srcTexture.format = ATI_TC_FORMAT_ARGB_32F;
-	}
+	srcTexture.dwWidth = image->width();
+	srcTexture.dwHeight = image->height();
+	srcTexture.dwPitch = image->width() * 4;
+	srcTexture.format = ATI_TC_FORMAT_ARGB_8888;
 	srcTexture.dwDataSize = ATI_TC_CalculateBufferSize(&srcTexture);
-	srcTexture.pData = (ATI_TC_BYTE*) data;
+	srcTexture.pData = (ATI_TC_BYTE*) image->pixels();
 
 	// Init dest texture
 	ATI_TC_Texture destTexture;
 	destTexture.dwSize = sizeof(destTexture);
-	destTexture.dwWidth = w;
-	destTexture.dwHeight = h;
+	destTexture.dwWidth = image->width();
+	destTexture.dwHeight = image->height();
 	destTexture.dwPitch = 0;
 	destTexture.format = ATI_TC_FORMAT_DXT1;
-	destTexture.dwDataSize = ATI_TC_CalculateBufferSize(&destTexture);
-	destTexture.pData = (ATI_TC_BYTE*) mem::malloc(destTexture.dwDataSize);
-
-	ATI_TC_CompressOptions options;
-	options.dwSize = sizeof(options);
-	options.bUseChannelWeighting = false;
-	options.bUseAdaptiveWeighting = false;
-	options.bDXT1UseAlpha = false;
-	options.nCompressionSpeed = ATI_TC_Speed_Normal;
-	options.bDisableMultiThreading = false;
-	//options.bDisableMultiThreading = true;
-
-	// Compress
-	ATI_TC_ConvertTexture(&srcTexture, &destTexture, &options, NULL, NULL, NULL);
-
-	if (outputOptions.outputHandler != NULL) {
-		outputOptions.outputHandler->writeData(destTexture.pData, destTexture.dwDataSize);
-	}
-
-	mem::free(destTexture.pData);
-}
-
-void AtiCompressorDXT5::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
-{
-	// Init source texture
-	ATI_TC_Texture srcTexture;
-	srcTexture.dwSize = sizeof(srcTexture);
-	srcTexture.dwWidth = w;
-	srcTexture.dwHeight = h;
-	if (inputFormat == nvtt::InputFormat_BGRA_8UB)
-	{
-		srcTexture.dwPitch = w * 4;
-		srcTexture.format = ATI_TC_FORMAT_ARGB_8888;
-	}
-	else
-	{
-		srcTexture.dwPitch = w * 16;
-		srcTexture.format = ATI_TC_FORMAT_ARGB_32F;
-	}
-	srcTexture.dwDataSize = ATI_TC_CalculateBufferSize(&srcTexture);
-	srcTexture.pData = (ATI_TC_BYTE*) data;
-
-	// Init dest texture
-	ATI_TC_Texture destTexture;
-	destTexture.dwSize = sizeof(destTexture);
-	destTexture.dwWidth = w;
-	destTexture.dwHeight = h;
-	destTexture.dwPitch = 0;
-	destTexture.format = ATI_TC_FORMAT_DXT5;
 	destTexture.dwDataSize = ATI_TC_CalculateBufferSize(&destTexture);
 	destTexture.pData = (ATI_TC_BYTE*) mem::malloc(destTexture.dwDataSize);
 
@@ -564,112 +592,6 @@ void AtiCompressorDXT5::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode 
 	if (outputOptions.outputHandler != NULL) {
 		outputOptions.outputHandler->writeData(destTexture.pData, destTexture.dwDataSize);
 	}
-
-	mem::free(destTexture.pData);
 }
 
 #endif // defined(HAVE_ATITC)
-
-#if defined(HAVE_SQUISH)
-
-void SquishCompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
-{
-#pragma message(NV_FILE_LINE "TODO: Convert input to fixed point ABGR format instead of ARGB")
-	/*
-	Image img(*image);
-	int count = img.width() * img.height();
-	for (int i = 0; i < count; i++)
-	{
-		Color32 c = img.pixel(i);
-		img.pixel(i) = Color32(c.b, c.g, c.r, c.a);
-	}
-
-	int size = squish::GetStorageRequirements(img.width(), img.height(), squish::kDxt1);
-	void * blocks = mem::malloc(size);
-
-	squish::CompressImage((const squish::u8 *)img.pixels(), img.width(), img.height(), blocks, squish::kDxt1 | squish::kColourClusterFit);
-
-	if (outputOptions.outputHandler != NULL) {
-		outputOptions.outputHandler->writeData(blocks, size);
-	}
-
-	mem::free(blocks);
-	*/
-}
-
-#endif // defined(HAVE_SQUISH)
-
-
-#if defined(HAVE_D3DX)
-
-void D3DXCompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
-{
-	IDirect3D9 * d3d = Direct3DCreate9(D3D_SDK_VERSION);
-
-	D3DPRESENT_PARAMETERS presentParams;
-	ZeroMemory(&presentParams, sizeof(presentParams));
-	presentParams.Windowed = TRUE;
-	presentParams.SwapEffect = D3DSWAPEFFECT_COPY;
-	presentParams.BackBufferWidth = 8;
-	presentParams.BackBufferHeight = 8;
-	presentParams.BackBufferFormat = D3DFMT_UNKNOWN;
-
-	HRESULT err;
-
-	IDirect3DDevice9 * device = NULL;
-	err = d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, GetDesktopWindow(), D3DCREATE_SOFTWARE_VERTEXPROCESSING, &presentParams, &device);
-
-	IDirect3DTexture9 * texture = NULL;
-	err = D3DXCreateTexture(device, w, h, 1, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &texture);
-	
-	IDirect3DSurface9 * surface = NULL;
-	err = texture->GetSurfaceLevel(0, &surface);
-
-	RECT rect;
-	rect.left = 0; 
-	rect.top = 0; 
-	rect.bottom = h;
-	rect.right = w;
-
-	if (inputFormat == nvtt::InputFormat_BGRA_8UB)
-	{
-		err = D3DXLoadSurfaceFromMemory(surface, NULL, NULL, data, D3DFMT_A8R8G8B8, w * 4, NULL, &rect, D3DX_DEFAULT, 0);
-	}
-	else
-	{
-		err = D3DXLoadSurfaceFromMemory(surface, NULL, NULL, data, D3DFMT_A32B32G32R32F, w * 16, NULL, &rect, D3DX_DEFAULT, 0);
-	}
-
-	if (err != D3DERR_INVALIDCALL && err != D3DXERR_INVALIDDATA)
-	{
-		D3DLOCKED_RECT rect;
-		ZeroMemory(&rect, sizeof(rect));
-
-		err = surface->LockRect(&rect, NULL, D3DLOCK_READONLY);
-
-		if (outputOptions.outputHandler != NULL) {
-			int size = rect.Pitch * ((h + 3) / 4);
-			outputOptions.outputHandler->writeData(rect.pBits, size);
-		}
-
-		err = surface->UnlockRect();
-	}
-
-	surface->Release();
-	device->Release();
-	d3d->Release();
-}
-
-#endif // defined(HAVE_D3DX)
-
-
-#if defined(HAVE_STB)
-
-void StbCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	rgba.swizzle(2, 1, 0, 3); // Swap R and B
-	stb_compress_dxt_block((unsigned char *)output, (unsigned char *)rgba.colors(), 0, 0);
-}
-
-
-#endif // defined(HAVE_STB)

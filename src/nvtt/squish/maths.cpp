@@ -27,7 +27,7 @@
 #include "simd.h"
 #include <cfloat>
 
-namespace nvsquish {
+namespace squish {
 
 Sym3x3 ComputeWeightedCovariance( int n, Vec3 const* points, float const* weights, Vec3::Arg metric )
 {
@@ -112,4 +112,4 @@ Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 
 #endif
 
-} // namespace nvsquish
+} // namespace squish

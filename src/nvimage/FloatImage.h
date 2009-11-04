@@ -8,7 +8,7 @@
 #include <nvmath/Vector.h>
 
 #include <nvcore/Debug.h>
-#include <nvcore/Algorithms.h> // clamp
+#include <nvcore/Containers.h> // clamp
 
 #include <stdlib.h> // abs
 
@@ -68,9 +68,7 @@ public:
 	NVIMAGE_API void toGamma(uint base_component, uint num, float gamma = 2.2f);
 	NVIMAGE_API void exponentiate(uint base_component, uint num, float power);
 	
-	NVIMAGE_API void transform(uint base_component, const Matrix & m, const Vector4 & offset);
-	NVIMAGE_API void swizzle(uint base_component, uint r, uint g, uint b, uint a);
-	
+
 	NVIMAGE_API FloatImage * fastDownSample() const;
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
 	NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;

@@ -23,10 +23,7 @@
 
 #include <string.h> // memcpy
 
-#include <nvcore/Containers.h> // nextPowerOfTwo
 #include <nvcore/Memory.h>
-
-#include <nvmath/Color.h>
 
 #include "nvtt.h"
 #include "InputOptions.h"
@@ -97,15 +94,13 @@ void InputOptions::reset()
 	m.textureType = TextureType_2D;
 	m.inputFormat = InputFormat_BGRA_8UB;
 
-	m.alphaMode = AlphaMode_Transparency;
+	m.alphaMode = AlphaMode_None;
 
 	m.inputGamma = 2.2f;
 	m.outputGamma = 2.2f;
 	
 	m.colorTransform = ColorTransform_None;
 	m.linearTransform = Matrix(identity);
-	for (int i = 0; i < 4; i++) m.colorOffsets[i] = 0;
-	for (int i = 0; i < 4; i++) m.swizzleTransform[i] = i;
 
 	m.generateMipmaps = true;
 	m.maxLevel = -1;
@@ -123,8 +118,6 @@ void InputOptions::reset()
 	
 	m.maxExtent = 0;
 	m.roundMode = RoundMode_None;
-
-	m.premultiplyAlpha = false;
 }
 
 
@@ -168,8 +161,7 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
 			img.mipLevel = mipLevel;
 			img.face = f;
 			
-			img.uint8data = NULL;
-			img.floatdata = NULL;
+			img.data = NULL;
 			
 			w = max(1U, w / 2);
 			h = max(1U, h / 2);
@@ -207,112 +199,10 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
 		return false;
 	}
 	
-	switch(m.inputFormat)
-	{
-		case InputFormat_BGRA_8UB:
-			if (Image * image = new nv::Image())
-			{
-				image->allocate(width, height);
-				memcpy(image->pixels(), data, width * height * 4);
-				m.images[idx].uint8data = image;
-			}
-			else
-			{
-				// @@ Out of memory error.
-				return false;
-			}
-			break;
-		case InputFormat_RGBA_32F:
-			if (FloatImage * image = new nv::FloatImage())
-			{
-				const float * floatData = (const float *)data;
-				image->allocate(4, width, height);
-				
-				for (int c = 0; c < 4; c++)
-				{
-					float * channel = image->channel(c);
-					for (int i = 0; i < width * height; i++)
-					{
-						channel[i] = floatData[i*4 + c];
-					}
-				}
-				
-				m.images[idx].floatdata = image;
-			}
-			else
-			{
-				// @@ Out of memory error.
-				return false;
-			}
-			break;
-		default:
-			return false;
-	}
+	m.images[idx].data = new nv::Image();
+	m.images[idx].data->allocate(width, height);
+	memcpy(m.images[idx].data->pixels(), data, width * height * 4); 
 	
-	return true;
-}
-
-
-// Copies data 
-bool InputOptions::setMipmapChannelData(const void * data, int channel, int width, int height, int depth /*= 1*/, int face /*= 0*/, int mipLevel /*= 0*/)
-{
-	nvCheck(depth == 1);
-	nvCheck(channel >= 0 && channel < 4);
-	
-	const int idx = face * m.mipmapCount + mipLevel;
-	
-	if (m.images[idx].width != width || m.images[idx].height != height || m.images[idx].depth != depth || m.images[idx].mipLevel != mipLevel || m.images[idx].face != face)
-	{
-		// Invalid dimension or index.
-		return false;
-	}
-	
-	// Allocate image if not allocated already.
-	if (m.inputFormat == InputFormat_BGRA_8UB)
-	{
-		m.images[idx].floatdata = NULL;
-		if (m.images[idx].uint8data == NULL)
-		{
-			m.images[idx].uint8data = new Image();
-			m.images[idx].uint8data->allocate(width, height);
-			m.images[idx].uint8data->fill(Color32(0,0,0,0));
-		}
-	}
-	else if (m.inputFormat == InputFormat_RGBA_32F)
-	{
-		m.images[idx].uint8data = NULL;
-		if (m.images[idx].floatdata == NULL)
-		{
-			m.images[idx].floatdata = new FloatImage();
-			m.images[idx].floatdata->allocate(4, width, height);
-			m.images[idx].floatdata->clear();
-		}
-
-		
-	}
-	else
-	{
-		m.images[idx].floatdata = NULL;
-		m.images[idx].uint8data = NULL;
-		return false;
-	}
-
-	// Copy channel data to image.
-	if (m.inputFormat == InputFormat_BGRA_8UB)
-	{
-		// @@ TODO
-	}
-	else if (m.inputFormat == InputFormat_RGBA_32F)
-	{
-		const float * floatData = (const float *)data;
-		float * channelPtr = m.images[idx].floatdata->channel(channel);
-
-		for (int i = 0; i < width * height; i++)
-		{
-			channelPtr[i] = floatData[i];
-		}
-	}
-
 	return true;
 }
 
@@ -411,32 +301,8 @@ void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2,
 {
 	nvCheck(channel >= 0 && channel < 4);
 
-	m.linearTransform(channel, 0) = w0;
-	m.linearTransform(channel, 1) = w1;
-	m.linearTransform(channel, 2) = w2;
-	m.linearTransform(channel, 3) = w3;
-}
-
-void InputOptions::setLinearTransform(int channel, float w0, float w1, float w2, float w3, float offset)
-{
-	nvCheck(channel >= 0 && channel < 4);
-
-	setLinearTransform(channel, w0, w1, w2, w3);
-
-	m.colorOffsets[channel] = offset;
-}
-
-void InputOptions::setSwizzleTransform(int x, int y, int z, int w)
-{
-	nvCheck(x >= 0 && x <= 6);
-	nvCheck(y >= 0 && y <= 6);
-	nvCheck(z >= 0 && z <= 6);
-	nvCheck(w >= 0 && w <= 6);
-	
-	m.swizzleTransform[0] = x;
-	m.swizzleTransform[1] = y;
-	m.swizzleTransform[2] = z;
-	m.swizzleTransform[3] = w;
+	Vector4 w(w0, w1, w2, w3);
+	//m.linearTransform.setRow(channel, w);
 }
 
 void InputOptions::setMaxExtents(int e)
@@ -450,10 +316,6 @@ void InputOptions::setRoundMode(RoundMode mode)
 	m.roundMode = mode;
 }
 
-void InputOptions::setPremultiplyAlpha(bool b)
-{
-	m.premultiplyAlpha = b;
-}
 
 void InputOptions::Private::computeTargetExtents() const
 {
@@ -533,7 +395,7 @@ const Image * InputOptions::Private::image(uint face, uint mipmap) const
 	nvDebugCheck(image.face == face);
 	nvDebugCheck(image.mipLevel == mipmap);
 
-	return image.uint8data.ptr();
+	return image.data.ptr();
 }
 
 const Image * InputOptions::Private::image(uint idx) const
@@ -542,14 +404,5 @@ const Image * InputOptions::Private::image(uint idx) const
 
 	const InputImage & image = this->images[idx];
 
-	return image.uint8data.ptr();
-}
-
-const FloatImage * InputOptions::Private::floatImage(uint idx) const
-{
-	nvDebugCheck(idx < faceCount * mipmapCount);
-
-	const InputImage & image = this->images[idx];
-
-	return image.floatdata.ptr();
+	return image.data.ptr();
 }

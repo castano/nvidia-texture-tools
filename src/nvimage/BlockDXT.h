@@ -47,13 +47,11 @@ namespace nv
 		bool isFourColorMode() const;
 	
 		uint evaluatePalette(Color32 color_array[4]) const;
-		uint evaluatePaletteNV5x(Color32 color_array[4]) const;
-
+		uint evaluatePaletteFast(Color32 color_array[4]) const;
 		void evaluatePalette3(Color32 color_array[4]) const;
 		void evaluatePalette4(Color32 color_array[4]) const;
 		
 		void decodeBlock(ColorBlock * block) const;
-		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void setIndices(int * idx);
 
@@ -107,7 +105,6 @@ namespace nv
 		BlockDXT1 color;
 		
 		void decodeBlock(ColorBlock * block) const;
-		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void flip4();
 		void flip2();
@@ -163,7 +160,6 @@ namespace nv
 		BlockDXT1 color;
 		
 		void decodeBlock(ColorBlock * block) const;
-		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void flip4();
 		void flip2();

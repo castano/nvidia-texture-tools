@@ -24,15 +24,15 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_FASTCLUSTERFIT_H
-#define NV_SQUISH_FASTCLUSTERFIT_H
+#ifndef SQUISH_FASTCLUSTERFIT_H
+#define SQUISH_FASTCLUSTERFIT_H
 
 #include "squish.h"
 #include "maths.h"
 #include "simd.h"
 #include "colourfit.h"
 
-namespace nvsquish {
+namespace squish {
 
 class FastClusterFit : public ColourFit
 {

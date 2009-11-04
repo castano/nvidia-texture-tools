@@ -23,13 +23,13 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_COLOURFIT_H
-#define NV_SQUISH_COLOURFIT_H
+#ifndef SQUISH_COLOURFIT_H
+#define SQUISH_COLOURFIT_H
 
 #include "squish.h"
 #include "maths.h"
 
-namespace nvsquish {
+namespace squish {
 
 class ColourSet;
 

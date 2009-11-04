@@ -24,15 +24,15 @@
 	
    -------------------------------------------------------------------------- */
    
-#ifndef NV_SQUISH_WEIGHTEDCLUSTERFIT_H
-#define NV_SQUISH_WEIGHTEDCLUSTERFIT_H
+#ifndef SQUISH_WEIGHTEDCLUSTERFIT_H
+#define SQUISH_WEIGHTEDCLUSTERFIT_H
 
 #include "squish.h"
 #include "maths.h"
 #include "simd.h"
 #include "colourfit.h"
 
-namespace nvsquish {
+namespace squish {
 
 class WeightedClusterFit : public ColourFit
 {

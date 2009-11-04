@@ -9,10 +9,9 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "i586")
 
 	IF(NV_SYSTEM_PROCESSOR STREQUAL "i686")
-		#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=i686")
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=i686")
 		#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpmath=sse -mtune=i686 -msse3")
 		#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=pentium4")
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=prescott")
 	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "i686")
 
 	IF(NV_SYSTEM_PROCESSOR STREQUAL "x86_64")
@@ -21,24 +20,11 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "x86_64")
 
 	IF(NV_SYSTEM_PROCESSOR STREQUAL "powerpc")
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=powerpc -faltivec -maltivec -mabi=altivec -mpowerpc-gfxopt")
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=powerpc -maltivec -mabi=altivec -mpowerpc-gfxopt")
 		
 		# ibook G4:
-		#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=7450 -mtune=7450 -faltivec -maltivec -mabi=altivec -mpowerpc-gfxopt")
-
-		# G5
-		#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=G5 -faltivec -maltivec -mabi=altivec -mpowerpc-gfxopt")
-
+		#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=7450 -mtune=7450 -maltivec -mabi=altivec -mpowerpc-gfxopt")
 	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "powerpc")
-
-#	IF(DARWIN)
-#		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
-#		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
-#	ENDIF(DARWIN)
-
-	IF(CMAKE_BUILD_TYPE STREQUAL "debug")
-		ADD_DEFINITIONS(-D_DEBUG)
-	ENDIF(CMAKE_BUILD_TYPE STREQUAL "debug")
 
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
