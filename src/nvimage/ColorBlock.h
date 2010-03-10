@@ -24,7 +24,7 @@ namespace nv
 		void swizzle(uint x, uint y, uint z, uint w); // 0=r, 1=g, 2=b, 3=a, 4=0xFF, 5=0
 		
 		bool isSingleColor() const;
-		bool isSingleColorNoAlpha() const;
+		//bool isSingleColorNoAlpha() const;
 		uint countUniqueColors() const;
 		Color32 averageColor() const;
 		bool hasAlpha() const;
