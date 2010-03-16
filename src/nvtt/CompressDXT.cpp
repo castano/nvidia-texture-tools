@@ -71,9 +71,10 @@ typedef ULONG_PTR DWORD_PTR;
 #include "stb/stb_dxt.h"
 #endif
 
-#pragma message(NV_FILE_LINE "FIXME: Define HAVE_OPENMP from cmake.")
-#define HAVE_OPENMP
+// OpenMP
+#if defined (HAVE_OPENMP)
 #include <omp.h>
+#endif
 
 using namespace nv;
 using namespace nvtt;
