@@ -32,7 +32,7 @@
 #include <nvtt/QuickCompressDXT.h>
 #include <nvtt/OptimalCompressDXT.h>
 
-#include "CudaCompressDXT.h"
+#include "CudaCompressorDXT.h"
 #include "CudaUtils.h"
 
 
@@ -62,8 +62,7 @@ extern "C" void compressKernelDXT3(uint firstBlock, uint blockNum, uint w, uint 
 //extern "C" void compressKernelCTX1(uint blockNum, uint * d_data, uint * d_result, uint * d_bitmaps);
 
 
-#pragma message(NV_FILE_LINE "TODO: Rename Bitmaps.h to BitmapTable.h")
-#include "Bitmaps.h"
+#include "BitmapTable.h"
 
 /*
 // Convert linear image to block linear.
@@ -141,13 +140,14 @@ bool CudaContext::isValid() const
 }
 
 
+#if defined HAVE_CUDA
 
 CudaCompressor::CudaCompressor(CudaContext & ctx) : m_ctx(ctx)
 {
 
 }
 
-void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
 	nvDebugCheck(cuda::isHardwarePresent());
 
@@ -645,3 +645,5 @@ void CudaCompressor::compressDXT5n(const nvtt::CompressionOptions::Private & com
 }
 
 #endif // 0
+
+#endif // defined HAVE_CUDA

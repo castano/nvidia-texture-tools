@@ -43,10 +43,10 @@
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
 
-#include "CompressDXT.h"
-#include "CompressRGB.h"
+#include "CompressorDXT.h"
+#include "CompressorRGB.h"
 #include "cuda/CudaUtils.h"
-#include "cuda/CudaCompressDXT.h"
+#include "cuda/CudaCompressorDXT.h"
 
 
 using namespace nv;
@@ -303,8 +303,7 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 // RAW api.
 bool Compressor::compress2D(InputFormat format, int w, int h, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-#pragma message(NV_FILE_LINE "TODO: Implement raw compress api")
-	return false;
+    return m.compress2D(format, AlphaMode_None, w, h, data, compressionOptions.m, outputOptions.m);
 }
 
 int Compressor::estimateSize(int w, int h, int d, const CompressionOptions & compressionOptions) const
@@ -955,7 +954,11 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			quantizeMipmap(mipmap, compressionOptions);
 		}
 
-		compressMipmap(mipmap, inputOptions, compressionOptions, outputOptions);
+	    const Image * image = mipmap.asFixedImage();
+	    nvDebugCheck(image != NULL);
+
+        // @@ Ignore return value?
+        compress2D(InputFormat_BGRA_8UB, inputOptions.alphaMode, image->width(), image->height(), image->pixels(), compressionOptions, outputOptions);
 
 		// Compute extents of next mipmap:
 		w = max(1U, w / 2);
@@ -1290,7 +1293,11 @@ void Compressor::Private::quantizeMipmap(Mipmap & mipmap, const CompressionOptio
 
 CompressorInterface * Compressor::Private::chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const
 {
-	if (compressionOptions.format == Format_DXT1)
+    if (compressionOptions.format == Format_RGB)
+    {
+        return new PixelFormatConverter;
+    }
+	else if (compressionOptions.format == Format_DXT1)
 	{
 #if defined(HAVE_S3QUANT)
 		if (compressionOptions.externalCompressor == "s3") return new S3CompressorDXT1;
@@ -1414,6 +1421,7 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 		return NULL;
 	}
 
+#if defined HAVE_CUDA
 	if (compressionOptions.format == Format_DXT1)
 	{
 		return new CudaCompressorDXT1(*cuda);
@@ -1428,11 +1436,11 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 	}
 	else if (compressionOptions.format == Format_DXT3)
 	{
-		return new CudaCompressorDXT3(*cuda);
+		//return new CudaCompressorDXT3(*cuda);
 	}
 	else if (compressionOptions.format == Format_DXT5)
 	{
-		return new CudaCompressorDXT5(*cuda);
+		//return new CudaCompressorDXT5(*cuda);
 	}
 	else if (compressionOptions.format == Format_DXT5n)
 	{
@@ -1458,6 +1466,7 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 	{
 		// Not supported.
 	}
+#endif // defined HAVE_CUDA
 
 	return NULL;
 }
@@ -1465,51 +1474,43 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 
 
 // Compress the given mipmap.
-bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+/*bool Compressor::Private::compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-	if (compressionOptions.format == Format_RGBA)
+    // @@ This is broken, we should not assume the fixed image is the valid one. @@ Compressor should do conversion if necessary.
+	const Image * image = mipmap.asFixedImage();
+	nvDebugCheck(image != NULL);
+
+    return compress2D(InputFormat_BGRA_8UB, inputOptions.alphaMode, image->width(), image->height(), image->pixels(), compressionOptions, outputOptions);
+}*/
+
+bool Compressor::Private::compress2D(InputFormat inputFormat, AlphaMode alphaMode, int w, int h, const void * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+{
+	// Decide what compressor to use.
+	CompressorInterface * compressor = NULL;
+#if defined HAVE_CUDA
+	if (cudaEnabled && w * h >= 512)
 	{
-		// Pixel format conversion.
-		if (compressionOptions.pixelType == PixelType_Float)
-		{
-			compressRGB(mipmap.asFloatImage(), outputOptions, compressionOptions);
-		}
-		else
-		{
-			compressRGB(mipmap.asFixedImage(), outputOptions, compressionOptions);
-		}
+		compressor = chooseGpuCompressor(compressionOptions);
+	}
+#endif
+	if (compressor == NULL)
+	{
+		compressor = chooseCpuCompressor(compressionOptions);
+	}
+
+	if (compressor == NULL)
+	{
+		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
 	}
 	else
 	{
-		const Image * image = mipmap.asFixedImage();
-		nvDebugCheck(image != NULL);
+		compressor->compress(inputFormat, alphaMode, w, h, data, compressionOptions, outputOptions);
 
-		// Decide what compressor to use.
-		CompressorInterface * compressor = NULL;
-		if (cudaEnabled && image->width() * image->height() >= 512)
-		{
-			compressor = chooseGpuCompressor(compressionOptions);
-		}
-		if (compressor == NULL)
-		{
-			compressor = chooseCpuCompressor(compressionOptions);
-		}
-
-		if (compressor == NULL)
-		{
-			if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
-		}
-		else
-		{
-			compressor->compress(InputFormat_BGRA_8UB, inputOptions.alphaMode, image->width(), image->height(), (void *)image->pixels(), compressionOptions, outputOptions);
-
-			delete compressor;
-		}
+		delete compressor;
 	}
 
 	return true;
 }
-
 
 int Compressor::Private::estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const
 {

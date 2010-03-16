@@ -21,20 +21,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_CUDACOMPRESSDXT_H
-#define NV_TT_CUDACOMPRESSDXT_H
+#ifndef NV_TT_CUDACOMPRESSORDXT_H
+#define NV_TT_CUDACOMPRESSORDXT_H
 
-#include <nvimage/nvimage.h>
-#include <nvtt/nvtt.h>
-
-#include "nvtt/CompressDXT.h"
+#include "nvtt/nvtt.h"
+#include "../Compressor.h" // CompressorInterface
 
 struct cudaArray;
 
 namespace nv
 {
-	class Image;
-
 	class CudaContext
 	{
 	public:
@@ -51,12 +47,13 @@ namespace nv
 		uint * result;
 	};
 
+#if defined HAVE_CUDA
 
 	struct CudaCompressor : public CompressorInterface
 	{
 		CudaCompressor(CudaContext & ctx);
 
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
 		virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions) = 0;
 		virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
@@ -106,6 +103,8 @@ namespace nv
 		virtual void compressBlocks(uint blockCount, const void * input, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
 		virtual uint blockSize() const { return 8; };
 	};*/
+
+#endif // defined HAVE_CUDA
 
 } // nv namespace
 

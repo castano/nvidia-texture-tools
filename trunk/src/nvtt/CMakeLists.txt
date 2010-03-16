@@ -9,6 +9,7 @@ SET(NVTT_SRCS
 	Context.cpp
 	nvtt_wrapper.h
 	nvtt_wrapper.cpp
+	Compressor.h
 	CompressDXT.h
 	CompressDXT.cpp
 	CompressRGB.h

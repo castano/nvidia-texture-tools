@@ -21,14 +21,13 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_COMPRESSOR_H
-#define NV_TT_COMPRESSOR_H
+#ifndef NV_TT_CONTEXT_H
+#define NV_TT_CONTEXT_H
 
-#include <nvcore/Ptr.h>
+#include "nvcore/Ptr.h"
 
-#include <nvtt/cuda/CudaCompressDXT.h>
-#include <nvtt/CompressDXT.h>
-
+#include "nvtt/Compressor.h"
+#include "nvtt/cuda/CudaCompressorDXT.h"
 #include "nvtt.h"
 
 namespace nv
@@ -46,7 +45,7 @@ namespace nvtt
 
 		bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-		bool compress(const void * data, int width, int height, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        bool compress2D(InputFormat inputFormat, AlphaMode alphaMode, int w, int h, const void * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 		int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
 
@@ -71,7 +70,6 @@ namespace nvtt
 		void premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
 		void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
-		bool compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 
 	public:
@@ -86,4 +84,4 @@ namespace nvtt
 } // nvtt namespace
 
 
-#endif // NV_TT_COMPRESSOR_H
+#endif // NV_TT_CONTEXT_H
