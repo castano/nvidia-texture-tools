@@ -120,7 +120,7 @@ float WeightedClusterFit::GetBestError() const
 #if SQUISH_USE_SIMD
 	Vec4 x = m_xxsum * m_metricSqr;
 	Vec4 error = m_besterror + x.SplatX() + x.SplatY() + x.SplatZ();
-	return error.GetVec3().X();
+	return error.GetX();
 #else
 	return m_besterror + Dot(m_xxsum, m_metricSqr);
 #endif
