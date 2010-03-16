@@ -21,7 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "CompressDXT.h"
+#include "CompressorDXT.h"
 #include "QuickCompressDXT.h"
 #include "OptimalCompressDXT.h"
 #include "CompressionOptions.h"
@@ -32,13 +32,13 @@
 #include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
 
-#include <nvtt/nvtt.h>
+#include "nvtt.h"
 
-#include <nvcore/Memory.h>
+#include "nvcore/Memory.h"
 
-#include <nvimage/Image.h>
-#include <nvimage/ColorBlock.h>
-#include <nvimage/BlockDXT.h>
+#include "nvimage/Image.h"
+#include "nvimage/ColorBlock.h"
+#include "nvimage/BlockDXT.h"
 
 
 // s3_quant
@@ -71,16 +71,15 @@ typedef ULONG_PTR DWORD_PTR;
 #include "stb/stb_dxt.h"
 #endif
 
-// OpenMP
-#if defined (HAVE_OPENMP)
+#pragma message(NV_FILE_LINE "FIXME: Define HAVE_OPENMP from cmake.")
+#define HAVE_OPENMP
 #include <omp.h>
-#endif
 
 using namespace nv;
 using namespace nvtt;
 
 
-void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
 	const uint bs = blockSize();
 	const uint bw = (w + 3) / 4;

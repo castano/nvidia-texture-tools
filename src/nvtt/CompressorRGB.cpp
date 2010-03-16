@@ -21,7 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "CompressRGB.h"
+#include "CompressorRGB.h"
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
 
@@ -61,8 +61,119 @@ namespace
 } // namespace
 
 
+
+void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+{
+	uint bitCount;
+	uint rmask, rshift, rsize;
+	uint gmask, gshift, gsize;
+	uint bmask, bshift, bsize;
+	uint amask, ashift, asize;
+
+    if (compressionOptions.pixelType == nvtt::PixelType_Float)
+    {
+	    rsize = compressionOptions.rsize;
+	    gsize = compressionOptions.gsize;
+	    bsize = compressionOptions.bsize;
+	    asize = compressionOptions.asize;
+
+	    nvCheck(rsize == 0 || rsize == 16 || rsize == 32);
+	    nvCheck(gsize == 0 || gsize == 16 || gsize == 32);
+	    nvCheck(bsize == 0 || bsize == 16 || bsize == 32);
+	    nvCheck(asize == 0 || asize == 16 || asize == 32);
+
+	    bitCount = rsize + gsize + bsize + asize;
+    }
+    else
+    {
+	    if (compressionOptions.bitcount != 0)
+	    {
+		    bitCount = compressionOptions.bitcount;
+		    nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
+
+		    rmask = compressionOptions.rmask;
+		    gmask = compressionOptions.gmask;
+		    bmask = compressionOptions.bmask;
+		    amask = compressionOptions.amask;
+
+		    PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
+		    PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
+		    PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
+		    PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
+	    }
+	    else
+	    {
+		    rsize = compressionOptions.rsize;
+		    gsize = compressionOptions.gsize;
+		    bsize = compressionOptions.bsize;
+		    asize = compressionOptions.asize;
+
+		    bitCount = rsize + gsize + bsize + asize;
+		    nvCheck(bitCount <= 32);
+
+		    ashift = 0;
+		    bshift = ashift + asize;
+		    gshift = bshift + bsize;
+		    rshift = gshift + gsize;
+
+		    rmask = ((1 << rsize) - 1) << rshift;
+		    gmask = ((1 << gsize) - 1) << gshift;
+		    bmask = ((1 << bsize) - 1) << bshift;
+		    amask = ((1 << asize) - 1) << ashift;
+	    }
+    }
+
+	uint byteCount = (bitCount + 7) / 8;
+    uint pitch = computePitch(w, bitCount);
+
+    uint srcPitchDiv4 = w;
+    if (inputFormat == nvtt::InputFormat_RGBA_32F) srcPitchDiv4 = w * 4;
+
+    // Allocate output scanline.
+	uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
+
+	for (uint y = 0; y < h; y++)
+	{
+        const uint * src = (const uint *)data + srcPitchDiv4;
+
+		for (uint x = 0; x < w; x++)
+		{
+            float r, g, b, a;
+
+            if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
+                Color32 c = Color32(src[x]);
+                r = float(c.r) / 255.0f;
+                g = float(c.g) / 255.0f;
+                b = float(c.b) / 255.0f;
+                a = float(c.a) / 255.0f;
+            }
+            else /*if (inputFormat == nvtt::InputFormat_RGBA_32F)*/ {
+			    r = src[4 * x + 0];
+			    g = src[4 * x + 1];
+			    b = src[4 * x + 2];
+			    a = src[4 * x + 3];
+            }
+
+            if (compressionOptions.pixelType == nvtt::PixelType_Float)
+            {
+
+            }
+            
+        }
+
+		if (outputOptions.outputHandler != NULL)
+		{
+			outputOptions.outputHandler->writeData(dst, pitch);
+		}
+    }
+
+	mem::free(dst);
+}
+
+
+
 // Pixel format converter.
-void nv::compressRGB(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+void compressRGB(const Image * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	nvCheck(image != NULL);
 
@@ -166,7 +277,7 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
 }
 
 
-void nv::compressRGB(const FloatImage * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
+void compressRGB(const FloatImage * image, const OutputOptions::Private & outputOptions, const CompressionOptions::Private & compressionOptions)
 {
 	nvCheck(image != NULL);
 

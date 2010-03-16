@@ -21,21 +21,20 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_COMPRESSRGB_H
-#define NV_TT_COMPRESSRGB_H
+#ifndef NV_TT_COMPRESSORRGB_H
+#define NV_TT_COMPRESSORRGB_H
 
 #include "nvtt.h"
+#include "Compressor.h"
 
 namespace nv
 {
-	class Image;
-	class FloatImage;
+    struct PixelFormatConverter : public CompressorInterface
+	{
+		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+	};
 
-	// Pixel format converter.
-	void compressRGB(const Image * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	void compressRGB(const FloatImage * image, const nvtt::OutputOptions::Private & outputOptions, const nvtt::CompressionOptions::Private & compressionOptions);
-	
 } // nv namespace
 
 
-#endif // NV_TT_COMPRESSDXT_H
+#endif // NV_TT_COMPRESSORRGB_H

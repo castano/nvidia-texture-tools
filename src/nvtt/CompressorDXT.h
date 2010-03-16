@@ -21,26 +21,20 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_COMPRESSDXT_H
-#define NV_TT_COMPRESSDXT_H
+#ifndef NV_TT_COMPRESSORDXT_H
+#define NV_TT_COMPRESSORDXT_H
 
-#include <nvimage/nvimage.h>
+#include <nvcore/nvcore.h>
 #include "nvtt.h"
+#include "Compressor.h"
 
 namespace nv
 {
-	class Image;
 	struct ColorBlock;
-
-	struct CompressorInterface
-	{
-		virtual ~CompressorInterface() {}
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions) = 0;
-	};
 
 	struct FixedBlockCompressor : public CompressorInterface
 	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
 		virtual uint blockSize() const = 0;
@@ -182,4 +176,4 @@ namespace nv
 } // nv namespace
 
 
-#endif // NV_TT_COMPRESSDXT_H
+#endif // NV_TT_COMPRESSORDXT_H
