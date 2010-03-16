@@ -3,8 +3,8 @@
 #ifndef NV_CORE_REFCOUNTED_H
 #define NV_CORE_REFCOUNTED_H
 
-#include <nvcore/nvcore.h>
-#include <nvcore/Debug.h>
+#include "nvcore.h"
+#include "Debug.h"
 
 
 namespace nv

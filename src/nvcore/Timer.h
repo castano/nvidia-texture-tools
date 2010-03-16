@@ -3,7 +3,7 @@
 #ifndef NV_CORE_TIMER_H
 #define NV_CORE_TIMER_H
 
-#include <nvcore/nvcore.h>
+#include "nvcore.h"
 
 #if 1
 
