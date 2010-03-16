@@ -72,6 +72,13 @@ public:
 		_mm_store_ps( c, m_v );
 		return Vec3( c[0], c[1], c[2] );
 	}
+
+    float GetX() const 
+    {
+        SQUISH_ALIGN_16 float f;
+        _mm_store_ss(&f, m_v);
+        return f;
+    }
 	
 	Vec4 SplatX() const { return Vec4( _mm_shuffle_ps( m_v, m_v, SQUISH_SSE_SPLAT( 0 ) ) ); }
 	Vec4 SplatY() const { return Vec4( _mm_shuffle_ps( m_v, m_v, SQUISH_SSE_SPLAT( 1 ) ) ); }

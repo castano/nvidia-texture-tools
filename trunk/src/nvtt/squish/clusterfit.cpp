@@ -109,7 +109,7 @@ void ClusterFit::SetMetric(float r, float g, float b)
 float ClusterFit::GetBestError() const
 {
 #if SQUISH_USE_SIMD
-	return m_besterror.GetVec3().X();
+	return m_besterror.GetX();
 #else
 	return m_besterror;
 #endif
