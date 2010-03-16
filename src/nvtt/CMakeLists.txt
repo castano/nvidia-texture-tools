@@ -10,10 +10,10 @@ SET(NVTT_SRCS
 	nvtt_wrapper.h
 	nvtt_wrapper.cpp
 	Compressor.h
-	CompressDXT.h
-	CompressDXT.cpp
-	CompressRGB.h
-	CompressRGB.cpp
+	CompressorDXT.h
+	CompressorDXT.cpp
+	CompressorRGB.h
+	CompressorRGB.cpp
 	QuickCompressDXT.h
 	QuickCompressDXT.cpp
 	OptimalCompressDXT.h
@@ -29,9 +29,9 @@ SET(NVTT_SRCS
 	cuda/CudaUtils.h
 	cuda/CudaUtils.cpp
 	cuda/CudaMath.h
-	cuda/Bitmaps.h
-	cuda/CudaCompressDXT.h
-	cuda/CudaCompressDXT.cpp)
+	cuda/BitmapTable.h
+	cuda/CudaCompressorDXT.h
+	cuda/CudaCompressorDXT.cpp)
 
 IF (CUDA_FOUND)
 	ADD_DEFINITIONS(-DHAVE_CUDA)
