@@ -48,7 +48,7 @@
 #	endif
 #endif
 
-//#include <stdexcept> // std::runtime_error
+#include <stdexcept> // std::runtime_error
 #undef assert // defined on mingw
 
 using namespace nv;
@@ -360,8 +360,7 @@ namespace
 			
 			if( ret == NV_ABORT_EXIT ) {
 				// Exit cleanly.
-				//throw std::runtime_error("Assertion failed");
-                throw "Assertion failed";
+				throw std::runtime_error("Assertion failed");
 			}
 			
 			return ret;			
