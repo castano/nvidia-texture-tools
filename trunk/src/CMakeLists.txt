@@ -111,6 +111,15 @@ ELSE(OPENEXR_FOUND)
 	MESSAGE(STATUS "Looking for OpenEXR - not found")
 ENDIF(OPENEXR_FOUND)
 
+# OpenMP
+INCLUDE(FindOpenMP)
+IF(OPENMP_FOUND)
+	SET(HAVE_OPENMP ${OPENMP_FOUND} CACHE BOOL "Set to TRUE if OpenMP is found, FALSE otherwise")
+	MESSAGE(STATUS "Looking for OpenMP - found")
+ELSE(OPENMP_FOUND)
+	MESSAGE(STATUS "Looking for OpenMP - not found")
+ENDIF(OPENMP_FOUND)
+	
 # Qt
 FIND_PACKAGE(Qt4)
 
