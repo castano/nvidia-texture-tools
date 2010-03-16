@@ -3,8 +3,8 @@
 #ifndef NV_CORE_TEXTWRITER_H
 #define NV_CORE_TEXTWRITER_H
 
-#include <nvcore/StrLib.h>
-#include <nvcore/Stream.h>
+#include "StrLib.h"
+#include "Stream.h"
 
 namespace nv
 {

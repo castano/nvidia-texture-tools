@@ -3,8 +3,8 @@
 #ifndef NV_CORE_TEXTREADER_H
 #define NV_CORE_TEXTREADER_H
 
-#include <nvcore/Containers.h>
-#include <nvcore/Stream.h>
+#include "Containers.h"
+#include "Stream.h"
 
 namespace nv
 {

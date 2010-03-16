@@ -1,7 +1,7 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include <nvcore/Debug.h>
-#include <nvcore/StrLib.h>
+#include "Debug.h"
+#include "StrLib.h"
 
 // Extern
 #if NV_OS_WIN32 //&& NV_CC_MSVC
@@ -48,7 +48,7 @@
 #	endif
 #endif
 
-#include <stdexcept> // std::runtime_error
+//#include <stdexcept> // std::runtime_error
 #undef assert // defined on mingw
 
 using namespace nv;
@@ -360,7 +360,8 @@ namespace
 			
 			if( ret == NV_ABORT_EXIT ) {
 				// Exit cleanly.
-				throw std::runtime_error("Assertion failed");
+				//throw std::runtime_error("Assertion failed");
+                throw "Assertion failed";
 			}
 			
 			return ret;			

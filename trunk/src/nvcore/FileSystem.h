@@ -3,7 +3,7 @@
 #ifndef NV_CORE_FILESYSTEM_H
 #define NV_CORE_FILESYSTEM_H
 
-#include <nvcore/nvcore.h>
+#include "nvcore.h"
 
 namespace nv
 {
