@@ -45,6 +45,7 @@
 
 #include "CompressorDXT.h"
 #include "CompressorRGB.h"
+#include "CompressorRGBE.h"
 #include "cuda/CudaUtils.h"
 #include "cuda/CudaCompressorDXT.h"
 
@@ -905,6 +906,13 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			mipmap.toFloatImage(inputOptions);
 
 			// @@ Convert to linear space.
+
+            // @@ HACK
+            const FloatImage * image = mipmap.asFloatImage();
+	        nvDebugCheck(image != NULL);
+
+            // @@ Ignore return value?
+            compress2D(InputFormat_RGBA_32F, inputOptions.alphaMode, image->width(), image->height(), image->channel(0), compressionOptions, outputOptions);
 		}
 		else
 		{
@@ -952,13 +960,16 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 			}*/
 
 			quantizeMipmap(mipmap, compressionOptions);
+
+	        const Image * image = mipmap.asFixedImage();
+	        nvDebugCheck(image != NULL);
+
+            // @@ Ignore return value?
+            compress2D(InputFormat_BGRA_8UB, inputOptions.alphaMode, image->width(), image->height(), image->pixels(), compressionOptions, outputOptions);
 		}
 
-	    const Image * image = mipmap.asFixedImage();
-	    nvDebugCheck(image != NULL);
 
-        // @@ Ignore return value?
-        compress2D(InputFormat_BGRA_8UB, inputOptions.alphaMode, image->width(), image->height(), image->pixels(), compressionOptions, outputOptions);
+
 
 		// Compute extents of next mipmap:
 		w = max(1U, w / 2);
@@ -1405,6 +1416,10 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
 	else if (compressionOptions.format == Format_BC7)
 	{
 		// Not supported.
+	}
+	else if (compressionOptions.format == Format_RGBE)
+	{
+        return new CompressorRGBE;
 	}
 
 	return NULL;
