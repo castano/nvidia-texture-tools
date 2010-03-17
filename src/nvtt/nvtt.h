@@ -91,21 +91,23 @@ namespace nvtt
 		Format_BC4,     // ATI1
 		Format_BC5,     // 3DC, ATI2
 
-		Format_DXT1n,
-		Format_CTX1,
-		Format_YCoCg_DXT5,
+		Format_DXT1n,// Not supported on CPU yet.
+		Format_CTX1, // Not supported on CPU yet.
+		Format_YCoCg_DXT5, // Not supported yet.
 
-		Format_BC6,
-		Format_BC7,
+		Format_BC6, // Not supported yet.
+		Format_BC7, // Not supported yet.
+
+        Format_RGBE,
 	};
 
 	/// Pixel types.
 	enum PixelType
 	{
 		PixelType_UnsignedNorm,
-		PixelType_SignedNorm,
-		PixelType_UnsignedInt,
-		PixelType_SignedInt,
+		PixelType_SignedNorm, // Not supported yet.
+		PixelType_UnsignedInt, // Not supported yet.
+		PixelType_SignedInt, // Not supported yet.
 		PixelType_Float,
 	};
 	
