@@ -1,6 +1,7 @@
 NVIDIA Texture Tools version 2.0.8
  * ColorBlock::isSingleColor compares only RGB channels. Fixes issue 115.
  * Fix cmake build in msvc. Fixes issue 111.
+ * Better estimate principal component. Fixes issue 120.
 
 NVIDIA Texture Tools version 2.0.7
  * Output correct exit codes. Fixes issue 92.
