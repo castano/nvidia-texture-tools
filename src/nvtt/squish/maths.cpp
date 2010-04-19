@@ -61,6 +61,22 @@ Sym3x3 ComputeWeightedCovariance( int n, Vec3 const* points, float const* weight
 }
 
 
+static Vec3 EstimatePrincipleComponent( Sym3x3 const& matrix )
+{
+	Vec3 const row0(matrix[0], matrix[1], matrix[2]);
+	Vec3 const row1(matrix[1], matrix[3], matrix[4]);
+	Vec3 const row2(matrix[2], matrix[4], matrix[5]);
+
+	float r0 = Dot(row0, row0);
+	float r1 = Dot(row1, row1);
+	float r2 = Dot(row2, row2);
+
+	if (r0 > r1 && r0 > r2) return row0;
+	if (r1 > r2) return row1;
+	return row2;
+}
+
+
 #define POWER_ITERATION_COUNT   8
 
 #if SQUISH_USE_SIMD
@@ -70,7 +86,13 @@ Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 	Vec4 const row0( matrix[0], matrix[1], matrix[2], 0.0f );
 	Vec4 const row1( matrix[1], matrix[3], matrix[4], 0.0f );
 	Vec4 const row2( matrix[2], matrix[4], matrix[5], 0.0f );
-	Vec4 v = VEC4_CONST( 1.0f );
+
+	//Vec4 v = VEC4_CONST( 1.0f );
+	//Vec4 v = row0; // row1, row2
+
+	Vec3 v3 = EstimatePrincipleComponent( matrix );
+	Vec4 v( v3.X(), v3.Y(), v3.Z(), 0.0f );
+
 	for( int i = 0; i < POWER_ITERATION_COUNT; ++i )
 	{
 		// matrix multiply
@@ -91,7 +113,7 @@ Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 
 Vec3 ComputePrincipleComponent( Sym3x3 const& matrix )
 {
-	Vec3 v(1, 1, 1);
+	Vec3 v = EstimatePrincipleComponent( matrix );
 	for (int i = 0; i < POWER_ITERATION_COUNT; i++)
 	{
 		float x = v.X() * matrix[0] + v.Y() * matrix[1] + v.Z() * matrix[2];
