@@ -128,7 +128,20 @@ inline __device__ __host__ float3 firstEigenVector( float matrix[6] )
 {
 	// 8 iterations seems to be more than enough.
 
-	float3 v = make_float3(1.0f, 1.0f, 1.0f);
+	float3 row0 = make_float3(matrix[0], matrix[1], matrix[2]);
+	float3 row1 = make_float3(matrix[1], matrix[3], matrix[4]);
+	float3 row2 = make_float3(matrix[2], matrix[4], matrix[5]);
+
+	float r0 = dot(row0, row0);
+	float r1 = dot(row1, row1);
+	float r2 = dot(row2, row2);
+
+	float3 v;
+	if (r0 > r1 && r0 > r2) v = row0;
+	else if (r1 > r2) v = row1;
+	else v = row2;
+
+	//float3 v = make_float3(1.0f, 1.0f, 1.0f);
 	for(int i = 0; i < 8; i++) {
 		float x = v.x * matrix[0] + v.y * matrix[1] + v.z * matrix[2];
 		float y = v.x * matrix[1] + v.y * matrix[3] + v.z * matrix[4];
