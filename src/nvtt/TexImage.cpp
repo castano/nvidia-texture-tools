@@ -1086,3 +1086,14 @@ float TexImage::rootMeanSquaredError_alpha(const TexImage & reference) const
 	return float(sqrt(mse / totalCount));
 }
 
+void TexImage::flipVertically() {
+
+    detach();
+
+	foreach (i, m->imageArray)
+	{
+		if (m->imageArray[i] == NULL) continue;
+
+        m->imageArray[i]->flip();
+	}
+}

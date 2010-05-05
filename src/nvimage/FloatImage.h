@@ -77,7 +77,6 @@ public:
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
 
 	NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
-	//@}
 
 	NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, uint c, WrapMode wm) const;
 	NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const;
@@ -86,7 +85,9 @@ public:
 	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, WrapMode wm, float * output) const;
 	NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, uint c, uint a, WrapMode wm, float * output) const;
 	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * output) const;
-	
+
+    NVIMAGE_API void flip();
+	//@}
 	
 	uint width() const { return m_width; }
 	uint height() const { return m_height; }
