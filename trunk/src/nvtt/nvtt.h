@@ -447,6 +447,9 @@ namespace nvtt
 		NVTT_API float rootMeanSquaredError_rgb(const TexImage & reference) const;
 		NVTT_API float rootMeanSquaredError_alpha(const TexImage & reference) const;
 
+        // Geometric transforms.
+        NVTT_API void flipVertically();
+
 	private:
 		void detach();
 

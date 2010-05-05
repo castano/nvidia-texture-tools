@@ -941,6 +941,25 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c,
 	}
 }
 
+
+// Vertical flip in place.
+void FloatImage::flip()
+{
+    const uint w = m_width;
+    const uint h = m_height;
+    const uint h2 = h / 2;
+
+    for (uint c = 0; c < m_componentNum; c++) {
+        for (uint y = 0; y < h2; y++) {
+            float * src = scanline(y, c);
+            float * dst = scanline(h - 1 - y, c);
+            for (uint x = 0; x < w; x++) {
+                swap(src[x], dst[x]);
+            }
+        }
+    }
+}
+
 FloatImage* FloatImage::clone() const
 {
 	FloatImage* copy = new FloatImage();
