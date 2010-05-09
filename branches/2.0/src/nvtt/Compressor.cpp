@@ -126,10 +126,8 @@ namespace nvtt
 		// Convert linear float image to fixed image ready for compression.
 		void toFixedImage(const InputOptions::Private & inputOptions)
 		{
-			if (this->asFixedImage() == NULL)
+			if (m_floatImage != NULL) // apfaffe - We should check that we have a float image, if so convert it!
 			{
-				nvDebugCheck(m_floatImage != NULL);
-
 				if (inputOptions.isNormalMap || inputOptions.outputGamma == 1.0f)
 				{
 					m_fixedImage = m_floatImage->createImage();
@@ -175,11 +173,12 @@ namespace nvtt
 
 		const Image * asFixedImage() const
 		{
-			if (m_inputImage != NULL) 
+			// - apfaffe - switched logic to return the 'processed image' rather than the input!
+			if (m_fixedImage != NULL && m_fixedImage.ptr() != NULL)
 			{
-				return m_inputImage;
+				return m_fixedImage.ptr();
 			}
-			return m_fixedImage.ptr();
+			return m_inputImage;
 		}
 
 		Image * asMutableFixedImage()
