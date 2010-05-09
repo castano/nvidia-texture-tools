@@ -1,4 +1,5 @@
 NVIDIA Texture Tools version 2.0.8
+ * Fix float to fixed image conversion. Patch provided by Alex Pfaffe. Fixes issue 121.
  * ColorBlock::isSingleColor compares only RGB channels. Fixes issue 115.
  * Fix cmake build in msvc. Fixes issue 111.
  * Better estimate principal component. Fixes issue 120.
