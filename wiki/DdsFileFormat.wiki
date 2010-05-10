@@ -1,14 +1,29 @@
 #summary DDS File Format Reference
 
-== Introduction ==
-
-*TODO*
-
-
 == References ==
 
-DDS File Reference:
-http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/reference/ddsfilereference/ddsfileformat.asp
+Microsoft has some documentation available:
 
-DX10 block compression formats:
-http://msdn2.microsoft.com/en-us/library/bb694531(VS.85).aspx
+Programming Guide for DDS:
+http://msdn.microsoft.com/en-us/library/bb943991.aspx
+
+Reference for DDS:
+http://msdn.microsoft.com/en-us/library/bb943992.aspx
+
+Compressed Texture Resources (Direct3D 9):
+http://msdn.microsoft.com/en-us/library/bb204843.aspx
+
+Block Compression (Direct3D 10):
+http://msdn.microsoft.com/en-us/library/bb694531.aspx
+
+The OpenGL extensions also document the block compression formats:
+
+DXT1, DXT3 and DXT5 (equivalent to BC1, BC2 and BC3):
+http://www.opengl.org/registry/specs/EXT/texture_compression_s3tc.txt
+
+LATC and RGTC (equivalent to BC4 and BC5):
+http://www.opengl.org/registry/specs/EXT/texture_compression_latc.txt
+http://www.opengl.org/registry/specs/EXT/texture_compression_rgtc.txt
+
+BPTC (equivalent to BC6 and BC7):
+http://www.opengl.org/registry/specs/ARB/texture_compression_bptc.txt
