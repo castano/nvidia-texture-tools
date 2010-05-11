@@ -8,6 +8,7 @@
   * [ApiDocumentation#Input_Options Input Options]
     * [ApiDocumentation#Specifying_Input_Images Specifying Input Images]
     * [ApiDocumentation#Mipmap_Generation Mipmap Generation]
+    * [ApiDocumentation#Alpha Mode]
     * [ApiDocumentation#Gamma_Correction Gamma Correction]
     * [ApiDocumentation#Processing_Normal_Maps Processing Normal Maps]
     * [ApiDocumentation#Generating_Normal_Maps Generating Normal Maps]
@@ -166,6 +167,25 @@ Where the `wrapMode` argument must have one the following values:
   * !WrapMode_Clamp
 
 Note that the `wrapMode` is also used for other image processing operations, like normal map generation. So, it's a good idea to set it even if you are not generating mipmaps. The default `wrapMode` is `WrapMode_Mirror`.
+
+
+=== Alpha Mode ===
+
+The contents of the alpha channel influences the mipmap generation and compression of the images. If the alpha channel contains transparency information that can be taken into account to produce more accurate results. 
+
+In order to achieve that, the alpha mode can be specified with the following method:
+
+{{{
+void InputOptions::setAlphaMode(AlphaMode alphaMode);
+}}}
+
+Where the `alphaMode` argument has one of the following values:
+
+  * !AlphaMode_None
+  * !AlphaMode_Transparency
+  * !AlphaMode_Premultiplied
+
+When the `alphaMode` is `AlphaMode_None` the alpha and color channels are processed independently. However, if the alpha is used for transparency it should be set to `AlphaMode_Transparency`, except when the alpha is premultiplied, in which case `AlphaMode_Premultiplied` should be used. The default `alphaMode` is `AlphaMode_Transparency`.
 
 
 === Gamma Correction ===
