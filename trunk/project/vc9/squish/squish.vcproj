@@ -353,6 +353,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\squish\simd_ve.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\squish\weightedclusterfit.h"
 				>
 			</File>

@@ -65,10 +65,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_LIB_PATH)\..\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -150,7 +150,7 @@
 				AdditionalDependencies="cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)\..\lib64&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -232,10 +232,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib cudart.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_LIB_PATH)\..\lib&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -318,7 +318,7 @@
 				AdditionalDependencies="cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;&quot;$(CUDA_LIB_PATH)&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)\..\lib64&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -395,10 +395,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -476,7 +476,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)\..\lib64&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -554,10 +554,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib;"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -635,7 +635,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\extern\gnuwin32\lib"
+				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)\..\lib64&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -677,10 +677,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressDXT.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\CompressionOptions.cpp"
 				>
 			</File>
@@ -692,7 +688,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -m 32 -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -702,7 +698,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -m 64 -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -712,7 +708,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -m 32 -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -722,7 +718,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
+						CommandLine="&quot;$(CUDA_BIN_PATH)\nvcc.exe&quot; -keep -ccbin &quot;$(VCInstallDir)bin&quot; -c -m 64 -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I&quot;$(CUDA_INC_PATH)&quot; -I./ -o $(IntDir)\$(InputName).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu&#x0D;&#x0A;"
 						AdditionalDependencies="CudaMath.h"
 						Outputs="$(IntDir)\$(InputName).obj"
 					/>
@@ -767,7 +763,15 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressRGB.cpp"
+				RelativePath="..\..\..\src\nvtt\CompressorDXT.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorRGB.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorRGBE.cpp"
 				>
 			</File>
 			<File
@@ -843,7 +847,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressDXT.cpp"
+				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressorDXT.cpp"
 				>
 			</File>
 			<File
@@ -879,7 +883,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\Texture.cpp"
+				RelativePath="..\..\..\src\nvtt\TexImage.cpp"
 				>
 			</File>
 		</Filter>
@@ -893,15 +897,23 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressDXT.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\CompressionOptions.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressRGB.h"
+				RelativePath="..\..\..\src\nvtt\Compressor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDXT.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorRGB.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorRGBE.h"
 				>
 			</File>
 			<File
@@ -909,7 +921,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressDXT.h"
+				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressorDXT.h"
 				>
 			</File>
 			<File
@@ -953,7 +965,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\Texture.h"
+				RelativePath="..\..\..\src\nvtt\TexImage.h"
 				>
 			</File>
 		</Filter>

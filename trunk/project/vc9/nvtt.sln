@@ -62,11 +62,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nvzoom", "nvzoom\nvzoom.vcp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nvidia.TextureTools", "Nvidia.TextureTools\Nvidia.TextureTools.csproj", "{CAB55C39-8FA9-4912-98D9-E52669C8911D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "stress", "stress\stress.vcproj", "{317B694E-B5C1-42A6-956F-FC12B69175A6}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testsuite", "testsuite\testsuite.vcproj", "{317B694E-B5C1-42A6-956F-FC12B69175A6}"
 	ProjectSection(ProjectDependencies) = postProject
 		{F143D180-D4C4-4037-B3DE-BE89A21C8D1D} = {F143D180-D4C4-4037-B3DE-BE89A21C8D1D}
 		{1AEB7681-57D8-48EE-813D-5C41CC38B647} = {1AEB7681-57D8-48EE-813D-5C41CC38B647}
 		{4046F392-A18B-4C66-9639-3EABFFF5D531} = {4046F392-A18B-4C66-9639-3EABFFF5D531}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A08D9CB4-C9D8-46EF-A74D-0EAB11FE34C5}"
+	ProjectSection(SolutionItems) = preProject
+		nvconfig.h = nvconfig.h
 	EndProjectSection
 EndProject
 Global
@@ -281,7 +286,8 @@ Global
 		{317B694E-B5C1-42A6-956F-FC12B69175A6}.Release (no cuda)|x64.ActiveCfg = Release|Win32
 		{317B694E-B5C1-42A6-956F-FC12B69175A6}.Release|Win32.ActiveCfg = Release|Win32
 		{317B694E-B5C1-42A6-956F-FC12B69175A6}.Release|Win32.Build.0 = Release|Win32
-		{317B694E-B5C1-42A6-956F-FC12B69175A6}.Release|x64.ActiveCfg = Release|Win32
+		{317B694E-B5C1-42A6-956F-FC12B69175A6}.Release|x64.ActiveCfg = Release|x64
+		{317B694E-B5C1-42A6-956F-FC12B69175A6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
