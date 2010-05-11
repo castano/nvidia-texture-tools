@@ -97,7 +97,7 @@ void InputOptions::reset()
 	m.textureType = TextureType_2D;
 	m.inputFormat = InputFormat_BGRA_8UB;
 
-	m.alphaMode = AlphaMode_Transparency;
+	m.alphaMode = AlphaMode_None;
 
 	m.inputGamma = 2.2f;
 	m.outputGamma = 2.2f;
