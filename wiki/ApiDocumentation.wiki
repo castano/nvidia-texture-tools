@@ -185,7 +185,7 @@ Where the `alphaMode` argument has one of the following values:
   * !AlphaMode_Transparency
   * !AlphaMode_Premultiplied
 
-When the `alphaMode` is `AlphaMode_None` the alpha and color channels are processed independently. However, if the alpha is used for transparency it should be set to `AlphaMode_Transparency`, except when the alpha is premultiplied, in which case `AlphaMode_Premultiplied` should be used. The default `alphaMode` is `AlphaMode_Transparency`.
+When the `alphaMode` is `AlphaMode_None` the alpha and color channels are processed independently. However, if the alpha is used for transparency it should be set to `AlphaMode_Transparency`, except when the alpha is premultiplied, in which case `AlphaMode_Premultiplied` should be used. The default `alphaMode` is `AlphaMode_None`.
 
 
 === Gamma Correction ===
