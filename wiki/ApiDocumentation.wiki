@@ -8,7 +8,7 @@
   * [ApiDocumentation#Input_Options Input Options]
     * [ApiDocumentation#Specifying_Input_Images Specifying Input Images]
     * [ApiDocumentation#Mipmap_Generation Mipmap Generation]
-    * [ApiDocumentation#Alpha Mode]
+    * [ApiDocumentation#Alpha_Mode Alpha Mode]
     * [ApiDocumentation#Gamma_Correction Gamma Correction]
     * [ApiDocumentation#Processing_Normal_Maps Processing Normal Maps]
     * [ApiDocumentation#Generating_Normal_Maps Generating Normal Maps]
