@@ -353,10 +353,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\nvconfig.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvcore\nvcore.h"
 				>
 			</File>
