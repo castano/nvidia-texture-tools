@@ -17,21 +17,6 @@ using namespace nv;
 
 namespace 
 {
-	static int iround(float f)
-	{
-		return int(f);
-	}
-
-	static int ifloor(float f)
-	{
-		return int(floor(f));
-	}
-
-	static float frac(float f)
-	{
-		return f - floor(f);
-	}
-
 	static int mirror(int x, int w)
 	{
 		x = abs(x);
