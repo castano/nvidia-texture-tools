@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
 	MyAssertHandler assertHandler;
 	MyMessageHandler messageHandler;
 
+	bool alpha = false;
 	bool normal = false;
 	bool color2normal = false;
 	bool wrapRepeat = false;
@@ -156,6 +157,10 @@ int main(int argc, char *argv[])
 		// Input options.
 		if (strcmp("-color", argv[i]) == 0)
 		{
+		}
+		else if (strcmp("-alpha", argv[i]) == 0)
+		{
+			alpha = true;
 		}
 		else if (strcmp("-normal", argv[i]) == 0)
 		{
@@ -270,6 +275,7 @@ int main(int argc, char *argv[])
 		
 		printf("Input options:\n");
 		printf("  -color   \tThe input image is a color map (default).\n");
+		printf("  -alpha     \tThe input image has an alpha channel used for transparency.\n");		
 		printf("  -normal  \tThe input image is a normal map.\n");
 		printf("  -tonormal\tConvert input to normal map.\n");
 		printf("  -clamp   \tClamp wrapping mode (default).\n");
@@ -361,6 +367,15 @@ int main(int argc, char *argv[])
 	else
 	{
 		inputOptions.setWrapMode(nvtt::WrapMode_Clamp);
+	}
+
+	if (alpha)
+	{
+		inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
+	}
+	else
+	{
+		inputOptions.setAlphaMode(nvtt::AlphaMode_None);
 	}
 
 	if (normal)
