@@ -36,9 +36,9 @@ using namespace nv;
 // Create normal map using the given kernels.
 static FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, const Kernel2 * kdu, const Kernel2 * kdv)
 {
-	nvDebugCheck(kdu != NULL);
-	nvDebugCheck(kdv != NULL);
-	nvDebugCheck(img != NULL);
+	nvCheck(kdu != NULL);
+	nvCheck(kdv != NULL);
+	nvCheck(img != NULL);
 	
 	const uint w = img->width();
 	const uint h = img->height();
@@ -75,54 +75,10 @@ static FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, 
 }
 
 
-// Create normal map using the given kernels.
-static FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode wm, const Kernel2 * kdu, const Kernel2 * kdv)
-{
-	nvDebugCheck(kdu != NULL);
-	nvDebugCheck(kdv != NULL);
-	nvDebugCheck(img != NULL);
-
-#pragma message(NV_FILE_LINE "FIXME: Height scale parameter should go away. It should be a sensible value that produces good results when the heightmap is in the [0, 1] range.")
-	const float heightScale = 1.0f / 16.0f;
-
-	const uint w = img->width();
-	const uint h = img->height();
-
-	AutoPtr<FloatImage> img_out(new FloatImage());
-	img_out->allocate(4, w, h);
-
-	for (uint y = 0; y < h; y++)
-	{
-		for (uint x = 0; x < w; x++)
-		{
-			const float du = img->applyKernel(kdu, x, y, 3, wm);
-			const float dv = img->applyKernel(kdv, x, y, 3, wm);
-
-			Vector3 n = normalize(Vector3(du, dv, heightScale));
-
-			img_out->setPixel(n.x(), x, y, 0);
-			img_out->setPixel(n.y(), x, y, 1);
-			img_out->setPixel(n.z(), x, y, 2);
-		}
-	}
-
-	// Copy alpha channel.
-	for (uint y = 0; y < h; y++)
-	{
-		for (uint x = 0; x < w; x++)
-		{
-			img_out->setPixel(img->pixel(x, y, 3), x, y, 3);
-		}
-	}
-
-	return img_out.release();
-}
-
-
 /// Create normal map using the given filter.
 FloatImage * nv::createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, NormalMapFilter filter /*= Sobel3x3*/)
 {
-	nvDebugCheck(img != NULL);
+	nvCheck(img != NULL);
 	
 	// Init the kernels.
 	Kernel2 * kdu = NULL;
@@ -159,7 +115,7 @@ FloatImage * nv::createNormalMap(const Image * img, FloatImage::WrapMode wm, Vec
 /// Create normal map combining multiple sobel filters.
 FloatImage * nv::createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, Vector4::Arg filterWeights)
 {
-	nvDebugCheck(img != NULL);
+	nvCheck(img != NULL);
 
 	Kernel2 * kdu = NULL;
 	Kernel2 * kdv = NULL;
@@ -174,32 +130,10 @@ FloatImage * nv::createNormalMap(const Image * img, FloatImage::WrapMode wm, Vec
 	return ::createNormalMap(img, wm, heightWeights, kdu, kdv);
 }
 
-
-FloatImage * nv::createNormalMap(const FloatImage * img, FloatImage::WrapMode wm, Vector4::Arg filterWeights)
-{
-	nvDebugCheck(img != NULL);
-
-	Kernel2 * kdu = NULL;
-	Kernel2 * kdv = NULL;
-
-	kdu = new Kernel2(9);
-	kdu->initBlendedSobel(filterWeights);
-	kdu->normalize();
-
-	kdv = new Kernel2(*kdu);
-	kdv->transpose();
-
-	return ::createNormalMap(img, wm, kdu, kdv);
-}
-
-
 /// Normalize the given image in place.
 void nv::normalizeNormalMap(FloatImage * img)
 {
-	nvDebugCheck(img != NULL);
-
-#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly")
-
+	nvCheck(img != NULL);
 	img->expandNormals(0);
 	img->normalize(0);
 	img->packNormals(0);

@@ -1,25 +1,27 @@
 PROJECT(nvcore)
+ADD_SUBDIRECTORY(poshlib)
 
 SET(CORE_SRCS
-    nvcore.h
-    Algorithms.h
-    Containers.h
-    Debug.h Debug.cpp
-    DefsGnucDarwin.h
-    DefsGnucLinux.h
-    DefsGnucWin32.h
-    DefsVcWin32.h
-    FileSystem.h FileSystem.cpp
-    Library.h Library.cpp
-    Memory.h Memory.cpp
-    Ptr.h
-    RefCounted.h RefCounted.cpp
-    StrLib.h StrLib.cpp
-    Stream.h
-    StdStream.h
-    TextReader.h TextReader.cpp
-    TextWriter.h TextWriter.cpp
-    Timer.h)
+	nvcore.h
+	Ptr.h
+	BitArray.h
+	Memory.h
+	Memory.cpp
+	Debug.h
+	Debug.cpp
+	Containers.h
+	StrLib.h
+	StrLib.cpp
+	Stream.h
+	StdStream.h
+	TextReader.h
+	TextReader.cpp
+	TextWriter.h
+	TextWriter.cpp
+	Radix.h
+	Radix.cpp
+	Library.h
+	Library.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -27,19 +29,19 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 ADD_DEFINITIONS(-DNVCORE_EXPORTS)
 
 IF(UNIX)
-    SET(LIBS ${LIBS} ${CMAKE_DL_LIBS})
+	SET(LIBS ${LIBS} ${CMAKE_DL_LIBS})
 ENDIF(UNIX)
 
 IF(NVCORE_SHARED)
-    ADD_DEFINITIONS(-DNVCORE_SHARED=1)
-    ADD_LIBRARY(nvcore SHARED ${CORE_SRCS})
+	ADD_DEFINITIONS(-DNVCORE_SHARED=1)
+	ADD_LIBRARY(nvcore SHARED ${CORE_SRCS})
 ELSE(NVCORE_SHARED)
-    ADD_LIBRARY(nvcore ${CORE_SRCS})
+	ADD_LIBRARY(nvcore ${CORE_SRCS})
 ENDIF(NVCORE_SHARED)
 
 TARGET_LINK_LIBRARIES(nvcore ${LIBS})
 
 INSTALL(TARGETS nvcore
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib/static)
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib/static)

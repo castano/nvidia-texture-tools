@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 	result->setFormat(nv::Image::Format_ARGB);
 
 	nv::StdOutputStream stream(output);
-	nv::ImageIO::save(output, stream, result.ptr());
+	nv::ImageIO::saveTGA(stream, result.ptr());	// @@ Add generic save function. Add support for png too.
 	
 	return 0;
 }

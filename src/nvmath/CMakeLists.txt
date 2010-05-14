@@ -1,14 +1,17 @@
 PROJECT(nvmath)
 
 SET(MATH_SRCS
-    nvmath.h
-    Vector.h
-    Matrix.h
-    Plane.h Plane.cpp
-    Box.h
-    Color.h
-    Half.h Half.cpp
-    Fitting.h Fitting.cpp)
+	nvmath.h
+	Vector.h
+	Matrix.h
+	Quaternion.h
+	Box.h
+	Color.h
+	Montecarlo.h Montecarlo.cpp
+	Random.h Random.cpp
+	SphericalHarmonic.h SphericalHarmonic.cpp
+	Basis.h Basis.cpp
+	Triangle.h Triangle.cpp TriBox.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -16,15 +19,15 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 ADD_DEFINITIONS(-DNVMATH_EXPORTS)
 
 IF(NVMATH_SHARED)
-    ADD_DEFINITIONS(-DNVMATH_SHARED=1)
-    ADD_LIBRARY(nvmath SHARED ${MATH_SRCS})
+	ADD_DEFINITIONS(-DNVMATH_SHARED=1)
+	ADD_LIBRARY(nvmath SHARED ${MATH_SRCS})
 ELSE(NVMATH_SHARED)
-    ADD_LIBRARY(nvmath ${MATH_SRCS})
+	ADD_LIBRARY(nvmath ${MATH_SRCS})
 ENDIF(NVMATH_SHARED)
 
 TARGET_LINK_LIBRARIES(nvmath ${LIBS} nvcore)
 
 INSTALL(TARGETS nvmath
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib/static)
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib/static)

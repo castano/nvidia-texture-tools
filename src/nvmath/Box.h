@@ -9,7 +9,6 @@
 
 namespace nv
 {
-class Stream;
 
 /// Axis Aligned Bounding Box.
 class Box
@@ -28,13 +27,11 @@ public:
 	// Cast operators.
 	operator const float * () const { return reinterpret_cast<const float *>(this); }
 
-	// Min corner of the box.
-	Vector3 minCorner() const { return m_mins; }
-	Vector3 & minCorner() { return m_mins; }
+	/// Min corner of the box.
+	Vector3 mins() const { return m_mins; }
 
-	// Max corner of the box.
-	Vector3 maxCorner() const { return m_maxs; }
-	Vector3 & maxCorner() { return m_maxs; }
+	/// Max corner of the box.
+	Vector3 maxs() const { return m_maxs; }
 
 	/// Clear the bounds.
 	void clearBounds()
@@ -128,8 +125,6 @@ public:
 			m_mins.x() < p.x() && m_mins.y() < p.y() && m_mins.z() < p.z() &&
 			m_maxs.x() > p.x() && m_maxs.y() > p.y() && m_maxs.z() > p.z();
 	}
-
-	friend Stream & operator<< (Stream & s, Box & box);
 
 private:
 

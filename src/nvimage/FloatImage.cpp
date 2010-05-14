@@ -17,6 +17,21 @@ using namespace nv;
 
 namespace 
 {
+	static int iround(float f)
+	{
+		return int(f);
+	}
+
+	static int ifloor(float f)
+	{
+		return int(floor(f));
+	}
+
+	static float frac(float f)
+	{
+		return f - floor(f);
+	}
+
 	static int mirror(int x, int w)
 	{
 		x = abs(x);
@@ -172,12 +187,12 @@ void FloatImage::normalize(uint base_component)
 
 void FloatImage::packNormals(uint base_component)
 {
-	scaleBias(base_component, 3, 0.5f, 0.5f);
+	scaleBias(base_component, 3, 0.5f, 1.0f);
 }
 
 void FloatImage::expandNormals(uint base_component)
 {
-	scaleBias(base_component, 3, 2.0f, -1.0f);
+	scaleBias(base_component, 3, 2, -0.5);
 }
 
 void FloatImage::scaleBias(uint base_component, uint num, float scale, float bias)
@@ -188,7 +203,7 @@ void FloatImage::scaleBias(uint base_component, uint num, float scale, float bia
 		float * ptr = this->channel(base_component + c);
 		
 		for(uint i = 0; i < size; i++) {
-			ptr[i] = scale * ptr[i] + bias;
+			ptr[i] = scale * (ptr[i] + bias);
 		}
 	}
 }
@@ -224,57 +239,6 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
 		for(uint i = 0; i < size; i++) {
 			ptr[i] = pow(ptr[i], power);
 		}
-	}
-}
-
-/// Apply linear transform.
-void FloatImage::transform(uint base_component, const Matrix & m, Vector4::Arg offset)
-{
-	nvCheck(base_component + 4 <= m_componentNum);
-
-	const uint size = m_width * m_height;
-
-	float * r = this->channel(base_component + 0);
-	float * g = this->channel(base_component + 1);
-	float * b = this->channel(base_component + 2);
-	float * a = this->channel(base_component + 3);
-
-	for (uint i = 0; i < size; i++)
-	{
-		Vector4 color = nv::transform(m, Vector4(*r, *g, *b, *a)) + offset;
-
-		*r++ = color.x();
-		*g++ = color.y();
-		*b++ = color.z();
-		*a++ = color.w();
-	}
-}
-
-void FloatImage::swizzle(uint base_component, uint r, uint g, uint b, uint a)
-{
-	nvCheck(base_component + 4 <= m_componentNum);
-	nvCheck(r < 7 && g < 7 && b < 7 && a < 7);
-
-	const uint size = m_width * m_height;
-
-	float consts[] = { 1.0f, 0.0f, -1.0f };
-	float * c[7];
-	c[0] = this->channel(base_component + 0);
-	c[1] = this->channel(base_component + 1);
-	c[2] = this->channel(base_component + 2);
-	c[3] = this->channel(base_component + 3);
-	c[4] = consts;
-	c[5] = consts + 1;
-	c[6] = consts + 2;
-
-	for (uint i = 0; i < size; i++)
-	{
-		float tmp[4] = { *c[r], *c[g], *c[b], *c[a] };
-
-		*c[0]++ = tmp[0];
-		*c[1]++ = tmp[1];
-		*c[2]++ = tmp[2];
-		*c[3]++ = tmp[3];
 	}
 }
 
@@ -628,7 +592,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					dst_channel[y * w + x] = tmp_column[y];
@@ -649,7 +613,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			float * tmp_channel = tmp_image->channel(c);
 
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					tmp_channel[y * w + x] = tmp_column[y];
@@ -701,7 +665,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
 			float * dst_channel = dst_image->channel(c);
 			
 			for (uint x = 0; x < w; x++) {
-				tmp_image->applyKernelVertical(ykernel, x, c, alpha, wm, tmp_column.mutableBuffer());
+				tmp_image->applyKernelVertical(ykernel, x, c, alpha, wm, tmp_column.unsecureBuffer());
 				
 				for (uint y = 0; y < h; y++) {
 					dst_channel[y * w + x] = tmp_column[y];
@@ -924,25 +888,6 @@ void FloatImage::applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c,
 		
 		output[i] = sum / norm;
 	}
-}
-
-
-// Vertical flip in place.
-void FloatImage::flip()
-{
-    const uint w = m_width;
-    const uint h = m_height;
-    const uint h2 = h / 2;
-
-    for (uint c = 0; c < m_componentNum; c++) {
-        for (uint y = 0; y < h2; y++) {
-            float * src = scanline(y, c);
-            float * dst = scanline(h - 1 - y, c);
-            for (uint x = 0; x < w; x++) {
-                swap(src[x], dst[x]);
-            }
-        }
-    }
 }
 
 FloatImage* FloatImage::clone() const

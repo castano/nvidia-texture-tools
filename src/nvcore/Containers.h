@@ -16,10 +16,9 @@ Do not use memmove in insert & remove, use copy ctors instead.
 
 
 // nvcore
-#include "nvcore.h"
-#include "Memory.h"
-#include "Debug.h"
-//#include "Stream.h"
+#include <nvcore/nvcore.h>
+#include <nvcore/Memory.h>
+#include <nvcore/Debug.h>
 
 #include <string.h>	// memmove
 #include <new>		// for placement new
@@ -71,10 +70,40 @@ namespace nv
 {
 	// Templates
 
+	/// Return the maximum of two values.
+	template <typename T> 
+	inline const T & max(const T & a, const T & b)
+	{
+		//return std::max(a, b);
+		if( a < b ) {
+			return b; 
+		}
+		return a;
+	}
+	
+	/// Return the minimum of two values.
+	template <typename T> 
+	inline const T & min(const T & a, const T & b)
+	{
+		//return std::min(a, b);
+		if( b < a ) {
+			return b; 
+		}
+		return a;
+	}
+	
+	/// Clamp between two values.
+	template <typename T> 
+	inline const T & clamp(const T & x, const T & a, const T & b)
+	{
+		return min(max(x, a), b);
+	}
+	
 	/// Swap two values.
 	template <typename T> 
 	inline void swap(T & a, T & b)
 	{
+		//return std::swap(a, b);
 		T temp = a; 
 		a = b; 
 		b = temp;
@@ -105,6 +134,16 @@ namespace nv
 		uint operator()(uint x) const { return x; }
 	};
 	
+	/// Delete all the elements of a container.
+	template <typename T>
+	void deleteAll(T & container)
+	{
+		for(typename T::PseudoIndex i = container.start(); !container.isDone(i); container.advance(i))
+		{
+			delete container[i];
+		}
+	}
+
 	
 	/** Return the next power of two. 
 	* @see http://graphics.stanford.edu/~seander/bithacks.html
@@ -115,7 +154,7 @@ namespace nv
 	inline uint nextPowerOfTwo( uint x )
 	{
 		nvDebugCheck( x != 0 );
-	#if 1	// On modern CPUs this is supposed to be as fast as using the bsr instruction.
+	#if 1	// On modern CPUs this is as fast as using the bsr instruction.
 		x--;
 		x |= x >> 1;
 		x |= x >> 2;
@@ -137,6 +176,15 @@ namespace nv
 	{
 		return (n & (n-1)) == 0;
 	}
+
+	/// Simple iterator interface.
+	template <typename T>
+	struct Iterator
+	{
+		virtual void advance();
+		virtual bool isDone();
+		virtual T current();
+	};
 
 
 	/**
@@ -179,29 +227,20 @@ namespace nv
 		}
 	
 	
-		/// Const element access.
+		/// Const and save vector access.
 		const T & operator[]( uint index ) const
 		{
 			nvDebugCheck(index < m_size);
 			return m_buffer[index];
 		}
-		const T & at( uint index ) const
-		{
-			nvDebugCheck(index < m_size);
-			return m_buffer[index];
-		}
-
-		/// Element access.
+	
+		/// Safe vector access.
 		T & operator[] ( uint index )
 		{
 			nvDebugCheck(index < m_size);
 			return m_buffer[index];
 		}
-		T & at( uint index )
-		{
-			nvDebugCheck(index < m_size);
-			return m_buffer[index];
-		}
+	
 	
 		/// Get vector size.
 		uint size() const { return m_size; }
@@ -213,7 +252,7 @@ namespace nv
 		const T * buffer() const { return m_buffer; }
 	
 		/// Get vector pointer.
-		T * mutableBuffer() { return m_buffer; }
+		T * unsecureBuffer() { return m_buffer; }
 	
 		/// Is vector empty.
 		bool isEmpty() const { return m_size == 0; }
@@ -294,22 +333,15 @@ namespace nv
 			return m_buffer[0];
 		}
 		
-		/// Return index of the 
-		bool find(const T & element, uint * index)
-		{
-			for (uint i = 0; i < m_size; i++) {
-				if (index != NULL) *index = i;
-				return true;
-			}
-			return false;
-		}
-
 		/// Check if the given element is contained in the array.
 		bool contains(const T & e) const
 		{
-			return find(e, NULL);
+			for (uint i = 0; i < m_size; i++) {
+				if (m_buffer[i] == e) return true;
+			}
+			return false;
 		}
-
+		
 		/// Remove the element at the given index. This is an expensive operation!
 		void removeAt( uint index )
 		{
@@ -495,10 +527,9 @@ namespace nv
 		}
 		
 		/// Assignment operator.
-		Array<T> & operator=( const Array<T> & a )
+		void operator=( const Array<T> & a )
 		{
 			copy( a.m_buffer, a.m_size );
-			return *this;
 		}
 		
 		/*
@@ -595,43 +626,18 @@ namespace nv
 	template<typename T, typename U, typename hash_functor = hash<T> >
 	class NVCORE_CLASS HashMap
 	{
+		NV_FORBID_COPY(HashMap)
 	public:
 
 		/// Default ctor.
 		HashMap() : entry_count(0), size_mask(-1), table(NULL) { }
-
-		// Copy ctor.
-		HashMap(const HashMap & map) : entry_count(0), size_mask(-1), table(NULL)
-		{
-			operator = (map);
-		}
 
 		/// Ctor with size hint.
 		explicit HashMap(int size_hint) : entry_count(0), size_mask(-1), table(NULL) { setCapacity(size_hint); }
 
 		/// Dtor.
 		~HashMap() { clear(); }
-
-		// Assignment operator.
-		void operator= (const HashMap & map)
-		{
-			clear();
-
-			if (entry_count > 0)
-			{
-				entry_count = map.entry_count;
-				size_mask = map.size_mask;
-
-				const uint size = uint(size_mask + 1);
-				table = (Entry *)nv::mem::malloc(sizeof(Entry) * size);
-
-				// Copy elements using copy ctor.
-				for (uint i = 0; i < size; i++)
-				{
-					new (table + i) Entry(map.table[i]);
-				}
-			}
-		}
+	
 	
 		/// Set a new or existing value under the key, to the value.
 		void set(const T& key, const U& value)

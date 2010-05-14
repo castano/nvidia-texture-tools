@@ -51,8 +51,8 @@ fi
 
 echo "-- Configuring nvidia-texture-tools "`cat VERSION`
 
-mkdir -p ./build-$build
-cd ./build-$build
+mkdir -p ./build
+cd ./build
 $CMAKE .. -DNVTT_SHARED=1 -DCMAKE_BUILD_TYPE=$build -DCMAKE_INSTALL_PREFIX=$prefix -G "Unix Makefiles" || exit 1
 cd ..
 
@@ -62,15 +62,11 @@ echo ""
 
 cat > Makefile << EOF
 all:
-	@make --no-print-directory -C build-$build/
+	@make --no-print-directory -C build/
 install:
-	@make install --no-print-directory -C build-$build/
-package:
-	@make package --no-print-directory -C build-$build/
-test:
-	@make test --no-print-directory -C build-$build/
+	@make install --no-print-directory -C build/
 clean:
-	@make clean --no-print-directory -C build-$build/
+	@make clean --no-print-directory -C build/
 distclean:
-	@rm -Rf build-$build/
+	@rm -Rf build/
 EOF

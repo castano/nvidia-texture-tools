@@ -22,7 +22,7 @@
 
 
 // Platform definitions
-#include <posh.h>
+#include "poshlib/posh.h"
 
 // OS:
 // NV_OS_WIN32
@@ -37,9 +37,6 @@
 
 #if defined POSH_OS_LINUX
 #	define NV_OS_LINUX 1
-#	define NV_OS_UNIX 1
-#elif defined POSH_OS_FREEBSD
-#	define NV_OS_FREEBSD 1
 #	define NV_OS_UNIX 1
 #elif defined POSH_OS_CYGWIN32
 #	define NV_OS_CYGWIN 1
@@ -129,13 +126,6 @@
 #define NV_DO_STRING_JOIN2(arg1, arg2) arg1 ## arg2
 #define NV_STRING_JOIN3(arg1, arg2, arg3) NV_DO_STRING_JOIN3(arg1, arg2, arg3)
 #define NV_DO_STRING_JOIN3(arg1, arg2, arg3) arg1 ## arg2 ## arg3
-#define NV_STRING2(x) #x
-#define NV_STRING(x) NV_STRING2(x)
-#if NV_CC_GNUC
-#define NV_FILE_LINE __FILE__ ":" NV_STRING(__LINE__) ": "
-#else
-#define NV_FILE_LINE __FILE__ "(" NV_STRING(__LINE__) ") : "
-#endif
 
 // Startup initialization macro.
 #define NV_AT_STARTUP(some_code) \
@@ -168,7 +158,7 @@
 #elif NV_CC_GNUC
 #	if NV_OS_LINUX
 #		include "DefsGnucLinux.h"
-#	elif NV_OS_DARWIN || NV_OS_FREEBSD
+#	elif NV_OS_DARWIN
 #		include "DefsGnucDarwin.h"
 #	elif NV_OS_MINGW
 #		include "DefsGnucWin32.h"

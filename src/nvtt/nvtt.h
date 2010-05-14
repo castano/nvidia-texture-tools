@@ -21,7 +21,6 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#pragma once
 #ifndef NV_TT_H
 #define NV_TT_H
 
@@ -48,15 +47,12 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_VERSION 201
+#define NVTT_VERSION 200
 
-#define NVTT_FORBID_COPY(Class) \
+#define NVTT_DECLARE_PIMPL(Class) \
 	private: \
 		Class(const Class &); \
 		void operator=(const Class &); \
-	public:
-
-#define NVTT_DECLARE_PIMPL(Class) \
 	public: \
 		struct Private; \
 		Private & m
@@ -65,9 +61,6 @@
 // Public interface.
 namespace nvtt
 {
-	// Forward declarations.
-	struct TexImage;
-	
 	/// Supported compression formats.
 	enum Format
 	{
@@ -90,25 +83,6 @@ namespace nvtt
 		Format_BC3n = Format_DXT5n,
 		Format_BC4,     // ATI1
 		Format_BC5,     // 3DC, ATI2
-
-		Format_DXT1n,// Not supported on CPU yet.
-		Format_CTX1, // Not supported on CPU yet.
-		Format_YCoCg_DXT5, // Not supported yet.
-
-		Format_BC6, // Not supported yet.
-		Format_BC7, // Not supported yet.
-
-        Format_RGBE,
-	};
-
-	/// Pixel types.
-	enum PixelType
-	{
-		PixelType_UnsignedNorm,
-		PixelType_SignedNorm, // Not supported yet.
-		PixelType_UnsignedInt, // Not supported yet.
-		PixelType_SignedInt, // Not supported yet.
-		PixelType_Float,
 	};
 	
 	/// Quality modes.
@@ -123,7 +97,6 @@ namespace nvtt
 	/// Compression options. This class describes the desired compression format and other compression settings.
 	struct CompressionOptions
 	{
-		NVTT_FORBID_COPY(CompressionOptions);
 		NVTT_DECLARE_PIMPL(CompressionOptions);
 
 		NVTT_API CompressionOptions();
@@ -139,23 +112,10 @@ namespace nvtt
 
 		// Set color mask to describe the RGB/RGBA format.
 		NVTT_API void setPixelFormat(unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask);
-		NVTT_API void setPixelFormat(unsigned char rsize, unsigned char gsize, unsigned char bsize, unsigned char asize);
-		
-		NVTT_API void setPixelType(PixelType pixelType);
 
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 	};
 
-	/* 
-	// DXGI_FORMAT_R16G16_FLOAT
-	compressionOptions.setPixelType(PixelType_Float);
-	compressionOptions.setPixelFormat2(16, 16, 0, 0);
-	
-	// DXGI_FORMAT_R32G32B32A32_FLOAT
-	compressionOptions.setPixelType(PixelType_Float);
-	compressionOptions.setPixelFormat2(32, 32, 32, 32);
-	*/
-	
 
 	/// Wrap modes.
 	enum WrapMode
@@ -177,7 +137,8 @@ namespace nvtt
 	enum InputFormat
 	{
 		InputFormat_BGRA_8UB,
-		InputFormat_RGBA_32F,
+	//	InputFormat_RGBE_8UB,
+	//	InputFormat_BGRA_32F,
 	};
 	
 	/// Mipmap downsampling filters.
@@ -188,23 +149,11 @@ namespace nvtt
 		MipmapFilter_Kaiser,    ///< Kaiser-windowed Sinc filter is the best downsampling filter.
 	};
 	
-	/// Texture resize filters.
-	enum ResizeFilter
-	{
-		ResizeFilter_Box,
-		ResizeFilter_Triangle,
-		ResizeFilter_Kaiser,
-		ResizeFilter_Mitchell,
-	};
-	
 	/// Color transformation.
 	enum ColorTransform
 	{
 		ColorTransform_None,
-		ColorTransform_Linear,      ///< Not implemented.
-		ColorTransform_Swizzle,     ///< Not implemented.
-		ColorTransform_YCoCg,       ///< Transform into r=Co, g=Cg, b=0, a=Y
-		ColorTransform_ScaledYCoCg, ///< Not implemented.
+		ColorTransform_Linear,
 	};
 	
 	/// Extents rounding mode.
@@ -227,7 +176,6 @@ namespace nvtt
 	/// Input options. Specify format and layout of the input texture.
 	struct InputOptions
 	{
-		NVTT_FORBID_COPY(InputOptions);
 		NVTT_DECLARE_PIMPL(InputOptions);
 
 		NVTT_API InputOptions();
@@ -242,18 +190,17 @@ namespace nvtt
 		
 		// Set mipmap data. Copies the data.
 		NVTT_API bool setMipmapData(const void * data, int w, int h, int d = 1, int face = 0, int mipmap = 0);
-		NVTT_API bool setMipmapChannelData(const void * data, int channel, int w, int h, int d = 1, int face = 0, int mipmap = 0);
 		
 		// Describe the format of the input.
 		NVTT_API void setFormat(InputFormat format);
 		
-		// Set the way the input alpha channel is interpreted. @@ Not implemented!
+		// Set the way the input alpha channel is interpreted.
 		NVTT_API void setAlphaMode(AlphaMode alphaMode);
 		
 		// Set gamma settings.
 		NVTT_API void setGamma(float inputGamma, float outputGamma);
 		
-		// Set texture wrapping mode.
+		// Set texture wrappign mode.
 		NVTT_API void setWrapMode(WrapMode mode);
 		
 		// Set mipmapping options.
@@ -268,18 +215,13 @@ namespace nvtt
 		NVTT_API void setNormalFilter(float sm, float medium, float big, float large);
 		NVTT_API void setNormalizeMipmaps(bool b);
 		
-		// Set color transforms.
+		// Set color transforms. @@ Not implemented!
 		NVTT_API void setColorTransform(ColorTransform t);
 		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
-		NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3, float offset);
-		NVTT_API void setSwizzleTransform(int x, int y, int z, int w);
 		
 		// Set resizing options.
 		NVTT_API void setMaxExtents(int d);
 		NVTT_API void setRoundMode(RoundMode mode);
-
-		// Set whether or not to premultiply color by alpha
-		NVTT_API void setPremultiplyAlpha(bool b);
 	};
 	
 	
@@ -304,7 +246,6 @@ namespace nvtt
 		Error_CudaError,
   		Error_FileOpen,
   		Error_FileWrite,
-		Error_UnsupportedOutputFormat,
 	};
 	
 	/// Error handler.
@@ -316,19 +257,11 @@ namespace nvtt
 		virtual void error(Error e) = 0;
 	};
 
-	/// Container.
-	enum Container
-	{
-		Container_DDS,
-		Container_DDS10,
-	};
-	
 
 	/// Output Options. This class holds pointers to the interfaces that are used to report the output of 
 	/// the compressor to the user.
 	struct OutputOptions
 	{
-		NVTT_FORBID_COPY(OutputOptions);
 		NVTT_DECLARE_PIMPL(OutputOptions);
 
 		NVTT_API OutputOptions();
@@ -342,132 +275,34 @@ namespace nvtt
 		NVTT_API void setOutputHandler(OutputHandler * outputHandler);
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
 		NVTT_API void setOutputHeader(bool outputHeader);
-		NVTT_API void setContainer(Container container);
 	};
 
 
-	/// Context.
+	/// Texture compressor.
 	struct Compressor
 	{
-		NVTT_FORBID_COPY(Compressor);
 		NVTT_DECLARE_PIMPL(Compressor);
 
 		NVTT_API Compressor();
 		NVTT_API ~Compressor();
 
-		// Context settings.
 		NVTT_API void enableCudaAcceleration(bool enable);
 		NVTT_API bool isCudaAccelerationEnabled() const;
 
-		// InputOptions api.
+		// Main entrypoint of the compression library.
 		NVTT_API bool process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+		
+		// Estimate the size of compressing the input with the given options.
 		NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
-
-		// RAW api.
-		NVTT_API bool compress2D(InputFormat format, int w, int h, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-		//ßNVTT_API bool compress3D(InputFormat format, int w, int h, int d, void * data, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-		NVTT_API int estimateSize(int w, int h, int d, const CompressionOptions & compressionOptions) const;
-
-		// TexImage api.
-		NVTT_API TexImage createTexImage() const;
-		NVTT_API bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-		NVTT_API bool compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-		NVTT_API int estimateSize(const TexImage & tex, const CompressionOptions & compressionOptions) const;
 	};
-
-	// "Compressor" is deprecated. This should have been called "Context"
-	typedef Compressor Context;
-
 	
-	/// DXT decoder.
-	enum Decoder
-	{
-		Decoder_Reference,
-		Decoder_NV5x,
-	};
-
-	/// A texture mipmap.
-	struct TexImage
-	{
-		NVTT_API TexImage();
-		NVTT_API TexImage(const TexImage & tex);
-		NVTT_API ~TexImage();
-
-		NVTT_API void operator=(const TexImage & tex);
-
-		// Texture parameters.
-		NVTT_API void setTextureType(TextureType type);
-		NVTT_API void setWrapMode(WrapMode mode);
-		NVTT_API void setAlphaMode(AlphaMode alphaMode);
-		NVTT_API void setNormalMap(bool isNormalMap);
-
-		// Accessors.
-		NVTT_API int width() const;
-		NVTT_API int height() const;
-		NVTT_API int depth() const;
-		NVTT_API int faceCount() const;
-		NVTT_API TextureType textureType() const;
-		NVTT_API WrapMode wrapMode() const;
-		NVTT_API AlphaMode alphaMode() const;
-		NVTT_API bool isNormalMap() const;
-		NVTT_API int countMipmaps() const;
-
-		// Texture data.
-		NVTT_API bool load(const char * fileName);
-		NVTT_API bool save(const char * fileName) const;
-		NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * data);
-		NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * r, const void * g, const void * b, const void * a);
-		NVTT_API bool setImage2D(Format format, Decoder decoder, int w, int h, int idx, const void * data);
-
-		// Resizing methods.
-		NVTT_API void resize(int w, int h, ResizeFilter filter);
-		NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
-		NVTT_API bool buildNextMipmap(MipmapFilter filter);
-
-		// Color transforms.
-		NVTT_API void toLinear(float gamma);
-		NVTT_API void toGamma(float gamma);
-		NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
-		NVTT_API void swizzle(int r, int g, int b, int a);
-		NVTT_API void scaleBias(int channel, float scale, float bias);
-		NVTT_API void packNormal();
-		NVTT_API void expandNormal();
-		NVTT_API void blend(float r, float g, float b, float a, float t);
-		NVTT_API void premultiplyAlpha();
-		NVTT_API void toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale);
-		NVTT_API void setBorder(float r, float g, float b, float a);
-		NVTT_API void fill(float r, float g, float b, float a);
-
-		// Set normal map options.
-		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
-		NVTT_API void toHeightMap();
-		NVTT_API void normalizeNormalMap();
-
-		// Error compare.
-		NVTT_API float rootMeanSquaredError_rgb(const TexImage & reference) const;
-		NVTT_API float rootMeanSquaredError_alpha(const TexImage & reference) const;
-
-        // Geometric transforms.
-        NVTT_API void flipVertically();
-
-	private:
-		void detach();
-
-		struct Private;
-		Private * m;
-	};
-
-
+	
 	// Return string for the given error code.
 	NVTT_API const char * errorString(Error e);
 
 	// Return NVTT version.
 	NVTT_API unsigned int version();
 
-	// Set callbacks.
-	//NVTT_API void setErrorCallback(ErrorCallback callback);
-	//NVTT_API void setMemoryCallbacks(...);	
-	
 } // nvtt namespace
 
 #endif // NV_TT_H

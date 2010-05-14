@@ -21,10 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/Containers.h> // swap
-
 #include <nvmath/Color.h>
-#include <nvmath/Fitting.h>
 
 #include <nvimage/ColorBlock.h>
 #include <nvimage/BlockDXT.h>
@@ -133,7 +130,7 @@ inline static float colorDistance(Vector3::Arg c0, Vector3::Arg c1)
 	return dot(c0-c1, c0-c1);
 }
 
-inline static uint computeIndices4(const Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
+inline static uint computeIndices4(Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
 	palette[0] = maxColor;
@@ -163,28 +160,6 @@ inline static uint computeIndices4(const Vector3 block[16], Vector3::Arg maxColo
 	}
 
 	return indices;
-}
-
-inline static float evaluatePaletteError4(const Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
-{
-	Vector3 palette[4];
-	palette[0] = maxColor;
-	palette[1] = minColor;
-	palette[2] = lerp(palette[0], palette[1], 1.0f / 3.0f);
-	palette[3] = lerp(palette[0], palette[1], 2.0f / 3.0f);
-	
-	float total = 0.0f;
-	for (int i = 0; i < 16; i++)
-	{
-		float d0 = colorDistance(palette[0], block[i]);
-		float d1 = colorDistance(palette[1], block[i]);
-		float d2 = colorDistance(palette[2], block[i]);
-		float d3 = colorDistance(palette[3], block[i]);
-
-		total += min(min(d0, d1), min(d2, d3));
-	}
-
-	return total;
 }
 
 inline static uint computeIndices3(const ColorBlock & rgba, Vector3::Arg maxColor, Vector3::Arg minColor)
@@ -475,8 +450,7 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		// read block
 		Vector3 block[16];
 		extractColorBlockRGB(rgba, block);
-
-#if 1
+		
 		// find min and max colors
 		Vector3 maxColor, minColor;
 		findMinMaxColorsBox(block, 16, &maxColor, &minColor);
@@ -484,31 +458,7 @@ void QuickCompress::compressDXT1(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		selectDiagonal(block, 16, &maxColor, &minColor);
 		
 		insetBBox(&maxColor, &minColor);
-#else
-		float weights[16] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-		Vector3 cluster[4];
-		int count = Compute4Means(16, block, weights, Vector3(1, 1, 1), cluster);
-
-		Vector3 maxColor, minColor;
-		float bestError = FLT_MAX;
-
-		for (int i = 1; i < 4; i++)
-		{
-			for (int j = 0; j < i; j++)
-			{
-		        uint16 color0 = roundAndExpand(&cluster[i]);
-		        uint16 color1 = roundAndExpand(&cluster[j]);
-
-				float error = evaluatePaletteError4(block, cluster[i], cluster[j]);
-				if (error < bestError) {
-					bestError = error;
-					maxColor = cluster[i];
-					minColor = cluster[j];
-				}
-			}
-		}
-#endif
-
+		
 		uint16 color0 = roundAndExpand(&maxColor);
 		uint16 color1 = roundAndExpand(&minColor);
 

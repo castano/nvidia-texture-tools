@@ -26,12 +26,10 @@
 #ifndef SQUISH_SIMD_VE_H
 #define SQUISH_SIMD_VE_H
 
-#ifndef __APPLE_ALTIVEC__
 #include <altivec.h>
 #undef bool
-#endif
 
-namespace nvsquish {
+namespace squish {
 
 #define VEC4_CONST( X ) Vec4( ( vector float )( X ) )
 
@@ -78,14 +76,7 @@ public:
 		u.v = m_v;
 		return Vec3( u.c[0], u.c[1], u.c[2] );
 	}
-
-	float GetX() const
-	{
-		union { vector float v; float c[4]; } u;
-		u.v = m_v;
-		return u.c[0];
-	}
-
+	
 	Vec4 SplatX() const { return Vec4( vec_splat( m_v, 0 ) ); }
 	Vec4 SplatY() const { return Vec4( vec_splat( m_v, 1 ) ); }
 	Vec4 SplatZ() const { return Vec4( vec_splat( m_v, 2 ) ); }

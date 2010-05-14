@@ -185,16 +185,6 @@ void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttOu
 
 
 // Compressor class.
-NvttCompressor * nvttCreateCompressor()
-{
-	return new nvtt::Compressor();
-}
-
-void nvttDestroyCompressor(NvttCompressor * compressor)
-{
-	delete compressor;
-}
-
 NvttBoolean nvttCompress(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions)
 {
 	return (NvttBoolean)compressor->process(*inputOptions, *compressionOptions, *outputOptions);

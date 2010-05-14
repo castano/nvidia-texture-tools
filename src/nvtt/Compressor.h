@@ -1,4 +1,4 @@
-// Copyright Ignacio Castano <icastano@nvidia.com> 2009
+// Copyright NVIDIA Corporation 2008 -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -24,17 +24,57 @@
 #ifndef NV_TT_COMPRESSOR_H
 #define NV_TT_COMPRESSOR_H
 
-#include <nvcore/nvcore.h> // uint
+#include <nvcore/Ptr.h>
+
+#include <nvtt/cuda/CudaCompressDXT.h>
+
 #include "nvtt.h"
 
 namespace nv
 {
-	struct CompressorInterface
+	class Image;
+}
+
+namespace nvtt
+{
+	struct Mipmap;
+
+	struct Compressor::Private
 	{
-		virtual ~CompressorInterface() {}
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions) = 0;
+		Private() {}
+
+		bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+		int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
+
+	private:
+
+		bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+		bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+
+		bool initMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f, uint m) const;
+
+		int findExactMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
+		int findClosestMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
+
+		void downsampleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
+		void scaleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d) const;
+		void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
+		void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
+		bool compressMipmap(const Mipmap & mipmap, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+
+
+
+	public:
+
+		bool cudaSupported;
+		bool cudaEnabled;
+		int cudaDevice;
+
+		nv::AutoPtr<nv::CudaCompressor> cuda;
+
 	};
 
-} // nv namespace
+} // nvtt namespace
+
 
 #endif // NV_TT_COMPRESSOR_H

@@ -23,7 +23,6 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -44,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..;..\..\..\src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -87,7 +86,6 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="0"
 			>
 			<Tool
@@ -109,7 +107,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..;..\..\..\src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -152,7 +150,6 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -173,7 +170,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..;..\..\..\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -214,7 +211,6 @@
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
 			ConfigurationType="4"
-			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
 			>
@@ -236,7 +232,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="..;..\..\..\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -286,19 +282,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvcore\FileSystem.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvcore\Library.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvcore\Memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\RefCounted.cpp"
 				>
 			</File>
 			<File
@@ -320,10 +308,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvcore\Algorithms.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvcore\Containers.h"
 				>
 			</File>
@@ -333,10 +317,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvcore\DefsVcWin32.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\FileSystem.h"
 				>
 			</File>
 			<File
@@ -360,31 +340,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvcore\RefCounted.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\StdStream.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Stream.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvcore\StrLib.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextReader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextWriter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Timer.h"
 				>
 			</File>
 		</Filter>

@@ -7,11 +7,6 @@
 #include <nvcore/Debug.h>
 
 #include <math.h>
-#include <limits.h> // INT_MAX
-
-#if NV_OS_WIN32
-#include <float.h>
-#endif
 
 // Function linkage
 #if NVMATH_SHARED
@@ -55,38 +50,38 @@
 
 inline double sqrt_assert(const double f)
 {
-    nvDebugCheck(f >= 0.0f);
-    return sqrt(f);
+	nvDebugCheck(f >= 0.0f);
+	return sqrt(f);
 }
 
 inline float sqrtf_assert(const float f)
 {
-    nvDebugCheck(f >= 0.0f);
-    return sqrtf(f);
+	nvDebugCheck(f >= 0.0f);
+	return sqrtf(f);
 }
 
 inline double acos_assert(const double f)
 {
-    nvDebugCheck(f >= -1.0f && f <= 1.0f);
-    return acos(f);
+	nvDebugCheck(f >= -1.0f && f <= 1.0f);
+	return acos(f);
 }
 
 inline float acosf_assert(const float f)
 {
-    nvDebugCheck(f >= -1.0f && f <= 1.0f);
-    return acosf(f);
+	nvDebugCheck(f >= -1.0f && f <= 1.0f);
+	return acosf(f);
 }
 
 inline double asin_assert(const double f)
 {
-    nvDebugCheck(f >= -1.0f && f <= 1.0f);
-    return asin(f);
+	nvDebugCheck(f >= -1.0f && f <= 1.0f);
+	return asin(f);
 }
 
 inline float asinf_assert(const float f)
 {
-    nvDebugCheck(f >= -1.0f && f <= 1.0f);
-    return asinf(f);
+	nvDebugCheck(f >= -1.0f && f <= 1.0f);
+	return asinf(f);
 }
 
 // Replace default functions with asserting ones.
@@ -97,99 +92,72 @@ inline float asinf_assert(const float f)
 #define asin asin_assert
 #define asinf asinf_assert
 
+#if NV_OS_WIN32
+#include <float.h>
+#endif
+
 namespace nv
 {
-    inline float toRadian(float degree) { return degree * (PI / 180.0f); }
-    inline float toDegree(float radian) { return radian * (180.0f / PI); }
+inline float toRadian(float degree) { return degree * (PI / 180.0f); }
+inline float toDegree(float radian) { return radian * (180.0f / PI); }
+	
+inline bool equal(const float f0, const float f1, const float epsilon = NV_EPSILON)
+{
+	return fabs(f0-f1) <= epsilon;
+}
 
-    inline bool equal(const float f0, const float f1, const float epsilon = NV_EPSILON)
-    {
-        return fabs(f0-f1) <= epsilon;
-    }
+inline bool isZero(const float f, const float epsilon = NV_EPSILON)
+{
+	return fabs(f) <= epsilon;
+}
 
-    inline bool isZero(const float f, const float epsilon = NV_EPSILON)
-    {
-        return fabs(f) <= epsilon;
-    }
-
-    inline bool isFinite(const float f)
-    {
+inline bool isFinite(const float f)
+{
 #if NV_OS_WIN32
-        return _finite(f) != 0;
-#elif NV_OS_DARWIN || NV_OS_FREEBSD
-        return isfinite(f);
+	return _finite(f) != 0;
+#elif NV_OS_DARWIN
+	return isfinite(f);
 #elif NV_OS_LINUX
-        return finitef(f);
+	return finitef(f);
 #else
 #	error "isFinite not supported"
 #endif
-        //return std::isfinite (f);
-        //return finite (f);
-    }
+//return std::isfinite (f);
+//return finite (f);
+}
 
-    inline bool isNan(const float f)
-    {
+inline bool isNan(const float f)
+{
 #if NV_OS_WIN32
-        return _isnan(f) != 0;
-#elif NV_OS_DARWIN || NV_OS_FREEBSD
-        return isnan(f);
+	return _isnan(f) != 0;
+#elif NV_OS_DARWIN
+	return isnan(f);
 #elif NV_OS_LINUX
-        return isnanf(f);
+	return isnanf(f);
 #else
 #	error "isNan not supported"
 #endif
-    }
+}
 
-    inline uint log2(uint i)
-    {
-        uint value = 0;
-        while( i >>= 1 ) {
-            value++;
-        }
-        return value;
-    }
+inline uint log2(uint i)
+{
+	uint value = 0;
+	while( i >>= 1 ) {
+		value++;
+	}
+	return value;
+}
 
-    inline float log2f(float x)
-    {
-        nvCheck(x >= 0);
-        return logf(x) / logf(2.0f);
-    }
+inline float lerp(float f0, float f1, float t)
+{
+	const float s = 1.0f - t;
+	return f0 * s + f1 * t;
+}
 
-    inline float lerp(float f0, float f1, float t)
-    {
-        const float s = 1.0f - t;
-        return f0 * s + f1 * t;
-    }
-
-    inline float square(float f)
-    {
-        return f * f;
-    }
-
-    // @@ Float to int conversions to be optimized at some point. See:
-    // http://cbloomrants.blogspot.com/2009/01/01-17-09-float-to-int.html
-    // http://www.stereopsis.com/sree/fpu2006.html
-    // http://assemblyrequired.crashworks.org/2009/01/12/why-you-should-never-cast-floats-to-ints/
-    // http://chrishecker.com/Miscellaneous_Technical_Articles#Floating_Point
-    inline int iround(float f)
-    {
-        return int(f);
-    }
-
-    inline int ifloor(float f)
-    {
-        return int(floorf(f));
-    }
-
-    inline int iceil(float f)
-    {
-        return int(ceilf(f));
-    }
-
-    inline float frac(float f)
-    {
-        return f - floor(f);
-    }
+inline float square(float f)
+{
+	return f * f;
+}
 
 } // nv
 
