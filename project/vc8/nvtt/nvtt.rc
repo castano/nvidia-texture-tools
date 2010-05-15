@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "NVIDIA Corporation"
             VALUE "FileDescription", "NVIDIA Texture Tools Dynamic Link Library"
-            VALUE "FileVersion", "2, 0, 6, 0"
+            VALUE "FileVersion", "2, 0, 8, 0"
             VALUE "InternalName", "nvtt"
-            VALUE "LegalCopyright", "Copyright (C) 2007"
+            VALUE "LegalCopyright", "Copyright (C) 2007-2010"
             VALUE "OriginalFilename", "nvtt.dll"
             VALUE "ProductName", "NVIDIA Texture Tools Dynamic Link Library"
-            VALUE "ProductVersion", "2, 0, 6, 0"
+            VALUE "ProductVersion", "2, 0, 8, 0"
         END
     END
     BLOCK "VarFileInfo"
