@@ -364,7 +364,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 	// Get output handler.
 	if (!outputOptions.hasValidOutputHandler())
 	{
-		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_FileOpen);
+		outputOptions.error(Error_FileOpen);
 		return false;
 	}
 	
@@ -587,11 +587,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		if (!supported)
 		{
 			// This container does not support the requested format.
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_UnsupportedOutputFormat);
-			}
-			
+			outputOptions.error(Error_UnsupportedOutputFormat);
 			return false;
 		}
 		
@@ -617,9 +613,9 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 		}
 
 		bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
-		if (!writeSucceed && outputOptions.errorHandler != NULL)
+		if (!writeSucceed)
 		{
-			outputOptions.errorHandler->error(Error_FileWrite);
+			outputOptions.error(Error_FileWrite);
 		}
 		
 		return writeSucceed;
@@ -632,14 +628,11 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
 {
 	if (tex.width() <= 0 || tex.height() <= 0 || tex.depth() <= 0 || mipmapCount <= 0)
 	{
-		if (outputOptions.errorHandler != NULL)
-		{
-			outputOptions.errorHandler->error(Error_InvalidInput);
-		}
+		outputOptions.error(Error_InvalidInput);
 		return false;
 	}
 
-	if (outputOptions.outputHandler == NULL || !outputOptions.outputHeader)
+	if (!outputOptions.outputHeader)
 	{
 		return true;
 	}
@@ -831,11 +824,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
 		if (!supported)
 		{
 			// This container does not support the requested format.
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_UnsupportedOutputFormat);
-			}
-
+			outputOptions.error(Error_UnsupportedOutputFormat);
 			return false;
 		}
 
@@ -861,9 +850,9 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
 		}
 
 		bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
-		if (!writeSucceed && outputOptions.errorHandler != NULL)
+		if (!writeSucceed)
 		{
-			outputOptions.errorHandler->error(Error_FileWrite);
+			outputOptions.error(Error_FileWrite);
 		}
 
 		return writeSucceed;
@@ -886,19 +875,13 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 
 	for (uint m = 0; m < mipmapCount; m++)
 	{
-		if (outputOptions.outputHandler)
-		{
-			int size = computeImageSize(w, h, d, compressionOptions.getBitCount(), compressionOptions.format);
-			outputOptions.outputHandler->beginImage(size, w, h, d, f, m);
-		}
+		int size = computeImageSize(w, h, d, compressionOptions.getBitCount(), compressionOptions.format);
+		outputOptions.beginImage(size, w, h, d, f, m);
 
 		if (!initMipmap(mipmap, inputOptions, w, h, d, f, m))
 		{
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_InvalidInput);
-				return false;
-			}
+			outputOptions.error(Error_InvalidInput);
+			return false;
 		}
 		
 		if (compressionOptions.pixelType == PixelType_Float)
@@ -1515,7 +1498,7 @@ bool Compressor::Private::compress2D(InputFormat inputFormat, AlphaMode alphaMod
 
 	if (compressor == NULL)
 	{
-		if (outputOptions.errorHandler) outputOptions.errorHandler->error(Error_UnsupportedFeature);
+		outputOptions.error(Error_UnsupportedFeature);
 	}
 	else
 	{

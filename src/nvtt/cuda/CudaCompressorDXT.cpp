@@ -199,17 +199,11 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
 		if (err != cudaSuccess)
 		{
 			//nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
+			outputOptions.error(Error_CudaError);
 		}
 
 		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(h_result, count * bs);
-		}
+		outputOptions.writeData(h_result, count * bs);
 
 		bn += count;
 	}
@@ -221,10 +215,7 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
 	cudaFreeArray(d_image);
 
 #else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
+	outputOptions.error(Error_CudaError);
 #endif
 
 }
@@ -362,24 +353,17 @@ void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressio
 		if (err != cudaSuccess)
 		{
 			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
+			outputOptions.error(Error_CudaError);
 		}
 
 		// Copy result to host, overwrite swizzled image.
 		cudaMemcpy(blockLinearImage, m_ctx.result, count * 8, cudaMemcpyDeviceToHost);
 
 		// Output result.
-		if (outputOptions.outputHandler != NULL)
+		for (uint i = 0; i < count; i++)
 		{
-			for (uint i = 0; i < count; i++)
-			{
-				outputOptions.outputHandler->writeData(alphaBlocks + i, 8);
-				outputOptions.outputHandler->writeData(blockLinearImage + i * 2, 8);
-			}
+			outputOptions.writeData(alphaBlocks + i, 8);
+			outputOptions.writeData(blockLinearImage + i * 2, 8);
 		}
 
 		bn += count;
@@ -392,10 +376,7 @@ void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressio
 	free(blockLinearImage);
 
 #else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
+	outputOptions.error(Error_CudaError);
 #endif
 }
 
@@ -453,24 +434,17 @@ void CudaCompressor::compressDXT5(const CompressionOptions::Private & compressio
 		if (err != cudaSuccess)
 		{
 			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
+			outputOptions.error(Error_CudaError);
 		}
 
 		// Copy result to host, overwrite swizzled image.
 		cudaMemcpy(blockLinearImage, m_ctx.result, count * 8, cudaMemcpyDeviceToHost);
 
 		// Output result.
-		if (outputOptions.outputHandler != NULL)
+		for (uint i = 0; i < count; i++)
 		{
-			for (uint i = 0; i < count; i++)
-			{
-				outputOptions.outputHandler->writeData(alphaBlocks + i, 8);
-				outputOptions.outputHandler->writeData(blockLinearImage + i * 2, 8);
-			}
+			outputOptions.writeData(alphaBlocks + i, 8);
+			outputOptions.writeData(blockLinearImage + i * 2, 8);
 		}
 
 		bn += count;
@@ -483,10 +457,7 @@ void CudaCompressor::compressDXT5(const CompressionOptions::Private & compressio
 	free(blockLinearImage);
 
 #else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
+	outputOptions.error(Error_CudaError);
 #endif
 }
 
@@ -527,21 +498,14 @@ void CudaCompressor::compressDXT1n(const nvtt::CompressionOptions::Private & com
 		if (err != cudaSuccess)
 		{
 			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
+			outputOptions.error(Error_CudaError);
 		}
 
 		// Copy result to host, overwrite swizzled image.
 		cudaMemcpy(blockLinearImage, m_ctx.result, count * 8, cudaMemcpyDeviceToHost);
 
 		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(blockLinearImage, count * 8);
-		}
+		outputOptions.writeData(blockLinearImage, count * 8);
 
 		bn += count;
 	}
@@ -552,10 +516,7 @@ void CudaCompressor::compressDXT1n(const nvtt::CompressionOptions::Private & com
 	free(blockLinearImage);
 
 #else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
+	outputOptions.error(Error_CudaError);
 #endif
 }
 
@@ -597,20 +558,14 @@ void CudaCompressor::compressCTX1(const nvtt::CompressionOptions::Private & comp
 		{
 			nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
 
-			if (outputOptions.errorHandler != NULL)
-			{
-				outputOptions.errorHandler->error(Error_CudaError);
-			}
+			outputOptions.error(Error_CudaError);
 		}
 
 		// Copy result to host, overwrite swizzled image.
 		cudaMemcpy(blockLinearImage, m_ctx.result, count * 8, cudaMemcpyDeviceToHost);
 
 		// Output result.
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(blockLinearImage, count * 8);
-		}
+		outputOptions.writeData(blockLinearImage, count * 8);
 
 		bn += count;
 	}
@@ -621,10 +576,7 @@ void CudaCompressor::compressCTX1(const nvtt::CompressionOptions::Private & comp
 	free(blockLinearImage);
 
 #else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
+	outputOptions.error(Error_CudaError);
 #endif
 }
 
@@ -637,10 +589,7 @@ void CudaCompressor::compressDXT5n(const nvtt::CompressionOptions::Private & com
 	// @@ TODO
 
 #else
-	if (outputOptions.errorHandler != NULL)
-	{
-		outputOptions.errorHandler->error(Error_CudaError);
-	}
+	outputOptions.error(Error_CudaError);
 #endif
 }
 

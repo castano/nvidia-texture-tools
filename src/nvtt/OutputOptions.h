@@ -55,18 +55,27 @@ namespace nvtt
 
 		nv::StdOutputStream stream;
 	};
-	
-	
+
+
 	struct OutputOptions::Private
 	{
 		nv::Path fileName;
 		
 		OutputHandler * outputHandler;
 		ErrorHandler * errorHandler;
+
+		BeginImageCallback * beginImageCallback;
+		OutputCallback * outputCallback;
+		ErrorCallback * errorCallback;
+
 		bool outputHeader;
 		Container container;
 		
 		bool hasValidOutputHandler() const;
+
+		void beginImage(int size, int width, int height, int depth, int face, int miplevel) const;
+		bool writeData(const void * data, int size) const;
+		void error(Error e) const;
 	};
 
 	

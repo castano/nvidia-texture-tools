@@ -26,6 +26,22 @@
 using namespace nvtt;
 
 
+static void defaultBeginImageCallback(int size, int width, int height, int depth, int face, int miplevel, void * userData) {
+	nvtt::OutputHandler * outputHandler = (nvtt::OutputHandler *)userData;
+	if (outputHandler != NULL) outputHandler->beginImage(size, width, height, depth, face, miplevel);
+}
+
+static bool defaultOutputCallback(const void * data, int size, void * userData) {
+	nvtt::OutputHandler * outputHandler = (nvtt::OutputHandler *)userData;
+	if (outputHandler != NULL) return outputHandler->writeData(data, size);
+}
+
+static void defaultErrorCallback(Error e, void * userData) {
+	nvtt::ErrorHandler * errorHandler = (nvtt::ErrorHandler *)userData;
+	if (errorHandler != NULL) errorHandler->error(e);
+}
+
+
 OutputOptions::OutputOptions() : m(*new OutputOptions::Private())
 {
 	reset();
@@ -43,8 +59,14 @@ OutputOptions::~OutputOptions()
 void OutputOptions::reset()
 {
 	m.fileName.reset();
+
 	m.outputHandler = NULL;
 	m.errorHandler = NULL;
+
+	m.beginImageCallback = defaultBeginImageCallback;
+	m.outputCallback = defaultOutputCallback;
+	m.errorCallback = defaultErrorCallback;
+
 	m.outputHeader = true;
 	m.container = Container_DDS;
 }
@@ -61,6 +83,7 @@ void OutputOptions::setFileName(const char * fileName)
 	{
 		m.outputHandler = oh;
 	}
+	m.outputCallback = defaultOutputCallback;
 }
 
 /// Set output handler.
@@ -72,6 +95,7 @@ void OutputOptions::setOutputHandler(OutputHandler * outputHandler)
 		m.fileName.reset();
 	}
 	m.outputHandler = outputHandler;
+	m.outputCallback = defaultOutputCallback;
 }
 
 /// Set error handler.
@@ -103,3 +127,17 @@ bool OutputOptions::Private::hasValidOutputHandler() const
 	return true;
 }
 
+void OutputOptions::Private::beginImage(int size, int width, int height, int depth, int face, int miplevel) const
+{
+	beginImageCallback(size, width, height, depth, face, miplevel, outputHandler);
+}
+
+bool OutputOptions::Private::writeData(const void * data, int size) const
+{
+	return outputCallback(data, size, outputHandler);
+}
+
+void OutputOptions::Private::error(Error e) const
+{
+	errorCallback(e, errorHandler);
+}
