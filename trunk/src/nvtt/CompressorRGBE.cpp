@@ -83,6 +83,8 @@ void CompressorRGBE::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
             else {
                 nvDebugCheck (inputFormat == nvtt::InputFormat_RGBA_32F);
 
+#pragma message("Interleave color components")
+
 			    // Color components not interleaved.
 			    r = fsrc[x + 0 * srcPlane];
 			    g = fsrc[x + 1 * srcPlane];
