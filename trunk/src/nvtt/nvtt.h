@@ -316,6 +316,10 @@ namespace nvtt
 		virtual void error(Error e) = 0;
 	};
 
+	typedef void (BeginImageCallback)(int size, int width, int height, int depth, int face, int miplevel, void *);
+	typedef bool (OutputCallback)(const void * data, int size, void *);
+	typedef void (ErrorCallback)(Error e, void *);
+
 	/// Container.
 	enum Container
 	{
@@ -341,6 +345,11 @@ namespace nvtt
 		
 		NVTT_API void setOutputHandler(OutputHandler * outputHandler);
 		NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
+
+		NVTT_API void setBeginImageCallback(BeginImageCallback * beginImageCallback);
+		NVTT_API void setOutputCallback(OutputCallback * outputCallback);
+		NVTT_API void setErrorCallback(ErrorCallback * errorCallback);
+
 		NVTT_API void setOutputHeader(bool outputHeader);
 		NVTT_API void setContainer(Container container);
 	};
