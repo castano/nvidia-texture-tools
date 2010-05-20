@@ -64,10 +64,6 @@ namespace nvtt
 		OutputHandler * outputHandler;
 		ErrorHandler * errorHandler;
 
-		BeginImageCallback * beginImageCallback;
-		OutputCallback * outputCallback;
-		ErrorCallback * errorCallback;
-
 		bool outputHeader;
 		Container container;
 		
