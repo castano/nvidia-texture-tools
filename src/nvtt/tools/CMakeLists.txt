@@ -1,5 +1,4 @@
 
-
 ADD_EXECUTABLE(nvcompress compress.cpp cmdline.h)
 TARGET_LINK_LIBRARIES(nvcompress nvcore nvmath nvimage nvtt)
 
@@ -18,10 +17,22 @@ TARGET_LINK_LIBRARIES(nvassemble nvcore nvmath nvimage)
 ADD_EXECUTABLE(nvzoom resize.cpp cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
+SET(TOOLS nvcompress nvdecompress nvddsinfo nvassemble nvzoom)
+
+IF(GLEW_FOUND AND GLUT_FOUND)
+    INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH} ${GLUT_INCLUDE_DIR})
+    ADD_EXECUTABLE(nvddsview ddsview.cpp cmdline.h)
+    TARGET_LINK_LIBRARIES(nvddsview nvcore nvmath nvimage ${GLEW_LIBRARY} ${GLUT_LIBRARY})
+    SET(TOOLS ${TOOLS} nvddsview)
+ENDIF(GLEW_FOUND AND GLUT_FOUND)
+
+
 ADD_EXECUTABLE(nv-gnome-thumbnailer thumbnailer.cpp cmdline.h)
 TARGET_LINK_LIBRARIES(nv-gnome-thumbnailer nvcore nvmath nvimage)
-  
-INSTALL(TARGETS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom nv-gnome-thumbnailer DESTINATION bin)
+
+SET(TOOLS ${TOOLS} nv-gnome-thumbnailer)
+
+INSTALL(TARGETS ${TOOLS} DESTINATION bin)
  
  # Use gconftool-2 to install gnome thumbnailer
 FIND_PROGRAM(GCONFTOOL2 gconftool-2)
