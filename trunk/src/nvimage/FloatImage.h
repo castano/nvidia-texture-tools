@@ -59,10 +59,9 @@ public:
 	
 	NVIMAGE_API void packNormals(uint base_component);
 	NVIMAGE_API void expandNormals(uint base_component);
-	NVIMAGE_API void scaleBias(uint base_component, uint num, float scale, float add);
+	NVIMAGE_API void scaleBias(uint base_component, uint num, float scale, float bias);
 	
-	//NVIMAGE_API void clamp(uint base_component, uint num);
-	NVIMAGE_API void clamp(float low, float high);
+	NVIMAGE_API void clamp(uint base_component, uint num, float low, float high);
 	
 	NVIMAGE_API void toLinear(uint base_component, uint num, float gamma = 2.2f);
 	NVIMAGE_API void toGamma(uint base_component, uint num, float gamma = 2.2f);
@@ -87,6 +86,9 @@ public:
 	NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * output) const;
 
     NVIMAGE_API void flip();
+
+    NVIMAGE_API float alphaTestCoverage(float alphaRef, int alphaChannel) const;
+    NVIMAGE_API void scaleAlphaToCoverage(float coverage, float alphaRef, int alphaChannel);
 	//@}
 	
 	uint width() const { return m_width; }

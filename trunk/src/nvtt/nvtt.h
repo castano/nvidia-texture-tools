@@ -412,6 +412,7 @@ namespace nvtt
 		NVTT_API AlphaMode alphaMode() const;
 		NVTT_API bool isNormalMap() const;
 		NVTT_API int countMipmaps() const;
+        NVTT_API float alphaTestCoverage(float alphaRef = 0.5) const;
 
 		// Texture data.
 		NVTT_API bool load(const char * fileName);
@@ -424,7 +425,7 @@ namespace nvtt
 		NVTT_API void resize(int w, int h, ResizeFilter filter);
 		NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
 		NVTT_API bool buildNextMipmap(MipmapFilter filter);
-
+    
 		// Color transforms.
 		NVTT_API void toLinear(float gamma);
 		NVTT_API void toGamma(float gamma);
@@ -438,6 +439,7 @@ namespace nvtt
 		NVTT_API void toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale);
 		NVTT_API void setBorder(float r, float g, float b, float a);
 		NVTT_API void fill(float r, float g, float b, float a);
+        NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
 
 		// Set normal map options.
 		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
