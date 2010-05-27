@@ -1,142 +1,156 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
+#pragma once
 #ifndef NV_MATH_BOX_H
 #define NV_MATH_BOX_H
 
-#include <nvmath/Vector.h>
+#include "Vector.h"
 
 #include <float.h> // FLT_MAX
 
 namespace nv
 {
-class Stream;
+    class Stream;
+    class Sphere;
 
-/// Axis Aligned Bounding Box.
-class Box
-{
-public:
+    /// Axis Aligned Bounding Box.
+    class Box
+    {
+    public:
 
-	/// Default ctor.
-	Box() { };
+        /// Default ctor.
+        Box() { };
 
-	/// Copy ctor.
-	Box( const Box & b ) : m_mins(b.m_mins), m_maxs(b.m_maxs) { }
+        /// Copy ctor.
+        Box(const Box & b) : minCorner(b.minCorner), maxCorner(b.maxCorner) { }
 
-	/// Init ctor.
-	Box( Vector3::Arg mins, Vector3::Arg maxs ) : m_mins(mins), m_maxs(maxs) { }
+        /// Init ctor.
+        Box(Vector3::Arg mins, Vector3::Arg maxs) : minCorner(mins), maxCorner(maxs) { }
 
-	// Cast operators.
-	operator const float * () const { return reinterpret_cast<const float *>(this); }
+        // Cast operators.
+        operator const float * () const { return reinterpret_cast<const float *>(this); }
 
-	// Min corner of the box.
-	Vector3 minCorner() const { return m_mins; }
-	Vector3 & minCorner() { return m_mins; }
+        /// Clear the bounds.
+        void clearBounds()
+        {
+            minCorner.set(FLT_MAX, FLT_MAX, FLT_MAX);
+            maxCorner.set(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+        }
 
-	// Max corner of the box.
-	Vector3 maxCorner() const { return m_maxs; }
-	Vector3 & maxCorner() { return m_maxs; }
+        /// Build a cube centered on center and with edge = 2*dist
+        void cube(Vector3::Arg center, float dist)
+        {
+            setCenterExtents(center, Vector3(dist, dist, dist));
+        }
 
-	/// Clear the bounds.
-	void clearBounds()
-	{
-		m_mins.set(FLT_MAX, FLT_MAX, FLT_MAX);
-		m_maxs.set(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-	}
+        /// Build a box, given center and extents.
+        void setCenterExtents(Vector3::Arg center, Vector3::Arg extents)
+        {
+            minCorner = center - extents;
+            maxCorner = center + extents;
+        }
 
-	/// Build a cube centered on center and with edge = 2*dist
-	void cube(Vector3::Arg center, float dist)
-	{
-		setCenterExtents(center, Vector3(dist, dist, dist));
-	}
+        /// Get box center.
+        Vector3 center() const
+        {
+            return (minCorner + maxCorner) * 0.5f;
+        }
 
-	/// Build a box, given center and extents.
-	void setCenterExtents(Vector3::Arg center, Vector3::Arg extents)
-	{
-		m_mins = center - extents;
-		m_maxs = center + extents;
-	}
+        /// Return extents of the box.
+        Vector3 extents() const
+        {
+            return (maxCorner - minCorner) * 0.5f;
+        }
 
-	/// Get box center.
-	Vector3 center() const
-	{
-		return (m_mins + m_maxs) * 0.5f;
-	}
+        /// Return extents of the box.
+        scalar extents(uint axis) const
+        {
+            nvDebugCheck(axis < 3);
+            if (axis == 0) return (maxCorner.x - minCorner.x) * 0.5f;
+            if (axis == 1) return (maxCorner.y - minCorner.y) * 0.5f;
+            if (axis == 2) return (maxCorner.z - minCorner.z) * 0.5f;
+            nvAssume(false);
+            return 0.0f;
+        }
 
-	/// Return extents of the box.
-	Vector3 extents() const
-	{
-		return (m_maxs - m_mins) * 0.5f;
-	}
+        /// Add a point to this box.
+        void addPointToBounds(Vector3::Arg p)
+        {
+            minCorner = min(minCorner, p);
+            maxCorner = max(maxCorner, p);
+        }
 
-	/// Return extents of the box.
-	scalar extents(uint axis) const
-	{
-		nvDebugCheck(axis < 3);
-		if (axis == 0) return (m_maxs.x() - m_mins.x()) * 0.5f;
-		if (axis == 1) return (m_maxs.y() - m_mins.y()) * 0.5f;
-		if (axis == 2) return (m_maxs.z() - m_mins.z()) * 0.5f;
-		nvAssume(false);
-		return 0.0f;
-	}
+        /// Add a box to this box.
+        void addBoxToBounds(const Box & b)
+        {
+            minCorner = min(minCorner, b.minCorner);
+            maxCorner = max(maxCorner, b.maxCorner);
+        }
 
-	/// Add a point to this box.
-	void addPointToBounds(Vector3::Arg p)
-	{
-		m_mins = min(m_mins, p);
-		m_maxs = max(m_maxs, p);
-	}
+        /// Translate box.
+        void translate(Vector3::Arg v)
+        {
+            minCorner += v;
+            maxCorner += v;
+        }
 
-	/// Add a box to this box.
-	void addBoxToBounds(const Box & b)
-	{
-		m_mins = min(m_mins, b.m_mins);
-		m_maxs = max(m_maxs, b.m_maxs);
-	}
+        /// Scale the box.
+        void scale(float s)
+        {
+            minCorner *= s;
+            maxCorner *= s;
+        }
 
-	/// Translate box.
-	void translate(Vector3::Arg v)
-	{
-		m_mins += v;
-		m_maxs += v;
-	}
+        // Expand the box by a fixed amount.
+        void expand(float r) {
+            minCorner -= Vector3(r,r,r);
+            maxCorner += Vector3(r,r,r);
+        }
 
-	/// Scale the box.
-	void scale(float s)
-	{
-		m_mins *= s;
-		m_maxs *= s;
-	}
+        /// Get the area of the box.
+        float area() const
+        {
+            const Vector3 d = extents();
+            return 8.0f * (d.x*d.y + d.x*d.z + d.y*d.z);
+        }	
 
-	/// Get the area of the box.
-	float area() const
-	{
-		const Vector3 d = extents();
-		return 8.0f * (d.x()*d.y() + d.x()*d.z() + d.y()*d.z());
-	}	
+        /// Get the volume of the box.
+        float volume() const
+        {
+            Vector3 d = extents();
+            return 8.0f * (d.x * d.y * d.z);
+        }
 
-	/// Get the volume of the box.
-	float volume() const
-	{
-		Vector3 d = extents();
-		return 8.0f * (d.x() * d.y() * d.z());
-	}
-	
-	/// Return true if the box contains the given point.
-	bool contains(Vector3::Arg p) const
-	{
-		return 
-			m_mins.x() < p.x() && m_mins.y() < p.y() && m_mins.z() < p.z() &&
-			m_maxs.x() > p.x() && m_maxs.y() > p.y() && m_maxs.z() > p.z();
-	}
+        /// Return true if the box contains the given point.
+        bool contains(Vector3::Arg p) const
+        {
+            return 
+                minCorner.x < p.x && minCorner.y < p.y && minCorner.z < p.z &&
+                maxCorner.x > p.x && maxCorner.y > p.y && maxCorner.z > p.z;
+        }
 
-	friend Stream & operator<< (Stream & s, Box & box);
+        /// Split the given box in 8 octants and assign the ith one to this box.
+        void setOctant(const Box & box, Vector3::Arg center, int i)
+        {
+            minCorner = box.minCorner;
+            maxCorner = box.maxCorner;
 
-private:
+            if (i & 4) minCorner.x = center.x;
+            else       maxCorner.x = center.x;
+            if (i & 2) minCorner.y = center.y;
+            else       maxCorner.y = center.y;
+            if (i & 1) minCorner.z = center.z;
+            else       maxCorner.z = center.z;
+        }
 
-	Vector3 m_mins;
-	Vector3 m_maxs;
-};
+        friend Stream & operator<< (Stream & s, Box & box);
 
+        Vector3 minCorner;
+        Vector3 maxCorner;
+    };
+
+    float distanceSquared(const Box &box, const Vector3 &point);
+    bool overlap(const Box &box, const Sphere &sphere);
 
 
 } // nv namespace

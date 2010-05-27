@@ -1,5 +1,6 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
+#pragma once
 #ifndef NV_MATH_H
 #define NV_MATH_H
 
@@ -28,29 +29,29 @@
 #endif // NVMATH_SHARED
 
 #ifndef PI
-#define PI      			float(3.1415926535897932384626433833)
+#define PI                  float(3.1415926535897932384626433833)
 #endif
 
-#define NV_EPSILON			(0.0001f)
-#define NV_NORMAL_EPSILON	(0.001f)
+#define NV_EPSILON          (0.0001f)
+#define NV_NORMAL_EPSILON   (0.001f)
 
 /*
-#define SQ(r)				((r)*(r))
+#define SQ(r)               ((r)*(r))
 
-#define	SIGN_BITMASK		0x80000000
+#define SIGN_BITMASK        0x80000000
 
 /// Integer representation of a floating-point value.
-#define IR(x)					((uint32 &)(x))
+#define IR(x)               ((uint32 &)(x))
 
 /// Absolute integer representation of a floating-point value
-#define AIR(x)					(IR(x) & 0x7fffffff)
+#define AIR(x)              (IR(x) & 0x7fffffff)
 
 /// Floating-point representation of an integer value.
-#define FR(x)					((float&)(x))
+#define FR(x)               ((float&)(x))
 
 /// Integer-based comparison of a floating point value.
 /// Don't use it blindly, it can be faster or slower than the FPU comparison, depends on the context.
-#define IS_NEGATIVE_FLOAT(x)	(IR(x)&SIGN_BITMASK)
+#define IS_NEGATIVE_FLOAT(x) (IR(x)&SIGN_BITMASK)
 */
 
 inline double sqrt_assert(const double f)
@@ -97,6 +98,7 @@ inline float asinf_assert(const float f)
 #define asin asin_assert
 #define asinf asinf_assert
 
+
 namespace nv
 {
     inline float toRadian(float degree) { return degree * (PI / 180.0f); }
@@ -121,7 +123,7 @@ namespace nv
 #elif NV_OS_LINUX
         return finitef(f);
 #else
-#	error "isFinite not supported"
+#   error "isFinite not supported"
 #endif
         //return std::isfinite (f);
         //return finite (f);
@@ -136,7 +138,7 @@ namespace nv
 #elif NV_OS_LINUX
         return isnanf(f);
 #else
-#	error "isNan not supported"
+#   error "isNan not supported"
 #endif
     }
 
@@ -161,10 +163,11 @@ namespace nv
         return f0 * s + f1 * t;
     }
 
-    inline float square(float f)
-    {
-        return f * f;
-    }
+    inline float square(float f) { return f * f; }
+    inline int square(int i) { return i * i; }
+
+    inline float cube(float f) { return f * f; }
+    inline int cube(int i) { return i * i; }
 
     // @@ Float to int conversions to be optimized at some point. See:
     // http://cbloomrants.blogspot.com/2009/01/01-17-09-float-to-int.html
@@ -186,10 +189,10 @@ namespace nv
         return int(ceilf(f));
     }
 
-    inline float frac(float f)
-    {
-        return f - floor(f);
-    }
+	inline float frac(float f)
+	{
+		return f - floor(f);
+	}
 
 } // nv
 
