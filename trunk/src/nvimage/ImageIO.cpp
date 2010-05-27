@@ -6,12 +6,13 @@
 #include "TgaFile.h"
 #include "PsdFile.h"
 
-#include <nvmath/Color.h>
+#include "nvmath/Color.h"
 
-#include <nvcore/Ptr.h>
-#include <nvcore/Containers.h>
-#include <nvcore/StrLib.h>
-#include <nvcore/StdStream.h>
+#include "nvcore/Ptr.h"
+#include "nvcore/Utils.h"
+#include "nvcore/Array.h"
+#include "nvcore/StrLib.h"
+#include "nvcore/StdStream.h"
 
 // Extern
 #if defined(HAVE_FREEIMAGE)

@@ -23,10 +23,10 @@
 
 #include "BlockDXT.h"
 
-#include <nvimage/ColorBlock.h>
+#include "ColorBlock.h"
 
-#include <nvcore/Stream.h>
-#include <nvcore/Containers.h> // swap
+#include "nvcore/Stream.h"
+#include "nvcore/Utils.h" // swap
 
 
 using namespace nv;

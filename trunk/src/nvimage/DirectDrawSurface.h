@@ -21,6 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#pragma once
 #ifndef NV_IMAGE_DIRECTDRAWSURFACE_H
 #define NV_IMAGE_DIRECTDRAWSURFACE_H
 
@@ -28,134 +29,134 @@
 
 namespace nv
 {
-	class Image;
-	class Stream;
-	struct ColorBlock;
+    class Image;
+    class Stream;
+    struct ColorBlock;
 
-	struct NVIMAGE_CLASS DDSPixelFormat
-	{
-		uint size;
-		uint flags;
-		uint fourcc;
-		uint bitcount;
-		uint rmask;
-		uint gmask;
-		uint bmask;
-		uint amask;
-	};
+    struct NVIMAGE_CLASS DDSPixelFormat
+    {
+        uint size;
+        uint flags;
+        uint fourcc;
+        uint bitcount;
+        uint rmask;
+        uint gmask;
+        uint bmask;
+        uint amask;
+    };
 
-	struct NVIMAGE_CLASS DDSCaps
-	{
-		uint caps1;
-		uint caps2;
-		uint caps3;
-		uint caps4;
-	};
+    struct NVIMAGE_CLASS DDSCaps
+    {
+        uint caps1;
+        uint caps2;
+        uint caps3;
+        uint caps4;
+    };
 
-	/// DDS file header for DX10.
-	struct NVIMAGE_CLASS DDSHeader10
-	{
-	    uint dxgiFormat;
-	    uint resourceDimension;
-	    uint miscFlag;
-	    uint arraySize;
-	    uint reserved;
-	};
+    /// DDS file header for DX10.
+    struct NVIMAGE_CLASS DDSHeader10
+    {
+        uint dxgiFormat;
+        uint resourceDimension;
+        uint miscFlag;
+        uint arraySize;
+        uint reserved;
+    };
 
-	/// DDS file header.
-	struct NVIMAGE_CLASS DDSHeader
-	{
-		uint fourcc;
-		uint size;
-		uint flags;
-		uint height;
-		uint width;
-		uint pitch;
-		uint depth;
-		uint mipmapcount;
-		uint reserved[11];
-		DDSPixelFormat pf;
-		DDSCaps caps;
-		uint notused;
-		DDSHeader10 header10;
-		
-		
-		// Helper methods.
-		DDSHeader();
-		
-		void setWidth(uint w);
-		void setHeight(uint h);
-		void setDepth(uint d);
-		void setMipmapCount(uint count);
-		void setTexture2D();
-		void setTexture3D();
-		void setTextureCube();
-		void setLinearSize(uint size);
-		void setPitch(uint pitch);
-		void setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
-		void setFormatCode(uint code);
-		void setSwizzleCode(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
-		void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
-		void setDX10Format(uint format);
-		void setNormalFlag(bool b);
-		void setHasAlphaFlag(bool b);
-		
-		void swapBytes();
-		
-		bool hasDX10Header() const;
-	};
-
-	NVIMAGE_API Stream & operator<< (Stream & s, DDSHeader & header);
+    /// DDS file header.
+    struct NVIMAGE_CLASS DDSHeader
+    {
+        uint fourcc;
+        uint size;
+        uint flags;
+        uint height;
+        uint width;
+        uint pitch;
+        uint depth;
+        uint mipmapcount;
+        uint reserved[11];
+        DDSPixelFormat pf;
+        DDSCaps caps;
+        uint notused;
+        DDSHeader10 header10;
 
 
-	/// DirectDraw Surface. (DDS)
-	class NVIMAGE_CLASS DirectDrawSurface
-	{
-	public:
-		DirectDrawSurface(const char * file);
-		DirectDrawSurface(Stream * stream);
-		~DirectDrawSurface();
-		
-		bool isValid() const;
-		bool isSupported() const;
+        // Helper methods.
+        DDSHeader();
 
-		bool hasAlpha() const;
-		
-		uint mipmapCount() const;
-		uint width() const;
-		uint height() const;
-		uint depth() const;
-		bool isTexture1D() const;
-		bool isTexture2D() const;
-		bool isTexture3D() const;
-		bool isTextureCube() const;
+        void setWidth(uint w);
+        void setHeight(uint h);
+        void setDepth(uint d);
+        void setMipmapCount(uint count);
+        void setTexture2D();
+        void setTexture3D();
+        void setTextureCube();
+        void setLinearSize(uint size);
+        void setPitch(uint pitch);
+        void setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
+        void setFormatCode(uint code);
+        void setSwizzleCode(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
+        void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+        void setDX10Format(uint format);
+        void setNormalFlag(bool b);
+        void setHasAlphaFlag(bool b);
 
-		void setNormalFlag(bool b);
-		void setHasAlphaFlag(bool b);
-		
-		void mipmap(Image * img, uint f, uint m);
-		//	void mipmap(FloatImage * img, uint f, uint m);
-		
-		void printInfo() const;
+        void swapBytes();
 
-	private:
-		
-		uint blockSize() const;
-		uint faceSize() const;
-		uint mipmapSize(uint m) const;
-		
-		uint offset(uint f, uint m);
-		
-		void readLinearImage(Image * img);
-		void readBlockImage(Image * img);
-		void readBlock(ColorBlock * rgba);
-		
-		
-	private:
-		Stream * const stream;
-		DDSHeader header;
-		DDSHeader10 header10;
-	};
+        bool hasDX10Header() const;
+    };
+
+    NVIMAGE_API Stream & operator<< (Stream & s, DDSHeader & header);
+
+
+    /// DirectDraw Surface. (DDS)
+    class NVIMAGE_CLASS DirectDrawSurface
+    {
+    public:
+        DirectDrawSurface(const char * file);
+        DirectDrawSurface(Stream * stream);
+        ~DirectDrawSurface();
+
+        bool isValid() const;
+        bool isSupported() const;
+
+        bool hasAlpha() const;
+
+        uint mipmapCount() const;
+        uint width() const;
+        uint height() const;
+        uint depth() const;
+        bool isTexture1D() const;
+        bool isTexture2D() const;
+        bool isTexture3D() const;
+        bool isTextureCube() const;
+
+        void setNormalFlag(bool b);
+        void setHasAlphaFlag(bool b);
+
+        void mipmap(Image * img, uint f, uint m);
+        //	void mipmap(FloatImage * img, uint f, uint m);
+
+        void printInfo() const;
+
+    private:
+
+        uint blockSize() const;
+        uint faceSize() const;
+        uint mipmapSize(uint m) const;
+
+        uint offset(uint f, uint m);
+
+        void readLinearImage(Image * img);
+        void readBlockImage(Image * img);
+        void readBlock(ColorBlock * rgba);
+
+
+    private:
+        Stream * const stream;
+        DDSHeader header;
+        DDSHeader10 header10;
+    };
 
 } // nv namespace
 

@@ -65,9 +65,9 @@ static FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, 
 			
 			Vector3 n = normalize(Vector3(du, dv, heightScale));
 			
-			fimage->setPixel(0.5f * n.x() + 0.5f, x, y, 0);
-			fimage->setPixel(0.5f * n.y() + 0.5f, x, y, 1);
-			fimage->setPixel(0.5f * n.z() + 0.5f, x, y, 2);
+			fimage->pixel(x, y, 0) = 0.5f * n.x + 0.5f;
+			fimage->pixel(x, y, 1) = 0.5f * n.y + 0.5f;
+			fimage->pixel(x, y, 2) = 0.5f * n.z + 0.5f;
 		}
 	}
 	
@@ -100,9 +100,9 @@ static FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode
 
 			Vector3 n = normalize(Vector3(du, dv, heightScale));
 
-			img_out->setPixel(n.x(), x, y, 0);
-			img_out->setPixel(n.y(), x, y, 1);
-			img_out->setPixel(n.z(), x, y, 2);
+			img_out->pixel(x, y, 0) = n.x;
+			img_out->pixel(x, y, 1) = n.y;
+			img_out->pixel(x, y, 2) = n.z;
 		}
 	}
 
@@ -111,7 +111,7 @@ static FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode
 	{
 		for (uint x = 0; x < w; x++)
 		{
-			img_out->setPixel(img->pixel(x, y, 3), x, y, 3);
+			img_out->pixel(x, y, 3) = img->pixel(x, y, 3);
 		}
 	}
 
