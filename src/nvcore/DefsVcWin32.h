@@ -1,3 +1,5 @@
+// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
+
 #ifndef NV_CORE_H
 #error "Do not include this file directly."
 #endif
@@ -20,13 +22,15 @@
 // Set standard function names.
 #define snprintf _snprintf
 #if _MSC_VER < 1500
-#	define vsnprintf _vsnprintf
+#   define vsnprintf _vsnprintf
 #endif
 #define vsscanf _vsscanf
 #define chdir _chdir
 #define getcwd _getcwd 
 
-#define va_copy(a, b)	a = b
+#ifndef va_copy
+#define va_copy(a, b) (a) = (b)
+#endif
 
 #if !defined restrict
 #define restrict
@@ -59,20 +63,20 @@ typedef uint32              uint;
 
 // Unwanted VC++ warnings to disable.
 /*
-#pragma warning(disable : 4244)		// conversion to float, possible loss of data
-#pragma warning(disable : 4245)		// conversion from 'enum ' to 'unsigned long', signed/unsigned mismatch
-#pragma warning(disable : 4100)		// unreferenced formal parameter
-#pragma warning(disable : 4514)		// unreferenced inline function has been removed
-#pragma warning(disable : 4710)		// inline function not expanded
-#pragma warning(disable : 4127)		// Conditional expression is constant
-#pragma warning(disable : 4305)		// truncation from 'const double' to 'float'
-#pragma warning(disable : 4505)		// unreferenced local function has been removed
+#pragma warning(disable : 4244)     // conversion to float, possible loss of data
+#pragma warning(disable : 4245)     // conversion from 'enum ' to 'unsigned long', signed/unsigned mismatch
+#pragma warning(disable : 4100)     // unreferenced formal parameter
+#pragma warning(disable : 4514)     // unreferenced inline function has been removed
+#pragma warning(disable : 4710)     // inline function not expanded
+#pragma warning(disable : 4127)     // Conditional expression is constant
+#pragma warning(disable : 4305)     // truncation from 'const double' to 'float'
+#pragma warning(disable : 4505)     // unreferenced local function has been removed
 
-#pragma warning(disable : 4702)		// unreachable code in inline expanded function
-#pragma warning(disable : 4711)		// function selected for automatic inlining
-#pragma warning(disable : 4725)		// Pentium fdiv bug
+#pragma warning(disable : 4702)     // unreachable code in inline expanded function
+#pragma warning(disable : 4711)     // function selected for automatic inlining
+#pragma warning(disable : 4725)     // Pentium fdiv bug
 
-#pragma warning(disable : 4786)		// Identifier was truncated and cannot be debugged.
+#pragma warning(disable : 4786)     // Identifier was truncated and cannot be debugged.
 
-#pragma warning(disable : 4675)		// resolved overload was found by argument-dependent lookup
+#pragma warning(disable : 4675)     // resolved overload was found by argument-dependent lookup
 */
