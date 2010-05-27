@@ -303,10 +303,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvcore\RefCounted.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvcore\StrLib.cpp"
 				>
 			</File>
