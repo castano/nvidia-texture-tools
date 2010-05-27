@@ -506,8 +506,8 @@ FloatImage * FloatImage::fastDownSample() const
 					
 					float f = 0.0f;
 					f += v0 * (w0 * src[0 * m_width + 2 * x] + w1 * src[0 * m_width + 2 * x + 1] + w2 * src[0 * m_width + 2 * x + 2]);
-					f += v1 * (w0 * src[1 * m_width + 2 * x] + w1 * src[1 * m_width + 2 * x + 1] + w2 * src[0 * m_width + 2 * x + 2]);
-					f += v2 * (w0 * src[2 * m_width + 2 * x] + w1 * src[2 * m_width + 2 * x + 1] + w2 * src[0 * m_width + 2 * x + 2]);
+					f += v1 * (w0 * src[1 * m_width + 2 * x] + w1 * src[1 * m_width + 2 * x + 1] + w2 * src[1 * m_width + 2 * x + 2]);
+					f += v2 * (w0 * src[2 * m_width + 2 * x] + w1 * src[2 * m_width + 2 * x + 1] + w2 * src[2 * m_width + 2 * x + 2]);
 					
 					*dst = f * scale;
 					dst++;
