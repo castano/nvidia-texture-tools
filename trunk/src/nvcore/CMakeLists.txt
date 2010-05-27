@@ -2,8 +2,8 @@ PROJECT(nvcore)
 
 SET(CORE_SRCS
     nvcore.h
-    Algorithms.h
-    Containers.h
+    Utils.h
+    Array.h HashMap.h
     Debug.h Debug.cpp
     DefsGnucDarwin.h
     DefsGnucLinux.h
@@ -13,7 +13,7 @@ SET(CORE_SRCS
     Library.h Library.cpp
     Memory.h Memory.cpp
     Ptr.h
-    RefCounted.h RefCounted.cpp
+    RefCounted.h
     StrLib.h StrLib.cpp
     Stream.h
     StdStream.h
@@ -27,7 +27,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 ADD_DEFINITIONS(-DNVCORE_EXPORTS)
 
 IF(UNIX)
-    SET(LIBS ${LIBS} ${CMAKE_DL_LIBS})
+	SET(LIBS ${LIBS} ${CMAKE_DL_LIBS})
 ENDIF(UNIX)
 
 IF(NVCORE_SHARED)

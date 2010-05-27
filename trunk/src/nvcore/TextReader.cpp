@@ -1,4 +1,4 @@
-// This code is in the public domain -- castano@gmail.com
+// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "TextReader.h"
 

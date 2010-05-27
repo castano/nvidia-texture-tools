@@ -1,13 +1,13 @@
 // This code is in the public domain -- castano@gmail.com
 
 #include "FileSystem.h"
-#include <nvcore/nvcore.h>
 
 #if NV_OS_WIN32
 #define _CRT_NONSTDC_NO_WARNINGS // _chdir is defined deprecated, but that's a bug, chdir is deprecated, _chdir is *not*.
 //#include <shlwapi.h> // PathFileExists
 #include <windows.h> // GetFileAttributes
 #include <direct.h> // _mkdir
+#include <stdio.h> // remove, unlink
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -26,7 +26,7 @@ bool FileSystem::exists(const char * path)
 #elif NV_OS_WIN32
     // PathFileExists requires linking to shlwapi.lib
     //return PathFileExists(path) != 0;
-    return GetFileAttributes(path) != 0xFFFFFFFF;
+    return GetFileAttributesA(path) != 0xFFFFFFFF;
 #else
 	if (FILE * fp = fopen(path, "r"))
 	{
@@ -53,4 +53,10 @@ bool FileSystem::changeDirectory(const char * path)
 #else
     return chdir(path) != -1;
 #endif
+}
+
+bool FileSystem::removeFile(const char * path)
+{
+    // @@ Use unlink or remove?
+    return remove(path) == 0;
 }

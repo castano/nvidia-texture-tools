@@ -1,5 +1,6 @@
 // This code is in the public domain -- castano@gmail.com
 
+#pragma once
 #ifndef NV_CORE_FILESYSTEM_H
 #define NV_CORE_FILESYSTEM_H
 
@@ -8,14 +9,14 @@
 namespace nv
 {
 
-	namespace FileSystem
-	{
+    namespace FileSystem
+    {
+        NVCORE_API bool exists(const char * path);
+        NVCORE_API bool createDirectory(const char * path);
+        NVCORE_API bool changeDirectory(const char * path);
+        NVCORE_API bool removeFile(const char * path);
 
-		NVCORE_API bool exists(const char * path);
-		NVCORE_API bool createDirectory(const char * path);
-		NVCORE_API bool changeDirectory(const char * path);
-
-	} // FileSystem namespace
+    } // FileSystem namespace
 
 } // nv namespace
 
