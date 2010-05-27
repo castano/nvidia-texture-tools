@@ -194,10 +194,16 @@ void FloatImage::scaleBias(uint base_component, uint num, float scale, float bia
 }
 
 /// Clamp the elements of the image.
-void FloatImage::clamp(float low, float high)
+void FloatImage::clamp(uint base_component, uint num, float low, float high)
 {
-	for(uint i = 0; i < m_count; i++) {
-		m_mem[i] = nv::clamp(m_mem[i], low, high);
+	const uint size = m_width * m_height;
+	
+	for(uint c = 0; c < num; c++) {
+		float * ptr = this->channel(base_component + c);
+		
+		for(uint i = 0; i < size; i++) {
+            ptr[i] = nv::clamp(ptr[i], low, high);
+		}
 	}
 }
 
@@ -944,6 +950,54 @@ void FloatImage::flip()
         }
     }
 }
+
+
+float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel) const
+{
+    const uint w = m_width;
+    const uint h = m_height;
+
+    float coverage = 0.0f;
+
+    for (uint y = 0; y < h; y++) {
+        const float * alpha = scanline(y, alphaChannel);
+        for (uint x = 0; x < w; x++) {
+            if (alpha[x] > alphaRef) coverage += 1.0f; // @@ gt or lt?
+        }
+    }
+
+    return coverage / float(w * h);
+}
+
+void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int alphaChannel)
+{
+    float minAlphaRef = 0.0f;
+    float maxAlphaRef = 1.0f;
+    float midAlphaRef = 0.5f;
+
+    // Determine desired scale using a binary search. Hardcoded to 8 steps max.
+    for (int i = 0; i < 8; i++) {
+        float currentCoverage = alphaTestCoverage(midAlphaRef, alphaChannel);
+
+        if (currentCoverage > desiredCoverage) {
+            maxAlphaRef = midAlphaRef;
+        }
+        else if (currentCoverage < desiredCoverage) {
+            minAlphaRef = midAlphaRef;
+        }
+        else {
+            break;
+        }
+
+        midAlphaRef = (minAlphaRef + maxAlphaRef) * 0.5f;
+    }
+
+    float alphaScale = alphaRef / midAlphaRef;
+
+    // Scale alpha channel.
+    scaleBias(alphaChannel, 1, alphaScale, 0.0f);
+}
+
 
 FloatImage* FloatImage::clone() const
 {

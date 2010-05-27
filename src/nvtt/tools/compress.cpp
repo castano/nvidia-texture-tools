@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		if (nv::strCaseCmp(input.extension(), ".exr") == 0)
+		if (nv::strCaseCmp(input.extension(), ".exr") == 0 || nv::strCaseCmp(input.extension(), ".hdr") == 0)
 		{
 			loadAsFloat = true;
 		}

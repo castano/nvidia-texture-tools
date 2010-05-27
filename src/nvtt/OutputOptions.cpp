@@ -112,7 +112,7 @@ void OutputOptions::Private::beginImage(int size, int width, int height, int dep
 
 bool OutputOptions::Private::writeData(const void * data, int size) const
 {
-	if (outputHandler != NULL) return outputHandler->writeData(data, size);
+	return outputHandler == NULL || outputHandler->writeData(data, size);
 }
 
 void OutputOptions::Private::error(Error e) const

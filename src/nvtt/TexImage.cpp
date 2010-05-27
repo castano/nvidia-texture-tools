@@ -244,6 +244,29 @@ int TexImage::countMipmaps() const
 	return ::countMipmaps(width(), height(), depth());
 }
 
+float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
+{
+    int imageCount = 0.0f;
+    float coverage = 0.0f;
+
+	foreach (i, m->imageArray)
+	{
+        FloatImage * img = m->imageArray[i];
+
+		if (img == NULL) continue;
+
+        imageCount++;
+        coverage += img->alphaTestCoverage(alphaRef, 3);
+	}
+
+    if (imageCount > 0) {
+        return coverage / imageCount;
+    }
+    else {
+        return 0.0f;
+    }
+}
+
 
 bool TexImage::load(const char * fileName)
 {
@@ -936,6 +959,21 @@ void TexImage::fill(float red, float green, float blue, float alpha)
 		}
 	}
 }
+
+
+void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
+{
+    detach();
+
+	foreach (i, m->imageArray)
+	{
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
+
+        img->scaleAlphaToCoverage(coverage, alphaRef, 3);
+    }
+}
+
 
 // Set normal map options.
 void TexImage::toNormalMap(float sm, float medium, float big, float large)
