@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 	uint w = dds.width();
 	uint h = dds.height();
 
-	// @@ Clamp window size is texture larger than desktop?
+	// @@ Clamp window size if texture larger than desktop?
 
 
 	glutInit(&argc, argv);

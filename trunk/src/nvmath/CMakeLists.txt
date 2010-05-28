@@ -5,7 +5,7 @@ SET(MATH_SRCS
     Vector.h
     Matrix.h
     Plane.h Plane.cpp
-    Box.h Box.cpp
+    Box.h 
     Color.h
     Half.h Half.cpp
     Fitting.h Fitting.cpp)

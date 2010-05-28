@@ -21,7 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/Containers.h> // swap
+#include <nvcore/Utils.h> // swap
 
 #include <nvmath/Color.h>
 #include <nvmath/Fitting.h>
@@ -86,23 +86,23 @@ inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * res
 	for (uint i = 0; i < num; i++)
 	{
 		Vector3 t = block[i] - center;
-		covariance += t.xy() * t.z();
+		covariance += t.xy() * t.z;
 	}
 
-	float x0 = maxColor->x();
-	float y0 = maxColor->y();
-	float x1 = minColor->x();
-	float y1 = minColor->y();
+	float x0 = maxColor->x;
+	float y0 = maxColor->y;
+	float x1 = minColor->x;
+	float y1 = minColor->y;
 	
-	if (covariance.x() < 0) {
+	if (covariance.x < 0) {
 		swap(x0, x1);
 	}
-	if (covariance.y() < 0) {
+	if (covariance.y < 0) {
 		swap(y0, y1);
 	}
 	
-	maxColor->set(x0, y0, maxColor->z());
-	minColor->set(x1, y1, minColor->z());
+	maxColor->set(x0, y0, maxColor->z);
+	minColor->set(x1, y1, minColor->z);
 }
 
 inline static void insetBBox(Vector3 * restrict maxColor, Vector3 * restrict minColor)
@@ -114,9 +114,9 @@ inline static void insetBBox(Vector3 * restrict maxColor, Vector3 * restrict min
 
 inline static uint16 roundAndExpand(Vector3 * restrict v)
 {
-	uint r = uint(clamp(v->x() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
-	uint g = uint(clamp(v->y() * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f);
-	uint b = uint(clamp(v->z() * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
+	uint r = uint(clamp(v->x * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
+	uint g = uint(clamp(v->y * (63.0f / 255.0f), 0.0f, 63.0f) + 0.5f);
+	uint b = uint(clamp(v->z * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
 	
 	uint16 w = (r << 11) | (g << 5) | b;
 

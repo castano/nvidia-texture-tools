@@ -5,13 +5,12 @@
 
 #include "nvcore.h"
 #include "Debug.h"
+#include "RefCounted.h" // WeakProxy
 
 
 
 namespace nv
 {
-    class WeakProxy;
-
     /** Simple auto pointer template class.
     *
     * This is very similar to the standard auto_ptr class, but with some 
@@ -274,10 +273,10 @@ namespace nv
 
         void operator=(T * p)
         {
-            if (p) {
+            if (p != NULL) {
                 m_proxy = p->getWeakProxy();
-                assert(m_proxy != NULL);
-                assert(m_proxy->ptr() == p);
+                nvDebugCheck(m_proxy != NULL);
+                nvDebugCheck(m_proxy->ptr() == p);
             }
             else {
                 m_proxy = NULL;
@@ -298,7 +297,7 @@ namespace nv
         T * operator->() const
         {
             T * p = ptr();
-            assert(p != NULL);
+            nvDebugCheck(p != NULL);
             return p;
         }
 

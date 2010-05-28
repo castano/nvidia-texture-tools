@@ -132,7 +132,8 @@
 #define NV_STRING2(x) #x
 #define NV_STRING(x) NV_STRING2(x)
 #if NV_CC_GNUC
-#define NV_FILE_LINE __FILE__ ":" NV_STRING(__LINE__) ": "
+//#define NV_FILE_LINE __FILE__ ":" NV_STRING(__LINE__) ": "
+#define NV_FILE_LINE
 #else
 #define NV_FILE_LINE __FILE__ "(" NV_STRING(__LINE__) ") : "
 #endif
@@ -152,6 +153,9 @@
 
 /// Null index. @@ Move this somewhere else... This could have collisions with other definitions!
 #define NIL uint(~0)
+
+// @@ Move this to DefsGnuc?
+#include <cstddef> // size_t, NULL
 
 /// Null pointer.
 #ifndef NULL

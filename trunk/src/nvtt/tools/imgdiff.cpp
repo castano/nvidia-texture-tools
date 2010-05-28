@@ -23,7 +23,6 @@
 
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
-#include <nvcore/Containers.h>
 
 #include <nvimage/Image.h>
 #include <nvimage/DirectDrawSurface.h>
@@ -123,7 +122,7 @@ struct NormalError
 		vc = nv::normalize(2.0f * (vc / 255.0f) - 1.0f);
 
 		ade += acosf(nv::clamp(dot(vo, vc), -1.0f, 1.0f));
-		mse += length_squared((vo - vc) * (255 / 2.0f));
+		mse += lengthSquared((vo - vc) * (255 / 2.0f));
 		
 		samples++;
 	}

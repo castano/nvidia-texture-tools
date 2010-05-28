@@ -501,10 +501,10 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 
 						if (x * 4 + xx < w && y * 4 + yy < h)
 						{
-							img->setPixel(float(c.r) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 0);
-							img->setPixel(float(c.g) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 1);
-							img->setPixel(float(c.b) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 2);
-							img->setPixel(float(c.a) * 1.0f/255.0f, x*4 + xx, y*4 + yy, 3);
+							img->pixel(x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
+							img->pixel(x*4 + xx, y*4 + yy, 1) = float(c.g) * 1.0f/255.0f;
+							img->pixel(x*4 + xx, y*4 + yy, 2) = float(c.b) * 1.0f/255.0f;
+							img->pixel(x*4 + xx, y*4 + yy, 3) = float(c.a) * 1.0f/255.0f;
 						}
 					}
 				}
@@ -908,28 +908,28 @@ void TexImage::setBorder(float r, float g, float b, float a)
 
 		for (int i = 0; i < w; i++)
 		{
-			img->setPixel(r, i, 0, 0);
-			img->setPixel(g, i, 0, 1);
-			img->setPixel(b, i, 0, 2);
-			img->setPixel(a, i, 0, 3);
+			img->pixel(i, 0, 0) = r;
+			img->pixel(i, 0, 1) = g;
+			img->pixel(i, 0, 2) = b;
+			img->pixel(i, 0, 3) = a;
 
-			img->setPixel(r, i, h-1, 0);
-			img->setPixel(g, i, h-1, 1);
-			img->setPixel(b, i, h-1, 2);
-			img->setPixel(a, i, h-1, 3);
+			img->pixel(i, h-1, 0) = r;
+			img->pixel(i, h-1, 1) = g;
+			img->pixel(i, h-1, 2) = b;
+			img->pixel(i, h-1, 3) = a;
 		}
 
 		for (int i = 0; i < h; i++)
 		{
-			img->setPixel(r, 0, i, 0);
-			img->setPixel(g, 0, i, 1);
-			img->setPixel(b, 0, i, 2);
-			img->setPixel(a, 0, i, 3);
+			img->pixel(0, i, 0) = r;
+			img->pixel(0, i, 1) = g;
+			img->pixel(0, i, 2) = b;
+			img->pixel(0, i, 3) = a;
 
-			img->setPixel(r, w-1, i, 0);
-			img->setPixel(g, w-1, i, 1);
-			img->setPixel(b, w-1, i, 2);
-			img->setPixel(a, w-1, i, 3);
+			img->pixel(w-1, i, 0) = r;
+			img->pixel(w-1, i, 1) = g;
+			img->pixel(w-1, i, 2) = b;
+			img->pixel(w-1, i, 3) = a;
 		}
 	}
 }
