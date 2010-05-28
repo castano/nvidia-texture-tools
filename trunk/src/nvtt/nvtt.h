@@ -456,6 +456,7 @@ namespace nvtt
 	private:
 		void detach();
 
+        friend struct Compressor;
 		struct Private;
 		Private * m;
 	};

@@ -168,7 +168,8 @@ int main(int argc, char *argv[])
 
 	nv::FloatImage fimage(&image);
 	fimage.toLinear(0, 3, gamma);
-	
+
+#if 0
 	nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(*filter, uint(image.width() * scale), uint(image.height() * scale), wrapMode));
 	
 	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
@@ -176,7 +177,7 @@ int main(int argc, char *argv[])
 
 	nv::StdOutputStream stream(output);
 	nv::ImageIO::save(output, stream, result.ptr());
-	
+#endif	
 	return 0;
 }
 

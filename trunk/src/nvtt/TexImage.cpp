@@ -246,7 +246,7 @@ int TexImage::countMipmaps() const
 
 float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
 {
-    int imageCount = 0.0f;
+    int imageCount = 0;
     float coverage = 0.0f;
 
 	foreach (i, m->imageArray)
