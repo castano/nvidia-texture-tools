@@ -26,7 +26,7 @@
 
 #include "nvtt.h"
 
-#include <nvcore/Containers.h>
+#include <nvcore/Array.h>
 #include <nvcore/RefCounted.h>
 #include <nvcore/Ptr.h>
 

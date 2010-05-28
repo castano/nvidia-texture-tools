@@ -21,8 +21,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include "CudaCompressorDXT.h"
+#include "CudaUtils.h"
+
 #include <nvcore/Debug.h>
-#include <nvcore/Containers.h>
+#include <nvcore/Utils.h>
 #include <nvmath/Color.h>
 #include <nvimage/Image.h>
 #include <nvimage/ColorBlock.h>
@@ -31,10 +34,6 @@
 #include <nvtt/OutputOptions.h>
 #include <nvtt/QuickCompressDXT.h>
 #include <nvtt/OptimalCompressDXT.h>
-
-#include "CudaCompressorDXT.h"
-#include "CudaUtils.h"
-
 
 #if defined HAVE_CUDA
 #include <cuda_runtime_api.h>

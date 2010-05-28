@@ -213,7 +213,7 @@ void FastCompressorBC5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMo
 void NormalCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
 	nvsquish::WeightedClusterFit fit;
-	fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+	fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
 	if (rgba.isSingleColor())
 	{
@@ -250,7 +250,7 @@ void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
 	else
 	{
 		nvsquish::WeightedClusterFit fit;
-		fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+		fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
 		int flags = nvsquish::kDxt1;
 		if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
@@ -278,7 +278,7 @@ void NormalCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 	else
 	{
 		nvsquish::WeightedClusterFit fit;
-		fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+		fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
 		int flags = 0;
 		if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
@@ -312,7 +312,7 @@ void NormalCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 	else
 	{
 		nvsquish::WeightedClusterFit fit;
-		fit.SetMetric(compressionOptions.colorWeight.x(), compressionOptions.colorWeight.y(), compressionOptions.colorWeight.z());
+		fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
 		int flags = 0;
 		if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;

@@ -7,12 +7,12 @@
 //#include <shlwapi.h> // PathFileExists
 #include <windows.h> // GetFileAttributes
 #include <direct.h> // _mkdir
-#include <stdio.h> // remove, unlink
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #endif
+#include <stdio.h> // remove, unlink
 
 using namespace nv;
 
