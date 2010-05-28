@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
 
 			for (uint i = 0; i < image->componentNum(); i++)
 			{
-				inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
+                inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
 			}
 		}
 		else

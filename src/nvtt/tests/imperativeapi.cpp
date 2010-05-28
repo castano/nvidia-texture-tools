@@ -23,11 +23,13 @@
 
 #include <nvtt/nvtt.h>
 
-#include <stdlib.h>
+#include <stdlib.h> // EXIT_SUCCESS, EXIT_FAILURE
 
 
 int main(int argc, char *argv[])
 {
+    if (argc != 2) return EXIT_FAILURE;
+
 	nvtt::CompressionOptions compressionOptions;
 	compressionOptions.setFormat(nvtt::Format_BC1);
 
@@ -37,20 +39,23 @@ int main(int argc, char *argv[])
 	nvtt::Context context;
 	nvtt::TexImage image = context.createTexImage();
 
-	image.load("kodim01.png");
+	image.load(argv[1]);
 
 	context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);
 
-	float gamma = 2.2;
+	float gamma = 2.2f;
 	image.toLinear(gamma);
+
+    float coverage = image.alphaTestCoverage();
 
 	while (image.buildNextMipmap(nvtt::MipmapFilter_Box))
 	{
 		nvtt::TexImage tmpImage = image;
 		tmpImage.toGamma(gamma);
 
+        tmpImage.scaleAlphaToCoverage(coverage);
+
 		context.compress(tmpImage, compressionOptions, outputOptions);
-	//	tmpImage.compress(compressionOptions, outputOptions);
 	}
 
 	return EXIT_SUCCESS;

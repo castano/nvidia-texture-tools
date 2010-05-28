@@ -26,53 +26,55 @@
 
 #include "nvtt.h"
 
-#include <nvcore/Array.h>
-#include <nvcore/RefCounted.h>
-#include <nvcore/Ptr.h>
+#include "nvcore/Array.h"
+#include "nvcore/RefCounted.h"
+#include "nvcore/Ptr.h"
 
-#include <nvimage/Image.h>
-#include <nvimage/FloatImage.h>
+#include "nvimage/Image.h"
+#include "nvimage/FloatImage.h"
 
 namespace nvtt
 {
 
-	struct TexImage::Private : public nv::RefCounted
-	{
-		Private()
-		{
-			type = TextureType_2D;
-			wrapMode = WrapMode_Mirror;
-			alphaMode = AlphaMode_None;
-			isNormalMap = false;
+    struct TexImage::Private : public nv::RefCounted
+    {
+        void operator=(const Private &);
+    public:
+        Private()
+        {
+            type = TextureType_2D;
+            wrapMode = WrapMode_Mirror;
+            alphaMode = AlphaMode_None;
+            isNormalMap = false;
 
-			imageArray.resize(1, NULL);
-		}
-		Private(const Private & p) // Copy ctor. inits refcount to 0.
-		{
-			type = p.type;
-			wrapMode = p.wrapMode;
-			alphaMode = p.alphaMode;
-			isNormalMap = p.isNormalMap;
+            imageArray.resize(1, NULL);
+        }
+        Private(const Private & p) // Copy ctor. inits refcount to 0.
+        {
+            type = p.type;
+            wrapMode = p.wrapMode;
+            alphaMode = p.alphaMode;
+            isNormalMap = p.isNormalMap;
 
-			imageArray = p.imageArray;
-		}
-		~Private()
-		{
-			const uint count = imageArray.count();
-			for (uint i = 0; i < count; i++) {
-				delete imageArray[i];
-			}
-		}
+            imageArray = p.imageArray;
+        }
+        ~Private()
+        {
+            const uint count = imageArray.count();
+            for (uint i = 0; i < count; i++) {
+                delete imageArray[i];
+            }
+        }
 
-		TextureType type;
-		WrapMode wrapMode;
-		AlphaMode alphaMode;
-		bool isNormalMap;
+        TextureType type;
+        WrapMode wrapMode;
+        AlphaMode alphaMode;
+        bool isNormalMap;
 
-		nv::Array<nv::FloatImage *> imageArray;
-	};
+        nv::Array<nv::FloatImage *> imageArray;
+    };
 
-	
+
 } // nvtt namespace
 
 

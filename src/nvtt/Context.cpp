@@ -42,6 +42,7 @@
 #include "InputOptions.h"
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
+#include "TexImage.h"
 
 #include "CompressorDXT.h"
 #include "CompressorRGB.h"
@@ -334,10 +335,16 @@ bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const Compr
 
 bool Compressor::compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-#pragma message(NV_FILE_LINE "TODO: Implement TexImage compress api")
+    // @@ Decide whether to change the swizzling of FloatImage.
 
-	// @@ Convert to fixed point and call compress2D for each face.
-	return false;
+    foreach(i, tex.m->imageArray) {
+        FloatImage * image = tex.m->imageArray[i];
+        if (!m.compress2D(InputFormat_RGBA_32F, tex.m->alphaMode, image->width(), image->height(), image->channel(0), compressionOptions.m, outputOptions.m)) {
+            return false;
+        }
+    }
+
+	return true;
 }
 
 /// Estimate the size of compressing the given texture.

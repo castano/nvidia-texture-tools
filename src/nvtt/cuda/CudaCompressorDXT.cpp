@@ -25,7 +25,6 @@
 #include "CudaUtils.h"
 
 #include <nvcore/Debug.h>
-#include <nvcore/Utils.h>
 #include <nvmath/Color.h>
 #include <nvimage/Image.h>
 #include <nvimage/ColorBlock.h>
@@ -34,6 +33,7 @@
 #include <nvtt/OutputOptions.h>
 #include <nvtt/QuickCompressDXT.h>
 #include <nvtt/OptimalCompressDXT.h>
+
 
 #if defined HAVE_CUDA
 #include <cuda_runtime_api.h>
