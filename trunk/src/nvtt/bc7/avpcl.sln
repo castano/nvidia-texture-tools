@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "avpcl", "avpcl.vcproj", "{C6F6CD96-D0C0-4A35-B1BC-53E0A3CB712F}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{C6F6CD96-D0C0-4A35-B1BC-53E0A3CB712F}.Debug.ActiveCfg = Debug|Win32
+		{C6F6CD96-D0C0-4A35-B1BC-53E0A3CB712F}.Debug.Build.0 = Debug|Win32
+		{C6F6CD96-D0C0-4A35-B1BC-53E0A3CB712F}.Release.ActiveCfg = Release|Win32
+		{C6F6CD96-D0C0-4A35-B1BC-53E0A3CB712F}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
