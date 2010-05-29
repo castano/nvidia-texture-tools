@@ -28,7 +28,11 @@
 #include <nvimage/DirectDrawSurface.h>
 
 #include <GL/glew.h>
+#if NV_OS_DARWIN
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif
 
 #include "cmdline.h"
 
