@@ -134,23 +134,45 @@ namespace Nvidia.TextureTools
 	/// </summary>
 	public enum Error
 	{
+        Unknown,
 		InvalidInput,
-		UserInterruption,
-		UnsupportedFeature,
+		
+        UnsupportedFeature,
 		CudaError,
-		Unknown,
-		FileOpen,
+		
+        FileOpen,
 		FileWrite,
 	}
 	#endregion
 
-	#endregion
 
-	#region public class InputOptions
-	/// <summary>
+    #endregion
+    
+    #region Exception Class
+
+    public class TextureToolsException : ApplicationException
+    {
+        Error errorCode = Error.Unknown;
+
+        public Error ErrorCode
+        {
+            get { return errorCode; }
+        }
+
+        public TextureToolsException(Error errorCode) : base(Compressor.ErrorString(errorCode))
+        {
+            this.errorCode = errorCode;
+        }
+    }
+
+    #endregion
+
+
+    #region public class InputOptions
+    /// <summary>
 	/// Input options.
 	/// </summary>
-	public class InputOptions
+	public class InputOptions : IDisposable
 	{
 		#region Bindings
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
@@ -223,10 +245,7 @@ namespace Nvidia.TextureTools
 		{
 			options = nvttCreateInputOptions();
 		}
-		~InputOptions()
-		{
-			nvttDestroyInputOptions(options);
-		}
+
 
 		public void SetTextureLayout(TextureType type, int w, int h, int d)
 		{
@@ -236,6 +255,22 @@ namespace Nvidia.TextureTools
 		{
 			nvttResetInputOptionsTextureLayout(options);
 		}
+
+        public void SetMipmapData(byte[] data, int width, int height, int depth, int face, int mipmap)
+        {
+            //unsafe() would be cleaner, but that would require compiling with the unsafe compiler option....
+            GCHandle gcHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+
+            try
+            {
+                SetMipmapData(gcHandle.AddrOfPinnedObject(), width, height, depth, face, mipmap);
+            }
+            finally
+            {
+                gcHandle.Free();
+            }
+
+        }
 
 		public void SetMipmapData(IntPtr data, int width, int height, int depth, int face, int mipmap)
 		{
@@ -326,14 +361,39 @@ namespace Nvidia.TextureTools
 		{
 			nvttSetInputOptionsRoundMode(options, mode);
 		}
-	}
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (options != IntPtr.Zero)
+            {
+                nvttDestroyInputOptions(options);
+                options = IntPtr.Zero;
+            }
+        }
+
+        ~InputOptions()
+        {
+            Dispose(false);
+        }
+
+        #endregion
+    }
 	#endregion
 
 	#region public class CompressionOptions
 	/// <summary>
 	/// Compression options.
 	/// </summary>
-	public class CompressionOptions
+	public class CompressionOptions : IDisposable
 	{
 		#region Bindings
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
@@ -356,6 +416,7 @@ namespace Nvidia.TextureTools
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsQuantization(IntPtr compressionOptions, bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold);
+
 		#endregion
 
 		internal IntPtr options;
@@ -363,10 +424,6 @@ namespace Nvidia.TextureTools
 		public CompressionOptions()
 		{
 			options = nvttCreateCompressionOptions();
-		}
-		~CompressionOptions()
-		{
-			nvttDestroyCompressionOptions(options);
 		}
 
 		public void SetFormat(Format format)
@@ -403,23 +460,104 @@ namespace Nvidia.TextureTools
 		{
 			nvttSetCompressionOptionsQuantization(options, colorDithering, alphaDithering, binaryAlpha, alphaThreshold);
 		}
-	}
+
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (options != IntPtr.Zero)
+            {
+                nvttDestroyCompressionOptions(options);
+                options = IntPtr.Zero;
+            }
+        }
+
+        ~CompressionOptions()
+        {
+            Dispose(false);
+        }
+
+        #endregion
+    }
 	#endregion
 
 	#region public class OutputOptions
+
+    public interface IOutputHandler    
+    {
+        void BeginImage(int size, int width, int height, int depth, int face, int miplevel);
+        void WriteDataUnsafe(IntPtr data, int size);
+    }
+
+    /* 
+     * This class provides a nicer interface for the output handler by taking care of the marshalling of the image data.
+     * However the IOutputHandler interface is still provided to allow the user to do this themselves to avoid the
+     * additional copying and memory allocations.
+     */
+    public abstract class OutputHandlerBase : IOutputHandler
+    {
+        private byte[] tempData;
+
+        protected OutputHandlerBase()
+        {
+        }
+
+        protected abstract void BeginImage(int size, int width, int height, int depth, int face, int miplevel);
+        protected abstract void WriteData(byte[] dataBuffer, int startIndex, int count);
+
+        #region IOutputHandler Members
+
+        void IOutputHandler.BeginImage(int size, int width, int height, int depth, int face, int miplevel)
+        {
+            BeginImage(size, width, height, depth, face, miplevel);
+        }
+
+        void IOutputHandler.WriteDataUnsafe(IntPtr data, int size)
+        {
+            if ((tempData == null) || (size > tempData.Length))
+                tempData = new byte[size];
+
+            Marshal.Copy(data, tempData, 0, size);
+
+            // Zero additional buffer elements to to aid reproducability of bugs.
+            Array.Clear(tempData, size, tempData.Length - size);
+
+            WriteData(tempData, 0, size);
+        }
+
+        #endregion
+    }
+
 	/// <summary>
 	/// Output options.
 	/// </summary>
-	public class OutputOptions
+	public class OutputOptions : IDisposable
 	{
-		#region Delegates
-		public delegate void ErrorHandler(Error error);
-		private delegate void WriteDataDelegate(IntPtr data, int size);
-		private delegate void ImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
+        #region Delegates
+
+        private delegate void InternalErrorHandlerDelegate(Error error);
+        private delegate void WriteDataDelegate(IntPtr data, int size);
+        private delegate void ImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
+
 		#endregion
 
-		#region Bindings
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        private Error lastErrorCode = Error.Unknown;
+
+        internal Error LastErrorCode
+        {
+            get { return lastErrorCode; }
+        }
+
+        #region Bindings
+        [DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static IntPtr nvttCreateOutputOptions();
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
@@ -429,51 +567,121 @@ namespace Nvidia.TextureTools
 		private extern static void nvttSetOutputOptionsFileName(IntPtr outputOptions, string fileName);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static void nvttSetOutputOptionsErrorHandler(IntPtr outputOptions, ErrorHandler errorHandler);
-
-		private void ErrorCallback(Error error)
-		{
-			if (Error != null) Error(error);
-		}
+		private extern static void nvttSetOutputOptionsErrorHandler(IntPtr outputOptions, InternalErrorHandlerDelegate errorHandler);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsOutputHeader(IntPtr outputOptions, bool b);
 
-		//[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		//private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, WriteDataDelegate writeData, ImageDelegate image);
+		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, IntPtr writeData, IntPtr image);
 
 		#endregion
 
 		internal IntPtr options;
+        
+        //Note: these references are used to prevent garbage collection of the delegates(and hence class) if they are
+        //only referenced from unmanaged land.
+        private WriteDataDelegate writeDataDelegate;
+        private ImageDelegate beginImageDelegate;
+
+        private IOutputHandler currentOutputHandler;
 
 		public OutputOptions()
 		{
 			options = nvttCreateOutputOptions();
-			nvttSetOutputOptionsErrorHandler(options, new ErrorHandler(ErrorCallback));
+			nvttSetOutputOptionsErrorHandler(options, ErrorCallback);
 		}
-		~OutputOptions()
-		{
-			nvttDestroyOutputOptions(options);
-		}
+
 
 		public void SetFileName(string fileName)
 		{
 			nvttSetOutputOptionsFileName(options, fileName);
 		}
-
-		public event ErrorHandler Error;
-
+        
 		public void SetOutputHeader(bool b)
 		{
 			nvttSetOutputOptionsOutputHeader(options, b);
 		}
 
-		// @@ Add OutputHandler interface.
-	}
+        public void SetOutputHandler(IOutputHandler outputHandler)
+        {
+            if (outputHandler != null)
+            {
+                //We need to store a ref in order to prevent garbage collection.
+                WriteDataDelegate tmpWriteDataDelegate = new WriteDataDelegate(WriteDataCallback);
+                ImageDelegate tmpBeginImageDelegate = new ImageDelegate(ImageCallback);
+
+                IntPtr ptrWriteData = Marshal.GetFunctionPointerForDelegate(tmpWriteDataDelegate);
+                IntPtr ptrBeginImage = Marshal.GetFunctionPointerForDelegate(tmpBeginImageDelegate);
+
+
+                nvttSetOutputOptionsOutputHandler(options, ptrWriteData, ptrBeginImage);
+
+                writeDataDelegate = tmpWriteDataDelegate;
+                beginImageDelegate = tmpBeginImageDelegate;
+
+                currentOutputHandler = outputHandler;
+            }
+            else
+            {
+                nvttSetOutputOptionsOutputHandler(options, IntPtr.Zero, IntPtr.Zero);
+
+                writeDataDelegate = null;
+                beginImageDelegate = null;
+
+                currentOutputHandler = null;
+            }
+        }
+
+        private void ErrorCallback(Error error)
+        {
+            lastErrorCode = error;
+        }
+
+        private void WriteDataCallback(IntPtr data, int size)
+        {
+            if (currentOutputHandler != null) currentOutputHandler.WriteDataUnsafe(data, size);
+        }
+
+        private void ImageCallback(int size, int width, int height, int depth, int face, int miplevel)
+        {
+            if (currentOutputHandler != null) currentOutputHandler.BeginImage(size, width, height, depth, face, miplevel);
+        }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (options != IntPtr.Zero)
+            {
+                nvttDestroyOutputOptions(options);
+
+                options = IntPtr.Zero;
+            }
+
+            writeDataDelegate = null;
+            beginImageDelegate = null;
+            currentOutputHandler = null;
+        }
+
+        ~OutputOptions()
+        {
+            Dispose(false);
+        }
+
+        #endregion
+    }
 	#endregion
 
-	#region public static class Compressor
-	public class Compressor
+	#region public class Compressor
+	public class Compressor : IDisposable
 	{
 		#region Bindings
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
@@ -490,6 +698,12 @@ namespace Nvidia.TextureTools
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private static extern IntPtr nvttErrorString(Error error);
+        
+        [DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        private extern static uint nvttVersion();
+
+        [DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        private extern static void nvttEnableCudaCompression(IntPtr compressor, bool enable);
 
 		#endregion
 
@@ -499,15 +713,14 @@ namespace Nvidia.TextureTools
 		{
 			compressor = nvttCreateCompressor();
 		}
-
-		~Compressor()
+        
+		public void Compress(InputOptions input, CompressionOptions compression, OutputOptions output)
 		{
-			nvttDestroyCompressor(compressor);
-		}
-
-		public bool Compress(InputOptions input, CompressionOptions compression, OutputOptions output)
-		{
-			return nvttCompress(compressor, input.options, compression.options, output.options);
+            if (!nvttCompress(compressor, input.options, compression.options, output.options))
+            {
+                //An error occured, use the last error registered.
+                throw new TextureToolsException(output.LastErrorCode);
+            }
 		}
 
 		public int EstimateSize(InputOptions input, CompressionOptions compression)
@@ -520,7 +733,138 @@ namespace Nvidia.TextureTools
 			return Marshal.PtrToStringAnsi(nvttErrorString(error));
 		}
 
-	}
+        public static uint Version()
+        {
+            return nvttVersion();
+        }
+
+        public void SetEnableCuda(bool enableCuda)
+        {
+            nvttEnableCudaCompression(compressor, enableCuda);
+        }
+
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (compressor != IntPtr.Zero)
+            {
+                nvttDestroyCompressor(compressor);
+                compressor = IntPtr.Zero;
+            }
+        }
+
+        ~Compressor()
+        {
+            Dispose(false);
+        }
+
+        #endregion
+    }
 	#endregion
+
+    #region public class CompressorOptionsBundle
+
+    /*
+     * We provide a class which combines all the objects, this simplifies usage such as:
+     * 
+     * using(CompressorOptionsBundle compressor = new CompressorOptionsBundle())
+     * {
+     *     compressor.InputOptions.SetMipmapData(...);
+     *     ...
+     * }
+     * 
+     * Making it easy to write exception safe code etc.
+     */
+    public class CompressorOptionsBundle : IDisposable
+    {
+        InputOptions inputOptions;
+        CompressionOptions compressionOptions;
+        OutputOptions outputOptions;
+        
+        Compressor compressor;
+
+        public InputOptions InputOptions
+        {
+            get { return inputOptions; }
+        }
+
+
+        public CompressionOptions CompressionOptions
+        {
+            get { return compressionOptions; }
+        }
+
+        public OutputOptions OutputOptions
+        {
+            get { return outputOptions; }
+        }
+
+        public Compressor Compressor
+        {
+            get { return compressor; }
+        }
+
+        public CompressorOptionsBundle()
+        {
+            inputOptions = new InputOptions();
+            compressionOptions = new CompressionOptions();
+            outputOptions = new OutputOptions();
+            compressor = new Compressor();
+        }
+
+        public void Compress()
+        {
+            compressor.Compress(inputOptions, compressionOptions, outputOptions);
+        }
+        
+        #region IDisposable Members
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (inputOptions != null)
+                {
+                    inputOptions.Dispose();
+                    inputOptions = null;
+                }
+
+                if (compressionOptions != null)
+                {
+                    compressionOptions.Dispose();
+                    compressionOptions = null;
+                }
+
+                if (outputOptions != null)
+                {
+                    outputOptions.Dispose();
+                    outputOptions = null;
+                }
+
+                if (compressor != null)
+                {
+                    compressor.Dispose();
+                    compressor = null;
+                }
+            }
+        }
+        #endregion
+
+    }
+
+    #endregion
 
 } // Nvidia.TextureTools namespace

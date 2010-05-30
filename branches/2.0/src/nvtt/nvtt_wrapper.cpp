@@ -1,7 +1,49 @@
+#include <stdio.h> //For NULL...
 
 #include "nvtt.h"
 #include "nvtt_wrapper.h"
 
+#include "OutputOptions.h"
+
+namespace nvttCWrap
+{
+	//Simple class to re-route calls to the C++ interfaces to C functions
+	struct HandlerProxy : public nvtt::ErrorHandler, public nvtt::OutputHandler
+	{
+	public:
+
+		HandlerProxy()
+		{
+			errorFunc = NULL;
+			outputFunc = NULL;
+			imageFunc = NULL;
+		}
+
+		virtual void error(nvtt::Error e)
+		{
+			if(errorFunc != NULL)
+				errorFunc((NvttError)e);
+		}
+
+		virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
+		{
+			if(imageFunc != NULL)
+				imageFunc(size, width, height, depth, face, miplevel);
+		}
+		
+		virtual bool writeData(const void * data, int size)
+		{
+			if(outputFunc != NULL)
+				return (outputFunc(data, size) != NVTT_False);
+			else
+				return true; //Just say we succeed anyway... despite nothing being done, in case the user only set the beginImage() func.
+		}
+
+		nvttErrorHandler errorFunc;
+		nvttOutputHandler outputFunc;
+		nvttImageHandler imageFunc;
+	};
+}
 
 // InputOptions class.
 NvttInputOptions * nvttCreateInputOptions()
@@ -110,6 +152,7 @@ void nvttSetInputOptionsRoundMode(NvttInputOptions * inputOptions, NvttRoundMode
 }
 
 
+
 // CompressionOptions class.
 NvttCompressionOptions * nvttCreateCompressionOptions()
 {
@@ -136,11 +179,6 @@ void nvttSetCompressionOptionsColorWeights(NvttCompressionOptions * compressionO
 	compressionOptions->setColorWeights(red, green, blue, alpha);
 }
 
-/*void nvttEnableCompressionOptionsCudaCompression(NvttCompressionOptions * compressionOptions, NvttBoolean enable)
-{
-	compressionOptions->enableCudaCompression(enable != NVTT_False);
-}*/
-
 void nvttSetCompressionOptionsPixelFormat(NvttCompressionOptions * compressionOptions, unsigned int bitcount, unsigned int rmask, unsigned int gmask, unsigned int bmask, unsigned int amask)
 {
 	compressionOptions->setPixelFormat(bitcount, rmask, gmask, bmask, amask);
@@ -151,16 +189,23 @@ void nvttSetCompressionOptionsQuantization(NvttCompressionOptions * compressionO
 	compressionOptions->setQuantization(colorDithering != NVTT_False, alphaDithering != NVTT_False, binaryAlpha != NVTT_False, alphaThreshold);
 }
 
-
 // OutputOptions class.
 NvttOutputOptions * nvttCreateOutputOptions()
 {
-	return new nvtt::OutputOptions();
+	nvtt::OutputOptions * outputOptions = new nvtt::OutputOptions();
+	nvttCWrap::HandlerProxy * handlerProxy = new nvttCWrap::HandlerProxy();
+
+	outputOptions->m.cWrapperProxy = handlerProxy;
+
+	return outputOptions;
 }
 
 void nvttDestroyOutputOptions(NvttOutputOptions * outputOptions)
 {
+	nvttCWrap::HandlerProxy * handlerProxy = (nvttCWrap::HandlerProxy *)outputOptions->m.cWrapperProxy;
+	
 	delete outputOptions;
+	delete handlerProxy;
 }
 
 void nvttSetOutputOptionsFileName(NvttOutputOptions * outputOptions, const char * fileName)
@@ -172,19 +217,45 @@ void nvttSetOutputOptionsOutputHeader(NvttOutputOptions * outputOptions, NvttBoo
 {
 	outputOptions->setOutputHeader(b != NVTT_False);
 }
-/*
+
+
 void nvttSetOutputOptionsErrorHandler(NvttOutputOptions * outputOptions, nvttErrorHandler errorHandler)
 {
-	outputOptions->setErrorHandler(errorHandler);
+	nvttCWrap::HandlerProxy * handlerProxy = (nvttCWrap::HandlerProxy *)outputOptions->m.cWrapperProxy;
+	
+	handlerProxy->errorFunc = errorHandler;
+		
+	if(errorHandler == NULL)
+		outputOptions->setErrorHandler(NULL);
+	else
+		outputOptions->setErrorHandler(handlerProxy);	
 }
 
 void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttOutputHandler outputHandler, nvttImageHandler imageHandler)
 {
+	nvttCWrap::HandlerProxy * handlerProxy = (nvttCWrap::HandlerProxy *)outputOptions->m.cWrapperProxy;
+
+	handlerProxy->outputFunc = outputHandler;
+	handlerProxy->imageFunc = imageHandler;
+
+	if((outputHandler == NULL) && (imageHandler == NULL))
+		outputOptions->setOutputHandler(NULL);
+	else
+		outputOptions->setOutputHandler(handlerProxy);
 }
-*/
 
 
 // Compressor class.
+NvttCompressor * nvttCreateCompressor()
+{
+	return new nvtt::Compressor();
+}
+
+void nvttDestroyCompressor(NvttCompressor * compressor)
+{
+	delete compressor;
+}
+
 NvttBoolean nvttCompress(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions)
 {
 	return (NvttBoolean)compressor->process(*inputOptions, *compressionOptions, *outputOptions);
@@ -193,6 +264,11 @@ NvttBoolean nvttCompress(const NvttCompressor * compressor, const NvttInputOptio
 int nvttEstimateSize(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions)
 {
 	return compressor->estimateSize(*inputOptions, *compressionOptions);
+}
+
+void nvttEnableCudaCompression(NvttCompressor * compressor, NvttBoolean enable)
+{
+	compressor->enableCudaAcceleration(enable != NVTT_False);
 }
 
 
