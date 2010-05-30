@@ -494,7 +494,7 @@ namespace Nvidia.TextureTools
     public interface IOutputHandler    
     {
         void BeginImage(int size, int width, int height, int depth, int face, int miplevel);
-        void WriteDataUnsafe(IntPtr data, int size);
+        bool WriteDataUnsafe(IntPtr data, int size);
     }
 
     /* 
@@ -520,8 +520,10 @@ namespace Nvidia.TextureTools
             BeginImage(size, width, height, depth, face, miplevel);
         }
 
-        void IOutputHandler.WriteDataUnsafe(IntPtr data, int size)
+        bool IOutputHandler.WriteDataUnsafe(IntPtr data, int size)
         {
+            //TODO: Exception handling and return an error result?
+
             if ((tempData == null) || (size > tempData.Length))
                 tempData = new byte[size];
 
@@ -531,6 +533,8 @@ namespace Nvidia.TextureTools
             Array.Clear(tempData, size, tempData.Length - size);
 
             WriteData(tempData, 0, size);
+
+            return true;
         }
 
         #endregion
@@ -544,7 +548,7 @@ namespace Nvidia.TextureTools
         #region Delegates
 
         private delegate void InternalErrorHandlerDelegate(Error error);
-        private delegate void WriteDataDelegate(IntPtr data, int size);
+        private delegate bool WriteDataDelegate(IntPtr data, int size);
         private delegate void ImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
 
 		#endregion
@@ -638,9 +642,12 @@ namespace Nvidia.TextureTools
             lastErrorCode = error;
         }
 
-        private void WriteDataCallback(IntPtr data, int size)
+        private bool WriteDataCallback(IntPtr data, int size)
         {
-            if (currentOutputHandler != null) currentOutputHandler.WriteDataUnsafe(data, size);
+            if (currentOutputHandler != null)
+                return currentOutputHandler.WriteDataUnsafe(data, size);
+            else
+                return true;
         }
 
         private void ImageCallback(int size, int width, int height, int depth, int face, int miplevel)
