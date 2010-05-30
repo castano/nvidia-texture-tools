@@ -11,30 +11,24 @@ See the License for the specific language governing permissions and limitations 
 */
 
 // utility class holding common routines
+#pragma once
 #ifndef _UTILS_H
 #define _UTILS_H
 
-#include "arvo/Vec3.h"
+#include "nvmath/Vector.h"
 
-using namespace ArvoMath;
-
-#ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
-
-#ifndef MAX
-#define MAX(x,y) ((x)>(y)?(x):(y))
-#endif
+using namespace nv; // @@ Move everything to nv namespace instead.
 
 #define	PALETTE_LERP(a, b, i, denom)	Utils::lerp(a, b, i, denom)
 
 #define	SIGN_EXTEND(x,nb)	((((signed(x))&(1<<((nb)-1)))?((~0)<<(nb)):0)|(signed(x)))
 
-enum Field { FIELD_M = 1,	// mode
-				FIELD_D = 2,	// distribution/shape
-				FIELD_RW = 10+0, FIELD_RX = 10+1, FIELD_RY = 10+2, FIELD_RZ = 10+3,	// red channel endpoints or deltas
-				FIELD_GW = 20+0, FIELD_GX = 20+1, FIELD_GY = 20+2, FIELD_GZ = 20+3,	// green channel endpoints or deltas
-				FIELD_BW = 30+0, FIELD_BX = 30+1, FIELD_BY = 30+2, FIELD_BZ = 30+3,	// blue channel endpoints or deltas
+enum Field {
+    FIELD_M = 1,	// mode
+    FIELD_D = 2,	// distribution/shape
+    FIELD_RW = 10+0, FIELD_RX = 10+1, FIELD_RY = 10+2, FIELD_RZ = 10+3,	// red channel endpoints or deltas
+    FIELD_GW = 20+0, FIELD_GX = 20+1, FIELD_GY = 20+2, FIELD_GZ = 20+3,	// green channel endpoints or deltas
+    FIELD_BW = 30+0, FIELD_BX = 30+1, FIELD_BY = 30+2, FIELD_BZ = 30+3,	// blue channel endpoints or deltas
 };
 
 // some constants
@@ -51,29 +45,29 @@ enum Format { UNSIGNED_F16, SIGNED_F16 };
 class Utils
 {
 public:
-	static Format FORMAT;	// this is a global -- we're either handling unsigned or unsigned half values
+    static Format FORMAT;	// this is a global -- we're either handling unsigned or unsigned half values
 
-	// error metrics
-	static double norm(const Vec3 &a, const Vec3 &b);
-	static double mpsnr_norm(const Vec3 &a, int exposure, const Vec3 &b);
+    // error metrics
+    static double norm(const Vector3 &a, const Vector3 &b);
+    static double mpsnr_norm(const Vector3 &a, int exposure, const Vector3 &b);
 
-	// conversion & clamp
-	static int ushort_to_format(unsigned short input);
-	static unsigned short format_to_ushort(int input);
+    // conversion & clamp
+    static int ushort_to_format(unsigned short input);
+    static unsigned short format_to_ushort(int input);
 
-	// clamp to format
-	static void Utils::clamp(Vec3 &v);
+    // clamp to format
+    static void clamp(Vector3 &v);
 
-	// quantization and unquantization
-	static int finish_unquantize(int q, int prec);
-	static int unquantize(int q, int prec);
-	static int quantize(float value, int prec);
+    // quantization and unquantization
+    static int finish_unquantize(int q, int prec);
+    static int unquantize(int q, int prec);
+    static int quantize(float value, int prec);
 
-	static void parse(char *encoding, int &ptr, Field &field, int &endbit, int &len);
+    static void parse(const char *encoding, int &ptr, Field & field, int &endbit, int &len);
 
-	// lerping
-	static int lerp(int a, int b, int i, int denom);
-	static Vec3 lerp(const Vec3& a, const Vec3 &b, int i, int denom);
+    // lerping
+    static int lerp(int a, int b, int i, int denom);
+    static Vector3 lerp(const Vector3 & a, const Vector3 & b, int i, int denom);
 };
 
 #endif

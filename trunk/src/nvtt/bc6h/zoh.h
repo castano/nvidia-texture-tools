@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and limitations 
 #ifndef _ZOH_H
 #define _ZOH_H
 
-#include <string>
+//#include <string>
 
 #include "tile.h"
 
-using namespace std;
+//using namespace std;
 
 // UNUSED ZOH MODES are 0x13, 0x17, 0x1b, 0x1f
 
@@ -33,8 +33,8 @@ using namespace std;
 
 struct FltEndpts
 {
-	Vec3	A;
-	Vec3	B;
+	Vector3 A;
+	Vector3 B;
 };
 
 struct IntEndpts
@@ -56,8 +56,8 @@ public:
 	static const int BITSIZE=128;
 	static Format FORMAT;
 
-	static void compress(string inf, string zohf);
-	static void decompress(string zohf, string outf);
+	//static void compress(string inf, string zohf);
+	//static void decompress(string zohf, string outf);
 	static void compress(const Tile &t, char *block);
 	static void decompress(const char *block, Tile &t);
 

@@ -16,14 +16,13 @@ See the License for the specific language governing permissions and limitations 
 #include "bits.h"
 #include "tile.h"
 #include "zoh.h"
-#include "arvo/Vec3.h"
-#include "arvo/Matrix.h"
-#include "arvo/SVD.h"
 #include "utils.h"
 
-#include <assert.h>
+#include "nvmath/Fitting.h"
 
-using namespace ArvoMath;
+#include <assert.h>
+#include <string.h> // strlen
+#include <float.h> // FLT_MAX
 
 #define NINDICES	16
 #define	INDEXBITS	4
@@ -55,7 +54,7 @@ struct Pattern
 	int transformed;		// if 0, deltas are unsigned and no transform; otherwise, signed and transformed
 	int mode;				// associated mode value
 	int modebits;			// number of mode bits
-	char *encoding;			// verilog description of encoding for this mode
+	const char *encoding;	// verilog description of encoding for this mode
 };
 
 #define MAXMODEBITS	5
@@ -65,10 +64,10 @@ struct Pattern
 
 static Pattern patterns[NPATTERNS] =
 {
-	16,4,	16,4,	16,4,		1,	0x0f, 5, "bw[10],bw[11],bw[12],bw[13],bw[14],bw[15],bx[3:0],gw[10],gw[11],gw[12],gw[13],gw[14],gw[15],gx[3:0],rw[10],rw[11],rw[12],rw[13],rw[14],rw[15],rx[3:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
-	12,8,	12,8,	12,8,		1,  0x0b, 5, "bw[10],bw[11],bx[7:0],gw[10],gw[11],gx[7:0],rw[10],rw[11],rx[7:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
-	11,9,	11,9,	11,9,		1,	0x07, 5, "bw[10],bx[8:0],gw[10],gx[8:0],rw[10],rx[8:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
-	10,10,	10,10,	10,10,		0,	0x03, 5, "bx[9:0],gx[9:0],rx[9:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
+	{{{16, 4}, {16, 4}, {16, 4}}, 1, 0x0f, 5, "bw[10],bw[11],bw[12],bw[13],bw[14],bw[15],bx[3:0],gw[10],gw[11],gw[12],gw[13],gw[14],gw[15],gx[3:0],rw[10],rw[11],rw[12],rw[13],rw[14],rw[15],rx[3:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
+	{{{12, 8}, {12, 8}, {12, 8}}, 1, 0x0b, 5, "bw[10],bw[11],bx[7:0],gw[10],gw[11],gx[7:0],rw[10],rw[11],rx[7:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
+	{{{11, 9}, {11, 9}, {11, 9}}, 1, 0x07, 5, "bw[10],bx[8:0],gw[10],gx[8:0],rw[10],rx[8:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
+	{{{10,10}, {10,10}, {10,10}}, 0, 0x03, 5, "bx[9:0],gx[9:0],rx[9:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
 };
 
 // mapping of mode to the corresponding index in pattern
@@ -139,12 +138,12 @@ static void quantize_endpts(const FltEndpts endpts[NREGIONS_ONE], int prec, IntE
 {
 	for (int region = 0; region < NREGIONS_ONE; ++region)
 	{
-		q_endpts[region].A[0] = Utils::quantize(endpts[region].A.X(), prec);
-		q_endpts[region].A[1] = Utils::quantize(endpts[region].A.Y(), prec);
-		q_endpts[region].A[2] = Utils::quantize(endpts[region].A.Z(), prec);
-		q_endpts[region].B[0] = Utils::quantize(endpts[region].B.X(), prec);
-		q_endpts[region].B[1] = Utils::quantize(endpts[region].B.Y(), prec);
-		q_endpts[region].B[2] = Utils::quantize(endpts[region].B.Z(), prec);
+		q_endpts[region].A[0] = Utils::quantize(endpts[region].A.x, prec);
+		q_endpts[region].A[1] = Utils::quantize(endpts[region].A.y, prec);
+		q_endpts[region].A[2] = Utils::quantize(endpts[region].A.z, prec);
+		q_endpts[region].B[0] = Utils::quantize(endpts[region].B.x, prec);
+		q_endpts[region].B[1] = Utils::quantize(endpts[region].B.y, prec);
+		q_endpts[region].B[2] = Utils::quantize(endpts[region].B.z, prec);
 	}
 }
 
@@ -311,31 +310,31 @@ static void emit_block(const ComprEndpts endpts[NREGIONS_ONE], int shapeindex, c
 	assert(out.getptr() == ZOH::BITSIZE);
 }
 
-static void generate_palette_quantized(const IntEndpts &endpts, int prec, Vec3 palette[NINDICES])
+static void generate_palette_quantized(const IntEndpts &endpts, int prec, Vector3 palette[NINDICES])
 {
 	// scale endpoints
-	int a, b;			// really need a IntVec3...
+	int a, b;			// really need a IntVector3...
 
 	a = Utils::unquantize(endpts.A[0], prec); 
 	b = Utils::unquantize(endpts.B[0], prec);
 
 	// interpolate
 	for (int i = 0; i < NINDICES; ++i)
-		palette[i].X() = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
+		palette[i].x = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
 
 	a = Utils::unquantize(endpts.A[1], prec); 
 	b = Utils::unquantize(endpts.B[1], prec);
 
 	// interpolate
 	for (int i = 0; i < NINDICES; ++i)
-		palette[i].Y() = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
+		palette[i].y = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
 
 	a = Utils::unquantize(endpts.A[2], prec); 
 	b = Utils::unquantize(endpts.B[2], prec);
 
 	// interpolate
 	for (int i = 0; i < NINDICES; ++i)
-		palette[i].Z() = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
+		palette[i].z = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
 }
 
 // position 0 was compressed
@@ -363,7 +362,7 @@ void ZOH::decompressone(const char *block, Tile &t)
 	
 	decompress_endpts(compr_endpts, endpts, p);
 
-	Vec3 palette[NREGIONS_ONE][NINDICES];
+	Vector3 palette[NREGIONS_ONE][NINDICES];
 	for (int r = 0; r < NREGIONS_ONE; ++r)
 		generate_palette_quantized(endpts[r], p.chan[0].prec[0], &palette[r][0]);
 
@@ -381,11 +380,11 @@ void ZOH::decompressone(const char *block, Tile &t)
 }
 
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
-static double map_colors(const Vec3 colors[], const float importance[], int np, const IntEndpts &endpts, int prec)
+static double map_colors(const Vector3 colors[], const float importance[], int np, const IntEndpts &endpts, int prec)
 {
-	Vec3 palette[NINDICES];
+	Vector3 palette[NINDICES];
 	double toterr = 0;
-	Vec3 err;
+	Vector3 err;
 
 	generate_palette_quantized(endpts, prec, palette);
 
@@ -414,7 +413,7 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndpts endpts[NR
 						   int indices[Tile::TILE_H][Tile::TILE_W], double toterr[NREGIONS_ONE])
 {
 	// build list of possibles
-	Vec3 palette[NREGIONS_ONE][NINDICES];
+	Vector3 palette[NREGIONS_ONE][NINDICES];
 
 	for (int region = 0; region < NREGIONS_ONE; ++region)
 	{
@@ -422,7 +421,7 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndpts endpts[NR
 		toterr[region] = 0;
 	}
 
-	Vec3 err;
+	Vector3 err;
 
 	for (int y = 0; y < tile.size_y; y++)
 	for (int x = 0; x < tile.size_x; x++)
@@ -449,7 +448,7 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndpts endpts[NR
 	}
 }
 
-static double perturb_one(const Vec3 colors[], const float importance[], int np, int ch, int prec, const IntEndpts &old_endpts, IntEndpts &new_endpts, 
+static double perturb_one(const Vector3 colors[], const float importance[], int np, int ch, int prec, const IntEndpts &old_endpts, IntEndpts &new_endpts,
 						  double old_err, int do_b)
 {
 	// we have the old endpoints: old_endpts
@@ -503,7 +502,7 @@ static double perturb_one(const Vec3 colors[], const float importance[], int np,
 	return min_err;
 }
 
-static void optimize_one(const Vec3 colors[], const float importance[], int np, double orig_err, const IntEndpts &orig_endpts, int prec, IntEndpts &opt_endpts)
+static void optimize_one(const Vector3 colors[], const float importance[], int np, double orig_err, const IntEndpts &orig_endpts, int prec, IntEndpts &opt_endpts)
 {
 	double opt_err = orig_err;
 	for (int ch = 0; ch < NCHANNELS; ++ch)
@@ -578,7 +577,7 @@ static void optimize_one(const Vec3 colors[], const float importance[], int np, 
 static void optimize_endpts(const Tile &tile, int shapeindex, const double orig_err[NREGIONS_ONE], 
 							const IntEndpts orig_endpts[NREGIONS_ONE], int prec, IntEndpts opt_endpts[NREGIONS_ONE])
 {
-	Vec3 pixels[Tile::TILE_TOTAL];
+	Vector3 pixels[Tile::TILE_TOTAL];
 	float importance[Tile::TILE_TOTAL];
 	double err = 0;
 	int indices[Tile::TILE_TOTAL];
@@ -660,7 +659,7 @@ double ZOH::refineone(const Tile &tile, int shapeindex_best, const FltEndpts end
 	throw "No candidate found, should never happen (refineone.)";
 }
 
-static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_ONE], Vec3 palette[NREGIONS_ONE][NINDICES])
+static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_ONE], Vector3 palette[NREGIONS_ONE][NINDICES])
 {
 	for (int region = 0; region < NREGIONS_ONE; ++region)
 	for (int i = 0; i < NINDICES; ++i)
@@ -671,12 +670,12 @@ static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_ONE], V
 static double map_colors(const Tile &tile, int shapeindex, const FltEndpts endpts[NREGIONS_ONE])
 {
 	// build list of possibles
-	Vec3 palette[NREGIONS_ONE][NINDICES];
+	Vector3 palette[NREGIONS_ONE][NINDICES];
 
 	generate_palette_unquantized(endpts, palette);
 
 	double toterr = 0;
-	Vec3 err;
+	Vector3 err;
 
 	for (int y = 0; y < tile.size_y; y++)
 	for (int x = 0; x < tile.size_x; x++)
@@ -705,22 +704,24 @@ double ZOH::roughone(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS
 	for (int region=0; region<NREGIONS_ONE; ++region)
 	{
 		int np = 0;
-		Vec3 colors[Tile::TILE_TOTAL];
-		Vec3 mean(0,0,0);
+		Vector3 colors[Tile::TILE_TOTAL];
+		Vector3 mean(0,0,0);
 
-		for (int y = 0; y < tile.size_y; y++)
-		for (int x = 0; x < tile.size_x; x++)
-			if (REGION(x,y,shapeindex) == region)
-			{
-				colors[np] = tile.data[y][x];
-				mean += tile.data[y][x];
-				++np;
+		for (int y = 0; y < tile.size_y; y++) {
+			for (int x = 0; x < tile.size_x; x++) {
+				if (REGION(x,y,shapeindex) == region)
+				{
+					colors[np] = tile.data[y][x];
+					mean += tile.data[y][x];
+					++np;
+				}
 			}
+		}
 
 		// handle simple cases	
 		if (np == 0)
 		{
-			Vec3 zero(0,0,0);
+			Vector3 zero(0,0,0);
 			endpts[region].A = zero;
 			endpts[region].B = zero;
 			continue;
@@ -738,28 +739,15 @@ double ZOH::roughone(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS
 			continue;
 		}
 
-		Matrix rdq(np, np);
-
 		mean /= float(np);
 
-		for (int i = 0; i < np; ++i)
-		{
-			rdq(i,0) = colors[i].X() - mean.X();
-			rdq(i,1) = colors[i].Y() - mean.Y();
-			rdq(i,2) = colors[i].Z() - mean.Z();
-		}
-				
-		// perform a singular value decomposition
-		SVD svd(rdq);			// decompose matrix rdq to R*D*Q (== U*W*V in standard nomenclature)
-
-		// get the principal component direction (well, the one with the largest weight)
-		Vec3 direction(svd.R()(0,0), svd.R()(0,1), svd.R()(0,2));
+		Vector3 direction = Fit::computePrincipalComponent(np, colors);
 
 		// project each pixel value along the principal direction
-		double minp = DBL_MAX, maxp = -DBL_MAX;
+		float minp = FLT_MAX, maxp = -FLT_MAX;
 		for (int i = 0; i < np; i++) 
 		{
-			float dp = rdq(i,0) * direction.X() + rdq(i,1)*direction.Y() + rdq(i,2)*direction.Z();
+			float dp = dot(colors[i]-mean, direction);
 			if (dp < minp) minp = dp;
 			if (dp > maxp) maxp = dp;
 		}
