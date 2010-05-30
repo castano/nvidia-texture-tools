@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and limitations 
 // Utility and common routines
 
 #include "utils.h"
-#include <half.h>
+//#include <half.h>
 #include <math.h>
 #include <assert.h>
 
@@ -38,7 +38,7 @@ int Utils::lerp(int a, int b, int i, int denom)
 	return (a*weights[denom-i] +b*weights[i] + round) >> shift;
 }
 
-Vec3 Utils::lerp(const Vec3& a, const Vec3 &b, int i, int denom)
+Vector3 Utils::lerp(const Vector3& a, const Vector3 &b, int i, int denom)
 {
 	assert (denom == 3 || denom == 7 || denom == 15);
 	assert (i >= 0 && i <= denom);
@@ -76,20 +76,20 @@ Vec3 Utils::lerp(const Vec3& a, const Vec3 &b, int i, int denom)
 // note that each channel is a float storing the allowable range as a bit pattern converted to float
 // that is, for unsigned f16 say, we would clamp each channel to the range [0, F16MAX]
 
-void Utils::clamp(Vec3 &v)
+void Utils::clamp(Vector3 &v)
 {
 	for (int i=0; i<3; ++i)
 	{
 		switch(Utils::FORMAT)
 		{
 		case UNSIGNED_F16:
-			if (v[i] < 0.0) v[i] = 0;
-			else if (v[i] > F16MAX) v[i] = F16MAX;
+			if (v.component[i] < 0.0) v.component[i] = 0;
+			else if (v.component[i] > F16MAX) v.component[i] = F16MAX;
 			break;
 
 		case SIGNED_F16:
-			if (v[i] < -F16MAX) v[i] = -F16MAX;
-			else if (v[i] > F16MAX) v[i] = F16MAX;
+			if (v.component[i] < -F16MAX) v.component[i] = -F16MAX;
+			else if (v.component[i] > F16MAX) v.component[i] = F16MAX;
 			break;
 
 		default:
@@ -258,16 +258,17 @@ static int clamp(double r, double low, double high)
 	else return r;
 }
 
+
 // match the tonemapping function used by exrdisplay
-static void tonemap(const Vec3 &in, double exposure, Vec3 &out)
+static void tonemap(const Vector3 &in, double exposure, Vector3 &out)
 {
     double r,g,b;
-	half h;
+    unsigned short h;
 
 	// convert from bit pattern back to half and then to double
-	h.setBits(in.X());	r = h;
-	h.setBits(in.Y());	g = h;
-	h.setBits(in.Z());	b = h;
+	h = in.x;	r = h;
+	h = in.y;	g = h;
+	h = in.z;	b = h;
 
     //  1) Compensate for fogging by subtracting defog
     //     from the raw pixel values.
@@ -319,20 +320,20 @@ static void tonemap(const Vec3 &in, double exposure, Vec3 &out)
     g *= 84.66f;
     b *= 84.66f;
 
-    out.X() = clamp (r, 0, 255);
-    out.Y() = clamp (g, 0, 255);
-    out.Z() = clamp (b, 0, 255);
+    out.x = clamp (r, 0, 255);
+    out.y = clamp (g, 0, 255);
+    out.z = clamp (b, 0, 255);
 }
 
-static void mpsnrmap(const Vec3 &in, int exposure, Vec3 &out)
+static void mpsnrmap(const Vector3 &in, int exposure, Vector3 &out)
 {
     double r,g,b;
-	half h;
+    uint16 h;
 
 	// convert from bit pattern back to half and then to double
-	h.setBits(in.X());	r = h;
-	h.setBits(in.Y());	g = h;
-	h.setBits(in.Z());	b = h;
+	h = in.x;	r = h;
+	h = in.y;	g = h;
+	h = in.z;	b = h;
 
 	assert (exposure > -32 && exposure < 32);
 	if (exposure > 0)
@@ -352,27 +353,26 @@ static void mpsnrmap(const Vec3 &in, int exposure, Vec3 &out)
     g = 255 * pow (g, 0.4545);
     b = 255 * pow (b, 0.4545);
 
-    out.X() = clamp (r, 0, 255);
-    out.Y() = clamp (g, 0, 255);
-    out.Z() = clamp (b, 0, 255);
+    out.x = clamp (r, 0, 255);
+    out.y = clamp (g, 0, 255);
+    out.z = clamp (b, 0, 255);
 }
 
 // pick a norm!
 #define	NORM_EUCLIDEAN 1
 
-double Utils::norm(const Vec3 &a, const Vec3 &b)
+double Utils::norm(const Vector3 &a, const Vector3 &b)
 {
 #ifdef	NORM_EUCLIDEAN
-	Vec3 err = a - b;
-	return err * err;
+	return lengthSquared(a - b);
 #endif
 #ifdef	NORM_ABS
-	Vec3 err = a - b;
-	return fabs(err.X()) + fabs(err.Y()) + fabs(err.Z());
+	Vector3 err = a - b;
+	return fabs(err.x) + fabs(err.y) + fabs(err.z);
 #endif
 #ifdef	NORM_EUCLIDEAN_EXPOSURE_UNWEIGHED
 	double toterr = 0;
-	Vec3 mapa, mapb, err;
+	Vector3 mapa, mapb, err;
 	for (int i=-6; i <= 6; i += 3)			// figure how many exposure samples needed. I'd argue if you take too many it's same as euclidean
 	{
 		tonemap(a, i, mapa);
@@ -384,7 +384,7 @@ double Utils::norm(const Vec3 &a, const Vec3 &b)
 #endif
 #ifdef	NORM_EUCLIDEAN_EXPOSURE_WEIGHED
 	double toterr = 0;
-	Vec3 mapa, mapb, err;
+	Vector3 mapa, mapb, err;
 	double rwt = 0.299;
 	double gwt = 0.587;
 	double bwt = 0.114;
@@ -392,8 +392,8 @@ double Utils::norm(const Vec3 &a, const Vec3 &b)
 	{
 		tonemap(a, i, mapa);
 		tonemap(b, i, mapb);
-		mapa.X() *= rwt; mapa.Y() *= gwt; mapa.Z() *= bwt;
-		mapb.X() *= rwt; mapb.Y() *= gwt; mapb.Z() *= bwt;
+		mapa.x *= rwt; mapa.y *= gwt; mapa.z *= bwt;
+		mapb.x *= rwt; mapb.y *= gwt; mapb.z *= bwt;
 		err = mapa - mapb;
 		toterr += err * err;
 	}
@@ -401,24 +401,20 @@ double Utils::norm(const Vec3 &a, const Vec3 &b)
 #endif
 }
 
-double Utils::mpsnr_norm(const Vec3 &a, int exposure, const Vec3 &b)
+double Utils::mpsnr_norm(const Vector3 &a, int exposure, const Vector3 &b)
 {
-	double toterr = 0;
-	Vec3 mapa, mapb, err;
+	Vector3 mapa, mapb;
 
 	mpsnrmap(a, exposure, mapa);
 	mpsnrmap(b, exposure, mapb);
 
-	err = mapa - mapb;
-	toterr += err * err;
-
-	return toterr;
+	return lengthSquared(mapa - mapb);
 }
 
 // parse <name>[<start>{:<end>}]{,}	
 // the pointer starts here         ^
 // name is 1 or 2 chars and matches field names. start and end are decimal numbers
-void Utils::parse(char *encoding, int &ptr, Field &field, int &endbit, int &len)
+void Utils::parse(const char *encoding, int &ptr, Field &field, int &endbit, int &len)
 {
 	if (ptr <= 0) return;
 	--ptr;

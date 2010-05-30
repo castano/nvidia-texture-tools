@@ -12,23 +12,11 @@ See the License for the specific language governing permissions and limitations 
 
 // the zoh compressor and decompressor
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <assert.h>
-
-#include "ImfArray.h"
-#include "ImfRgba.h"
-
 #include "tile.h"
 #include "zoh.h"
-#include "exr.h"
 
-#ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
+#include <string.h> // memcpy
 
-using namespace std;
 
 bool ZOH::isone(const char *block)
 {
@@ -58,6 +46,7 @@ void ZOH::decompress(const char *block, Tile &t)
 		ZOH::decompresstwo(block, t);
 }
 
+/*
 void ZOH::compress(string inf, string zohf)
 {
 	Array2D<Rgba> pixels;
@@ -80,10 +69,10 @@ void ZOH::compress(string inf, string zohf)
 	// convert to tiles and compress each tile
 	for (int y=0; y<h; y+=Tile::TILE_H)
 	{
-		int ysize = MIN(Tile::TILE_H, h-y);
+		int ysize = min(Tile::TILE_H, h-y);
 		for (int x=0; x<w; x+=Tile::TILE_W)
 		{
-			int xsize = MIN(Tile::TILE_W, w-x);
+			int xsize = min(Tile::TILE_W, w-x);
 			Tile t(xsize, ysize);
 
 			t.insert(pixels, x, y);
@@ -103,7 +92,7 @@ void ZOH::compress(string inf, string zohf)
 	if (fclose(zohfile)) throw "Close failed on .zoh file";
 }
 
-static int str2int(std::string s) 
+static int str2int(std::string s)
 {
 	int thing;
 	std::stringstream str (stringstream::in | stringstream::out);
@@ -180,10 +169,10 @@ void ZOH::decompress(string zohf, string outf)
 	// convert to tiles and decompress each tile
 	for (int y=0; y<h; y+=Tile::TILE_H)
 	{
-		int ysize = MIN(Tile::TILE_H, h-y);
+		int ysize = min(Tile::TILE_H, h-y);
 		for (int x=0; x<w; x+=Tile::TILE_W)
 		{
-			int xsize = MIN(Tile::TILE_W, w-x);
+			int xsize = min(Tile::TILE_W, w-x);
 			Tile t(xsize, ysize);
 
 			if (fread(block, sizeof(char), ZOH::BLOCKSIZE, zohfile) != ZOH::BLOCKSIZE)
@@ -203,3 +192,4 @@ void ZOH::decompress(string zohf, string outf)
 	printstats();	// print statistics
 #endif
 }
+*/

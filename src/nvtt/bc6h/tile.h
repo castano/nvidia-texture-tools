@@ -13,35 +13,31 @@ See the License for the specific language governing permissions and limitations 
 #ifndef _TILE_H
 #define _TILE_H
 
-#include <ImfArray.h>
-#include <ImfRgba.h>
-#include <half.h>
+//#include <ImfArray.h>
+//#include <ImfRgba.h>
+//#include <half.h>
 #include <math.h>
-#include "arvo/Vec3.h"
+#include "nvmath/Vector.h"
 
 #include "utils.h"
 
 #define	DBL_MAX	(1.0e37)		// doesn't have to be really dblmax, just bigger than any possible squared error
-
-using namespace Imf;
-using namespace ArvoMath;
 
 //#define	USE_IMPORTANCE_MAP	1		// define this if you want to increase importance of some pixels in tile
 class Tile
 {
 private:
 	// NOTE: this returns the appropriately-clamped BIT PATTERN of the half as an INTEGRAL float value
-	static float half2float(half h)
+	static float half2float(uint16 h)
 	{
-		return (float) Utils::ushort_to_format(h.bits());
+		return (float) Utils::ushort_to_format(h);
 	}
 	// NOTE: this is the inverse of the above operation
-	static half float2half(float f)
+	static uint16 float2half(float f)
 	{
-		half h;
-		h.setBits(Utils::format_to_ushort((int)f));
-		return h;
+		return Utils::format_to_ushort((int)f);
 	}
+
 	// look for adjacent pixels that are identical. if there are enough of them, increase their importance
 	void generate_importance_map()
 	{
@@ -57,10 +53,11 @@ private:
 	{
 		if (xn < 0 || xn >= size_x || yn < 0 || yn >= size_y)
 			return false;
-		return( (data[y][x].X() == data[yn][xn].X()) &&
-				(data[y][x].Y() == data[yn][xn].Y()) &&
-				(data[y][x].Z() == data[yn][xn].Z()) );
+		return( (data[y][x].x == data[yn][xn].x) &&
+				(data[y][x].y == data[yn][xn].y) &&
+				(data[y][x].z == data[yn][xn].z) );
 	}
+
 #ifdef USE_IMPORTANCE_MAP
 	bool match_4_neighbor(int x, int y)
 	{
@@ -81,19 +78,19 @@ public:
 	static const int TILE_H = 4;
 	static const int TILE_W = 4;
 	static const int TILE_TOTAL = TILE_H * TILE_W;
-	Vec3 data[TILE_H][TILE_W];
+	Vector3 data[TILE_H][TILE_W];
 	float importance_map[TILE_H][TILE_W];
 	int	size_x, size_y;			// actual size of tile
 
 	// pixels -> tile
-	void inline insert(const Array2D<Rgba> &pixels, int x, int y)
+	/*void inline insert(const Array2D<Rgba> &pixels, int x, int y)
 	{
 		for (int y0=0; y0<size_y; ++y0)
 		for (int x0=0; x0<size_x; ++x0)
 		{
-			data[y0][x0].X() = half2float((pixels[y+y0][x+x0]).r);
-			data[y0][x0].Y() = half2float((pixels[y+y0][x+x0]).g);
-			data[y0][x0].Z() = half2float((pixels[y+y0][x+x0]).b);
+			data[y0][x0].x = half2float((pixels[y+y0][x+x0]).r);
+			data[y0][x0].y = half2float((pixels[y+y0][x+x0]).g);
+			data[y0][x0].z = half2float((pixels[y+y0][x+x0]).b);
 		}
 		generate_importance_map();
 	}
@@ -104,12 +101,12 @@ public:
 		for (int y0=0; y0<size_y; ++y0)
 		for (int x0=0; x0<size_x; ++x0)
 		{
-			pixels[y+y0][x+x0].r = float2half(data[y0][x0].X());
-			pixels[y+y0][x+x0].g = float2half(data[y0][x0].Y());
-			pixels[y+y0][x+x0].b = float2half(data[y0][x0].Z());
+			pixels[y+y0][x+x0].r = float2half(data[y0][x0].x);
+			pixels[y+y0][x+x0].g = float2half(data[y0][x0].y);
+			pixels[y+y0][x+x0].b = float2half(data[y0][x0].z);
 			pixels[y+y0][x+x0].a = 0;		// set it to a known value
 		}
-	}
+	}*/
 };
 
 #endif
