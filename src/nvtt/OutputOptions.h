@@ -65,6 +65,8 @@ namespace nvtt
 		ErrorHandler * errorHandler;
 		bool outputHeader;
 		
+		void * cWrapperProxy;
+
 		bool openFile() const;
 		void closeFile() const;
 	};

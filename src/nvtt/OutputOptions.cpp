@@ -28,6 +28,7 @@ using namespace nvtt;
 
 OutputOptions::OutputOptions() : m(*new OutputOptions::Private())
 {
+	m.cWrapperProxy = NULL;
 	reset();
 }
 
@@ -71,7 +72,6 @@ void OutputOptions::setOutputHeader(bool outputHeader)
 {
 	m.outputHeader = outputHeader;
 }
-
 
 bool OutputOptions::Private::openFile() const
 {
