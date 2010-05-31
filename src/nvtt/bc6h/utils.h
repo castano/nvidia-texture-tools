@@ -70,4 +70,4 @@ public:
     static Vector3 lerp(const Vector3 & a, const Vector3 & b, int i, int denom);
 };
 
-#endif
+#endif // _UTILS_H

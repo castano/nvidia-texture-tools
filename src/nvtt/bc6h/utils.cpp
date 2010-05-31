@@ -13,17 +13,15 @@ See the License for the specific language governing permissions and limitations 
 // Utility and common routines
 
 #include "utils.h"
-//#include <half.h>
 #include <math.h>
-#include <assert.h>
 
 static int denom7_weights_64[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
 static int denom15_weights_64[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64
 
 int Utils::lerp(int a, int b, int i, int denom)
 {
-	assert (denom == 3 || denom == 7 || denom == 15);
-	assert (i >= 0 && i <= denom);
+	nvDebugCheck (denom == 3 || denom == 7 || denom == 15);
+	nvDebugCheck (i >= 0 && i <= denom);
 
 	int round = 32, shift = 6, *weights;
 
@@ -32,7 +30,7 @@ int Utils::lerp(int a, int b, int i, int denom)
 	case 3:		denom *= 5; i *= 5;	// fall through to case 15
 	case 15:	weights = denom15_weights_64; break;
 	case 7:		weights = denom7_weights_64; break;
-	default:	assert(0);
+	default:	nvDebugCheck(0);
 	}
 
 	return (a*weights[denom-i] +b*weights[i] + round) >> shift;
@@ -40,8 +38,8 @@ int Utils::lerp(int a, int b, int i, int denom)
 
 Vector3 Utils::lerp(const Vector3& a, const Vector3 &b, int i, int denom)
 {
-	assert (denom == 3 || denom == 7 || denom == 15);
-	assert (i >= 0 && i <= denom);
+	nvDebugCheck (denom == 3 || denom == 7 || denom == 15);
+	nvDebugCheck (i >= 0 && i <= denom);
 
 	int shift = 6, *weights;
 
@@ -50,7 +48,7 @@ Vector3 Utils::lerp(const Vector3& a, const Vector3 &b, int i, int denom)
 	case 3:		denom *= 5; i *= 5;	// fall through to case 15
 	case 15:	weights = denom15_weights_64; break;
 	case 7:		weights = denom7_weights_64; break;
-	default:	assert(0);
+	default:	nvAssume(0);
 	}
 
 	// no need to round these as this is an exact division
@@ -93,7 +91,7 @@ void Utils::clamp(Vector3 &v)
 			break;
 
 		default:
-			assert (0);
+			nvAssume (0);
 		}
 	}
 }
@@ -132,12 +130,12 @@ unsigned short Utils::format_to_ushort(int input)
 	switch (Utils::FORMAT)
 	{
 	case UNSIGNED_F16:
-		assert (input >= 0 && input <= F16MAX);
+		nvDebugCheck (input >= 0 && input <= F16MAX);
 		out = input;
 		break;
 
 	case SIGNED_F16:
-		assert (input >= -F16MAX && input <= F16MAX);
+		nvDebugCheck (input >= -F16MAX && input <= F16MAX);
 		// convert to sign-magnitude
 		int s;
 		if (input < 0) { s = F16S_MASK; input = -input; }
@@ -153,7 +151,7 @@ int Utils::quantize(float value, int prec)
 {
 	int q, ivalue, s;
 
-	assert (prec > 1);	// didn't bother to make it work for 1
+	nvDebugCheck (prec > 1);	// didn't bother to make it work for 1
 
 	value = (float)floor(value + 0.5);
 
@@ -162,14 +160,14 @@ int Utils::quantize(float value, int prec)
 	switch (Utils::FORMAT)
 	{
 	case UNSIGNED_F16:
-		assert (value >= 0 && value <= F16MAX);
+		nvDebugCheck (value >= 0 && value <= F16MAX);
 		ivalue = (int)value;
 		q = ((ivalue << prec) + bias) / (F16MAX+1);
-		assert (q >= 0 && q < (1 << prec));
+		nvDebugCheck (q >= 0 && q < (1 << prec));
 		break;
 
 	case SIGNED_F16:
-		assert (value >= -F16MAX && value <= F16MAX);
+		nvDebugCheck (value >= -F16MAX && value <= F16MAX);
 		// convert to sign-magnitude
 		ivalue = (int)value;
 		if (ivalue < 0) { s = 1; ivalue = -ivalue; } else s = 0;
@@ -177,7 +175,7 @@ int Utils::quantize(float value, int prec)
 		q = ((ivalue << (prec-1)) + bias) / (F16MAX+1);
 		if (s)
 			q = -q;
-		assert (q > -(1 << (prec-1)) && q < (1 << (prec-1)));
+		nvDebugCheck (q > -(1 << (prec-1)) && q < (1 << (prec-1)));
 		break;
 	}
 
@@ -204,7 +202,7 @@ int Utils::unquantize(int q, int prec)
 {
 	int unq, s;
 
-	assert (prec > 1);	// not implemented for prec 1
+	nvDebugCheck (prec > 1);	// not implemented for prec 1
 
 	switch (Utils::FORMAT)
 	{
@@ -335,7 +333,7 @@ static void mpsnrmap(const Vector3 &in, int exposure, Vector3 &out)
 	h = in.y;	g = h;
 	h = in.z;	b = h;
 
-	assert (exposure > -32 && exposure < 32);
+	nvDebugCheck (exposure > -32 && exposure < 32);
 	if (exposure > 0)
 	{
 		r *= 1 << exposure;
@@ -419,13 +417,13 @@ void Utils::parse(const char *encoding, int &ptr, Field &field, int &endbit, int
 	if (ptr <= 0) return;
 	--ptr;
 	if (encoding[ptr] == ',') --ptr;
-	assert (encoding[ptr] == ']');
+	nvDebugCheck (encoding[ptr] == ']');
 	--ptr;
 	endbit = 0;
 	int scale = 1;
 	while (encoding[ptr] != ':' && encoding[ptr] != '[')
 	{
-		assert(encoding[ptr] >= '0' && encoding[ptr] <= '9');
+		nvDebugCheck(encoding[ptr] >= '0' && encoding[ptr] <= '9');
 		endbit += (encoding[ptr--] - '0') * scale;
 		scale *= 10;
 	}
@@ -437,7 +435,7 @@ void Utils::parse(const char *encoding, int &ptr, Field &field, int &endbit, int
 		ptr--;
 		while (encoding[ptr] != '[')
 		{
-			assert(encoding[ptr] >= '0' && encoding[ptr] <= '9');
+			nvDebugCheck(encoding[ptr] >= '0' && encoding[ptr] <= '9');
 			startbit += (encoding[ptr--] - '0') * scale;
 			scale *= 10;
 		}
@@ -448,13 +446,13 @@ void Utils::parse(const char *encoding, int &ptr, Field &field, int &endbit, int
 	else if (encoding[ptr] == 'd')	field = FIELD_D;
 	else {
 		// it's wxyz
-		assert (encoding[ptr] >= 'w' && encoding[ptr] <= 'z');
+		nvDebugCheck (encoding[ptr] >= 'w' && encoding[ptr] <= 'z');
 		int foo = encoding[ptr--] - 'w';
 		// now it is r g or b
 		if (encoding[ptr] == 'r')		foo += 10;
 		else if (encoding[ptr] == 'g')	foo += 20;
 		else if (encoding[ptr] == 'b')	foo += 30;
-		else assert(0);
+		else nvDebugCheck(0);
 		field = (Field) foo;
 	}
 }

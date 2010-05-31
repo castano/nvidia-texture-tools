@@ -9,19 +9,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 */
-
+#pragma once
 #ifndef _TILE_H
 #define _TILE_H
 
-//#include <ImfArray.h>
-//#include <ImfRgba.h>
-//#include <half.h>
-#include <math.h>
-#include "nvmath/Vector.h"
-
 #include "utils.h"
 
-#define	DBL_MAX	(1.0e37)		// doesn't have to be really dblmax, just bigger than any possible squared error
+#include "nvmath/Vector.h"
+
+#include <math.h>
+
 
 //#define	USE_IMPORTANCE_MAP	1		// define this if you want to increase importance of some pixels in tile
 class Tile
@@ -81,32 +78,6 @@ public:
 	Vector3 data[TILE_H][TILE_W];
 	float importance_map[TILE_H][TILE_W];
 	int	size_x, size_y;			// actual size of tile
-
-	// pixels -> tile
-	/*void inline insert(const Array2D<Rgba> &pixels, int x, int y)
-	{
-		for (int y0=0; y0<size_y; ++y0)
-		for (int x0=0; x0<size_x; ++x0)
-		{
-			data[y0][x0].x = half2float((pixels[y+y0][x+x0]).r);
-			data[y0][x0].y = half2float((pixels[y+y0][x+x0]).g);
-			data[y0][x0].z = half2float((pixels[y+y0][x+x0]).b);
-		}
-		generate_importance_map();
-	}
-
-	// tile -> pixels
-	void inline extract(Array2D<Rgba> &pixels, int x, int y)	
-	{
-		for (int y0=0; y0<size_y; ++y0)
-		for (int x0=0; x0<size_x; ++x0)
-		{
-			pixels[y+y0][x+x0].r = float2half(data[y0][x0].x);
-			pixels[y+y0][x+x0].g = float2half(data[y0][x0].y);
-			pixels[y+y0][x+x0].b = float2half(data[y0][x0].z);
-			pixels[y+y0][x+x0].a = 0;		// set it to a known value
-		}
-	}*/
 };
 
-#endif
+#endif // _TILE_H

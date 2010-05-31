@@ -20,7 +20,6 @@ See the License for the specific language governing permissions and limitations 
 
 #include "nvmath/Fitting.h"
 
-#include <assert.h>
 #include <string.h> // strlen
 #include <float.h> // FLT_MAX
 
@@ -64,10 +63,10 @@ struct Pattern
 
 static Pattern patterns[NPATTERNS] =
 {
-	{{{16, 4}, {16, 4}, {16, 4}}, 1, 0x0f, 5, "bw[10],bw[11],bw[12],bw[13],bw[14],bw[15],bx[3:0],gw[10],gw[11],gw[12],gw[13],gw[14],gw[15],gx[3:0],rw[10],rw[11],rw[12],rw[13],rw[14],rw[15],rx[3:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
-	{{{12, 8}, {12, 8}, {12, 8}}, 1, 0x0b, 5, "bw[10],bw[11],bx[7:0],gw[10],gw[11],gx[7:0],rw[10],rw[11],rx[7:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
-	{{{11, 9}, {11, 9}, {11, 9}}, 1, 0x07, 5, "bw[10],bx[8:0],gw[10],gx[8:0],rw[10],rx[8:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
-	{{{10,10}, {10,10}, {10,10}}, 0, 0x03, 5, "bx[9:0],gx[9:0],rx[9:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]"},
+	16,4,  16,4,  16,4,   1, 0x0f, 5, "bw[10],bw[11],bw[12],bw[13],bw[14],bw[15],bx[3:0],gw[10],gw[11],gw[12],gw[13],gw[14],gw[15],gx[3:0],rw[10],rw[11],rw[12],rw[13],rw[14],rw[15],rx[3:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
+	12,8,  12,8,  12,8,   1, 0x0b, 5, "bw[10],bw[11],bx[7:0],gw[10],gw[11],gx[7:0],rw[10],rw[11],rx[7:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
+	11,9,  11,9,  11,9,   1, 0x07, 5, "bw[10],bx[8:0],gw[10],gx[8:0],rw[10],rx[8:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
+	10,10, 10,10, 10,10,  0, 0x03, 5, "bx[9:0],gx[9:0],rx[9:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
 };
 
 // mapping of mode to the corresponding index in pattern
@@ -159,7 +158,7 @@ static void swap_indices(IntEndpts endpts[NREGIONS_ONE], int indices[Tile::TILE_
 	{
 		int x = index_positions[region] & 3;
 		int y = (index_positions[region] >> 2) & 3;
-		assert(REGION(x,y,shapeindex) == region);		// double check the table
+		nvDebugCheck(REGION(x,y,shapeindex) == region);		// double check the table
 		if (indices[y][x] & HIGH_INDEXBIT)
 		{
 			// high bit is set, swap the endpts and indices for this region
@@ -221,7 +220,7 @@ static void write_header(const ComprEndpts endpts[NREGIONS_ONE], const Pattern &
 		case FIELD_GZ:
 		case FIELD_BY:
 		case FIELD_BZ:
-		default: assert(0);
+		default: nvAssume(0);
 		}
 	}
 }
@@ -235,8 +234,8 @@ static void read_header(Bits &in, ComprEndpts endpts[NREGIONS_ONE], Pattern &p)
 
 	int pat_index = mode_to_pat[mode];
 
-	assert (pat_index >= 0 && pat_index < NPATTERNS);
-	assert (in.getptr() == patterns[pat_index].modebits);
+	nvDebugCheck (pat_index >= 0 && pat_index < NPATTERNS);
+	nvDebugCheck (in.getptr() == patterns[pat_index].modebits);
 
 	p = patterns[pat_index];
 
@@ -276,11 +275,11 @@ static void read_header(Bits &in, ComprEndpts endpts[NREGIONS_ONE], Pattern &p)
 		case FIELD_GZ:	
 		case FIELD_BY:	
 		case FIELD_BZ:	
-		default: assert(0);
+		default: nvAssume(0);
 		}
 	}
 
-	assert (in.getptr() == 128 - 63);
+	nvDebugCheck (in.getptr() == 128 - 63);
 
 	endpts[0].A[0] = rw; endpts[0].B[0] = rx;
 	endpts[0].A[1] = gw; endpts[0].B[1] = gx;
@@ -307,7 +306,7 @@ static void emit_block(const ComprEndpts endpts[NREGIONS_ONE], int shapeindex, c
 
 	write_indices(indices, shapeindex, out);
 
-	assert(out.getptr() == ZOH::BITSIZE);
+	nvDebugCheck(out.getptr() == ZOH::BITSIZE);
 }
 
 static void generate_palette_quantized(const IntEndpts &endpts, int prec, Vector3 palette[NINDICES])
@@ -371,7 +370,7 @@ void ZOH::decompressone(const char *block, Tile &t)
 
 	read_indices(in, shapeindex, indices);
 
-	assert(in.getptr() == ZOH::BITSIZE);
+	nvDebugCheck(in.getptr() == ZOH::BITSIZE);
 
 	// lookup
 	for (int y = 0; y < Tile::TILE_H; y++)
@@ -627,7 +626,7 @@ double ZOH::refineone(const Tile &tile, int shapeindex_best, const FltEndpts end
 	for (int sp = 0; sp < NPATTERNS; ++sp)
 	{
 		// precisions for all channels need to be the same
-		for (int i=1; i<NCHANNELS; ++i) assert (patterns[sp].chan[0].prec[0] == patterns[sp].chan[i].prec[0]);
+		for (int i=1; i<NCHANNELS; ++i) nvDebugCheck (patterns[sp].chan[0].prec[0] == patterns[sp].chan[i].prec[0]);
 
 		quantize_endpts(endpts, patterns[sp].chan[0].prec[0], orig_endpts);
 		assign_indices(tile, shapeindex_best, orig_endpts, patterns[sp].chan[0].prec[0], orig_indices, orig_err);

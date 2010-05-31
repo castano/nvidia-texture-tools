@@ -25,7 +25,7 @@ See the License for the specific language governing permissions and limitations 
 		transform and get bit delta.
 		if the bit delta fits, exit
 	if we ended up with no candidates somehow, choose the tail set of EC candidates and retry. this should happen hardly ever.
-		add a state variable to assert we only do this once.
+		add a state variable to nvDebugCheck we only do this once.
 	convert to bit stream.
 	return the error.
 
@@ -44,7 +44,6 @@ See the License for the specific language governing permissions and limitations 
 
 #include "nvmath/Fitting.h"
 
-#include <assert.h>
 #include <string.h> // strlen
 #include <float.h> // FLT_MAX
 
@@ -213,7 +212,7 @@ static void swap_indices(IntEndpts endpts[NREGIONS_TWO], int indices[Tile::TILE_
 
 		int x = POS_TO_X(position);
 		int y = POS_TO_Y(position);
-		assert(REGION(x,y,shapeindex) == region);		// double check the table
+		nvDebugCheck(REGION(x,y,shapeindex) == region);		// double check the table
 		if (indices[y][x] & HIGH_INDEXBIT)
 		{
 			// high bit is set, swap the endpts and indices for this region
@@ -278,7 +277,7 @@ static void write_header(const ComprEndpts endpts[NREGIONS_TWO], int shapeindex,
 		case FIELD_BX:	out.write(bx >> endbit, len); break;
 		case FIELD_BY:	out.write(by >> endbit, len); break;
 		case FIELD_BZ:	out.write(bz >> endbit, len); break;
-		default: assert(0);
+		default: nvAssume(0);
 		}
 	}
 }
@@ -295,8 +294,8 @@ static bool read_header(Bits &in, ComprEndpts endpts[NREGIONS_TWO], int &shapein
 	if (pat_index == -2)
 		return false;		// reserved mode found
 
-	assert (pat_index >= 0 && pat_index < NPATTERNS);
-	assert (in.getptr() == patterns[pat_index].modebits);
+	nvDebugCheck (pat_index >= 0 && pat_index < NPATTERNS);
+	nvDebugCheck (in.getptr() == patterns[pat_index].modebits);
 
 	p = patterns[pat_index];
 
@@ -335,11 +334,11 @@ static bool read_header(Bits &in, ComprEndpts endpts[NREGIONS_TWO], int &shapein
 		case FIELD_BX:	bx |= in.read(len) << endbit; break;
 		case FIELD_BY:	by |= in.read(len) << endbit; break;
 		case FIELD_BZ:	bz |= in.read(len) << endbit; break;
-		default: assert(0);
+		default: nvAssume(0);
 		}
 	}
 
-	assert (in.getptr() == 128 - 46);
+	nvDebugCheck (in.getptr() == 128 - 46);
 
 	shapeindex = d;
 	endpts[0].A[0] = rw; endpts[0].B[0] = rx; endpts[1].A[0] = ry; endpts[1].B[0] = rz;
@@ -378,7 +377,7 @@ static void emit_block(const ComprEndpts compr_endpts[NREGIONS_TWO], int shapein
 
 	write_indices(indices, shapeindex, out);
 
-	assert(out.getptr() == ZOH::BITSIZE);
+	nvDebugCheck(out.getptr() == ZOH::BITSIZE);
 }
 
 static void generate_palette_quantized(const IntEndpts &endpts, int prec, Vector3 palette[NINDICES])
@@ -458,7 +457,7 @@ void ZOH::decompresstwo(const char *block, Tile &t)
 
 	read_indices(in, shapeindex, indices);
 
-	assert(in.getptr() == ZOH::BITSIZE);
+	nvDebugCheck(in.getptr() == ZOH::BITSIZE);
 
 	// lookup
 	for (int y = 0; y < Tile::TILE_H; y++)
@@ -714,7 +713,7 @@ double ZOH::refinetwo(const Tile &tile, int shapeindex_best, const FltEndpts end
 	for (int sp = 0; sp < NPATTERNS; ++sp)
 	{
 		// precisions for all channels need to be the same
-		for (int i=1; i<NCHANNELS; ++i) assert (patterns[sp].chan[0].prec[0] == patterns[sp].chan[i].prec[0]);
+		for (int i=1; i<NCHANNELS; ++i) nvDebugCheck (patterns[sp].chan[0].prec[0] == patterns[sp].chan[i].prec[0]);
 
 		quantize_endpts(endpts, patterns[sp].chan[0].prec[0], orig_endpts);
 		assign_indices(tile, shapeindex_best, orig_endpts, patterns[sp].chan[0].prec[0], orig_indices, orig_err);
