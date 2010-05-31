@@ -40,6 +40,7 @@
 #include "nvimage/ColorBlock.h"
 #include "nvimage/BlockDXT.h"
 
+#include <new> // placement new
 
 // s3_quant
 #if defined(HAVE_S3QUANT)
@@ -188,25 +189,6 @@ void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
 
 	BlockDXT5 * block = new(output) BlockDXT5;
 	QuickCompress::compressDXT5(rgba, block);
-}
-
-void FastCompressorBC4::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockATI1 * block = new(output) BlockATI1;
-	
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	QuickCompress::compressDXT5A(rgba, &block->alpha);
-}
-
-void FastCompressorBC5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockATI2 * block = new(output) BlockATI2;
-	
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	QuickCompress::compressDXT5A(rgba, &block->x);
-	
-	rgba.swizzle(0, 1, 2, 1); // Copy green to alpha
-	QuickCompress::compressDXT5A(rgba, &block->y);
 }
 
 
@@ -365,27 +347,6 @@ void NormalCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
 		}
 	}
 }
-
-
-void ProductionCompressorBC4::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockATI1 * block = new(output) BlockATI1;
-
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	OptimalCompress::compressDXT5A(rgba, &block->alpha);
-}
-
-void ProductionCompressorBC5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
-{
-	BlockATI2 * block = new(output) BlockATI2;
-	
-	rgba.swizzle(0, 1, 2, 0); // Copy red to alpha
-	OptimalCompress::compressDXT5A(rgba, &block->x);
-	
-	rgba.swizzle(0, 1, 2, 1); // Copy green to alpha
-	OptimalCompress::compressDXT5A(rgba, &block->y);
-}
-
 
 
 #if defined(HAVE_S3QUANT)

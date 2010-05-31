@@ -21,10 +21,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_COMPRESSORRGBE_H
-#define NV_TT_COMPRESSORRGBE_H
+#ifndef NVTT_COMPRESSORRGBE_H
+#define NVTT_COMPRESSORRGBE_H
 
-#include "nvtt.h"
 #include "Compressor.h"
 
 namespace nv
@@ -37,4 +36,4 @@ namespace nv
 } // nv namespace
 
 
-#endif // NV_TT_COMPRESSORRGBE_H
+#endif // NVTT_COMPRESSORRGBE_H

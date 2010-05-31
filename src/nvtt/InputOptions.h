@@ -21,8 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_INPUTOPTIONS_H
-#define NV_TT_INPUTOPTIONS_H
+#ifndef NVTT_INPUTOPTIONS_H
+#define NVTT_INPUTOPTIONS_H
 
 #include <nvcore/Ptr.h>
 #include <nvmath/Vector.h>
@@ -120,4 +120,4 @@ namespace nvtt
 
 } // nvtt namespace
 
-#endif // NV_TT_INPUTOPTIONS_H
+#endif // NVTT_INPUTOPTIONS_H

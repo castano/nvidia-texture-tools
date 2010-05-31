@@ -45,6 +45,8 @@
 #include "TexImage.h"
 
 #include "CompressorDXT.h"
+#include "CompressorDX10.h"
+#include "CompressorDX11.h"
 #include "CompressorRGB.h"
 #include "CompressorRGBE.h"
 #include "cuda/CudaUtils.h"
