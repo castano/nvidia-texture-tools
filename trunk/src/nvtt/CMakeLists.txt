@@ -1,6 +1,8 @@
 PROJECT(nvtt)
 
 ADD_SUBDIRECTORY(squish)
+ADD_SUBDIRECTORY(bc6h)
+#ADD_SUBDIRECTORY(bc7)
 
 SET(NVTT_SRCS
 	nvtt.h 
@@ -12,6 +14,10 @@ SET(NVTT_SRCS
 	Compressor.h
 	CompressorDXT.h
 	CompressorDXT.cpp
+	CompressorDX10.h
+	CompressorDX10.cpp
+	CompressorDX11.h
+	CompressorDX11.cpp
 	CompressorRGB.h
 	CompressorRGB.cpp
 	CompressorRGBE.h

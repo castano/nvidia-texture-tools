@@ -21,11 +21,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_COMPRESSORDXT_H
-#define NV_TT_COMPRESSORDXT_H
+#ifndef NVTT_COMPRESSORDXT_H
+#define NVTT_COMPRESSORDXT_H
 
-#include <nvcore/nvcore.h>
-#include "nvtt.h"
 #include "Compressor.h"
 
 namespace nv
@@ -72,18 +70,6 @@ namespace nv
 		virtual uint blockSize() const { return 16; }
 	};
 
-	struct FastCompressorBC4 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
-
-	struct FastCompressorBC5 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
-
 
 	// Normal CPU compressors.
 	struct NormalCompressorDXT1 : public FixedBlockCompressor
@@ -111,20 +97,6 @@ namespace nv
 	};
 
 	struct NormalCompressorDXT5n : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
-
-
-	// Production CPU compressors.
-	struct ProductionCompressorBC4 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
-
-	struct ProductionCompressorBC5 : public FixedBlockCompressor
 	{
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 16; }
@@ -176,4 +148,4 @@ namespace nv
 } // nv namespace
 
 
-#endif // NV_TT_COMPRESSORDXT_H
+#endif // NVTT_COMPRESSORDXT_H

@@ -21,19 +21,26 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NVTT_COMPRESSORRGB_H
-#define NVTT_COMPRESSORRGB_H
+#ifndef NVTT_COMPRESSORDX11_H
+#define NVTT_COMPRESSORDX11_H
 
-#include "Compressor.h"
+#include "CompressorDXT.h"
 
 namespace nv
 {
-    struct PixelFormatConverter : public CompressorInterface
+	struct CompressorBC6 : public FixedBlockCompressor
 	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+		virtual uint blockSize() const { return 16; }
 	};
 
+    struct CompressorBC7 : public FixedBlockCompressor
+	{
+		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+		virtual uint blockSize() const { return 16; }
+	};
+	
 } // nv namespace
 
 
-#endif // NVTT_COMPRESSORRGB_H
+#endif // NVTT_COMPRESSORDX11_H

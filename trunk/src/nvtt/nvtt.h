@@ -22,8 +22,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#ifndef NV_TT_H
-#define NV_TT_H
+#ifndef NVTT_H
+#define NVTT_H
 
 // Function linkage
 #if NVTT_SHARED
@@ -474,4 +474,4 @@ namespace nvtt
 	
 } // nvtt namespace
 
-#endif // NV_TT_H
+#endif // NVTT_H

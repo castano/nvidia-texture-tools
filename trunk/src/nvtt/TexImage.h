@@ -21,8 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NV_TT_TEXIMAGE_H
-#define NV_TT_TEXIMAGE_H
+#ifndef NVTT_TEXIMAGE_H
+#define NVTT_TEXIMAGE_H
 
 #include "nvtt.h"
 
@@ -78,4 +78,4 @@ namespace nvtt
 } // nvtt namespace
 
 
-#endif // NV_TT_TEXIMAGE_H
+#endif // NVTT_TEXIMAGE_H
