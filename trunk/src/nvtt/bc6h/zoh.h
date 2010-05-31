@@ -9,15 +9,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 See the License for the specific language governing permissions and limitations under the License.
 */
-
+#pragma once
 #ifndef _ZOH_H
 #define _ZOH_H
 
-//#include <string>
-
 #include "tile.h"
-
-//using namespace std;
 
 // UNUSED ZOH MODES are 0x13, 0x17, 0x1b, 0x1f
 
@@ -39,14 +35,14 @@ struct FltEndpts
 
 struct IntEndpts
 {
-	int		A[NCHANNELS];
-	int		B[NCHANNELS];
+	int A[NCHANNELS];
+	int B[NCHANNELS];
 };
 
 struct ComprEndpts
 {
-	unsigned int	A[NCHANNELS];
-	unsigned int	B[NCHANNELS];
+	uint A[NCHANNELS];
+	uint B[NCHANNELS];
 };
 
 class ZOH
@@ -56,8 +52,6 @@ public:
 	static const int BITSIZE=128;
 	static Format FORMAT;
 
-	//static void compress(string inf, string zohf);
-	//static void decompress(string zohf, string outf);
 	static void compress(const Tile &t, char *block);
 	static void decompress(const char *block, Tile &t);
 
@@ -75,4 +69,4 @@ public:
 	static bool isone(const char *block);
 };
 
-#endif
+#endif // _ZOH_H
