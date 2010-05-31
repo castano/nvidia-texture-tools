@@ -1,12 +1,12 @@
-// This code is in the public domain -- icastano@gmail.com
+// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #pragma once
 #ifndef NV_MATH_FITTING_H
 #define NV_MATH_FITTING_H
 
-#include <nvmath/nvmath.h>
-#include <nvmath/Vector.h>
-#include <nvmath/Plane.h>
+#include "nvmath/nvmath.h"
+#include "nvmath/Vector.h"
+#include "nvmath/Plane.h"
 
 namespace nv
 {

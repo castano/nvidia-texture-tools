@@ -1,4 +1,4 @@
-// This code is in the public domain -- icastano@gmail.com
+// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "Fitting.h"
 #include "nvcore/Utils.h" // max, swap
@@ -8,6 +8,24 @@
 using namespace nv;
 
 // @@ Move to EigenSolver.h
+
+// @@ We should be able to do something cheaper...
+static Vector3 estimatePrincipleComponent(const float * __restrict matrix)
+{
+	const Vector3 row0(matrix[0], matrix[1], matrix[2]);
+	const Vector3 row1(matrix[1], matrix[3], matrix[4]);
+	const Vector3 row2(matrix[2], matrix[4], matrix[5]);
+
+	float r0 = lengthSquared(row0);
+	float r1 = lengthSquared(row1);
+	float r2 = lengthSquared(row2);
+
+	if (r0 > r1 && r0 > r2) return row0;
+	if (r1 > r2) return row1;
+	return row2;
+}
+
+
 static inline Vector3 firstEigenVector_PowerMethod(const float *__restrict matrix)
 {
     if (matrix[0] == 0 && matrix[3] == 0 && matrix[5] == 0)
@@ -15,9 +33,9 @@ static inline Vector3 firstEigenVector_PowerMethod(const float *__restrict matri
         return Vector3(zero);
     }
 
-    const int NUM = 8;
+    Vector3 v = estimatePrincipleComponent(matrix);
 
-    Vector3 v(1, 1, 1);
+    const int NUM = 8;
     for (int i = 0; i < NUM; i++)
     {
         float x = v.x * matrix[0] + v.y * matrix[1] + v.z * matrix[2];
