@@ -37,7 +37,7 @@
 using namespace nv;
 
 #if !defined(MAKEFOURCC)
-#	define MAKEFOURCC(ch0, ch1, ch2, ch3) \
+#define MAKEFOURCC(ch0, ch1, ch2, ch3) \
     (uint(uint8(ch0)) | (uint(uint8(ch1)) << 8) | \
     (uint(uint8(ch2)) << 16) | (uint(uint8(ch3)) << 24 ))
 #endif
@@ -129,7 +129,7 @@ namespace
     static const uint DDPF_PALETTEINDEXED8 = 0x00000020U;
     static const uint DDPF_LUMINANCE = 0x00020000U;
     static const uint DDPF_ALPHAPREMULT = 0x00008000U;
-    static const uint DDPF_NORMAL = 0x80000000U;	// @@ Custom nv flag.
+    static const uint DDPF_NORMAL = 0x80000000U;  // @@ Custom nv flag.
 
     // DX10 formats.
     enum DXGI_FORMAT
@@ -410,10 +410,10 @@ namespace nv
         s.serialize(&pf.gmask, sizeof(pf.gmask));
         s.serialize(&pf.bmask, sizeof(pf.bmask));
         s.serialize(&pf.amask, sizeof(pf.amask));
-        //	s << pf.rmask;
-        //	s << pf.gmask;
-        //	s << pf.bmask;
-        //	s << pf.amask;
+        // s << pf.rmask;
+        // s << pf.gmask;
+        // s << pf.bmask;
+        // s << pf.amask;
         return s;
     }
 
@@ -538,7 +538,7 @@ DDSHeader::DDSHeader()
 
     // Store version information on the reserved header attributes.
     this->reserved[9] = MAKEFOURCC('N', 'V', 'T', 'T');
-    this->reserved[10] = (2 << 16) | (1 << 8) | (0);	// major.minor.revision
+    this->reserved[10] = (2 << 16) | (1 << 8) | (0); // major.minor.revision
 
     this->pf.size = 32;
     this->pf.flags = 0;
@@ -686,7 +686,7 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
         if (gmask == 0 && bmask == 0)
         {
             this->pf.flags = DDPF_LUMINANCE;
-		}
+        }
         else
         {
             this->pf.flags = DDPF_RGB;
