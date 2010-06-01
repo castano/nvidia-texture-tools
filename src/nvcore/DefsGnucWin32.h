@@ -2,6 +2,8 @@
 #error "Do not include this file directly."
 #endif
 
+#include <cstddef> // size_t, NULL
+
 // Function linkage
 #define DLL_IMPORT	__declspec(dllimport)
 #define DLL_EXPORT	__declspec(dllexport)

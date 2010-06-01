@@ -154,9 +154,6 @@
 /// Null index. @@ Move this somewhere else... This could have collisions with other definitions!
 #define NIL uint(~0)
 
-// @@ Move this to DefsGnuc?
-#include <cstddef> // size_t, NULL
-
 /// Null pointer.
 #ifndef NULL
 #define NULL 0

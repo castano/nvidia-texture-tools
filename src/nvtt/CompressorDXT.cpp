@@ -107,11 +107,11 @@ void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 
 				ColorBlock rgba;
 				if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-					rgba.init(w, h, (uint *)data, x, y);
+					rgba.init(w, h, (const uint *)data, x, y);
 				}
 				else {
 					nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
-					rgba.init(w, h, (float *)data, x, y);
+					rgba.init(w, h, (const float *)data, x, y);
 				}
 
 				compressBlock(rgba, alphaMode, compressionOptions, mem);

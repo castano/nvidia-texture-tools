@@ -542,7 +542,7 @@ const char * Path::extension(const char * str)
     l = length = (int)strlen( str );
     while (length > 0 && str[length] != '.') {
         length--;
-        if (str[length] != '\\' || str[length] != '/') {
+        if (str[length] == '\\' || str[length] == '/') {
             return &str[l]; // no extension
         }
     }

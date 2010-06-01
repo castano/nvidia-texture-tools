@@ -23,15 +23,15 @@
 
 #include "TexImage.h"
 
-#include <nvmath/Vector.h>
-#include <nvmath/Matrix.h>
-#include <nvmath/Color.h>
+#include "nvmath/Vector.h"
+#include "nvmath/Matrix.h"
+#include "nvmath/Color.h"
 
-#include <nvimage/Filter.h>
-#include <nvimage/ImageIO.h>
-#include <nvimage/NormalMap.h>
-#include <nvimage/BlockDXT.h>
-#include <nvimage/ColorBlock.h>
+#include "nvimage/Filter.h"
+#include "nvimage/ImageIO.h"
+#include "nvimage/NormalMap.h"
+#include "nvimage/BlockDXT.h"
+#include "nvimage/ColorBlock.h"
 
 #include <float.h>
 
@@ -128,6 +128,7 @@ void TexImage::detach()
 {
 	if (m->refCount() > 1)
 	{
+        m->release();
 		m = new TexImage::Private(*m);
 		m->addRef();
 		nvDebugCheck(m->refCount() == 1);
@@ -280,6 +281,8 @@ bool TexImage::load(const char * fileName)
 	}
 
 	detach();
+
+#pragma message(NV_FILE_LINE "TODO: Make sure that floating point image has 4 channels.")
 
 	m->imageArray.resize(1);
 	m->imageArray[0] = img.release();
@@ -674,19 +677,21 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 
 	foreach (i, m->imageArray)
 	{
-		if (m->imageArray[i] == NULL) continue;
+        FloatImage * img = m->imageArray[i];
+
+		if (img == NULL) continue;
 
 		if (m->alphaMode == AlphaMode_Transparency)
 		{
 			if (filter == MipmapFilter_Box)
 			{
 				BoxFilter filter;
-				m->imageArray[i]->downSample(filter, wrapMode, 3);
+				img = img->downSample(filter, wrapMode, 3);
 			}
 			else if (filter == MipmapFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i]->downSample(filter, wrapMode, 3);
+				img = img->downSample(filter, wrapMode, 3);
 			}
 			else if (filter == MipmapFilter_Kaiser)
 			{
@@ -694,19 +699,19 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i]->downSample(filter, wrapMode, 3);
+				img = img->downSample(filter, wrapMode, 3);
 			}
 		}
 		else
 		{
 			if (filter == MipmapFilter_Box)
 			{
-				m->imageArray[i]->fastDownSample();
+				img = img->fastDownSample();
 			}
 			else if (filter == MipmapFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i]->downSample(filter, wrapMode);
+				img = img->downSample(filter, wrapMode);
 			}
 			else //if (filter == MipmapFilter_Kaiser)
 			{
@@ -714,9 +719,12 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i]->downSample(filter, wrapMode);
+				img = img->downSample(filter, wrapMode);
 			}
 		}
+
+        delete m->imageArray[i];
+        m->imageArray[i] = img;
 	}
 
 	return true;

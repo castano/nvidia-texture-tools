@@ -48,7 +48,7 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_VERSION 201
+#define NVTT_VERSION 020100
 
 #define NVTT_FORBID_COPY(Class) \
 	private: \

@@ -203,10 +203,15 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 
 	const char * extension = Path::extension(fileName);
 
+    FloatImage * floatImage = NULL;
+    
+    const uint spos = s.tell(); // Save stream position.
+
+    // Try to load as a floating point image.
 #if defined(HAVE_FREEIMAGE)
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
 	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
-		return loadFloatFreeImage(fif, s);
+		floatImage = loadFloatFreeImage(fif, s);
 	}
 #else // defined(HAVE_FREEIMAGE)
 #pragma message(NV_FILE_LINE "TODO: Load TIFF and EXR files from stream.")
@@ -222,7 +227,17 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 #endif
 #endif // defined(HAVE_FREEIMAGE)
 
-	return NULL;
+    // Try to load as an RGBA8 image and convert to float.
+    if (floatImage == NULL) {
+        s.seek(spos); // Restore stream position.
+
+        AutoPtr<Image> img = load(fileName, s);
+        if (img != NULL) {
+            floatImage = new FloatImage(img.ptr());
+        }
+    }
+
+	return floatImage;
 }
 
 bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage * fimage, uint baseComponent, uint componentCount)
@@ -357,19 +372,18 @@ Image * nv::ImageIO::loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 	const int w = FreeImage_GetWidth(bitmap);
 	const int h = FreeImage_GetHeight(bitmap);
 
-	if (FreeImage_GetImageType(bitmap) == FIT_BITMAP)
-	{
-		if (FreeImage_GetBPP(bitmap) != 32)
-		{
-			FIBITMAP * tmp = FreeImage_ConvertTo32Bits(bitmap);
-			FreeImage_Unload(bitmap);
-			bitmap = tmp;
-		}
-	}
-	else
+	if (FreeImage_GetImageType(bitmap) != FIT_BITMAP)
 	{
 		// @@ Use tone mapping?
 		FIBITMAP * tmp = FreeImage_ConvertToType(bitmap, FIT_BITMAP, true);
+		FreeImage_Unload(bitmap);
+		bitmap = tmp;
+	}
+
+    nvDebugCheck(FreeImage_GetImageType(bitmap) == FIT_BITMAP);
+	if (FreeImage_GetBPP(bitmap) != 32)
+	{
+		FIBITMAP * tmp = FreeImage_ConvertTo32Bits(bitmap);
 		FreeImage_Unload(bitmap);
 		bitmap = tmp;
 	}
