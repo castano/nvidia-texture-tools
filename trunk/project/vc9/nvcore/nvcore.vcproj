@@ -341,6 +341,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvcore\HashMap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvcore\Library.h"
 				>
 			</File>
