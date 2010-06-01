@@ -763,6 +763,14 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDX10.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDX11.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\CompressorDXT.cpp"
 				>
 			</File>
@@ -855,10 +863,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvmath\Half.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
 				>
 			</File>
@@ -905,6 +909,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDX10.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDX11.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\CompressorDXT.h"
 				>
 			</File>
@@ -930,10 +942,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\cuda\CudaUtils.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvmath\Half.h"
 				>
 			</File>
 			<File

@@ -309,6 +309,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvmath\Half.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvimage\Image.cpp"
 				>
 			</File>
@@ -352,6 +356,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvimage\FloatImage.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvmath\Half.h"
 				>
 			</File>
 			<File

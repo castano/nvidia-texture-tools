@@ -7,6 +7,10 @@
 //#cmakedefine HAVE_EXECINFO_H
 #define HAVE_MALLOC_H
 
+#if !defined(_DEBUG)
+#define HAVE_OPENMP
+#endif
+
 #if !defined(_M_X64)
 #define HAVE_FREEIMAGE
 //#define HAVE_PNG
