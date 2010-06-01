@@ -406,10 +406,14 @@ namespace nv
 		s << pf.flags;
 		s << pf.fourcc;
 		s << pf.bitcount;
-		s << pf.rmask;
-		s << pf.gmask;
-		s << pf.bmask;
-		s << pf.amask;
+        s.serialize(&pf.rmask, sizeof(pf.rmask));
+        s.serialize(&pf.gmask, sizeof(pf.gmask));
+        s.serialize(&pf.bmask, sizeof(pf.bmask));
+        s.serialize(&pf.amask, sizeof(pf.amask));
+        //	s << pf.rmask;
+        //	s << pf.gmask;
+        //	s << pf.bmask;
+        //	s << pf.amask;
 		return s;
 	}
 
@@ -445,7 +449,9 @@ namespace nv
 		s << header.pitch;
 		s << header.depth;
 		s << header.mipmapcount;
-		s.serialize(header.reserved, 11 * sizeof(uint));
+        for (int i = 0; i < 11; i++) {
+            s << header.reserved[i];
+        }
 		s << header.pf;
 		s << header.caps;
 		s << header.notused;
@@ -569,8 +575,8 @@ void DDSHeader::setHeight(uint h)
 
 void DDSHeader::setDepth(uint d)
 {
-	this->flags |= DDSD_DEPTH;
-	this->height = d;
+    this->flags |= DDSD_DEPTH;
+    this->depth = d;
 }
 
 void DDSHeader::setMipmapCount(uint count)
@@ -598,14 +604,16 @@ void DDSHeader::setMipmapCount(uint count)
 
 void DDSHeader::setTexture2D()
 {
-	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+    this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+    this->header10.arraySize = 1;
 }
 
 void DDSHeader::setTexture3D()
 {
-	this->caps.caps2 = DDSCAPS2_VOLUME;
-	
-	this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+    this->caps.caps2 = DDSCAPS2_VOLUME;
+
+    this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+    this->header10.arraySize = 1;
 }
 
 void DDSHeader::setTextureCube()
@@ -662,17 +670,25 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 	nvCheck((gmask & amask) == 0);
 	nvCheck((bmask & amask) == 0);
 
-	if (rmask > 0 && gmask == 0 && bmask == 0)
-	{
-		this->pf.flags = DDPF_LUMINANCE;
-	}
-	else
-	{
-		this->pf.flags = DDPF_RGB;
-	}
-	if (amask != 0) {
-		this->pf.flags |= DDPF_ALPHAPIXELS;
-	}
+    if (rmask != 0 || gmask != 0 || bmask != 0)
+    {
+		if (gmask == 0 && bmask == 0)
+		{
+			this->pf.flags = DDPF_LUMINANCE;
+		}
+		else
+		{
+			this->pf.flags = DDPF_RGB;
+		}
+
+        if (amask != 0) {
+            this->pf.flags |= DDPF_ALPHAPIXELS;
+        }
+    }
+    else if (amask != 0)
+    {
+        this->pf.flags |= DDPF_ALPHA;
+    }
 
 	if (bitcount == 0)
 	{
@@ -1248,7 +1264,7 @@ void DirectDrawSurface::printInfo() const
 	printf("Pixel Format:\n");
 	printf("\tFlags: 0x%.8X\n", header.pf.flags);
 	if (header.pf.flags & DDPF_RGB) printf("\t\tDDPF_RGB\n");
-	if (header.pf.flags & DDPF_LUMINANCE) printf("\t\DDPF_LUMINANCE\n");
+	if (header.pf.flags & DDPF_LUMINANCE) printf("\t\tDDPF_LUMINANCE\n");
 	if (header.pf.flags & DDPF_FOURCC) printf("\t\tDDPF_FOURCC\n");
 	if (header.pf.flags & DDPF_ALPHAPIXELS) printf("\t\tDDPF_ALPHAPIXELS\n");
 	if (header.pf.flags & DDPF_ALPHA) printf("\t\tDDPF_ALPHA\n");
