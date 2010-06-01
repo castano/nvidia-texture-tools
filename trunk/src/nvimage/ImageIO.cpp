@@ -669,7 +669,7 @@ Image * nv::ImageIO::loadTGA(Stream & s)
 	// Read palette
 	uint8 palette[768];
 	if( pal ) {
-		nvDebugCheck(tga.colormap_length < 256);
+		nvDebugCheck(tga.colormap_length <= 256);
 		s.serialize(palette, 3 * tga.colormap_length);
 	}
 
