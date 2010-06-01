@@ -5,6 +5,101 @@ What's New for FreeImage
 ! : changed
 + : added
 
+December 22, 2009 - 3.13.1
+! FreeImage now uses libTIFF 3.9.2
+! FreeImage now uses OpenJPEG 1.3.0 (SVN patch 2009-11-05)
+! FreeImage now uses libPNG 1.2.41
++ [Berend Engelbrecht] added loading of Exif orientation tag in TIFF plugin
++ [Herve Drolon] added decoding support for the old and outdated JPEG-in-TIFF 6.0 format in TIFF plugin
++ [Herve Drolon] added new 'non standard' Exif tags
++ [Herve Drolon] added new Exif makernote tags
+* [Herve Drolon] fixed TIF plugin crashing on a malformed TIFF-JPEG compressed image
+* [Herve Drolon] fixed MNG plugin crashing on some old mng images
+* [Herve Drolon] fixed handling of 2-bit grayscale transparent PNG
+* [Herve Drolon] fixed a bug with the compression rate of JP2 and J2K encoders
+* [zestony] fixed TIF plugin with the '65535 bytes' pitch size limitation on saving
+* [Herve Drolon] fixed handling of PSD files with a non zero file header reserved member
+* [Lucian Sabo] PNG plugin now keep transparency when saving 1- or 4-bit transparent images
+
+September 28th, 2009 - 3.13.0
+! FreeImage now uses LibJPEG 7
+! FreeImage now uses LibRaw-Lite 0.7.2
+! FreeImage now uses libPNG 1.2.40
+! FreeImage now uses libTIFF 3.9.1
+! FreeImage_RotateClassic is deprecated (use FreeImage_Rotate instead)
++ [Herve Drolon] added support for all Photoshop supported color modes to PSD plugin
++ [Herve Drolon] added support for 32-bit to JNG/MNG plugin
++ [Amir Ebrahimi] added loading support for the PICT format
++ [Herve Drolon] added loading support for camera RAW formats (using LibRawLite wrapper for dcraw)
++ [Mihail Naydenov] added UNICODE functions FreeImage_JPEGTransformU and FreeImage_JPEGCropU
++ [Carsten Klein] added FreeImage_OpenMultiBitmapFromHandle
++ [Carsten Klein] added FreeImage_FillBackground
++ [Carsten Klein] added FreeImage_EnlargeCanvas
++ [Carsten Klein] added FreeImage_AllocateEx / FreeImage_AllocateExT
++ [Mihail Naydenov/Herve Drolon] added FreeImage_TmoReinhard05Ex
++ [Herve Drolon] added FIT_RGBA16 to FIT_RGBF conversion to FreeImage_ConvertToRGBF  
++ [Herve Drolon] added FreeImage_Rotate (support for most image types, support background color) 
+* [Christian Heimes] fixed function prototypes to use a void argument when no argument exist
+* [Herve Drolon] fixed RGB color ordering on Intel macs
+* [Herve Drolon] FreeImage_RotateClassic now keep transparency when applied to 8-bit images
+* [Herve Drolon] fixed handling of transparency info in FreeImage_Copy
+* [Herve Drolon] fixed a normalization error in FreeImage_GetAdjustColorsLookupTable
+* [Herve Drolon] fixed invalid Exif rotation in PluginJPEG for orientation cases 2 and 4
+* [Mihail Naydenov / Carsten Klein] fixed compilation issues with MinGW32
+* [Mihail Naydenov] improved the loading speed of all targa images
+* [Herve Drolon] FreeImage_TagToString now handles the Exif UserComment tag
+
+April 14th, 2009 - 3.12.0
+! FreeImage now uses libPNG 1.2.35
+! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2009-02-12)
+! FreeImage now uses OpenJPEG 1.3.0 (SVN patch 2008-08-21)
+! [Herve Drolon] FreeImage_CloneMetadata no longer clone the FIMD_ANIMATION metadata (this was causing problems when saving to GIF format)
++ [Herve Drolon] added full support for the PFM format
++ [Herve Drolon] added JPEG_EXIFROTATE load flag to the JPEG plugin
++ [Herve Drolon] added 16-bit RGB(A) and float RGB(A)F support to FreeImage_GetChannel / FreeImage_SetChannel 
++ [Herve Drolon] added src FIT_RGBA16 to dst 32-bit FIT_BITMAP conversion to FreeImage_ConvertToType
+* [Carsten Klein] FreeImage_Copy now copies transparency info, resolution info, ICC profile and metadata
+* [Carsten Klein] check for negative top/left values in FreeImage_Paste
+* [Christian Heimes] changed exceptions with a "catch(char *text)" to a "catch(const char *text)" to make GCC 4.1 happy
+* [Deif Lou] fixed a bug in FreeImage_SetTransparentIndex
+* [Thomas Maiwald] BMP plugin: on saving, fixed correct setting of bfSize BMP file header for palettized images
+* [Timothy Lee] fixed handling of frame disposal in GIF_PLAYBACK mode (GIF plugin)
+* [Herve Drolon] fixed handling of Exif Olympus Type 2 maker notes (not yet supported but now safely ignored)
+* [Rich Geldreich] fixed DXT1 color endpoint precision problem in DDS plugin
+* [Mihail Naydenov] improved loading speed of 24-bit targa images
+* [Eugene Golushkov] improved big endian / little endian swapping functions
+* [Carsten Klein/Jean-Philippe Goerke] improved FreeImage_SetMetadata / FreeImage_GetMetadata accessors
+* [Christian Ruppert] improved Linux Makefiles
+* [Eugene Golushkov] fixed PluginBMP alignment bug while saving 16 or 24bit BMP on big endian or Apple machines
+
+July 28th, 2008 - 3.11.0
+! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2008-05-24)
+! FreeImage now uses OpenJPEG 1.3.0 (SVN patch 2008-05-22)
+! FreeImage now uses libMNG 1.0.10
+! FreeImage now uses libPNG 1.2.29
++ [Yves Schmid] added 48-bit RGB to 32-bit conversion support in FreeImage_ConvertTo32Bits
++ [Aaron Shumate] added RGB16-to-BITMAP and All-to-RGBF conversion support in FreeImage_ConvertToType
++ [Benjamin English] added a new OpenGL sample to FreeImage/Examples
++ [Lucian Sabo] added new compression flags to the PNG plugin
++ [Lucian Sabo] added new compression flags to the JPEG plugin (chroma subsampling options)
++ [Noam Gat] added support for SGI grayscale + alpha pics to SGI plugin
++ [Herve Drolon] added FreeImage_CloneMetadata
++ [Herve Drolon] added loading support for Windows Vista icons in ICO Plugin
++ [Herve Drolon] added loading and saving support for RGBF images to the TIF plugin (using the LogLuv codec)
+* [Will Bryant] fixed makefile for MacOSX Tiger and Leopard
+* [Maria Gullickson] fixed a 'divide by 0' error in PNM plugin and FreeImage_Rescale function
+* [Yves Schmid] fixed a bug with Exif metadata reading in TIFF images
+* [Herve Drolon] fixed some possible 64-bit portability issues with pointer calculations
+* [wangyn] fixed a bug with transparency handling of indexed images in PNG plugin
+* [Martin Dyring-Andersen] fixed a bug with GIFinfo structure initialization in GIF plugin
+* [Noam Gat] fixed a bug in SGI plugin: when the file reports as two-dimensional, the height factor does not get loaded
+* [Herve Drolon] added error messages in FreeImage_Load(U) / FreeImage_Save(U) in case of bad filenames
+* [Scott Smith/Herve Drolon] added missing IPTC tags and renamed some tag names to be compatible with ExifTool naming convention
+* [Martin Dyring-Andersen] fixed a crash problem with images containing exif data emitted by Picassa
+* [Herve Drolon] removed RGBA to RGB transparent conversion in EXR plugin
+* [Glenn Pierce] improved the speed of FreeImage_FlipHorizontal
+* [Carsten Klein] fixed 65535 pixels width/height limitation in FreeImage_Paste
+
 November 19th, 2007 - 3.10.0
 ! FreeImage now uses libTIFF 3.9.0beta (CVS patch 2007-10-05)
 ! FreeImage now uses OpenJPEG 1.2.0 (SVN patch 2007-07-13)
