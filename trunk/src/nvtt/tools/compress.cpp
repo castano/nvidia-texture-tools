@@ -142,6 +142,7 @@ int main(int argc, char *argv[])
 	bool fast = false;
 	bool nocuda = false;
 	bool bc1n = false;
+	bool luminance = false;
 	nvtt::Format format = nvtt::Format_BC1;
 	bool premultiplyAlpha = false;
 	nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
@@ -215,6 +216,11 @@ int main(int argc, char *argv[])
 		}
 		else if (strcmp("-rgb", argv[i]) == 0)
 		{
+			format = nvtt::Format_RGB;
+		}
+		else if (strcmp("-lumi", argv[i]) == 0)
+		{
+			luminance = true;
 			format = nvtt::Format_RGB;
 		}
 		else if (strcmp("-bc1", argv[i]) == 0)
@@ -315,6 +321,7 @@ int main(int argc, char *argv[])
 		printf("  -fast    \tFast compression.\n");
 		printf("  -nocuda  \tDo not use cuda compressor.\n");
 		printf("  -rgb     \tRGBA format\n");
+		printf("  -lumi    \tLUMINANCE format\n");
 		printf("  -bc1     \tBC1 format (DXT1)\n");
 		printf("  -bc1n    \tBC1 normal map format (DXT1nm)\n");
 		printf("  -bc1a    \tBC1 format with binary alpha (DXT1a)\n");
@@ -478,11 +485,17 @@ int main(int argc, char *argv[])
 
 	if (format == nvtt::Format_RGBA)
 	{
-		// @@ Edit this to choose the desired pixel format:
-	//	compressionOptions.setPixelType(nvtt::PixelType_Float);
-	//	compressionOptions.setPixelFormat(16, 16, 16, 16);
-	//	compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
-	//	compressionOptions.setPixelFormat(16, 0, 0, 0);
+		if (luminance)
+		{
+			compressionOptions.setPixelFormat(8, 0xff, 0, 0, 0);
+		}
+		else {
+			// @@ Edit this to choose the desired pixel format:
+			//	compressionOptions.setPixelType(nvtt::PixelType_Float);
+			//	compressionOptions.setPixelFormat(16, 16, 16, 16);
+			//	compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
+			//	compressionOptions.setPixelFormat(16, 0, 0, 0);
+		}
 	}
 
 	if (fast)
