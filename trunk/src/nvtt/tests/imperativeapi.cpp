@@ -21,6 +21,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include <nvcore/StrLib.h>
 #include <nvtt/nvtt.h>
 
 #include <stdlib.h> // EXIT_SUCCESS, EXIT_FAILURE
@@ -30,30 +31,54 @@ int main(int argc, char *argv[])
 {
     if (argc != 2) return EXIT_FAILURE;
 
-	nvtt::CompressionOptions compressionOptions;
-	compressionOptions.setFormat(nvtt::Format_BC1);
+    const char * inputFileName = argv[1];
 
-	nvtt::OutputOptions outputOptions;
-	outputOptions.setFileName("output.dds");
-
+    // Init context.
 	nvtt::Context context;
+    context.enableCudaAcceleration(false);
+
+    // Load input image.
 	nvtt::TexImage image = context.createTexImage();
+    if (!image.load(inputFileName)) {
+        return EXIT_FAILURE;
+    }
 
-	image.load(argv[1]);
+    // Setup compression options.
+	nvtt::CompressionOptions compressionOptions;
+	compressionOptions.setFormat(nvtt::Format_BC3);
+    //compressionOptions.setFormat(nvtt::Format_RGBA);
 
-	context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);
+    // Setup output options.
+	nvtt::OutputOptions outputOptions;
+
+    nv::Path outputFileName(inputFileName);
+    outputFileName.stripExtension();
+    outputFileName.append(".dds");
+
+	outputOptions.setFileName(outputFileName);
+
+    // Output compressed image.
+    context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);
+
+    image.flipVertically();
+    image.setAlphaMode(nvtt::AlphaMode_Transparency);
+
+    // Output first mipmap.
+    context.compress(image, compressionOptions, outputOptions);
 
 	float gamma = 2.2f;
 	image.toLinear(gamma);
 
-    float coverage = image.alphaTestCoverage();
+    float alphaRef = 0.95;
+    float coverage = image.alphaTestCoverage(alphaRef);
 
-	while (image.buildNextMipmap(nvtt::MipmapFilter_Box))
+    // Build mimaps.
+    while (image.buildNextMipmap(nvtt::MipmapFilter_Kaiser))
 	{
 		nvtt::TexImage tmpImage = image;
 		tmpImage.toGamma(gamma);
 
-        tmpImage.scaleAlphaToCoverage(coverage);
+        tmpImage.scaleAlphaToCoverage(coverage, alphaRef);
 
 		context.compress(tmpImage, compressionOptions, outputOptions);
 	}

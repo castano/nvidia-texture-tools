@@ -56,34 +56,10 @@ ColorBlock::ColorBlock(const Image * img, uint x, uint y)
 
 void ColorBlock::init(const Image * img, uint x, uint y)
 {
-    nvDebugCheck(img != NULL);
-
-    const uint bw = min(img->width() - x, 4U);
-    const uint bh = min(img->height() - y, 4U);
-    nvDebugCheck(bw != 0 && bh != 0);
-
-    static const int remainder[] = {
-        0, 0, 0, 0,
-        0, 1, 0, 1,
-        0, 1, 2, 0,
-        0, 1, 2, 3,
-    };
-
-    // Blocks that are smaller than 4x4 are handled by repeating the pixels.
-    // @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
-
-    for(uint i = 0; i < 4; i++) {
-        //const int by = i % bh;
-        const int by = remainder[(bh - 1) * 4 + i];
-        for(uint e = 0; e < 4; e++) {
-            //const int bx = e % bw;
-            const int bx = remainder[(bw - 1) * 4 + e];
-            color(e, i) = img->pixel(x + bx, y + by);
-        }
-    }
+    init(img->width(), img->height(), (const uint *)img->pixels(), x, y);
 }
 
-void ColorBlock::init(uint w, uint h, uint * data, uint x, uint y)
+void ColorBlock::init(uint w, uint h, const uint * data, uint x, uint y)
 {
     nvDebugCheck(data != NULL);
 
@@ -93,6 +69,7 @@ void ColorBlock::init(uint w, uint h, uint * data, uint x, uint y)
 
     // Blocks that are smaller than 4x4 are handled by repeating the pixels.
     // @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
+    // @@ Ideally we should zero the weights of the pixels out of range.
 
     for (uint i = 0; i < 4; i++)
     {
@@ -108,7 +85,7 @@ void ColorBlock::init(uint w, uint h, uint * data, uint x, uint y)
     }
 }
 
-void ColorBlock::init(uint w, uint h, float * data, uint x, uint y)
+void ColorBlock::init(uint w, uint h, const float * data, uint x, uint y)
 {
     nvDebugCheck(data != NULL);
 
@@ -118,6 +95,9 @@ void ColorBlock::init(uint w, uint h, float * data, uint x, uint y)
 
     // Blocks that are smaller than 4x4 are handled by repeating the pixels.
     // @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
+    // @@ Ideally we should zero the weights of the pixels out of range.
+
+    uint srcPlane = w * h;
 
     for (uint i = 0; i < 4; i++)
     {
@@ -126,13 +106,13 @@ void ColorBlock::init(uint w, uint h, float * data, uint x, uint y)
         for (uint e = 0; e < 4; e++)
         {
             const uint bx = e % bw;
-            const uint idx = ((y + by) * w + x + bx) * 4;
+            const uint idx = ((y + by) * w + x + bx);
 
             Color32 & c = color(e, i);
-            c.r = uint8(255 * clamp(data[idx + 0], 0.0f, 1.0f));
-            c.g = uint8(255 * clamp(data[idx + 1], 0.0f, 1.0f));
-            c.b = uint8(255 * clamp(data[idx + 2], 0.0f, 1.0f));
-            c.a = uint8(255 * clamp(data[idx + 3], 0.0f, 1.0f));
+            c.r = uint8(255 * clamp(data[idx + 0 * srcPlane], 0.0f, 1.0f)); // @@ Is this the right way to quantize floats to bytes?
+            c.g = uint8(255 * clamp(data[idx + 1 * srcPlane], 0.0f, 1.0f));
+            c.b = uint8(255 * clamp(data[idx + 2 * srcPlane], 0.0f, 1.0f));
+            c.a = uint8(255 * clamp(data[idx + 3 * srcPlane], 0.0f, 1.0f));
         }
     }
 }

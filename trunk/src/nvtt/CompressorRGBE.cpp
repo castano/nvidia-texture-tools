@@ -25,12 +25,12 @@
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
 
-#include <nvimage/Image.h>
-#include <nvimage/FloatImage.h>
+#include "nvimage/Image.h"
+#include "nvimage/FloatImage.h"
 
-#include <nvmath/Color.h>
+#include "nvmath/Color.h"
 
-#include <nvcore/Debug.h>
+#include "nvcore/Debug.h"
 
 using namespace nv;
 using namespace nvtt;
@@ -63,7 +63,7 @@ void CompressorRGBE::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     uint srcPlane = w * h;
 
     // Allocate output scanline.
-	Color32 * dst = (Color32 *)mem::malloc(w);
+	Color32 * dst = new Color32[w];
 
 	for (uint y = 0; y < h; y++)
 	{
@@ -83,8 +83,6 @@ void CompressorRGBE::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
             else {
                 nvDebugCheck (inputFormat == nvtt::InputFormat_RGBA_32F);
 
-#pragma message(NV_FILE_LINE "TODO: Interleave color components")
-
 			    // Color components not interleaved.
 			    r = fsrc[x + 0 * srcPlane];
 			    g = fsrc[x + 1 * srcPlane];
@@ -100,5 +98,5 @@ void CompressorRGBE::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
 		}
     }
 
-	mem::free(dst);
+    delete [] dst;
 }

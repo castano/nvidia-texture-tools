@@ -337,8 +337,6 @@ bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const Compr
 
 bool Compressor::compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-    // @@ Decide whether to change the swizzling of FloatImage.
-
     foreach(i, tex.m->imageArray) {
         FloatImage * image = tex.m->imageArray[i];
         if (!m.compress2D(InputFormat_RGBA_32F, tex.m->alphaMode, image->width(), image->height(), image->channel(0), compressionOptions.m, outputOptions.m)) {
@@ -1493,7 +1491,7 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 bool Compressor::Private::compress2D(InputFormat inputFormat, AlphaMode alphaMode, int w, int h, const void * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
 	// Decide what compressor to use.
-	CompressorInterface * compressor = NULL;
+	AutoPtr<CompressorInterface> compressor;
 #if defined HAVE_CUDA
 	if (cudaEnabled && w * h >= 512)
 	{
@@ -1512,8 +1510,6 @@ bool Compressor::Private::compress2D(InputFormat inputFormat, AlphaMode alphaMod
 	else
 	{
 		compressor->compress(inputFormat, alphaMode, w, h, data, compressionOptions, outputOptions);
-
-		delete compressor;
 	}
 
 	return true;

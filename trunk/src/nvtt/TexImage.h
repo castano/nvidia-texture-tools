@@ -56,7 +56,10 @@ namespace nvtt
             alphaMode = p.alphaMode;
             isNormalMap = p.isNormalMap;
 
-            imageArray = p.imageArray;
+            imageArray.reserve(p.imageArray.count());
+            foreach(i, p.imageArray) {
+                imageArray.append(p.imageArray[i]->clone());
+            }
         }
         ~Private()
         {

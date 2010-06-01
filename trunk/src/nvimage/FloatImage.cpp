@@ -206,10 +206,16 @@ void FloatImage::scaleBias(uint base_component, uint num, float scale, float bia
 }
 
 /// Clamp the elements of the image.
-void FloatImage::clamp(float low, float high)
+void FloatImage::clamp(uint base_component, uint num, float low, float high)
 {
-    for(uint i = 0; i < m_count; i++) {
-        m_mem[i] = nv::clamp(m_mem[i], low, high);
+    const uint size = m_width * m_height;
+
+    for(uint c = 0; c < num; c++) {
+        float * ptr = this->channel(base_component + c);
+
+        for(uint i = 0; i < size; i++) {
+            ptr[i] = nv::clamp(ptr[i], low, high);
+        }
     }
 }
 
@@ -697,23 +703,24 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
         Array<float> tmp_column(h);
         tmp_column.resize(h);
 
-        for (uint c = 0; c < m_componentNum; c++)
+        for (uint i = 0; i < m_componentNum; i++)
         {
+            // Process alpha channel first.
+            uint c;
+            if (i == 0) c = alpha;
+            else if (i > alpha) c = i;
+            else c = i - 1;
+
             float * tmp_channel = tmp_image->channel(c);
 
             for (uint y = 0; y < m_height; y++) {
-                this->applyKernelHorizontal(xkernel, y, c, alpha, wm, tmp_channel + y * w);
+                this->applyKernelHorizontal(xkernel, y, c, wm, tmp_channel + y * w);
             }
-        }
 
-        // Process all channels before applying vertical kernel to make sure alpha has been computed.
-
-        for (uint c = 0; c < m_componentNum; c++)
-        {
             float * dst_channel = dst_image->channel(c);
 
             for (uint x = 0; x < w; x++) {
-                tmp_image->applyKernelVertical(ykernel, x, c, alpha, wm, tmp_column.mutableBuffer());
+                tmp_image->applyKernelVertical(ykernel, x, c, wm, tmp_column.mutableBuffer());
 
                 for (uint y = 0; y < h; y++) {
                     dst_channel[y * w + x] = tmp_column[y];
@@ -981,14 +988,14 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
     float midAlphaRef = 0.5f;
 
     // Determine desired scale using a binary search. Hardcoded to 8 steps max.
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 10; i++) {
         float currentCoverage = alphaTestCoverage(midAlphaRef, alphaChannel);
 
         if (currentCoverage > desiredCoverage) {
-            maxAlphaRef = midAlphaRef;
+            minAlphaRef = midAlphaRef;
         }
         else if (currentCoverage < desiredCoverage) {
-            minAlphaRef = midAlphaRef;
+            maxAlphaRef = midAlphaRef;
         }
         else {
             break;
@@ -1001,6 +1008,9 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
 
     // Scale alpha channel.
     scaleBias(alphaChannel, 1, alphaScale, 0.0f);
+    clamp(alphaChannel, 1, 0.0f, 1.0f); 
+
+    //float newCoverage = alphaTestCoverage(alphaRef, alphaChannel);
 }
 
 FloatImage* FloatImage::clone() const
