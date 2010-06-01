@@ -683,7 +683,14 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 
     if (rmask != 0 || gmask != 0 || bmask != 0)
     {
-        this->pf.flags = DDPF_RGB;
+        if (gmask == 0 && bmask == 0)
+        {
+            this->pf.flags = DDPF_LUMINANCE;
+		}
+        else
+        {
+            this->pf.flags = DDPF_RGB;
+        }
 
         if (amask != 0) {
             this->pf.flags |= DDPF_ALPHAPIXELS;
@@ -867,9 +874,9 @@ bool DirectDrawSurface::isSupported() const
                 return false;
             }
         }
-        else if (header.pf.flags & DDPF_RGB)
+        else if ((header.pf.flags & DDPF_RGB) || (header.pf.flags & DDPF_LUMINANCE))
         {
-            // All RGB formats are supported now.
+            // All RGB and luminance formats are supported now.
         }
         else
         {
@@ -1294,7 +1301,7 @@ uint DirectDrawSurface::mipmapSize(uint mipmap) const
     }
     else
     {
-        nvDebugCheck(header.pf.flags & DDPF_RGB);
+        nvDebugCheck((header.pf.flags & DDPF_RGB) || (header.pf.flags & DDPF_LUMINANCE));
 
         // Align pixels to bytes.
         uint byteCount = (header.pf.bitcount + 7) / 8;
@@ -1364,6 +1371,7 @@ void DirectDrawSurface::printInfo() const
     printf("Pixel Format:\n");
     printf("\tFlags: 0x%.8X\n", header.pf.flags);
     if (header.pf.flags & DDPF_RGB) printf("\t\tDDPF_RGB\n");
+    if (header.pf.flags & DDPF_LUMINANCE) printf("\t\tDDPF_LUMINANCE\n");
     if (header.pf.flags & DDPF_FOURCC) printf("\t\tDDPF_FOURCC\n");
     if (header.pf.flags & DDPF_ALPHAPIXELS) printf("\t\tDDPF_ALPHAPIXELS\n");
     if (header.pf.flags & DDPF_ALPHA) printf("\t\tDDPF_ALPHA\n");
