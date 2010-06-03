@@ -93,7 +93,7 @@ namespace nvtt
 
 		Format_DXT1n,// Not supported on CPU yet.
 		Format_CTX1, // Not supported on CPU yet.
-		Format_YCoCg_DXT5, // Not supported yet.
+		//Format_YCoCg_DXT5, // Not supported yet.
 
 		Format_BC6, // Not supported yet.
 		Format_BC7, // Not supported yet.
@@ -101,7 +101,7 @@ namespace nvtt
         Format_RGBE,
 	};
 
-	/// Pixel types.
+	/// Pixel types. These basically indicate how the output should be interpreted, but do not have any influence over the input.
 	enum PixelType
 	{
 		PixelType_UnsignedNorm,
@@ -109,6 +109,7 @@ namespace nvtt
 		PixelType_UnsignedInt, // Not supported yet.
 		PixelType_SignedInt, // Not supported yet.
 		PixelType_Float,
+		PixelType_UnsignedFloat,
 	};
 	
 	/// Quality modes.

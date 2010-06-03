@@ -29,12 +29,21 @@
 namespace nv
 {
 	struct ColorBlock;
+	struct Tile;
 
 	struct FixedBlockCompressor : public CompressorInterface
 	{
 		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
+		virtual uint blockSize() const = 0;
+	};
+
+	struct TileCompressor : public CompressorInterface
+	{
+		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+
+		virtual void compressBlock(Tile & tile, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
 		virtual uint blockSize() const = 0;
 	};
 

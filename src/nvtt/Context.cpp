@@ -455,25 +455,32 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 			else
 			{
 				if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
-					header.setDX10Format(71);
+					header.setDX10Format(70); // DXGI_FORMAT_BC1_TYPELESS
 					if (compressionOptions.format == Format_DXT1a) header.setHasAlphaFlag(true);
 					if (inputOptions.isNormalMap) header.setNormalFlag(true);
 				}
 				else if (compressionOptions.format == Format_DXT3) {
-					header.setDX10Format(74);
+					header.setDX10Format(73); // DXGI_FORMAT_BC2_TYPELESS
 				}
 				else if (compressionOptions.format == Format_DXT5) {
-					header.setDX10Format(77);
+					header.setDX10Format(76); // DXGI_FORMAT_BC3_TYPELESS
 				}
 				else if (compressionOptions.format == Format_DXT5n) {
-					header.setDX10Format(77);
+					header.setDX10Format(76); // DXGI_FORMAT_BC3_TYPELESS
 					if (inputOptions.isNormalMap) header.setNormalFlag(true);
 				}
 				else if (compressionOptions.format == Format_BC4) {
-					header.setDX10Format(80);
+					header.setDX10Format(79); // DXGI_FORMAT_BC4_TYPELESS
 				}
 				else if (compressionOptions.format == Format_BC5) {
-					header.setDX10Format(83);
+					header.setDX10Format(82); // DXGI_FORMAT_BC5_TYPELESS
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
+				}
+				else if (compressionOptions.format == Format_BC6) {
+					header.setDX10Format(94); // DXGI_FORMAT_BC6H_TYPELESS
+				}
+				else if (compressionOptions.format == Format_BC7) {
+					header.setDX10Format(97); // DXGI_FORMAT_BC7_TYPELESS
 					if (inputOptions.isNormalMap) header.setNormalFlag(true);
 				}
 				else {
@@ -580,6 +587,13 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 						header.setNormalFlag(true);
 						header.setSwizzleCode('A', '2', 'X', 'Y');
 					}
+				}
+				else if (compressionOptions.format == Format_BC6) {
+					header.setFourCC('Z', 'O', 'H', ' ');
+				}
+				else if (compressionOptions.format == Format_BC7) {
+					header.setFourCC('Z', 'O', 'L', 'A');
+					if (inputOptions.isNormalMap) header.setNormalFlag(true);
 				}
 				else if (compressionOptions.format == Format_CTX1) {
 					header.setFourCC('C', 'T', 'X', '1');

@@ -148,7 +148,7 @@ void FloatImage::free()
 void FloatImage::resizeChannelCount(uint c)
 {
     if (m_componentNum != c) {
-        uint count = w * h * c;
+        uint count = m_width * m_height * c;
         nv::mem::realloc(m_mem, count * sizeof(float));
 
         if (c > m_componentNum) {
