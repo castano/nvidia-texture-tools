@@ -19,6 +19,10 @@ ENDIF (CUDA_FOUND)
 ADD_EXECUTABLE(imperativeapi imperativeapi.cpp)
 TARGET_LINK_LIBRARIES(imperativeapi nvcore nvmath nvimage nvtt)
 
+ADD_EXECUTABLE(process_alpha_map process_alpha_map.cpp)
+TARGET_LINK_LIBRARIES(process_alpha_map
+ nvcore nvmath nvimage nvtt)
+
 INSTALL(TARGETS nvtestsuite DESTINATION bin)
  
 #include_directories("/usr/include/ffmpeg/")

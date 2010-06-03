@@ -453,6 +453,10 @@ namespace nvtt
         // Geometric transforms.
         NVTT_API void flipVertically();
 
+		// Copy image data.
+		NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel);
+		NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel);
+
 	private:
 		void detach();
 
