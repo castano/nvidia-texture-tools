@@ -1,7 +1,10 @@
 NVIDIA Texture Tools version 2.0.9
  * Fix invalid assert when reading paletted TGA images. Fixes issue 125.
  * Add support for luminance flag. Fixes issue 126.
-
+ * Fix the C wrapper and provide methods involving callbacks.
+ * Improve C# / .NET Wrapper
+ * Add an XNA Game Studio 3.1 Content Processor to make it easy to utilize NVIDIA Texture Tools in XNA applications.
+ 
 NVIDIA Texture Tools version 2.0.8
  * Fix float to fixed image conversion. Patch provided by Alex Pfaffe. Fixes issue 121.
  * ColorBlock::isSingleColor compares only RGB channels. Fixes issue 115.
