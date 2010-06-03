@@ -443,7 +443,7 @@ namespace nvtt
 
 		// Set normal map options.
 		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
-		NVTT_API void toHeightMap();
+		//NVTT_API void toHeightMap();
 		NVTT_API void normalizeNormalMap();
 
 		// Error compare.

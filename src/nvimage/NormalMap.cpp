@@ -198,7 +198,7 @@ void nv::normalizeNormalMap(FloatImage * img)
 {
 	nvDebugCheck(img != NULL);
 
-#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly")
+#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly?")
 
 	img->expandNormals(0);
 	img->normalize(0);

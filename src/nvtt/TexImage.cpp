@@ -282,7 +282,7 @@ bool TexImage::load(const char * fileName)
 
 	detach();
 
-#pragma message(NV_FILE_LINE "TODO: Make sure that floating point image has 4 channels.")
+	img->resizeChannelCount(4);
 
 	m->imageArray.resize(1);
 	m->imageArray[0] = img.release();
@@ -997,7 +997,7 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
 		const FloatImage * img = m->imageArray[i];
 		m->imageArray[i] = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
 
-#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly")
+#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly?")
 		m->imageArray[i]->packNormals(0);
 
 		delete img;
@@ -1006,7 +1006,7 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
 	m->isNormalMap = true;
 }
 
-void TexImage::toHeightMap()
+/*void TexImage::toHeightMap()
 {
 	detach();
 
@@ -1018,7 +1018,7 @@ void TexImage::toHeightMap()
 	}
 
 	m->isNormalMap = false;
-}
+}*/
 
 void TexImage::normalizeNormalMap()
 {
