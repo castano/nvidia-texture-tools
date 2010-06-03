@@ -175,67 +175,67 @@ namespace Nvidia.TextureTools
 	public class InputOptions : IDisposable
 	{
 		#region Bindings
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		[DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static IntPtr nvttCreateInputOptions();
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttDestroyInputOptions(IntPtr inputOptions);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsTextureLayout(IntPtr inputOptions, TextureType type, int w, int h, int d);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttResetInputOptionsTextureLayout(IntPtr inputOptions);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static bool nvttSetInputOptionsMipmapData(IntPtr inputOptions, IntPtr data, int w, int h, int d, int face, int mipmap);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsFormat(IntPtr inputOptions, InputFormat format);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsAlphaMode(IntPtr inputOptions, AlphaMode alphaMode);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsGamma(IntPtr inputOptions, float inputGamma, float outputGamma);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsWrapMode(IntPtr inputOptions, WrapMode mode);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsMipmapFilter(IntPtr inputOptions, MipmapFilter filter);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsMipmapGeneration(IntPtr inputOptions, bool generateMipmaps, int maxLevel);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsKaiserParameters(IntPtr inputOptions, float width, float alpha, float stretch);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsNormalMap(IntPtr inputOptions, bool b);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsConvertToNormalMap(IntPtr inputOptions, bool convert);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsHeightEvaluation(IntPtr inputOptions, float redScale, float greenScale, float blueScale, float alphaScale);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsNormalFilter(IntPtr inputOptions, float small, float medium, float big, float large);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsNormalizeMipmaps(IntPtr inputOptions, bool b);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsColorTransform(IntPtr inputOptions, ColorTransform t);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsLinearTransfrom(IntPtr inputOptions, int channel, float w0, float w1, float w2, float w3);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsMaxExtents(IntPtr inputOptions, int d);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetInputOptionsRoundMode(IntPtr inputOptions, RoundMode mode);
 		#endregion
 
@@ -396,25 +396,25 @@ namespace Nvidia.TextureTools
 	public class CompressionOptions : IDisposable
 	{
 		#region Bindings
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static IntPtr nvttCreateCompressionOptions();
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttDestroyCompressionOptions(IntPtr compressionOptions);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsFormat(IntPtr compressionOptions, Format format);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsQuality(IntPtr compressionOptions, Quality quality);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsColorWeights(IntPtr compressionOptions, float red, float green, float blue, float alpha);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsPixelFormat(IntPtr compressionOptions, uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetCompressionOptionsQuantization(IntPtr compressionOptions, bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold);
 
 		#endregion
@@ -547,8 +547,13 @@ namespace Nvidia.TextureTools
 	{
         #region Delegates
 
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void InternalErrorHandlerDelegate(Error error);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate bool WriteDataDelegate(IntPtr data, int size);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
 
 		#endregion
@@ -561,22 +566,22 @@ namespace Nvidia.TextureTools
         }
 
         #region Bindings
-        [DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static IntPtr nvttCreateOutputOptions();
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttDestroyOutputOptions(IntPtr outputOptions);
 
-		[DllImport("nvtt", CharSet = CharSet.Ansi), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsFileName(IntPtr outputOptions, string fileName);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsErrorHandler(IntPtr outputOptions, InternalErrorHandlerDelegate errorHandler);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsOutputHeader(IntPtr outputOptions, bool b);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, IntPtr writeData, IntPtr image);
 
 		#endregion
@@ -691,25 +696,25 @@ namespace Nvidia.TextureTools
 	public class Compressor : IDisposable
 	{
 		#region Bindings
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static IntPtr nvttCreateCompressor();
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttDestroyCompressor(IntPtr compressor);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static bool nvttCompress(IntPtr compressor, IntPtr inputOptions, IntPtr compressionOptions, IntPtr outputOptions);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private extern static int nvttEstimateSize(IntPtr compressor, IntPtr inputOptions, IntPtr compressionOptions);
 
-		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
 		private static extern IntPtr nvttErrorString(Error error);
-        
-        [DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         private extern static uint nvttVersion();
 
-        [DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         private extern static void nvttEnableCudaCompression(IntPtr compressor, bool enable);
 
 		#endregion
