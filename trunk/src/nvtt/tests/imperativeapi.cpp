@@ -34,28 +34,28 @@ int main(int argc, char *argv[])
     const char * inputFileName = argv[1];
 
     // Init context.
-	nvtt::Context context;
+    nvtt::Context context;
     context.enableCudaAcceleration(false);
 
     // Load input image.
-	nvtt::TexImage image = context.createTexImage();
+    nvtt::TexImage image = context.createTexImage();
     if (!image.load(inputFileName)) {
         return EXIT_FAILURE;
     }
 
     // Setup compression options.
-	nvtt::CompressionOptions compressionOptions;
-	compressionOptions.setFormat(nvtt::Format_BC3);
+    nvtt::CompressionOptions compressionOptions;
+    compressionOptions.setFormat(nvtt::Format_BC3);
     //compressionOptions.setFormat(nvtt::Format_RGBA);
 
     // Setup output options.
-	nvtt::OutputOptions outputOptions;
+    nvtt::OutputOptions outputOptions;
 
     nv::Path outputFileName(inputFileName);
     outputFileName.stripExtension();
     outputFileName.append(".dds");
 
-	outputOptions.setFileName(outputFileName);
+    outputOptions.setFileName(outputFileName);
 
     // Output compressed image.
     context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);
@@ -66,23 +66,23 @@ int main(int argc, char *argv[])
     // Output first mipmap.
     context.compress(image, compressionOptions, outputOptions);
 
-	float gamma = 2.2f;
-	image.toLinear(gamma);
+    float gamma = 2.2f;
+    image.toLinear(gamma);
 
     float alphaRef = 0.95;
     float coverage = image.alphaTestCoverage(alphaRef);
 
     // Build mimaps.
     while (image.buildNextMipmap(nvtt::MipmapFilter_Kaiser))
-	{
-		nvtt::TexImage tmpImage = image;
-		tmpImage.toGamma(gamma);
+    {
+        nvtt::TexImage tmpImage = image;
+        tmpImage.toGamma(gamma);
 
         tmpImage.scaleAlphaToCoverage(coverage, alphaRef);
 
-		context.compress(tmpImage, compressionOptions, outputOptions);
-	}
+        context.compress(tmpImage, compressionOptions, outputOptions);
+    }
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
