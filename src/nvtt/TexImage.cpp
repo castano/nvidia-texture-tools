@@ -1132,8 +1132,8 @@ float TexImage::rootMeanSquaredError_alpha(const TexImage & reference) const
 	return float(sqrt(mse / totalCount));
 }
 
-void TexImage::flipVertically() {
-
+void TexImage::flipVertically()
+{
     detach();
 
 	foreach (i, m->imageArray)
@@ -1143,3 +1143,44 @@ void TexImage::flipVertically() {
         m->imageArray[i]->flip();
 	}
 }
+
+bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel)
+{
+	return copyChannel(srcImage, srcChannel, srcChannel);
+}
+
+bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel)
+{
+	const int faceCount = this->faceCount();
+	if (faceCount != srcImage.faceCount()) {
+		return false;
+	}
+
+	detach();
+
+	foreach (i, m->imageArray)
+	{
+		FloatImage * dst = m->imageArray[i];
+		const FloatImage * src = srcImage.m->imageArray[i];
+
+		if (dst == NULL || src == NULL) {
+			return false;
+		}
+
+		nvCheck(src->componentNum() == 4);
+		nvCheck(dst->componentNum() == 4);
+
+		const uint w = src->width();
+		const uint h = src->height();
+
+		if (w != dst->width() || h != dst->height()) {
+			return false;
+		}
+
+		memcpy(dst->channel(dstChannel), src->channel(srcChannel), w*h*sizeof(float));
+	}
+
+	return true;
+}
+
+
