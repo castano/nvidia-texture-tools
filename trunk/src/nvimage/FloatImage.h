@@ -47,6 +47,7 @@ namespace nv
         //@{
         NVIMAGE_API void allocate(uint c, uint w, uint h);
         NVIMAGE_API void free(); // Does not clear members.
+        NVIMAGE_API void resizeChannelCount(uint c);
         //@}
 
         /** @name Manipulation. */

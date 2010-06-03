@@ -113,7 +113,7 @@ Image * FloatImage::createImageGammaCorrect(float gamma/*= 2.2f*/) const
     const float * aChannel = this->channel(3);
 
     const uint size = m_width * m_height;
-    for(uint i = 0; i < size; i++)
+    for (uint i = 0; i < size; i++)
     {
         const uint8 r = nv::clamp(int(255.0f * pow(rChannel[i], 1.0f/gamma)), 0, 255);
         const uint8 g = nv::clamp(int(255.0f * pow(gChannel[i], 1.0f/gamma)), 0, 255);
@@ -145,9 +145,24 @@ void FloatImage::free()
     m_mem = NULL;
 }
 
+void FloatImage::resizeChannelCount(uint c)
+{
+    if (m_componentNum != c) {
+        uint count = w * h * c;
+        nv::mem::realloc(m_mem, count * sizeof(float));
+
+        if (c > m_componentNum) {
+            memset(m_mem + m_count, 0, (count - m_count) * sizeof(float));
+        }
+
+        m_componentNum = c;
+        m_count = count;
+    }
+}
+
 void FloatImage::clear(float f/*=0.0f*/)
 {
-    for(uint i = 0; i < m_count; i++) {
+    for (uint i = 0; i < m_count; i++) {
         m_mem[i] = f;
     }
 }

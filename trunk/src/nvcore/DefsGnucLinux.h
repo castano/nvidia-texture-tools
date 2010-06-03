@@ -2,6 +2,8 @@
 #error "Do not include this file directly."
 #endif
 
+#include <cstddef> // size_t, NULL
+
 // Function linkage
 #define DLL_IMPORT
 #if __GNUC__ >= 4

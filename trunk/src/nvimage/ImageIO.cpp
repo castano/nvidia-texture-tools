@@ -231,7 +231,7 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
     if (floatImage == NULL) {
         s.seek(spos); // Restore stream position.
 
-        AutoPtr<Image> img = load(fileName, s);
+        AutoPtr<Image> img(load(fileName, s));
         if (img != NULL) {
             floatImage = new FloatImage(img.ptr());
         }

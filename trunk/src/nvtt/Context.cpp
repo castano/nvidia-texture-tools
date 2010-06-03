@@ -44,7 +44,7 @@
 #include "OutputOptions.h"
 #include "TexImage.h"
 
-#include "CompressorDXT.h"
+#include "CompressorDX9.h"
 #include "CompressorDX10.h"
 #include "CompressorDX11.h"
 #include "CompressorRGB.h"
