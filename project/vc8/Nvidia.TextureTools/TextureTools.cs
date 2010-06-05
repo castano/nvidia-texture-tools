@@ -1,6 +1,8 @@
 using System;
 using System.Security;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Nvidia.TextureTools
 {
@@ -159,7 +161,12 @@ namespace Nvidia.TextureTools
             get { return errorCode; }
         }
 
-        public TextureToolsException(Error errorCode) : base(Compressor.ErrorString(errorCode))
+        public TextureToolsException(Error errorCode) : this(errorCode, Compressor.ErrorString(errorCode))
+        {
+        }
+
+        public TextureToolsException(Error errorCode, string msg)
+            : base(msg)
         {
             this.errorCode = errorCode;
         }
@@ -720,14 +727,24 @@ namespace Nvidia.TextureTools
 		#endregion
 
 		internal IntPtr compressor;
+        private Thread creatingThread;
 
 		public Compressor()
 		{
+            /*
+             * Strictly speaking the CLR may decide to move managed threads between OS thread, to prevent this we call BeginThreadAffinity().
+             * In practice this doesnt happen, but it may if the host is using some form of custom thread management.
+             */
+            creatingThread = Thread.CurrentThread;
+            Thread.BeginThreadAffinity();
+
 			compressor = nvttCreateCompressor();
 		}
         
 		public void Compress(InputOptions input, CompressionOptions compression, OutputOptions output)
 		{
+            ValidateThread();
+
             if (!nvttCompress(compressor, input.options, compression.options, output.options))
             {
                 //An error occured, use the last error registered.
@@ -737,6 +754,8 @@ namespace Nvidia.TextureTools
 
 		public int EstimateSize(InputOptions input, CompressionOptions compression)
 		{
+            ValidateThread();
+
 			return nvttEstimateSize(compressor, input.options, compression.options);
 		}
 
@@ -752,8 +771,19 @@ namespace Nvidia.TextureTools
 
         public void SetEnableCuda(bool enableCuda)
         {
+            ValidateThread();
+
             nvttEnableCudaCompression(compressor, enableCuda);
         }
+
+        private void ValidateThread()
+        {
+            if (Thread.CurrentThread != creatingThread)
+            {
+                throw new TextureToolsException(Error.Unknown, "Compressor objects should only be used on the thread which creates them, this is because CUDA stores per thread data.");
+            }
+        }
+
 
         #region IDisposable Members
 
@@ -766,10 +796,30 @@ namespace Nvidia.TextureTools
 
         protected virtual void Dispose(bool disposing)
         {
+
             if (compressor != IntPtr.Zero)
             {
+                if (!disposing)
+                {
+                    /*
+                     * Throwing exceptions from finalizers is a bad idea, so just let the user know in a debug build.
+                     * Otherwise we presumably leak the cuda context data, but still deallocate the memory for the compressor object.
+                     */
+                    Debug.Fail("Compressor objects should always be disposed on the thread which creates them, this is because CUDA stores per thread data which should be cleaned up on the calling thread");
+                }
+                else
+                {
+                    ValidateThread();
+                }
+
                 nvttDestroyCompressor(compressor);
                 compressor = IntPtr.Zero;
+            }
+
+            if (creatingThread != null)
+            {
+                Thread.EndThreadAffinity();
+                creatingThread = null;
             }
         }
 
