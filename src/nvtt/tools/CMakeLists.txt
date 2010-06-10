@@ -67,8 +67,8 @@ IF(QT4_FOUND) # AND NOT MSVC)
 	QT4_WRAP_CPP(MOCS ui/configdialog.h)
 	#QT4_ADD_RESOURCES(RCCS ui/configdialog.rc)
 
-	ADD_EXECUTABLE(nvcompressui MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
-	TARGET_LINK_LIBRARIES(nvcompressui ${LIBS})
+    #ADD_EXECUTABLE(nvcompressui MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
+    #TARGET_LINK_LIBRARIES(nvcompressui ${LIBS})
 
 ENDIF(QT4_FOUND) # AND NOT MSVC)
 
