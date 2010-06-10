@@ -1,3 +1,33 @@
+#  James Bigler, NVIDIA Corp (nvidia.com - jbigler)
+#
+#  Copyright (c) 2008 - 2009 NVIDIA Corporation.  All rights reserved.
+#
+#  This code is licensed under the MIT License.  See the FindCUDA.cmake script
+#  for the text of the license.
+
+# The MIT License
+#
+# License for the specific language governing rights and limitations under
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+
+##########################################################################
 # This file runs the nvcc commands to produce the desired output file along with
 # the dependency file needed by CMake to compute dependencies.  In addition the
 # file checks the output of each command and if the command fails it deletes the
@@ -39,7 +69,7 @@ set(generated_file_internal "@generated_file@")
 set(generated_cubin_file_internal "@generated_cubin_file@")
 
 set(CUDA_NVCC_EXECUTABLE "@CUDA_NVCC_EXECUTABLE@")
-set(CUDA_NVCC_FLAGS "@CUDA_NVCC_FLAGS@;@CUDA_WRAP_OPTION_NVCC_FLAGS@")
+set(CUDA_NVCC_FLAGS "@CUDA_NVCC_FLAGS@;;@CUDA_WRAP_OPTION_NVCC_FLAGS@")
 @CUDA_NVCC_FLAGS_CONFIG@
 set(nvcc_flags "@nvcc_flags@")
 set(CUDA_NVCC_INCLUDE_ARGS "@CUDA_NVCC_INCLUDE_ARGS@")
@@ -120,18 +150,39 @@ cuda_execute_process(
   COMMAND "${CMAKE_COMMAND}" -E remove "${generated_file}"
   )
 
+# For CUDA 2.3 and below, -G -M doesn't work, so remove the -G flag
+# for dependency generation and hope for the best.
+set(depends_CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+set(CUDA_VERSION @CUDA_VERSION@)
+if(CUDA_VERSION VERSION_LESS "3.0")
+  cmake_policy(PUSH)
+  # CMake policy 0007 NEW states that empty list elements are not
+  # ignored.  I'm just setting it to avoid the warning that's printed.
+  cmake_policy(SET CMP0007 NEW)
+  # Note that this will remove all occurances of -G.
+  list(REMOVE_ITEM depends_CUDA_NVCC_FLAGS "-G")
+  cmake_policy(POP)
+endif()
+
+# nvcc doesn't define __CUDACC__ for some reason when generating dependency files.  This
+# can cause incorrect dependencies when #including files based on this macro which is
+# defined in the generating passes of nvcc invokation.  We will go ahead and manually
+# define this for now until a future version fixes this bug.
+set(CUDACC_DEFINE -D__CUDACC__)
+
 # Generate the dependency file
 cuda_execute_process(
   "Generating dependency file: ${NVCC_generated_dependency_file}"
   COMMAND "${CUDA_NVCC_EXECUTABLE}"
-  "${source_file}"
-  ${CUDA_NVCC_FLAGS}
-  ${nvcc_flags}
-  ${CCBIN}
-  ${nvcc_host_compiler_flags}
-  -DNVCC
   -M
+  ${CUDACC_DEFINE}
+  "${source_file}"
   -o "${NVCC_generated_dependency_file}"
+  ${CCBIN}
+  ${nvcc_flags}
+  ${nvcc_host_compiler_flags}
+  ${depends_CUDA_NVCC_FLAGS}
+  -DNVCC
   ${CUDA_NVCC_INCLUDE_ARGS}
   )
 
@@ -179,12 +230,12 @@ cuda_execute_process(
   "Generating ${generated_file}"
   COMMAND "${CUDA_NVCC_EXECUTABLE}"
   "${source_file}"
-  ${CUDA_NVCC_FLAGS}
-  ${nvcc_flags}
-  ${CCBIN}
-  ${nvcc_host_compiler_flags}
-  -DNVCC
   ${format_flag} -o "${generated_file}"
+  ${CCBIN}
+  ${nvcc_flags}
+  ${nvcc_host_compiler_flags}
+  ${CUDA_NVCC_FLAGS}
+  -DNVCC
   ${CUDA_NVCC_INCLUDE_ARGS}
   )
 
@@ -196,7 +247,9 @@ if(CUDA_result)
     )
   message(FATAL_ERROR "Error generating file ${generated_file}")
 else()
-  message("Generated ${generated_file} successfully.")
+  if(verbose)
+    message("Generated ${generated_file} successfully.")
+  endif()
 endif()
 
 # Cubin resource report commands.
