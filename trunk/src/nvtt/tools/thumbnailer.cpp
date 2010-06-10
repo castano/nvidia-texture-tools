@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	float gamma = 2.2f;
 	nv::Path input;
 	nv::Path output;
-	int size = 128;
+	uint size = 128;
 	
 	// Parse arguments.
 	for (int i = 1; i < argc; i++)
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 		if (strcmp("-s", argv[i]) == 0)
 		{
 			if (i+1 < argc && argv[i+1][0] != '-') {
-				size = (int)atoi(argv[i+1]);
+				size = (uint)atoi(argv[i+1]);
 				i++;
 			}
 		}
