@@ -25,7 +25,7 @@
 #define NV_TT_CUDACOMPRESSORDXT_H
 
 #include "nvtt/nvtt.h"
-#include "../Compressor.h" // CompressorInterface
+#include "nvtt/Compressor.h" // CompressorInterface
 
 struct cudaArray;
 

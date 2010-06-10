@@ -219,6 +219,7 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
 
 }
 
+#if defined HAVE_CUDA
 
 void CudaCompressorDXT1::setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions)
 {
@@ -290,7 +291,7 @@ void CudaCompressorDXT5::compressBlocks(uint first, uint count, uint w, uint h, 
 
 }
 
-
+#endif // defined HAVE_CUDA
 
 
 
