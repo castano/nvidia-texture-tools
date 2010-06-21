@@ -29,8 +29,8 @@ See the License for the specific language governing permissions and limitations 
 
 struct FltEndpts
 {
-	Vector3 A;
-	Vector3 B;
+    nv::Vector3 A;
+    nv::Vector3 B;
 };
 
 struct IntEndpts

@@ -26,10 +26,11 @@
 
 #include "Compressor.h"
 
+struct Tile;
+
 namespace nv
 {
 	struct ColorBlock;
-	struct Tile;
 
 	struct FixedBlockCompressor : public CompressorInterface
 	{

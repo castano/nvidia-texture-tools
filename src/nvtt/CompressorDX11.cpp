@@ -24,10 +24,31 @@
 #include "CompressorDX11.h"
 
 #include "nvtt.h"
+#include "CompressionOptions.h"
+
+#include "bc6h/zoh.h"
+#include "bc6h/utils.h"
 
 using namespace nv;
 using namespace nvtt;
 
 
+void CompressorBC6::compressBlock(Tile & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
+{
+    NV_UNUSED(alphaMode); // ZOH does not support alpha.
+
+    if (compressionOptions.pixelType == PixelType_UnsignedFloat ||
+        compressionOptions.pixelType == PixelType_UnsignedNorm ||
+        compressionOptions.pixelType == PixelType_UnsignedInt)
+    {
+        Utils::FORMAT = UNSIGNED_F16; // @@ Do not use globals.
+    }
+    else
+    {
+        Utils::FORMAT = SIGNED_F16;
+    }
+
+    ZOH::compress(tile, (char *)output);
+}
 
 
