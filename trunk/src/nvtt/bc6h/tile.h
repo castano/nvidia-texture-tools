@@ -75,7 +75,7 @@ public:
 	static const int TILE_H = 4;
 	static const int TILE_W = 4;
 	static const int TILE_TOTAL = TILE_H * TILE_W;
-	Vector3 data[TILE_H][TILE_W];
+    nv::Vector3 data[TILE_H][TILE_W];
 	float importance_map[TILE_H][TILE_W];
 	int	size_x, size_y;			// actual size of tile
 };

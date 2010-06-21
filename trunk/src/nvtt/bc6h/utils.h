@@ -17,7 +17,6 @@ See the License for the specific language governing permissions and limitations 
 
 #include "nvmath/Vector.h"
 
-using namespace nv; // @@ Move everything to nv namespace instead.
 
 #define	PALETTE_LERP(a, b, i, denom)	Utils::lerp(a, b, i, denom)
 
@@ -45,18 +44,18 @@ enum Format { UNSIGNED_F16, SIGNED_F16 };
 class Utils
 {
 public:
-    static Format FORMAT;	// this is a global -- we're either handling unsigned or unsigned half values
+    static ::Format FORMAT;	// this is a global -- we're either handling unsigned or unsigned half values
 
     // error metrics
-    static double norm(const Vector3 &a, const Vector3 &b);
-    static double mpsnr_norm(const Vector3 &a, int exposure, const Vector3 &b);
+    static double norm(const nv::Vector3 &a, const nv::Vector3 &b);
+    static double mpsnr_norm(const nv::Vector3 &a, int exposure, const nv::Vector3 &b);
 
     // conversion & clamp
     static int ushort_to_format(unsigned short input);
     static unsigned short format_to_ushort(int input);
 
     // clamp to format
-    static void clamp(Vector3 &v);
+    static void clamp(nv::Vector3 &v);
 
     // quantization and unquantization
     static int finish_unquantize(int q, int prec);
@@ -67,7 +66,7 @@ public:
 
     // lerping
     static int lerp(int a, int b, int i, int denom);
-    static Vector3 lerp(const Vector3 & a, const Vector3 & b, int i, int denom);
+    static nv::Vector3 lerp(const nv::Vector3 & a, const nv::Vector3 & b, int i, int denom);
 };
 
 #endif // _UTILS_H

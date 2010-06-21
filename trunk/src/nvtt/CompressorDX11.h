@@ -28,15 +28,15 @@
 
 namespace nv
 {
-	struct CompressorBC6 : public FixedBlockCompressor
+    struct CompressorBC6 : public TileCompressor
 	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual void compressBlock(Tile & tile, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 16; }
 	};
 
-    struct CompressorBC7 : public FixedBlockCompressor
+    struct CompressorBC7 : public TileCompressor
 	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual void compressBlock(Tile & tile, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 16; }
 	};
 	

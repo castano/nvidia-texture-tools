@@ -49,7 +49,6 @@ void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 	const uint bs = blockSize();
 	const uint bw = (w + 3) / 4;
 	const uint bh = (h + 3) / 4;
-	const uint size = bs * bw * bh;
 
 #if defined(HAVE_OPENMP)
 	bool singleThreaded = false;
@@ -61,9 +60,9 @@ void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 	if (bw * bh < 16) singleThreaded = true;
 
 	if (singleThreaded)
-	{
-		nvDebugCheck(bs <= 16);
-		uint8 mem[16];
+    {
+        nvDebugCheck(bs <= 16);
+        uint8 mem[16]; // @@ Output one row at a time!
 
 		for (int y = 0; y < int(h); y += 4) {
 			for (uint x = 0; x < w; x += 4) {
@@ -88,7 +87,8 @@ void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 #if defined(HAVE_OPENMP)
 	else
 	{
-		uint8 * mem = new uint8[size];
+        const uint size = bs * bw * bh;
+        uint8 * mem = new uint8[size];
 
 	#pragma omp parallel
 		{
@@ -121,3 +121,40 @@ void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 #endif
 }
 
+
+#include "bc6h/tile.h"
+
+void TileCompressor::compress(InputFormat inputFormat, AlphaMode alphaMode, uint w, uint h, const void * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+{
+    const uint bs = blockSize();
+    const uint bw = (w + 3) / 4;
+    const uint bh = (h + 3) / 4;
+
+    bool singleThreaded = true;
+
+    if (singleThreaded)
+    {
+        nvDebugCheck(bs <= 16);
+        uint8 mem[16]; // @@ Output one row at a time!
+
+        for (uint y = 0; y < h; y += 4) {
+            for (uint x = 0; x < w; x += 4) {
+
+                Tile tile;
+                if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
+                    //tile.init((const uint *)data, w, h, x, y);
+                }
+                else {
+                    nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
+                    //tile.init((const float *)data, w, h, x, y);
+                }
+
+                compressBlock(tile, alphaMode, compressionOptions, mem);
+
+                if (outputOptions.outputHandler != NULL) {
+                    outputOptions.outputHandler->writeData(mem, bs);
+                }
+            }
+        }
+    }
+}
