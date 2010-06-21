@@ -209,7 +209,7 @@ uint ColorBlock::countUniqueColors() const
     return count;
 }
 
-/// Get average color of the block.
+/*/// Get average color of the block.
 Color32 ColorBlock::averageColor() const
 {
     uint r, g, b, a;
@@ -223,7 +223,7 @@ Color32 ColorBlock::averageColor() const
     }
 
     return Color32(uint8(r / 16), uint8(g / 16), uint8(b / 16), uint8(a / 16));
-}
+}*/
 
 /// Return true if the block is not fully opaque.
 bool ColorBlock::hasAlpha() const
@@ -235,6 +235,7 @@ bool ColorBlock::hasAlpha() const
     return false;
 }
 
+#if 0
 
 /// Get diameter color range.
 void ColorBlock::diameterRange(Color32 * start, Color32 * end) const
@@ -367,9 +368,9 @@ void ColorBlock::boundsRangeAlpha(Color32 * start, Color32 * end) const
     *start = minColor;
     *end = maxColor;
 }
+#endif
 
-
-/// Sort colors by abosolute value in their 16 bit representation.
+/*/// Sort colors by abosolute value in their 16 bit representation.
 void ColorBlock::sortColorsByAbsoluteValue()
 {
     // Dummy selection sort.
@@ -387,10 +388,10 @@ void ColorBlock::sortColorsByAbsoluteValue()
         }
         swap( m_color[a], m_color[max] );
     }
-}
+}*/
 
 
-/// Find extreme colors in the given axis.
+/*/// Find extreme colors in the given axis.
 void ColorBlock::computeRange(Vector3::Arg axis, Color32 * start, Color32 * end) const
 {
     nvDebugCheck(start != NULL);
@@ -419,10 +420,10 @@ void ColorBlock::computeRange(Vector3::Arg axis, Color32 * start, Color32 * end)
 
     *start = m_color[mini];
     *end = m_color[maxi];
-}
+}*/
 
 
-/// Sort colors in the given axis.
+/*/// Sort colors in the given axis.
 void ColorBlock::sortColors(const Vector3 & axis)
 {
     float luma_array[16];
@@ -443,10 +444,10 @@ void ColorBlock::sortColors(const Vector3 & axis)
         swap( luma_array[a], luma_array[min] );
         swap( m_color[a], m_color[min] );
     }
-}
+}*/
 
 
-/// Get the volume of the color block.
+/*/// Get the volume of the color block.
 float ColorBlock::volume() const
 {
     Box bounds;
@@ -458,6 +459,47 @@ float ColorBlock::volume() const
     }
 
     return bounds.volume();
+}*/
+
+
+void FloatColorBlock::init(const Image * img, uint x, uint y)
+{
+    w = min(4U, img->width() - x);
+    h = min(4U, img->height() - y);
+    nvDebugCheck(w != 0 && h != 0);
+
+    // Blocks that are smaller than 4x4 are handled by repeating the pixels.
+    // @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
+    // @@ Ideally we should zero the weights of the pixels out of range.
+
+    uint srcPlane = w * h;
+
+    for (uint i = 0; i < 4; i++)
+    {
+        const uint by = i % h;
+
+        for (uint e = 0; e < 4; e++)
+        {
+            const uint bx = e % w;
+            Color32 c = img->pixel(x+bx, y+by);
+            Vector4 & v = color(e, i);
+            v.x = c.r / 255;
+            v.y = c.g / 255;
+            v.z = c.b / 255;
+            v.w = c.a / 255;
+        }
+    }
 }
 
+void FloatColorBlock::init(const FloatImage * img, uint x, uint y)
+{
+}
+
+void FloatColorBlock::init(const uint * data, uint w, uint h, uint x, uint y)
+{
+}
+
+void FloatColorBlock::init(const float * data, uint w, uint h, uint x, uint y)
+{
+}
 
