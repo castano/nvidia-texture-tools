@@ -47,6 +47,7 @@ See the License for the specific language governing permissions and limitations 
 #include <string.h> // strlen
 #include <float.h> // FLT_MAX
 
+using namespace nv;
 
 #define NINDICES	8
 #define	INDEXBITS	3
