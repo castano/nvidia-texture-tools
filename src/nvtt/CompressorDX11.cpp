@@ -29,6 +29,9 @@
 #include "bc6h/zoh.h"
 #include "bc6h/utils.h"
 
+//#include "bc7/avpcl.h"
+//#include "bc7/utils.h"
+
 using namespace nv;
 using namespace nvtt;
 
@@ -52,3 +55,7 @@ void CompressorBC6::compressBlock(Tile & tile, AlphaMode alphaMode, const Compre
 }
 
 
+void CompressorBC7::compressBlock(Tile & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
+{
+    // @@ TODO
+}
