@@ -18,10 +18,13 @@ See the License for the specific language governing permissions and limitations 
 #include "zoh.h"
 #include "utils.h"
 
+#include "nvmath/Vector.h"
 #include "nvmath/Fitting.h"
 
 #include <string.h> // strlen
 #include <float.h> // FLT_MAX
+
+using namespace nv;
 
 #define NINDICES	16
 #define	INDEXBITS	4
