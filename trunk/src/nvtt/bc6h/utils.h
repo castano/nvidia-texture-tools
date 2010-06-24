@@ -44,7 +44,7 @@ enum Format { UNSIGNED_F16, SIGNED_F16 };
 class Utils
 {
 public:
-    static ::Format FORMAT;	// this is a global -- we're either handling unsigned or unsigned half values
+    static ::Format FORMAT;     // this is a global -- we're either handling unsigned or unsigned half values
 
     // error metrics
     static double norm(const nv::Vector3 &a, const nv::Vector3 &b);

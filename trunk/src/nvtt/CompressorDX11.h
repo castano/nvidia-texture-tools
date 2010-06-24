@@ -29,16 +29,16 @@
 namespace nv
 {
     struct CompressorBC6 : public TileCompressor
-	{
+    {
         virtual void compressBlock(Tile & tile, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
+        virtual uint blockSize() const { return 16; }
+    };
 
     struct CompressorBC7 : public TileCompressor
-	{
+    {
         virtual void compressBlock(Tile & tile, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
+        virtual uint blockSize() const { return 16; }
+    };
 	
 } // nv namespace
 

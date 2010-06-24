@@ -20,6 +20,8 @@ using namespace nv;
 static int denom7_weights_64[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
 static int denom15_weights_64[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64
 
+/*static*/ Format Utils::FORMAT;
+
 int Utils::lerp(int a, int b, int i, int denom)
 {
 	nvDebugCheck (denom == 3 || denom == 7 || denom == 15);

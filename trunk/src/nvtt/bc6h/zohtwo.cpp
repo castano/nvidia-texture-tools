@@ -465,7 +465,7 @@ void ZOH::decompresstwo(const char *block, Tile &t)
     // lookup
     for (int y = 0; y < Tile::TILE_H; y++)
 	for (int x = 0; x < Tile::TILE_W; x++)
-            t.data[y][x] = palette[REGION(x,y,shapeindex)][indices[y][x]];
+        t.data[y][x] = palette[REGION(x,y,shapeindex)][indices[y][x]];
 }
 
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
