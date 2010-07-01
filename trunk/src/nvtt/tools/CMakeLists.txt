@@ -19,12 +19,12 @@ TARGET_LINK_LIBRARIES(nvzoom nvcore nvmath nvimage)
 
 SET(TOOLS nvcompress nvdecompress nvddsinfo nvassemble nvzoom)
 
-#IF(GLEW_FOUND AND GLUT_FOUND)
-#    INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH} ${GLUT_INCLUDE_DIR})
-#    ADD_EXECUTABLE(nvddsview ddsview.cpp cmdline.h)
-#    TARGET_LINK_LIBRARIES(nvddsview nvcore nvmath nvimage ${GLEW_LIBRARY} ${GLUT_LIBRARY})
-#    SET(TOOLS ${TOOLS} nvddsview)
-#ENDIF(GLEW_FOUND AND GLUT_FOUND)
+IF(GLEW_FOUND AND GLUT_FOUND AND OPENGL_FOUND)
+    INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH} ${GLUT_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
+    ADD_EXECUTABLE(nvddsview ddsview.cpp cmdline.h)
+    TARGET_LINK_LIBRARIES(nvddsview nvcore nvmath nvimage ${GLEW_LIBRARY} ${GLUT_LIBRARY} ${OPENGL_LIBRARY})
+    SET(TOOLS ${TOOLS} nvddsview)
+ENDIF(GLEW_FOUND AND GLUT_FOUND AND OPENGL_FOUND)
 
 
 ADD_EXECUTABLE(nv-gnome-thumbnailer thumbnailer.cpp cmdline.h)
