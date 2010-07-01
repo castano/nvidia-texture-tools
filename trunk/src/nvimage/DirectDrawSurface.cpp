@@ -803,32 +803,47 @@ bool DDSHeader::hasDX10Header() const
 }
 
 
-
-DirectDrawSurface::DirectDrawSurface(const char * name) : stream(new StdInputStream(name))
+DirectDrawSurface::DirectDrawSurface() : stream(NULL)
 {
-    if (!stream->isError())
-    {
-        (*stream) << header;
-    }
 }
 
-DirectDrawSurface::DirectDrawSurface(Stream * s) : stream(s)
+DirectDrawSurface::DirectDrawSurface(const char * name) : stream(NULL)
 {
-    if (!stream->isError())
-    {
-        (*stream) << header;
-    }
+    load(name);
 }
 
+DirectDrawSurface::DirectDrawSurface(Stream * s) : stream(NULL)
+{
+    load(s);
+}
 
 DirectDrawSurface::~DirectDrawSurface()
 {
     delete stream;
 }
 
+bool DirectDrawSurface::load(const char * filename)
+{
+    return load(new StdInputStream(filename));
+}
+
+bool DirectDrawSurface::load(Stream * stream)
+{
+    delete this->stream;
+    this->stream = stream;
+
+    if (!stream->isError())
+    {
+        (*stream) << header;
+        return true;
+    }
+
+    return false;
+}
+
 bool DirectDrawSurface::isValid() const
 {
-    if (stream->isError())
+    if (stream == NULL || stream->isError())
     {
         return false;
     }

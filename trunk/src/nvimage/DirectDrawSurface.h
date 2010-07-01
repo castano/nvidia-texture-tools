@@ -113,9 +113,13 @@ namespace nv
     class NVIMAGE_CLASS DirectDrawSurface
     {
     public:
+        DirectDrawSurface();
         DirectDrawSurface(const char * file);
         DirectDrawSurface(Stream * stream);
         ~DirectDrawSurface();
+
+        bool load(const char * filename);
+        bool load(Stream * stream);
 
         bool isValid() const;
         bool isSupported() const;
@@ -153,7 +157,7 @@ namespace nv
 
 
     private:
-        Stream * const stream;
+        Stream * stream;
         DDSHeader header;
         DDSHeader10 header10;
     };
