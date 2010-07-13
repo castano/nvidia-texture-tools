@@ -332,7 +332,7 @@ namespace nv
 
 
         /// Resize the vector preserving existing elements.
-        void resize(uint new_size)
+        NV_NOINLINE void resize(uint new_size)
         {
             uint i;
             uint old_size = m_size;
@@ -372,7 +372,7 @@ namespace nv
 
         /// Resize the vector preserving existing elements and initializing the
         /// new ones with the given value.
-        void resize( uint new_size, const T &elem )
+        NV_NOINLINE void resize( uint new_size, const T &elem )
         {
             uint i;
             uint old_size = m_size;
@@ -496,7 +496,7 @@ namespace nv
     private:
 
         /// Change buffer size.
-        void allocate( uint rsize )
+        NV_NOINLINE void allocate( uint rsize )
         {
             m_buffer_size = rsize;
 
