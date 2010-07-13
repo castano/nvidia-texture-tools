@@ -30,6 +30,8 @@
 #define NV_CONST
 #endif
 
+#define NV_NOINLINE __attribute__((noinline))
+
 // Define __FUNC__ properly.
 #if __STDC_VERSION__ < 199901L
 #	if __GNUC__ >= 2

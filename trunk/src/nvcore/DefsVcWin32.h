@@ -42,6 +42,7 @@
 #define __FUNC__ __FUNCTION__ 
 #endif
 
+#define NV_NOINLINE __declspec(noinline)
 
 // Type definitions
 typedef unsigned char       uint8;
