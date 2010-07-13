@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     float gamma = 2.2f;
     image.toLinear(gamma);
 
-    float alphaRef = 0.95;
+    float alphaRef = 0.95f;
     float coverage = image.alphaTestCoverage(alphaRef);
 
     // Build mimaps.

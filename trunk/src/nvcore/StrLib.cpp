@@ -9,12 +9,6 @@
 #include <stdarg.h> // vsnprintf
 #endif
 
-#if NV_OS_WIN32
-#define NV_PATH_SEPARATOR '\\'
-#else
-#define NV_PATH_SEPARATOR '/'
-#endif
-
 using namespace nv;
 
 namespace 
@@ -230,7 +224,7 @@ StringBuilder & StringBuilder::format( const char * fmt, ... )
     va_list arg;
     va_start( arg, fmt );
 
-    format( fmt, arg );
+    formatList( fmt, arg );
 
     va_end( arg );
 
@@ -239,7 +233,7 @@ StringBuilder & StringBuilder::format( const char * fmt, ... )
 
 
 /** Format a string safely. */
-StringBuilder & StringBuilder::format( const char * fmt, va_list arg )
+StringBuilder & StringBuilder::formatList( const char * fmt, va_list arg )
 {
     nvDebugCheck(fmt != NULL);
 
@@ -315,14 +309,14 @@ StringBuilder & StringBuilder::append( const char * s )
 
 
 /** Append a formatted string. */
-StringBuilder & StringBuilder::appendFormat( const char * format, ... )
+StringBuilder & StringBuilder::appendFormat( const char * fmt, ... )
 {
-    nvDebugCheck( format != NULL );
+    nvDebugCheck( fmt != NULL );
 
     va_list arg;
-    va_start( arg, format );
+    va_start( arg, fmt );
 
-    appendFormat( format, arg );
+    appendFormatList( fmt, arg );
 
     va_end( arg );
 
@@ -331,16 +325,21 @@ StringBuilder & StringBuilder::appendFormat( const char * format, ... )
 
 
 /** Append a formatted string. */
-StringBuilder & StringBuilder::appendFormat( const char * format, va_list arg )
+StringBuilder & StringBuilder::appendFormatList( const char * fmt, va_list arg )
 {
-    nvDebugCheck( format != NULL );
+    nvDebugCheck( fmt != NULL );
 
     va_list tmp;
     va_copy(tmp, arg);
 
-    StringBuilder tmp_str;
-    tmp_str.format( format, tmp );
-    append( tmp_str );
+    if (m_size == 0) {
+        formatList(fmt, arg);
+    }
+    else {
+        StringBuilder tmp_str;
+        tmp_str.formatList( fmt, tmp );
+        append( tmp_str );
+    }
 
     va_end(tmp);
 
@@ -459,17 +458,13 @@ const char * Path::extension() const
 
 
 /// Toggles path separators (ie. \\ into /).
-void Path::translatePath()
+void Path::translatePath(char pathSeparator /*= NV_PATH_SEPARATOR*/)
 {
     nvCheck( m_str != NULL );
 
-    for(int i = 0; ; i++) {
-        if( m_str[i] == '\0' ) break;
-#if NV_PATH_SEPARATOR == '/'
-        if( m_str[i] == '\\' ) m_str[i] = NV_PATH_SEPARATOR;
-#else
-        if( m_str[i] == '/' ) m_str[i] = NV_PATH_SEPARATOR;
-#endif
+    for (int i = 0; ; i++) {
+        if (m_str[i] == '\0') break;
+        if (m_str[i] == '\\' || m_str[i] == '/') m_str[i] = pathSeparator;
     }
 }
 
@@ -501,13 +496,13 @@ void Path::stripExtension()
     nvCheck( m_str != NULL );
 
     int length = (int)strlen(m_str) - 1;
-    while( length > 0 && m_str[length] != '.' ) {
+    while (length > 0 && m_str[length] != '.') {
         length--;
         if( m_str[length] == NV_PATH_SEPARATOR ) {
             return; // no extension
         }
     }
-    if( length ) {
+    if (length > 0) {
         m_str[length] = 0;
     }
 }

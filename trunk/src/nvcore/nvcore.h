@@ -37,27 +37,27 @@
 #define NV_OS_STRING POSH_OS_STRING
 
 #if defined POSH_OS_LINUX
-#	define NV_OS_LINUX 1
-#	define NV_OS_UNIX 1
+#   define NV_OS_LINUX 1
+#   define NV_OS_UNIX 1
 #elif defined POSH_OS_FREEBSD
-#	define NV_OS_FREEBSD 1
-#	define NV_OS_UNIX 1
+#   define NV_OS_FREEBSD 1
+#   define NV_OS_UNIX 1
 #elif defined POSH_OS_CYGWIN32
-#	define NV_OS_CYGWIN 1
+#   define NV_OS_CYGWIN 1
 #elif defined POSH_OS_MINGW
-#	define NV_OS_MINGW 1
-#	define NV_OS_WIN32 1
+#   define NV_OS_MINGW 1
+#   define NV_OS_WIN32 1
 #elif defined POSH_OS_OSX
-#	define NV_OS_DARWIN 1
-#	define NV_OS_UNIX 1
+#   define NV_OS_DARWIN 1
+#   define NV_OS_UNIX 1
 #elif defined POSH_OS_UNIX
-#	define NV_OS_UNIX 1
+#   define NV_OS_UNIX 1
 #elif defined POSH_OS_WIN32
-#	define NV_OS_WIN32 1
+#   define NV_OS_WIN32 1
 #elif defined POSH_OS_WIN64
-#	define NV_OS_WIN64 1
+#   define NV_OS_WIN64 1
 #else
-#	error "Unsupported OS"
+#   error "Unsupported OS"
 #endif
 
 // CPUs:
@@ -151,8 +151,8 @@
 /// @hideinitializer 
 #define NV_UNUSED(a) ((a)=(a))
 
-/// Null index. @@ Move this somewhere else... This could have collisions with other definitions!
-#define NIL uint(~0)
+/// Null index. @@ Move this somewhere else... it's only used by nvmesh.
+const unsigned int NIL = unsigned int(~0);
 
 /// Null pointer.
 #ifndef NULL

@@ -10,6 +10,11 @@
 
 #include <string.h> // strlen, strcmp, etc.
 
+#if NV_OS_WIN32
+#define NV_PATH_SEPARATOR '\\'
+#else
+#define NV_PATH_SEPARATOR '/'
+#endif
 
 namespace nv
 {
@@ -30,6 +35,7 @@ namespace nv
     template <> struct Hash<const char *> {
         uint operator()(const char * str) const { return strHash(str); }
     };
+
 
 
     NVCORE_API int strCaseCmp(const char * s1, const char * s2) NV_PURE;
@@ -60,11 +66,11 @@ namespace nv
         ~StringBuilder();
 
         StringBuilder & format( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-        StringBuilder & format( const char * format, va_list arg );
+        StringBuilder & formatList( const char * format, va_list arg );
 
         StringBuilder & append( const char * str );
         StringBuilder & appendFormat( const char * format, ... ) __attribute__((format (printf, 2, 3)));
-        StringBuilder & appendFormat( const char * format, va_list arg );
+        StringBuilder & appendFormatList( const char * format, va_list arg );
 
         StringBuilder & number( int i, int base = 10 );
         StringBuilder & number( uint i, int base = 10 );
@@ -142,7 +148,7 @@ namespace nv
         const char * fileName() const;
         const char * extension() const;
 
-        void translatePath();
+        void translatePath(char pathSeparator = NV_PATH_SEPARATOR);
 
         void stripFileName();
         void stripExtension();
@@ -359,6 +365,10 @@ namespace nv
 
         const char * data;
 
+    };
+
+    template <> struct Hash<String> {
+        uint operator()(const String & str) const { return str.hash(); }
     };
 
 } // nv namespace
