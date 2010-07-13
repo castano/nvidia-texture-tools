@@ -275,12 +275,14 @@ namespace nv
         }
 
         /// Remove the first instance of the given element.
-        void remove(const T & element)
+        bool remove(const T & element)
         {
-            for (uint i = 0; i < m_size; i++) {
-                removeAt(i);
-                break;
+            uint index;
+            if (find(element, &index)) {
+                removeAt(index);
+                return true;
             }
+            return false;
         }
 
         /// Insert the given element at the given index shifting all the elements up.
@@ -342,7 +344,7 @@ namespace nv
             }
 
             if( m_size == 0 ) {
-                //Allocate(0);	// Don't shrink automatically.
+                //allocate(0);	// Don't shrink automatically.
             }
             else if( m_size <= m_buffer_size/* && m_size > m_buffer_size >> 1*/) {
                 // don't compact yet.
@@ -382,7 +384,7 @@ namespace nv
             }
 
             if( m_size == 0 ) {
-                //Allocate(0);	// Don't shrink automatically.
+                //allocate(0);	// Don't shrink automatically.
             }
             else if( m_size <= m_buffer_size && m_size > m_buffer_size >> 1 ) {
                 // don't compact yet.

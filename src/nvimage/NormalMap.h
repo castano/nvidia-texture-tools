@@ -21,12 +21,14 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#pragma once
 #ifndef NV_IMAGE_NORMALMAP_H
 #define NV_IMAGE_NORMALMAP_H
 
-#include <nvmath/Vector.h>
-#include <nvimage/nvimage.h>
-#include <nvimage/FloatImage.h>
+#include "nvimage.h"
+#include "FloatImage.h"
+
+#include "nvmath/Vector.h"
 
 
 namespace nv

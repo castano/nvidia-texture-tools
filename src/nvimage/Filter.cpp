@@ -83,15 +83,15 @@ namespace
     /*// Alternative bessel function from Paul Heckbert.
     static float _bessel0(float x)
     {
-    const float EPSILON_RATIO = 1E-6;
-    float sum = 1.0f;
-    float y = x * x / 4.0f;
-    float t = y;
-    for(int i = 2; t > EPSILON_RATIO; i++) {
-    sum += t;
-    t *= y / float(i * i);
-    }
-    return sum;
+        const float EPSILON_RATIO = 1E-6;
+        float sum = 1.0f;
+        float y = x * x / 4.0f;
+        float t = y;
+        for(int i = 2; t > EPSILON_RATIO; i++) {
+            sum += t;
+            t *= y / float(i * i);
+        }
+        return sum;
     }*/
 
 } // namespace

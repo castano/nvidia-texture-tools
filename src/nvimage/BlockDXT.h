@@ -21,17 +21,18 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#pragma once
 #ifndef NV_IMAGE_BLOCKDXT_H
 #define NV_IMAGE_BLOCKDXT_H
 
-#include <nvmath/Color.h>
+#include "nvimage.h"
 
-#include <nvimage/nvimage.h>
+#include "nvmath/Color.h"
 
 namespace nv
 {
-	struct ColorBlock;
-	class Stream;
+    struct ColorBlock;
+    class Stream;
 
 
 	/// DXT1 block.

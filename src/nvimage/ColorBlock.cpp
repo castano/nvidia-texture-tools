@@ -161,28 +161,25 @@ bool ColorBlock::isSingleColor() const
 /// Returns true if the block has a single color, ignoring transparent pixels.
 bool ColorBlock::isSingleColorNoAlpha() const
 {
-Color32 c;
-int i;
-for(i = 0; i < 16; i++)
-{
-if (m_color[i].a != 0) {
-c = m_color[i];
-break;
-}
-}
+    Color32 c;
+    int i;
+    for(i = 0; i < 16; i++)
+    {
+        if (m_color[i].a != 0) c = m_color[i];
+    }
 
-Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
-uint u = c.u & mask.u;
+    Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
+    uint u = c.u & mask.u;
 
-for(; i < 16; i++)
-{
-if (u != (m_color[i].u & mask.u))
-{
-return false;
-}
-}
+    for(; i < 16; i++)
+    {
+        if (u != (m_color[i].u & mask.u))
+        {
+            return false;
+        }
+    }
 
-return true;
+    return true;
 }
 */
 
@@ -483,10 +480,10 @@ void FloatColorBlock::init(const Image * img, uint x, uint y)
             const uint bx = e % w;
             Color32 c = img->pixel(x+bx, y+by);
             Vector4 & v = color(e, i);
-            v.x = c.r / 255;
-            v.y = c.g / 255;
-            v.z = c.b / 255;
-            v.w = c.a / 255;
+            v.x = c.r / 255.0f;
+            v.y = c.g / 255.0f;
+            v.z = c.b / 255.0f;
+            v.w = c.a / 255.0f;
         }
     }
 }

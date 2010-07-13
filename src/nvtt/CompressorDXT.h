@@ -26,7 +26,7 @@
 
 #include "Compressor.h"
 
-struct Tile;
+class Tile;
 
 namespace nv
 {
