@@ -141,9 +141,8 @@ void ColorBlock::swizzle(uint x, uint y, uint z, uint w)
 
 
 /// Returns true if the block has a single color.
-bool ColorBlock::isSingleColor() const
+bool ColorBlock::isSingleColor(Color32 mask/*= Color32(0xFF, 0xFF, 0xFF, 0x00)*/) const
 {
-    Color32 mask(0xFF, 0xFF, 0xFF, 0x00);
     uint u = m_color[0].u & mask.u;
 
     for (int i = 1; i < 16; i++)
@@ -184,7 +183,7 @@ bool ColorBlock::isSingleColorNoAlpha() const
 */
 
 /// Count number of unique colors in this color block.
-uint ColorBlock::countUniqueColors() const
+/*uint ColorBlock::countUniqueColors() const
 {
     uint count = 0;
 
@@ -204,7 +203,7 @@ uint ColorBlock::countUniqueColors() const
     }
 
     return count;
-}
+}*/
 
 /*/// Get average color of the block.
 Color32 ColorBlock::averageColor() const

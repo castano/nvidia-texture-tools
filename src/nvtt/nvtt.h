@@ -391,7 +391,6 @@ namespace nvtt
 	/// A texture mipmap.
 	struct TexImage
 	{
-		NVTT_API TexImage();
 		NVTT_API TexImage(const TexImage & tex);
 		NVTT_API ~TexImage();
 
@@ -459,6 +458,7 @@ namespace nvtt
 		NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel);
 
 	private:
+		TexImage();
 		void detach();
 
         friend struct Compressor;
