@@ -771,6 +771,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDX9.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\CompressorDXT.cpp"
 				>
 			</File>
@@ -887,6 +891,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\SingleColorLookup.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\TexImage.cpp"
 				>
 			</File>
@@ -914,6 +922,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\CompressorDX11.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\nvtt\CompressorDX9.h"
 				>
 			</File>
 			<File

@@ -383,8 +383,7 @@ Vec4 ClusterFit::SolveLeastSquares( Vec4& start, Vec4& end ) const
 
 	// clamp to the grid
 	Vec4 const grid( 31.0f, 63.0f, 31.0f, 0.0f );
-//	Vec4 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
-	Vec4 const gridrcp( 0.03227752766457f, 0.01583151765563f, 0.03227752766457f, 0.0f ); // IC: use approximate grid fitting.
+	Vec4 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
 	Vec4 const onethird = VEC4_CONST( 1.0f/3.0f );
 	Vec4 const twothirds = VEC4_CONST( 2.0f/3.0f );
 	a = Truncate( MultiplyAdd( grid, a, half ) )*gridrcp;
@@ -459,8 +458,7 @@ float ClusterFit::SolveLeastSquares( Vec3& start, Vec3& end ) const
 
 	// clamp to the grid
 	Vec3 const grid( 31.0f, 63.0f, 31.0f );
-	//Vec3 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
-	Vec3 const gridrcp(0.03227752766457f, 0.01583151765563f, 0.03227752766457f); // IC: use approximate grid fitting.
+	Vec3 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
 	Vec3 const half( 0.5f );
 	a = Floor( grid*a + half )*gridrcp;
 	b = Floor( grid*b + half )*gridrcp;

@@ -266,18 +266,27 @@ void OptimalCompress::compressDXT1(Color32 c, BlockDXT1 * dxtBlock)
 	}
 }
 
-void OptimalCompress::compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock)
+void OptimalCompress::compressDXT1a(Color32 c, uint alphaMask, BlockDXT1 * dxtBlock)
 {
-	if (rgba.a < 128)
-	{
-		dxtBlock->col0.u = 0;
-		dxtBlock->col1.u = 0;
-		dxtBlock->indices = 0xFFFFFFFF;
-	}
-	else
-	{
-		compressDXT1(rgba, dxtBlock);
-	}
+    if (alphaMask == 0) {
+        compressDXT1(c, dxtBlock);
+    }
+    else {
+        dxtBlock->col0.r = OMatchAlpha5[c.r][0];
+        dxtBlock->col0.g = OMatchAlpha6[c.g][0];
+        dxtBlock->col0.b = OMatchAlpha5[c.b][0];
+        dxtBlock->col1.r = OMatchAlpha5[c.r][1];
+        dxtBlock->col1.g = OMatchAlpha6[c.g][1];
+        dxtBlock->col1.b = OMatchAlpha5[c.b][1];
+        dxtBlock->indices = 0xaaaaaaaa; // 0b1010..1010
+
+        if (dxtBlock->col0.u > dxtBlock->col1.u)
+        {
+	        swap(dxtBlock->col0.u, dxtBlock->col1.u);
+        }
+
+        dxtBlock->indices |= alphaMask;
+    }
 }
 
 void OptimalCompress::compressDXT1G(uint8 g, BlockDXT1 * dxtBlock)

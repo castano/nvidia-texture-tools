@@ -26,7 +26,6 @@
 
 #include "CudaMath.h"
 
-#include "../SingleColorLookup.h"
 
 #define NUM_THREADS 64		// Number of threads per block.
 
@@ -47,6 +46,9 @@ __device__ inline void swap(T & a, T & b)
 	a = b;
 	b = tmp;
 }
+
+__constant__ uchar OMatch5[256][2];
+__constant__ uchar OMatch6[256][2];
 
 __constant__ float3 kColorMetric = { 1.0f, 1.0f, 1.0f };
 __constant__ float3 kColorMetricSqr = { 1.0f, 1.0f, 1.0f };

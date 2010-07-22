@@ -24,31 +24,24 @@
 #include "CudaCompressorDXT.h"
 #include "CudaUtils.h"
 
-#include <nvcore/Debug.h>
-#include <nvmath/Color.h>
-#include <nvimage/Image.h>
-#include <nvimage/ColorBlock.h>
-#include <nvimage/BlockDXT.h>
-#include <nvtt/CompressionOptions.h>
-#include <nvtt/OutputOptions.h>
-#include <nvtt/QuickCompressDXT.h>
-#include <nvtt/OptimalCompressDXT.h>
+#include "nvcore/Debug.h"
+#include "nvmath/Color.h"
+#include "nvimage/Image.h"
+#include "nvimage/ColorBlock.h"
+#include "nvimage/BlockDXT.h"
+#include "nvtt/CompressionOptions.h"
+#include "nvtt/OutputOptions.h"
+#include "nvtt/QuickCompressDXT.h"
+#include "nvtt/OptimalCompressDXT.h"
 
-
-#if defined HAVE_CUDA
-#include <cuda_runtime_api.h>
-#endif
 
 #include <time.h>
 #include <stdio.h>
 
-using namespace nv;
-using namespace nvtt;
-
 #if defined HAVE_CUDA
+#include <cuda_runtime_api.h>
 
-#define MAX_BLOCKS 8192U // 32768, 65535
-
+#define MAX_BLOCKS 8192U // 32768, 65535 // @@ Limit number of blocks on slow devices to prevent hitting the watchdog timer.
 
 extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void bindTextureToArray(cudaArray * d_data);
@@ -62,30 +55,12 @@ extern "C" void compressKernelDXT3(uint firstBlock, uint blockNum, uint w, uint 
 
 
 #include "BitmapTable.h"
-
-/*
-// Convert linear image to block linear.
-static void convertToBlockLinear(const Image * image, uint * blockLinearImage)
-{
-	const uint w = (image->width() + 3) / 4;
-	const uint h = (image->height() + 3) / 4;
-
-	for(uint by = 0; by < h; by++) {
-		for(uint bx = 0; bx < w; bx++) {
-			const uint bw = min(image->width() - bx * 4, 4U);
-			const uint bh = min(image->height() - by * 4, 4U);
-
-			for (uint i = 0; i < 16; i++) {
-				const int x = (i % 4) % bw;
-				const int y = (i / 4) % bh;
-				blockLinearImage[(by * w + bx) * 16 + i] = image->pixel(bx * 4 + x, by * 4 + y).u;
-			}
-		}
-	}
-}
-*/
+#include "nvtt/SingleColorLookup.h"
 
 #endif
+
+using namespace nv;
+using namespace nvtt;
 
 
 CudaContext::CudaContext() : 
@@ -111,6 +86,11 @@ CudaContext::CudaContext() :
 	// Allocate scratch buffers.
     cudaMalloc((void**) &data, MAX_BLOCKS * 64U);
     cudaMalloc((void**) &result, MAX_BLOCKS * 8U);
+
+    // Init single color lookup contant tables.
+    cudaMemcpyToSymbol("OMatch5", OMatch5, sizeof(OMatch5), 0, cudaMemcpyHostToDevice);
+    cudaMemcpyToSymbol("OMatch6", OMatch6, sizeof(OMatch6), 0, cudaMemcpyHostToDevice);
+
 #endif
 }
 
@@ -299,6 +279,30 @@ void CudaCompressorDXT5::compressBlocks(uint first, uint count, uint w, uint h, 
 // @@ This code is very repetitive and needs to be cleaned up.
 
 #if 0
+
+
+/*
+// Convert linear image to block linear.
+static void convertToBlockLinear(const Image * image, uint * blockLinearImage)
+{
+	const uint w = (image->width() + 3) / 4;
+	const uint h = (image->height() + 3) / 4;
+
+	for(uint by = 0; by < h; by++) {
+		for(uint bx = 0; bx < w; bx++) {
+			const uint bw = min(image->width() - bx * 4, 4U);
+			const uint bh = min(image->height() - by * 4, 4U);
+
+			for (uint i = 0; i < 16; i++) {
+				const int x = (i % 4) % bw;
+				const int y = (i / 4) % bh;
+				blockLinearImage[(by * w + bx) * 16 + i] = image->pixel(bx * 4 + x, by * 4 + y).u;
+			}
+		}
+	}
+}
+*/
+
 
 /// Compress image using CUDA.
 void CudaCompressor::compressDXT3(const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
