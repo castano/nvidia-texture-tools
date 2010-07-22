@@ -3,7 +3,7 @@
 # Once done this will define
 #
 # CG_FOUND =system has NVIDIA Cg and it can be used. 
-# CG_INCLUDE_PATH = directory where cg.h resides
+# CG_INCLUDE_DIR = directory where cg.h resides
 # CG_LIBRARY = full path to libCg.so (Cg.DLL on win32)
 # CG_GL_LIBRARY = full path to libCgGL.so (CgGL.dll on win32)
 # CG_COMPILER = full path to cgc (cgc.exe on win32)
@@ -21,7 +21,7 @@ IF (APPLE)
     ENDFOREACH(dir)
 
     # Find the include  dir
-    FIND_PATH(CG_INCLUDE_PATH cg.h
+    FIND_PATH(CG_INCLUDE_DIR cg.h
       ${CG_FRAMEWORK_INCLUDES}
       )
 
@@ -63,7 +63,7 @@ ELSE (APPLE)
       SET (CG_COMPILER_DIR .)
       SET (CG_COMPILER_SUPER_DIR ..)
     ENDIF (CG_COMPILER)
-    FIND_PATH( CG_INCLUDE_PATH Cg/cg.h
+    FIND_PATH( CG_INCLUDE_DIR Cg/cg.h
       $ENV{CG_INC_PATH}
       $ENV{PROGRAMFILES}/NVIDIA\ Corporation/Cg/include
       $ENV{PROGRAMFILES}/Cg
@@ -133,7 +133,7 @@ ELSE (APPLE)
       )
     GET_FILENAME_COMPONENT(CG_COMPILER_DIR "${CG_COMPILER}" PATH)
     GET_FILENAME_COMPONENT(CG_COMPILER_SUPER_DIR "${CG_COMPILER_DIR}" PATH)
-    FIND_PATH( CG_INCLUDE_PATH Cg/cg.h
+    FIND_PATH( CG_INCLUDE_DIR Cg/cg.h
       /usr/include
       /usr/local/include
       ${CG_COMPILER_SUPER_DIR}/include
@@ -163,10 +163,10 @@ ELSE (APPLE)
   ENDIF (WIN32)
 ENDIF (APPLE)
 
-IF (CG_INCLUDE_PATH)
+IF (CG_INCLUDE_DIR)
   SET( CG_FOUND 1 CACHE STRING "Set to 1 if CG is found, 0 otherwise")
-ELSE (CG_INCLUDE_PATH)
+ELSE (CG_INCLUDE_DIR)
   SET( CG_FOUND 0 CACHE STRING "Set to 1 if CG is found, 0 otherwise")
-ENDIF (CG_INCLUDE_PATH)
+ENDIF (CG_INCLUDE_DIR)
 
 MARK_AS_ADVANCED( CG_FOUND )
