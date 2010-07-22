@@ -312,12 +312,18 @@ bool TexImage::setImage2D(nvtt::InputFormat format, int w, int h, int idx, const
 	}
 
 	FloatImage * img = m->imageArray[idx];
-	if (img->width() != w || img->height() != h)
-	{
-		return false;
+    if (img != NULL) {
+        if (img->width() != w || img->height() != h) {
+		    return false;
+        }
 	}
 
 	detach();
+
+    if (img == NULL) {
+        img = m->imageArray[idx] = new FloatImage();
+        img->allocate(4, w, h);
+    }
 
 	const int count = w * h;
 
@@ -333,10 +339,10 @@ bool TexImage::setImage2D(nvtt::InputFormat format, int w, int h, int idx, const
 		try {
 			for (int i = 0; i < count; i++)
 			{
-				rdst[i] = src[i].r;
-				gdst[i] = src[i].g;
-				bdst[i] = src[i].b;
-				adst[i] = src[i].a;
+				rdst[i] = float(src[i].r) / 255.0f;
+				gdst[i] = float(src[i].g) / 255.0f;
+				bdst[i] = float(src[i].b) / 255.0f;
+				adst[i] = float(src[i].a) / 255.0f;
 			}
 		}
 		catch(...) {

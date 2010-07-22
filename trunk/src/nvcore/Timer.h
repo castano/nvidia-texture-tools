@@ -10,20 +10,24 @@
 
 #include <time.h> //clock
 
-class NVCORE_CLASS Timer
-{
-public:
-    Timer() {}
+namespace nv {
 
-    void start() { m_start = clock(); }
-    void stop() { m_stop = clock(); }
+    class NVCORE_CLASS Timer
+    {
+    public:
+        Timer() {}
 
-    float elapsed() const { return float(m_stop - m_start) / CLOCKS_PER_SEC; }
+        void start() { m_start = clock(); }
+        void stop() { m_stop = clock(); }
 
-private:
-    clock_t m_start;
-    clock_t m_stop;
-};
+        float elapsed() const { return float(m_stop - m_start) / CLOCKS_PER_SEC; }
+
+    private:
+        clock_t m_start;
+        clock_t m_stop;
+    };
+
+} // nv namespace
 
 #else
 

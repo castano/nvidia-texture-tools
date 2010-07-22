@@ -37,63 +37,62 @@ namespace nv
     public:
 
         /// Ctor.
-        StdStream( FILE * fp, bool autoclose=true ) : 
-          m_fp(fp), m_autoclose(autoclose) { }
+        StdStream( FILE * fp, bool autoclose=true ) : m_fp(fp), m_autoclose(autoclose) { }
 
-          /// Dtor. 
-          virtual ~StdStream()
-          {
-              if( m_fp != NULL && m_autoclose ) {
-                  fclose( m_fp );
-              }
-          }
+        /// Dtor. 
+        virtual ~StdStream()
+        {
+            if( m_fp != NULL && m_autoclose ) {
+                _fclose_nolock( m_fp );
+            }
+        }
 
 
-          /** @name Stream implementation. */
-          //@{
-          virtual void seek( uint pos )
-          {
-              nvDebugCheck(m_fp != NULL);
-              nvDebugCheck(pos < size());
-              fseek(m_fp, pos, SEEK_SET);
-          }
+        /** @name Stream implementation. */
+        //@{
+        virtual void seek( uint pos )
+        {
+            nvDebugCheck(m_fp != NULL);
+            nvDebugCheck(pos < size());
+            _fseek_nolock(m_fp, pos, SEEK_SET);
+        }
 
-          virtual uint tell() const
-          {
-              nvDebugCheck(m_fp != NULL);
-              return ftell(m_fp);
-          }
+        virtual uint tell() const
+        {
+            nvDebugCheck(m_fp != NULL);
+            return _ftell_nolock(m_fp);
+        }
 
-          virtual uint size() const
-          {
-              nvDebugCheck(m_fp != NULL);
-              uint pos = ftell(m_fp);
-              fseek(m_fp, 0, SEEK_END);
-              uint end = ftell(m_fp);
-              fseek(m_fp, pos, SEEK_SET);
-              return end;
-          }
+        virtual uint size() const
+        {
+            nvDebugCheck(m_fp != NULL);
+            uint pos = ftell(m_fp);
+            _fseek_nolock(m_fp, 0, SEEK_END);
+            uint end = ftell(m_fp);
+            _fseek_nolock(m_fp, pos, SEEK_SET);
+            return end;
+        }
 
-          virtual bool isError() const
-          {
-              return m_fp == NULL || ferror( m_fp ) != 0;
-          }
+        virtual bool isError() const
+        {
+            return m_fp == NULL || ferror( m_fp ) != 0;
+        }
 
-          virtual void clearError()
-          {
-              nvDebugCheck(m_fp != NULL);
-              clearerr(m_fp);
-          }
+        virtual void clearError()
+        {
+            nvDebugCheck(m_fp != NULL);
+            clearerr(m_fp);
+        }
 
-          virtual bool isAtEnd() const
-          {
-              nvDebugCheck(m_fp != NULL);
-              return feof( m_fp ) != 0;
-          }
+        virtual bool isAtEnd() const
+        {
+            nvDebugCheck(m_fp != NULL);
+            return feof( m_fp ) != 0;
+        }
 
-          /// Always true.
-          virtual bool isSeekable() const { return true; }
-          //@}
+        /// Always true.
+        virtual bool isSeekable() const { return true; }
+        //@}
 
     protected:
 
@@ -110,34 +109,33 @@ namespace nv
     public:
 
         /// Construct stream by file name.
-        StdOutputStream( const char * name ) :
-          StdStream(fileOpen(name, "wb")) { }
+        StdOutputStream( const char * name ) : StdStream(fileOpen(name, "wb")) { }
 
-          /// Construct stream by file handle.
-          StdOutputStream( FILE * fp, bool autoclose=true ) : StdStream(fp, autoclose)
-          {
-          }
+        /// Construct stream by file handle.
+        StdOutputStream( FILE * fp, bool autoclose=true ) : StdStream(fp, autoclose)
+        {
+        }
 
-          /** @name Stream implementation. */
-          //@{
-          /// Write data.
-          virtual uint serialize( void * data, uint len )
-          {
-              nvDebugCheck(data != NULL);
-              nvDebugCheck(m_fp != NULL);
-              return (uint)fwrite(data, 1, len, m_fp);
-          }
+        /** @name Stream implementation. */
+        //@{
+        /// Write data.
+        virtual uint serialize( void * data, uint len )
+        {
+            nvDebugCheck(data != NULL);
+            nvDebugCheck(m_fp != NULL);
+            return (uint)_fwrite_nolock(data, 1, len, m_fp);
+        }
 
-          virtual bool isLoading() const
-          {
-              return false;
-          }
+        virtual bool isLoading() const
+        {
+            return false;
+        }
 
-          virtual bool isSaving() const
-          {
-              return true;
-          }
-          //@}
+        virtual bool isSaving() const
+        {
+            return true;
+        }
+        //@}
 
     };
 
@@ -149,34 +147,33 @@ namespace nv
     public:
 
         /// Construct stream by file name.
-        StdInputStream( const char * name ) : 
-          StdStream(fileOpen(name, "rb")) { }
+        StdInputStream( const char * name ) : StdStream(fileOpen(name, "rb")) { }
 
-          /// Construct stream by file handle.
-          StdInputStream( FILE * fp, bool autoclose=true ) : StdStream(fp, autoclose)
-          {
-          }
+        /// Construct stream by file handle.
+        StdInputStream( FILE * fp, bool autoclose=true ) : StdStream(fp, autoclose)
+        {
+        }
 
-          /** @name Stream implementation. */
-          //@{
-          /// Read data.
-          virtual uint serialize( void * data, uint len )
-          {
-              nvDebugCheck(data != NULL);
-              nvDebugCheck(m_fp != NULL);
-              return (uint)fread(data, 1, len, m_fp);
-          }
+        /** @name Stream implementation. */
+        //@{
+        /// Read data.
+        virtual uint serialize( void * data, uint len )
+        {
+            nvDebugCheck(data != NULL);
+            nvDebugCheck(m_fp != NULL);
+            return (uint)_fread_nolock(data, 1, len, m_fp);
+        }
 
-          virtual bool isLoading() const
-          {
-              return true;
-          }
+        virtual bool isLoading() const
+        {
+            return true;
+        }
 
-          virtual bool isSaving() const
-          {
-              return false;
-          }
-          //@}
+        virtual bool isSaving() const
+        {
+            return false;
+        }
+        //@}
     };
 
 
@@ -188,75 +185,74 @@ namespace nv
     public:
 
         /// Ctor.
-        MemoryInputStream( const uint8 * mem, uint size ) : 
-          m_mem(mem), m_ptr(mem), m_size(size) { }
+        MemoryInputStream( const uint8 * mem, uint size ) : m_mem(mem), m_ptr(mem), m_size(size) { }
 
-          /** @name Stream implementation. */
-          //@{
-          /// Read data.
-          virtual uint serialize( void * data, uint len )
-          {
-              nvDebugCheck(data != NULL);
-              nvDebugCheck(!isError());
+        /** @name Stream implementation. */
+        //@{
+        /// Read data.
+        virtual uint serialize( void * data, uint len )
+        {
+            nvDebugCheck(data != NULL);
+            nvDebugCheck(!isError());
 
-              uint left = m_size - tell();
-              if (len > left) len = left;
+            uint left = m_size - tell();
+            if (len > left) len = left;
 
-              memcpy( data, m_ptr, len );
-              m_ptr += len;
+            memcpy( data, m_ptr, len );
+            m_ptr += len;
 
-              return len;
-          }
+            return len;
+        }
 
-          virtual void seek( uint pos )
-          {
-              nvDebugCheck(!isError());
-              m_ptr = m_mem + pos;
-              nvDebugCheck(!isError());
-          }
+        virtual void seek( uint pos )
+        {
+            nvDebugCheck(!isError());
+            m_ptr = m_mem + pos;
+            nvDebugCheck(!isError());
+        }
 
-          virtual uint tell() const
-          {
-              nvDebugCheck(m_ptr >= m_mem);
-              return uint(m_ptr - m_mem);
-          }
+        virtual uint tell() const
+        {
+            nvDebugCheck(m_ptr >= m_mem);
+            return uint(m_ptr - m_mem);
+        }
 
-          virtual uint size() const
-          {
-              return m_size;
-          }
+        virtual uint size() const
+        {
+            return m_size;
+        }
 
-          virtual bool isError() const
-          {
-              return m_mem == NULL || m_ptr > m_mem + m_size || m_ptr < m_mem;
-          }
+        virtual bool isError() const
+        {
+            return m_mem == NULL || m_ptr > m_mem + m_size || m_ptr < m_mem;
+        }
 
-          virtual void clearError()
-          {
-              // Nothing to do.
-          }
+        virtual void clearError()
+        {
+            // Nothing to do.
+        }
 
-          virtual bool isAtEnd() const
-          {
-              return m_ptr == m_mem + m_size;
-          }
+        virtual bool isAtEnd() const
+        {
+            return m_ptr == m_mem + m_size;
+        }
 
-          /// Always true.
-          virtual bool isSeekable() const
-          {
-              return true;
-          }
+        /// Always true.
+        virtual bool isSeekable() const
+        {
+            return true;
+        }
 
-          virtual bool isLoading() const
-          {
-              return true;
-          }
+        virtual bool isLoading() const
+        {
+            return true;
+        }
 
-          virtual bool isSaving() const
-          {
-              return false;
-          }
-          //@}
+        virtual bool isSaving() const
+        {
+            return false;
+        }
+        //@}
 
 
     private:

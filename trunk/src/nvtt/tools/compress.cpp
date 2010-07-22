@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
     // fflush(stdout);
     // getchar();
 
-    Timer timer;
+    nv::Timer timer;
     timer.start();
 
     if (!context.process(inputOptions, compressionOptions, outputOptions))

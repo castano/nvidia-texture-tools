@@ -82,6 +82,9 @@ namespace nv
         StringBuilder & toLower();
         StringBuilder & toUpper();
 
+        bool endsWith(const char * str) const;
+        bool beginsWith(const char * str) const;
+
         void reset();
         bool isNull() const { return m_size == 0; }
 

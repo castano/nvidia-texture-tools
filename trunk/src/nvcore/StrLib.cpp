@@ -426,6 +426,21 @@ StringBuilder & StringBuilder::copy( const StringBuilder & s )
     return *this;
 }
 
+bool StringBuilder::endsWith(const char * str) const
+{
+    size_t l = strlen(str);
+    size_t ml = strlen(m_str);
+    if (ml < l) return false;
+    return strncmp(m_str + ml - l, str, l) == 0;
+}
+
+bool StringBuilder::beginsWith(const char * str) const 
+{
+    size_t l = strlen(str);
+    return strncmp(m_str, str, l) == 0;
+}
+
+
 /** Reset the string. */
 void StringBuilder::reset()
 {
