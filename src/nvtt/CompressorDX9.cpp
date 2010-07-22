@@ -29,7 +29,6 @@
 
 // squish
 #include "squish/colourset.h"
-#include "squish/fastclusterfit.h"
 #include "squish/weightedclusterfit.h"
 
 #include "nvtt.h"
@@ -130,21 +129,18 @@ void NormalCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 
 void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
-	bool anyAlpha = false;
-	bool allAlpha = true;
-		
+    uint alphaMask = 0;
 	for (uint i = 0; i < 16; i++)
 	{
-		if (rgba.color(i).a < 128) anyAlpha = true;
-		else allAlpha = false;
+		if (rgba.color(i).a < 128) alphaMask |= (3 << (i * 2)); // Set two bits for each color.
 	}
 
 	const bool isSingleColor = rgba.isSingleColor();
 		
-	if ((!anyAlpha && isSingleColor || allAlpha))
+	if (isSingleColor)
 	{
 		BlockDXT1 * block = new(output) BlockDXT1;
-		OptimalCompress::compressDXT1a(rgba.color(0), block);
+        OptimalCompress::compressDXT1a(rgba.color(0), alphaMask, block);
 	}
 	else
 	{
