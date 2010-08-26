@@ -132,7 +132,7 @@ void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
     uint alphaMask = 0;
 	for (uint i = 0; i < 16; i++)
 	{
-		if (rgba.color(i).a < 128) alphaMask |= (3 << (i * 2)); // Set two bits for each color.
+		if (rgba.color(i).a == 0) alphaMask |= (3 << (i * 2)); // Set two bits for each color.
 	}
 
 	const bool isSingleColor = rgba.isSingleColor();
