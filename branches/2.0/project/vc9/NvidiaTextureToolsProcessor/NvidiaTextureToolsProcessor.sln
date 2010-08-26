@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C# Express 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NvidiaTextureToolsProcessor", "NvidiaTextureToolsProcessor.csproj", "{F4446AE2-B5E1-4D17-B33C-275A6770FD50}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Debug|Xbox 360 = Debug|Xbox 360
+		Debug|Zune = Debug|Zune
+		Release|x86 = Release|x86
+		Release|Xbox 360 = Release|Xbox 360
+		Release|Zune = Release|Zune
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Debug|x86.ActiveCfg = Debug|x86
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Debug|x86.Build.0 = Debug|x86
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Debug|Xbox 360.ActiveCfg = Debug|Xbox 360
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Debug|Xbox 360.Build.0 = Debug|Xbox 360
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Debug|Zune.ActiveCfg = Debug|Zune
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Debug|Zune.Build.0 = Debug|Zune
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Release|x86.ActiveCfg = Release|x86
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Release|x86.Build.0 = Release|x86
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Release|Xbox 360.ActiveCfg = Release|Xbox 360
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Release|Xbox 360.Build.0 = Release|Xbox 360
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Release|Zune.ActiveCfg = Release|Zune
+		{F4446AE2-B5E1-4D17-B33C-275A6770FD50}.Release|Zune.Build.0 = Release|Zune
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
