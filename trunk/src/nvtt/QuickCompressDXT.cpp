@@ -533,7 +533,7 @@ void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 	
 	for (uint i = 0; i < 16; i++)
 	{
-		if (rgba.color(i).a < 128) {
+		if (rgba.color(i).a == 0) {
 			hasAlpha = true;
 			break;
 		}
