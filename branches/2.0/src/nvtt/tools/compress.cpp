@@ -419,6 +419,11 @@ int main(int argc, char *argv[])
 			//	compressionOptions.setPixelFormat(16, 0, 0, 0);
 		}
 	}
+
+    if (format == nvtt::Format_BC1a) {
+        compressionOptions.setQuantization(false, true, true, 127);
+    }
+
 	if (fast)
 	{
 		compressionOptions.setQuality(nvtt::Quality_Fastest);

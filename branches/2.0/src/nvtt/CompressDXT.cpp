@@ -255,7 +255,7 @@ void nv::SlowCompressor::compressDXT1a(const CompressionOptions::Private & compr
 			
 			for (uint i = 0; i < 16; i++)
 			{
-				if (rgba.color(i).a < 128) anyAlpha = true;
+				if (rgba.color(i).a == 0) anyAlpha = true;
 				else allAlpha = false;
 			}
 			
