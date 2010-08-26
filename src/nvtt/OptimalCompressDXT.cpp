@@ -205,7 +205,7 @@ void OptimalCompress::compressDXT1(Color32 c, BlockDXT1 * dxtBlock)
 
 void OptimalCompress::compressDXT1a(Color32 rgba, BlockDXT1 * dxtBlock)
 {
-	if (rgba.a < 128)
+	if (rgba.a == 0)
 	{
 		dxtBlock->col0.u = 0;
 		dxtBlock->col1.u = 0;
