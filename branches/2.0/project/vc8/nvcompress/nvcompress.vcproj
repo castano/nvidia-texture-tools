@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="nvcompress"
 	ProjectGUID="{88079E38-83AA-4E8A-B18A-66A78D1B058B}"
 	RootNamespace="nvcompress"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -71,8 +70,6 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -92,6 +89,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -149,8 +149,6 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -170,6 +168,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -200,15 +201,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				OmitFramePointers="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -226,8 +225,8 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -247,6 +246,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -278,15 +280,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..;..\..\..\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVDXT_SHARED"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -303,8 +302,8 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -324,6 +323,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -381,8 +383,6 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -402,6 +402,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -456,8 +459,6 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -477,6 +478,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -507,16 +511,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -535,8 +535,8 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -556,6 +556,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -584,14 +587,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				OmitFramePointers="true"
 				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..;..\..\..\src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVDXT_SHARED"
 				RuntimeLibrary="2"
 				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -611,8 +612,6 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -632,6 +631,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

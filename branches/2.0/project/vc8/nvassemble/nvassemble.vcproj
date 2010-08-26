@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="nvassemble"
 	ProjectGUID="{3BC6D760-91E8-4FFB-BD0E-F86F367AD8EA}"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -68,8 +67,6 @@
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -89,6 +86,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -137,8 +137,6 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -158,6 +156,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -188,13 +189,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				OmitFramePointers="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -212,8 +209,6 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				SubSystem="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -233,6 +228,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -262,10 +260,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				OmitFramePointers="true"
-				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\gnuwin32\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;NVTT_SHARED;__SSE2__;__SSE__;__MMX__"
 				RuntimeLibrary="2"
@@ -285,8 +279,6 @@
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
 				AdditionalLibraryDirectories="..\..\..\gnuwin32\lib"
 				LinkTimeCodeGeneration="1"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -306,6 +298,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
