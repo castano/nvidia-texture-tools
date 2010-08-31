@@ -51,7 +51,8 @@ namespace nvtt
 		uint8 asize;
 		
 		PixelType pixelType;
-		
+        uint pitchAlignment;
+
 		nv::String externalCompressor;
 
 		// Quantization.

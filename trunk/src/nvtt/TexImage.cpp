@@ -271,23 +271,19 @@ float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
 
 bool TexImage::load(const char * fileName)
 {
-#pragma message(NV_FILE_LINE "TODO: Add support for DDS textures in TexImage::load().")
+    AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
+    if (img == NULL) {
+	    return false;
+    }
 
-	AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
+    detach();
 
-	if (img == NULL)
-	{
-		return false;
-	}
+    img->resizeChannelCount(4);
 
-	detach();
+    m->imageArray.resize(1);
+    m->imageArray[0] = img.release();
 
-	img->resizeChannelCount(4);
-
-	m->imageArray.resize(1);
-	m->imageArray[0] = img.release();
-
-	return true;
+    return true;
 }
 
 bool TexImage::save(const char * fileName) const
@@ -560,25 +556,25 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 			if (filter == ResizeFilter_Box)
 			{
 				BoxFilter filter;
-				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
+				img = img->resize(filter, w, h, wrapMode, 3);
 			}
 			else if (filter == ResizeFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
+				img = img->resize(filter, w, h, wrapMode, 3);
 			}
 			else if (filter == ResizeFilter_Kaiser)
 			{
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
+				img = img->resize(filter, w, h, wrapMode, 3);
 			}
 			else //if (filter == ResizeFilter_Mitchell)
 			{
 				nvDebugCheck(filter == ResizeFilter_Mitchell);
 				MitchellFilter filter;
-				m->imageArray[i]->resize(filter, w, h, wrapMode, 3);
+				img = img->resize(filter, w, h, wrapMode, 3);
 			}
 		}
 		else
@@ -586,27 +582,30 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 			if (filter == ResizeFilter_Box)
 			{
 				BoxFilter filter;
-				m->imageArray[i]->resize(filter, w, h, wrapMode);
+				img = img->resize(filter, w, h, wrapMode);
 			}
 			else if (filter == ResizeFilter_Triangle)
 			{
 				TriangleFilter filter;
-				m->imageArray[i]->resize(filter, w, h, wrapMode);
+				img = img->resize(filter, w, h, wrapMode);
 			}
 			else if (filter == ResizeFilter_Kaiser)
 			{
 				//KaiserFilter filter(inputOptions.kaiserWidth);
 				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
 				KaiserFilter filter(3);
-				m->imageArray[i]->resize(filter, w, h, wrapMode);
+				img = img->resize(filter, w, h, wrapMode);
 			}
 			else //if (filter == ResizeFilter_Mitchell)
 			{
 				nvDebugCheck(filter == ResizeFilter_Mitchell);
 				MitchellFilter filter;
-				m->imageArray[i]->resize(filter, w, h, wrapMode);
+				img = img->resize(filter, w, h, wrapMode);
 			}
 		}
+
+        delete m->imageArray[i];
+        m->imageArray[i] = img;
 	}
 }
 
@@ -810,6 +809,18 @@ void TexImage::scaleBias(int channel, float scale, float bias)
 		if (m->imageArray[i] == NULL) continue;
 
 		m->imageArray[i]->scaleBias(channel, 1, scale, bias);
+	}
+}
+
+void TexImage::clamp(int channel, float low, float high)
+{
+	detach();
+
+	foreach (i, m->imageArray)
+	{
+		if (m->imageArray[i] == NULL) continue;
+
+		m->imageArray[i]->clamp(channel, 1, low, high);
 	}
 }
 

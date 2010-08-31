@@ -13,15 +13,23 @@
 		Value="$(SolutionDir)..\..\src"
 	/>
 	<UserMacro
+		Name="ExternDir"
+		Value="$(SolutionDir)..\..\extern"
+	/>
+	<UserMacro
 		Name="PoshDir"
-		Value="$(SolutionDir)..\..\extern\poshlib"
+		Value="$(ExternDir)\poshlib"
 	/>
 	<UserMacro
 		Name="GnuWinDir"
-		Value="$(SolutionDir)..\..\extern\gnuwin32"
+		Value="$(ExternDir)\gnuwin32"
 	/>
 	<UserMacro
 		Name="FreeImageDir"
-		Value="$(SolutionDir)..\..\extern\FreeImage"
+		Value="$(ExternDir)\FreeImage"
+	/>
+	<UserMacro
+		Name="GlewDir"
+		Value="$(ExternDir)\glew"
 	/>
 </VisualStudioPropertySheet>

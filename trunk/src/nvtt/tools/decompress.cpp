@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
  	}
 
 	// Load surface.
-	nv::DirectDrawSurface dds(input);
+	nv::DirectDrawSurface dds(input.str());
 	if (!dds.isValid())
 	{
 		fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			
-			nv::ImageIO::save(name, stream, &mipmap);
+			nv::ImageIO::save(name.str(), stream, &mipmap);
 		}
 	}
 

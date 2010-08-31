@@ -207,16 +207,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				InlineFunctionExpansion="2"
+				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
+				FavorSizeOrSpeed="0"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_INC_PATH)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="0"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="0"
@@ -295,11 +296,15 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				OmitFramePointers="true"
+				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_INC_PATH)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
+				StringPooling="true"
 				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="0"
@@ -904,10 +909,6 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath="..\..\..\src\nvtt\cuda\Bitmaps.h"
-				>
-			</File>
 			<File
 				RelativePath="..\..\..\src\nvtt\CompressionOptions.h"
 				>

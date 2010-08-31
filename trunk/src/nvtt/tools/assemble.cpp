@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 
 	for (uint i = 0; i < imageCount; i++)
 	{
-		if (!images[i].load(files[i]))
+		if (!images[i].load(files[i].str()))
 		{
 			printf("*** error loading file\n");
 			return 1;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 	}
 	
 	
-	nv::StdOutputStream stream(output);
+	nv::StdOutputStream stream(output.str());
 	if (stream.isError()) {
 		printf("Error opening '%s' for writting\n", output.str());
 		return 1;

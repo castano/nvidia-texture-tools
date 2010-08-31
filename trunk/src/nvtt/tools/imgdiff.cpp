@@ -204,8 +204,8 @@ int main(int argc, char *argv[])
 	}
 
 	nv::Image image0, image1;
-	if (!loadImage(image0, input0)) return 0;
-	if (!loadImage(image1, input1)) return 0;
+	if (!loadImage(image0, input0.str())) return 0;
+	if (!loadImage(image1, input1.str())) return 0;
 
 	const uint w0 = image0.width();
 	const uint h0 = image0.height();

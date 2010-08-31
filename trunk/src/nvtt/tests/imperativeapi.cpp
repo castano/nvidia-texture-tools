@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     outputFileName.stripExtension();
     outputFileName.append(".dds");
 
-    outputOptions.setFileName(outputFileName);
+    outputOptions.setFileName(outputFileName.str());
 
     // Output compressed image.
     context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);

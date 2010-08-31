@@ -33,6 +33,8 @@ namespace nv
     class Stream;
     struct ColorBlock;
 
+    extern const uint FOURCC_NVTT;
+
     struct NVIMAGE_CLASS DDSPixelFormat
     {
         uint size;
@@ -100,10 +102,17 @@ namespace nv
         void setDX10Format(uint format);
         void setNormalFlag(bool b);
         void setHasAlphaFlag(bool b);
+        void setUserVersion(int version);
 
         void swapBytes();
 
         bool hasDX10Header() const;
+        uint signature() const;
+        uint toolVersion() const;
+        uint userVersion() const;
+        bool isNormalMap() const;
+        bool hasAlpha() const;
+        uint d3d9Format() const;
     };
 
     NVIMAGE_API Stream & operator<< (Stream & s, DDSHeader & header);
@@ -137,9 +146,11 @@ namespace nv
 
         void setNormalFlag(bool b);
         void setHasAlphaFlag(bool b);
+        void setUserVersion(int version);
 
         void mipmap(Image * img, uint f, uint m);
         //	void mipmap(FloatImage * img, uint f, uint m);
+        void * readData(uint * sizePtr);
 
         void printInfo() const;
 

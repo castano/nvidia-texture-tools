@@ -49,13 +49,20 @@ void OutputOptions::reset()
 
 	m.outputHeader = true;
 	m.container = Container_DDS;
+    m.version = 0;
 }
 
 
 /// Set output file name.
 void OutputOptions::setFileName(const char * fileName)
 {
-	m.fileName = fileName; // @@ Do we need to record filename?
+	if (!m.fileName.isNull())
+	{
+        // To close the file and avoid leak.
+		delete m.outputHandler;
+	}
+
+	m.fileName = fileName;
 	m.outputHandler = NULL;
 
 	DefaultOutputHandler * oh = new DefaultOutputHandler(fileName);
@@ -94,6 +101,11 @@ void OutputOptions::setContainer(Container container)
 	m.container = container;
 }
 
+/// Set user version.
+void OutputOptions::setUserVersion(int version)
+{
+	m.version = version;
+}
 
 bool OutputOptions::Private::hasValidOutputHandler() const
 {
