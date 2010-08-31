@@ -5,8 +5,10 @@
 #include "FloatImage.h"
 #include "TgaFile.h"
 #include "PsdFile.h"
+#include "DirectDrawSurface.h"
 
 #include "nvmath/Color.h"
+#include "nvmath/Half.h"
 
 #include "nvcore/Ptr.h"
 #include "nvcore/Utils.h"
@@ -92,6 +94,8 @@ namespace nv
 	#endif
 
 	#endif // defined(HAVE_FREEIMAGE)
+
+        static FloatImage * loadFloatDDS(Stream & s);
 
 	} // ImageIO namespace
 } // nv namespace
@@ -207,12 +211,18 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
     
     const uint spos = s.tell(); // Save stream position.
 
+	if (strCaseCmp(extension, ".dds") == 0) {
+        floatImage = loadFloatDDS(s);
+    }
+
     // Try to load as a floating point image.
 #if defined(HAVE_FREEIMAGE)
-	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
-	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
-		floatImage = loadFloatFreeImage(fif, s);
-	}
+    if (floatImage == NULL) {
+	    FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
+	    if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
+		    floatImage = loadFloatFreeImage(fif, s);
+	    }
+    }
 #else // defined(HAVE_FREEIMAGE)
 #pragma message(NV_FILE_LINE "TODO: Load TIFF and EXR files from stream.")
 #if defined(HAVE_TIFF)
@@ -1697,3 +1707,44 @@ bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage,
 #endif // defined(HAVE_OPENEXR)
 
 #endif // defined(HAVE_FREEIMAGE)
+
+FloatImage * nv::ImageIO::loadFloatDDS(Stream & s)
+{
+	nvCheck(s.isLoading());
+	nvCheck(!s.isError());
+
+    DDSHeader header;
+    s << header;
+
+    static const uint D3DFMT_A16B16G16R16F = 113;
+
+    // @@ We only support RGBA16F for now.
+    if (header.pf.fourcc == D3DFMT_A16B16G16R16F) {
+        const int size = header.width * header.height;
+        uint16 * const data = new uint16[size * 4];
+
+        s.serialize(data, size * 4 * sizeof(uint16));
+
+        FloatImage * img = new FloatImage;
+        img->allocate(4, header.width, header.height);
+
+        uint32 * r = (uint32 *)img->channel(0);
+        uint32 * g = (uint32 *)img->channel(1);
+        uint32 * b = (uint32 *)img->channel(2);
+        uint32 * a = (uint32 *)img->channel(3);
+
+        uint16 * ptr = data;
+        for (int i = 0; i < size; i++) {
+            *r++ = half_to_float( *ptr++ );
+            *g++ = half_to_float( *ptr++ );
+            *b++ = half_to_float( *ptr++ );
+            *a++ = half_to_float( *ptr++ );
+        }
+
+        delete [] data;
+
+        return img;
+    }
+ 
+    return NULL;
+}

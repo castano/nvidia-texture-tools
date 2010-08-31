@@ -235,13 +235,13 @@ namespace nv
         }
 
         /// Return true if element found.
-        bool find(const T & element, uint * index)
+        bool find(const T & element, uint * index) const
         {
             return find(element, 0, m_size, index);
         }
 
         /// Return true if element found within the given range.
-        bool find(const T & element, uint first, uint count, uint * index)
+        bool find(const T & element, uint first, uint count, uint * index) const
         {
             for (uint i = first; i < first+count; i++) {
                 if (m_buffer[i] == element) {

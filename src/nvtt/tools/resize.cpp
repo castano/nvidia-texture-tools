@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 	}
 
 	nv::Image image;
-	if (!loadImage(image, input)) return 0;
+	if (!loadImage(image, input.str())) return 0;
 
 	nv::FloatImage fimage(&image);
 	fimage.toLinear(0, 3, gamma);

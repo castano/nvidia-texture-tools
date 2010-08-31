@@ -89,8 +89,8 @@ namespace nv
         bool isNull() const { return m_size == 0; }
 
         // const char * accessors
-        operator const char * () const { return m_str; }
-        operator char * () { return m_str; }
+        //operator const char * () const { return m_str; }
+        //operator char * () { return m_str; }
         const char * str() const { return m_str; }
         char * str() { return m_str; }
 

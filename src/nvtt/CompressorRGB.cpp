@@ -40,12 +40,9 @@ using namespace nvtt;
 namespace 
 {
 
-	inline uint computePitch(uint w, uint bitsize)
+	inline uint computePitch(uint w, uint bitsize, uint alignment)
 	{
-		uint p = w * ((bitsize + 7) / 8);
-
-		// Align to 32 bits.
-		return ((p + 3) / 4) * 4;
+		return ((w * bitsize +  8 * alignment - 1) / (8 * alignment)) * alignment;
 	}
 
 	inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
@@ -64,6 +61,67 @@ namespace
         c.f = f;
         return half_from_float(c.u);
     }
+
+    struct BitStream
+    {
+        BitStream(uint8 * ptr) : ptr(ptr), buffer(0), bits(0) {
+        }
+
+        void putBits(uint p, int bitCount)
+        {
+            nvDebugCheck(bits < 8);
+            nvDebugCheck(bitCount <= 32);
+
+            uint64 buffer = (this->buffer << bitCount) | p;
+            uint bits = this->bits + bitCount;
+
+            while (bits >= 8)
+            {
+                *ptr++ = (buffer & 0xFF);
+                
+                buffer >>= 8;
+                bits -= 8;
+            }
+
+            this->buffer = (uint8)buffer;
+            this->bits = bits;
+        }
+
+        void putFloat(float f)
+        {
+            nvDebugCheck(bits == 0);
+            *((float *)ptr) = f;
+            ptr += 4;
+        }
+
+        void putHalf(float f)
+        {
+            nvDebugCheck(bits == 0);
+            *((uint16 *)ptr) = to_half(f);
+            ptr += 2;
+        }
+
+        void flush()
+        {
+            nvDebugCheck(bits < 8);
+            if (bits) {
+                *ptr++ = buffer;
+                buffer = 0;
+                bits = 0;
+            }
+        }
+
+        void align(int alignment)
+        {
+            nvDebugCheck(alignment >= 1);
+            flush();
+            putBits(0, ((size_t)ptr % alignment) * 8);
+        }
+
+        uint8 * ptr;
+        uint8 buffer;
+        uint8 bits;
+    };
 
 } // namespace
 
@@ -96,7 +154,7 @@ void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 	    if (compressionOptions.bitcount != 0)
 	    {
 		    bitCount = compressionOptions.bitcount;
-		    nvCheck(bitCount == 8 || bitCount == 16 || bitCount == 24 || bitCount == 32);
+		    nvCheck(bitCount <= 32);
 
 		    rmask = compressionOptions.rmask;
 		    gmask = compressionOptions.gmask;
@@ -130,20 +188,16 @@ void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 	    }
     }
 
-	uint byteCount = (bitCount + 7) / 8;
-    uint pitch = computePitch(w, bitCount);
-
-    uint srcPitch = w;
-    uint srcPlane = w * h;
-
+    const uint pitch = computePitch(w, bitCount, compressionOptions.pitchAlignment);
+    const uint wh = w * h;
 
     // Allocate output scanline.
-	uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
+	uint8 * const dst = (uint8 *)mem::malloc(pitch);
 
 	for (uint y = 0; y < h; y++)
 	{
-        const uint * src = (const uint *)data + y * srcPitch;
-        const float * fsrc = (const float *)data + y * srcPitch;
+        const uint * src = (const uint *)data + y * w;
+        const float * fsrc = (const float *)data + y * w;
 
 	    if (inputFormat == nvtt::InputFormat_BGRA_8UB && compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm && bitCount == 32 && rmask == 0xFF0000 && gmask == 0xFF00 && bmask == 0xFF && amask == 0xFF000000)
 	    {
@@ -151,7 +205,7 @@ void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
         }
         else
         {
-            uint8 * ptr = dst;
+            BitStream stream(dst);
 
 		    for (uint x = 0; x < w; x++)
 		    {
@@ -171,29 +225,25 @@ void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 			        //g = ((float *)src)[4 * x + 1];
 			        //b = ((float *)src)[4 * x + 2];
 			        //a = ((float *)src)[4 * x + 3];
-			        r = fsrc[x + 0 * srcPlane];
-			        g = fsrc[x + 1 * srcPlane];
-			        b = fsrc[x + 2 * srcPlane];
-			        a = fsrc[x + 3 * srcPlane];
+			        r = fsrc[x + 0 * wh];
+			        g = fsrc[x + 1 * wh];
+			        b = fsrc[x + 2 * wh];
+			        a = fsrc[x + 3 * wh];
                 }
 
                 if (compressionOptions.pixelType == nvtt::PixelType_Float)
                 {
-			        if (rsize == 32) *((float *)ptr) = r;
-			        else if (rsize == 16) *((uint16 *)ptr) = to_half(r);
-			        ptr += rsize / 8;
+			        if (rsize == 32) stream.putFloat(r);
+			        else if (rsize == 16) stream.putHalf(r);
 
-			        if (gsize == 32) *((float *)ptr) = g;
-			        else if (gsize == 16) *((uint16 *)ptr) = to_half(g);
-			        ptr += gsize / 8;
+			        if (gsize == 32) stream.putFloat(g);
+			        else if (gsize == 16) stream.putHalf(g);
 
-			        if (bsize == 32) *((float *)ptr) = b;
-			        else if (bsize == 16) *((uint16 *)ptr) = to_half(b);
-			        ptr += bsize / 8;
+			        if (bsize == 32) stream.putFloat(b);
+			        else if (bsize == 16) stream.putHalf(b);
 
-			        if (asize == 32) *((float *)ptr) = a;
-			        else if (asize == 16) *((uint16 *)ptr) = to_half(a);
-			        ptr += asize / 8;
+			        if (asize == 32) stream.putFloat(a);
+			        else if (asize == 16) stream.putHalf(a);
                 }
                 else
                 {
@@ -212,25 +262,27 @@ void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
 				    p |= PixelFormat::convert(c.b, 8, bsize) << bshift;
 				    p |= PixelFormat::convert(c.a, 8, asize) << ashift;
     				
+                    stream.putBits(p, bitCount);
+
 				    // Output one byte at a time.
-				    for (uint i = 0; i < byteCount; i++)
+				    /*for (uint i = 0; i < byteCount; i++)
 				    {
 					    *(dst + x * byteCount + i) = (p >> (i * 8)) & 0xFF;
-				    }
+				    }*/
                 }
             }
 
 		    // Zero padding.
-		    for (uint x = w * byteCount; x < pitch; x++)
+            stream.align(compressionOptions.pitchAlignment);
+            nvDebugCheck(stream.ptr == dst + pitch);
+
+		    /*for (uint x = w * byteCount; x < pitch; x++)
 		    {
 			    *(dst + x) = 0;
-		    }
+		    }*/
         }
 
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(dst, pitch);
-		}
+		outputOptions.writeData(dst, pitch);
     }
 
 	mem::free(dst);

@@ -59,7 +59,9 @@ void CompressionOptions::reset()
 	m.gsize = 8;
 	m.bsize = 8;
 	m.asize = 8;
-	m.pixelType = PixelType_UnsignedNorm;
+	
+    m.pixelType = PixelType_UnsignedNorm;
+    m.pitchAlignment = 1;
 
 	m.enableColorDithering = false;
 	m.enableAlphaDithering = false;
@@ -98,10 +100,10 @@ void CompressionOptions::setColorWeights(float red, float green, float blue, flo
 
 
 /// Set color mask to describe the RGB/RGBA format.
-void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+void CompressionOptions::setPixelFormat(uint bitCount, uint rmask, uint gmask, uint bmask, uint amask)
 {
 	// Validate arguments.
-	nvCheck(bitcount == 8 || bitcount == 16 || bitcount == 24 || bitcount == 32);
+    nvCheck(bitCount <= 32);
 	nvCheck((rmask & gmask) == 0);
 	nvCheck((rmask & bmask) == 0);
 	nvCheck((rmask & amask) == 0);
@@ -109,16 +111,16 @@ void CompressionOptions::setPixelFormat(uint bitcount, uint rmask, uint gmask, u
 	nvCheck((gmask & amask) == 0);
 	nvCheck((bmask & amask) == 0);
 
-	if (bitcount != 32)
+	if (bitCount != 32)
 	{
-		uint maxMask = (1 << bitcount);
+		uint maxMask = (1 << bitCount);
 		nvCheck(maxMask > rmask);
 		nvCheck(maxMask > gmask);
 		nvCheck(maxMask > bmask);
 		nvCheck(maxMask > amask);
 	}
 
-	m.bitcount = bitcount;
+	m.bitcount = bitCount;
 	m.rmask = rmask;
 	m.gmask = gmask;
 	m.bmask = bmask;
@@ -150,6 +152,14 @@ void CompressionOptions::setPixelFormat(uint8 rsize, uint8 gsize, uint8 bsize, u
 void CompressionOptions::setPixelType(PixelType pixelType)
 {
 	m.pixelType = pixelType;
+}
+
+
+/// Set pitch alignment in bytes.
+void CompressionOptions::setPitchAlignment(int pitchAlignment)
+{
+    nvDebugCheck(pitchAlignment > 0 && isPowerOfTwo(pitchAlignment));
+	m.pitchAlignment = pitchAlignment;
 }
 
 

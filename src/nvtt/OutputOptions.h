@@ -35,9 +35,7 @@ namespace nvtt
 	{
 		DefaultOutputHandler(const char * fileName) : stream(fileName) {}
 		
-		virtual ~DefaultOutputHandler()
-		{
-		}
+		virtual ~DefaultOutputHandler() {}
 		
 		virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
 		{
@@ -66,6 +64,7 @@ namespace nvtt
 
 		bool outputHeader;
 		Container container;
+        int version;
 		
 		bool hasValidOutputHandler() const;
 

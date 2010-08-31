@@ -48,7 +48,7 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_VERSION 020100
+#define NVTT_VERSION 20100
 
 #define NVTT_FORBID_COPY(Class) \
 	private: \
@@ -143,6 +143,8 @@ namespace nvtt
 		NVTT_API void setPixelFormat(unsigned char rsize, unsigned char gsize, unsigned char bsize, unsigned char asize);
 		
 		NVTT_API void setPixelType(PixelType pixelType);
+
+        NVTT_API void setPitchAlignment(int pitchAlignment);
 
 		NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 	};
@@ -345,6 +347,7 @@ namespace nvtt
 
 		NVTT_API void setOutputHeader(bool outputHeader);
 		NVTT_API void setContainer(Container container);
+        NVTT_API void setUserVersion(int version);
 	};
 
 
@@ -432,6 +435,7 @@ namespace nvtt
 		NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
 		NVTT_API void swizzle(int r, int g, int b, int a);
 		NVTT_API void scaleBias(int channel, float scale, float bias);
+        NVTT_API void clamp(int channel, float low = 0.0f, float high = 1.0f);
 		NVTT_API void packNormal();
 		NVTT_API void expandNormal();
 		NVTT_API void blend(float r, float g, float b, float a, float t);

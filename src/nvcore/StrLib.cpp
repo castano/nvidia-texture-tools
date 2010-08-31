@@ -211,9 +211,7 @@ StringBuilder::StringBuilder( const char * s, int extra_size_hint/*=0*/ ) : m_si
 /** Delete the string. */
 StringBuilder::~StringBuilder()
 {
-    m_size = 0;
     strFree(m_str);
-    m_str = NULL;
 }
 
 
@@ -237,7 +235,7 @@ StringBuilder & StringBuilder::formatList( const char * fmt, va_list arg )
 {
     nvDebugCheck(fmt != NULL);
 
-    if( m_size == 0 ) {
+    if (m_size == 0) {
         m_size = 64;
         m_str = strAlloc( m_size );
     }
@@ -287,21 +285,19 @@ StringBuilder & StringBuilder::append( const char * s )
 
     const uint slen = uint(strlen( s ));
 
-    if( m_str == NULL ) {
+    if (m_str == NULL) {
         m_size = slen + 1;
         m_str = strAlloc(m_size);
-        strCpy( m_str, m_size, s );
+        memcpy(m_str, s, m_size + 1);
     }
     else {
-
         const uint len = uint(strlen( m_str ));
-
-        if( m_size < len + slen + 1 ) {
+        if (m_size < len + slen + 1) {
             m_size = len + slen + 1;
             m_str = strReAlloc(m_str, m_size);
         }
 
-        strCat( m_str, m_size, s );
+        memcpy(m_str + len, s, slen + 1);
     }
 
     return *this;
@@ -338,7 +334,7 @@ StringBuilder & StringBuilder::appendFormatList( const char * fmt, va_list arg )
     else {
         StringBuilder tmp_str;
         tmp_str.formatList( fmt, tmp );
-        append( tmp_str );
+        append( tmp_str.str() );
     }
 
     va_end(tmp);
@@ -391,7 +387,7 @@ StringBuilder & StringBuilder::number( uint i, int base )
 StringBuilder & StringBuilder::reserve( uint size_hint )
 {
     nvCheck(size_hint != 0);
-    if( size_hint > m_size ) {
+    if (size_hint > m_size) {
         m_str = strReAlloc(m_str, size_hint);
         m_size = size_hint;
     }
@@ -403,9 +399,9 @@ StringBuilder & StringBuilder::reserve( uint size_hint )
 StringBuilder & StringBuilder::copy( const char * s, int extra_size/*=0*/ )
 {
     nvCheck( s != NULL );
-    uint str_size = uint(strlen( s )) + 1;
+    const uint str_size = uint(strlen( s )) + 1;
     reserve(str_size + extra_size);
-    strCpy( m_str, str_size, s );
+    memcpy(m_str, s, str_size);
     return *this;
 }
 
@@ -413,11 +409,9 @@ StringBuilder & StringBuilder::copy( const char * s, int extra_size/*=0*/ )
 /** Copy an StringBuilder. */
 StringBuilder & StringBuilder::copy( const StringBuilder & s )
 {
-    if( s.m_str == NULL ) {
+    if (s.m_str == NULL) {
         nvCheck( s.m_size == 0 );
-        m_size = 0;
-        strFree( m_str );
-        m_str = NULL;
+        reset();
     }
     else {
         reserve( s.m_size );
@@ -428,8 +422,8 @@ StringBuilder & StringBuilder::copy( const StringBuilder & s )
 
 bool StringBuilder::endsWith(const char * str) const
 {
-    size_t l = strlen(str);
-    size_t ml = strlen(m_str);
+    uint l = uint(strlen(str));
+    uint ml = uint(strlen(m_str));
     if (ml < l) return false;
     return strncmp(m_str + ml - l, str, l) == 0;
 }
@@ -596,7 +590,7 @@ void String::setString(const StringBuilder & str)
         data =	NULL;
     }
     else {
-        allocString(str);
+        allocString(str.str());
         addRef();
     }
 }	

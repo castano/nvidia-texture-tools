@@ -89,18 +89,15 @@ namespace
         return 0;
     }
 
-    inline uint computePitch(uint w, uint bitsize)
-    {
-        uint p = w * ((bitsize + 7) / 8);
+	inline uint computePitch(uint w, uint bitsize, uint alignment)
+	{
+        return ((w * bitsize +  8 * alignment - 1) / (8 * alignment)) * alignment;
+	}
 
-        // Align to 32 bits.
-        return ((p + 3) / 4) * 4;
-    }
-
-    static int computeImageSize(uint w, uint h, uint d, uint bitCount, Format format)
+    static int computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignment, Format format)
     {
         if (format == Format_RGBA) {
-            return d * h * computePitch(w, bitCount);
+            return d * h * computePitch(w, bitCount, alignment);
         }
         else {
             // @@ Handle 3D textures. DXT and VTC have different behaviors.
@@ -324,7 +321,7 @@ int Compressor::estimateSize(int w, int h, int d, const CompressionOptions & com
 
     uint bitCount = co.getBitCount();
 
-    return computeImageSize(w, h, d, bitCount, format);
+    return computeImageSize(w, h, d, bitCount, co.pitchAlignment, format);
 }
 
 
@@ -413,7 +410,20 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
     if (outputOptions.container == Container_DDS || outputOptions.container == Container_DDS10)
     {
         DDSHeader header;
-	
+
+        header.setUserVersion(outputOptions.version);
+
+        if (inputOptions.textureType == TextureType_2D) {
+            header.setTexture2D();
+        }
+        else if (inputOptions.textureType == TextureType_Cube) {
+            header.setTextureCube();
+        }
+        /*else if (inputOptions.textureType == TextureType_3D) {
+            header.setTexture3D();
+            header.setDepth(inputOptions.targetDepth);
+        }*/
+
         header.setWidth(inputOptions.targetWidth);
         header.setHeight(inputOptions.targetHeight);
 
@@ -499,7 +509,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
             if (compressionOptions.format == Format_RGBA)
             {
                 // Get output bit count.
-                header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.getBitCount()));
+                header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.getBitCount(), compressionOptions.pitchAlignment));
 
                 if (compressionOptions.pixelType == PixelType_Float)
                 {
@@ -564,7 +574,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
             }
             else
             {
-                header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.format));
+                header.setLinearSize(computeImageSize(inputOptions.targetWidth, inputOptions.targetHeight, inputOptions.targetDepth, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format));
 
                 if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
                     header.setFourCC('D', 'X', 'T', '1');
@@ -618,17 +628,6 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
             return false;
         }
 
-        if (inputOptions.textureType == TextureType_2D) {
-            header.setTexture2D();
-        }
-        else if (inputOptions.textureType == TextureType_Cube) {
-            header.setTextureCube();
-        }
-        /*else if (inputOptions.textureType == TextureType_3D) {
-            header.setTexture3D();
-            header.setDepth(inputOptions.targetDepth);
-        }*/
-
         // Swap bytes if necessary.
         header.swapBytes();
 
@@ -668,6 +667,19 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
     if (outputOptions.container == Container_DDS || outputOptions.container == Container_DDS10)
     {
         DDSHeader header;
+
+        header.setUserVersion(outputOptions.version);
+
+        if (tex.textureType() == TextureType_2D) {
+            header.setTexture2D();
+        }
+        else if (tex.textureType() == TextureType_Cube) {
+            header.setTextureCube();
+        }
+        /*else if (tex.textureType() == TextureType_3D) {
+            header.setTexture3D();
+            header.setDepth(tex.depth());
+        }*/
 
         header.setWidth(tex.width());
         header.setHeight(tex.height());
@@ -750,7 +762,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
             if (compressionOptions.format == Format_RGBA)
             {
                 // Get output bit count.
-                header.setPitch(computePitch(tex.width(), compressionOptions.getBitCount()));
+                header.setPitch(computePitch(tex.width(), compressionOptions.getBitCount(), compressionOptions.pitchAlignment));
 
                 if (compressionOptions.pixelType == PixelType_Float)
                 {
@@ -815,7 +827,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
             }
             else
             {
-                header.setLinearSize(computeImageSize(tex.width(), tex.height(), tex.depth(), compressionOptions.bitcount, compressionOptions.format));
+                header.setLinearSize(computeImageSize(tex.width(), tex.height(), tex.depth(), compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format));
 
                 if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
                     header.setFourCC('D', 'X', 'T', '1');
@@ -869,17 +881,6 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
             return false;
         }
 
-        if (tex.textureType() == TextureType_2D) {
-            header.setTexture2D();
-        }
-        else if (tex.textureType() == TextureType_Cube) {
-            header.setTextureCube();
-        }
-        /*else if (tex.textureType() == TextureType_3D) {
-            header.setTexture3D();
-            header.setDepth(tex.depth());
-        }*/
-
         // Swap bytes if necessary.
         header.swapBytes();
 
@@ -890,7 +891,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
             headerSize = 128 + 20;
         }
 
-        bool writeSucceed = outputOptions.outputHandler->writeData(&header, headerSize);
+        bool writeSucceed = outputOptions.writeData(&header, headerSize);
         if (!writeSucceed)
         {
             outputOptions.error(Error_FileWrite);
@@ -916,7 +917,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
 
     for (uint m = 0; m < mipmapCount; m++)
     {
-        int size = computeImageSize(w, h, d, compressionOptions.getBitCount(), compressionOptions.format);
+        int size = computeImageSize(w, h, d, compressionOptions.getBitCount(), compressionOptions.pitchAlignment, compressionOptions.format);
         outputOptions.beginImage(size, w, h, d, f, m);
 
         if (!initMipmap(mipmap, inputOptions, w, h, d, f, m))
@@ -1553,12 +1554,12 @@ int Compressor::Private::estimateSize(const InputOptions::Private & inputOptions
 {
     const Format format = compressionOptions.format;
 
-    uint bitCount = compressionOptions.bitcount;
-    if (format == Format_RGBA && bitCount == 0) bitCount = compressionOptions.rsize + compressionOptions.gsize + compressionOptions.bsize + compressionOptions.asize;
+    const uint bitCount = compressionOptions.getBitCount();
+    const uint pitchAlignment = compressionOptions.pitchAlignment;
 
     inputOptions.computeTargetExtents();
 
-    uint mipmapCount = inputOptions.realMipmapCount();
+    const uint mipmapCount = inputOptions.realMipmapCount();
 
     int size = 0;
 
@@ -1570,7 +1571,7 @@ int Compressor::Private::estimateSize(const InputOptions::Private & inputOptions
 
         for (uint m = 0; m < mipmapCount; m++)
         {
-            size += computeImageSize(w, h, d, bitCount, format);
+            size += computeImageSize(w, h, d, bitCount, pitchAlignment, format);
 
             // Compute extents of next mipmap:
             w = max(1U, w / 2);

@@ -21,6 +21,7 @@
 #           include <dbghelp.h>
 #       endif
 #   endif
+#   pragma comment(lib,"dbghelp.lib")
 #endif
 
 #if !NV_OS_WIN32 && defined(HAVE_SIGNAL_H)
@@ -76,55 +77,191 @@ namespace
 
 #if NV_OS_WIN32 && NV_CC_MSVC
 
-    // TODO write minidump
-
-    static LONG WINAPI nvTopLevelFilter( struct _EXCEPTION_POINTERS * pExceptionInfo)
+    static bool writeMiniDump(EXCEPTION_POINTERS * pExceptionInfo)
     {
-        NV_UNUSED(pExceptionInfo);
-        /* BOOL (WINAPI * Dump) (HANDLE, DWORD, HANDLE, MINIDUMP_TYPE, PMINIDUMP_EXCEPTION_INFORMATION, PMINIDUMP_USER_STREAM_INFORMATION, PMINIDUMP_CALLBACK_INFORMATION );
-
-        AutoString dbghelp_path(512);
-        getcwd(dbghelp_path, 512);
-        dbghelp_path.Append("\\DbgHelp.dll");
-        nvTranslatePath(dbghelp_path);
-
-        PiLibrary DbgHelp_lib(dbghelp_path, true);
-
-        if( !DbgHelp_lib.IsValid() ) {
-        nvDebug("*** 'DbgHelp.dll' not found.\n");
-        return EXCEPTION_CONTINUE_SEARCH;
-        }
-
-        if( !DbgHelp_lib.BindSymbol( (void **)&Dump, "MiniDumpWriteDump" ) ) {
-        nvDebug("*** 'DbgHelp.dll' too old.\n");
-        return EXCEPTION_CONTINUE_SEARCH;
-        }
-
         // create the file
-        HANDLE hFile = ::CreateFile( "nv.dmp", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
-        if( hFile == INVALID_HANDLE_VALUE ) {
-        nvDebug("*** Failed to create dump file.\n");
-        return EXCEPTION_CONTINUE_SEARCH;
+        HANDLE hFile = CreateFile("crash.dmp", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (hFile == INVALID_HANDLE_VALUE) {
+            nvDebug("*** Failed to create dump file.\n");
+            return false;
         }
 
-
-        _MINIDUMP_EXCEPTION_INFORMATION ExInfo;
-
+        MINIDUMP_EXCEPTION_INFORMATION ExInfo;
         ExInfo.ThreadId = ::GetCurrentThreadId();
         ExInfo.ExceptionPointers = pExceptionInfo;
         ExInfo.ClientPointers = NULL;
 
         // write the dump
-        bool ok = Dump( GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, NULL, NULL )!=0;
-        ::CloseHandle(hFile);
+        BOOL ok = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, NULL, NULL) != 0;
+        CloseHandle(hFile);
 
-        if( !ok ) {
-        nvDebug("*** Failed to save dump file.\n");
-        return EXCEPTION_CONTINUE_SEARCH;
+        if (ok == FALSE) {
+            nvDebug("*** Failed to save dump file.\n");
+            return false;
         }
 
-        nvDebug("--- Dump file saved.\n");
-        */
+        nvDebug("\nDump file saved.\n");
+
+        return true;
+    }
+
+    static bool hasStackTrace() {
+        return true;
+    }
+
+    /*static NV_NOINLINE int backtrace(void * trace[], int maxcount) {
+	
+        // In Windows XP and Windows Server 2003, the sum of the FramesToSkip and FramesToCapture parameters must be less than 63.
+        int xp_maxcount = min(63-1, maxcount);
+
+        int count = RtlCaptureStackBackTrace(1, xp_maxcount, trace, NULL);
+        nvDebugCheck(count <= maxcount);
+
+        return count;
+    }*/
+
+    static NV_NOINLINE int backtraceWithSymbols(CONTEXT * ctx, void * trace[], int maxcount, int skip = 0) {
+		
+        // Init the stack frame for this function
+        STACKFRAME64 stackFrame = { 0 };
+
+    #if NV_CPU_X86_64
+        DWORD dwMachineType = IMAGE_FILE_MACHINE_AMD64;
+        stackFrame.AddrPC.Offset = ctx->Rip;
+        stackFrame.AddrFrame.Offset = ctx->Rbp;
+        stackFrame.AddrStack.Offset = ctx->Rsp;
+    #elif NV_CPU_X86
+        DWORD dwMachineType = IMAGE_FILE_MACHINE_I386;
+        stackFrame.AddrPC.Offset = ctx->Eip;
+        stackFrame.AddrFrame.Offset = ctx->Ebp;
+        stackFrame.AddrStack.Offset = ctx->Esp;
+    #else
+        #error "Platform not supported!"
+    #endif
+        stackFrame.AddrPC.Mode = AddrModeFlat;
+        stackFrame.AddrFrame.Mode = AddrModeFlat;
+        stackFrame.AddrStack.Mode = AddrModeFlat;
+
+        // Walk up the stack
+        const HANDLE hThread = GetCurrentThread();
+        const HANDLE hProcess = GetCurrentProcess();
+        int i;
+        for (i = 0; i < maxcount; i++)
+        {
+            // walking once first makes us skip self
+            if (!StackWalk64(dwMachineType, hProcess, hThread, &stackFrame, ctx, NULL, &SymFunctionTableAccess64, &SymGetModuleBase64, NULL)) {
+                break;
+            }
+
+            /*if (stackFrame.AddrPC.Offset == stackFrame.AddrReturn.Offset || stackFrame.AddrPC.Offset == 0) {
+                break;
+            }*/
+
+            if (i >= skip) {
+                trace[i - skip] = (PVOID)stackFrame.AddrPC.Offset;
+            }
+        }
+
+        return i - skip;
+    }
+
+    static NV_NOINLINE int backtrace(void * trace[], int maxcount) {
+        CONTEXT ctx = { 0 };
+#if NV_CPU_X86 && !NV_CPU_X86_64
+        ctx.ContextFlags = CONTEXT_CONTROL;
+        _asm {
+             call x
+          x: pop eax
+             mov ctx.Eip, eax
+             mov ctx.Ebp, ebp
+             mov ctx.Esp, esp
+        }
+#else
+        RtlCaptureContext(&ctx);
+#endif
+
+        return backtraceWithSymbols(&ctx, trace, maxcount, 1);
+    }
+
+
+    static NV_NOINLINE void printStackTrace(void * trace[], int size, int start=0)
+    {
+	    HANDLE hProcess = GetCurrentProcess();
+    	
+        nvDebug( "\nDumping stacktrace:\n" );
+
+	    // Resolve PC to function names
+	    for (int i = start; i < size; i++)
+	    {
+		    // Check for end of stack walk
+		    DWORD64 ip = (DWORD64)trace[i];
+		    if (ip == NULL)
+			    break;
+
+		    // Get function name
+		    #define MAX_STRING_LEN	(512)
+		    unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
+		    IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
+		    pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+		    pSymbol->MaxNameLength = MAX_STRING_LEN;
+
+		    DWORD64 dwDisplacement;
+    		
+		    if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
+		    {
+			    pSymbol->Name[MAX_STRING_LEN-1] = 0;
+    			
+			    /*
+			    // Make the symbol readable for humans
+			    UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE, 
+				    UNDNAME_COMPLETE | 
+				    UNDNAME_NO_THISTYPE |
+				    UNDNAME_NO_SPECIAL_SYMS |
+				    UNDNAME_NO_MEMBER_TYPE |
+				    UNDNAME_NO_MS_KEYWORDS |
+				    UNDNAME_NO_ACCESS_SPECIFIERS );
+			    */
+    			
+			    // pSymbol->Name
+			    const char * pFunc = pSymbol->Name;
+    			
+			    // Get file/line number
+			    IMAGEHLP_LINE64 theLine = { 0 };
+			    theLine.SizeOfStruct = sizeof(theLine);
+
+			    DWORD dwDisplacement;
+			    if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
+			    {
+				    nvDebug("unknown(%08X) : %s\n", (uint32)ip, pFunc);
+			    }
+			    else
+			    {
+				    /*
+				    const char* pFile = strrchr(theLine.FileName, '\\');
+				    if ( pFile == NULL ) pFile = theLine.FileName;
+				    else pFile++;
+				    */
+				    const char * pFile = theLine.FileName;
+    				
+				    int line = theLine.LineNumber;
+    				
+				    nvDebug("%s(%d) : %s\n", pFile, line, pFunc);
+			    }
+		    }
+	    }
+    }
+
+
+    // Write mini dump and print stack trace.
+    static LONG WINAPI topLevelFilter(EXCEPTION_POINTERS * pExceptionInfo)
+    {
+        void * trace[64];
+        
+        int size = backtraceWithSymbols(pExceptionInfo->ContextRecord, trace, 64);
+        printStackTrace(trace, size, 0);
+
+        writeMiniDump(pExceptionInfo);
+
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
@@ -132,7 +269,7 @@ namespace
 
 #if defined(HAVE_EXECINFO_H) // NV_OS_LINUX
 
-    static bool nvHasStackTrace() {
+    static bool hasStackTrace() {
 #if NV_OS_DARWIN
         return backtrace != NULL;
 #else
@@ -140,7 +277,7 @@ namespace
 #endif
     }
 
-    static void nvPrintStackTrace(void * trace[], int size, int start=0) {
+    static void printStackTrace(void * trace[], int size, int start=0) {
         char ** string_array = backtrace_symbols(trace, size);
 
         nvDebug( "\nDumping stacktrace:\n" );
@@ -260,7 +397,7 @@ namespace
         }
 
 #if defined(HAVE_EXECINFO_H)
-        if (nvHasStackTrace()) // in case of weak linking
+        if (hasStackTrace()) // in case of weak linking
         {
             void * trace[64];
             int size = backtrace(trace, 64);
@@ -270,7 +407,7 @@ namespace
                 trace[1] = pnt;
             }
 
-            nvPrintStackTrace(trace, size, 1);
+            printStackTrace(trace, size, 1);
         }
 #endif // defined(HAVE_EXECINFO_H)
 
@@ -289,18 +426,14 @@ namespace
         // Code from Daniel Vogel.
         static bool isDebuggerPresent()
         {
-            bool result = false;
-
-            HINSTANCE kern_lib = LoadLibraryExA( "kernel32.dll", NULL, 0 );
-            if( kern_lib ) {
-                FARPROC lIsDebuggerPresent = GetProcAddress( kern_lib, "IsDebuggerPresent" );
-                if( lIsDebuggerPresent && lIsDebuggerPresent() ) {
-                    result = true;
+            HINSTANCE kernel32 = GetModuleHandle("kernel32.dll");
+            if (kernel32) {
+                FARPROC IsDebuggerPresent = GetProcAddress(kernel32, "IsDebuggerPresent");
+                if (IsDebuggerPresent != NULL && IsDebuggerPresent()) {
+                    return true;
                 }
-
-                FreeLibrary( kern_lib );
             }
-            return result;
+            return false;
         }
 
         // Flush the message queue. This is necessary for the message box to show up.
@@ -322,11 +455,11 @@ namespace
             StringBuilder error_string;
             if( func != NULL ) {
                 error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On function: %s\n    On line: %d\n ", exp, file, func, line );
-                nvDebug( error_string );
+                nvDebug( error_string.str() );
             }
             else {
                 error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On line: %d\n ", exp, file, line );
-                nvDebug( error_string );
+                nvDebug( error_string.str() );
             }
 
             if (isDebuggerPresent()) {
@@ -334,7 +467,7 @@ namespace
             }
 
             flushMessageQueue();
-            int action = MessageBoxA(NULL, error_string, "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
+            int action = MessageBoxA(NULL, error_string.str(), "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
             switch( action ) {
             case IDRETRY:
                 ret = NV_ABORT_DEBUG;
@@ -352,7 +485,7 @@ namespace
             }*/
 
             if( ret == NV_ABORT_EXIT ) {
-                // Exit cleanly.
+                 // Exit cleanly.
                 throw "Assertion failed";
             }
 
@@ -402,16 +535,16 @@ namespace
 #endif
 
 #if defined(HAVE_EXECINFO_H)
-            if (nvHasStackTrace())
+            if (hasStackTrace())
             {
                 void * trace[64];
                 int size = backtrace(trace, 64);
-                nvPrintStackTrace(trace, size, 2);
+                printStackTrace(trace, size, 2);
             }
 #endif
 
             // Exit cleanly.
-            throw std::runtime_error("Assertion failed");
+            throw "Assertion failed";
         }
     };
 
@@ -453,14 +586,12 @@ void NV_CDECL nvDebugPrint(const char *msg, ...)
 /// Dump debug info.
 void debug::dumpInfo()
 {
-#if !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H)
-    if (nvHasStackTrace())
+    if (hasStackTrace())
     {
         void * trace[64];
         int size = backtrace(trace, 64);
-        nvPrintStackTrace(trace, size, 1);
+        printStackTrace(trace, size, 1);
     }
-#endif
 }
 
 
@@ -497,7 +628,12 @@ void debug::enableSigHandler()
 
 #if NV_OS_WIN32 && NV_CC_MSVC
 
-    s_old_exception_filter = ::SetUnhandledExceptionFilter( nvTopLevelFilter );
+    s_old_exception_filter = ::SetUnhandledExceptionFilter( topLevelFilter );
+
+    // SYMOPT_DEFERRED_LOADS make us not take a ton of time unless we actual log traces
+    SymSetOptions(SYMOPT_DEFERRED_LOADS|SYMOPT_FAIL_CRITICAL_ERRORS|SYMOPT_LOAD_LINES|SYMOPT_UNDNAME);
+
+    SymInitialize(GetCurrentProcess(), NULL, TRUE);
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H)
 
@@ -525,6 +661,8 @@ void debug::disableSigHandler()
 
     ::SetUnhandledExceptionFilter( s_old_exception_filter );
     s_old_exception_filter = NULL;
+
+    SymCleanup(GetCurrentProcess());
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H)
 

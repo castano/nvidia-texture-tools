@@ -295,11 +295,12 @@ int main(int argc, char *argv[])
     }
 
     const uint version = nvtt::version();
-    const uint major = version / 100;
-    const uint minor = version % 100;
+    const uint major = version / 100 / 100;
+    const uint minor = (version / 100) % 100;
+    const uint rev = version % 100;
 
 
-    printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor);
+    printf("NVIDIA Texture Tools %u.%u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor, rev);
 
     if (input.isNull())
     {
@@ -351,7 +352,7 @@ int main(int argc, char *argv[])
     if (nv::strCaseCmp(input.extension(), ".dds") == 0)
     {
         // Load surface.
-        nv::DirectDrawSurface dds(input);
+        nv::DirectDrawSurface dds(input.str());
         if (!dds.isValid())
         {
             fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
@@ -400,7 +401,7 @@ int main(int argc, char *argv[])
 
         if (loadAsFloat)
         {
-            nv::AutoPtr<nv::FloatImage> image(nv::ImageIO::loadFloat(input));
+            nv::AutoPtr<nv::FloatImage> image(nv::ImageIO::loadFloat(input.str()));
 
             if (image == NULL)
             {
@@ -420,7 +421,7 @@ int main(int argc, char *argv[])
         {
             // Regular image.
             nv::Image image;
-            if (!image.load(input))
+            if (!image.load(input.str()))
             {
                 fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
                 return 1;
@@ -448,6 +449,9 @@ int main(int argc, char *argv[])
     {
         inputOptions.setAlphaMode(nvtt::AlphaMode_None);
     }
+
+    inputOptions.setRoundMode(nvtt::RoundMode_ToNearestPowerOfTwo);
+
 
     if (normal)
     {
@@ -524,7 +528,7 @@ int main(int argc, char *argv[])
 
 
     MyErrorHandler errorHandler;
-    MyOutputHandler outputHandler(output);
+    MyOutputHandler outputHandler(output.str());
     if (outputHandler.stream->isError())
     {
         fprintf(stderr, "Error opening '%s' for writting\n", output.str());

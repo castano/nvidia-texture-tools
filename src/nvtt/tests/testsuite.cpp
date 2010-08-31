@@ -423,7 +423,7 @@ int main(int argc, char *argv[])
 
 	Path csvFileName;
 	csvFileName.format("%s/result.csv", outPath);
-	StdOutputStream csvStream(csvFileName);
+	StdOutputStream csvStream(csvFileName.str());
 	TextWriter csvWriter(&csvStream);
 
 	float totalTime = 0;
@@ -465,7 +465,7 @@ int main(int argc, char *argv[])
 		outputFileName.format("%s/%s", outPath, fileNames[i]);
 		outputFileName.stripExtension();
 		outputFileName.append(".png");
-		if (!ImageIO::save(outputFileName, img_out.ptr()))
+		if (!ImageIO::save(outputFileName.str(), img_out.ptr()))
 		{
 			printf("Error saving file '%s'.\n", outputFileName.str());
 		}

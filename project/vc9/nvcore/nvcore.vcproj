@@ -173,16 +173,17 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				InlineFunctionExpansion="2"
+				InlineFunctionExpansion="0"
 				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
+				FavorSizeOrSpeed="0"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="0"
+				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -242,9 +243,15 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				Optimization="3"
+				EnableIntrinsicFunctions="true"
+				OmitFramePointers="true"
+				WholeProgramOptimization="true"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
+				StringPooling="true"
 				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -281,106 +288,98 @@
 	<References>
 	</References>
 	<Files>
-		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+		<File
+			RelativePath="..\..\..\src\nvcore\Algorithms.h"
 			>
-			<File
-				RelativePath="..\..\..\src\nvcore\Debug.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\FileSystem.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Library.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\StrLib.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextWriter.cpp"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Array.h"
 			>
-			<File
-				RelativePath="..\..\..\src\nvcore\Algorithms.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Containers.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Debug.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\DefsVcWin32.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\FileSystem.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\HashMap.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Library.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Memory.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\nvcore.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Ptr.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\RefCounted.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\StrLib.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextReader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\TextWriter.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvcore\Timer.h"
-				>
-			</File>
-		</Filter>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Containers.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Debug.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Debug.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\DefsVcWin32.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\FileSystem.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\FileSystem.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\HashMap.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Library.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Library.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Memory.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Memory.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\nvcore.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Ptr.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\RefCounted.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\StrLib.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\StrLib.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\TextReader.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\TextReader.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\TextWriter.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\TextWriter.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Timer.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
