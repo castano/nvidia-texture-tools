@@ -30,7 +30,7 @@ void TextWriter::write(const char * format, ...)
 {
     va_list arg;
     va_start(arg,format);
-    str.format(format, arg);
+    str.formatList(format, arg);
     writeString(str.str(), str.length());
     va_end(arg);
 }
@@ -39,7 +39,7 @@ void TextWriter::write(const char * format, va_list arg)
 {
     va_list tmp;
     va_copy(tmp, arg);
-    str.format(format, arg);
+    str.formatList(format, arg);
     writeString(str.str(), str.length());
     va_end(tmp);
 }

@@ -39,12 +39,6 @@ using namespace nvtt;
 
 namespace 
 {
-
-	inline uint computePitch(uint w, uint bitsize, uint alignment)
-	{
-		return ((w * bitsize +  8 * alignment - 1) / (8 * alignment)) * alignment;
-	}
-
 	inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
 	{
 		memcpy(dst, src, 4 * w);

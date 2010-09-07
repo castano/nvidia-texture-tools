@@ -89,11 +89,6 @@ namespace
         return 0;
     }
 
-	inline uint computePitch(uint w, uint bitsize, uint alignment)
-	{
-        return ((w * bitsize +  8 * alignment - 1) / (8 * alignment)) * alignment;
-	}
-
     static int computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignment, Format format)
     {
         if (format == Format_RGBA) {
