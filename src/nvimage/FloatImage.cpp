@@ -258,7 +258,7 @@ void FloatImage::exponentiate(uint base_component, uint num, float power)
         float * ptr = this->channel(base_component + c);
 
         for(uint i = 0; i < size; i++) {
-            ptr[i] = pow(ptr[i], power);
+            ptr[i] = powf(max(0.0f, ptr[i]), power);
         }
     }
 }
