@@ -74,18 +74,10 @@ namespace
 		return 0;
 	}
 
-	inline uint computePitch(uint w, uint bitsize)
-	{
-		uint p = w * ((bitsize + 7) / 8);
-
-		// Align to 32 bits.
-		return ((p + 3) / 4) * 4;
-	}
-
 	static int computeImageSize(uint w, uint h, uint d, uint bitCount, Format format)
 	{
 		if (format == Format_RGBA) {
-			return d * h * computePitch(w, bitCount);
+			return d * h * computePitch(w, bitCount, 8);
 		}
 		else {
 			// @@ Handle 3D textures. DXT and VTC have different behaviors.
@@ -346,7 +338,7 @@ bool Compressor::Private::outputHeader(const InputOptions::Private & inputOption
 
 	if (compressionOptions.format == Format_RGBA)
 	{
-		header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount));
+		header.setPitch(computePitch(inputOptions.targetWidth, compressionOptions.bitcount, 8));
 		header.setPixelFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
 	}
 	else

@@ -19,4 +19,14 @@
 #define NVIMAGE_CLASS
 #endif
 
+
+// Some utility functions:
+
+inline uint computePitch(uint w, uint bitsize, uint alignment)
+{
+	return ((w * bitsize +  8 * alignment - 1) / (8 * alignment)) * alignment;
+}
+
+
+
 #endif // NV_IMAGE_H
