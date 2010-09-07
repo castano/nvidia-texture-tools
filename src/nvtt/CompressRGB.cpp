@@ -37,12 +37,6 @@ using namespace nvtt;
 namespace 
 {
 
-    inline uint computePitch(uint w, uint bitsize)
-    {
-        // Align to 8 bits.
-        return w * ((bitsize + 7) / 8);
-    }
-
     inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
     {
         memcpy(dst, src, 4 * w);
@@ -86,7 +80,7 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
     PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
 
     // Determine pitch.
-    uint pitch = computePitch(w, compressionOptions.bitcount);
+    uint pitch = computePitch(w, compressionOptions.bitcount, 8);
 
     uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
 
