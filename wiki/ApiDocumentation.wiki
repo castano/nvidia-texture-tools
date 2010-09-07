@@ -500,6 +500,18 @@ compressionOptions.setPixelType(PixelType_Float);
 compressionOptions.setPixelFormat(32, 32, 32, 32);
 }}}
 
+By default pixel rows of unaligned pixel formats are aligned to the next byte boundary. However, it's possible to change that behavior using the following function:
+
+{{{
+void CompressionOptions:: setPitchAlignment(int pitchAlignment);
+}}}
+
+Where `pitchAlignment` must be a positive number multiple of 8. Note, that previous versions of NVTT incorrectly aligned the pitch to 32 bits by default, so obtain the same behavior now you have to explicitly set the alignment as follows:
+
+{{{
+compressionOptions.setPitchAlignment(32);
+}}}
+
 
 === Quantization ===
 
