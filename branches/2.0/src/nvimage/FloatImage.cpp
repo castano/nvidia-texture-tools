@@ -32,14 +32,17 @@ namespace
 		return f - floor(f);
 	}
 
-	static int mirror(int x, int w)
-	{
-		x = abs(x);
-		while (x >= w) {
-			x = 2 * w - x - 2;
-		}
-		return x;
-	}
+    static int mirror(int x, int w)
+    {
+        if (w == 1) return 0;
+
+        x = abs(x);
+        while (x >= w) {
+            x = abs(w + w - x - 2);
+        }
+
+        return x;
+    }
 }
 
 
