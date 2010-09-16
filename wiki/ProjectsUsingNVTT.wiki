@@ -31,4 +31,4 @@ The [http://developer.nvidia.com/object/texture_tools.html NVIDIA Texture Tools]
 
   * [http://wildfiregames.com/0ad/ 0 A.D.], _Philip Taylor_
 
-  0 A.D. is a cross-platform open source RTS game that uses NVTT to generate DDS files consistently. NVTT is bundled in the runtime, which allows users to modify and create new textures that are automatically processed for use in the game with no extra effort.
+  0 A.D. is a cross-platform open source RTS game that uses NVTT to generate consistent DDS files. NVTT is bundled in the runtime, which allows users to modify and create new textures that are automatically processed for use in the game with no extra effort.
