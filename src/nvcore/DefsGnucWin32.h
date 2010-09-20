@@ -2,7 +2,7 @@
 #error "Do not include this file directly."
 #endif
 
-#include <cstddef> // size_t, NULL
+//#include <cstddef> // size_t, NULL
 
 // Function linkage
 #define DLL_IMPORT	__declspec(dllimport)
@@ -45,7 +45,7 @@
 
 #define restrict	__restrict__
 
-
+/*
 // Type definitions
 typedef unsigned char		uint8;
 typedef signed char			int8;
@@ -61,3 +61,5 @@ typedef signed long long	int64;
 
 // Aliases
 typedef uint32				uint;
+*/
+
