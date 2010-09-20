@@ -585,7 +585,7 @@ void NV_CDECL nvDebugPrint(const char *msg, ...)
 /// Dump debug info.
 void debug::dumpInfo()
 {
-#if NV_OS_WIN32 || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECIINFO_H))
+#if NV_OS_WIN32 || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H))
     if (hasStackTrace())
     {
         void * trace[64];
