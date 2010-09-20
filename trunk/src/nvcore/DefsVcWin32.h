@@ -44,6 +44,7 @@
 
 #define NV_NOINLINE __declspec(noinline)
 
+/*
 // Type definitions
 typedef unsigned char       uint8;
 typedef signed char         int8;
@@ -59,7 +60,7 @@ typedef signed __int64      int64;
 
 // Aliases
 typedef uint32              uint;
-
+*/
 
 // Unwanted VC++ warnings to disable.
 /*

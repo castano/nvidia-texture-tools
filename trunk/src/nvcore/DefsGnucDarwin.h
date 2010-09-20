@@ -2,8 +2,8 @@
 #error "Do not include this file directly."
 #endif
 
-#include <stdint.h> // uint8_t, int8_t, ...
-#include <cstddef> // size_t, NULL
+//#include <stdint.h> // uint8_t, int8_t, ...
+//#include <cstddef> // size_t, NULL
 
 // Function linkage
 #define DLL_IMPORT
@@ -51,7 +51,7 @@
 
 #define restrict    __restrict__
 
-
+/*
 // Type definitions
 typedef uint8_t     uint8;
 typedef int8_t      int8;
@@ -67,3 +67,4 @@ typedef int64_t     int64;
 
 // Aliases
 typedef uint32      uint;
+*/

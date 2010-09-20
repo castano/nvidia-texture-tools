@@ -40,7 +40,6 @@
 #   include <sys/types.h>
 #   include <sys/sysctl.h> // sysctl
 #   include <sys/ucontext.h>
-#   undef HAVE_EXECINFO_H
 #   if defined(HAVE_EXECINFO_H) // only after OSX 10.5
 #       include <execinfo.h> // backtrace
 #       if NV_CC_GNUC // defined(HAVE_CXXABI_H)
@@ -267,7 +266,7 @@ namespace
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) // NV_OS_LINUX || NV_OS_DARWIN
 
-#if defined(HAVE_EXECINFO_H) // NV_OS_LINUX
+#if defined(HAVE_EXECINFO_H)
 
     static bool hasStackTrace() {
 #if NV_OS_DARWIN
@@ -586,12 +585,14 @@ void NV_CDECL nvDebugPrint(const char *msg, ...)
 /// Dump debug info.
 void debug::dumpInfo()
 {
+#if NV_OS_WIN32 || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECIINFO_H))
     if (hasStackTrace())
     {
         void * trace[64];
         int size = backtrace(trace, 64);
         printStackTrace(trace, size, 1);
     }
+#endif
 }
 
 
