@@ -29,8 +29,9 @@ ELSE (WIN32)
 		${GLEW_ROOT_DIR}/include
 		DOC "The directory where GL/glew.h resides")
 
+	# Prefer the static library.
 	FIND_LIBRARY( GLEW_LIBRARY
-		NAMES GLEW glew
+		NAMES libGLEW.a GLEW
 		PATHS
 		/usr/lib64
 		/usr/lib
