@@ -6,7 +6,7 @@
 #include "nvcore.h"
 #include "Debug.h"
 
-
+#include "RefCounted.h"
 
 namespace nv
 {

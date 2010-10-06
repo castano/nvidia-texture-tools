@@ -15,26 +15,26 @@ namespace
 {
     static char * strAlloc(uint size)
     {
-        return static_cast<char *>(mem::malloc(size));
+        return static_cast<char *>(malloc(size));
     }
 
     static char * strReAlloc(char * str, uint size)
     {
-        return static_cast<char *>(mem::realloc(str, size));
+        return static_cast<char *>(realloc(str, size));
     }
 
     static void strFree(const char * str)
     {
-        return mem::free(const_cast<char *>(str));
+        return free(const_cast<char *>(str));
     }
 
-    /*static char * strDup( const char * str ) 
+    /*static char * strDup( const char * str )
     {
-    nvDebugCheck( str != NULL );
-    uint len = uint(strlen( str ) + 1);
-    char * dup = strAlloc( len );
-    memcpy( dup, str, len );
-    return dup;
+        nvDebugCheck( str != NULL );
+        uint len = uint(strlen( str ) + 1);
+        char * dup = strAlloc( len );
+        memcpy( dup, str, len );
+        return dup;
     }*/
 
     // helper function for integer to string conversion.

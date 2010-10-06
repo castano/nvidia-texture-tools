@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	}
 	
 	nv::Image image;
-	if (!loadImage(image, input)) return 1;
+        if (!loadImage(image, input.str())) return 1;
 
 	nv::ImageIO::ImageMetaData metaData;
 	metaData.tagMap.add("Thumb::Image::Width", nv::StringBuilder().number (image.width()));
@@ -143,13 +143,13 @@ int main(int argc, char *argv[])
 		nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
 		result->setFormat(nv::Image::Format_ARGB);
 
-		nv::StdOutputStream stream(output);
-		nv::ImageIO::save(output, stream, result.ptr(), &metaData);
+                nv::StdOutputStream stream(output.str());
+                nv::ImageIO::save(output.str(), stream, result.ptr(), &metaData);
 	}
 	else
 	{
-		nv::StdOutputStream stream(output);
-		nv::ImageIO::save(output, stream, &image, &metaData);
+                nv::StdOutputStream stream(output.str());
+                nv::ImageIO::save(output.str(), stream, &image, &metaData);
 	}
 	
 	return 0;

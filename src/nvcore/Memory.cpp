@@ -15,7 +15,9 @@ extern "C" void EF_free(void * address);
 
 using namespace nv;
 
-void * nv::mem::malloc(size_t size)
+#if NV_OVERRIDE_ALLOC
+
+void * malloc(size_t size)
 {
 #if USE_EFENCE
     return EF_malloc(size);
@@ -24,7 +26,7 @@ void * nv::mem::malloc(size_t size)
 #endif
 }
 
-void * nv::mem::malloc(size_t size, const char * file, int line)
+void * debug_malloc(size_t size, const char * file, int line)
 {
     NV_UNUSED(file);
     NV_UNUSED(line);
@@ -35,7 +37,7 @@ void * nv::mem::malloc(size_t size, const char * file, int line)
 #endif
 }
 
-void nv::mem::free(const void * ptr)
+void free(void * ptr)
 {
 #if USE_EFENCE
     return EF_free(const_cast<void *>(ptr));
@@ -44,7 +46,7 @@ void nv::mem::free(const void * ptr)
 #endif
 }
 
-void * nv::mem::realloc(void * ptr, size_t size)
+void * realloc(void * ptr, size_t size)
 {
     nvDebugCheck(ptr != NULL || size != 0); // undefined realloc behavior.
 #if USE_EFENCE
@@ -54,3 +56,63 @@ void * nv::mem::realloc(void * ptr, size_t size)
 #endif
 }
 
+/* No need to override this unless we want line info.
+void * operator new (size_t size) throw()
+{
+    return malloc(size);
+}
+
+void operator delete (void *p) throw()
+{
+    free(p);
+}
+
+void * operator new [] (size_t size) throw()
+{
+    return malloc(size);
+}
+
+void operator delete [] (void * p) throw()
+{
+    free(p);
+}
+*/
+
+#if 0 // Code from Apple:
+void* operator new(std::size_t sz) throw (std::bad_alloc)
+{
+        void *result = std::malloc (sz == 0 ? 1 : sz);
+        if (result == NULL)
+                throw std::bad_alloc();
+        gNewCounter++;
+        return result;
+}
+void operator delete(void* p) throw()
+{
+        if (p == NULL)
+                return;
+        std::free (p);
+        gDeleteCounter++;
+}
+
+/* These are the 'nothrow' versions of the above operators.
+   The system version will try to call a std::new_handler if they
+   fail, but your overriding versions are not required to do this.  */
+void* operator new(std::size_t sz, const std::nothrow_t&) throw()
+{
+        try {
+                void * result = ::operator new (sz);  // calls our overridden operator new
+                return result;
+        } catch (std::bad_alloc &) {
+          return NULL;
+        }
+}
+void operator delete(void* p, const std::nothrow_t&) throw()
+{
+        ::operator delete (p);
+}
+
+#endif // 0
+
+
+#endif // NV_OVERRIDE_ALLOC

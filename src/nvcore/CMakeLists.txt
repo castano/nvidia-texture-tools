@@ -10,6 +10,7 @@ SET(CORE_SRCS
     DefsGnucWin32.h
     DefsVcWin32.h
     FileSystem.h FileSystem.cpp
+#    FileMonitor.h FileMonitor.cpp
     Library.h Library.cpp
     Memory.h Memory.cpp
     Ptr.h

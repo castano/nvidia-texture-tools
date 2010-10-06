@@ -60,10 +60,10 @@ int main(int argc, char *argv[])
     outputFileNameColor.stripExtension();
     outputFileNameColor.append(".dds");
 
-    colorOutputOptions.setFileName(outputFileNameColor);
+    colorOutputOptions.setFileName(outputFileNameColor.str());
 
     // Load normal map.
-    nvtt::TexImage normalMap;
+    nvtt::TexImage normalMap = context.createTexImage();
     if (inputFileNameNormal != NULL) {
         normalMap = context.createTexImage();
         if (!normalMap.load(inputFileNameColor)) {
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         outputFileNameNormal.stripExtension();
         outputFileNameNormal.append(".dds");
 
-        normalOutputOptions.setFileName(outputFileNameNormal);
+        normalOutputOptions.setFileName(outputFileNameNormal.str());
     }
 
 

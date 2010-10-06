@@ -43,7 +43,13 @@ namespace nv
         virtual ~StdStream()
         {
             if( m_fp != NULL && m_autoclose ) {
+#if NV_OS_WIN32
                 _fclose_nolock( m_fp );
+#elif NV_OS_LINUX
+                fclose_unlocked( m_fp );
+#else
+                fclose( m_fp );
+#endif
             }
         }
 
@@ -54,22 +60,46 @@ namespace nv
         {
             nvDebugCheck(m_fp != NULL);
             nvDebugCheck(pos < size());
+#if NV_OS_WIN32
             _fseek_nolock(m_fp, pos, SEEK_SET);
+#elif NV_OS_LINUX
+            fseek_unlocked(m_fp, pos, SEEK_SET);
+#else
+            fseek(m_fp, pos, SEEK_SET);
+#endif
         }
 
         virtual uint tell() const
         {
             nvDebugCheck(m_fp != NULL);
+#if NV_OS_WIN32
             return _ftell_nolock(m_fp);
+#elif NV_OS_LINUX
+            return ftell_unlocked(m_fp);
+#else
+            return ftell(m_fp);
+#endif
         }
 
         virtual uint size() const
         {
             nvDebugCheck(m_fp != NULL);
-            uint pos = ftell(m_fp);
+#if NV_OS_WIN32
+            uint pos = _ftell_nolock(m_fp);
             _fseek_nolock(m_fp, 0, SEEK_END);
-            uint end = ftell(m_fp);
+            uint end = _ftell_nolock(m_fp);
             _fseek_nolock(m_fp, pos, SEEK_SET);
+#elif NV_OS_LINUX
+            uint pos = ftell_unlocked(m_fp);
+            fseek_unlocked(m_fp, 0, SEEK_END);
+            uint end = ftell_unlocked(m_fp);
+            fseek_unlocked(m_fp, pos, SEEK_SET);            
+#else
+            uint pos = ftell(m_fp);
+            fseek(m_fp, 0, SEEK_END);
+            uint end = ftell(m_fp);
+            fseek(m_fp, pos, SEEK_SET);            
+#endif
             return end;
         }
 
@@ -123,7 +153,19 @@ namespace nv
         {
             nvDebugCheck(data != NULL);
             nvDebugCheck(m_fp != NULL);
+#if NV_OS_WIN32
             return (uint)_fwrite_nolock(data, 1, len, m_fp);
+#elif NV_OS_LINUX
+            return (uint)fwrite_unlocked(data, 1, len, m_fp);
+#elif NV_OS_DARWIN
+            // @@ No error checking, always returns len.
+            for (uint i = 0; i < len; i++) {
+                putc_unlocked(((char *)data)[i], m_fp);
+            }
+            return len;
+#else
+            return (uint)fwrite(data, 1, len, m_fp);
+#endif
         }
 
         virtual bool isLoading() const
@@ -161,7 +203,20 @@ namespace nv
         {
             nvDebugCheck(data != NULL);
             nvDebugCheck(m_fp != NULL);
+#if NV_OS_WIN32
             return (uint)_fread_nolock(data, 1, len, m_fp);
+#elif NV_OS_LINUX
+            return (uint)fread_unlocked(data, 1, len, m_fp);
+#elif NV_OS_DARWIN
+            // @@ No error checking, always returns len.
+            for (uint i = 0; i < len; i++) {
+                ((char *)data)[i] = getc_unlocked(m_fp);
+            }
+            return len;
+#else
+            return (uint)fread(data, 1, len, m_fp);
+#endif
+            
         }
 
         virtual bool isLoading() const

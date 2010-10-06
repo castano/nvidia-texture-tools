@@ -232,7 +232,7 @@ namespace nv
                         e->clear();
                     }
                 }
-                mem::free(table);
+                free(table);
                 table = NULL;
                 entry_count = 0;
                 size_mask = -1;
@@ -503,7 +503,7 @@ namespace nv
             new_size = nextPowerOfTwo(new_size);
 
             HashMap<T, U, H, E> new_hash;
-            new_hash.table = (Entry *) mem::malloc(sizeof(Entry) * new_size);
+            new_hash.table = (Entry *) malloc(sizeof(Entry) * new_size);
             nvDebugCheck(new_hash.table != NULL);
 
             new_hash.entry_count = 0;
@@ -528,7 +528,7 @@ namespace nv
                 }
 
                 // Delete our old data buffer.
-                mem::free(table);
+                free(table);
             }
 
             // Steal new_hash's data.
