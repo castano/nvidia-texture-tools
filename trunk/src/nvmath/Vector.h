@@ -64,7 +64,7 @@ namespace nv
 
         const Vector3 & operator=(Vector3::Arg v);
 
-        const Vector2 & xy() const;
+        Vector2 xy() const;
 
         const scalar * ptr() const;
 
@@ -104,8 +104,8 @@ namespace nv
 
         const Vector4 & operator=(Vector4::Arg v);
 
-        const Vector2 & xy() const;
-        const Vector3 & xyz() const;
+        Vector2 xy() const;
+        Vector3 xyz() const;
 
         const scalar * ptr() const;
 
@@ -211,9 +211,9 @@ namespace nv
     }
 
 
-    inline const Vector2 & Vector3::xy() const
+    inline Vector2 Vector3::xy() const
     {
-        return *(Vector2 *)this;
+        return Vector2(x, y);
     }
 
     inline const scalar * Vector3::ptr() const
@@ -297,14 +297,14 @@ namespace nv
         return *this;
     }
 
-    inline const Vector2 & Vector4::xy() const
+    inline Vector2 Vector4::xy() const
     {
-        return *(Vector2 *)this;
+        return Vector2(x, y);
     }
 
-    inline const Vector3 & Vector4::xyz() const
+    inline Vector3 Vector4::xyz() const
     {
-        return *(Vector3 *)this;
+        return Vector3(x, y, z);
     }
 
     inline const scalar * Vector4::ptr() const

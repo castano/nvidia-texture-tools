@@ -138,13 +138,13 @@ void FloatImage::allocate(uint c, uint w, uint h)
     m_height = h;
     m_componentNum = c;
     m_count = w * h * c;
-    m_mem = reinterpret_cast<float *>(nv::mem::malloc(m_count * sizeof(float)));
+    m_mem = malloc<float>(m_count);
 }
 
 /// Free the image, but don't clear the members.
 void FloatImage::free()
 {
-    nv::mem::free( reinterpret_cast<void *>(m_mem) );
+    ::free(m_mem);
     m_mem = NULL;
 }
 
@@ -152,7 +152,7 @@ void FloatImage::resizeChannelCount(uint c)
 {
     if (m_componentNum != c) {
         uint count = m_width * m_height * c;
-        nv::mem::realloc(m_mem, count * sizeof(float));
+        realloc(m_mem, count * sizeof(float));
 
         if (c > m_componentNum) {
             memset(m_mem + m_count, 0, (count - m_count) * sizeof(float));

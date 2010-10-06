@@ -60,7 +60,7 @@ struct PseudoIndexWrapper {
 
 // Declare foreach keyword.
 #if !defined NV_NO_USE_KEYWORDS
-#	define foreach NV_FOREACH
+#   define foreach NV_FOREACH
 #endif
 
 
@@ -340,7 +340,7 @@ namespace nv
 
             // Destruct old elements (if we're shrinking).
             for( i = new_size; i < old_size; i++ ) {
-                (m_buffer+i)->~T();							// Explicit call to the destructor
+                (m_buffer+i)->~T();                         // Explicit call to the destructor
             }
 
             if( m_size == 0 ) {
@@ -380,7 +380,7 @@ namespace nv
 
             // Destruct old elements (if we're shrinking).
             for( i = new_size; i < old_size; i++ ) {
-                (m_buffer+i)->~T();							// Explicit call to the destructor
+                (m_buffer+i)->~T();                         // Explicit call to the destructor
             }
 
             if( m_size == 0 ) {
@@ -503,15 +503,14 @@ namespace nv
             // free the buffer.
             if (m_buffer_size == 0) {
                 if (m_buffer) {
-                    mem::free( m_buffer );
+                    free( m_buffer );
                     m_buffer = NULL;
                 }
             }
 
             // realloc the buffer
             else {
-                if (m_buffer) m_buffer = (T *) mem::realloc( m_buffer, sizeof(T) * m_buffer_size );
-                else m_buffer = (T *) mem::malloc( sizeof(T) * m_buffer_size );
+                m_buffer = (T *) realloc( m_buffer, sizeof(T) * m_buffer_size );
             }
         }
 
