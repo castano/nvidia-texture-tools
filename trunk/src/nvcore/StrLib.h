@@ -343,7 +343,7 @@ namespace nv
 
         void allocString(const char * str, int len)
         {
-            const char * ptr = static_cast<const char *>(malloc(2 + len + 1));
+            const char * ptr = malloc<char>(2 + len + 1);
 
             setData( ptr );
             setRefCount( 0 );

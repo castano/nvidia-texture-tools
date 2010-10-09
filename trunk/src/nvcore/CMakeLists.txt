@@ -2,15 +2,14 @@ PROJECT(nvcore)
 
 SET(CORE_SRCS
     nvcore.h
-    Utils.h
-    Array.h HashMap.h
+    Array.h
     Debug.h Debug.cpp
     DefsGnucDarwin.h
     DefsGnucLinux.h
     DefsGnucWin32.h
     DefsVcWin32.h
     FileSystem.h FileSystem.cpp
-#    FileMonitor.h FileMonitor.cpp
+	HashMap.h
     Library.h Library.cpp
     Memory.h Memory.cpp
     Ptr.h
@@ -20,7 +19,8 @@ SET(CORE_SRCS
     StdStream.h
     TextReader.h TextReader.cpp
     TextWriter.h TextWriter.cpp
-    Timer.h)
+    Timer.h
+    Utils.h)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -28,7 +28,7 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 ADD_DEFINITIONS(-DNVCORE_EXPORTS)
 
 IF(UNIX)
-	SET(LIBS ${LIBS} ${CMAKE_DL_LIBS})
+    SET(LIBS ${LIBS} ${CMAKE_DL_LIBS})
 ENDIF(UNIX)
 
 IF(NVCORE_SHARED)
@@ -44,3 +44,5 @@ INSTALL(TARGETS nvcore
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static)
+
+

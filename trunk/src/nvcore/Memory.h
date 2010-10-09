@@ -32,17 +32,21 @@ extern "C" {
 
 #endif
 
-// C++ helpers.
-template <typename T> T * malloc(size_t count) {
-    return (T *)::malloc(sizeof(T) * count);
-}
+namespace nv {
 
-template <typename T> T * realloc(T * ptr, size_t count) {
-    return (T *)::realloc(ptr, sizeof(T) * count);
-}
+    // C++ helpers.
+    template <typename T> T * malloc(size_t count) {
+        return (T *)::malloc(sizeof(T) * count);
+    }
 
-template <typename T> void free(const T * ptr) {
-    ::free((T *)ptr);
-}
+    template <typename T> T * realloc(T * ptr, size_t count) {
+        return (T *)::realloc(ptr, sizeof(T) * count);
+    }
+
+    template <typename T> void free(const T * ptr) {
+        ::free((T *)ptr);
+    }
+
+} // nv namespace
 
 #endif // NV_CORE_MEMORY_H
