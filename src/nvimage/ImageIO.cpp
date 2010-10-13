@@ -345,6 +345,9 @@ static int DLL_CALLCONV SeekProc(fi_handle handle, long offset, int origin)
 		case SEEK_SET :
 			s->seek(offset);
 			break;
+		case SEEK_END :
+			s->seek(s->size() + offset);
+			break;
 		case SEEK_CUR :
 			s->seek(s->tell() + offset);
 			break;
