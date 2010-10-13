@@ -368,10 +368,10 @@ The supported block compression formats are the following:
   * Format_BC3n (DXT5nm)
   This is a variation of BC3 that is used to represent normal maps by encoding the X and Y components as follows: R=1, G=Y, B=0, A=X, this swizzle is used to facilitate decompression using [http://code.google.com/p/nvidia-texture-tools/wiki/NormalMapCompression#Capcon%27s_DXT_trick Capcon's DXT decompression trick]
 
-  * Format_BC4
+  * Format_BC4 (ATI1)
   This is a block compression format that only contains a single alpha block.
 
-  * Format_BC5 (LATC, RGTC)
+  * Format_BC5 (LATC, RGTC, 3Dc, ATI2)
   This is a block compression format that contains two alpha blocks. It's typically used to compress normal maps.
 
 The following formats are only available in NVTT 2.0:
