@@ -34,9 +34,9 @@
 #include "nvtt/QuickCompressDXT.h"
 #include "nvtt/OptimalCompressDXT.h"
 
-
 #include <time.h>
 #include <stdio.h>
+
 
 #if defined HAVE_CUDA
 #include <cuda_runtime_api.h>
@@ -141,7 +141,7 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     }
     else
     {
-#pragma message(NV_FILE_LINE "FIXME: Floating point textures not really supported by CUDA compressors.")
+#pragma message(NV_FILE_LINE "FIXME: Floating point textures not really supported by CUDA compressors.") // @@ What's missing???
         cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
         cudaMallocArray(&d_image, &channelDesc, w, h);
 
@@ -156,7 +156,7 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     const uint blockNum = bw * bh;
     const uint compressedSize = blockNum * bs;
 
-    void * h_result = malloc(min(blockNum, MAX_BLOCKS) * bs);
+    void * h_result = ::malloc(min(blockNum, MAX_BLOCKS) * bs);
 
     setup(d_image, compressionOptions);
 
@@ -164,18 +164,18 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     // timer.start();
 
     uint bn = 0;
-    while(bn != blockNum)
+    while (bn != blockNum)
     {
         uint count = min(blockNum - bn, MAX_BLOCKS);
 
-        compressBlocks(bn, count, w, h, alphaMode, compressionOptions, h_result);
+        compressBlocks(bn, count, bw, bh, alphaMode, compressionOptions, h_result);
 
         // Check for errors.
         cudaError_t err = cudaGetLastError();
         if (err != cudaSuccess)
         {
-                //nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
-                outputOptions.error(Error_CudaError);
+            //nvDebug("CUDA Error: %s\n", cudaGetErrorString(err));
+            outputOptions.error(Error_CudaError);
         }
 
         // Output result.
@@ -198,10 +198,10 @@ void CudaCompressorDXT1::setup(cudaArray * image, const nvtt::CompressionOptions
     bindTextureToArray(image);
 }
 
-void CudaCompressorDXT1::compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CudaCompressorDXT1::compressBlocks(uint first, uint count, uint bw, uint bh, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     // Launch kernel.
-    compressKernelDXT1(first, count, w, m_ctx.result, m_ctx.bitmapTable);
+    compressKernelDXT1(first, count, bw, m_ctx.result, m_ctx.bitmapTable);
 
     // Copy result to host.
     cudaMemcpy(output, m_ctx.result, count * 8, cudaMemcpyDeviceToHost);
@@ -214,10 +214,10 @@ void CudaCompressorDXT3::setup(cudaArray * image, const nvtt::CompressionOptions
     bindTextureToArray(image);
 }
 
-void CudaCompressorDXT3::compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CudaCompressorDXT3::compressBlocks(uint first, uint count, uint bw, uint bh, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     // Launch kernel.
-    compressKernelDXT3(first, count, w, m_ctx.result, m_ctx.bitmapTable);
+    compressKernelDXT3(first, count, bw, m_ctx.result, m_ctx.bitmapTable);
 
     // Copy result to host.
     cudaMemcpy(output, m_ctx.result, count * 16, cudaMemcpyDeviceToHost);
@@ -230,10 +230,10 @@ void CudaCompressorDXT5::setup(cudaArray * image, const nvtt::CompressionOptions
     bindTextureToArray(image);
 }
 
-void CudaCompressorDXT5::compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CudaCompressorDXT5::compressBlocks(uint first, uint count, uint bw, uint bh, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     /*// Launch kernel.
-    compressKernelDXT5(first, count, w, m_ctx.result, m_ctx.bitmapTable);
+    compressKernelDXT5(first, count, bw, m_ctx.result, m_ctx.bitmapTable);
 
     // Copy result to host.
     cudaMemcpy(output, m_ctx.result, count * 16, cudaMemcpyDeviceToHost);*/
@@ -241,7 +241,7 @@ void CudaCompressorDXT5::compressBlocks(uint first, uint count, uint w, uint h, 
     // Launch kernel.
     if (alphaMode == AlphaMode_Transparency)
     {
-    //	compressWeightedKernelDXT1(first, count, w, m_ctx.result, m_ctx.bitmapTable);
+    //	compressWeightedKernelDXT1(first, count, bw, m_ctx.result, m_ctx.bitmapTable);
     }
     else
     {
@@ -251,8 +251,8 @@ void CudaCompressorDXT5::compressBlocks(uint first, uint count, uint w, uint h, 
     // Compress alpha in parallel with the GPU.
     for (uint i = 0; i < count; i++)
     {
-            //ColorBlock rgba(blockLinearImage + (first + i) * 16);
-            //OptimalCompress::compressDXT3A(rgba, alphaBlocks + i);
+        //ColorBlock rgba(blockLinearImage + (first + i) * 16);
+        //OptimalCompress::compressDXT3A(rgba, alphaBlocks + i);
     }
 
     // Copy result to host.

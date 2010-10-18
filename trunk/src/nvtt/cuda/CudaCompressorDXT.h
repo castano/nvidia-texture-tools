@@ -31,78 +31,78 @@ struct cudaArray;
 
 namespace nv
 {
-	class CudaContext
-	{
-	public:
-		CudaContext();
-		~CudaContext();
+    class CudaContext
+    {
+    public:
+        CudaContext();
+        ~CudaContext();
 
-		bool isValid() const;
+        bool isValid() const;
 
-	public:
-		// Device pointers.
-		uint * bitmapTable;
-		uint * bitmapTableCTX;
-		uint * data;
-		uint * result;
-	};
+    public:
+        // Device pointers.
+        uint * bitmapTable;
+        uint * bitmapTableCTX;
+        uint * data;
+        uint * result;
+    };
 
 #if defined HAVE_CUDA
 
-	struct CudaCompressor : public CompressorInterface
-	{
-		CudaCompressor(CudaContext & ctx);
+    struct CudaCompressor : public CompressorInterface
+    {
+        CudaCompressor(CudaContext & ctx);
 
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+        virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
-		virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions) = 0;
-		virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
-		virtual uint blockSize() const = 0;
+        virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions) = 0;
+        virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
+        virtual uint blockSize() const = 0;
 
-	protected:
-		CudaContext & m_ctx;
-	};
+    protected:
+        CudaContext & m_ctx;
+    };
 
-	struct CudaCompressorDXT1 : public CudaCompressor
-	{
-		CudaCompressorDXT1(CudaContext & ctx) : CudaCompressor(ctx) {}
+    struct CudaCompressorDXT1 : public CudaCompressor
+    {
+        CudaCompressorDXT1(CudaContext & ctx) : CudaCompressor(ctx) {}
 
-		virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions);
-		virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; };
-	};
+        virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions);
+        virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 8; };
+    };
 
-	/*struct CudaCompressorDXT1n : public CudaCompressor
-	{
-		virtual void setup(const CompressionOptions::Private & compressionOptions);
-		virtual void compressBlocks(uint blockCount, const void * input, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
-		virtual uint blockSize() const { return 8; };
-	};*/
+    /*struct CudaCompressorDXT1n : public CudaCompressor
+    {
+        virtual void setup(const CompressionOptions::Private & compressionOptions);
+        virtual void compressBlocks(uint blockCount, const void * input, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
+        virtual uint blockSize() const { return 8; };
+    };*/
 
-	struct CudaCompressorDXT3 : public CudaCompressor
-	{
-		CudaCompressorDXT3(CudaContext & ctx) : CudaCompressor(ctx) {}
+    struct CudaCompressorDXT3 : public CudaCompressor
+    {
+        CudaCompressorDXT3(CudaContext & ctx) : CudaCompressor(ctx) {}
 
-		virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions);
-		virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; };
-	};
+        virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions);
+        virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; };
+    };
 
-	struct CudaCompressorDXT5 : public CudaCompressor
-	{
-		CudaCompressorDXT5(CudaContext & ctx) : CudaCompressor(ctx) {}
+    struct CudaCompressorDXT5 : public CudaCompressor
+    {
+        CudaCompressorDXT5(CudaContext & ctx) : CudaCompressor(ctx) {}
 
-		virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions);
-		virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; };
-	};
+        virtual void setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions);
+        virtual void compressBlocks(uint first, uint count, uint w, uint h, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; };
+    };
 
-	/*struct CudaCompressorCXT1 : public CudaCompressor
-	{
-		virtual void setup(const CompressionOptions::Private & compressionOptions);
-		virtual void compressBlocks(uint blockCount, const void * input, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
-		virtual uint blockSize() const { return 8; };
-	};*/
+    /*struct CudaCompressorCXT1 : public CudaCompressor
+    {
+        virtual void setup(const CompressionOptions::Private & compressionOptions);
+        virtual void compressBlocks(uint blockCount, const void * input, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
+        virtual uint blockSize() const { return 8; };
+    };*/
 
 #endif // defined HAVE_CUDA
 
