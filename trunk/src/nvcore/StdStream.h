@@ -59,7 +59,7 @@ namespace nv
         virtual void seek( uint pos )
         {
             nvDebugCheck(m_fp != NULL);
-            nvDebugCheck(pos < size());
+            nvDebugCheck(pos <= size());
 #if NV_OS_WIN32
             _fseek_nolock(m_fp, pos, SEEK_SET);
 #elif NV_OS_LINUX

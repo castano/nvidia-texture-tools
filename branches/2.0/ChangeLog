@@ -6,6 +6,7 @@ NVIDIA Texture Tools version 2.0.9
  * Add an XNA Game Studio 3.1 Content Processor to make it easy to utilize NVIDIA Texture Tools in XNA applications.
  * Fix single color DXT1a compressor. Fixes issue 134.
  * Fix mirror sampling. Fixes issue 135.
+ * Fix seek bug. Fixes issue 144.
 
 NVIDIA Texture Tools version 2.0.8
  * Fix float to fixed image conversion. Patch provided by Alex Pfaffe. Fixes issue 121.
