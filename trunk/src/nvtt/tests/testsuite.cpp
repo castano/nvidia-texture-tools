@@ -373,6 +373,8 @@ int main(int argc, char *argv[])
 		printf("    1:           \tWaterloo.\n");
 		printf("    2:           \tEpic.\n");
 		printf("    3:           \tFarbrausch.\n");
+        printf("    4:           \Lugaru.\n");
+        printf("    5:           \Quake 3.\n");
 		printf("  -dec x         \tDecompressor.\n");
 		printf("    0:           \tReference.\n");
 		printf("    1:           \tNVIDIA.\n");
@@ -422,7 +424,7 @@ int main(int argc, char *argv[])
 	FileSystem::createDirectory(outPath);
 
 	Path csvFileName;
-	csvFileName.format("%s/result.csv", outPath);
+	csvFileName.format("%s/result-%d.csv", outPath, set);
 	StdOutputStream csvStream(csvFileName.str());
 	TextWriter csvWriter(&csvStream);
 

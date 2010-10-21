@@ -82,7 +82,7 @@ static FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode
 	nvDebugCheck(kdv != NULL);
 	nvDebugCheck(img != NULL);
 
-#pragma message(NV_FILE_LINE "FIXME: Height scale parameter should go away. It should be a sensible value that produces good results when the heightmap is in the [0, 1] range.")
+#pragma NV_MESSAGE("FIXME: Height scale parameter should go away. It should be a sensible value that produces good results when the heightmap is in the [0, 1] range.")
 	const float heightScale = 1.0f / 16.0f;
 
 	const uint w = img->width();
@@ -198,7 +198,7 @@ void nv::normalizeNormalMap(FloatImage * img)
 {
 	nvDebugCheck(img != NULL);
 
-#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly?")
+#pragma NV_MESSAGE("TODO: Pack and expand normals explicitly?")
 
 	img->expandNormals(0);
 	img->normalize(0);

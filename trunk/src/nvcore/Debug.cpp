@@ -24,6 +24,13 @@
 #   pragma comment(lib,"dbghelp.lib")
 #endif
 
+#if NV_OS_XBOX
+#    include <Xtl.h>
+#    ifdef _DEBUG
+#        include <xbdm.h>
+#    endif //_DEBUG
+#endif //NV_OS_XBOX
+
 #if !NV_OS_WIN32 && defined(HAVE_SIGNAL_H)
 #   include <signal.h>
 #endif
@@ -419,7 +426,7 @@ namespace
 
 #if NV_OS_WIN32 //&& NV_CC_MSVC
 
-    /** Win32 asset handler. */
+    /** Win32 assert handler. */
     struct Win32AssertHandler : public AssertHandler 
     {
         // Code from Daniel Vogel.
@@ -491,10 +498,50 @@ namespace
             return ret;
         }
     };
+#elif NV_OS_XBOX
 
+    /** Xbox360 assert handler. */
+    struct Xbox360AssertHandler : public AssertHandler 
+    {
+        static bool isDebuggerPresent()
+        {
+#ifdef _DEBUG
+            return DmIsDebuggerPresent() == TRUE;
+#else
+            return false;
+#endif
+        }
+
+        // Assert handler method.
+        virtual int assertion( const char * exp, const char * file, int line, const char * func/*=NULL*/ )
+        {
+            int ret = NV_ABORT_EXIT;
+
+            StringBuilder error_string;
+            if( func != NULL ) {
+                error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On function: %s\n    On line: %d\n ", exp, file, func, line );
+                nvDebug( error_string.str() );
+            }
+            else {
+                error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On line: %d\n ", exp, file, line );
+                nvDebug( error_string.str() );
+            }
+
+            if (isDebuggerPresent()) {
+                return NV_ABORT_DEBUG;
+            }
+
+            if( ret == NV_ABORT_EXIT ) {
+                 // Exit cleanly.
+                throw "Assertion failed";
+            }
+
+            return ret;
+        }
+    };
 #else
 
-    /** Unix asset handler. */
+    /** Unix assert handler. */
     struct UnixAssertHandler : public AssertHandler
     {
         bool isDebuggerPresent()
@@ -552,11 +599,13 @@ namespace
 } // namespace
 
 
-/// Handle assertion through the asset handler.
+/// Handle assertion through the assert handler.
 int nvAbort(const char * exp, const char * file, int line, const char * func/*=NULL*/)
 {
 #if NV_OS_WIN32 //&& NV_CC_MSVC
     static Win32AssertHandler s_default_assert_handler;
+#elif NV_OS_XBOX
+    static Xbox360AssertHandler s_default_assert_handler;
 #else
     static UnixAssertHandler s_default_assert_handler;
 #endif
@@ -585,7 +634,7 @@ void NV_CDECL nvDebugPrint(const char *msg, ...)
 /// Dump debug info.
 void debug::dumpInfo()
 {
-#if NV_OS_WIN32 || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H))
+#if (NV_OS_WIN32 && NV_CC_MSVC) || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H))
     if (hasStackTrace())
     {
         void * trace[64];

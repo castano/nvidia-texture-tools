@@ -977,7 +977,7 @@ bool DirectDrawSurface::hasAlpha() const
 {
     if (header.hasDX10Header())
     {
-#pragma message(NV_FILE_LINE "TODO: Update hasAlpha to handle all DX10 formats.")
+#pragma NV_MESSAGE("TODO: Update hasAlpha to handle all DX10 formats.")
         return 
             header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM ||
             header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
@@ -1187,7 +1187,7 @@ void DirectDrawSurface::readLinearImage(Image * img)
 
     uint byteCount = (header.pf.bitcount + 7) / 8;
 
-#pragma message(NV_FILE_LINE "TODO: Support floating point linear images and other FOURCC codes.")
+#pragma NV_MESSAGE("TODO: Support floating point linear images and other FOURCC codes.")
 
     // Read linear RGB images.
     for (uint y = 0; y < h; y++)

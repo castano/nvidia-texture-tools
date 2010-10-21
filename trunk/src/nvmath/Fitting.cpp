@@ -162,7 +162,7 @@ Plane nv::Fit::bestPlane(int n, const Vector3 *__restrict points)
         return Plane(Vector3(0, 0, 1), centroid);
     }
 
-#pragma message(NV_FILE_LINE "TODO: need to write an eigensolver!")
+#pragma NV_MESSAGE("TODO: need to write an eigensolver!")
 
     // - Numerical Recipes in C is a good reference. Householder transforms followed by QL decomposition seems to be the best approach.
     // - The one from magic-tools is now LGPL. For the 3D case it uses a cubic root solver, which is not very accurate.

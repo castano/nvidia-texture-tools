@@ -7,6 +7,8 @@
 //#include <shlwapi.h> // PathFileExists
 #include <windows.h> // GetFileAttributes
 #include <direct.h> // _mkdir
+#elif NV_OS_XBOX
+#include <Xtl.h>
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -23,7 +25,7 @@ bool FileSystem::exists(const char * path)
 	return access(path, F_OK|R_OK) == 0;
 	//struct stat buf;
 	//return stat(path, &buf) == 0;
-#elif NV_OS_WIN32
+#elif NV_OS_WIN32 || NV_OS_XBOX
     // PathFileExists requires linking to shlwapi.lib
     //return PathFileExists(path) != 0;
     return GetFileAttributesA(path) != 0xFFFFFFFF;
@@ -39,8 +41,8 @@ bool FileSystem::exists(const char * path)
 
 bool FileSystem::createDirectory(const char * path)
 {
-#if NV_OS_WIN32
-    return _mkdir(path) != -1;
+#if NV_OS_WIN32 || NV_OS_XBOX
+    return CreateDirectory(path, NULL) != 0;
 #else
     return mkdir(path, 0777) != -1;
 #endif
@@ -50,6 +52,9 @@ bool FileSystem::changeDirectory(const char * path)
 {
 #if NV_OS_WIN32
     return _chdir(path) != -1;
+#elif NV_OS_XBOX
+	// Xbox doesn't support Current Working Directory!
+	return false;
 #else
     return chdir(path) != -1;
 #endif

@@ -61,7 +61,7 @@ namespace
 		}
 	}
 
-#pragma message(NV_FILE_LINE "TODO: Move these functions to a common location.")
+#pragma NV_MESSAGE("TODO: Move these functions to a common location.")
 
 	static int blockSize(Format format)
 	{
@@ -288,7 +288,7 @@ bool TexImage::load(const char * fileName)
 
 bool TexImage::save(const char * fileName) const
 {
-#pragma message(NV_FILE_LINE "TODO: Add support for DDS textures in TexImage::save")
+#pragma NV_MESSAGE("TODO: Add support for DDS textures in TexImage::save")
 
 	if (m->imageArray.count() == 0)
 	{
@@ -433,7 +433,7 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 		return false;
 	}
 
-#pragma message(NV_FILE_LINE "TODO: Add support for all compressed formats in TexImage::setImage2D.")
+#pragma NV_MESSAGE("TODO: Add support for all compressed formats in TexImage::setImage2D.")
 
 	if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3)
 	{
@@ -526,7 +526,7 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx,
 }
 
 
-#pragma message(NV_FILE_LINE "TODO: provide a TexImage::resize that can override filter width and parameters.")
+#pragma NV_MESSAGE("TODO: provide a TexImage::resize that can override filter width and parameters.")
 
 void TexImage::resize(int w, int h, ResizeFilter filter)
 {
@@ -537,7 +537,7 @@ void TexImage::resize(int w, int h, ResizeFilter filter)
 
 	if (m->type == TextureType_Cube)
 	{
-#pragma message(NV_FILE_LINE "TODO: Output error when image is cubemap and w != h.")
+#pragma NV_MESSAGE("TODO: Output error when image is cubemap and w != h.")
 		h = w;
 	}
 
@@ -1014,7 +1014,7 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
 		const FloatImage * img = m->imageArray[i];
 		m->imageArray[i] = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
 
-#pragma message(NV_FILE_LINE "TODO: Pack and expand normals explicitly?")
+#pragma NV_MESSAGE("TODO: Pack and expand normals explicitly?")
 		m->imageArray[i]->packNormals(0);
 
 		delete img;

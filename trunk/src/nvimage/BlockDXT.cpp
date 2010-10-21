@@ -96,35 +96,37 @@ uint BlockDXT1::evaluatePalette(Color32 color_array[4]) const
 uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
 {
     // Does bit expansion before interpolation.
-    color_array[0].b = col0.b * 22 / 8;
+    color_array[0].b = (3 * col0.b * 22) / 8;
     color_array[0].g = (col0.g << 2) | (col0.g >> 4);
-    color_array[0].r = col0.r * 22 / 8;
+    color_array[0].r = (3 * col0.r * 22) / 8;
     color_array[0].a = 0xFF;
 
-    color_array[1].r = col1.r * 22 / 8;
+    color_array[1].r = (3 * col1.r * 22) / 8;
     color_array[1].g = (col1.g << 2) | (col1.g >> 4);
-    color_array[1].b = col1.b * 22 / 8;
+    color_array[1].b = (3 * col1.b * 22) / 8;
     color_array[1].a = 0xFF;
+
+    int gdiff = color_array[1].g - color_array[0].g;
 
     if( col0.u > col1.u ) {
         // Four-color block: derive the other two colors.
-        color_array[2].r = (2 * col0.r + col1.r) * 22 / 8;
-        color_array[2].g = (256 * color_array[0].g + (color_array[1].g - color_array[0].g)/4 + 128 + (color_array[1].g - color_array[0].g) * 80) / 256;
-        color_array[2].b = (2 * col0.b + col1.b) * 22 / 8;
+        color_array[2].r = ((2 * col0.r + col1.r) * 22) / 8;
+        color_array[2].g = (256 * color_array[0].g + gdiff / 4 + 128 + gdiff * 80) / 256;
+        color_array[2].b = ((2 * col0.b + col1.b) * 22) / 8;
         color_array[2].a = 0xFF;
 
-        color_array[3].r = (2 * col1.r + col0.r) * 22 / 8;
-        color_array[3].g = (256 * color_array[1].g + (color_array[0].g - color_array[1].g)/4 + 128 + (color_array[0].g - color_array[1].g) * 80) / 256;
-        color_array[3].b = (2 * col1.b + col0.b) * 22 / 8;
+        color_array[3].r = ((2 * col1.r + col0.r) * 22) / 8;
+        color_array[3].g = (256 * color_array[1].g - gdiff / 4 + 128 - gdiff * 80) / 256;
+        color_array[3].b = ((2 * col1.b + col0.b) * 22) / 8;
         color_array[3].a = 0xFF;
 
         return 4;
     }
     else {
         // Three-color block: derive the other color.
-        color_array[2].r = (col0.r + col1.r) * 33 / 8;
-        color_array[2].g = (256 * color_array[0].g + (color_array[1].g - color_array[0].g)/4 + 128 + (color_array[1].g - color_array[0].g) * 128) / 256;
-        color_array[2].b = (col0.b + col1.b) * 33 / 8;
+        color_array[2].r = ((col0.r + col1.r) * 33) / 8;
+        color_array[2].g = (256 * color_array[0].g + gdiff / 4 + 128 + gdiff * 128) / 256;
+        color_array[2].b = ((col0.b + col1.b) * 33) / 8;
         color_array[2].a = 0xFF;
 
         // Set all components to 0 to match DXT specs.

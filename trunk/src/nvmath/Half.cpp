@@ -275,7 +275,10 @@ static inline uint16 _uint16_sels( uint16 test, uint16 a, uint16 b )
     return (result);
 }
 
-#if NV_CC_MSVC
+#if NV_OS_XBOX
+#include <PPCIntrinsics.h>
+#elif NV_CC_MSVC
+
 #include <intrin.h>
 #pragma intrinsic(_BitScanReverse)
 
@@ -297,6 +300,9 @@ static inline uint32 _uint32_cntlz( uint32 x )
     uint32 nlz          = __builtin_clz( x );
     uint32 result       = _uint32_sels( is_x_nez_msb, nlz, 0x00000020 );
     return (result);
+#elif NV_OS_XBOX
+    // Xbox PPC has this as an intrinsic.
+    return _CountLeadingZeros(x);
 #elif NV_CC_MSVC
     uint32 is_x_nez_msb = _uint32_neg( x );
     uint32 nlz          = _uint32_nlz( x );
@@ -342,6 +348,9 @@ static inline uint16 _uint16_cntlz( uint16 x )
     uint16 nlz32 = (uint16)_uint32_cntlz( (uint32)x );
     uint32 nlz   = _uint32_sub( nlz32, 16 );
     return (nlz);
+#elif _NV_OS_XBOX_
+    uint16 nlz32 = (uint16)_CountLeadingZeros( (uint32)x );
+    return _uint32_sub( nlz32, 16);
 #else
     const uint16 x0  = _uint16_srl(  x,  1 );
     const uint16 x1  = _uint16_or(   x,  x0 );

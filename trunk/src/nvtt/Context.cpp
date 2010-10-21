@@ -224,7 +224,7 @@ Compressor::Compressor() : m(*new Compressor::Private())
 
     if (m.cudaEnabled)
     {
-#pragma message(NV_FILE_LINE "FIXME: This code is duplicated below.")
+#pragma NV_MESSAGE("FIXME: This code is duplicated below.")
         // Select fastest CUDA device.
         int device = cuda::getFastestDevice();
         if (!cuda::setDevice(device))
@@ -944,7 +944,7 @@ bool Compressor::Private::compressMipmaps(uint f, const InputOptions::Private & 
                 premultiplyAlphaMipmap(mipmap, inputOptions);
             }
 
-#pragma message(NV_FILE_LINE "TODO: All color transforms should be done here!")
+#pragma NV_MESSAGE("TODO: All color transforms should be done here!")
 
             // Apply gamma space color transforms:
             if (inputOptions.colorTransform == ColorTransform_YCoCg)
@@ -1231,7 +1231,7 @@ void Compressor::Private::processInputImage(Mipmap & mipmap, const InputOptions:
             mipmap.toFloatImage(inputOptions);
         }
 
-#pragma message(NV_FILE_LINE "FIXME: Do not perform color transforms here!")
+#pragma NV_MESSAGE("FIXME: Do not perform color transforms here!")
 
         /*// Apply linear transforms in linear space.
         if (inputOptions.colorTransform == ColorTransform_Linear)

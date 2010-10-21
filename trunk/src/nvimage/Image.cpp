@@ -42,7 +42,7 @@ void Image::allocate(uint w, uint h)
     free();
     m_width = w;
     m_height = h;
-    m_data = (Color32 *)realloc(m_data, w * h * sizeof(Color32));
+    m_data = realloc<Color32>(m_data, w * h);
 }
 
 bool Image::load(const char * name)
