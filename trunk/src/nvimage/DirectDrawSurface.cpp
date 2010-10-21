@@ -1276,16 +1276,13 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
         *stream << block;
         block.decodeBlock(rgba);
     }
-    else if (fourcc == FOURCC_DXT2 ||
-        header.pf.fourcc == FOURCC_DXT3)
+    else if (fourcc == FOURCC_DXT2 || fourcc == FOURCC_DXT3)
     {
         BlockDXT3 block;
         *stream << block;
         block.decodeBlock(rgba);
     }
-    else if (fourcc == FOURCC_DXT4 ||
-        header.pf.fourcc == FOURCC_DXT5 ||
-        header.pf.fourcc == FOURCC_RXGB)
+    else if (fourcc == FOURCC_DXT4 || fourcc == FOURCC_DXT5 || fourcc == FOURCC_RXGB)
     {
         BlockDXT5 block;
         *stream << block;
