@@ -44,7 +44,7 @@ namespace nv {
     }
 
     template <typename T> void free(const T * ptr) {
-        ::free((T *)ptr);
+        ::free((void *)ptr);
     }
 
 } // nv namespace

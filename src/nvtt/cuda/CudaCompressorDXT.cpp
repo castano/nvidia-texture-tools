@@ -37,7 +37,6 @@
 #include <time.h>
 #include <stdio.h>
 
-
 #if defined HAVE_CUDA
 #include <cuda_runtime_api.h>
 
@@ -129,6 +128,8 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
 {
     nvDebugCheck(cuda::isHardwarePresent());
 
+#if defined HAVE_CUDA
+
     // Allocate image as a cuda array.
     cudaArray * d_image;
     if (inputFormat == nvtt::InputFormat_BGRA_8UB)
@@ -141,7 +142,7 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     }
     else
     {
-#pragma message(NV_FILE_LINE "FIXME: Floating point textures not really supported by CUDA compressors.") // @@ What's missing???
+#pragma NV_MESSAGE("FIXME: Floating point textures not really supported by CUDA compressors.") // @@ What's missing???
         cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
         cudaMallocArray(&d_image, &channelDesc, w, h);
 
@@ -189,8 +190,14 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
 
     free(h_result);
     cudaFreeArray(d_image);
+
+#else
+	outputOptions.error(Error_CudaError);
+#endif
+
 }
 
+#if defined HAVE_CUDA
 
 void CudaCompressorDXT1::setup(cudaArray * image, const nvtt::CompressionOptions::Private & compressionOptions)
 {
@@ -589,3 +596,5 @@ void CudaCompressor::compressDXT5n(const nvtt::CompressionOptions::Private & com
 }
 
 #endif // 0
+
+#endif // defined HAVE_CUDA

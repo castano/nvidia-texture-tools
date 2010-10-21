@@ -152,7 +152,7 @@ void FloatImage::resizeChannelCount(uint c)
 {
     if (m_componentNum != c) {
         uint count = m_width * m_height * c;
-        realloc(m_mem, count * sizeof(float));
+        realloc<float>(m_mem, count);
 
         if (c > m_componentNum) {
             memset(m_mem + m_count, 0, (count - m_count) * sizeof(float));

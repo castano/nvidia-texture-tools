@@ -120,46 +120,46 @@ namespace nv
 
 
         /// Const element access.
-        const T & operator[]( uint index ) const
+        NV_FORCEINLINE const T & operator[]( uint index ) const
         {
             nvDebugCheck(index < m_size);
             return m_buffer[index];
         }
-        const T & at( uint index ) const
+        NV_FORCEINLINE const T & at( uint index ) const
         {
             nvDebugCheck(index < m_size);
             return m_buffer[index];
         }
 
         /// Element access.
-        T & operator[] ( uint index )
+        NV_FORCEINLINE T & operator[] ( uint index )
         {
             nvDebugCheck(index < m_size);
             return m_buffer[index];
         }
-        T & at( uint index )
+        NV_FORCEINLINE T & at( uint index )
         {
             nvDebugCheck(index < m_size);
             return m_buffer[index];
         }
 
         /// Get vector size.
-        uint size() const { return m_size; }
+        NV_FORCEINLINE uint size() const { return m_size; }
 
         /// Get vector size.
-        uint count() const { return m_size; }
+        NV_FORCEINLINE uint count() const { return m_size; }
 
         /// Get const vector pointer.
-        const T * buffer() const { return m_buffer; }
+        NV_FORCEINLINE const T * buffer() const { return m_buffer; }
 
         /// Get vector pointer.
-        T * mutableBuffer() { return m_buffer; }
+        NV_FORCEINLINE T * mutableBuffer() { return m_buffer; }
 
         /// Is vector empty.
-        bool isEmpty() const { return m_size == 0; }
+        NV_FORCEINLINE bool isEmpty() const { return m_size == 0; }
 
         /// Is a null vector.
-        bool isNull() const	{ return m_buffer == NULL; }
+        NV_FORCEINLINE bool isNull() const	{ return m_buffer == NULL; }
 
 
         /// Push an element at the end of the vector.
@@ -179,17 +179,17 @@ namespace nv
                 new(m_buffer+new_size-1) T(val);
             }
         }
-        void pushBack( const T & val )
+        NV_FORCEINLINE void pushBack( const T & val )
         {
             push_back(val);
         }
-        void append( const T & val )
+        NV_FORCEINLINE void append( const T & val )
         {
             push_back(val);
         }
 
         /// Qt like push operator.
-        Array<T> & operator<< ( T & t )
+        NV_FORCEINLINE Array<T> & operator<< ( T & t )
         {
             push_back(t);
             return *this;
@@ -201,41 +201,41 @@ namespace nv
             nvDebugCheck( m_size > 0 );
             resize( m_size - 1 );
         }
-        void popBack()
+        NV_FORCEINLINE void popBack()
         {
             pop_back();
         }
 
         /// Get back element.
-        const T & back() const
+        NV_FORCEINLINE const T & back() const
         {
             nvDebugCheck( m_size > 0 );
             return m_buffer[m_size-1];
         }
 
         /// Get back element.
-        T & back()
+        NV_FORCEINLINE T & back()
         {
             nvDebugCheck( m_size > 0 );
             return m_buffer[m_size-1];
         }
 
         /// Get front element.
-        const T & front() const
+        NV_FORCEINLINE const T & front() const
         {
             nvDebugCheck( m_size > 0 );
             return m_buffer[0];
         }
 
         /// Get front element.
-        T & front()
+        NV_FORCEINLINE T & front()
         {
             nvDebugCheck( m_size > 0 );
             return m_buffer[0];
         }
 
         /// Return true if element found.
-        bool find(const T & element, uint * index) const
+        NV_FORCEINLINE bool find(const T & element, uint * index) const
         {
             return find(element, 0, m_size, index);
         }
@@ -253,7 +253,7 @@ namespace nv
         }
 
         /// Check if the given element is contained in the array.
-        bool contains(const T & e) const
+        NV_FORCEINLINE bool contains(const T & e) const
         {
             return find(e, NULL);
         }
@@ -301,7 +301,7 @@ namespace nv
         }
 
         /// Append the given data to our vector.
-        void append(const Array<T> & other)
+        NV_FORCEINLINE void append(const Array<T> & other)
         {
             append(other.m_buffer, other.m_size);
         }
@@ -324,7 +324,7 @@ namespace nv
         void replaceWithLast(uint index)
         {
             nvDebugCheck( index < m_size );
-            swap(m_buffer[index], back());
+            nv::swap(m_buffer[index], back());
             //m_buffer[index] = back();
             (m_buffer+m_size-1)->~T();
             m_size--;
@@ -409,13 +409,13 @@ namespace nv
         }
 
         /// Clear the buffer.
-        void clear()
+        NV_FORCEINLINE void clear()
         {
             resize(0);
         }
 
         /// Shrink the allocated vector.
-        void shrink()
+        NV_FORCEINLINE void shrink()
         {
             if (m_size < m_buffer_size) {
                 allocate(m_size);
@@ -423,7 +423,7 @@ namespace nv
         }
 
         /// Preallocate space.
-        void reserve(uint desired_size)
+        NV_FORCEINLINE void reserve(uint desired_size)
         {
             if (desired_size > m_buffer_size) {
                 allocate( desired_size );
@@ -440,7 +440,7 @@ namespace nv
         }
 
         /// Assignment operator.
-        Array<T> & operator=( const Array<T> & a )
+        NV_FORCEINLINE Array<T> & operator=( const Array<T> & a )
         {
             copy(a.m_buffer, a.m_size);
             return *this;
@@ -470,15 +470,15 @@ namespace nv
         // Array enumerator.
         typedef uint PseudoIndex;
 
-        PseudoIndex start() const { return 0; }
-        bool isDone(const PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); return i == this->m_size; };
-        void advance(PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); i++; }
+        NV_FORCEINLINE PseudoIndex start() const { return 0; }
+        NV_FORCEINLINE bool isDone(const PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); return i == this->m_size; };
+        NV_FORCEINLINE void advance(PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); i++; }
 
 #if NV_CC_MSVC
-        T & operator[]( const PseudoIndexWrapper & i ) {
+        NV_FORCEINLINE T & operator[]( const PseudoIndexWrapper & i ) {
             return m_buffer[i(this)];
         }
-        const T & operator[]( const PseudoIndexWrapper & i ) const {
+        NV_FORCEINLINE const T & operator[]( const PseudoIndexWrapper & i ) const {
             return m_buffer[i(this)];		
         }
 #endif
@@ -510,7 +510,7 @@ namespace nv
 
             // realloc the buffer
             else {
-                m_buffer = (T *) realloc( m_buffer, sizeof(T) * m_buffer_size );
+                m_buffer = realloc<T>(m_buffer, m_buffer_size);
             }
         }
 

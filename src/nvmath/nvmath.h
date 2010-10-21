@@ -10,7 +10,7 @@
 #include <math.h>
 #include <limits.h> // INT_MAX
 
-#if NV_OS_WIN32
+#if NV_OS_WIN32 || NV_OS_XBOX
 #include <float.h>
 #endif
 
@@ -116,7 +116,7 @@ namespace nv
 
     inline bool isFinite(const float f)
     {
-#if NV_OS_WIN32
+#if NV_OS_WIN32 || NV_OS_XBOX
         return _finite(f) != 0;
 #elif NV_OS_DARWIN || NV_OS_FREEBSD
         return isfinite(f);
@@ -131,7 +131,7 @@ namespace nv
 
     inline bool isNan(const float f)
     {
-#if NV_OS_WIN32
+#if NV_OS_WIN32 || NV_OS_XBOX
         return _isnan(f) != 0;
 #elif NV_OS_DARWIN || NV_OS_FREEBSD
         return isnan(f);

@@ -15,17 +15,17 @@ namespace
 {
     static char * strAlloc(uint size)
     {
-        return static_cast<char *>(malloc(size));
+        return malloc<char>(size);
     }
 
     static char * strReAlloc(char * str, uint size)
     {
-        return static_cast<char *>(realloc(str, size));
+        return realloc<char>(str, size);
     }
 
     static void strFree(const char * str)
     {
-        return free(const_cast<char *>(str));
+        return free<char>(str);
     }
 
     /*static char * strDup( const char * str )

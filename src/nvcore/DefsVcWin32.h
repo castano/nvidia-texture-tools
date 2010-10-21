@@ -13,7 +13,6 @@
 #define NV_CDECL        __cdecl
 #define NV_STDCALL      __stdcall
 #define NV_FASTCALL     __fastcall
-#define NV_FORCEINLINE  __forceinline
 #define NV_DEPRECATED
 
 #define NV_PURE
@@ -43,6 +42,7 @@
 #endif
 
 #define NV_NOINLINE __declspec(noinline)
+#define NV_FORCEINLINE __forceinline
 
 /*
 // Type definitions

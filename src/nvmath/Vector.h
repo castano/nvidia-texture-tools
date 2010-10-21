@@ -88,6 +88,10 @@ namespace nv
         };
     };
 
+    // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
+    template <typename T> Vector3 from(const T & v) { return Vector3(v.x, v.y, v.z); }
+    template <typename T> T to(Vector3::Arg v) { return T(v.x, v.y, v.z); }
+
 
     class NVMATH_CLASS Vector4
     {

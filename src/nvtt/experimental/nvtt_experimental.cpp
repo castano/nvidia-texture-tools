@@ -55,6 +55,3 @@ void nvttCompressImage(NvttImage * img, NvttFormat format)
 	// @@ Invoke appropriate compressor.
 }
 
-
-
-#endif // NVTT_EXPERIMENTAL_H

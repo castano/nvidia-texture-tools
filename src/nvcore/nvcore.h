@@ -33,6 +33,7 @@
 // NV_OS_LINUX
 // NV_OS_UNIX
 // NV_OS_DARWIN
+// NV_OS_XBOX
 
 #define NV_OS_STRING POSH_OS_STRING
 
@@ -56,6 +57,8 @@
 #   define NV_OS_WIN32 1
 #elif defined POSH_OS_WIN64
 #   define NV_OS_WIN64 1
+#elif defined POSH_OS_XBOX
+#   define NV_OS_XBOX 1
 #else
 #   error "Unsupported OS"
 #endif
@@ -148,12 +151,17 @@ typedef uint32      uint;
 #define NV_DO_STRING_JOIN3(arg1, arg2, arg3) arg1 ## arg2 ## arg3
 #define NV_STRING2(x) #x
 #define NV_STRING(x) NV_STRING2(x)
-#if NV_CC_GNUC
-//#define NV_FILE_LINE __FILE__ ":" NV_STRING(__LINE__) ": "
-#define NV_FILE_LINE
+
+#if 1
+#if NV_CC_MSVC
+#define NV_MESSAGE(x) message(__FILE__ "(" NV_STRING(__LINE__) ") : " x)
 #else
-#define NV_FILE_LINE __FILE__ "(" NV_STRING(__LINE__) ") : "
+#define NV_MESSAGE(x) message(x)
 #endif
+#else
+#define NV_MESSAGE(x) 
+#endif
+
 
 // Startup initialization macro.
 #define NV_AT_STARTUP(some_code) \
@@ -180,6 +188,8 @@ typedef uint32      uint;
 #if NV_CC_MSVC
 #   if NV_OS_WIN32
 #       include "DefsVcWin32.h"
+#   elif NV_OS_XBOX
+#       include "DefsVcXBox.h"
 #   else
 #       error "MSVC: Platform not supported"
 #   endif

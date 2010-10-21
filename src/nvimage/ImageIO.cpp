@@ -224,7 +224,7 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 	    }
     }
 #else // defined(HAVE_FREEIMAGE)
-#pragma message(NV_FILE_LINE "TODO: Load TIFF and EXR files from stream.")
+#pragma NV_MESSAGE("TODO: Load TIFF and EXR files from stream.")
 #if defined(HAVE_TIFF)
 	if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
 		return loadFloatTIFF(fileName, s);
