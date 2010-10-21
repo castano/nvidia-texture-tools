@@ -7,6 +7,7 @@ NVIDIA Texture Tools version 2.0.9
  * Fix single color DXT1a compressor. Fixes issue 134.
  * Fix mirror sampling. Fixes issue 135.
  * Fix seek bug. Fixes issue 144.
+ * Fix aliasing bug. Fixes issue 139.
 
 NVIDIA Texture Tools version 2.0.8
  * Fix float to fixed image conversion. Patch provided by Alex Pfaffe. Fixes issue 121.
