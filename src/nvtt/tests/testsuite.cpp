@@ -373,8 +373,8 @@ int main(int argc, char *argv[])
 		printf("    1:           \tWaterloo.\n");
 		printf("    2:           \tEpic.\n");
 		printf("    3:           \tFarbrausch.\n");
-        printf("    4:           \Lugaru.\n");
-        printf("    5:           \Quake 3.\n");
+        printf("    4:           \tLugaru.\n");
+        printf("    5:           \tQuake 3.\n");
 		printf("  -dec x         \tDecompressor.\n");
 		printf("    0:           \tReference.\n");
 		printf("    1:           \tNVIDIA.\n");

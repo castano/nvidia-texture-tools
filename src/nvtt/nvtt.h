@@ -444,6 +444,7 @@ namespace nvtt
 		NVTT_API void setBorder(float r, float g, float b, float a);
 		NVTT_API void fill(float r, float g, float b, float a);
         NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
+        NVTT_API bool normalizeRange(float * rangeMin, float * rangeMax);
 
 		// Set normal map options.
 		NVTT_API void toNormalMap(float sm, float medium, float big, float large);
