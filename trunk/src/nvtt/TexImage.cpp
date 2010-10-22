@@ -999,6 +999,54 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
     }
 }
 
+bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
+{
+    Vector2 range(FLT_MAX, -FLT_MAX);
+
+    // Compute range.
+	foreach (i, m->imageArray) {
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
+
+        const uint count = img->count();
+        for (uint p = 0; p < count; p++) {
+            float c = img->pixel(p);
+
+            if (c < range.x) range.x = c;
+            if (c > range.y) range.y = c;
+        }
+    }
+
+    if (range.x == range.y) {
+        // Single color image.
+        return false;
+    }
+
+    *rangeMin = range.x;
+    *rangeMax = range.y;
+
+    const float scale = 1.0f / (range.y - range.x);
+    const float bias = range.x * scale;
+
+    if (scale == 1.0f && bias == 0.0f) {
+        // Already normalized.
+        return true;
+    }
+
+    detach();
+
+    // Scale to range.
+    foreach (i, m->imageArray) {
+		FloatImage * img = m->imageArray[i];
+		if (img == NULL) continue;
+
+        img->scaleBias(0, 4, scale, bias);
+        //img->clamp(0, 4, 0.0f, 1.0f);
+    }
+
+    return true;
+}
+
 
 // Set normal map options.
 void TexImage::toNormalMap(float sm, float medium, float big, float large)

@@ -563,7 +563,7 @@ bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image *
 
 	if (tags != NULL)
 	{
-#pragma message(NV_FILE_LINE "TODO: Save image metadata")
+#pragma NV_MESSAGE("TODO: Save image metadata")
 		//FreeImage_SetMetadata(
 	}
 

@@ -1463,7 +1463,7 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
     }
     else if (compressionOptions.format == Format_DXT1a)
     {
-#pragma message(NV_FILE_LINE "TODO: Implement CUDA DXT1a compressor.")
+#pragma NV_MESSAGE("TODO: Implement CUDA DXT1a compressor.")
     }
     else if (compressionOptions.format == Format_DXT1n)
     {
