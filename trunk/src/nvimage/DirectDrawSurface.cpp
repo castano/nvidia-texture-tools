@@ -524,7 +524,7 @@ namespace
 
     static uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
     {
-        for (int i = 0; i < s_d3dFormatCount; i++)
+        for (uint i = 0; i < s_d3dFormatCount; i++)
         {
             if (s_d3dFormats[i].bitcount == bitcount &&
                 s_d3dFormats[i].rmask == rmask &&
@@ -1160,7 +1160,7 @@ void * DirectDrawSurface::readData(uint * sizePtr)
     void * data = new unsigned char [size];
     
     size = stream->serialize(data, size);
-    nvDebugCheck(size == *sizePtr);
+    nvDebugCheck(uint(size) == *sizePtr);
 
     return data;
 }

@@ -118,17 +118,18 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 	nvDebugCheck(fileName != NULL);
 	nvDebugCheck(s.isLoading());
 
-	const char * extension = Path::extension(fileName);
-
 #if defined(HAVE_FREEIMAGE)
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
 	if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
 		return loadFreeImage(fif, s);
 	}
 #else // defined(HAVE_FREEIMAGE)
+	const char * extension = Path::extension(fileName);
+
 	if (strCaseCmp(extension, ".tga") == 0) {
 		return loadTGA(s);
 	}
+    
 #if defined(HAVE_JPEG)
 	if (strCaseCmp(extension, ".jpg") == 0 || strCaseCmp(extension, ".jpeg") == 0) {
 		return loadJPG(s);
@@ -139,7 +140,8 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 		return loadPNG(s);
 	}
 #endif
-	if (strCaseCmp(extension, ".psd") == 0) {
+	
+    if (strCaseCmp(extension, ".psd") == 0) {
 		return loadPSD(s);
 	}
 #endif // defined(HAVE_FREEIMAGE)
@@ -297,9 +299,9 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 
 bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount)
 {
+#if !defined(HAVE_FREEIMAGE)
 	const char * extension = Path::extension(fileName);
 
-#if !defined(HAVE_FREEIMAGE)
 #if defined(HAVE_OPENEXR)
 	if (strCaseCmp(extension, ".exr") == 0) {
 		return saveFloatEXR(fileName, fimage, baseComponent, componentCount);
@@ -310,7 +312,8 @@ bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, ui
 		return saveFloatTIFF(fileName, fimage, baseComponent, componentCount);
 	}
 #endif
-#endif // defined(HAVE_FREEIMAGE)
+
+#endif // !defined(HAVE_FREEIMAGE)
 
 	StdInputStream stream(fileName);
 
@@ -600,6 +603,10 @@ bool nv::ImageIO::saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Fl
 	{
 		type = FIT_RGBAF;
 	}
+    else {
+        return false;
+    }
+
 
 	FIBITMAP * bitmap = FreeImage_AllocateT(type, w, h);
 
