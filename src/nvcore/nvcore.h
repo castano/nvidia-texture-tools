@@ -67,6 +67,7 @@
 // NV_CPU_X86
 // NV_CPU_X86_64
 // NV_CPU_PPC
+// NV_CPU_ARM
 
 #define NV_CPU_STRING   POSH_CPU_STRING
 
@@ -76,6 +77,8 @@
 #   define NV_CPU_X86 1
 #elif defined POSH_CPU_PPC
 #   define NV_CPU_PPC 1
+#elif defined POSH_CPU_STRONGARM
+#   define NV_CPU_ARM 1
 #else
 #   error "Unsupported CPU"
 #endif
@@ -128,21 +131,19 @@ typedef uint32      uint;
     NV_ENDIAN_STRING"-endian - " __DATE__ "-" __TIME__
 
 
-/// Disable copy constructor and assignment operator. 
-/// @hideinitializer
+// Disable copy constructor and assignment operator. 
 #define NV_FORBID_COPY(C) \
     private: \
     C( const C & ); \
     C &operator=( const C & );
 
 
-/// Disable dynamic allocation on the heap. 
-/// See Prohibiting Heap-Based Objects in More Effective C++.
-/// @hideinitializer 
+// Disable dynamic allocation on the heap. 
+// See Prohibiting Heap-Based Objects in More Effective C++.
 #define NV_FORBID_HEAPALLOC() \
     private: \
-    static void *operator new(size_t size); \
-    static void *operator new[](size_t size);
+    void *operator new(size_t size); \
+    void *operator new[](size_t size);
 
 // String concatenation macros.
 #define NV_STRING_JOIN2(arg1, arg2) NV_DO_STRING_JOIN2(arg1, arg2)
@@ -172,14 +173,13 @@ typedef uint32      uint;
         NV_STRING_JOIN3(AtStartup_, __LINE__, Instance); \
     };
 
-/// Indicate the compiler that the parameter is not used to suppress compier warnings.
-/// @hideinitializer 
+// Indicate the compiler that the parameter is not used to suppress compier warnings.
 #define NV_UNUSED(a) ((a)=(a))
 
-/// Null index. @@ Move this somewhere else... it's only used by nvmesh.
+// Null index. @@ Move this somewhere else... it's only used by nvmesh.
 //const unsigned int NIL = unsigned int(~0);
 
-/// Null pointer.
+// Null pointer.
 #ifndef NULL
 #define NULL 0
 #endif
