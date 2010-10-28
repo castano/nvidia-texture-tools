@@ -3,7 +3,7 @@
 #endif
 
 //#include <stdint.h> // uint8_t, int8_t, ...
-//#include <cstddef> // size_t, NULL
+#include <cstddef> // operator new, size_t, NULL
 
 // Function linkage
 #define DLL_IMPORT

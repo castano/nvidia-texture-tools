@@ -326,9 +326,17 @@ namespace
 #    if NV_CPU_PPC
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext->__ss.__srr0;
+#    elif NV_CPU_X86_64
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext->__ss.__rip;
 #    elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext->__ss.__eip;
+#    elif NV_CPU_ARM
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext->__ss.__pc;
+#    else
+#      error "Unknown CPU"
 #    endif
 #  else
 #    if NV_CPU_PPC
@@ -337,16 +345,20 @@ namespace
 #    elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext->ss.eip;
+#    else
+#      error "Unknown CPU"
 #    endif
 #  endif
-#	elif NV_OS_FREEBSD
-#		if NV_CPU_X86_64
-			ucontext_t * ucp = (ucontext_t *)secret;
-			return (void *)ucp->uc_mcontext.mc_rip;
-#		elif NV_CPU_X86
-			ucontext_t * ucp = (ucontext_t *)secret;
-			return (void *)ucp->uc_mcontext.mc_eip;
-#		endif
+#elif NV_OS_FREEBSD
+#  if NV_CPU_X86_64
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *)ucp->uc_mcontext.mc_rip;
+#  elif NV_CPU_X86
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *)ucp->uc_mcontext.mc_eip;
+#    else
+#      error "Unknown CPU"
+#    endif
 #else
 #  if NV_CPU_X86_64
         // #define REG_RIP REG_INDEX(rip) // seems to be 16
@@ -358,7 +370,9 @@ namespace
 #  elif NV_CPU_PPC
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext.regs->nip;
-#  endif
+#    else
+#      error "Unknown CPU"
+#    endif
 #endif
 
         // How to obtain the instruction pointers in different platforms, from mlton's source code.
