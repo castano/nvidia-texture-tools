@@ -82,7 +82,7 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
     // Determine pitch.
     uint pitch = computePitch(w, compressionOptions.bitcount, 8);
 
-    uint8 * dst = (uint8 *)mem::malloc(pitch + 4);
+    uint8 * dst = (uint8 *)::malloc(pitch + 4);
 
     for (uint y = 0; y < h; y++)
     {
@@ -127,6 +127,6 @@ void nv::compressRGB(const Image * image, const OutputOptions::Private & outputO
         }
     }
 
-    mem::free(dst);
+    ::free(dst);
 }
 
