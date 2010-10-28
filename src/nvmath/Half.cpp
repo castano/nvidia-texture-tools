@@ -496,12 +496,10 @@ nv::fast_half_to_float( uint16 h )
     const uint32 h_f_s_pos_offset      = _uint32_li( 0x00000010 );
     const uint32 h_f_e_pos_offset      = _uint32_li( 0x0000000d );
     const uint32 h_f_bias_offset       = _uint32_li( 0x0001c000 );
-    const uint32 f_e_mask              = _uint32_li( 0x7f800000 );
     const uint32 f_m_mask              = _uint32_li( 0x007fffff );
     const uint32 h_f_e_denorm_bias     = _uint32_li( 0x0000007e );
     const uint32 h_f_m_denorm_sa_bias  = _uint32_li( 0x00000008 );
     const uint32 f_e_pos               = _uint32_li( 0x00000017 );
-    const uint32 h_e_mask_minus_one    = _uint32_li( 0x00007bff );
     const uint32 h_e                   = _uint32_and( h, h_e_mask );
     const uint32 h_m                   = _uint32_and( h, h_m_mask );
     const uint32 h_s                   = _uint32_and( h, h_s_mask );
@@ -517,10 +515,8 @@ nv::fast_half_to_float( uint16 h )
     const uint32 f_m_denorm            = _uint32_and( h_f_m,               f_m_mask             );
     const uint32 f_e_denorm            = _uint32_sll( f_e_denorm_unpacked, f_e_pos              );
     const uint32 f_em_denorm           = _uint32_or(  f_e_denorm,          f_m_denorm           );
-    const uint32 f_em_nan              = _uint32_or(  f_e_mask,            f_m                  );
     const uint32 is_e_eqz_msb          = _uint32_dec(  h_e );
     const uint32 is_m_nez_msb          = _uint32_neg(  h_m );
-    const uint32 is_e_flagged_msb      = _uint32_sub(  h_e_mask_minus_one, h_e );
     const uint32 is_zero_msb           = _uint32_andc( is_e_eqz_msb,       is_m_nez_msb );
     const uint32 is_denorm_msb         = _uint32_and(  is_m_nez_msb,       is_e_eqz_msb );
     const uint32 is_zero               = _uint32_ext(  is_zero_msb );
