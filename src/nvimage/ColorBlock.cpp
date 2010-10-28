@@ -468,8 +468,6 @@ void FloatColorBlock::init(const Image * img, uint x, uint y)
     // @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
     // @@ Ideally we should zero the weights of the pixels out of range.
 
-    uint srcPlane = w * h;
-
     for (uint i = 0; i < 4; i++)
     {
         const uint by = i % h;
