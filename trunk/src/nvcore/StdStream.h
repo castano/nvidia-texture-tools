@@ -45,8 +45,6 @@ namespace nv
             if( m_fp != NULL && m_autoclose ) {
 #if NV_OS_WIN32
                 _fclose_nolock( m_fp );
-#elif NV_OS_LINUX
-                fclose_unlocked( m_fp );
 #else
                 fclose( m_fp );
 #endif
@@ -62,8 +60,6 @@ namespace nv
             nvDebugCheck(pos <= size());
 #if NV_OS_WIN32
             _fseek_nolock(m_fp, pos, SEEK_SET);
-#elif NV_OS_LINUX
-            fseek_unlocked(m_fp, pos, SEEK_SET);
 #else
             fseek(m_fp, pos, SEEK_SET);
 #endif
@@ -74,8 +70,6 @@ namespace nv
             nvDebugCheck(m_fp != NULL);
 #if NV_OS_WIN32
             return _ftell_nolock(m_fp);
-#elif NV_OS_LINUX
-            return ftell_unlocked(m_fp);
 #else
             return ftell(m_fp);
 #endif
@@ -89,11 +83,6 @@ namespace nv
             _fseek_nolock(m_fp, 0, SEEK_END);
             uint end = _ftell_nolock(m_fp);
             _fseek_nolock(m_fp, pos, SEEK_SET);
-#elif NV_OS_LINUX
-            uint pos = ftell_unlocked(m_fp);
-            fseek_unlocked(m_fp, 0, SEEK_END);
-            uint end = ftell_unlocked(m_fp);
-            fseek_unlocked(m_fp, pos, SEEK_SET);            
 #else
             uint pos = ftell(m_fp);
             fseek(m_fp, 0, SEEK_END);

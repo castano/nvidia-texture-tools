@@ -1471,7 +1471,7 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 	fimage->allocate(spp, width, height);
 
 	int linesize = TIFFScanlineSize(tif);
-	tdata_t buf = (::uint8 *)nv::mem::malloc(linesize);
+	tdata_t buf = malloc<uint8>(linesize);
 
 	for (uint y = 0; y < height; y++)
 	{
@@ -1508,7 +1508,7 @@ FloatImage * nv::ImageIO::loadFloatTIFF(const char * fileName, Stream & s)
 		}
 	}
 
-	nv::mem::free(buf);
+	free(buf);
 
 	TIFFClose(tif);
 
