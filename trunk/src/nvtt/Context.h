@@ -47,7 +47,7 @@ namespace nvtt
         bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
         bool compress(AlphaMode alphaMode, int w, int h, int d, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-        //int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
+        bool quantize(TexImage & tex, const CompressionOptions::Private & compressionOptions) const;
 
         bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
         bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
@@ -55,18 +55,6 @@ namespace nvtt
 	nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
 	nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
 
-	//bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
-
-	//bool initMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f, uint m) const;
-
-	//int findExactMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
-	//int findClosestMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
-
-	//void downsampleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
-	//void scaleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d) const;
-	//void premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
-	//void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
-	//void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
 
 
 	bool cudaSupported;

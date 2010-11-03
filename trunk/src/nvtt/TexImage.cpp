@@ -1268,6 +1268,17 @@ void TexImage::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
 }
 
 
+void TexImage::binarize(int channel, float threshold, bool dither)
+{
+#pragma NV_MESSAGE("binarize not implemented")
+}
+
+void TexImage::quantize(int channel, int bits, bool dither)
+{
+#pragma NV_MESSAGE("quantize not implemented")
+}
+
+
 
 // Set normal map options.
 void TexImage::toNormalMap(float sm, float medium, float big, float large)
