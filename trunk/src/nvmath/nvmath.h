@@ -166,8 +166,8 @@ namespace nv
     inline float square(float f) { return f * f; }
     inline int square(int i) { return i * i; }
 
-    inline float cube(float f) { return f * f; }
-    inline int cube(int i) { return i * i; }
+    inline float cube(float f) { return f * f * f; }
+    inline int cube(int i) { return i * i * i; }
 
     // @@ Float to int conversions to be optimized at some point. See:
     // http://cbloomrants.blogspot.com/2009/01/01-17-09-float-to-int.html
@@ -189,10 +189,37 @@ namespace nv
         return int(ceilf(f));
     }
 
-	inline float frac(float f)
-	{
-		return f - floor(f);
-	}
+    inline float frac(float f)
+    {
+        return f - floor(f);
+    }
+
+    inline float fround(float f)
+    {
+        // @@ Do something better.
+        return float(iround(f));
+    }
+
+    inline float quantizeCeil(float f, int bits)
+    {
+        nvDebugCheck(f >= 0.0f && f <= 1.0f);
+        float scale = float(1 << bits);
+        return ceilf(f * scale) / scale;
+    }
+
+    inline float quantizeRound(float f, int bits)
+    {
+        nvDebugCheck(f >= 0.0f && f <= 1.0f);
+        float scale = float(1 << bits);
+        return fround(f * scale) / scale;
+    }
+
+    inline float quantizeFloor(float f, int bits)
+    {
+        nvDebugCheck(f >= 0.0f && f <= 1.0f);
+        float scale = float(1 << bits);
+        return floor(f * scale) / scale;
+    }
 
 } // nv
 

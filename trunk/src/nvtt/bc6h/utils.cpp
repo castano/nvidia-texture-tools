@@ -262,7 +262,7 @@ static int clamp(double r, double low, double high)
 
 
 // match the tonemapping function used by exrdisplay
-static void tonemap(const Vector3 &in, double exposure, Vector3 &out)
+/*static void tonemap(const Vector3 &in, double exposure, Vector3 &out)
 {
     double r,g,b;
     unsigned short h;
@@ -325,7 +325,7 @@ static void tonemap(const Vector3 &in, double exposure, Vector3 &out)
     out.x = clamp (r, 0, 255);
     out.y = clamp (g, 0, 255);
     out.z = clamp (b, 0, 255);
-}
+}*/
 
 static void mpsnrmap(const Vector3 &in, int exposure, Vector3 &out)
 {

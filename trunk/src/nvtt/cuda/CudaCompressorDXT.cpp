@@ -124,38 +124,45 @@ CudaCompressor::CudaCompressor(CudaContext & ctx) : m_ctx(ctx)
 
 }
 
-void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void CudaCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     nvDebugCheck(cuda::isHardwarePresent());
 
 #if defined HAVE_CUDA
 
     // Allocate image as a cuda array.
+    const uint count = w * h;
+    Color32 * tmp = malloc<Color32>(count);
+    for (int i = 0; i < count; i++) {
+        tmp[i].r = clamp(data[i + count*0], 0.0f, 1.0f) * 255;
+        tmp[i].g = clamp(data[i + count*1], 0.0f, 1.0f) * 255;
+        tmp[i].b = clamp(data[i + count*2], 0.0f, 1.0f) * 255;
+        tmp[i].a = clamp(data[i + count*3], 0.0f, 1.0f) * 255;
+    }
+
     cudaArray * d_image;
-    if (inputFormat == nvtt::InputFormat_BGRA_8UB)
-    {
-        cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
-        cudaMallocArray(&d_image, &channelDesc, w, h);
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(8, 8, 8, 8, cudaChannelFormatKindUnsigned);
+    cudaMallocArray(&d_image, &channelDesc, w, h);
 
-        const int imageSize = w * h * sizeof(uint);
-        cudaMemcpyToArray(d_image, 0, 0, data, imageSize, cudaMemcpyHostToDevice);
-    }
-    else
-    {
-#pragma NV_MESSAGE("FIXME: Floating point textures not really supported by CUDA compressors.") // @@ What's missing???
-        cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
-        cudaMallocArray(&d_image, &channelDesc, w, h);
+    cudaMemcpyToArray(d_image, 0, 0, tmp, count * sizeof(Color32), cudaMemcpyHostToDevice);
 
-        const int imageSize = w * h * sizeof(uint);
-        cudaMemcpyToArray(d_image, 0, 0, data, imageSize, cudaMemcpyHostToDevice);
-    }
+    free(tmp);
+
+    // To avoid the copy we could keep the data in floating point format, but the channels are not interleaved like the kernel expects.
+    /*
+    cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc(32, 32, 32, 32, cudaChannelFormatKindFloat);
+    cudaMallocArray(&d_image, &channelDesc, w, h);
+
+    const int imageSize = w * h * sizeof(float) * 4;
+    cudaMemcpyToArray(d_image, 0, 0, data, imageSize, cudaMemcpyHostToDevice);
+    */
 
     // Image size in blocks.
     const uint bw = (w + 3) / 4;
     const uint bh = (h + 3) / 4;
     const uint bs = blockSize();
     const uint blockNum = bw * bh;
-    const uint compressedSize = blockNum * bs;
+    //const uint compressedSize = blockNum * bs;
 
     void * h_result = ::malloc(min(blockNum, MAX_BLOCKS) * bs);
 
@@ -192,9 +199,8 @@ void CudaCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     cudaFreeArray(d_image);
 
 #else
-	outputOptions.error(Error_CudaError);
+    outputOptions.error(Error_CudaError);
 #endif
-
 }
 
 #if defined HAVE_CUDA

@@ -42,6 +42,8 @@ namespace nvtt
     public:
         Private()
         {
+            nvDebugCheck( refCount() == 0 );
+
             type = TextureType_2D;
             wrapMode = WrapMode_Mirror;
             alphaMode = AlphaMode_None;
@@ -49,8 +51,10 @@ namespace nvtt
 
             imageArray.resize(1, NULL);
         }
-        Private(const Private & p) // Copy ctor. inits refcount to 0.
+        Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
         {
+            nvDebugCheck( refCount() == 0 );
+
             type = p.type;
             wrapMode = p.wrapMode;
             alphaMode = p.alphaMode;

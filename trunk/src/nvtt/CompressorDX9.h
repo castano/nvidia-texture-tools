@@ -28,112 +28,105 @@
 
 namespace nv
 {
-	struct ColorBlock;
+    struct ColorBlock;
 
-	// Fast CPU compressors.
-	struct FastCompressorDXT1 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
+    // Fast CPU compressors.
+    struct FastCompressorDXT1 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 8; }
+    };
 
-	struct FastCompressorDXT1a : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
+    struct FastCompressorDXT1a : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 8; }
+    };
 
-	struct FastCompressorDXT3 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
+    struct FastCompressorDXT3 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; }
+    };
 
-	struct FastCompressorDXT5 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
+    struct FastCompressorDXT5 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; }
+    };
 
-	struct FastCompressorDXT5n : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
-
-
-	// Normal CPU compressors.
-	struct NormalCompressorDXT1 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
-
-	struct NormalCompressorDXT1a : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
-
-	struct NormalCompressorDXT3 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
-
-	struct NormalCompressorDXT5 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
-
-	struct NormalCompressorDXT5n : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 16; }
-	};
+    struct FastCompressorDXT5n : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; }
+    };
 
 
-	// External compressors.
-#if defined(HAVE_S3QUANT)
-	struct S3CompressorDXT1 : public CompressorInterface
-	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-	};
-#endif
-	
+    // Normal CPU compressors.
+    struct NormalCompressorDXT1 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 8; }
+    };
+
+    struct NormalCompressorDXT1a : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 8; }
+    };
+
+    struct NormalCompressorDXT3 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; }
+    };
+
+    struct NormalCompressorDXT5 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; }
+    };
+
+    struct NormalCompressorDXT5n : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 16; }
+    };
+
+
+    // External compressors.
 #if defined(HAVE_ATITC)
-	struct AtiCompressorDXT1 : public CompressorInterface
-	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-	};
+    struct AtiCompressorDXT1 : public CompressorInterface
+    {
+        virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+    };
 
-	struct AtiCompressorDXT5 : public CompressorInterface
-	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-	};
+    struct AtiCompressorDXT5 : public CompressorInterface
+    {
+        virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+    };
 #endif
 
 #if defined(HAVE_SQUISH)
-	struct SquishCompressorDXT1 : public CompressorInterface
-	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-	};
+    struct SquishCompressorDXT1 : public CompressorInterface
+    {
+        virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+    };
 #endif
 
 #if defined(HAVE_D3DX)
-	struct D3DXCompressorDXT1 : public CompressorInterface
-	{
-		virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
-	};
+    struct D3DXCompressorDXT1 : public CompressorInterface
+    {
+        virtual void compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+    };
 #endif
 
 #if defined(HAVE_STB)
-	struct StbCompressorDXT1 : public FixedBlockCompressor
-	{
-		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-		virtual uint blockSize() const { return 8; }
-	};
+    struct StbCompressorDXT1 : public FixedBlockCompressor
+    {
+        virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual uint blockSize() const { return 8; }
+    };
 #endif
 
 } // nv namespace

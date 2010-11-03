@@ -54,7 +54,7 @@ namespace
 		return d * d;
 	}
 
-	static uint nearestGreen4(uint green, uint maxGreen, uint minGreen)
+	/*static uint nearestGreen4(uint green, uint maxGreen, uint minGreen)
 	{
 		uint bias = maxGreen + (maxGreen - minGreen) / 6;
 
@@ -62,7 +62,7 @@ namespace
 		if (maxGreen - minGreen != 0) index = clamp(3 * (bias - green) / (maxGreen - minGreen), 0U, 3U);
 
 		return (index * minGreen + (3 - index) * maxGreen) / 3;
-	}
+	}*/
 
 	static int computeGreenError(const ColorBlock & rgba, const BlockDXT1 * block, int bestError = INT_MAX)
 	{
@@ -164,7 +164,7 @@ namespace
 		return (index * minAlpha + (7 - index) * maxAlpha) / 7;
 	}
 
-	static uint computeAlphaError8(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
+	/*static uint computeAlphaError8(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
 	{
 		int totalError = 0;
 
@@ -182,7 +182,7 @@ namespace
 		}
 
 		return totalError;
-	}
+	}*/
 
 	static uint computeAlphaError(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
 	{

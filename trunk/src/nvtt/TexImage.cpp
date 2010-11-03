@@ -26,6 +26,7 @@
 #include "nvmath/Vector.h"
 #include "nvmath/Matrix.h"
 #include "nvmath/Color.h"
+#include "nvmath/Half.h"
 
 #include "nvimage/Filter.h"
 #include "nvimage/ImageIO.h"
@@ -40,209 +41,210 @@ using namespace nvtt;
 
 namespace
 {
-	// 1 -> 1, 2 -> 2, 3 -> 2, 4 -> 4, 5 -> 4, ...
-	static uint previousPowerOfTwo(const uint v)
-	{
-		return nextPowerOfTwo(v + 1) / 2;
-	}
+    // 1 -> 1, 2 -> 2, 3 -> 2, 4 -> 4, 5 -> 4, ...
+    static uint previousPowerOfTwo(const uint v)
+    {
+        return nextPowerOfTwo(v + 1) / 2;
+    }
 
-	static uint nearestPowerOfTwo(const uint v)
-	{
-		const uint np2 = nextPowerOfTwo(v);
-		const uint pp2 = previousPowerOfTwo(v);
+    static uint nearestPowerOfTwo(const uint v)
+    {
+        const uint np2 = nextPowerOfTwo(v);
+        const uint pp2 = previousPowerOfTwo(v);
 
-		if (np2 - v <= v - pp2)
-		{
-			return np2;
-		}
-		else
-		{
-			return pp2;
-		}
+	if (np2 - v <= v - pp2)
+	{
+	    return np2;
 	}
+	else
+	{
+	    return pp2;
+	}
+    }
 
 #pragma NV_MESSAGE("TODO: Move these functions to a common location.")
 
-	static int blockSize(Format format)
-	{
-		if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
-			return 8;
-		}
-		else if (format == Format_DXT3) {
-			return 16;
-		}
-		else if (format == Format_DXT5 || format == Format_DXT5n) {
-			return 16;
-		}
-		else if (format == Format_BC4) {
-			return 8;
-		}
-		else if (format == Format_BC5) {
-			return 16;
-		}
-		else if (format == Format_CTX1) {
-			return 8;
-		}
-		return 0;
+    static int blockSize(Format format)
+    {
+        if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
+            return 8;
+        }
+        else if (format == Format_DXT3) {
+            return 16;
+        }
+        else if (format == Format_DXT5 || format == Format_DXT5n) {
+            return 16;
+        }
+        else if (format == Format_BC4) {
+            return 8;
+        }
+        else if (format == Format_BC5) {
+            return 16;
+        }
+        else if (format == Format_CTX1) {
+            return 8;
+        }
+        return 0;
+    }
+
+    static uint countMipmaps(int w, int h, int d)
+    {
+        uint mipmap = 0;
+
+	while (w != 1 || h != 1 || d != 1) {
+	    w = max(1, w / 2);
+	    h = max(1, h / 2);
+	    d = max(1, d / 2);
+	    mipmap++;
 	}
 
-	static uint countMipmaps(int w, int h, int d)
-	{
-		uint mipmap = 0;
-
-		while (w != 1 || h != 1 || d != 1) {
-			w = max(1, w / 2);
-			h = max(1, h / 2);
-			d = max(1, d / 2);
-			mipmap++;
-		}
-
-		return mipmap + 1;
-	}
+        return mipmap + 1;
+    }
 }
 
 
 TexImage::TexImage() : m(new TexImage::Private())
 {
+    m->addRef();
 }
 
 TexImage::TexImage(const TexImage & tex) : m(tex.m)
 {
-	if (m != NULL) m->addRef();
+    if (m != NULL) m->addRef();
 }
 
 TexImage::~TexImage()
 {
-	if (m != NULL) m->release();
-	m = NULL;
+    if (m != NULL) m->release();
+    m = NULL;
 }
 
 void TexImage::operator=(const TexImage & tex)
 {
-	if (tex.m != NULL) tex.m->addRef();
-	if (m != NULL) m->release();
-	m = tex.m;
+    if (tex.m != NULL) tex.m->addRef();
+    if (m != NULL) m->release();
+    m = tex.m;
 }
 
 void TexImage::detach()
 {
-	if (m->refCount() > 1)
-	{
+    if (m->refCount() > 1)
+    {
         m->release();
-		m = new TexImage::Private(*m);
-		m->addRef();
-		nvDebugCheck(m->refCount() == 1);
-	}
+        m = new TexImage::Private(*m);
+        m->addRef();
+        nvDebugCheck(m->refCount() == 1);
+    }
 }
 
 void TexImage::setTextureType(TextureType type)
 {
-	if (m->type != type)
+    if (m->type != type)
+    {
+        detach();
+
+        m->type = type;
+
+	int count = 0;
+	if (type == TextureType_2D)
 	{
-		detach();
-
-		m->type = type;
-
-		int count = 0;
-		if (type == TextureType_2D)
-		{
-			count = 1;
-		}
-		else
-		{
-			nvCheck (type == TextureType_Cube);
-			count = 6;
-		}
-
-		// Delete all but the first 'count' images.
-		const uint imageCount = m->imageArray.count();
-		for (uint i = count; i < imageCount; i++)
-		{
-			delete m->imageArray[i];
-		}
-
-		m->imageArray.resize(count, NULL);
+	    count = 1;
 	}
+	else
+	{
+	    nvCheck (type == TextureType_Cube);
+	    count = 6;
+	}
+
+	// Delete all but the first 'count' images.
+	const uint imageCount = m->imageArray.count();
+	for (uint i = count; i < imageCount; i++)
+	{
+	    delete m->imageArray[i];
+	}
+
+        m->imageArray.resize(count, NULL);
+    }
 }
 
 void TexImage::setWrapMode(WrapMode wrapMode)
 {
-	if (m->wrapMode != wrapMode)
-	{
-		detach();
-		m->wrapMode = wrapMode;
-	}
+    if (m->wrapMode != wrapMode)
+    {
+        detach();
+        m->wrapMode = wrapMode;
+    }
 }
 
 void TexImage::setAlphaMode(AlphaMode alphaMode)
 {
-	if (m->alphaMode != alphaMode)
-	{
-		detach();
-		m->alphaMode = alphaMode;
-	}
+    if (m->alphaMode != alphaMode)
+    {
+        detach();
+        m->alphaMode = alphaMode;
+    }
 }
 
 void TexImage::setNormalMap(bool isNormalMap)
 {
-	if (m->isNormalMap != isNormalMap)
-	{
-		detach();
-		m->isNormalMap = isNormalMap;
-	}
+    if (m->isNormalMap != isNormalMap)
+    {
+        detach();
+        m->isNormalMap = isNormalMap;
+    }
 }
 
 int TexImage::width() const
 {
-	if (m->imageArray.count() > 0)
-	{
-		return m->imageArray[0]->width();
-	}
-	return 0;
+    if (m->imageArray.count() > 0)
+    {
+        return m->imageArray[0]->width();
+    }
+    return 0;
 }
 
 int TexImage::height() const
 {
-	if (m->imageArray.count() > 0)
-	{
-		return m->imageArray[0]->height();
-	}
-	return 0;
+    if (m->imageArray.count() > 0)
+    {
+        return m->imageArray[0]->height();
+    }
+    return 0;
 }
 
 int TexImage::depth() const
 {
-	return 1;
+    return 1;
 }
 
 int TexImage::faceCount() const
 {
-	return m->imageArray.count();
+    return m->imageArray.count();
 }
 
 TextureType TexImage::textureType() const
 {
-	return m->type;
+    return m->type;
 }
 
 WrapMode TexImage::wrapMode() const
 {
-	return m->wrapMode;
+    return m->wrapMode;
 }
 
 AlphaMode TexImage::alphaMode() const
 {
-	return m->alphaMode;
+    return m->alphaMode;
 }
 
 bool TexImage::isNormalMap() const
 {
-	return m->isNormalMap;
+    return m->isNormalMap;
 }
 
 int TexImage::countMipmaps() const
 {
-	return ::countMipmaps(width(), height(), depth());
+    return ::countMipmaps(width(), height(), depth());
 }
 
 float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
@@ -250,15 +252,15 @@ float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
     int imageCount = 0;
     float coverage = 0.0f;
 
-	foreach (i, m->imageArray)
-	{
+    foreach (i, m->imageArray)
+    {
         FloatImage * img = m->imageArray[i];
 
-		if (img == NULL) continue;
+        if (img == NULL) continue;
 
         imageCount++;
         coverage += img->alphaTestCoverage(alphaRef, 3);
-	}
+    }
 
     if (imageCount > 0) {
         return coverage / imageCount;
@@ -290,699 +292,785 @@ bool TexImage::save(const char * fileName) const
 {
 #pragma NV_MESSAGE("TODO: Add support for DDS textures in TexImage::save")
 
-	if (m->imageArray.count() == 0)
-	{
-		return false;
-	}
-	else
-	{
-		return ImageIO::saveFloat(fileName, m->imageArray[0], 0, 4);
-	}
+    if (m->imageArray.count() == 0)
+    {
+        return false;
+    }
+    else
+    {
+        return ImageIO::saveFloat(fileName, m->imageArray[0], 0, 4);
+    }
 }
 
-bool TexImage::setImage2D(nvtt::InputFormat format, int w, int h, int idx, const void * restrict data)
+bool TexImage::setImage2D(nvtt::InputFormat format, int w, int h, int idx, const void * data)
 {
-	if (idx < 0 || uint(idx) >= m->imageArray.count())
-	{
-		return false;
-	}
+    if (idx < 0 || uint(idx) >= m->imageArray.count())
+    {
+        return false;
+    }
 
-	FloatImage * img = m->imageArray[idx];
+    FloatImage * img = m->imageArray[idx];
     if (img != NULL) {
         if (img->width() != w || img->height() != h) {
-		    return false;
+            return false;
         }
-	}
+    }
 
-	detach();
+    detach();
 
     if (img == NULL) {
         img = m->imageArray[idx] = new FloatImage();
         img->allocate(4, w, h);
     }
 
-	const int count = w * h;
+    const int count = w * h;
 
-	float * restrict rdst = img->channel(0);
-	float * restrict gdst = img->channel(1);
-	float * restrict bdst = img->channel(2);
-	float * restrict adst = img->channel(3);
+    float * rdst = img->channel(0);
+    float * gdst = img->channel(1);
+    float * bdst = img->channel(2);
+    float * adst = img->channel(3);
 
-	if (format == InputFormat_BGRA_8UB)
-	{
-		const Color32 * src = (const Color32 *)data;
+    if (format == InputFormat_BGRA_8UB)
+    {
+        const Color32 * src = (const Color32 *)data;
 
-		try {
-			for (int i = 0; i < count; i++)
-			{
-				rdst[i] = float(src[i].r) / 255.0f;
-				gdst[i] = float(src[i].g) / 255.0f;
-				bdst[i] = float(src[i].b) / 255.0f;
-				adst[i] = float(src[i].a) / 255.0f;
-			}
-		}
-		catch(...) {
-			return false;
-		}
+	try {
+	    for (int i = 0; i < count; i++)
+	    {
+		rdst[i] = float(src[i].r) / 255.0f;
+		gdst[i] = float(src[i].g) / 255.0f;
+		bdst[i] = float(src[i].b) / 255.0f;
+		adst[i] = float(src[i].a) / 255.0f;
+	    }
 	}
-	else if (format == InputFormat_RGBA_32F)
-	{
-		const float * src = (const float *)data;
-
-		try {
-			for (int i = 0; i < count; i++)
-			{
-				rdst[i] = src[4 * i + 0];
-				gdst[i] = src[4 * i + 1];
-				bdst[i] = src[4 * i + 2];
-				adst[i] = src[4 * i + 3];
-			}
-		}
-		catch(...) {
-			return false;
-		}
+	catch(...) {
+	    return false;
 	}
+    }
+    else if (format == InputFormat_RGBA_16F)
+    {
+        const uint16 * src = (const uint16 *)data;
 
-	return true;
+	try {
+	    for (int i = 0; i < count; i++)
+	    {
+		((uint32 *)rdst)[i] = half_to_float(src[4*i+0]);
+		((uint32 *)gdst)[i] = half_to_float(src[4*i+1]);
+		((uint32 *)bdst)[i] = half_to_float(src[4*i+2]);
+		((uint32 *)adst)[i] = half_to_float(src[4*i+3]);
+	    }
+	}
+	catch(...) {
+	    return false;
+	}
+    }
+    else if (format == InputFormat_RGBA_32F)
+    {
+        const float * src = (const float *)data;
+
+	try {
+	    for (int i = 0; i < count; i++)
+	    {
+		rdst[i] = src[4 * i + 0];
+		gdst[i] = src[4 * i + 1];
+		bdst[i] = src[4 * i + 2];
+		adst[i] = src[4 * i + 3];
+	    }
+	}
+	catch(...) {
+	    return false;
+	}
+    }
+
+    return true;
 }
 
-bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * restrict r, const void * restrict g, const void * restrict b, const void * restrict a)
+bool TexImage::setImage2D(InputFormat format, int w, int h, int idx, const void * r, const void * g, const void * b, const void * a)
 {
-	if (idx < 0 || uint(idx) >= m->imageArray.count())
-	{
-		return false;
+    if (idx < 0 || uint(idx) >= m->imageArray.count())
+    {
+        return false;
+    }
+
+    FloatImage * img = m->imageArray[idx];
+    if (img->width() != w || img->height() != h)
+    {
+        return false;
+    }
+
+    detach();
+
+    const int count = w * h;
+
+    float * rdst = img->channel(0);
+    float * gdst = img->channel(1);
+    float * bdst = img->channel(2);
+    float * adst = img->channel(3);
+
+    if (format == InputFormat_BGRA_8UB)
+    {
+        const uint8 * rsrc = (const uint8 *)r;
+        const uint8 * gsrc = (const uint8 *)g;
+        const uint8 * bsrc = (const uint8 *)b;
+        const uint8 * asrc = (const uint8 *)a;
+
+	try {
+	    for (int i = 0; i < count; i++) rdst[i] = float(rsrc[i]) / 255.0f;
+	    for (int i = 0; i < count; i++) gdst[i] = float(gsrc[i]) / 255.0f;
+	    for (int i = 0; i < count; i++) bdst[i] = float(bsrc[i]) / 255.0f;
+	    for (int i = 0; i < count; i++) adst[i] = float(asrc[i]) / 255.0f;
 	}
-
-	FloatImage * img = m->imageArray[idx];
-	if (img->width() != w || img->height() != h)
-	{
-		return false;
+	catch(...) {
+	    return false;
 	}
+    }
+    else if (format == InputFormat_RGBA_16F)
+    {
+        const uint16 * rsrc = (const uint16 *)r;
+        const uint16 * gsrc = (const uint16 *)g;
+        const uint16 * bsrc = (const uint16 *)b;
+        const uint16 * asrc = (const uint16 *)a;
 
-	detach();
-
-	const int count = w * h;
-
-	float * restrict rdst = img->channel(0);
-	float * restrict gdst = img->channel(1);
-	float * restrict bdst = img->channel(2);
-	float * restrict adst = img->channel(3);
-
-	if (format == InputFormat_BGRA_8UB)
-	{
-		const uint8 * restrict rsrc = (const uint8 *)r;
-		const uint8 * restrict gsrc = (const uint8 *)g;
-		const uint8 * restrict bsrc = (const uint8 *)b;
-		const uint8 * restrict asrc = (const uint8 *)a;
-
-		try {
-			for (int i = 0; i < count; i++) rdst[i] = float(rsrc[i]) / 255.0f;
-			for (int i = 0; i < count; i++) gdst[i] = float(gsrc[i]) / 255.0f;
-			for (int i = 0; i < count; i++) bdst[i] = float(bsrc[i]) / 255.0f;
-			for (int i = 0; i < count; i++) adst[i] = float(asrc[i]) / 255.0f;
-		}
-		catch(...) {
-			return false;
-		}
+	try {
+	    for (int i = 0; i < count; i++) ((uint32 *)rdst)[i] = half_to_float(rsrc[i]);
+	    for (int i = 0; i < count; i++) ((uint32 *)gdst)[i] = half_to_float(gsrc[i]);
+	    for (int i = 0; i < count; i++) ((uint32 *)bdst)[i] = half_to_float(bsrc[i]);
+	    for (int i = 0; i < count; i++) ((uint32 *)adst)[i] = half_to_float(asrc[i]);
 	}
-	else if (format == InputFormat_RGBA_32F)
-	{
-		const float * rsrc = (const float *)r;
-		const float * gsrc = (const float *)g;
-		const float * bsrc = (const float *)b;
-		const float * asrc = (const float *)a;
-
-		try {
-			memcpy(rdst, rsrc, count * sizeof(float));
-			memcpy(gdst, gsrc, count * sizeof(float));
-			memcpy(bdst, bsrc, count * sizeof(float));
-			memcpy(adst, asrc, count * sizeof(float));
-		}
-		catch(...) {
-			return false;
-		}
+	catch(...) {
+	    return false;
 	}
+    }
+    else if (format == InputFormat_RGBA_32F)
+    {
+        const float * rsrc = (const float *)r;
+        const float * gsrc = (const float *)g;
+        const float * bsrc = (const float *)b;
+        const float * asrc = (const float *)a;
 
-	return true;
+	try {
+	    memcpy(rdst, rsrc, count * sizeof(float));
+	    memcpy(gdst, gsrc, count * sizeof(float));
+	    memcpy(bdst, bsrc, count * sizeof(float));
+	    memcpy(adst, asrc, count * sizeof(float));
+	}
+	catch(...) {
+	    return false;
+	}
+    }
+
+    return true;
 }
 
 bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, int idx, const void * data)
 {
-	if (idx < 0 || uint(idx) >= m->imageArray.count())
-	{
-		return false;
-	}
+    if (idx < 0 || uint(idx) >= m->imageArray.count())
+    {
+        return false;
+    }
 
 #pragma NV_MESSAGE("TODO: Add support for all compressed formats in TexImage::setImage2D.")
 
-	if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3)
-	{
-		return false;
-	}
+    if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3)
+    {
+        return false;
+    }
 
-	FloatImage * img = m->imageArray[idx];
-	if (img->width() != w || img->height() != h)
-	{
-		return false;
-	}
+    FloatImage * img = m->imageArray[idx];
+    if (img->width() != w || img->height() != h)
+    {
+        return false;
+    }
 
-	detach();
+    detach();
 
-	const int count = w * h;
+    const int count = w * h;
 
-	const int bw = (w + 3) / 4;
-	const int bh = (h + 3) / 4;
+    const int bw = (w + 3) / 4;
+    const int bh = (h + 3) / 4;
 
-	const uint bs = blockSize(format);
+    const uint bs = blockSize(format);
 
-	const uint8 * ptr = (const uint8 *)data;
+    const uint8 * ptr = (const uint8 *)data;
 
-	try {
-		for (int y = 0; y < bh; y++)
+    try {
+        for (int y = 0; y < bh; y++)
+        {
+            for (int x = 0; x < bw; x++)
+            {
+                ColorBlock colors;
+
+		if (format == nvtt::Format_BC1)
 		{
-			for (int x = 0; x < bw; x++)
-			{
-				ColorBlock colors;
+		    const BlockDXT1 * block = (const BlockDXT1 *)ptr;
 
-				if (format == nvtt::Format_BC1)
-				{
-					const BlockDXT1 * block = (const BlockDXT1 *)ptr;
-
-					if (decoder == Decoder_Reference) {
-						block->decodeBlock(&colors);
-					}
-					else if (decoder == Decoder_NV5x) {
-						block->decodeBlockNV5x(&colors);
-					}
-				}
-				else if (format == nvtt::Format_BC2)
-				{
-					const BlockDXT3 * block = (const BlockDXT3 *)ptr;
-
-					if (decoder == Decoder_Reference) {
-						block->decodeBlock(&colors);
-					}
-					else if (decoder == Decoder_NV5x) {
-						block->decodeBlockNV5x(&colors);
-					}
-				}
-				else if (format == nvtt::Format_BC3)
-				{
-					const BlockDXT5 * block = (const BlockDXT5 *)ptr;
-
-					if (decoder == Decoder_Reference) {
-						block->decodeBlock(&colors);
-					}
-					else if (decoder == Decoder_NV5x) {
-						block->decodeBlockNV5x(&colors);
-					}
-				}
-
-				for (int yy = 0; yy < 4; yy++)
-				{
-					for (int xx = 0; xx < 4; xx++)
-					{
-						Color32 c = colors.color(xx, yy);
-
-						if (x * 4 + xx < w && y * 4 + yy < h)
-						{
-							img->pixel(x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
-							img->pixel(x*4 + xx, y*4 + yy, 1) = float(c.g) * 1.0f/255.0f;
-							img->pixel(x*4 + xx, y*4 + yy, 2) = float(c.b) * 1.0f/255.0f;
-							img->pixel(x*4 + xx, y*4 + yy, 3) = float(c.a) * 1.0f/255.0f;
-						}
-					}
-				}
-
-				ptr += bs;
-			}
+		    if (decoder == Decoder_Reference) {
+			block->decodeBlock(&colors);
+		    }
+		    else if (decoder == Decoder_NV5x) {
+			block->decodeBlockNV5x(&colors);
+		    }
 		}
-	}
-	catch(...) {
-		return false;
-	}
+		else if (format == nvtt::Format_BC2)
+		{
+		    const BlockDXT3 * block = (const BlockDXT3 *)ptr;
 
-	return true;
+		    if (decoder == Decoder_Reference) {
+			block->decodeBlock(&colors);
+		    }
+		    else if (decoder == Decoder_NV5x) {
+			block->decodeBlockNV5x(&colors);
+		    }
+		}
+		else if (format == nvtt::Format_BC3)
+		{
+		    const BlockDXT5 * block = (const BlockDXT5 *)ptr;
+
+		    if (decoder == Decoder_Reference) {
+			block->decodeBlock(&colors);
+		    }
+		    else if (decoder == Decoder_NV5x) {
+			block->decodeBlockNV5x(&colors);
+		    }
+		}
+
+		for (int yy = 0; yy < 4; yy++)
+		{
+		    for (int xx = 0; xx < 4; xx++)
+		    {
+			Color32 c = colors.color(xx, yy);
+
+			if (x * 4 + xx < w && y * 4 + yy < h)
+			{
+			    img->pixel(x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
+			    img->pixel(x*4 + xx, y*4 + yy, 1) = float(c.g) * 1.0f/255.0f;
+			    img->pixel(x*4 + xx, y*4 + yy, 2) = float(c.b) * 1.0f/255.0f;
+			    img->pixel(x*4 + xx, y*4 + yy, 3) = float(c.a) * 1.0f/255.0f;
+			}
+		    }
+		}
+
+		ptr += bs;
+	    }
+	}
+    }
+    catch(...) {
+        return false;
+    }
+
+    return true;
 }
 
 
-#pragma NV_MESSAGE("TODO: provide a TexImage::resize that can override filter width and parameters.")
+static void getDefaultFilterWidthAndParams(int filter, float * filterWidth, float params[2])
+{
+    if (filter == ResizeFilter_Box) {
+        *filterWidth = 0.5f;
+    }
+    else if (filter == ResizeFilter_Triangle) {
+        *filterWidth = 1.0f;
+    }
+    else if (filter == ResizeFilter_Kaiser)
+    {
+        *filterWidth = 3.0f;
+        params[0] = 4.0f;
+        params[1] = 1.0f;
+    }
+    else //if (filter == ResizeFilter_Mitchell)
+    {
+        *filterWidth = 2.0f;
+        params[0] = 1.0f / 3.0f;
+        params[1] = 1.0f / 3.0f;
+    }
+}
 
 void TexImage::resize(int w, int h, ResizeFilter filter)
 {
-	if (m->imageArray.count() > 0)
-	{
-		if (w == m->imageArray[0]->width() && h == m->imageArray[0]->height()) return;
-	}
+    float filterWidth;
+    float params[2];
+    getDefaultFilterWidthAndParams(filter, &filterWidth, params);
 
-	if (m->type == TextureType_Cube)
-	{
+    resize(w, h, filter, filterWidth, params);
+}
+
+void TexImage::resize(int w, int h, ResizeFilter filter, float filterWidth, const float * params)
+{
+    if (m->imageArray.count() > 0)
+    {
+        if (w == m->imageArray[0]->width() && h == m->imageArray[0]->height()) return;
+    }
+
+    if (m->type == TextureType_Cube)
+    {
 #pragma NV_MESSAGE("TODO: Output error when image is cubemap and w != h.")
-		h = w;
-	}
+        h = w;
+    }
 
-	detach();
+    detach();
 
-	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
+    FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
-	foreach (i, m->imageArray)
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+
+        if (img == NULL) continue;
+
+	if (m->alphaMode == AlphaMode_Transparency)
 	{
-		FloatImage * img = m->imageArray[i];
-
-		if (img == NULL) continue;
-
-		if (m->alphaMode == AlphaMode_Transparency)
-		{
-			if (filter == ResizeFilter_Box)
-			{
-				BoxFilter filter;
-				img = img->resize(filter, w, h, wrapMode, 3);
-			}
-			else if (filter == ResizeFilter_Triangle)
-			{
-				TriangleFilter filter;
-				img = img->resize(filter, w, h, wrapMode, 3);
-			}
-			else if (filter == ResizeFilter_Kaiser)
-			{
-				//KaiserFilter filter(inputOptions.kaiserWidth);
-				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-				KaiserFilter filter(3);
-				img = img->resize(filter, w, h, wrapMode, 3);
-			}
-			else //if (filter == ResizeFilter_Mitchell)
-			{
-				nvDebugCheck(filter == ResizeFilter_Mitchell);
-				MitchellFilter filter;
-				img = img->resize(filter, w, h, wrapMode, 3);
-			}
-		}
-		else
-		{
-			if (filter == ResizeFilter_Box)
-			{
-				BoxFilter filter;
-				img = img->resize(filter, w, h, wrapMode);
-			}
-			else if (filter == ResizeFilter_Triangle)
-			{
-				TriangleFilter filter;
-				img = img->resize(filter, w, h, wrapMode);
-			}
-			else if (filter == ResizeFilter_Kaiser)
-			{
-				//KaiserFilter filter(inputOptions.kaiserWidth);
-				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-				KaiserFilter filter(3);
-				img = img->resize(filter, w, h, wrapMode);
-			}
-			else //if (filter == ResizeFilter_Mitchell)
-			{
-				nvDebugCheck(filter == ResizeFilter_Mitchell);
-				MitchellFilter filter;
-				img = img->resize(filter, w, h, wrapMode);
-			}
-		}
+	    if (filter == ResizeFilter_Box)
+	    {
+		BoxFilter filter(filterWidth);
+		img = img->resize(filter, w, h, wrapMode, 3);
+	    }
+	    else if (filter == ResizeFilter_Triangle)
+	    {
+		TriangleFilter filter(filterWidth);
+		img = img->resize(filter, w, h, wrapMode, 3);
+	    }
+	    else if (filter == ResizeFilter_Kaiser)
+	    {
+		KaiserFilter filter(filterWidth);
+		if (params != NULL) filter.setParameters(params[0], params[1]);
+		img = img->resize(filter, w, h, wrapMode, 3);
+	    }
+	    else //if (filter == ResizeFilter_Mitchell)
+	    {
+		nvDebugCheck(filter == ResizeFilter_Mitchell);
+		MitchellFilter filter;
+		if (params != NULL) filter.setParameters(params[0], params[1]);
+		img = img->resize(filter, w, h, wrapMode, 3);
+	    }
+	}
+	else
+	{
+	    if (filter == ResizeFilter_Box)
+	    {
+		BoxFilter filter(filterWidth);
+		img = img->resize(filter, w, h, wrapMode);
+	    }
+	    else if (filter == ResizeFilter_Triangle)
+	    {
+		TriangleFilter filter(filterWidth);
+		img = img->resize(filter, w, h, wrapMode);
+	    }
+	    else if (filter == ResizeFilter_Kaiser)
+	    {
+		KaiserFilter filter(filterWidth);
+		if (params != NULL) filter.setParameters(params[0], params[1]);
+		img = img->resize(filter, w, h, wrapMode);
+	    }
+	    else //if (filter == ResizeFilter_Mitchell)
+	    {
+		nvDebugCheck(filter == ResizeFilter_Mitchell);
+		MitchellFilter filter;
+		if (params != NULL) filter.setParameters(params[0], params[1]);
+		img = img->resize(filter, w, h, wrapMode);
+	    }
+	}
 
         delete m->imageArray[i];
         m->imageArray[i] = img;
-	}
+    }
 }
 
 void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 {
-	if (m->imageArray.count() > 0)
+    float filterWidth;
+    float params[2];
+    getDefaultFilterWidthAndParams(filter, &filterWidth, params);
+
+    resize(maxExtent, roundMode, filter, filterWidth, params);
+}
+
+
+void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, float filterWidth, const float * params)
+{
+    if (m->imageArray.count() > 0)
+    {
+        int w = m->imageArray[0]->width();
+        int h = m->imageArray[0]->height();
+
+	nvDebugCheck(w > 0);
+	nvDebugCheck(h > 0);
+
+	if (roundMode != RoundMode_None && maxExtent > 0)
 	{
-		int w = m->imageArray[0]->width();
-		int h = m->imageArray[0]->height();
-
-		nvDebugCheck(w > 0);
-		nvDebugCheck(h > 0);
-
-		if (roundMode != RoundMode_None)
-		{
-			// rounded max extent should never be higher than original max extent.
-			maxExtent = previousPowerOfTwo(maxExtent);
-		}
-
-		// Scale extents without changing aspect ratio.
-		int maxwh = max(w, h);
-		if (maxExtent != 0 && maxwh > maxExtent)
-		{
-			w = max((w * maxExtent) / maxwh, 1);
-			h = max((h * maxExtent) / maxwh, 1);
-		}
-
-		// Round to power of two.
-		if (roundMode == RoundMode_ToNextPowerOfTwo)
-		{
-			w = nextPowerOfTwo(w);
-			h = nextPowerOfTwo(h);
-		}
-		else if (roundMode == RoundMode_ToNearestPowerOfTwo)
-		{
-			w = nearestPowerOfTwo(w);
-			h = nearestPowerOfTwo(h);
-		}
-		else if (roundMode == RoundMode_ToPreviousPowerOfTwo)
-		{
-			w = previousPowerOfTwo(w);
-			h = previousPowerOfTwo(h);
-		}
-
-		// Make sure cube faces are square.
-		if (m->type == TextureType_Cube)
-		{
-			w = h = max(w, h);
-		}
-
-		resize(w, h, filter);
+	    // rounded max extent should never be higher than original max extent.
+	    maxExtent = previousPowerOfTwo(maxExtent);
 	}
+
+	// Scale extents without changing aspect ratio.
+	int maxwh = max(w, h);
+	if (maxExtent > 0 && maxwh > maxExtent)
+	{
+	    w = max((w * maxExtent) / maxwh, 1);
+	    h = max((h * maxExtent) / maxwh, 1);
+	}
+
+	// Round to power of two.
+	if (roundMode == RoundMode_ToNextPowerOfTwo)
+	{
+	    w = nextPowerOfTwo(w);
+	    h = nextPowerOfTwo(h);
+	}
+	else if (roundMode == RoundMode_ToNearestPowerOfTwo)
+	{
+	    w = nearestPowerOfTwo(w);
+	    h = nearestPowerOfTwo(h);
+	}
+	else if (roundMode == RoundMode_ToPreviousPowerOfTwo)
+	{
+	    w = previousPowerOfTwo(w);
+	    h = previousPowerOfTwo(h);
+	}
+
+	// Make sure cube faces are square.
+	if (m->type == TextureType_Cube)
+	{
+	    w = h = max(w, h);
+	}
+
+        resize(w, h, filter, filterWidth, params);
+    }
 }
 
 bool TexImage::buildNextMipmap(MipmapFilter filter)
 {
-	if (m->imageArray.count() > 0)
+    float filterWidth;
+    float params[2];
+    getDefaultFilterWidthAndParams(filter, &filterWidth, params);
+
+    buildNextMipmap(filter, filterWidth, params);
+}
+
+bool TexImage::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params)
+{
+    if (m->imageArray.count() > 0)
+    {
+        int w = m->imageArray[0]->width();
+        int h = m->imageArray[0]->height();
+
+	nvDebugCheck(w > 0);
+	nvDebugCheck(h > 0);
+
+	if (w == 1 && h == 1)
 	{
-		int w = m->imageArray[0]->width();
-		int h = m->imageArray[0]->height();
-
-		nvDebugCheck(w > 0);
-		nvDebugCheck(h > 0);
-
-		if (w == 1 && h == 1)
-		{
-			return false;
-		}
+	    return false;
 	}
+    }
 
-	detach();
+    detach();
 
-	FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
+    FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
-	foreach (i, m->imageArray)
-	{
+    foreach (i, m->imageArray)
+    {
         FloatImage * img = m->imageArray[i];
 
-		if (img == NULL) continue;
+        if (img == NULL) continue;
 
-		if (m->alphaMode == AlphaMode_Transparency)
-		{
-			if (filter == MipmapFilter_Box)
-			{
-				BoxFilter filter;
-				img = img->downSample(filter, wrapMode, 3);
-			}
-			else if (filter == MipmapFilter_Triangle)
-			{
-				TriangleFilter filter;
-				img = img->downSample(filter, wrapMode, 3);
-			}
-			else if (filter == MipmapFilter_Kaiser)
-			{
-				nvDebugCheck(filter == MipmapFilter_Kaiser);
-				//KaiserFilter filter(inputOptions.kaiserWidth);
-				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-				KaiserFilter filter(3);
-				img = img->downSample(filter, wrapMode, 3);
-			}
+	if (m->alphaMode == AlphaMode_Transparency)
+	{
+	    if (filter == MipmapFilter_Box)
+	    {
+		BoxFilter filter(filterWidth);
+		img = img->downSample(filter, wrapMode, 3);
+	    }
+	    else if (filter == MipmapFilter_Triangle)
+	    {
+		TriangleFilter filter(filterWidth);
+		img = img->downSample(filter, wrapMode, 3);
+	    }
+	    else if (filter == MipmapFilter_Kaiser)
+	    {
+		nvDebugCheck(filter == MipmapFilter_Kaiser);
+		KaiserFilter filter(filterWidth);
+		if (params != NULL) filter.setParameters(params[0], params[1]);
+		img = img->downSample(filter, wrapMode, 3);
+	    }
+	}
+	else
+	{
+	    if (filter == MipmapFilter_Box)
+	    {
+		if (filterWidth == 0.5f) {
+		    img = img->fastDownSample();
 		}
-		else
-		{
-			if (filter == MipmapFilter_Box)
-			{
-				img = img->fastDownSample();
-			}
-			else if (filter == MipmapFilter_Triangle)
-			{
-				TriangleFilter filter;
-				img = img->downSample(filter, wrapMode);
-			}
-			else //if (filter == MipmapFilter_Kaiser)
-			{
-				nvDebugCheck(filter == MipmapFilter_Kaiser);
-				//KaiserFilter filter(inputOptions.kaiserWidth);
-				//filter.setParameters(inputOptions.kaiserAlpha, inputOptions.kaiserStretch);
-				KaiserFilter filter(3);
-				img = img->downSample(filter, wrapMode);
-			}
+		else {
+		    BoxFilter filter(filterWidth);
+		    img = img->downSample(filter, wrapMode);
 		}
+	    }
+	    else if (filter == MipmapFilter_Triangle)
+	    {
+		TriangleFilter filter(filterWidth);
+		img = img->downSample(filter, wrapMode);
+	    }
+	    else //if (filter == MipmapFilter_Kaiser)
+	    {
+		nvDebugCheck(filter == MipmapFilter_Kaiser);
+		KaiserFilter filter(filterWidth);
+		if (params != NULL) filter.setParameters(params[0], params[1]);
+		img = img->downSample(filter, wrapMode);
+	    }
+	}
 
         delete m->imageArray[i];
         m->imageArray[i] = img;
-	}
+    }
 
-	return true;
+    return true;
 }
 
 // Color transforms.
 void TexImage::toLinear(float gamma)
 {
-	if (equal(gamma, 1.0f)) return;
+    if (equal(gamma, 1.0f)) return;
 
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		m->imageArray[i]->toLinear(0, 3, gamma);
-	}
+        m->imageArray[i]->toLinear(0, 3, gamma);
+    }
 }
 
 void TexImage::toGamma(float gamma)
 {
-	if (equal(gamma, 1.0f)) return;
+    if (equal(gamma, 1.0f)) return;
 
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		m->imageArray[i]->toGamma(0, 3, gamma);
-	}
+        m->imageArray[i]->toGamma(0, 3, gamma);
+    }
 }
 
 void TexImage::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
 {
-	detach();
+    detach();
 
-	Matrix xform(
-		Vector4(w0[0], w0[1], w0[2], w0[3]),
-		Vector4(w1[0], w1[1], w1[2], w1[3]),
-		Vector4(w2[0], w2[1], w2[2], w2[3]),
-		Vector4(w3[0], w3[1], w3[2], w3[3]));
+    Matrix xform(
+        Vector4(w0[0], w0[1], w0[2], w0[3]),
+        Vector4(w1[0], w1[1], w1[2], w1[3]),
+        Vector4(w2[0], w2[1], w2[2], w2[3]),
+        Vector4(w3[0], w3[1], w3[2], w3[3]));
 
-	Vector4 voffset(offset[0], offset[1], offset[2], offset[3]);
+    Vector4 voffset(offset[0], offset[1], offset[2], offset[3]);
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		m->imageArray[i]->transform(0, xform, voffset);
-	}
+        m->imageArray[i]->transform(0, xform, voffset);
+    }
 }
 
 void TexImage::swizzle(int r, int g, int b, int a)
 {
-	if (r == 0 && g == 1 && b == 2 && a == 3) return;
+    if (r == 0 && g == 1 && b == 2 && a == 3) return;
 
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		m->imageArray[i]->swizzle(0, r, g, b, a);
-	}
+        m->imageArray[i]->swizzle(0, r, g, b, a);
+    }
 }
 
 void TexImage::scaleBias(int channel, float scale, float bias)
 {
-	if (equal(scale, 1.0f) && equal(bias, 0.0f)) return;
+    if (equal(scale, 1.0f) && equal(bias, 0.0f)) return;
 
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		m->imageArray[i]->scaleBias(channel, 1, scale, bias);
-	}
+        m->imageArray[i]->scaleBias(channel, 1, scale, bias);
+    }
 }
 
 void TexImage::clamp(int channel, float low, float high)
 {
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		m->imageArray[i]->clamp(channel, 1, low, high);
-	}
+        m->imageArray[i]->clamp(channel, 1, low, high);
+    }
 }
 
 void TexImage::packNormal()
 {
-	scaleBias(0, 0.5f, 0.5f);
-	scaleBias(1, 0.5f, 0.5f);
-	scaleBias(2, 0.5f, 0.5f);
+    scaleBias(0, 0.5f, 0.5f);
+    scaleBias(1, 0.5f, 0.5f);
+    scaleBias(2, 0.5f, 0.5f);
 }
 
 void TexImage::expandNormal()
 {
-	scaleBias(0, 2.0f, -1.0f);
-	scaleBias(1, 2.0f, -1.0f);
-	scaleBias(2, 2.0f, -1.0f);
+    scaleBias(0, 2.0f, -1.0f);
+    scaleBias(1, 2.0f, -1.0f);
+    scaleBias(2, 2.0f, -1.0f);
 }
 
 
 void TexImage::blend(float red, float green, float blue, float alpha, float t)
 {
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
+
+	float * r = img->channel(0);
+	float * g = img->channel(1);
+	float * b = img->channel(2);
+	float * a = img->channel(3);
+
+	const int count = img->width() * img->height();
+	for (int i = 0; i < count; i++)
 	{
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
-
-		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(1);
-		float * restrict b = img->channel(2);
-		float * restrict a = img->channel(3);
-
-		const int count = img->width() * img->height();
-		for (int i = 0; i < count; i++)
-		{
-			r[i] = lerp(r[i], red, t);
-			g[i] = lerp(g[i], green, t);
-			b[i] = lerp(b[i], blue, t);
-			a[i] = lerp(a[i], alpha, t);
-		}
+	    r[i] = lerp(r[i], red, t);
+	    g[i] = lerp(g[i], green, t);
+	    b[i] = lerp(b[i], blue, t);
+	    a[i] = lerp(a[i], alpha, t);
 	}
+    }
 }
 
 void TexImage::premultiplyAlpha()
 {
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
+
+	float * r = img->channel(0);
+	float * g = img->channel(1);
+	float * b = img->channel(2);
+	float * a = img->channel(3);
+
+	const int count = img->width() * img->height();
+	for (int i = 0; i < count; i++)
 	{
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
-
-		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(1);
-		float * restrict b = img->channel(2);
-		float * restrict a = img->channel(3);
-
-		const int count = img->width() * img->height();
-		for (int i = 0; i < count; i++)
-		{
-			r[i] *= a[i];
-			g[i] *= a[i];
-			b[i] *= a[i];
-		}
+	    r[i] *= a[i];
+	    g[i] *= a[i];
+	    b[i] *= a[i];
 	}
+    }
 }
 
 
 void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale)
 {
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
 
-		float sum = redScale + greenScale + blueScale + alphaScale;
-		redScale /= sum;
-		greenScale /= sum;
-		blueScale /= sum;
-		alphaScale /= sum;
+        float sum = redScale + greenScale + blueScale + alphaScale;
+        redScale /= sum;
+        greenScale /= sum;
+        blueScale /= sum;
+        alphaScale /= sum;
 
-		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(1);
-		float * restrict b = img->channel(2);
-		float * restrict a = img->channel(3);
+        float * r = img->channel(0);
+        float * g = img->channel(1);
+        float * b = img->channel(2);
+        float * a = img->channel(3);
 
-		const int count = img->width() * img->height();
-		for (int i = 0; i < count; i++)
-		{
-			float grey = r[i] * redScale + g[i] * greenScale + b[i] * blueScale + a[i] * alphaScale;
-			a[i] = b[i] = g[i] = r[i] = grey;
-		}
-	}
+        const int count = img->width() * img->height();
+        for (int i = 0; i < count; i++)
+        {
+            float grey = r[i] * redScale + g[i] * greenScale + b[i] * blueScale + a[i] * alphaScale;
+            a[i] = b[i] = g[i] = r[i] = grey;
+        }
+    }
 }
 
 // Draw colored border.
 void TexImage::setBorder(float r, float g, float b, float a)
 {
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
+
+	const int w = img->width();
+	const int h = img->height();
+
+        for (int i = 0; i < w; i++)
+        {
+            img->pixel(i, 0, 0) = r;
+            img->pixel(i, 0, 1) = g;
+            img->pixel(i, 0, 2) = b;
+            img->pixel(i, 0, 3) = a;
+
+            img->pixel(i, h-1, 0) = r;
+            img->pixel(i, h-1, 1) = g;
+            img->pixel(i, h-1, 2) = b;
+            img->pixel(i, h-1, 3) = a;
+        }
+
+	for (int i = 0; i < h; i++)
 	{
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
+	    img->pixel(0, i, 0) = r;
+	    img->pixel(0, i, 1) = g;
+	    img->pixel(0, i, 2) = b;
+	    img->pixel(0, i, 3) = a;
 
-		const int w = img->width();
-		const int h = img->height();
-
-		for (int i = 0; i < w; i++)
-		{
-			img->pixel(i, 0, 0) = r;
-			img->pixel(i, 0, 1) = g;
-			img->pixel(i, 0, 2) = b;
-			img->pixel(i, 0, 3) = a;
-
-			img->pixel(i, h-1, 0) = r;
-			img->pixel(i, h-1, 1) = g;
-			img->pixel(i, h-1, 2) = b;
-			img->pixel(i, h-1, 3) = a;
-		}
-
-		for (int i = 0; i < h; i++)
-		{
-			img->pixel(0, i, 0) = r;
-			img->pixel(0, i, 1) = g;
-			img->pixel(0, i, 2) = b;
-			img->pixel(0, i, 3) = a;
-
-			img->pixel(w-1, i, 0) = r;
-			img->pixel(w-1, i, 1) = g;
-			img->pixel(w-1, i, 2) = b;
-			img->pixel(w-1, i, 3) = a;
-		}
+	    img->pixel(w-1, i, 0) = r;
+	    img->pixel(w-1, i, 1) = g;
+	    img->pixel(w-1, i, 2) = b;
+	    img->pixel(w-1, i, 3) = a;
 	}
+    }
 }
 
 // Fill image with the given color.
 void TexImage::fill(float red, float green, float blue, float alpha)
 {
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
 
-		float * restrict r = img->channel(0);
-		float * restrict g = img->channel(1);
-		float * restrict b = img->channel(2);
-		float * restrict a = img->channel(3);
+        float * restrict r = img->channel(0);
+        float * restrict g = img->channel(1);
+        float * restrict b = img->channel(2);
+        float * restrict a = img->channel(3);
 
-		const int count = img->width() * img->height();
-		for (int i = 0; i < count; i++)
-		{
-			r[i] = red;
-			g[i] = green;
-			b[i] = blue;
-			a[i] = alpha;
-		}
-	}
+        const int count = img->width() * img->height();
+        for (int i = 0; i < count; i++)
+        {
+            r[i] = red;
+            g[i] = green;
+            b[i] = blue;
+            a[i] = alpha;
+        }
+    }
 }
 
 
@@ -990,10 +1078,10 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 {
     detach();
 
-	foreach (i, m->imageArray)
-	{
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
 
         img->scaleAlphaToCoverage(coverage, alphaRef, 3);
     }
@@ -1004,9 +1092,9 @@ bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
     Vector2 range(FLT_MAX, -FLT_MAX);
 
     // Compute range.
-	foreach (i, m->imageArray) {
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
+    foreach (i, m->imageArray) {
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
 
         const uint count = img->count();
         for (uint p = 0; p < count; p++) {
@@ -1037,8 +1125,8 @@ bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
 
     // Scale to range.
     foreach (i, m->imageArray) {
-		FloatImage * img = m->imageArray[i];
-		if (img == NULL) continue;
+        FloatImage * img = m->imageArray[i];
+        if (img == NULL) continue;
 
         img->scaleBias(0, 4, scale, bias);
         //img->clamp(0, 4, 0.0f, 1.0f);
@@ -1047,205 +1135,324 @@ bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
     return true;
 }
 
+// Ideally you should compress/quantize the RGB and M portions independently.
+// Once you have M quantized, you would compute the corresponding RGB and quantize that.
+void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
+{
+    detach();
+
+    float irange = 1.0f / range;
+
+    foreach (idx, m->imageArray) {
+        FloatImage * img = m->imageArray[idx];
+        if (img == NULL) continue;
+
+	float * r = img->channel(0);
+	float * g = img->channel(1);
+	float * b = img->channel(2);
+	float * a = img->channel(3);
+
+        const uint count = img->width() * img->height();
+        for (uint i = 0; i < count; i++) {
+            float ri = nv::clamp(r[i] * irange, 0.0f, 1.0f);
+            float gi = nv::clamp(g[i] * irange, 0.0f, 1.0f);
+            float bi = nv::clamp(b[i] * irange, 0.0f, 1.0f);
+
+            float m = max(max(ri, gi), max(bi, 1e-6f)); // Avoid division by zero.
+            //m = quantizeCeil(m, 8);
+            float im = 1.0f / m;
+
+            r[i] = ri * im;
+            g[i] = gi * im;
+            b[i] = bi * im;
+            a[i] = m;
+        }
+    }
+}
+
+// Y is in the [0, 1] range, while CoCg are in the [-1, 1] range.
+void TexImage::toYCoCg()
+{
+    detach();
+
+    foreach (idx, m->imageArray) {
+        FloatImage * img = m->imageArray[idx];
+        if (img == NULL) continue;
+
+	float * r = img->channel(0);
+	float * g = img->channel(1);
+	float * b = img->channel(2);
+	float * a = img->channel(3);
+
+        const uint count = img->width() * img->height();
+        for (uint i = 0; i < count; i++) {
+            float ri = r[i];
+            float gi = g[i];
+            float bi = b[i];
+
+            float Y = (2*gi + ri + bi) * 0.25f;
+            float Co = (ri - bi);
+            float Cg = (2*gi - ri - bi) * 0.5f;
+
+            r[i] = Co;
+            g[i] = Cg;
+            b[i] = 0.0f;
+            a[i] = Y;
+        }
+    }
+}
+
+// img.toYCoCg();
+// img.blockScaleCoCg();
+// img.scaleBias(0, 0.5, 0.5);
+// img.scaleBias(1, 0.5, 0.5);
+
+// @@ Add support for threshold.
+// We could do something to prevent scale values from adjacent blocks from being too different to each other
+// and minimize bilinear interpolation artifacts.
+void TexImage::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
+{
+    detach();
+
+    foreach (idx, m->imageArray) {
+        FloatImage * img = m->imageArray[idx];
+        if (img == NULL) continue;
+
+        const uint w = img->width();
+        const uint h = img->height();
+        const uint bw = max(1U, w/4);
+        const uint bh = max(1U, h/4);
+
+        for (uint bj = 0; bj < bh; bj++) {
+            for (uint bi = 0; bi < bw; bi++) {
+
+                // Compute per block scale.
+                float m = 1.0f / 256.0f;
+                for (uint j = 0; j < 4; j++) {
+                    for (uint i = 0; i < 4; i++) {
+                        uint x = min(bi*4 + i, w);
+                        uint y = min(bj*4 + j, h);
+
+                        float Co = img->pixel(x, y, 0);
+                        float Cg = img->pixel(x, y, 1);
+
+                        m = max(m, fabsf(Co));
+                        m = max(m, fabsf(Cg));
+                    }
+                }
+
+                float scale = quantizeCeil(m, bits);
+                nvDebugCheck(scale >= m);
+
+                // Store block scale in blue channel and scale CoCg.
+                for (uint j = 0; j < 4; j++) {
+                    for (uint i = 0; i < 4; i++) {
+                        uint x = min(bi*4 + i, w);
+                        uint y = min(bj*4 + j, h);
+
+                        float & Co = img->pixel(x, y, 0);
+                        float & Cg = img->pixel(x, y, 1);
+
+                        Co /= scale;
+                        nvDebugCheck(fabsf(Co) <= 1.0f);
+
+                        Cg /= scale;
+                        nvDebugCheck(fabsf(Cg) <= 1.0f);
+
+                        img->pixel(x, y, 2) = scale;
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 
 // Set normal map options.
 void TexImage::toNormalMap(float sm, float medium, float big, float large)
 {
-	detach();
+    detach();
 
-	const Vector4 filterWeights(sm, medium, big, large);
+    const Vector4 filterWeights(sm, medium, big, large);
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		const FloatImage * img = m->imageArray[i];
-		m->imageArray[i] = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
+        const FloatImage * img = m->imageArray[i];
+        m->imageArray[i] = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
 
 #pragma NV_MESSAGE("TODO: Pack and expand normals explicitly?")
-		m->imageArray[i]->packNormals(0);
+        m->imageArray[i]->packNormals(0);
 
-		delete img;
-	}
+        delete img;
+    }
 
-	m->isNormalMap = true;
+    m->isNormalMap = true;
 }
-
-/*void TexImage::toHeightMap()
-{
-	detach();
-
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
-
-#pragma message(NV_FILE_LINE "TODO: Implement TexImage::toHeightMap")
-	}
-
-	m->isNormalMap = false;
-}*/
 
 void TexImage::normalizeNormalMap()
 {
-	//nvCheck(m->isNormalMap);
+    //nvCheck(m->isNormalMap);
 
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
-		nv::normalizeNormalMap(m->imageArray[i]);
-	}
+        nv::normalizeNormalMap(m->imageArray[i]);
+    }
 }
 
 float TexImage::rootMeanSquaredError_rgb(const TexImage & reference) const
 {
-	int totalCount = 0;
-	double mse = 0;
+    int totalCount = 0;
+    double mse = 0;
 
-	const int faceCount = this->faceCount();
-	if (faceCount != reference.faceCount()) {
-		return FLT_MAX;
-	}
+    const int faceCount = this->faceCount();
+    if (faceCount != reference.faceCount()) {
+        return FLT_MAX;
+    }
 
-	for (int f = 0; f < faceCount; f++)
-	{
-		const FloatImage * img = m->imageArray[f];
-		const FloatImage * ref = reference.m->imageArray[f];
+    for (int f = 0; f < faceCount; f++)
+    {
+        const FloatImage * img = m->imageArray[f];
+        const FloatImage * ref = reference.m->imageArray[f];
 
-		if (img == NULL || ref == NULL) {
-			return FLT_MAX;
-		}
+        if (img == NULL || ref == NULL) {
+                return FLT_MAX;
+        }
 
-		nvCheck(img->componentNum() == 4);
-		nvCheck(ref->componentNum() == 4);
+        nvCheck(img->componentNum() == 4);
+        nvCheck(ref->componentNum() == 4);
 
-		const uint count = img->width() * img->height();
-		totalCount += count;
+        const uint count = img->width() * img->height();
+        totalCount += count;
 
-		for (uint i = 0; i < count; i++)
-		{
-			float r0 = img->pixel(4 * i + count * 0);
-			float g0 = img->pixel(4 * i + count * 1);
-			float b0 = img->pixel(4 * i + count * 2);
-			float a0 = img->pixel(4 * i + count * 3);
-			float r1 = ref->pixel(4 * i + count * 0);
-			float g1 = ref->pixel(4 * i + count * 1);
-			float b1 = ref->pixel(4 * i + count * 2);
-			float a1 = ref->pixel(4 * i + count * 3);
+        for (uint i = 0; i < count; i++)
+        {
+            float r0 = img->pixel(4 * i + count * 0);
+            float g0 = img->pixel(4 * i + count * 1);
+            float b0 = img->pixel(4 * i + count * 2);
+            float a0 = img->pixel(4 * i + count * 3);
+            float r1 = ref->pixel(4 * i + count * 0);
+            float g1 = ref->pixel(4 * i + count * 1);
+            float b1 = ref->pixel(4 * i + count * 2);
+            float a1 = ref->pixel(4 * i + count * 3);
 
-			float r = r0 - r1;
-			float g = g0 - g1;
-			float b = b0 - b1;
-			float a = a0 - a1;
+            float r = r0 - r1;
+            float g = g0 - g1;
+            float b = b0 - b1;
+            float a = a0 - a1;
 
-			if (reference.alphaMode() == nvtt::AlphaMode_Transparency)
-			{
-				mse += double(r * r * a1) / 255.0;
-				mse += double(g * g * a1) / 255.0;
-				mse += double(b * b * a1) / 255.0;
-			}
-			else
-			{
-				mse += r * r;
-				mse += g * g;
-				mse += b * b;
-			}
-		}
-	}
+            if (reference.alphaMode() == nvtt::AlphaMode_Transparency)
+            {
+                mse += double(r * r * a1) / 255.0;
+                mse += double(g * g * a1) / 255.0;
+                mse += double(b * b * a1) / 255.0;
+            }
+            else
+            {
+                mse += r * r;
+                mse += g * g;
+                mse += b * b;
+            }
+        }
+    }
 
-	return float(sqrt(mse / totalCount));
+    return float(sqrt(mse / totalCount));
 }
 
 float TexImage::rootMeanSquaredError_alpha(const TexImage & reference) const
 {
-	int totalCount = 0;
-	double mse = 0;
+    int totalCount = 0;
+    double mse = 0;
 
-	const int faceCount = this->faceCount();
-	if (faceCount != reference.faceCount()) {
-		return FLT_MAX;
-	}
+    const int faceCount = this->faceCount();
+    if (faceCount != reference.faceCount()) {
+        return FLT_MAX;
+    }
 
-	for (int f = 0; f < faceCount; f++)
-	{
-		const FloatImage * img = m->imageArray[f];
-		const FloatImage * ref = reference.m->imageArray[f];
+    for (int f = 0; f < faceCount; f++)
+    {
+        const FloatImage * img = m->imageArray[f];
+        const FloatImage * ref = reference.m->imageArray[f];
 
-		if (img == NULL || ref == NULL) {
-			return FLT_MAX;
-		}
+        if (img == NULL || ref == NULL) {
+            return FLT_MAX;
+        }
 
-		nvCheck(img->componentNum() == 4);
-		nvCheck(ref->componentNum() == 4);
+        nvCheck(img->componentNum() == 4);
+        nvCheck(ref->componentNum() == 4);
 
-		const uint count = img->width() * img->height();
-		totalCount += count;
+        const uint count = img->width() * img->height();
+        totalCount += count;
 
-		for (uint i = 0; i < count; i++)
-		{
-			float a0 = img->pixel(4 * i + count * 3);
-			float a1 = ref->pixel(4 * i + count * 3);
+        for (uint i = 0; i < count; i++)
+        {
+            float a0 = img->pixel(4 * i + count * 3);
+            float a1 = ref->pixel(4 * i + count * 3);
 
-			float a = a0 - a1;
+            float a = a0 - a1;
 
-			mse += a * a;
-		}
-	}
+            mse += a * a;
+        }
+    }
 
-	return float(sqrt(mse / totalCount));
+    return float(sqrt(mse / totalCount));
 }
 
 void TexImage::flipVertically()
 {
     detach();
 
-	foreach (i, m->imageArray)
-	{
-		if (m->imageArray[i] == NULL) continue;
+    foreach (i, m->imageArray)
+    {
+        if (m->imageArray[i] == NULL) continue;
 
         m->imageArray[i]->flip();
-	}
+    }
 }
 
 bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel)
 {
-	return copyChannel(srcImage, srcChannel, srcChannel);
+    return copyChannel(srcImage, srcChannel, srcChannel);
 }
 
 bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel)
 {
-	const int faceCount = this->faceCount();
-	if (faceCount != srcImage.faceCount()) {
-		return false;
-	}
+    const int faceCount = this->faceCount();
+    if (faceCount != srcImage.faceCount()) {
+        return false;
+    }
 
-	detach();
+    detach();
 
-	foreach (i, m->imageArray)
-	{
-		FloatImage * dst = m->imageArray[i];
-		const FloatImage * src = srcImage.m->imageArray[i];
+    foreach (i, m->imageArray)
+    {
+        FloatImage * dst = m->imageArray[i];
+        const FloatImage * src = srcImage.m->imageArray[i];
 
-		if (dst == NULL || src == NULL) {
-			return false;
-		}
+        if (dst == NULL || src == NULL) {
+            return false;
+        }
 
-		nvCheck(src->componentNum() == 4);
-		nvCheck(dst->componentNum() == 4);
+        nvCheck(src->componentNum() == 4);
+        nvCheck(dst->componentNum() == 4);
 
-		const uint w = src->width();
-		const uint h = src->height();
+        const uint w = src->width();
+        const uint h = src->height();
 
-		if (w != dst->width() || h != dst->height()) {
-			return false;
-		}
+        if (w != dst->width() || h != dst->height()) {
+            return false;
+        }
 
-		memcpy(dst->channel(dstChannel), src->channel(srcChannel), w*h*sizeof(float));
-	}
+        memcpy(dst->channel(dstChannel), src->channel(srcChannel), w*h*sizeof(float));
+    }
 
-	return true;
+    return true;
 }
 
 

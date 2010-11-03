@@ -32,54 +32,49 @@
 
 namespace nv
 {
-	class Image;
+    class Image;
 }
 
 namespace nvtt
 {
-	struct Mipmap;
+    struct Mipmap;
 
-	struct Compressor::Private
-	{
-		Private() {}
+    struct Compressor::Private
+    {
+        Private() {}
 
-		bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool compress(const TexImage & tex, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool compress(AlphaMode alphaMode, int w, int h, int d, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-        bool compress2D(InputFormat inputFormat, AlphaMode alphaMode, int w, int h, const void * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        //int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
 
-		int estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const;
+        bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-		bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions);
+	nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
+	nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
 
-	private:
+	//bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-		bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+	//bool initMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f, uint m) const;
 
-		nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
-		nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
+	//int findExactMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
+	//int findClosestMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
 
-		bool compressMipmaps(uint f, const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
-
-		bool initMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f, uint m) const;
-
-		int findExactMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
-		int findClosestMipmap(const InputOptions::Private & inputOptions, uint w, uint h, uint d, uint f) const;
-
-		void downsampleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
-		void scaleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d) const;
-		void premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
-		void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
-		void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
+	//void downsampleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
+	//void scaleMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions, uint w, uint h, uint d) const;
+	//void premultiplyAlphaMipmap(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
+	//void processInputImage(Mipmap & mipmap, const InputOptions::Private & inputOptions) const;
+	//void quantizeMipmap(Mipmap & mipmap, const CompressionOptions::Private & compressionOptions) const;
 
 
-	public:
+	bool cudaSupported;
+	bool cudaEnabled;
 
-		bool cudaSupported;
-		bool cudaEnabled;
+	nv::AutoPtr<nv::CudaContext> cuda;
 
-		nv::AutoPtr<nv::CudaContext> cuda;
-
-	};
+    };
 
 } // nvtt namespace
 

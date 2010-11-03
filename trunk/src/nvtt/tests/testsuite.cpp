@@ -37,6 +37,7 @@
 #include <stdlib.h> // free
 #include <string.h> // memcpy
 
+#include "../tools/cmdline.h"
 
 using namespace nv;
 
@@ -294,11 +295,15 @@ float rmsError(const Image * a, const Image * b)
 
 int main(int argc, char *argv[])
 {
-    const uint version = nvtt::version();
-    const uint major = version / 100;
-    const uint minor = version % 100;
+    MyAssertHandler assertHandler;
+    MyMessageHandler messageHandler;
 
-    printf("NVIDIA Texture Tools %u.%u - Copyright NVIDIA Corporation 2007 - 2008\n\n", major, minor);
+    const uint version = nvtt::version();
+    const uint major = version / 100 / 100;
+    const uint minor = (version / 100) % 100;
+    const uint rev = version % 100;
+
+    printf("NVIDIA Texture Tools %u.%u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor, rev);
 
     int set = 0;
     bool fast = false;

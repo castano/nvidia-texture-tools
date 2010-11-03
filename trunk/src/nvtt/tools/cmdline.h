@@ -32,36 +32,36 @@
 
 
 struct MyMessageHandler : public nv::MessageHandler {
-	MyMessageHandler() {
-		nv::debug::setMessageHandler( this );
-	}
-	~MyMessageHandler() {
-		nv::debug::resetMessageHandler();
-	}
+    MyMessageHandler() {
+        nv::debug::setMessageHandler( this );
+    }
+    ~MyMessageHandler() {
+        nv::debug::resetMessageHandler();
+    }
 
-	virtual void log( const char * str, va_list arg ) {
-		va_list val;
-		va_copy(val, arg);
-		vfprintf(stderr, str, arg);
-		va_end(val);		
-	}
+    virtual void log( const char * str, va_list arg ) {
+        va_list val;
+        va_copy(val, arg);
+        vfprintf(stderr, str, arg);
+        va_end(val);
+    }
 };
 
 
 struct MyAssertHandler : public nv::AssertHandler {
-	MyAssertHandler() {
-		nv::debug::setAssertHandler( this );
-	}
-	~MyAssertHandler() {
-		nv::debug::resetAssertHandler();
-	}
-	
-	// Handler method, note that func might be NULL!
-	virtual int assertion( const char *exp, const char *file, int line, const char *func ) {
-		fprintf(stderr, "Assertion failed: %s\nIn %s:%d\n", exp, file, line);
-		nv::debug::dumpInfo();
-		exit(1);
-	}
+    MyAssertHandler() {
+        nv::debug::setAssertHandler( this );
+    }
+    ~MyAssertHandler() {
+        nv::debug::resetAssertHandler();
+    }
+
+    // Handler method, note that func might be NULL!
+    virtual int assertion( const char *exp, const char *file, int line, const char *func ) {
+        fprintf(stderr, "Assertion failed: %s\nIn %s:%d\n", exp, file, line);
+        nv::debug::dumpInfo();
+        exit(1);
+    }
 };
 
 

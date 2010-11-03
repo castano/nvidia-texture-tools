@@ -44,87 +44,75 @@ using namespace nv;
 using namespace nvtt;
 
 
-void FixedBlockCompressor::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
-	const uint bs = blockSize();
-	const uint bw = (w + 3) / 4;
-	const uint bh = (h + 3) / 4;
+    const uint bs = blockSize();
+    const uint bw = (w + 3) / 4;
+    const uint bh = (h + 3) / 4;
 
 #if defined(HAVE_OPENMP)
-	bool singleThreaded = false;
+    bool singleThreaded = false;
 #else
-	bool singleThreaded = true;
+    bool singleThreaded = true;
 #endif
 
-	// Use a single thread to compress small textures.
-	if (bw * bh < 16) singleThreaded = true;
+    // Use a single thread to compress small textures.
+    if (bw * bh < 16) singleThreaded = true;
 
-	if (singleThreaded)
+    if (singleThreaded)
     {
         nvDebugCheck(bs <= 16);
         uint8 mem[16]; // @@ Output one row at a time!
 
-		for (int y = 0; y < int(h); y += 4) {
-			for (uint x = 0; x < w; x += 4) {
+        for (int y = 0; y < int(h); y += 4) {
+            for (uint x = 0; x < w; x += 4) {
 
-				ColorBlock rgba;
-				if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-					rgba.init(w, h, (const uint *)data, x, y);
-				}
-				else {
-					nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
-					rgba.init(w, h, (const float *)data, x, y);
-				}
+                ColorBlock rgba;
+                rgba.init(w, h, data, x, y);
 
-				compressBlock(rgba, alphaMode, compressionOptions, mem);
+                compressBlock(rgba, alphaMode, compressionOptions, mem);
 
-				if (outputOptions.outputHandler != NULL) {
-					outputOptions.outputHandler->writeData(mem, bs);
-				}
-			}
-		}
-	}
+                if (outputOptions.outputHandler != NULL) {
+                    outputOptions.outputHandler->writeData(mem, bs);
+                }
+            }
+        }
+    }
 #if defined(HAVE_OPENMP)
-	else
-	{
+    else
+    {
         const uint size = bs * bw * bh;
         uint8 * mem = new uint8[size];
 
-	#pragma omp parallel
-		{
-	#pragma omp for
-			for (int i = 0; i < int(bw*bh); i++)
-			{
-				const uint x = i % bw;
-				const uint y = i / bw;
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (int i = 0; i < int(bw*bh); i++)
+            {
+                const uint x = i % bw;
+                const uint y = i / bw;
 
-				ColorBlock rgba;
-				if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-					rgba.init(w, h, (uint *)data, 4*x, 4*y);
-				}
-				else {
-					nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
-					rgba.init(w, h, (float *)data, 4*x, 4*y);
-				}
+		ColorBlock rgba;
+		rgba.init(w, h, data, 4*x, 4*y);
 
-				uint8 * ptr = mem + (y * bw + x) * bs;
-				compressBlock(rgba, alphaMode, compressionOptions, ptr);
-			} // omp for
-		} // omp parallel
+		uint8 * ptr = mem + (y * bw + x) * bs;
+		compressBlock(rgba, alphaMode, compressionOptions, ptr);
+	    } // omp for
+	} // omp parallel
 
-		if (outputOptions.outputHandler != NULL) {
-			outputOptions.outputHandler->writeData(mem, size);
-		}
-
-		delete [] mem;
+	if (outputOptions.outputHandler != NULL) {
+	    outputOptions.outputHandler->writeData(mem, size);
 	}
+
+        delete [] mem;
+    }
 #endif
 }
 
 
 #include "bc6h/tile.h"
 
-void TileCompressor::compress(InputFormat inputFormat, AlphaMode alphaMode, uint w, uint h, const void * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+void TileCompressor::compress(AlphaMode alphaMode, uint w, uint h, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
     const uint bs = blockSize();
     const uint bw = (w + 3) / 4;
@@ -141,13 +129,7 @@ void TileCompressor::compress(InputFormat inputFormat, AlphaMode alphaMode, uint
             for (uint x = 0; x < w; x += 4) {
 
                 Tile tile;
-                if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-                    //tile.init((const uint *)data, w, h, x, y);
-                }
-                else {
-                    nvDebugCheck(inputFormat == nvtt::InputFormat_RGBA_32F);
-                    //tile.init((const float *)data, w, h, x, y);
-                }
+                //tile.init((const float *)data, w, h, x, y);
 
                 compressBlock(tile, alphaMode, compressionOptions, mem);
 

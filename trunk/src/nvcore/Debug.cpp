@@ -35,7 +35,7 @@
 #   include <signal.h>
 #endif
 
-#if NV_OS_LINUX || NV_OS_DARWIN
+#if NV_OS_LINUX || NV_OS_DARWIN || NV_OS_FREEBSD
 #   include <unistd.h> // getpid
 #endif
 
@@ -195,69 +195,69 @@ namespace
 
     static NV_NOINLINE void printStackTrace(void * trace[], int size, int start=0)
     {
-	    HANDLE hProcess = GetCurrentProcess();
+        HANDLE hProcess = GetCurrentProcess();
     	
         nvDebug( "\nDumping stacktrace:\n" );
 
-	    // Resolve PC to function names
-	    for (int i = start; i < size; i++)
-	    {
-		    // Check for end of stack walk
-		    DWORD64 ip = (DWORD64)trace[i];
-		    if (ip == NULL)
-			    break;
+	// Resolve PC to function names
+	for (int i = start; i < size; i++)
+	{
+	    // Check for end of stack walk
+	    DWORD64 ip = (DWORD64)trace[i];
+	    if (ip == NULL)
+		break;
 
-		    // Get function name
-		    #define MAX_STRING_LEN	(512)
-		    unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
-		    IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
-		    pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-		    pSymbol->MaxNameLength = MAX_STRING_LEN;
+	    // Get function name
+	    #define MAX_STRING_LEN	(512)
+	    unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
+	    IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
+	    pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+	    pSymbol->MaxNameLength = MAX_STRING_LEN;
 
-		    DWORD64 dwDisplacement;
-    		
-		    if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
-		    {
-			    pSymbol->Name[MAX_STRING_LEN-1] = 0;
-    			
-			    /*
-			    // Make the symbol readable for humans
-			    UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE, 
-				    UNDNAME_COMPLETE | 
-				    UNDNAME_NO_THISTYPE |
-				    UNDNAME_NO_SPECIAL_SYMS |
-				    UNDNAME_NO_MEMBER_TYPE |
-				    UNDNAME_NO_MS_KEYWORDS |
-				    UNDNAME_NO_ACCESS_SPECIFIERS );
-			    */
-    			
-			    // pSymbol->Name
-			    const char * pFunc = pSymbol->Name;
-    			
-			    // Get file/line number
-			    IMAGEHLP_LINE64 theLine = { 0 };
-			    theLine.SizeOfStruct = sizeof(theLine);
+	    DWORD64 dwDisplacement;
 
-			    DWORD dwDisplacement;
-			    if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
-			    {
-				    nvDebug("unknown(%08X) : %s\n", (uint32)ip, pFunc);
-			    }
-			    else
-			    {
-				    /*
-				    const char* pFile = strrchr(theLine.FileName, '\\');
-				    if ( pFile == NULL ) pFile = theLine.FileName;
-				    else pFile++;
-				    */
-				    const char * pFile = theLine.FileName;
-    				
-				    int line = theLine.LineNumber;
-    				
-				    nvDebug("%s(%d) : %s\n", pFile, line, pFunc);
-			    }
-		    }
+            if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
+            {
+                pSymbol->Name[MAX_STRING_LEN-1] = 0;
+
+                /*
+                // Make the symbol readable for humans
+                UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE,
+                    UNDNAME_COMPLETE |
+                    UNDNAME_NO_THISTYPE |
+                    UNDNAME_NO_SPECIAL_SYMS |
+                    UNDNAME_NO_MEMBER_TYPE |
+                    UNDNAME_NO_MS_KEYWORDS |
+                    UNDNAME_NO_ACCESS_SPECIFIERS );
+                */
+
+                // pSymbol->Name
+                const char * pFunc = pSymbol->Name;
+
+                // Get file/line number
+                IMAGEHLP_LINE64 theLine = { 0 };
+                theLine.SizeOfStruct = sizeof(theLine);
+
+		DWORD dwDisplacement;
+		if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
+		{
+		    nvDebug("unknown(%08X) : %s\n", (uint32)ip, pFunc);
+		}
+		else
+		{
+		    /*
+		    const char* pFile = strrchr(theLine.FileName, '\\');
+		    if ( pFile == NULL ) pFile = theLine.FileName;
+		    else pFile++;
+		    */
+		    const char * pFile = theLine.FileName;
+
+		    int line = theLine.LineNumber;
+
+		    nvDebug("%s(%d) : %s\n", pFile, line, pFunc);
+		}
 	    }
+	}
     }
 
 
@@ -294,13 +294,13 @@ namespace
 #       if NV_CC_GNUC // defined(HAVE_CXXABI_H)
             char * begin = strchr(string_array[i], '(');
             char * end = strchr(string_array[i], '+');
-            if( begin != 0 && begin < end ) {
+            if (begin != 0 && begin < end) {
                 int stat;
                 *end = '\0';
                 *begin = '\0';
                 char * module = string_array[i];
                 char * name = abi::__cxa_demangle(begin+1, 0, 0, &stat);
-                if( name == NULL || begin[1] != '_' || begin[2] != 'Z' ) {
+                if (name == NULL || stat != 0) {
                     nvDebug( "  In: [%s] '%s'\n", module, begin+1 );
                 }
                 else {
