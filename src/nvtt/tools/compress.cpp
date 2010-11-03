@@ -412,10 +412,10 @@ int main(int argc, char *argv[])
             inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
             inputOptions.setTextureLayout(nvtt::TextureType_2D, image->width(), image->height());
 
-            for (uint i = 0; i < image->componentNum(); i++)
+            /*for (uint i = 0; i < image->componentNum(); i++)
             {
                 inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
-            }
+            }*/
         }
         else
         {
@@ -450,8 +450,11 @@ int main(int argc, char *argv[])
         inputOptions.setAlphaMode(nvtt::AlphaMode_None);
     }
 
-    inputOptions.setRoundMode(nvtt::RoundMode_ToNearestPowerOfTwo);
-
+    // Block compressed textures with mipmaps must be powers of two.
+    //if (!noMipmaps && format != nvtt::Format_RGB)
+    {
+        inputOptions.setRoundMode(nvtt::RoundMode_ToNearestPowerOfTwo);
+    }
 
     if (normal)
     {
@@ -471,11 +474,11 @@ int main(int argc, char *argv[])
         inputOptions.setMipmapGeneration(false);
     }
 
-    if (premultiplyAlpha)
+    /*if (premultiplyAlpha)
     {
         inputOptions.setPremultiplyAlpha(true);
         inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
-    }
+    }*/
 
     inputOptions.setMipmapFilter(mipmapFilter);
 

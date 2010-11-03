@@ -39,19 +39,19 @@ using namespace nvtt;
 
 namespace 
 {
-	inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
-	{
-		memcpy(dst, src, 4 * w);
-	}
+    inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
+    {
+        memcpy(dst, src, 4 * w);
+    }
 
-	inline void convert_to_x8r8g8b8(const void * src, void * dst, uint w)
-	{
-		memcpy(dst, src, 4 * w);
-	}
+    inline void convert_to_x8r8g8b8(const void * src, void * dst, uint w)
+    {
+        memcpy(dst, src, 4 * w);
+    }
 
     static uint16 to_half(float f)
     {
-	    union { float f; uint32 u; } c;
+        union { float f; uint32 u; } c;
         c.f = f;
         return half_from_float(c.u);
     }
@@ -121,8 +121,10 @@ namespace
 
 
 
-void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
+    nvDebugCheck (compressionOptions.format == nvtt::Format_RGBA);
+
     uint bitCount;
     uint rmask, rshift, rsize;
     uint gmask, gshift, gsize;
@@ -193,88 +195,64 @@ void PixelFormatConverter::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMo
         const uint * src = (const uint *)data + y * w;
         const float * fsrc = (const float *)data + y * w;
 
-        if (inputFormat == nvtt::InputFormat_BGRA_8UB && compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm && bitCount == 32 && rmask == 0xFF0000 && gmask == 0xFF00 && bmask == 0xFF && amask == 0xFF000000)
-        {
-            convert_to_a8r8g8b8(src, dst, w);
-        }
-        else
-        {
-            BitStream stream(dst);
+        BitStream stream(dst);
 
-            for (uint x = 0; x < w; x++)
+        for (uint x = 0; x < w; x++)
+        {
+            float r = fsrc[x + 0 * wh];
+            float g = fsrc[x + 1 * wh];
+            float b = fsrc[x + 2 * wh];
+            float a = fsrc[x + 3 * wh];
+
+            if (compressionOptions.pixelType == nvtt::PixelType_Float)
             {
-                float r, g, b, a;
+                if (rsize == 32) stream.putFloat(r);
+                else if (rsize == 16) stream.putHalf(r);
 
-                if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-                    Color32 c = Color32(src[x]);
-                    r = float(c.r) / 255.0f;
-                    g = float(c.g) / 255.0f;
-                    b = float(c.b) / 255.0f;
-                    a = float(c.a) / 255.0f;
-                }
-                else {
-                    nvDebugCheck (inputFormat == nvtt::InputFormat_RGBA_32F);
+                if (gsize == 32) stream.putFloat(g);
+                else if (gsize == 16) stream.putHalf(g);
 
-                    //r = ((float *)src)[4 * x + 0]; // Color components not interleaved.
-                    //g = ((float *)src)[4 * x + 1];
-                    //b = ((float *)src)[4 * x + 2];
-                    //a = ((float *)src)[4 * x + 3];
-                    r = fsrc[x + 0 * wh];
-                    g = fsrc[x + 1 * wh];
-                    b = fsrc[x + 2 * wh];
-                    a = fsrc[x + 3 * wh];
-                }
+                if (bsize == 32) stream.putFloat(b);
+                else if (bsize == 16) stream.putHalf(b);
 
-                if (compressionOptions.pixelType == nvtt::PixelType_Float)
-                {
-                    if (rsize == 32) stream.putFloat(r);
-                    else if (rsize == 16) stream.putHalf(r);
-
-                    if (gsize == 32) stream.putFloat(g);
-                    else if (gsize == 16) stream.putHalf(g);
-
-                    if (bsize == 32) stream.putFloat(b);
-                    else if (bsize == 16) stream.putHalf(b);
-
-                    if (asize == 32) stream.putFloat(a);
-                    else if (asize == 16) stream.putHalf(a);
-                }
-                else
-                {
-                    Color32 c;
-                    if (compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm) {
-                        c.r = uint8(clamp(r * 255, 0.0f, 255.0f));
-                        c.g = uint8(clamp(g * 255, 0.0f, 255.0f));
-                        c.b = uint8(clamp(b * 255, 0.0f, 255.0f));
-                        c.a = uint8(clamp(a * 255, 0.0f, 255.0f));
-                    }
-                    // @@ Add support for nvtt::PixelType_SignedInt, nvtt::PixelType_SignedNorm, nvtt::PixelType_UnsignedInt
-
-                    uint p = 0;
-                    p |= PixelFormat::convert(c.r, 8, rsize) << rshift;
-                    p |= PixelFormat::convert(c.g, 8, gsize) << gshift;
-                    p |= PixelFormat::convert(c.b, 8, bsize) << bshift;
-                    p |= PixelFormat::convert(c.a, 8, asize) << ashift;
-    				
-                    stream.putBits(p, bitCount);
-
-                    // Output one byte at a time.
-                    /*for (uint i = 0; i < byteCount; i++)
-                    {
-                            *(dst + x * byteCount + i) = (p >> (i * 8)) & 0xFF;
-                    }*/
-                }
+                if (asize == 32) stream.putFloat(a);
+                else if (asize == 16) stream.putHalf(a);
             }
-
-            // Zero padding.
-            stream.align(compressionOptions.pitchAlignment);
-            nvDebugCheck(stream.ptr == dst + pitch);
-
-            /*for (uint x = w * byteCount; x < pitch; x++)
+            else
             {
-                    *(dst + x) = 0;
-            }*/
+                Color32 c;
+                if (compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm) {
+                    c.r = uint8(clamp(r * 255, 0.0f, 255.0f));
+                    c.g = uint8(clamp(g * 255, 0.0f, 255.0f));
+                    c.b = uint8(clamp(b * 255, 0.0f, 255.0f));
+                    c.a = uint8(clamp(a * 255, 0.0f, 255.0f));
+                }
+                // @@ Add support for nvtt::PixelType_SignedInt, nvtt::PixelType_SignedNorm, nvtt::PixelType_UnsignedInt
+
+                uint p = 0;
+                p |= PixelFormat::convert(c.r, 8, rsize) << rshift;
+                p |= PixelFormat::convert(c.g, 8, gsize) << gshift;
+                p |= PixelFormat::convert(c.b, 8, bsize) << bshift;
+                p |= PixelFormat::convert(c.a, 8, asize) << ashift;
+
+                stream.putBits(p, bitCount);
+
+                // Output one byte at a time.
+                /*for (uint i = 0; i < byteCount; i++)
+                {
+                        *(dst + x * byteCount + i) = (p >> (i * 8)) & 0xFF;
+                }*/
+            }
         }
+
+        // Zero padding.
+        stream.align(compressionOptions.pitchAlignment);
+        nvDebugCheck(stream.ptr == dst + pitch);
+
+        /*for (uint x = w * byteCount; x < pitch; x++)
+        {
+                *(dst + x) = 0;
+        }*/
 
         outputOptions.writeData(dst, pitch);
     }

@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     context.enableCudaAcceleration(false);
 
     // Load input image.
-    nvtt::TexImage image = context.createTexImage();
+    nvtt::TexImage image;
     if (!image.load(inputFileName)) {
         return EXIT_FAILURE;
     }

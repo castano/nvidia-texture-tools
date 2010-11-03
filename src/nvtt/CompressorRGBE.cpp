@@ -55,7 +55,7 @@ static Color32 toRgbe8(float r, float g, float b)
 }
 
 
-void CompressorRGBE::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alphaMode, uint w, uint h, const void * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void CompressorRGBE::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     nvDebugCheck (compressionOptions.format == nvtt::Format_RGBE);
 
@@ -63,39 +63,25 @@ void CompressorRGBE::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode alp
     uint srcPlane = w * h;
 
     // Allocate output scanline.
-	Color32 * dst = new Color32[w];
+    Color32 * dst = new Color32[w];
 
-	for (uint y = 0; y < h; y++)
-	{
-        const uint * src = (const uint *)data + y * srcPitch;
-        const float * fsrc = (const float *)data + y * srcPitch;
+    for (uint y = 0; y < h; y++)
+    {
+        const float * src = (const float *)data + y * srcPitch;
 
-		for (uint x = 0; x < w; x++)
-		{
-            float r, g, b;
-
-            if (inputFormat == nvtt::InputFormat_BGRA_8UB) {
-                Color32 c = Color32(src[x]);
-                r = float(c.r) / 255.0f;
-                g = float(c.g) / 255.0f;
-                b = float(c.b) / 255.0f;
-            }
-            else {
-                nvDebugCheck (inputFormat == nvtt::InputFormat_RGBA_32F);
-
-			    // Color components not interleaved.
-			    r = fsrc[x + 0 * srcPlane];
-			    g = fsrc[x + 1 * srcPlane];
-			    b = fsrc[x + 2 * srcPlane];
-            }
+        for (uint x = 0; x < w; x++)
+        {
+            float r = src[x + 0 * srcPlane];
+            float g = src[x + 1 * srcPlane];
+            float b = src[x + 2 * srcPlane];
             
             dst[x] = toRgbe8(r, g, b);
         }
 
-		if (outputOptions.outputHandler != NULL)
-		{
-			outputOptions.outputHandler->writeData(dst, w * 4);
-		}
+	if (outputOptions.outputHandler != NULL)
+	{
+	    outputOptions.outputHandler->writeData(dst, w * 4);
+	}
     }
 
     delete [] dst;

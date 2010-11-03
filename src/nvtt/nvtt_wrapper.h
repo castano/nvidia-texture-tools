@@ -123,13 +123,6 @@ typedef enum
 	NVTT_MipmapFilter_Kaiser,
 } NvttMipmapFilter;
 
-/// Color transformation.
-typedef enum
-{
-	NVTT_ColorTransform_None,
-	NVTT_ColorTransform_Linear,
-} NvttColorTransform;
-
 /// Extents rounding mode.
 typedef enum
 {
@@ -195,8 +188,6 @@ NVTT_API void nvttSetInputOptionsConvertToNormalMap(NvttInputOptions * inputOpti
 NVTT_API void nvttSetInputOptionsHeightEvaluation(NvttInputOptions * inputOptions, float redScale, float greenScale, float blueScale, float alphaScale);
 NVTT_API void nvttSetInputOptionsNormalFilter(NvttInputOptions * inputOptions, float sm, float medium, float big, float large);
 NVTT_API void nvttSetInputOptionsNormalizeMipmaps(NvttInputOptions * inputOptions, NvttBoolean b);
-NVTT_API void nvttSetInputOptionsColorTransform(NvttInputOptions * inputOptions, NvttColorTransform t);
-NVTT_API void nvttSetInputOptionsLinearTransform(NvttInputOptions * inputOptions, int channel, float w0, float w1, float w2, float w3);
 NVTT_API void nvttSetInputOptionsMaxExtents(NvttInputOptions * inputOptions, int dim);
 NVTT_API void nvttSetInputOptionsRoundMode(NvttInputOptions * inputOptions, NvttRoundMode mode);
 

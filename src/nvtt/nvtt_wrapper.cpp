@@ -89,16 +89,6 @@ void nvttSetInputOptionsNormalizeMipmaps(NvttInputOptions * inputOptions, NvttBo
 	inputOptions->setNormalizeMipmaps(b != NVTT_False);
 }
 
-void nvttSetInputOptionsColorTransform(NvttInputOptions * inputOptions, NvttColorTransform t)
-{
-	inputOptions->setColorTransform((nvtt::ColorTransform)t);
-}
-
-void nvttSetInputOptionsLinearTransfrom(NvttInputOptions * inputOptions, int channel, float w0, float w1, float w2, float w3)
-{
-	inputOptions->setLinearTransform(channel, w0, w1, w2, w3);
-}
-
 void nvttSetInputOptionsMaxExtents(NvttInputOptions * inputOptions, int dim)
 {
 	inputOptions->setMaxExtents(dim);
