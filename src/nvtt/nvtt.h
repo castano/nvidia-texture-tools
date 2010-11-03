@@ -431,9 +431,11 @@ namespace nvtt
         NVTT_API void toYCoCg();
         NVTT_API void blockScaleCoCg(int bits = 5, float threshold = 0.0f);
 
-        // @@ Add quantization methods.
+        // Color quantization.
+        NVTT_API void binarize(int channel, float threshold, bool dither);
+        NVTT_API void quantize(int channel, int bits, bool dither);
 
-        // Set normal map options.
+        // Normal map transforms.
         NVTT_API void toNormalMap(float sm, float medium, float big, float large);
         NVTT_API void normalizeNormalMap();
 

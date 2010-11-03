@@ -104,118 +104,6 @@ namespace
 
 } // namespace
 
-namespace nvtt
-{
-    // Mipmap could be:
-    // - a pointer to an input image.
-    // - a fixed point image.
-    // - a floating point image.
-    /*struct Mipmap
-    {
-        Mipmap() : m_inputImage(NULL) {}
-        ~Mipmap() {}
-
-        // Reference input image.
-        void setFromInput(const InputOptions::Private & inputOptions, uint idx)
-        {
-            m_inputImage = inputOptions.image(idx);
-            m_fixedImage = NULL;
-            m_floatImage = NULL;
-
-            if (const FloatImage * floatImage = inputOptions.floatImage(idx))
-            {
-                m_floatImage = floatImage->clone();
-            }
-        }
-
-        // Assign and take ownership of given image.
-        void setImage(FloatImage * image)
-        {
-            m_inputImage = NULL;
-            m_fixedImage = NULL;
-            m_floatImage = image;
-        }
-
-
-        // Convert linear float image to fixed image ready for compression.
-        void toFixedImage(const InputOptions::Private & inputOptions)
-        {
-            if (this->asFixedImage() == NULL)
-            {
-                nvDebugCheck(m_floatImage != NULL);
-
-                if (inputOptions.isNormalMap || inputOptions.outputGamma == 1.0f)
-                {
-                    m_fixedImage = m_floatImage->createImage();
-                }
-                else
-                {
-                    m_fixedImage = m_floatImage->createImageGammaCorrect(inputOptions.outputGamma);
-                }
-            }
-        }
-
-        // Convert input image to linear float image.
-        void toFloatImage(const InputOptions::Private & inputOptions)
-        {
-            if (m_floatImage == NULL)
-            {
-                nvDebugCheck(this->asFixedImage() != NULL);
-
-                m_floatImage = new FloatImage(this->asFixedImage());
-
-                if (inputOptions.isNormalMap)
-                {
-                    // Expand normals to [-1, 1] range.
-                    //	floatImage->expandNormals(0);
-                }
-                else if (inputOptions.inputGamma != 1.0f)
-                {
-                    // Convert to linear space.
-                    m_floatImage->toLinear(0, 3, inputOptions.inputGamma);
-                }
-            }
-        }
-
-        const FloatImage * asFloatImage() const
-        {
-            return m_floatImage.ptr();
-        }
-
-        FloatImage * asMutableFloatImage()
-        {
-            m_inputImage = NULL;
-            return m_floatImage.ptr();
-        }
-
-        const Image * asFixedImage() const
-        {
-            if (m_inputImage != NULL)
-            {
-                return m_inputImage;
-            }
-            return m_fixedImage.ptr();
-        }
-
-        Image * asMutableFixedImage()
-        {
-            if (m_inputImage != NULL)
-            {
-                // Do not modify input image, create a copy.
-                m_fixedImage = new Image(*m_inputImage);
-                m_inputImage = NULL;
-            }
-            return m_fixedImage.ptr();
-        }
-
-
-    private:
-        const Image * m_inputImage;
-        AutoPtr<Image> m_fixedImage;
-        AutoPtr<FloatImage> m_floatImage;
-    };*/
-
-} // nvtt namespace
 
 
 Compressor::Compressor() : m(*new Compressor::Private())
@@ -400,11 +288,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 
     // @@ Fix order of cubemap faces!
 
-    // @@ Apply quantization options.
-
-    int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
-    outputOptions.beginImage(size, w, h, d, 0, 0);
-
+    quantize(tmp, compressionOptions);
     compress(tmp, compressionOptions, outputOptions);
 
     for (int m = 1; m < mipmapCount; m++) {
@@ -457,14 +341,12 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             tmp.toGamma(inputOptions.outputGamma);
         }
 
-        // @@ Apply quantization options.
-
+        quantize(tmp, compressionOptions);
         compress(tmp, compressionOptions, outputOptions);
     };
 
     return true;
 }
-
 
 bool Compressor::Private::compress(const TexImage & tex, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
@@ -475,6 +357,60 @@ bool Compressor::Private::compress(const TexImage & tex, const CompressionOption
         }
     }
     return true;
+}
+
+bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, const float * rgba, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+{
+    // Decide what compressor to use.
+    AutoPtr<CompressorInterface> compressor;
+#if defined HAVE_CUDA
+    if (cudaEnabled && w * h >= 512)
+    {
+        compressor = chooseGpuCompressor(compressionOptions);
+    }
+#endif
+    if (compressor == NULL)
+    {
+        compressor = chooseCpuCompressor(compressionOptions);
+    }
+
+    if (compressor == NULL)
+    {
+        outputOptions.error(Error_UnsupportedFeature);
+    }
+    else
+    {
+        compressor->compress(alphaMode, w, h, rgba, compressionOptions, outputOptions);
+    }
+
+    return true;
+}
+
+
+bool Compressor::Private::quantize(TexImage & img, const CompressionOptions::Private & compressionOptions) const
+{
+    if (compressionOptions.enableColorDithering) {
+        if (compressionOptions.format >= Format_BC1 && compressionOptions.format <= Format_BC3) {
+            img.quantize(0, 5, true);
+            img.quantize(1, 6, true);
+            img.quantize(2, 5, true);
+        }
+        else if (compressionOptions.format == Format_RGB) {
+            img.quantize(0, compressionOptions.rsize, true);
+            img.quantize(1, compressionOptions.gsize, true);
+            img.quantize(2, compressionOptions.bsize, true);
+        }
+    }
+    if (compressionOptions.enableAlphaDithering) {
+        if (compressionOptions.format == Format_RGB) {
+            img.quantize(0, compressionOptions.rsize, true);
+            img.quantize(1, compressionOptions.gsize, true);
+            img.quantize(2, compressionOptions.bsize, true);
+        }
+    }
+    else if (compressionOptions.binaryAlpha) {
+        img.binarize(3, compressionOptions.alphaThreshold, compressionOptions.enableAlphaDithering);
+    }
 }
 
 
@@ -909,34 +845,6 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 #endif // defined HAVE_CUDA
 
     return NULL;
-}
-
-
-bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, const float * rgba, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
-{
-    // Decide what compressor to use.
-    AutoPtr<CompressorInterface> compressor;
-#if defined HAVE_CUDA
-    if (cudaEnabled && w * h >= 512)
-    {
-        compressor = chooseGpuCompressor(compressionOptions);
-    }
-#endif
-    if (compressor == NULL)
-    {
-        compressor = chooseCpuCompressor(compressionOptions);
-    }
-
-    if (compressor == NULL)
-    {
-        outputOptions.error(Error_UnsupportedFeature);
-    }
-    else
-    {
-        compressor->compress(alphaMode, w, h, rgba, compressionOptions, outputOptions);
-    }
-
-    return true;
 }
 
 /*
