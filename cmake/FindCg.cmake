@@ -73,7 +73,7 @@ ELSE (APPLE)
       DOC "The directory where Cg/cg.h resides"
       )
 	
-	IF (NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
+	IF (NV_SYSTEM_PROCESSOR STREQUAL "x86_64")
       FIND_LIBRARY( CG_LIBRARY
         NAMES Cg
         PATHS
@@ -100,7 +100,7 @@ ELSE (APPLE)
         ${CG_COMPILER_DIR}
         DOC "The Cg GL runtime library (64-bit)"
         )
-	ELSE(NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
+	ELSE(NV_SYSTEM_PROCESSOR STREQUAL "x86_64")
       FIND_LIBRARY( CG_LIBRARY
         NAMES Cg
         PATHS
@@ -123,7 +123,7 @@ ELSE (APPLE)
         ${CG_COMPILER_DIR}
         DOC "The Cg GL runtime library"
         )
-	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "AMD64")
+	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "x86_64")
 
   ELSE (WIN32)
     FIND_PROGRAM( CG_COMPILER cgc
