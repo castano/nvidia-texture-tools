@@ -463,8 +463,8 @@ int main(int argc, char *argv[])
         context.process(inputOptions, compressionOptions, outputOptions);
 
         timer.stop();
-        printf("  Time: \t%.3f sec\n", float(timer.elapsed()) / 1000);
-        totalTime += float(timer.elapsed()) / 1000;
+        printf("  Time: \t%.3f sec\n", timer.elapsed());
+        totalTime += timer.elapsed();
 
         AutoPtr<Image> img_out( outputHandler.decompress(s_imageSets[set].format, decoder) );
 

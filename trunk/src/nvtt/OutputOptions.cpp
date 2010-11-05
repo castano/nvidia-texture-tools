@@ -28,27 +28,27 @@ using namespace nvtt;
 
 OutputOptions::OutputOptions() : m(*new OutputOptions::Private())
 {
-	reset();
+    reset();
 }
 
 OutputOptions::~OutputOptions()
 {
-	// Cleanup output handler.
-	setOutputHandler(NULL);
+    // Cleanup output handler.
+    setOutputHandler(NULL);
 
-	delete &m;
+    delete &m;
 }
 
 /// Set default output options.
 void OutputOptions::reset()
 {
-	m.fileName.reset();
+    m.fileName.reset();
 
-	m.outputHandler = NULL;
-	m.errorHandler = NULL;
+    m.outputHandler = NULL;
+    m.errorHandler = NULL;
 
-	m.outputHeader = true;
-	m.container = Container_DDS;
+    m.outputHeader = true;
+    m.container = Container_DDS;
     m.version = 0;
 }
 
@@ -56,78 +56,78 @@ void OutputOptions::reset()
 /// Set output file name.
 void OutputOptions::setFileName(const char * fileName)
 {
-	if (!m.fileName.isNull())
-	{
+    if (!m.fileName.isNull())
+    {
         // To close the file and avoid leak.
-		delete m.outputHandler;
-	}
+        delete m.outputHandler;
+    }
 
-	m.fileName = fileName;
-	m.outputHandler = NULL;
+    m.fileName = fileName;
+    m.outputHandler = NULL;
 
-	DefaultOutputHandler * oh = new DefaultOutputHandler(fileName);
-	if (!oh->stream.isError())
-	{
-		m.outputHandler = oh;
-	}
+    DefaultOutputHandler * oh = new DefaultOutputHandler(fileName);
+    if (!oh->stream.isError())
+    {
+        m.outputHandler = oh;
+    }
 }
 
 /// Set output handler.
 void OutputOptions::setOutputHandler(OutputHandler * outputHandler)
 {
-	if (!m.fileName.isNull())
-	{
-		delete m.outputHandler;
-		m.fileName.reset();
-	}
-	m.outputHandler = outputHandler;
+    if (!m.fileName.isNull())
+    {
+        delete m.outputHandler;
+        m.fileName.reset();
+    }
+    m.outputHandler = outputHandler;
 }
 
 /// Set error handler.
 void OutputOptions::setErrorHandler(ErrorHandler * errorHandler)
 {
-	m.errorHandler = errorHandler;
+    m.errorHandler = errorHandler;
 }
 
 /// Set output header.
 void OutputOptions::setOutputHeader(bool outputHeader)
 {
-	m.outputHeader = outputHeader;
+    m.outputHeader = outputHeader;
 }
 
 /// Set container.
 void OutputOptions::setContainer(Container container)
 {
-	m.container = container;
+    m.container = container;
 }
 
 /// Set user version.
 void OutputOptions::setUserVersion(int version)
 {
-	m.version = version;
+    m.version = version;
 }
 
 bool OutputOptions::Private::hasValidOutputHandler() const
 {
-	if (!fileName.isNull())
-	{
-		return outputHandler != NULL;
-	}
-	
-	return true;
+    if (!fileName.isNull())
+    {
+        return outputHandler != NULL;
+    }
+
+    return true;
 }
 
 void OutputOptions::Private::beginImage(int size, int width, int height, int depth, int face, int miplevel) const
 {
-	if (outputHandler != NULL) outputHandler->beginImage(size, width, height, depth, face, miplevel);
+    if (outputHandler != NULL) outputHandler->beginImage(size, width, height, depth, face, miplevel);
 }
 
 bool OutputOptions::Private::writeData(const void * data, int size) const
 {
-	return outputHandler == NULL || outputHandler->writeData(data, size);
+    return outputHandler == NULL || outputHandler->writeData(data, size);
 }
 
 void OutputOptions::Private::error(Error e) const
 {
-	if (errorHandler != NULL) errorHandler->error(e);
+    if (errorHandler != NULL) errorHandler->error(e);
 }

@@ -129,16 +129,19 @@ Image * FloatImage::createImageGammaCorrect(float gamma/*= 2.2f*/) const
     return img.release();
 }
 
-/// Allocate a 2d float image of the given format and the given extents.
+/// Allocate a 2D float image of the given format and the given extents.
 void FloatImage::allocate(uint c, uint w, uint h)
 {
-    free();
+    if (m_componentNum != c || m_width != w || m_height != h)
+    {
+        free();
 
-    m_width = w;
-    m_height = h;
-    m_componentNum = c;
-    m_count = w * h * c;
-    m_mem = malloc<float>(m_count);
+        m_width = w;
+        m_height = h;
+        m_componentNum = c;
+        m_count = w * h * c;
+        m_mem = malloc<float>(m_count);
+    }
 }
 
 /// Free the image, but don't clear the members.
@@ -1034,16 +1037,9 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
 FloatImage* FloatImage::clone() const
 {
     FloatImage* copy = new FloatImage();
-    copy->m_width = m_width;
-    copy->m_height = m_height;
-    copy->m_componentNum = m_componentNum;
-    copy->m_count = m_count;
 
-    if(m_mem)
-    {
-        copy->allocate(m_componentNum, m_width, m_height);
-        memcpy(copy->m_mem, m_mem, m_count * sizeof(float));
-    }
+    copy->allocate(m_componentNum, m_width, m_height);
+    memcpy(copy->m_mem, m_mem, m_count * sizeof(float));
 
     return copy;
 }

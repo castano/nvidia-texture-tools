@@ -49,8 +49,8 @@ namespace nvtt
 
         bool quantize(TexImage & tex, const CompressionOptions::Private & compressionOptions) const;
 
-        bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
-        bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool outputHeader(nvtt::TextureType textureType, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        //bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
 	nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
 	nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;

@@ -143,36 +143,12 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
     m.depth = depth;
 
     // Allocate images.
-    m.faceCount = (type == TextureType_2D) ? 1 : 6;
+    m.faceCount = (type == TextureType_Cube) ? 6 : 1;
     m.mipmapCount = countMipmaps(width, height, depth);
     m.imageCount = m.mipmapCount * m.faceCount;
     m.images = new void *[m.imageCount];
 
     memset(m.images, 0, sizeof(void *) * m.imageCount);
-
-    /*for (uint f = 0; f < m.faceCount; f++)
-    {
-            uint w = width;
-            uint h = height;
-            uint d = depth;
-
-	    for (uint mipLevel = 0; mipLevel < m.mipmapCount; mipLevel++)
-	    {
-		    Private::InputImage & img = m.images[f * m.mipmapCount + mipLevel];
-		    img.width = w;
-		    img.height = h;
-		    img.depth = d;
-		    img.mipLevel = mipLevel;
-		    img.face = f;
-
-		    img.uint8data = NULL;
-		    img.floatdata = NULL;
-
-		    w = max(1U, w / 2);
-		    h = max(1U, h / 2);
-		    d = max(1U, d / 2);
-	    }
-    }*/
 }
 
 
@@ -180,6 +156,11 @@ void InputOptions::resetTextureLayout()
 {
     if (m.images != NULL)
     {
+        // Delete images.
+        for (int i = 0; i < m.imageCount; i++) {
+            free(m.images[i]);
+        }
+
         // Delete image array.
         delete [] m.images;
         m.images = NULL;
@@ -240,7 +221,7 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
         return false;
     }
 
-    m.images[idx] = new uint8[imageSize];
+    m.images[idx] = realloc(m.images[idx], imageSize);
     if (m.images[idx] == NULL) {
         // Out of memory.
         return false;
