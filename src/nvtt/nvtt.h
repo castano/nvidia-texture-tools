@@ -379,29 +379,28 @@ namespace nvtt
         NVTT_API void operator=(const TexImage & tex);
 
         // Texture parameters.
-        NVTT_API void setTextureType(TextureType type);
         NVTT_API void setWrapMode(WrapMode mode);
         NVTT_API void setAlphaMode(AlphaMode alphaMode);
         NVTT_API void setNormalMap(bool isNormalMap);
 
-        // Accessors.
+        // Queries.
         NVTT_API int width() const;
         NVTT_API int height() const;
         NVTT_API int depth() const;
-        NVTT_API int faceCount() const;
-        NVTT_API TextureType textureType() const;
         NVTT_API WrapMode wrapMode() const;
         NVTT_API AlphaMode alphaMode() const;
         NVTT_API bool isNormalMap() const;
         NVTT_API int countMipmaps() const;
         NVTT_API float alphaTestCoverage(float alphaRef = 0.5) const;
+        NVTT_API float average(int channel) const;
+        NVTT_API const float * data() const;
 
         // Texture data.
         NVTT_API bool load(const char * fileName);
         NVTT_API bool save(const char * fileName) const;
-        NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * data);
-        NVTT_API bool setImage2D(InputFormat format, int w, int h, int idx, const void * r, const void * g, const void * b, const void * a);
-        NVTT_API bool setImage2D(Format format, Decoder decoder, int w, int h, int idx, const void * data);
+        NVTT_API bool setImage2D(InputFormat format, int w, int h, const void * data);
+        NVTT_API bool setImage2D(InputFormat format, int w, int h, const void * r, const void * g, const void * b, const void * a);
+        NVTT_API bool setImage2D(Format format, Decoder decoder, int w, int h, const void * data);
 
         // Resizing methods.
         NVTT_API void resize(int w, int h, ResizeFilter filter);
@@ -452,7 +451,6 @@ namespace nvtt
 
     private:
         void detach();
-        friend struct Compressor::Private;
 
         struct Private;
         Private * m;

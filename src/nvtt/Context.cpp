@@ -52,57 +52,8 @@
 #include "nvcore/Memory.h"
 #include "nvcore/Ptr.h"
 
-
-
-
 using namespace nv;
 using namespace nvtt;
-
-
-namespace
-{
-
-    static int blockSize(Format format)
-    {
-        if (format == Format_DXT1 || format == Format_DXT1a || format == Format_DXT1n) {
-            return 8;
-        }
-        else if (format == Format_DXT3) {
-            return 16;
-        }
-        else if (format == Format_DXT5 || format == Format_DXT5n) {
-            return 16;
-        }
-        else if (format == Format_BC4) {
-            return 8;
-        }
-        else if (format == Format_BC5) {
-            return 16;
-        }
-        else if (format == Format_CTX1) {
-            return 8;
-        }
-        else if (format == Format_BC6) {
-            return 16;
-        }
-        else if (format == Format_BC7) {
-            return 16;
-        }
-        return 0;
-    }
-
-    static int computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignment, Format format)
-    {
-        if (format == Format_RGBA) {
-            return d * h * computePitch(w, bitCount, alignment);
-        }
-        else {
-            // @@ Handle 3D textures. DXT and VTC have different behaviors.
-            return ((w + 3) / 4) * ((h + 3) / 4) * blockSize(format);
-        }
-    }
-
-} // namespace
 
 
 
@@ -166,12 +117,12 @@ bool Compressor::process(const InputOptions & inputOptions, const CompressionOpt
 
 int Compressor::estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const
 {
-    // @@ Compute w, h, mipmapCount based on inputOptions settings.
-    const int w = 0;
-    const int h = 0;
-    const int d = 1;
-    int mipmapCount = 1;
+    int w = inputOptions.m.width;
+    int h = inputOptions.m.height;
+    int d = inputOptions.m.depth;
+    getTargetExtent(w, h, d, inputOptions.m.maxExtent, inputOptions.m.roundMode, inputOptions.m.textureType);
 
+    int mipmapCount = countMipmaps(w, h, d);
     return inputOptions.m.faceCount * estimateSize(w, h, d, mipmapCount, compressionOptions);
 }
 
@@ -179,7 +130,7 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 // TexImage API.
 bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-    return m.outputHeader(tex, mipmapCount, compressionOptions.m, outputOptions.m);
+    return m.outputHeader(TextureType_2D, tex.width(), tex.height(), tex.depth(), mipmapCount, tex.isNormalMap(), compressionOptions.m, outputOptions.m);
 }
 
 bool Compressor::compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
@@ -192,9 +143,8 @@ int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const Compre
     const int w = tex.width();
     const int h = tex.height();
     const int d = tex.depth();
-    const int faceCount = tex.faceCount();
 
-    return faceCount * estimateSize(w, h, d, mipmapCount, compressionOptions);
+    return estimateSize(w, h, d, mipmapCount, compressionOptions);
 }
 
 
@@ -244,7 +194,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     }
 
     nvtt::TexImage img;
-    img.setTextureType(inputOptions.textureType);
     img.setWrapMode(inputOptions.wrapMode);
     img.setAlphaMode(inputOptions.alphaMode);
     img.setNormalMap(inputOptions.isNormalMap);
@@ -254,108 +203,112 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     int h = inputOptions.height;
     int d = inputOptions.depth;
 
-    for (int f = 0; f < faceCount; f++)
-    {
-        img.setImage2D(inputOptions.inputFormat, w, h, f, inputOptions.images[f]);
-    }
+    nv::getTargetExtent(w, h, d, inputOptions.maxExtent, inputOptions.roundMode, inputOptions.textureType);
 
-    // To linear space.
-    if (!inputOptions.isNormalMap) {
-        img.toLinear(inputOptions.inputGamma);
-    }
-
-    // Resize input.
-    img.resize(inputOptions.maxExtent, inputOptions.roundMode, ResizeFilter_Box);
-
-    // If the extents have not change we can use source images for the mipmaps.
-    bool canUseSourceImages = (img.width() == w && img.height() == h);
+    // If the extents have not changed, then we can use source images for all mipmaps.
+    bool canUseSourceImages = (inputOptions.width == w && inputOptions.height == h && inputOptions.depth == d);
 
     int mipmapCount = 1;
     if (inputOptions.generateMipmaps) {
-        mipmapCount = img.countMipmaps();
+        mipmapCount = countMipmaps(w, h, d);
         if (inputOptions.maxLevel > 0) mipmapCount = min(mipmapCount, inputOptions.maxLevel);
     }
 
-    if (!outputHeader(img, mipmapCount, compressionOptions, outputOptions))
+    if (!outputHeader(inputOptions.textureType, w, h, d, mipmapCount, img.isNormalMap(), compressionOptions, outputOptions))
     {
         return false;
     }
 
-    nvtt::TexImage tmp = img;
-    if (!inputOptions.isNormalMap) {
-        tmp.toGamma(inputOptions.outputGamma);
-    }
 
-    // @@ Fix order of cubemap faces!
+    // Output images.
+    for (int f = 0; f < faceCount; f++)
+    {
+        img.setImage2D(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.images[f]);
 
-    quantize(tmp, compressionOptions);
-    compress(tmp, compressionOptions, outputOptions);
-
-    for (int m = 1; m < mipmapCount; m++) {
-        w = max(1, w/2);
-        h = max(1, h/2);
-        d = max(1, d/2);
-
-        int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
-        outputOptions.beginImage(size, w, h, d, 0, m);
-
-        bool useSourceImages = false;
-        if (canUseSourceImages) {
-            useSourceImages = true;
-            for (int f = 0; f < faceCount; f++) {
-                int idx = m * faceCount + f;
-                if (inputOptions.images[idx] == NULL) { // One face is missing in this mipmap level.
-                    useSourceImages = false;
-                    canUseSourceImages = false; // If one level is missing, ignore the following source images.
-                    break;
-                }
-            }
+        // To normal map.
+        if (inputOptions.convertToNormalMap) {
+            img.toGreyScale(inputOptions.heightFactors.x, inputOptions.heightFactors.y, inputOptions.heightFactors.z, inputOptions.heightFactors.w);
+            img.toNormalMap(inputOptions.bumpFrequencyScale.x, inputOptions.bumpFrequencyScale.y, inputOptions.bumpFrequencyScale.z, inputOptions.bumpFrequencyScale.w);
         }
 
-        if (useSourceImages) {
-            for (int f = 0; f < faceCount; f++) {
-                int idx = m * faceCount + f;
-                img.setImage2D(inputOptions.inputFormat, w, h, f, inputOptions.images[idx]);
-            }
+        // To linear space.
+        if (!img.isNormalMap()) {
+            img.toLinear(inputOptions.inputGamma);
         }
-        else {
-            if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
-                float params[2] = { inputOptions.kaiserStretch, inputOptions.kaiserAlpha };
-                img.buildNextMipmap(MipmapFilter_Kaiser, inputOptions.kaiserWidth, params);
-            }
-            else {
-                img.buildNextMipmap(inputOptions.mipmapFilter);
-            }
-        }
-        nvDebugCheck(img.width() == w);
-        nvDebugCheck(img.height() == h);
 
-        if (inputOptions.isNormalMap) {
-            if (inputOptions.normalizeMipmaps) {
-                img.normalizeNormalMap();
-            }
-            tmp = img;
-        }
-        else {
-            tmp = img;
+        // Resize input.
+        img.resize(w, h, ResizeFilter_Box);
+
+        nvtt::TexImage tmp = img;
+        if (!img.isNormalMap()) {
             tmp.toGamma(inputOptions.outputGamma);
         }
 
+        int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
+        outputOptions.beginImage(size, w, h, d, f, 0);
+
         quantize(tmp, compressionOptions);
         compress(tmp, compressionOptions, outputOptions);
-    };
+
+        for (int m = 1; m < mipmapCount; m++) {
+            w = max(1, w/2);
+            h = max(1, h/2);
+            d = max(1, d/2);
+
+            int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
+            outputOptions.beginImage(size, w, h, d, f, m);
+
+            int idx = m * faceCount + f;
+
+            bool useSourceImages = false;
+            if (canUseSourceImages) {
+                useSourceImages = true;
+                if (inputOptions.images[idx] == NULL) { // One face is missing in this mipmap level.
+                    useSourceImages = false;
+                    canUseSourceImages = false; // If one level is missing, ignore the following source images.
+                }
+            }
+
+            if (useSourceImages) {
+                img.setImage2D(inputOptions.inputFormat, w, h, inputOptions.images[idx]);
+            }
+            else {
+                if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
+                    float params[2] = { inputOptions.kaiserStretch, inputOptions.kaiserAlpha };
+                    img.buildNextMipmap(MipmapFilter_Kaiser, inputOptions.kaiserWidth, params);
+                }
+                else {
+                    img.buildNextMipmap(inputOptions.mipmapFilter);
+                }
+            }
+            nvDebugCheck(img.width() == w);
+            nvDebugCheck(img.height() == h);
+
+            if (img.isNormalMap()) {
+                if (inputOptions.normalizeMipmaps) {
+                    img.normalizeNormalMap();
+                }
+                tmp = img;
+            }
+            else {
+                tmp = img;
+                tmp.toGamma(inputOptions.outputGamma);
+            }
+
+            quantize(tmp, compressionOptions);
+            compress(tmp, compressionOptions, outputOptions);
+        }
+    }
 
     return true;
 }
 
 bool Compressor::Private::compress(const TexImage & tex, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-    foreach(i, tex.m->imageArray) {
-        FloatImage * image = tex.m->imageArray[i];
-        if (!compress(tex.alphaMode(), tex.width(), tex.height(), tex.depth(), image->channel(0), compressionOptions, outputOptions)) {
-            return false;
-        }
+    if (!compress(tex.alphaMode(), tex.width(), tex.height(), tex.depth(), tex.data(), compressionOptions, outputOptions)) {
+        return false;
     }
+
     return true;
 }
 
@@ -414,9 +367,9 @@ bool Compressor::Private::quantize(TexImage & img, const CompressionOptions::Pri
 }
 
 
-bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-    if (tex.width() <= 0 || tex.height() <= 0 || tex.depth() <= 0 || mipmapCount <= 0)
+    if (w <= 0 || h <= 0 || d <= 0 || mipmapCount <= 0)
     {
         outputOptions.error(Error_InvalidInput);
         return false;
@@ -434,19 +387,19 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
 
         header.setUserVersion(outputOptions.version);
 
-        if (tex.textureType() == TextureType_2D) {
+        if (textureType == TextureType_2D) {
             header.setTexture2D();
         }
-        else if (tex.textureType() == TextureType_Cube) {
+        else if (textureType == TextureType_Cube) {
             header.setTextureCube();
         }
-        /*else if (tex.textureType() == TextureType_3D) {
+        /*else if (textureType == TextureType_3D) {
             header.setTexture3D();
-            header.setDepth(tex.depth());
+            header.setDepth(d);
         }*/
 
-        header.setWidth(tex.width());
-        header.setHeight(tex.height());
+        header.setWidth(w);
+        header.setHeight(h);
         header.setMipmapCount(mipmapCount);
 
         bool supported = true;
@@ -490,7 +443,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
                 if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
                     header.setDX10Format(70); // DXGI_FORMAT_BC1_TYPELESS
                     if (compressionOptions.format == Format_DXT1a) header.setHasAlphaFlag(true);
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_DXT3) {
                     header.setDX10Format(73); // DXGI_FORMAT_BC2_TYPELESS
@@ -500,21 +453,21 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
                 }
                 else if (compressionOptions.format == Format_DXT5n) {
                     header.setDX10Format(76); // DXGI_FORMAT_BC3_TYPELESS
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_BC4) {
                     header.setDX10Format(79); // DXGI_FORMAT_BC4_TYPELESS
                 }
                 else if (compressionOptions.format == Format_BC5) {
                     header.setDX10Format(82); // DXGI_FORMAT_BC5_TYPELESS
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_BC6) {
                     header.setDX10Format(94); // DXGI_FORMAT_BC6H_TYPELESS
                 }
                 else if (compressionOptions.format == Format_BC7) {
                     header.setDX10Format(97); // DXGI_FORMAT_BC7_TYPELESS
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else {
                     supported = false;
@@ -526,7 +479,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
             if (compressionOptions.format == Format_RGBA)
             {
                 // Get output bit count.
-                header.setPitch(computePitch(tex.width(), compressionOptions.getBitCount(), compressionOptions.pitchAlignment));
+                header.setPitch(computePitch(w, compressionOptions.getBitCount(), compressionOptions.pitchAlignment));
 
                 if (compressionOptions.pixelType == PixelType_Float)
                 {
@@ -591,11 +544,11 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
             }
             else
             {
-                header.setLinearSize(computeImageSize(tex.width(), tex.height(), tex.depth(), compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format));
+                header.setLinearSize(computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format));
 
                 if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
                     header.setFourCC('D', 'X', 'T', '1');
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_DXT3) {
                     header.setFourCC('D', 'X', 'T', '3');
@@ -605,7 +558,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
                 }
                 else if (compressionOptions.format == Format_DXT5n) {
                     header.setFourCC('D', 'X', 'T', '5');
-                    if (tex.isNormalMap()) {
+                    if (isNormalMap) {
                         header.setNormalFlag(true);
                         header.setSwizzleCode('A', '2', 'D', '5');
                         //header.setSwizzleCode('x', 'G', 'x', 'R');
@@ -616,7 +569,7 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
                 }
                 else if (compressionOptions.format == Format_BC5) {
                     header.setFourCC('A', 'T', 'I', '2');
-                    if (tex.isNormalMap()) {
+                    if (isNormalMap) {
                         header.setNormalFlag(true);
                         header.setSwizzleCode('A', '2', 'X', 'Y');
                     }
@@ -626,11 +579,11 @@ bool Compressor::Private::outputHeader(const TexImage & tex, int mipmapCount, co
                 }
                 else if (compressionOptions.format == Format_BC7) {
                     header.setFourCC('Z', 'O', 'L', 'A');
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_CTX1) {
                     header.setFourCC('C', 'T', 'X', '1');
-                    if (tex.isNormalMap()) header.setNormalFlag(true);
+                    if (isNormalMap) header.setNormalFlag(true);
                 }
                 else {
                     supported = false;

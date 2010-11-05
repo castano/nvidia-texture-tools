@@ -49,7 +49,7 @@ namespace nvtt
             alphaMode = AlphaMode_None;
             isNormalMap = false;
 
-            imageArray.resize(1, NULL);
+            image = NULL;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
         {
@@ -60,17 +60,11 @@ namespace nvtt
             alphaMode = p.alphaMode;
             isNormalMap = p.isNormalMap;
 
-            imageArray.reserve(p.imageArray.count());
-            foreach(i, p.imageArray) {
-                imageArray.append(p.imageArray[i]->clone());
-            }
+            image = p.image->clone();
         }
         ~Private()
         {
-            const uint count = imageArray.count();
-            for (uint i = 0; i < count; i++) {
-                delete imageArray[i];
-            }
+            delete image;
         }
 
         TextureType type;
@@ -78,11 +72,16 @@ namespace nvtt
         AlphaMode alphaMode;
         bool isNormalMap;
 
-        nv::Array<nv::FloatImage *> imageArray;
+        nv::FloatImage * image;
     };
 
-
 } // nvtt namespace
+
+namespace nv {
+    uint countMipmaps(uint w, uint h, uint d);
+    uint computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignment, nvtt::Format format);
+    void getTargetExtent(int & w, int & h, int & d, int maxExtent, nvtt::RoundMode roundMode, nvtt::TextureType textureType);
+}
 
 
 #endif // NVTT_TEXIMAGE_H
