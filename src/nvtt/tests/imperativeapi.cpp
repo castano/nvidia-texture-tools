@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     image.setAlphaMode(nvtt::AlphaMode_Transparency);
 
     // Output first mipmap.
-    context.compress(image, compressionOptions, outputOptions);
+    context.compress(image, 0, 0, compressionOptions, outputOptions);
 
     float gamma = 2.2f;
     image.toLinear(gamma);
@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
     float coverage = image.alphaTestCoverage(alphaRef);
 
     // Build mimaps.
+    int m = 1;
     while (image.buildNextMipmap(nvtt::MipmapFilter_Kaiser))
     {
         nvtt::TexImage tmpImage = image;
@@ -80,7 +81,8 @@ int main(int argc, char *argv[])
 
         tmpImage.scaleAlphaToCoverage(coverage, alphaRef);
 
-        context.compress(tmpImage, compressionOptions, outputOptions);
+        context.compress(tmpImage, 0, m, compressionOptions, outputOptions);
+        m++;
     }
 
     return EXIT_SUCCESS;

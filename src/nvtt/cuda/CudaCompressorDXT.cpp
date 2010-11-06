@@ -1,4 +1,5 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
+// Copyright (c) 2007-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -133,11 +134,11 @@ void CudaCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const f
     // Allocate image as a cuda array.
     const uint count = w * h;
     Color32 * tmp = malloc<Color32>(count);
-    for (int i = 0; i < count; i++) {
-        tmp[i].r = clamp(data[i + count*0], 0.0f, 1.0f) * 255;
-        tmp[i].g = clamp(data[i + count*1], 0.0f, 1.0f) * 255;
-        tmp[i].b = clamp(data[i + count*2], 0.0f, 1.0f) * 255;
-        tmp[i].a = clamp(data[i + count*3], 0.0f, 1.0f) * 255;
+    for (uint i = 0; i < count; i++) {
+        tmp[i].r = uint8(clamp(data[i + count*0], 0.0f, 1.0f) * 255);
+        tmp[i].g = uint8(clamp(data[i + count*1], 0.0f, 1.0f) * 255);
+        tmp[i].b = uint8(clamp(data[i + count*2], 0.0f, 1.0f) * 255);
+        tmp[i].a = uint8(clamp(data[i + count*3], 0.0f, 1.0f) * 255);
     }
 
     cudaArray * d_image;

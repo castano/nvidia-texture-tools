@@ -1,4 +1,5 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
+// Copyright (c) 2007-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -350,11 +351,11 @@ namespace nvtt
 
         // TexImage API.
         NVTT_API bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-        NVTT_API bool compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API bool compress(const TexImage & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API int estimateSize(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions) const;
 
         // Raw API.
-        NVTT_API bool compress(int w, int h, int d, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API bool compress(int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API int estimateSize(int w, int h, int d, int mipmapCount, const CompressionOptions & compressionOptions) const;
     };
 
@@ -427,8 +428,10 @@ namespace nvtt
         NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
         NVTT_API bool normalizeRange(float * rangeMin, float * rangeMax);
         NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
+        NVTT_API void fromRGBM(float range = 1.0f);
         NVTT_API void toYCoCg();
         NVTT_API void blockScaleCoCg(int bits = 5, float threshold = 0.0f);
+        NVTT_API void fromYCoCg();
 
         // Color quantization.
         NVTT_API void binarize(int channel, float threshold, bool dither);
@@ -438,16 +441,17 @@ namespace nvtt
         NVTT_API void toNormalMap(float sm, float medium, float big, float large);
         NVTT_API void normalizeNormalMap();
 
-        // Error compare.
-        NVTT_API float rootMeanSquaredError_rgb(const TexImage & reference) const;
-        NVTT_API float rootMeanSquaredError_alpha(const TexImage & reference) const;
-
         // Geometric transforms.
         NVTT_API void flipVertically();
 
         // Copy image data.
         NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel);
         NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel);
+
+        // Error compare.
+        friend NVTT_API float rmsError(const TexImage & reference, const TexImage & img);
+        friend NVTT_API float rmsAlphaError(const TexImage & reference, const TexImage & img);
+        friend NVTT_API TexImage diff(const TexImage & reference, const TexImage & img);
 
     private:
         void detach();

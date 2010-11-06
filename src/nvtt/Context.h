@@ -1,4 +1,5 @@
-// Copyright NVIDIA Corporation 2008 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
+// Copyright (c) 2007-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -43,11 +44,11 @@ namespace nvtt
     {
         Private() {}
 
-        bool compress(const TexImage & tex, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
         bool compress(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
-        bool compress(AlphaMode alphaMode, int w, int h, int d, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool compress(const TexImage & tex, int face, int mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool compress(AlphaMode alphaMode, int w, int h, int d, int face, int mipmap, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-        bool quantize(TexImage & tex, const CompressionOptions::Private & compressionOptions) const;
+        void quantize(TexImage & tex, const CompressionOptions::Private & compressionOptions) const;
 
         bool outputHeader(nvtt::TextureType textureType, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
         //bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;

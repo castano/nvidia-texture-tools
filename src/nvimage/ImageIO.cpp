@@ -6,6 +6,7 @@
 #include "TgaFile.h"
 #include "PsdFile.h"
 #include "DirectDrawSurface.h"
+#include "PixelFormat.h"
 
 #include "nvmath/Color.h"
 #include "nvmath/Half.h"
@@ -290,7 +291,7 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 			image->setFormat(Image::Format_ARGB);
 		}
 
-		return ImageIO::save(fileName, image.ptr());
+		return ImageIO::save(fileName, s, image.ptr());
 	}
 #endif // defined(HAVE_FREEIMAGE)
 
@@ -299,9 +300,9 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 
 bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount)
 {
-#if !defined(HAVE_FREEIMAGE)
 	const char * extension = Path::extension(fileName);
 
+#if !defined(HAVE_FREEIMAGE)
 #if defined(HAVE_OPENEXR)
 	if (strCaseCmp(extension, ".exr") == 0) {
 		return saveFloatEXR(fileName, fimage, baseComponent, componentCount);
@@ -312,16 +313,15 @@ bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, ui
 		return saveFloatTIFF(fileName, fimage, baseComponent, componentCount);
 	}
 #endif
-
 #endif // !defined(HAVE_FREEIMAGE)
 
-	StdInputStream stream(fileName);
+    StdOutputStream stream(fileName);
 
-	if (stream.isError()) {
-		return false;
-	}
+    if (stream.isError()) {
+        return false;
+    }
 
-	return saveFloat(fileName, stream, fimage, baseComponent, componentCount);
+  	return saveFloat(fileName, stream, fimage, baseComponent, componentCount);
 }
 
 #if defined(HAVE_FREEIMAGE)
@@ -448,6 +448,38 @@ FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 
 	switch (fit)
 	{
+        case FIT_BITMAP:
+            {
+                floatImage->allocate(4, w, h);
+                FIBITMAP * tmp = FreeImage_ConvertTo32Bits(bitmap);
+
+                uint bitcount = FreeImage_GetBPP(bitmap);
+                uint byteCount = bitcount / 8;
+
+			    for (int y=0; y < h; y++)
+			    {
+                    const Color32 * src = (const Color32 *)FreeImage_GetScanLine(bitmap, h - y - 1 );
+        			
+                    float * r = floatImage->scanline(y, 0);
+                    float * g = floatImage->scanline(y, 1);
+                    float * b = floatImage->scanline(y, 2);
+                    float * a = floatImage->scanline(y, 3);
+
+			        for (int x=0; x < w; x++)
+			        {
+                        r[x] = float(src[x].r) / 255.0f;
+                        g[x] = float(src[x].g) / 255.0f;
+                        b[x] = float(src[x].b) / 255.0f;
+                        a[x] = float(src[x].a) / 255.0f;
+                    }
+
+                    src += byteCount;
+                }
+
+                FreeImage_Unload(tmp);
+            }
+
+            break;
 		case FIT_FLOAT:
 			floatImage->allocate(1, w, h);
 
@@ -1216,7 +1248,7 @@ bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * t
 	png_set_write_fn(png_ptr, (void*)&s, user_write_data, user_write_flush);
 
 	// Set image header information
-	int color_type = PNG_COLOR_TYPE_RGB;
+	int color_type = PNG_COLOR_TYPE_RGBA;
 	switch(img->format())
 	{
 		case Image::Format_RGB:		color_type = PNG_COLOR_TYPE_RGB; break;
@@ -1231,6 +1263,7 @@ bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * t
 	png_bytep * row_data = new png_bytep[sizeof(png_byte) * img->height()];
 	for (uint i = 0; i < img->height(); i++) {
 		row_data[i] = (png_byte*)img->scanline (i);
+        if (img->format() == Image::Format_RGB) row_data[i]--; // This is a bit of a hack, libpng expects images in ARGB format not BGRA, it supports BGR swapping, but not alpha swapping.
 	}
 	png_set_rows(png_ptr, info_ptr, row_data);
 
@@ -1252,9 +1285,10 @@ bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * t
 
 	png_write_png(png_ptr, info_ptr,
 		// component order is BGR(A)
-		PNG_TRANSFORM_BGR
+        PNG_TRANSFORM_BGR |
 		// Strip alpha byte for RGB images
-		| (img->format() == Image::Format_RGB ? PNG_TRANSFORM_STRIP_FILLER : 0),
+		(img->format() == Image::Format_RGB ? PNG_TRANSFORM_STRIP_FILLER : 0)
+        ,
 		NULL);
 
 	// Finish things up

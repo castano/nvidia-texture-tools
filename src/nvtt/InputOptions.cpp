@@ -1,4 +1,5 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
+// Copyright (c) 2007-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -157,7 +158,7 @@ void InputOptions::resetTextureLayout()
     if (m.images != NULL)
     {
         // Delete images.
-        for (int i = 0; i < m.imageCount; i++) {
+        for (uint i = 0; i < m.imageCount; i++) {
             free(m.images[i]);
         }
 
@@ -178,14 +179,14 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
     if (depth != 1) {
         return false;
     }
-    if (face >= m.faceCount) {
+    if (uint(face) >= m.faceCount) {
         return false;
     }
-    if (mipLevel >= m.mipmapCount) {
+    if (uint(mipLevel) >= m.mipmapCount) {
         return false;
     }
 
-    const int idx = mipLevel * m.faceCount + face;
+    const uint idx = mipLevel * m.faceCount + face;
     if (idx >= m.imageCount) {
         return false;
     }
