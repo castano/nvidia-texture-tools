@@ -1,4 +1,5 @@
-// Copyright NVIDIA Corporation 2008 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
+// Copyright (c) 2008-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -133,9 +134,9 @@ bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const Compr
     return m.outputHeader(TextureType_2D, tex.width(), tex.height(), tex.depth(), mipmapCount, tex.isNormalMap(), compressionOptions.m, outputOptions.m);
 }
 
-bool Compressor::compress(const TexImage & tex, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+bool Compressor::compress(const TexImage & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-    return m.compress(tex, compressionOptions.m, outputOptions.m);
+    return m.compress(tex, face, mipmap, compressionOptions.m, outputOptions.m);
 }
 
 int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions) const
@@ -149,9 +150,9 @@ int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const Compre
 
 
 // Raw API.
-bool Compressor::compress(int w, int h, int d, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+bool Compressor::compress(int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-    return m.compress(AlphaMode_None, w, h, d, rgba, compressionOptions.m, outputOptions.m);
+    return m.compress(AlphaMode_None, w, h, d, face, mipmap, rgba, compressionOptions.m, outputOptions.m);
 }
 
 int Compressor::estimateSize(int w, int h, int d, int mipmapCount, const CompressionOptions & compressionOptions) const
@@ -244,19 +245,13 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             tmp.toGamma(inputOptions.outputGamma);
         }
 
-        int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
-        outputOptions.beginImage(size, w, h, d, f, 0);
-
         quantize(tmp, compressionOptions);
-        compress(tmp, compressionOptions, outputOptions);
+        compress(tmp, f, 0, compressionOptions, outputOptions);
 
         for (int m = 1; m < mipmapCount; m++) {
             w = max(1, w/2);
             h = max(1, h/2);
             d = max(1, d/2);
-
-            int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
-            outputOptions.beginImage(size, w, h, d, f, m);
 
             int idx = m * faceCount + f;
 
@@ -296,24 +291,27 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             }
 
             quantize(tmp, compressionOptions);
-            compress(tmp, compressionOptions, outputOptions);
+            compress(tmp, f, m, compressionOptions, outputOptions);
         }
     }
 
     return true;
 }
 
-bool Compressor::Private::compress(const TexImage & tex, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+bool Compressor::Private::compress(const TexImage & tex, int face, int mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-    if (!compress(tex.alphaMode(), tex.width(), tex.height(), tex.depth(), tex.data(), compressionOptions, outputOptions)) {
+    if (!compress(tex.alphaMode(), tex.width(), tex.height(), tex.depth(), face, mipmap, tex.data(), compressionOptions, outputOptions)) {
         return false;
     }
 
     return true;
 }
 
-bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, const float * rgba, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
+    int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
+    outputOptions.beginImage(size, w, h, d, face, mipmap);
+
     // Decide what compressor to use.
     AutoPtr<CompressorInterface> compressor;
 #if defined HAVE_CUDA
@@ -340,7 +338,7 @@ bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, con
 }
 
 
-bool Compressor::Private::quantize(TexImage & img, const CompressionOptions::Private & compressionOptions) const
+void Compressor::Private::quantize(TexImage & img, const CompressionOptions::Private & compressionOptions) const
 {
     if (compressionOptions.enableColorDithering) {
         if (compressionOptions.format >= Format_BC1 && compressionOptions.format <= Format_BC3) {
@@ -362,7 +360,7 @@ bool Compressor::Private::quantize(TexImage & img, const CompressionOptions::Pri
         }
     }
     else if (compressionOptions.binaryAlpha) {
-        img.binarize(3, compressionOptions.alphaThreshold, compressionOptions.enableAlphaDithering);
+        img.binarize(3, float(compressionOptions.alphaThreshold)/255.0f, compressionOptions.enableAlphaDithering);
     }
 }
 

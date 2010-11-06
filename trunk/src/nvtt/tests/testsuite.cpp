@@ -1,4 +1,5 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
+// Copyright (c) 2007-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -127,29 +128,38 @@ static const char * s_quake3ImageSet[] = {
     "q3-wires02.tga",
 };
 
-
+enum Mode {
+    Mode_BC1,
+    Mode_BC3_Alpha,
+    Mode_BC3_YCoCg,
+    Mode_BC3_RGBM,
+    Mode_BC3_Normal,
+    Mode_BC5_Normal,
+};
 struct ImageSet
 {
+    const char * name;
     const char ** fileNames;
     int fileCount;
-    nvtt::Format format;
+    Mode mode;
 };
+
+#define ARRAY_SIZE(a) sizeof(a)/sizeof(a[0])
 
 static ImageSet s_imageSets[] = {
-    {s_kodakImageSet, sizeof(s_kodakImageSet)/sizeof(s_kodakImageSet[0]), nvtt::Format_DXT1},
-    {s_waterlooImageSet, sizeof(s_waterlooImageSet)/sizeof(s_waterlooImageSet[0]), nvtt::Format_DXT1},
-    {s_epicImageSet, sizeof(s_epicImageSet)/sizeof(s_epicImageSet[0]), nvtt::Format_DXT1},
-    {s_farbrauschImageSet, sizeof(s_farbrauschImageSet)/sizeof(s_farbrauschImageSet[0]), nvtt::Format_DXT1},
-    {s_lugaruImageSet, sizeof(s_lugaruImageSet)/sizeof(s_lugaruImageSet[0]), nvtt::Format_DXT5},
-    {s_quake3ImageSet, sizeof(s_quake3ImageSet)/sizeof(s_quake3ImageSet[0]), nvtt::Format_DXT5},
+    {"Kodak - BC1",             s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        Mode_BC1},
+    {"Kodak - BC3-YCoCg",       s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        Mode_BC3_YCoCg},
+    {"Kodak - BC3-RGBM",        s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        Mode_BC3_RGBM},
+    {"Waterloo - BC1",          s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet),     Mode_BC1},
+    {"Waterloo - BC3-YCoCg",    s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet),     Mode_BC3_YCoCg},
+    {"Epic - BC1",              s_epicImageSet,         ARRAY_SIZE(s_epicImageSet),         Mode_BC1},
+    {"Epic - BC1-YCoCg",        s_epicImageSet,         ARRAY_SIZE(s_epicImageSet),         Mode_BC3_YCoCg},
+    {"Farbraush - BC1",         s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet),   Mode_BC1},
+    {"Farbraush - BC1-YCoCg",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet),   Mode_BC3_YCoCg},
+    {"Lugaru - BC3",            s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet),       Mode_BC3_Alpha},
+    {"Quake3 - BC3",            s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet),       Mode_BC3_Alpha},
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
-
-enum Decoder
-{
-    Decoder_Reference,
-    Decoder_NVIDIA,
-};
 
 struct MyOutputHandler : public nvtt::OutputHandler
 {
@@ -176,83 +186,17 @@ struct MyOutputHandler : public nvtt::OutputHandler
         return true;
     }
 
-    Image * decompress(nvtt::Format format, Decoder decoder)
+    nvtt::TexImage decompress(Mode mode, nvtt::Decoder decoder)
     {
-        int bw = (m_width + 3) / 4;
-        int bh = (m_height + 3) / 4;
+        nvtt::Format format; 
+        if (mode == Mode_BC1) format = nvtt::Format_BC1;
+        else if (mode == Mode_BC5_Normal) format = nvtt::Format_BC5;
+        else  format = nvtt::Format_BC3;
 
-        AutoPtr<Image> img( new Image() );
-        img->allocate(m_width, m_height);
+        nvtt::TexImage img;
+        img.setImage2D(format, decoder, m_width, m_height, m_data);
 
-        if (format == nvtt::Format_BC1)
-        {
-            BlockDXT1 * block = (BlockDXT1 *)m_data;
-
-            for (int y = 0; y < bh; y++)
-            {
-                for (int x = 0; x < bw; x++)
-                {
-                    ColorBlock colors;
-                    if (decoder == Decoder_Reference) {
-                        block->decodeBlock(&colors);
-                    }
-                    else if (decoder == Decoder_NVIDIA) {
-                        block->decodeBlockNV5x(&colors);
-                    }
-
-                    for (int yy = 0; yy < 4; yy++)
-                    {
-                        for (int xx = 0; xx < 4; xx++)
-                        {
-                            Color32 c = colors.color(xx, yy);
-
-                            if (x * 4 + xx < m_width && y * 4 + yy < m_height)
-                            {
-                                img->pixel(x * 4 + xx, y * 4 + yy) = c;
-                            }
-                        }
-                    }
-
-                    block++;
-                }
-            }
-        }
-        else if (format == nvtt::Format_BC3)
-        {
-            BlockDXT5 * block = (BlockDXT5 *)m_data;
-
-            for (int y = 0; y < bh; y++)
-            {
-                for (int x = 0; x < bw; x++)
-                {
-                    ColorBlock colors;
-                    if (decoder == Decoder_Reference) {
-                        block->decodeBlock(&colors);
-                    }
-                    else if (decoder == Decoder_NVIDIA) {
-                        block->decodeBlockNV5x(&colors);
-                    }
-
-                    for (int yy = 0; yy < 4; yy++)
-                    {
-                        for (int xx = 0; xx < 4; xx++)
-                        {
-                            Color32 c = colors.color(xx, yy);
-
-                            if (x * 4 + xx < m_width && y * 4 + yy < m_height)
-                            {
-                                img->pixel(x * 4 + xx, y * 4 + yy) = c;
-                            }
-                        }
-                    }
-
-                    block++;
-                }
-            }
-        }
-
-
-        return img.release();
+        return img;
     }
 
     int m_size;
@@ -261,36 +205,6 @@ struct MyOutputHandler : public nvtt::OutputHandler
     unsigned char * m_data;
     unsigned char * m_ptr;
 };
-
-
-float rmsError(const Image * a, const Image * b)
-{
-    nvCheck(a != NULL);
-    nvCheck(b != NULL);
-    nvCheck(a->width() == b->width());
-    nvCheck(a->height() == b->height());
-
-    double mse = 0;
-
-    const uint count = a->width() * a->height();
-
-    for (uint i = 0; i < count; i++)
-    {
-        Color32 c0 = a->pixel(i);
-        Color32 c1 = b->pixel(i);
-
-        int r = c0.r - c1.r;
-        int g = c0.g - c1.g;
-        int b = c0.b - c1.b;
-        int a = c0.a - c1.a;
-
-        mse += double(r * r * c0.a) / 255;
-        mse += double(g * g * c0.a) / 255;
-        mse += double(b * b * c0.a) / 255;
-    }
-
-    return float(sqrt(mse / count));
-}
 
 
 int main(int argc, char *argv[])
@@ -305,11 +219,11 @@ int main(int argc, char *argv[])
 
     printf("NVIDIA Texture Tools %u.%u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor, rev);
 
-    int set = 0;
+    int setIndex = 0;
     bool fast = false;
     bool nocuda = false;
     bool showHelp = false;
-    Decoder decoder = Decoder_Reference;
+    nvtt::Decoder decoder = nvtt::Decoder_Reference;
     const char * basePath = "";
     const char * outPath = "output";
     const char * regressPath = NULL;
@@ -320,14 +234,14 @@ int main(int argc, char *argv[])
         if (strcmp("-set", argv[i]) == 0)
         {
             if (i+1 < argc && argv[i+1][0] != '-') {
-                set = atoi(argv[i+1]);
+                setIndex = atoi(argv[i+1]);
                 i++;
             }
         }
         else if (strcmp("-dec", argv[i]) == 0)
         {
             if (i+1 < argc && argv[i+1][0] != '-') {
-                decoder = (Decoder)atoi(argv[i+1]);
+                decoder = (nvtt::Decoder)atoi(argv[i+1]);
                 i++;
             }
         }
@@ -394,10 +308,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    nvtt::InputOptions inputOptions;
-    inputOptions.setMipmapGeneration(false);
-    inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
-
     nvtt::CompressionOptions compressionOptions;
     compressionOptions.setFormat(nvtt::Format_BC1);
     if (fast)
@@ -413,7 +323,22 @@ int main(int argc, char *argv[])
     //compressionOptions.setExternalCompressor("d3dx");
     //compressionOptions.setExternalCompressor("stb");
 
-    compressionOptions.setFormat(s_imageSets[set].format);
+    
+    const ImageSet & set = s_imageSets[setIndex];
+
+    if (set.mode == Mode_BC1) {
+        compressionOptions.setFormat(nvtt::Format_BC1);
+    }
+    else if (set.mode == Mode_BC3_Alpha || set.mode == Mode_BC3_YCoCg || set.mode == Mode_BC3_RGBM) {
+        compressionOptions.setFormat(nvtt::Format_BC3);
+    }
+    else if (set.mode == Mode_BC3_Normal) {
+        compressionOptions.setFormat(nvtt::Format_BC3n);
+    }
+    else if (set.mode == Mode_BC5_Normal) {
+        compressionOptions.setFormat(nvtt::Format_BC5);
+    }
+   
 
 
     nvtt::OutputOptions outputOptions;
@@ -429,7 +354,7 @@ int main(int argc, char *argv[])
     FileSystem::createDirectory(outPath);
 
     Path csvFileName;
-    csvFileName.format("%s/result-%d.csv", outPath, set);
+    csvFileName.format("%s/result-%d.csv", outPath, setIndex);
     StdOutputStream csvStream(csvFileName.str());
     TextWriter csvWriter(&csvStream);
 
@@ -438,46 +363,85 @@ int main(int argc, char *argv[])
     int failedTests = 0;
     float totalDiff = 0;
 
-    const char ** fileNames = s_imageSets[set].fileNames;
-    int fileCount = s_imageSets[set].fileCount;
+    const char ** fileNames = set.fileNames;
+    int fileCount = set.fileCount;
 
     Timer timer;
 
+    nvtt::TexImage img;
+    if (set.mode == Mode_BC3_Alpha) {
+        img.setAlphaMode(nvtt::AlphaMode_Transparency);
+    }
+    if (set.mode == Mode_BC3_Normal || set.mode == Mode_BC5_Normal) {
+        img.setNormalMap(true);
+    }
+
+    printf("Processing Set: %s\n", set.name);
+
     for (int i = 0; i < fileCount; i++)
     {
-        AutoPtr<Image> img( new Image() );
-
-        if (!img->load(fileNames[i]))
+        if (!img.load(fileNames[i]))
         {
             printf("Input image '%s' not found.\n", fileNames[i]);
             return EXIT_FAILURE;
         }
 
-        inputOptions.setTextureLayout(nvtt::TextureType_2D, img->width(), img->height());
-        inputOptions.setMipmapData(img->pixels(), img->width(), img->height());
+        if (img.isNormalMap()) {
+            img.normalizeNormalMap();
+        }
+
+        if (set.mode == Mode_BC3_YCoCg) {
+            img.toYCoCg();
+            img.blockScaleCoCg();
+            img.scaleBias(0, 0.5, 0.5);
+            img.scaleBias(1, 0.5, 0.5);
+        }
+        else if (set.mode == Mode_BC3_RGBM) {
+            img.toRGBM();
+        }
 
         printf("Compressing: \t'%s'\n", fileNames[i]);
 
         timer.start();
 
-        context.process(inputOptions, compressionOptions, outputOptions);
+        context.compress(img, 0, 0, compressionOptions, outputOptions);
 
         timer.stop();
         printf("  Time: \t%.3f sec\n", timer.elapsed());
         totalTime += timer.elapsed();
 
-        AutoPtr<Image> img_out( outputHandler.decompress(s_imageSets[set].format, decoder) );
+        nvtt::TexImage img_out = outputHandler.decompress(set.mode, decoder);
+        if (set.mode == Mode_BC3_Alpha) {
+            img_out.setAlphaMode(nvtt::AlphaMode_Transparency);
+        }
+        if (set.mode == Mode_BC3_Normal || set.mode == Mode_BC5_Normal) {
+            img_out.setNormalMap(true);
+        }
+
+        if (set.mode == Mode_BC3_YCoCg) {
+            img_out.scaleBias(0, 1.0, -0.5);
+            img_out.scaleBias(1, 1.0, -0.5);
+            img_out.fromYCoCg();
+
+            img.scaleBias(0, 1.0, -0.5);
+            img.scaleBias(1, 1.0, -0.5);
+            img.fromYCoCg();
+        }
+        else if (set.mode == Mode_BC3_RGBM) {
+            img_out.fromRGBM();
+            img.fromRGBM();
+        }
 
         Path outputFileName;
         outputFileName.format("%s/%s", outPath, fileNames[i]);
         outputFileName.stripExtension();
         outputFileName.append(".png");
-        if (!ImageIO::save(outputFileName.str(), img_out.ptr()))
+        if (!img_out.save(outputFileName.str()))
         {
             printf("Error saving file '%s'.\n", outputFileName.str());
         }
 
-        float rmse = rmsError(img.ptr(), img_out.ptr());
+        float rmse = nvtt::rmsError(img, img_out);
         totalRMSE += rmse;
 
         printf("  RMSE:  \t%.4f\n", rmse);
@@ -492,14 +456,14 @@ int main(int argc, char *argv[])
             regressFileName.stripExtension();
             regressFileName.append(".png");
 
-            AutoPtr<Image> img_reg( new Image() );
-            if (!img_reg->load(regressFileName.str()))
+            nvtt::TexImage img_reg;
+            if (!img_reg.load(regressFileName.str()))
             {
                 printf("Regression image '%s' not found.\n", regressFileName.str());
                 return EXIT_FAILURE;
             }
 
-            float rmse_reg = rmsError(img.ptr(), img_reg.ptr());
+            float rmse_reg = rmsError(img, img_reg);
 
             float diff = rmse_reg - rmse;
             totalDiff += diff;
