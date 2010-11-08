@@ -3,7 +3,7 @@
 = Image Sets =
  * [http://www.r0k.us/graphics/kodak/ Kodak image set]
  * [http://links.uwaterloo.ca/Repository.html Waterloo image set]:
-   # [http://code.google.com/p/nvidia-texture-tools/source/browse/trunk/data/testsuite/clegg.png clegg.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/clegg.png clegg.png]
    # frymire.png
    # lena.png
    # monarch.png
