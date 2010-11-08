@@ -4,16 +4,17 @@
  * [http://www.r0k.us/graphics/kodak/ Kodak image set]
  * [http://links.uwaterloo.ca/Repository.html Waterloo image set]:
    # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/clegg.png clegg.png]
-   # frymire.png
-   # lena.png
-   # monarch.png
-   # peppers.png
-   # sail.png
-   # serrano.png
-   # tulips.png
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/frymire.png frymire.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/lena.png lena.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/monarch.png monarch.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/peppers.png peppers.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/sail.png sail.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/serrano.png serrano.png]
+   # [http://nvidia-texture-tools.googlecode.com/svn/trunk/data/testsuite/tulips.png tulips.png]
  * [http://udn.epicgames.com/Two/TextureComparison.html Epic image set]
  * [http://www.farbrausch.de/~fg/dxt/testimg/ Farbrausch image set]
  * Witness image set
+
 
 = Color Compression =
 
