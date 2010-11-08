@@ -34,6 +34,7 @@
 #include "nvimage/NormalMap.h"
 #include "nvimage/BlockDXT.h"
 #include "nvimage/ColorBlock.h"
+#include "nvimage/PixelFormat.h"
 
 #include <float.h>
 
@@ -1154,7 +1155,7 @@ void TexImage::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
                 }
             }
 
-            float scale = quantizeCeil(m, bits);
+            float scale = PixelFormat::quantizeCeil(m, bits, 8);
             nvDebugCheck(scale >= m);
 
             // Store block scale in blue channel and scale CoCg.
@@ -1212,6 +1213,41 @@ void TexImage::fromYCoCg()
     }
 }
 
+void TexImage::toLUVW(float range/*= 1.0f*/)
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    float irange = 1.0f / range;
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+    float * a = img->channel(3);
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++) {
+        float R = nv::clamp(r[i] * irange, 0.0f, 1.0f);
+        float G = nv::clamp(g[i] * irange, 0.0f, 1.0f);
+        float B = nv::clamp(b[i] * irange, 0.0f, 1.0f);
+
+        float L = max(sqrtf(R*R + G*G + B*B), 1e-6f)); // Avoid division by zero.
+        //m = quantizeCeil(m, 8);
+
+        r[i] = R / L;
+        g[i] = G / L;
+        b[i] = B / L;
+        a[i] = L;
+    }
+}
+
+void TexImage::fromLUVW(float range/*= 1.0f*/)
+{
+    // Decompression is the same as in RGBM.
+    fromRGBM(range);
+}
 
 
 void TexImage::binarize(int channel, float threshold, bool dither)

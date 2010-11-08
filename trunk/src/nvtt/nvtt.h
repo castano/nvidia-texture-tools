@@ -432,6 +432,8 @@ namespace nvtt
         NVTT_API void toYCoCg();
         NVTT_API void blockScaleCoCg(int bits = 5, float threshold = 0.0f);
         NVTT_API void fromYCoCg();
+        NVTT_API void toLUVW(float range = 1.0f);
+        NVTT_API void fromLUVW(float range = 1.0f);
 
         // Color quantization.
         NVTT_API void binarize(int channel, float threshold, bool dither);
@@ -449,9 +451,9 @@ namespace nvtt
         NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel);
 
         // Error compare.
-        friend NVTT_API float rmsError(const TexImage & reference, const TexImage & img);
-        friend NVTT_API float rmsAlphaError(const TexImage & reference, const TexImage & img);
-        friend NVTT_API TexImage diff(const TexImage & reference, const TexImage & img);
+        friend float rmsError(const TexImage & reference, const TexImage & img);
+        friend float rmsAlphaError(const TexImage & reference, const TexImage & img);
+        friend TexImage diff(const TexImage & reference, const TexImage & img);
 
     private:
         void detach();
@@ -466,6 +468,10 @@ namespace nvtt
 
     // Return NVTT version.
     NVTT_API unsigned int version();
+
+    NVTT_API float rmsError(const TexImage & reference, const TexImage & img);
+    NVTT_API float rmsAlphaError(const TexImage & reference, const TexImage & img);
+    NVTT_API TexImage diff(const TexImage & reference, const TexImage & img);
 
 } // nvtt namespace
 

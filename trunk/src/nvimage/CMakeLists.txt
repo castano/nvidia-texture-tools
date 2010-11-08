@@ -22,6 +22,7 @@ SET(IMAGE_SRCS
     NormalMap.cpp
     PsdFile.h
     TgaFile.h
+    PixelFormat.h
     ColorSpace.h
     ColorSpace.cpp)
 

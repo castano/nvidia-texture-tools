@@ -72,7 +72,7 @@ ELSE(MAYA_FOUND)
 ENDIF(MAYA_FOUND)
 
 # FreeImage
-INCLUDE(${NV_CMAKE_DIR}/FindFreeImage.cmake)
+#INCLUDE(${NV_CMAKE_DIR}/FindFreeImage.cmake)
 IF(FREEIMAGE_FOUND)
 	SET(HAVE_FREEIMAGE ${FREEIMAGE_FOUND} CACHE BOOL "Set to TRUE if FreeImage is found, FALSE otherwise")
 	MESSAGE(STATUS "Looking for FreeImage - found")

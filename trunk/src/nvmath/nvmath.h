@@ -200,27 +200,6 @@ namespace nv
         return float(iround(f));
     }
 
-    inline float quantizeCeil(float f, int bits)
-    {
-        nvDebugCheck(f >= 0.0f && f <= 1.0f);
-        float scale = float(1 << bits);
-        return ceilf(f * scale) / scale;
-    }
-
-    inline float quantizeRound(float f, int bits)
-    {
-        nvDebugCheck(f >= 0.0f && f <= 1.0f);
-        float scale = float(1 << bits);
-        return fround(f * scale) / scale;
-    }
-
-    inline float quantizeFloor(float f, int bits)
-    {
-        nvDebugCheck(f >= 0.0f && f <= 1.0f);
-        float scale = float(1 << bits);
-        return floor(f * scale) / scale;
-    }
-
 } // nv
 
 #endif // NV_MATH_H
