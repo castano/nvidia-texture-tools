@@ -1,11 +1,11 @@
 #summary One-sentence summary of this page.
 
 = Image Sets =
- * Kodak image set.
- * Waterloo image set.
- * Epic image set.
- * Farbrausch image set.
- * Witness image set.
+ * [http://www.r0k.us/graphics/kodak/ Kodak image set]
+ * [http://links.uwaterloo.ca/Repository.html Waterloo image set]
+ * [http://udn.epicgames.com/Two/TextureComparison.html Epic image set]
+ * [http://www.farbrausch.de/~fg/dxt/testimg/ Farbrausch image set]
+ * Witness image set
 
 = DXT Color Compression =
 
