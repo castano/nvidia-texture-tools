@@ -42,6 +42,8 @@
 
 using namespace nv;
 
+#define ARRAY_SIZE(a) sizeof(a)/sizeof(a[0])
+
 // Kodak image set
 static const char * s_kodakImageSet[] = {
     "kodim01.png",
@@ -94,17 +96,17 @@ static const char * s_epicImageSet[] = {
 
 // Farbrausch
 static const char * s_farbrauschImageSet[] = {
-    "t.2d.pn02.bmp",
-    "t.aircondition.01.bmp",
-    "t.bricks.02.bmp",
-    "t.bricks.05.bmp",
-    "t.concrete.cracked.01.bmp",
-    "t.envi.colored02.bmp",
-    "t.envi.colored03.bmp",
-    "t.font.01.bmp",
-    "t.sewers.01.bmp",
-    "t.train.03.bmp",
-    "t.yello.01.bmp",
+    "t.2d.pn02.png",
+    "t.aircondition.01.png",
+    "t.bricks.02.png",
+    "t.bricks.05.png",
+    "t.concrete.cracked.01.png",
+    "t.envi.colored02.png",
+    "t.envi.colored03.png",
+    "t.font.01.png",
+    "t.sewers.01.png",
+    "t.train.03.png",
+    "t.yello.01.png",
 };
 
 // Lugaru
@@ -128,38 +130,74 @@ static const char * s_quake3ImageSet[] = {
     "q3-wires02.tga",
 };
 
+static const char * s_witnessImageSet[] = {
+    "applebark.tga",
+    "grass-01.tga",
+    "brownRock.tga",
+    "rock-01.tga",
+    "rock-02.tga",
+    "Lao-picture.tga",
+    "laser-base.tga",
+    "skydome.tga",
+    "speaker.tga",
+    "specRuin-base.tga",
+    "vault.tga",
+    "specRuin-puzzle.tga"
+};
+
 enum Mode {
     Mode_BC1,
+    Mode_BC1_Alpha,
+    Mode_BC2_Alpha,
     Mode_BC3_Alpha,
     Mode_BC3_YCoCg,
     Mode_BC3_RGBM,
+    Mode_BC1_Normal,
     Mode_BC3_Normal,
     Mode_BC5_Normal,
 };
+static const char * s_modeNames[] = {
+    "BC1",
+    "BC1-Alpha",
+    "BC2-Alpha",
+    "BC3-Alpha",
+    "BC3-YCoCg",
+    "BC3-RGBM",
+    "BC3-LUVW",
+    "BC1-Normal",
+    "BC3-Normal",
+    "BC5-Normal",
+};
+
+struct Test {
+    const char * name;
+    int count;
+    Mode modes[4];
+};
+static Test s_imageTests[] = {
+    {"DXT Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM}},
+    {"DXT Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
+    {"DXT Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
+};
+const int s_testCount = ARRAY_SIZE(s_imageTests);
+
 struct ImageSet
 {
     const char * name;
     const char ** fileNames;
     int fileCount;
-    Mode mode;
 };
-
-#define ARRAY_SIZE(a) sizeof(a)/sizeof(a[0])
-
 static ImageSet s_imageSets[] = {
-    {"Kodak - BC1",             s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        Mode_BC1},
-    {"Kodak - BC3-YCoCg",       s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        Mode_BC3_YCoCg},
-    {"Kodak - BC3-RGBM",        s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        Mode_BC3_RGBM},
-    {"Waterloo - BC1",          s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet),     Mode_BC1},
-    {"Waterloo - BC3-YCoCg",    s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet),     Mode_BC3_YCoCg},
-    {"Epic - BC1",              s_epicImageSet,         ARRAY_SIZE(s_epicImageSet),         Mode_BC1},
-    {"Epic - BC1-YCoCg",        s_epicImageSet,         ARRAY_SIZE(s_epicImageSet),         Mode_BC3_YCoCg},
-    {"Farbraush - BC1",         s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet),   Mode_BC1},
-    {"Farbraush - BC1-YCoCg",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet),   Mode_BC3_YCoCg},
-    {"Lugaru - BC3",            s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet),       Mode_BC3_Alpha},
-    {"Quake3 - BC3",            s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet),       Mode_BC3_Alpha},
+    {"Kodak",       s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet)},       // 0
+    {"Waterloo",    s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet)},    // 1
+    {"Epic",        s_epicImageSet,         ARRAY_SIZE(s_epicImageSet)},        // 2
+    {"Farbraush",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet)},  // 3
+    {"Lugaru",      s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet)},      // 4
+    {"Quake3",      s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet)},      // 5
+    {"Witness",     s_witnessImageSet,       ARRAY_SIZE(s_witnessImageSet)}     // 6
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
+
 
 struct MyOutputHandler : public nvtt::OutputHandler
 {
@@ -220,6 +258,7 @@ int main(int argc, char *argv[])
     printf("NVIDIA Texture Tools %u.%u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor, rev);
 
     int setIndex = 0;
+    int testIndex = 0;
     bool fast = false;
     bool nocuda = false;
     bool showHelp = false;
@@ -235,6 +274,13 @@ int main(int argc, char *argv[])
         {
             if (i+1 < argc && argv[i+1][0] != '-') {
                 setIndex = atoi(argv[i+1]);
+                i++;
+            }
+        }
+        else if (strcmp("-test", argv[i]) == 0)
+        {
+            if (i+1 < argc && argv[i+1][0] != '-') {
+                testIndex = atoi(argv[i+1]);
                 i++;
             }
         }
@@ -280,6 +326,16 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Validate inputs.
+    if (testIndex >= s_testCount) {
+        printf("Invalid test %d\n", testIndex);
+        return 0;
+    }
+    if (setIndex >= s_imageSetCount) {
+        printf("Invalid image set %d\n", setIndex);
+        return 0;
+    }
+
     if (showHelp)
     {
         printf("usage: nvtestsuite [options]\n\n");
@@ -287,13 +343,17 @@ int main(int argc, char *argv[])
         printf("Input options:\n");
         printf("  -path <path>   \tInput image path.\n");
         printf("  -regress <path>\tRegression directory.\n");
-        printf("  -set [0:2]     \tImage set.\n");
+        printf("  -set [0:5]     \tImage set.\n");
         printf("    0:           \tKodak.\n");
         printf("    1:           \tWaterloo.\n");
         printf("    2:           \tEpic.\n");
         printf("    3:           \tFarbrausch.\n");
         printf("    4:           \tLugaru.\n");
         printf("    5:           \tQuake 3.\n");
+        printf("  -test [0:2]    \tCompression tests to run.");
+        printf("    0:           \tDXT Color.\n");
+        printf("    1:           \tDXT Alpha.\n");
+        printf("    2:           \tDXT Normal.\n");
         printf("  -dec x         \tDecompressor.\n");
         printf("    0:           \tReference.\n");
         printf("    1:           \tNVIDIA.\n");
@@ -325,20 +385,7 @@ int main(int argc, char *argv[])
 
     
     const ImageSet & set = s_imageSets[setIndex];
-
-    if (set.mode == Mode_BC1) {
-        compressionOptions.setFormat(nvtt::Format_BC1);
-    }
-    else if (set.mode == Mode_BC3_Alpha || set.mode == Mode_BC3_YCoCg || set.mode == Mode_BC3_RGBM) {
-        compressionOptions.setFormat(nvtt::Format_BC3);
-    }
-    else if (set.mode == Mode_BC3_Normal) {
-        compressionOptions.setFormat(nvtt::Format_BC3n);
-    }
-    else if (set.mode == Mode_BC5_Normal) {
-        compressionOptions.setFormat(nvtt::Format_BC5);
-    }
-   
+    const Test & test = s_imageTests[testIndex];
 
 
     nvtt::OutputOptions outputOptions;
@@ -353,147 +400,230 @@ int main(int argc, char *argv[])
     FileSystem::changeDirectory(basePath);
     FileSystem::createDirectory(outPath);
 
-    Path csvFileName;
-    csvFileName.format("%s/result-%d.csv", outPath, setIndex);
-    StdOutputStream csvStream(csvFileName.str());
-    TextWriter csvWriter(&csvStream);
+    //Path csvFileName;
+    //csvFileName.format("%s/result-%d.csv", outPath, setIndex);
+    //StdOutputStream csvStream(csvFileName.str());
+    //TextWriter csvWriter(&csvStream);
+
+    Path graphFileName;
+    graphFileName.format("%s/result-%d.txt", outPath, setIndex);
+    StdOutputStream graphStream(graphFileName.str());
+    TextWriter graphWriter(&graphStream);
+
+    graphWriter << "http://chart.apis.google.com/chart?";
+
+    // Graph size.
+    graphWriter << "chs=480x240";
+
+    // Graph type: line
+    graphWriter << "&cht=lc";
+
+    // Margins.
+    graphWriter << "&chma=30,10,10|0,40";
+
+    // Grid lines.
+    graphWriter << "&chxt=x,y&chxtc=0,-1000|1,-1000";
+
+    // Labels.
+    graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01";
+    graphWriter << "&chdlp=b"; // Labels at the bottom.
+
+    // Line colors.
+    graphWriter << "&chco=";
+    for (int t = 0; t < test.count; t++)
+    {
+        const char * colors[] = {
+            "3D7930", "952826", "3D1FC1",
+            "3D7930", "952826", "3D1FC1", // pick other colors...
+        };
+        graphWriter << colors[t];
+        if (t != test.count-1) graphWriter << ",";
+    }
+
+    // Line width.
+    graphWriter << "&chls=";
+    for (int t = 0; t < test.count; t++)
+    {
+        graphWriter << "2";
+        if (t != test.count-1) graphWriter << "|";
+    }
+
+    // Data ranges.
+    graphWriter << "&chds=";
+    for (int t = 0; t < test.count; t++)
+    {
+        graphWriter << "0,0.05";
+        if (t != test.count-1) graphWriter << ",";
+    }
+
+    // Leyends.
+    graphWriter << "&chdl=";
+    for (int t = 0; t < test.count; t++)
+    {
+        graphWriter << s_modeNames[test.modes[t]];
+        if (t != test.count-1) graphWriter << "|";
+    }
+
+    // Title
+    graphWriter << "&chtt=" << set.name << " - " << test.name;
 
     float totalTime = 0;
     float totalRMSE = 0;
-    int failedTests = 0;
+    //int failedTests = 0;
     float totalDiff = 0;
 
-    const char ** fileNames = set.fileNames;
-    int fileCount = set.fileCount;
 
     Timer timer;
 
     nvtt::TexImage img;
-    if (set.mode == Mode_BC3_Alpha) {
-        img.setAlphaMode(nvtt::AlphaMode_Transparency);
-    }
-    if (set.mode == Mode_BC3_Normal || set.mode == Mode_BC5_Normal) {
-        img.setNormalMap(true);
-    }
 
-    printf("Processing Set: %s\n", set.name);
+    printf("Running Test: %s\n", set.name);
 
-    for (int i = 0; i < fileCount; i++)
+    graphWriter << "&chd=t:";
+
+    for (int t = 0; t < test.count; t++)
     {
-        if (!img.load(fileNames[i]))
+        Mode mode = test.modes[t];
+        if (mode == Mode_BC1) {
+            compressionOptions.setFormat(nvtt::Format_BC1);
+        }
+        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_RGBM) {
+            compressionOptions.setFormat(nvtt::Format_BC3);
+        }
+        else if (mode == Mode_BC3_Normal) {
+            compressionOptions.setFormat(nvtt::Format_BC3n);
+        }
+        else if (mode == Mode_BC5_Normal) {
+            compressionOptions.setFormat(nvtt::Format_BC5);
+        }
+
+        if (mode == Mode_BC3_Alpha) {
+            img.setAlphaMode(nvtt::AlphaMode_Transparency);
+        }
+        if (mode == Mode_BC3_Normal || mode == Mode_BC5_Normal) {
+            img.setNormalMap(true);
+        }
+
+
+        printf("Processing Set: %s\n", set.name);
+        for (int i = 0; i < set.fileCount; i++)
         {
-            printf("Input image '%s' not found.\n", fileNames[i]);
-            return EXIT_FAILURE;
-        }
-
-        if (img.isNormalMap()) {
-            img.normalizeNormalMap();
-        }
-
-        if (set.mode == Mode_BC3_YCoCg) {
-            img.toYCoCg();
-            img.blockScaleCoCg();
-            img.scaleBias(0, 0.5, 0.5);
-            img.scaleBias(1, 0.5, 0.5);
-        }
-        else if (set.mode == Mode_BC3_RGBM) {
-            img.toRGBM();
-        }
-
-        printf("Compressing: \t'%s'\n", fileNames[i]);
-
-        timer.start();
-
-        context.compress(img, 0, 0, compressionOptions, outputOptions);
-
-        timer.stop();
-        printf("  Time: \t%.3f sec\n", timer.elapsed());
-        totalTime += timer.elapsed();
-
-        nvtt::TexImage img_out = outputHandler.decompress(set.mode, decoder);
-        if (set.mode == Mode_BC3_Alpha) {
-            img_out.setAlphaMode(nvtt::AlphaMode_Transparency);
-        }
-        if (set.mode == Mode_BC3_Normal || set.mode == Mode_BC5_Normal) {
-            img_out.setNormalMap(true);
-        }
-
-        if (set.mode == Mode_BC3_YCoCg) {
-            img_out.scaleBias(0, 1.0, -0.5);
-            img_out.scaleBias(1, 1.0, -0.5);
-            img_out.fromYCoCg();
-
-            img.scaleBias(0, 1.0, -0.5);
-            img.scaleBias(1, 1.0, -0.5);
-            img.fromYCoCg();
-        }
-        else if (set.mode == Mode_BC3_RGBM) {
-            img_out.fromRGBM();
-            img.fromRGBM();
-        }
-
-        Path outputFileName;
-        outputFileName.format("%s/%s", outPath, fileNames[i]);
-        outputFileName.stripExtension();
-        outputFileName.append(".png");
-        if (!img_out.save(outputFileName.str()))
-        {
-            printf("Error saving file '%s'.\n", outputFileName.str());
-        }
-
-        float rmse = nvtt::rmsError(img, img_out);
-        totalRMSE += rmse;
-
-        printf("  RMSE:  \t%.4f\n", rmse);
-
-        // Output csv file
-        csvWriter << "\"" << fileNames[i] << "\"," << rmse << "\n";
-
-        if (regressPath != NULL)
-        {
-            Path regressFileName;
-            regressFileName.format("%s/%s", regressPath, fileNames[i]);
-            regressFileName.stripExtension();
-            regressFileName.append(".png");
-
-            nvtt::TexImage img_reg;
-            if (!img_reg.load(regressFileName.str()))
+            if (!img.load(set.fileNames[i]))
             {
-                printf("Regression image '%s' not found.\n", regressFileName.str());
+                printf("Input image '%s' not found.\n", set.fileNames[i]);
                 return EXIT_FAILURE;
             }
 
-            float rmse_reg = rmsError(img, img_reg);
-
-            float diff = rmse_reg - rmse;
-            totalDiff += diff;
-
-            const char * text = "PASSED";
-            if (equal(diff, 0)) text = "PASSED";
-            else if (diff < 0) {
-                text = "FAILED";
-                failedTests++;
+            if (img.isNormalMap()) {
+                img.normalizeNormalMap();
             }
 
-            printf("  Diff: \t%.4f (%s)\n", diff, text);
+            nvtt::TexImage tmp = img;
+            if (mode == Mode_BC3_YCoCg) {
+                tmp.toYCoCg();
+                tmp.blockScaleCoCg();
+                tmp.scaleBias(0, 0.5, 0.5);
+                tmp.scaleBias(1, 0.5, 0.5);
+            }
+            else if (mode == Mode_BC3_RGBM) {
+                tmp.toRGBM();
+            }
+
+            printf("Compressing: \t'%s'\n", set.fileNames[i]);
+
+            timer.start();
+
+            context.compress(tmp, 0, 0, compressionOptions, outputOptions);
+
+            timer.stop();
+            printf("  Time: \t%.3f sec\n", timer.elapsed());
+            totalTime += timer.elapsed();
+
+            nvtt::TexImage img_out = outputHandler.decompress(mode, decoder);
+            if (mode == Mode_BC3_Alpha) {
+                img_out.setAlphaMode(nvtt::AlphaMode_Transparency);
+            }
+            if (mode == Mode_BC3_Normal || mode == Mode_BC5_Normal) {
+                img_out.setNormalMap(true);
+            }
+
+            if (mode == Mode_BC3_YCoCg) {
+                img_out.scaleBias(0, 1.0, -0.5);
+                img_out.scaleBias(1, 1.0, -0.5);
+                img_out.fromYCoCg();
+            }
+            else if (mode == Mode_BC3_RGBM) {
+                img_out.fromRGBM();
+            }
+
+            Path outputFileName;
+            outputFileName.format("%s/%s", outPath, set.fileNames[i]);
+            outputFileName.stripExtension();
+            outputFileName.append(".png");
+            if (!img_out.save(outputFileName.str()))
+            {
+                printf("Error saving file '%s'.\n", outputFileName.str());
+            }
+
+            float rmse = nvtt::rmsError(img, img_out);
+            totalRMSE += rmse;
+
+            printf("  RMSE:  \t%.4f\n", rmse);
+
+            graphWriter << rmse;
+            if (i != set.fileCount-1) graphWriter << ",";
+
+            // Output csv file
+            //csvWriter << "\"" << fileNames[i] << "\"," << rmse << "\n";
+
+            /*if (regressPath != NULL)
+            {
+                Path regressFileName;
+                regressFileName.format("%s/%s", regressPath, fileNames[i]);
+                regressFileName.stripExtension();
+                regressFileName.append(".png");
+
+                nvtt::TexImage img_reg;
+                if (!img_reg.load(regressFileName.str()))
+                {
+                    printf("Regression image '%s' not found.\n", regressFileName.str());
+                    return EXIT_FAILURE;
+                }
+
+                float rmse_reg = rmsError(img, img_reg);
+
+                float diff = rmse_reg - rmse;
+                totalDiff += diff;
+
+                const char * text = "PASSED";
+                if (equal(diff, 0)) text = "PASSED";
+                else if (diff < 0) {
+                    text = "FAILED";
+                    failedTests++;
+                }
+
+                printf("  Diff: \t%.4f (%s)\n", diff, text);
+            }*/
+
+            fflush(stdout);
         }
 
-        fflush(stdout);
+        totalRMSE /= set.fileCount;
+        totalDiff /= set.fileCount;
+
+        printf("Total Results:\n");
+        printf("  Total Time: \t%.3f sec\n", totalTime);
+        printf("  Average RMSE:\t%.4f\n", totalRMSE);
+
+        if (t != s_testCount-1) graphWriter << "|";
     }
 
-    totalRMSE /= fileCount;
-    totalDiff /= fileCount;
-
-    printf("Total Results:\n");
-    printf("  Total Time: \t%.3f sec\n", totalTime);
-    printf("  Average RMSE:\t%.4f\n", totalRMSE);
-
-    if (regressPath != NULL)
+    /*if (regressPath != NULL)
     {
         printf("Regression Results:\n");
         printf("  Diff: %.4f\n", totalDiff);
         printf("  %d/%d tests failed.\n", failedTests, fileCount);
-    }
+    }*/
 
     return EXIT_SUCCESS;
 }

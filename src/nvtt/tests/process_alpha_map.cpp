@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     colorMap.flipVertically();
     colorMap.setAlphaMode(nvtt::AlphaMode_Transparency);
 
-    context.compress(colorMap, colorCompressionOptions, colorOutputOptions);
+    context.compress(colorMap, 0, 0, colorCompressionOptions, colorOutputOptions);
     
     if (inputFileNameNormal != NULL) {
         context.outputHeader(normalMap, normalMap.countMipmaps(), normalCompressionOptions, normalOutputOptions);
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         normalMap.normalizeNormalMap();
         normalMap.copyChannel(colorMap, 3); // Copy alpha channel from color to normal map.
         
-        context.compress(normalMap, normalCompressionOptions, normalOutputOptions);
+        context.compress(normalMap, 0, 0, normalCompressionOptions, normalOutputOptions);
     }
 
     const float gamma = 2.2f;
@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     const float coverage = colorMap.alphaTestCoverage(alphaRef);
 
     // Build and output mipmaps.
+	int m = 1;
     while (colorMap.buildNextMipmap(nvtt::MipmapFilter_Kaiser))
     {
         colorMap.scaleAlphaToCoverage(coverage, alphaRef);
@@ -125,15 +126,17 @@ int main(int argc, char *argv[])
         nvtt::TexImage tmpColorMap = colorMap;
         tmpColorMap.toGamma(gamma);
 
-        context.compress(tmpColorMap, colorCompressionOptions, colorOutputOptions);
+        context.compress(tmpColorMap, 0, m, colorCompressionOptions, colorOutputOptions);
         
         if (inputFileNameNormal != NULL) {
             normalMap.buildNextMipmap(nvtt::MipmapFilter_Kaiser);
             normalMap.normalizeNormalMap();
             normalMap.copyChannel(tmpColorMap, 3);
                         
-            context.compress(normalMap, normalCompressionOptions, normalOutputOptions);            
+            context.compress(normalMap, 0, m, normalCompressionOptions, normalOutputOptions);            
         }
+
+		m++;
     }
 
     return EXIT_SUCCESS;
