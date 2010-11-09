@@ -35,6 +35,7 @@ namespace nv
 	struct BlockDXT5;
 	struct AlphaBlockDXT3;
 	struct AlphaBlockDXT5;
+    class Vector3;
 
 	namespace QuickCompress
 	{
@@ -45,6 +46,9 @@ namespace nv
 		
 		void compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock, int iterationCount=8);
 		void compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, int iterationCount=8);
+
+        void outputBlock4(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
+        void outputBlock3(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
 	}
 } // nv namespace
 

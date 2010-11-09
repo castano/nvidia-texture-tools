@@ -289,15 +289,7 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="..\..\..\src\nvcore\Algorithms.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\..\src\nvcore\Array.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Containers.h"
 			>
 		</File>
 		<File

@@ -85,7 +85,7 @@ namespace nv
             float result;
             int offset = 0;
             do {
-                uint i = offset + f * (float(1 << inbits) - 1);
+                uint i = offset + uint(f * (float(1 << inbits) - 1));
                 i = convert(i, inbits, outbits);
                 result = float(i) / (float(1 << outbits) - 1);
                 offset++;

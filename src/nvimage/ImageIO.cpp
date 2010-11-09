@@ -97,6 +97,7 @@ namespace nv
 	#endif // defined(HAVE_FREEIMAGE)
 
         static FloatImage * loadFloatDDS(Stream & s);
+        static bool saveFloatDDS(const char * fileName, Stream & s, const FloatImage * img, uint base_component, uint num_components);
 
 	} // ImageIO namespace
 } // nv namespace
@@ -262,6 +263,12 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 	if (baseComponent + componentCount < fimage->componentNum())
 	{
 		return false;
+	}
+
+    const char * extension = Path::extension(fileName);
+
+	if (strCaseCmp(extension, ".dds") == 0) {
+		return saveFloatDDS(fileName, s, fimage, baseComponent, componentCount);
 	}
 
 #if defined(HAVE_FREEIMAGE)
@@ -1791,4 +1798,43 @@ FloatImage * nv::ImageIO::loadFloatDDS(Stream & s)
     }
  
     return NULL;
+}
+
+bool nv::ImageIO::saveFloatDDS(const char * fileName, Stream & s, const FloatImage * img, uint base_component, uint num_components)
+{
+    nvCheck(s.isSaving());
+	nvCheck(!s.isError());
+
+    if (num_components != 4) return false;
+
+    static const uint D3DFMT_A16B16G16R16F = 113;
+
+    DDSHeader header;
+    header.setTexture2D();
+    header.setWidth(img->width());
+    header.setHeight(img->height());
+    header.setFormatCode(D3DFMT_A16B16G16R16F);
+    // ...
+
+    s << header;
+
+    uint32 * r = (uint32 *)img->channel(base_component + 0);
+    uint32 * g = (uint32 *)img->channel(base_component + 1);
+    uint32 * b = (uint32 *)img->channel(base_component + 2);
+    uint32 * a = (uint32 *)img->channel(base_component + 3);
+
+    const uint size = img->width() * img->height();
+    for (uint i = 0; i < size; i++) {
+        uint16 R = half_from_float( *r++ );
+        uint16 G = half_from_float( *g++ );
+        uint16 B = half_from_float( *b++ );
+        uint16 A = half_from_float( *a++ );
+
+        s.serialize(&R, sizeof(uint16));
+        s.serialize(&G, sizeof(uint16));
+        s.serialize(&B, sizeof(uint16));
+        s.serialize(&A, sizeof(uint16));
+    }
+
+    return true;
 }

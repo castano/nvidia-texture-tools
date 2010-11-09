@@ -129,7 +129,7 @@ float WeightedClusterFit::GetBestError() const
 
 #if SQUISH_USE_SIMD
 
-void WeightedClusterFit::Compress3( void* block )
+bool WeightedClusterFit::Compress3( Vec3 * start, Vec3 * end )
 {
     int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
@@ -212,7 +212,7 @@ void WeightedClusterFit::Compress3( void* block )
 	if( CompareAnyLessThan( besterror, m_besterror ) )
 	{
 		// compute indices from cluster sizes.
-		u8 bestindices[16];
+		/*u8 bestindices[16];
 		{
 			int i = 0;
 			for(; i < b0; i++) {
@@ -233,16 +233,22 @@ void WeightedClusterFit::Compress3( void* block )
 		
 		m_colours->RemapIndices( ordered, bestindices );
 
-
 		// save the block
-		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );
-		
+		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );*/
+
+        *start = beststart.GetVec3();
+        *end = bestend.GetVec3();
+
 		// save the error
 		m_besterror = besterror;
+
+        return true;
 	}
+
+    return false;
 }
 
-void WeightedClusterFit::Compress4( void* block )
+bool WeightedClusterFit::Compress4( Vec3 * start, Vec3 * end )
 {
     int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
@@ -334,7 +340,7 @@ void WeightedClusterFit::Compress4( void* block )
 	// save the block if necessary
 	if( CompareAnyLessThan( besterror, m_besterror ) )
 	{
-		// compute indices from cluster sizes.
+		/*// compute indices from cluster sizes.
 		u8 bestindices[16];
 		{
 			int i = 0;
@@ -360,11 +366,18 @@ void WeightedClusterFit::Compress4( void* block )
         m_colours->RemapIndices( ordered, bestindices );
 
 		// save the block
-		WriteColourBlock4( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );
+		WriteColourBlock4( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );*/
+
+        *start = beststart.GetVec3();
+        *end = bestend.GetVec3();
 		
 		// save the error
 		m_besterror = besterror;
+
+        return true;
 	}
+
+    return false;
 }
 
 #else

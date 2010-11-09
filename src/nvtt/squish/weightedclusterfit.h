@@ -45,8 +45,8 @@ public:
 	float GetBestError() const;
 
 	// Make them public
-	virtual void Compress3( void* block );
-	virtual void Compress4( void* block );
+	bool Compress3( Vec3 * start, Vec3 * end );
+	bool Compress4( Vec3 * start, Vec3 * end );
 	
 private:
 

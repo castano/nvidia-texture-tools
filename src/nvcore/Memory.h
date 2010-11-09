@@ -11,6 +11,14 @@
 
 #include <new>	// new and delete
 
+
+#if NV_CC_GNUC
+#   define NV_ALIGN_16 __attribute__ ((__aligned__ (16)))
+#else
+#   define NV_ALIGN_16 __declspec(align(16))
+#endif
+
+
 #define NV_OVERRIDE_ALLOC 0
 
 #if NV_OVERRIDE_ALLOC

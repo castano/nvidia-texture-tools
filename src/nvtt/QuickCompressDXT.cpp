@@ -217,6 +217,33 @@ inline static uint computeIndices3(const ColorBlock & rgba, Vector3::Arg maxColo
 	return indices;
 }
 
+inline static uint computeIndices3(const Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
+{
+	Vector3 palette[4];
+	palette[0] = minColor;
+	palette[1] = maxColor;
+	palette[2] = (palette[0] + palette[1]) * 0.5f;
+	
+	uint indices = 0;
+	for(int i = 0; i < 16; i++)
+	{
+		float d0 = colorDistance(palette[0], block[i]);
+		float d1 = colorDistance(palette[1], block[i]);
+		float d2 = colorDistance(palette[2], block[i]);
+		
+		uint index;
+		if (d0 < d1 && d0 < d2) index = 0;
+		else if (d1 < d2) index = 1;
+		else index = 2;
+		
+		indices |= index << (2 * i);
+	}
+
+	return indices;
+}
+
+
+
 
 static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 {
@@ -266,7 +293,7 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	dxtBlock->indices = computeIndices4(block, a, b);
 }
 
-/*static void optimizeEndPoints3(Vector3 block[16], BlockDXT1 * dxtBlock)
+static void optimizeEndPoints3(Vector3 block[16], BlockDXT1 * dxtBlock)
 {
 	float alpha2_sum = 0.0f;
 	float beta2_sum = 0.0f;
@@ -278,7 +305,7 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	{
 		const uint bits = dxtBlock->indices >> (2 * i);
 
-		float beta = (bits & 1);
+		float beta = float(bits & 1);
 		if (bits & 2) beta = 0.5f;
 		float alpha = 1.0f - beta;
 
@@ -312,7 +339,7 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	dxtBlock->col0 = Color16(color1);
 	dxtBlock->col1 = Color16(color0);
 	dxtBlock->indices = computeIndices3(block, a, b);
-}*/
+}
 
 namespace
 {
@@ -571,7 +598,7 @@ void QuickCompress::compressDXT1a(const ColorBlock & rgba, BlockDXT1 * dxtBlock)
 		
 		dxtBlock->col0 = Color16(color1);
 		dxtBlock->col1 = Color16(color0);
-		dxtBlock->indices = computeIndices3(rgba, maxColor, minColor);
+		dxtBlock->indices = computeIndices3(block, maxColor, minColor);
 		
 		//	optimizeEndPoints(block, dxtBlock);
 	}
@@ -633,4 +660,52 @@ void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, 
 {
 	compressDXT1(rgba, &dxtBlock->color);
 	compressDXT5A(rgba, &dxtBlock->alpha, iterationCount);
+}
+
+
+
+void QuickCompress::outputBlock4(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * dxtBlock)
+{
+	Vector3 block[16];
+	extractColorBlockRGB(rgba, block);
+
+    Vector3 maxColor = start * 255;
+    Vector3 minColor = end * 255;
+	uint16 color0 = roundAndExpand(&maxColor);
+	uint16 color1 = roundAndExpand(&minColor);
+
+	if (color0 < color1)
+	{
+		swap(maxColor, minColor);
+		swap(color0, color1);
+	}
+
+	dxtBlock->col0 = Color16(color0);
+	dxtBlock->col1 = Color16(color1);
+	dxtBlock->indices = computeIndices4(block, maxColor, minColor);
+
+	optimizeEndPoints4(block, dxtBlock);
+}
+
+void QuickCompress::outputBlock3(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * dxtBlock)
+{
+	Vector3 block[16];
+	extractColorBlockRGB(rgba, block);
+
+    Vector3 maxColor = start * 255;
+    Vector3 minColor = end * 255;
+	uint16 color0 = roundAndExpand(&maxColor);
+	uint16 color1 = roundAndExpand(&minColor);
+
+	if (color0 > color1)
+	{
+		swap(maxColor, minColor);
+		swap(color0, color1);
+	}
+
+	dxtBlock->col0 = Color16(color0);
+	dxtBlock->col1 = Color16(color1);
+    dxtBlock->indices = computeIndices3(block, maxColor, minColor);
+
+	optimizeEndPoints3(block, dxtBlock);
 }
