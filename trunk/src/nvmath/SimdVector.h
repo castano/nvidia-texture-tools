@@ -5,7 +5,7 @@
 
 // Set some reasonable defaults.
 #ifndef NV_USE_ALTIVEC
-#   define NV_USE_ALTIVEC POSH_CPU_PPC
+#   define NV_USE_ALTIVEC NV_CPU_PPC
 #endif
 
 #ifndef NV_USE_SSE
