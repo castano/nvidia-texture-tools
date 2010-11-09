@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_INC_PATH)"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_PATH)\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -68,7 +68,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_LIB_PATH)\..\lib&quot;"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_PATH)\lib\Win32&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -127,7 +127,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_INC_PATH)"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_PATH)\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -150,7 +150,7 @@
 				AdditionalDependencies="cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)\..\lib64&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)\lib\x64&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -212,7 +212,7 @@
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_INC_PATH)"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_PATH)\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -220,7 +220,7 @@
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -236,7 +236,7 @@
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_LIB_PATH)\..\lib&quot;"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_PATH)\lib\Win32&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -300,14 +300,14 @@
 				EnableIntrinsicFunctions="true"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_INC_PATH)"
+				AdditionalIncludeDirectories="..;..\..\..\src;..\..\..\extern\gnuwin32\include;$(CUDA_PATH)\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;NVTT_EXPORTS;NVTT_SHARED;HAVE_CUDA;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -323,7 +323,7 @@
 				AdditionalDependencies="cudart.lib"
 				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(CUDA_LIB_PATH)\..\lib64&quot;"
+				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)\lib\x64&quot;"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -677,14 +677,22 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressionOptions.cpp"
+				RelativePath=".\nvtt.rc"
 				>
 			</File>
+			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="cuda"
+			>
 			<File
 				RelativePath="..\..\..\src\nvtt\cuda\CompressKernel.cu"
 				>
@@ -768,34 +776,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDX10.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDX11.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDX9.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDXT.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorRGB.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorRGBE.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\Context.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\cuda\ConvolveKernel.cu"
 				>
 				<FileConfiguration
@@ -868,84 +848,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\nvtt\cuda\CudaUtils.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\nvtt.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\nvtt_wrapper.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\OutputOptions.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\QuickCompressDXT.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\SingleColorLookup.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\TexImage.cpp"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
-			>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressionOptions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\Compressor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDX10.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDX11.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDX9.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorDXT.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorRGB.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\CompressorRGBE.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\Context.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\nvtt\cuda\CudaCompressorDXT.h"
 				>
 			</File>
@@ -954,52 +856,142 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\nvtt\cuda\CudaUtils.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\nvtt\cuda\CudaUtils.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\InputOptions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\nvtt.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\nvtt_wrapper.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\OutputOptions.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\QuickCompressDXT.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\nvtt\TexImage.h"
-				>
-			</File>
 		</Filter>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressionOptions.cpp"
 			>
-			<File
-				RelativePath=".\nvtt.rc"
-				>
-			</File>
-		</Filter>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressionOptions.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\Compressor.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDX10.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDX10.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDX11.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDX11.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDX9.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDX9.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDXT.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDXT.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorRGB.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorRGB.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorRGBE.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorRGBE.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\Context.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\Context.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\InputOptions.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\nvtt.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\nvtt.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\nvtt_wrapper.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\nvtt_wrapper.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\OptimalCompressDXT.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\OutputOptions.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\OutputOptions.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\QuickCompressDXT.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\QuickCompressDXT.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\SingleColorLookup.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\TexImage.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\TexImage.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -111,6 +111,9 @@ namespace nv
         float pixel(uint x, uint y, uint c) const;
         float & pixel(uint x, uint y, uint c);
 
+        float pixel(uint idx, uint c) const;
+        float & pixel(uint idx, uint c);
+
         float pixel(uint idx) const;
         float & pixel(uint idx);
 
@@ -195,6 +198,24 @@ namespace nv
         nvDebugCheck(y < m_height);
         nvDebugCheck(c < m_componentNum);
         return m_mem[(c * m_height + y) * m_width + x];
+    }
+
+    /// Get pixel component.
+    inline float FloatImage::pixel(uint idx, uint c) const
+    {
+        nvDebugCheck(m_mem != NULL);
+        nvDebugCheck(idx < uint(m_width*m_height));
+        nvDebugCheck(c < m_componentNum);
+        return m_mem[c * m_height * m_width + idx];
+    }
+
+    /// Get pixel component.
+    inline float & FloatImage::pixel(uint idx, uint c)
+    {
+        nvDebugCheck(m_mem != NULL);
+        nvDebugCheck(idx < uint(m_width*m_height));
+        nvDebugCheck(c < m_componentNum);
+        return m_mem[c * m_height * m_width + idx];
     }
 
     /// Get pixel component.

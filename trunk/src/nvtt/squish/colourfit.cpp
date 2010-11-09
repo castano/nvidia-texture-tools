@@ -38,21 +38,21 @@ void ColourFit::SetColourSet( ColourSet const* colours, int flags )
 	m_flags = flags;
 }
 
-void ColourFit::Compress( void* block )
+void ColourFit::Compress( Vec3 * start, Vec3 * end )
 {
 	bool isDxt1 = ( ( m_flags & kDxt1 ) != 0 );
 	if( isDxt1 )
 	{
-		Compress3( block );
+		Compress3( start, end );
 	
 		if( !m_colours->IsTransparent() )
 		{		
-			Compress4( block );
+			Compress4( start, end );
 		}
 	}
 	else
 	{
-		Compress4( block );
+		Compress4( start, end );
 	}
 }
 

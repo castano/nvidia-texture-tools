@@ -26,21 +26,8 @@ namespace nv
         void swizzle(uint x, uint y, uint z, uint w); // 0=r, 1=g, 2=b, 3=a, 4=0xFF, 5=0
 
         bool isSingleColor(Color32 mask = Color32(0xFF, 0xFF, 0xFF, 0x00)) const;
-        //uint countUniqueColors() const;
-        //Color32 averageColor() const;
         bool hasAlpha() const;
 
-        //void diameterRange(Color32 * start, Color32 * end) const;
-        //void luminanceRange(Color32 * start, Color32 * end) const;
-        //void boundsRange(Color32 * start, Color32 * end) const;
-        //void boundsRangeAlpha(Color32 * start, Color32 * end) const;
-
-        //void sortColorsByAbsoluteValue();
-
-        //void computeRange(const Vector3 & axis, Color32 * start, Color32 * end) const;
-        //void sortColors(const Vector3 & axis);
-
-        //float volume() const;
 
         // Accessors
         const Color32 * colors() const;
@@ -93,19 +80,21 @@ namespace nv
     }
 
 
-    struct FloatColorBlock
+    struct ColorSet
     {
-        FloatColorBlock() : w(4), h(4) {}
-        FloatColorBlock(uint w, uint h) : w(w), h(h) {}
+        ColorSet() : w(4), h(4) {}
+        ColorSet(uint w, uint h) : w(w), h(h) {}
 
         void init(const Image * img, uint x, uint y);
         void init(const FloatImage * img, uint x, uint y);
         void init(const uint * data, uint w, uint h, uint x, uint y);
         void init(const float * data, uint w, uint h, uint x, uint y);
 
-        Vector4 color(uint x, uint y) const { 	nvDebugCheck(x < w && y < h); return colors[y * 4 + x]; }
+        Vector4 color(uint x, uint y) const { nvDebugCheck(x < w && y < h); return colors[y * 4 + x]; }
         Vector4 & color(uint x, uint y) { nvDebugCheck(x < w && y < h); return colors[y * 4 + x]; }
 
+        Vector4 color(uint i) const { nvDebugCheck(i < 16); return colors[i]; }
+        Vector4 & color(uint i) { nvDebugCheck(i < 16); return colors[i]; }
 
         Vector4 colors[16];
         uint w, h;

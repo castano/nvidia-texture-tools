@@ -145,6 +145,11 @@ static const char * s_witnessImageSet[] = {
     "specRuin-puzzle.tga"
 };
 
+static const char * s_witnessLmapImageSet[] = {
+    "specruin.dds",
+};
+
+
 enum Mode {
     Mode_BC1,
     Mode_BC1_Alpha,
@@ -152,9 +157,12 @@ enum Mode {
     Mode_BC3_Alpha,
     Mode_BC3_YCoCg,
     Mode_BC3_RGBM,
+    Mode_BC3_LUVW,
     Mode_BC1_Normal,
     Mode_BC3_Normal,
     Mode_BC5_Normal,
+    Mode_BC3_Lightmap_1,
+    Mode_BC3_Lightmap_2,
 };
 static const char * s_modeNames[] = {
     "BC1",
@@ -167,6 +175,8 @@ static const char * s_modeNames[] = {
     "BC1-Normal",
     "BC3-Normal",
     "BC5-Normal",
+    "BC3-RGBM",
+    "BC3-LUVW",
 };
 
 struct Test {
@@ -175,26 +185,29 @@ struct Test {
     Mode modes[4];
 };
 static Test s_imageTests[] = {
-    {"DXT Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM}},
+    {"DXT Color", 1, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_LUVW}},
     {"DXT Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
     {"DXT Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
+    {"DXT Lightmap", 2, {Mode_BC3_Lightmap_1, Mode_BC3_Lightmap_2}},
 };
-const int s_testCount = ARRAY_SIZE(s_imageTests);
+const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
 
 struct ImageSet
 {
     const char * name;
+    const char * basePath;
     const char ** fileNames;
     int fileCount;
 };
 static ImageSet s_imageSets[] = {
-    {"Kodak",       s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet)},       // 0
-    {"Waterloo",    s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet)},    // 1
-    {"Epic",        s_epicImageSet,         ARRAY_SIZE(s_epicImageSet)},        // 2
-    {"Farbraush",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet)},  // 3
-    {"Lugaru",      s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet)},      // 4
-    {"Quake3",      s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet)},      // 5
-    {"Witness",     s_witnessImageSet,       ARRAY_SIZE(s_witnessImageSet)}     // 6
+    {"Kodak",       "kodak",        s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet)},       // 0
+    {"Waterloo",    "waterloo",     s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet)},    // 1
+    {"Epic",        "epic",         s_epicImageSet,         ARRAY_SIZE(s_epicImageSet)},        // 2
+    {"Farbraush",   "farbrausch",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet)},  // 3
+    {"Lugaru",      "lugaru",       s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet)},      // 4
+    {"Quake3",      "quake3",       s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet)},      // 5
+    {"Witness",     "witness",      s_witnessImageSet,      ARRAY_SIZE(s_witnessImageSet)},     // 6
+    {"Lightmap",    "lightmap",     s_witnessLmapImageSet,  ARRAY_SIZE(s_witnessLmapImageSet)}, // 7
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
@@ -227,9 +240,10 @@ struct MyOutputHandler : public nvtt::OutputHandler
     nvtt::TexImage decompress(Mode mode, nvtt::Decoder decoder)
     {
         nvtt::Format format; 
-        if (mode == Mode_BC1) format = nvtt::Format_BC1;
+        if (mode == Mode_BC1 || mode == Mode_BC1_Alpha || mode == Mode_BC1_Normal) format = nvtt::Format_BC1;
+        else if (mode == Mode_BC2_Alpha) format = nvtt::Format_BC2;
         else if (mode == Mode_BC5_Normal) format = nvtt::Format_BC5;
-        else  format = nvtt::Format_BC3;
+        else format = nvtt::Format_BC3;
 
         nvtt::TexImage img;
         img.setImage2D(format, decoder, m_width, m_height, m_data);
@@ -263,7 +277,7 @@ int main(int argc, char *argv[])
     bool nocuda = false;
     bool showHelp = false;
     nvtt::Decoder decoder = nvtt::Decoder_Reference;
-    const char * basePath = "";
+    Path basePath = "";
     const char * outPath = "output";
     const char * regressPath = NULL;
 
@@ -274,6 +288,14 @@ int main(int argc, char *argv[])
         {
             if (i+1 < argc && argv[i+1][0] != '-') {
                 setIndex = atoi(argv[i+1]);
+
+                for (int j = 0; j < s_imageSetCount; j++) {
+                    if (strCaseCmp(s_imageSets[j].name, argv[i+1]) == 0) {
+                        setIndex = j;
+                        break;
+                    }
+                }
+
                 i++;
             }
         }
@@ -327,7 +349,7 @@ int main(int argc, char *argv[])
     }
 
     // Validate inputs.
-    if (testIndex >= s_testCount) {
+    if (testIndex >= s_imageTestCount) {
         printf("Invalid test %d\n", testIndex);
         return 0;
     }
@@ -343,17 +365,14 @@ int main(int argc, char *argv[])
         printf("Input options:\n");
         printf("  -path <path>   \tInput image path.\n");
         printf("  -regress <path>\tRegression directory.\n");
-        printf("  -set [0:5]     \tImage set.\n");
-        printf("    0:           \tKodak.\n");
-        printf("    1:           \tWaterloo.\n");
-        printf("    2:           \tEpic.\n");
-        printf("    3:           \tFarbrausch.\n");
-        printf("    4:           \tLugaru.\n");
-        printf("    5:           \tQuake 3.\n");
-        printf("  -test [0:2]    \tCompression tests to run.");
-        printf("    0:           \tDXT Color.\n");
-        printf("    1:           \tDXT Alpha.\n");
-        printf("    2:           \tDXT Normal.\n");
+        printf("  -set [0:%d]     \tImage set.\n", s_imageSetCount-1);
+        for (int i = 0; i < s_imageSetCount; i++) {
+            printf("    %i:           \t%s.\n", i, s_imageSets[i].name);
+        }
+        printf("  -test [0:%d]    \tCompression tests to run.", s_imageTestCount);
+        for (int i = 0; i < s_imageTestCount; i++) {
+            printf("    %i:           \t%s.\n", i, s_imageTests[i].name);
+        }
         printf("  -dec x         \tDecompressor.\n");
         printf("    0:           \tReference.\n");
         printf("    1:           \tNVIDIA.\n");
@@ -397,7 +416,9 @@ int main(int argc, char *argv[])
     nvtt::Context context;
     context.enableCudaAcceleration(!nocuda);
 
-    FileSystem::changeDirectory(basePath);
+    basePath.append(set.basePath);
+
+    FileSystem::changeDirectory(basePath.str());
     FileSystem::createDirectory(outPath);
 
     //Path csvFileName;
@@ -406,7 +427,7 @@ int main(int argc, char *argv[])
     //TextWriter csvWriter(&csvStream);
 
     Path graphFileName;
-    graphFileName.format("%s/result-%d.txt", outPath, setIndex);
+    graphFileName.format("%s/chart.txt", outPath/*, test.name*/);
     StdOutputStream graphStream(graphFileName.str());
     TextWriter graphWriter(&graphStream);
 
@@ -434,7 +455,7 @@ int main(int argc, char *argv[])
     {
         const char * colors[] = {
             "3D7930", "952826", "3D1FC1",
-            "3D7930", "952826", "3D1FC1", // pick other colors...
+            "FF9900", "999999", "999999", // pick other colors...
         };
         graphWriter << colors[t];
         if (t != test.count-1) graphWriter << ",";
@@ -484,10 +505,10 @@ int main(int argc, char *argv[])
     for (int t = 0; t < test.count; t++)
     {
         Mode mode = test.modes[t];
-        if (mode == Mode_BC1) {
+        if (mode == Mode_BC1 || mode == Mode_BC1_Alpha || mode == Mode_BC1_Normal) {
             compressionOptions.setFormat(nvtt::Format_BC1);
         }
-        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_RGBM) {
+        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_RGBM || mode == Mode_BC3_LUVW || mode == Mode_BC3_Lightmap_1 || mode == Mode_BC3_Lightmap_2) {
             compressionOptions.setFormat(nvtt::Format_BC3);
         }
         else if (mode == Mode_BC3_Normal) {
@@ -497,10 +518,10 @@ int main(int argc, char *argv[])
             compressionOptions.setFormat(nvtt::Format_BC5);
         }
 
-        if (mode == Mode_BC3_Alpha) {
+        if (mode == Mode_BC3_Alpha || mode == Mode_BC3_Lightmap_1 || mode == Mode_BC3_Lightmap_2) { // Lightmap's alpha channel is coverage.
             img.setAlphaMode(nvtt::AlphaMode_Transparency);
         }
-        if (mode == Mode_BC3_Normal || mode == Mode_BC5_Normal) {
+        if (mode == Mode_BC1_Normal || mode == Mode_BC3_Normal || mode == Mode_BC5_Normal) {
             img.setNormalMap(true);
         }
 
@@ -528,6 +549,56 @@ int main(int argc, char *argv[])
             else if (mode == Mode_BC3_RGBM) {
                 tmp.toRGBM();
             }
+            else if (mode == Mode_BC3_LUVW) {
+                tmp.toLUVW();
+            }
+            else if (mode == Mode_BC3_Lightmap_1) {
+                tmp.toRGBM(4);
+
+                /*float rmin, rmax;
+                tmp.range(0, &rmin, &rmax);
+
+                float gmin, gmax;
+                tmp.range(1, &gmin, &gmax);
+
+                float bmin, bmax;
+                tmp.range(2, &bmin, &bmax);
+
+                float lmin, lmax;
+                tmp.range(3, &lmin, &lmax);
+
+                printf("rmin: %.3f   rmax: %.3f\n", rmin, rmax);
+                printf("gmin: %.3f   gmax: %.3f\n", gmin, gmax);
+                printf("bmin: %.3f   bmax: %.3f\n", bmin, bmax);
+                printf("lmin: %.3f   lmax: %.3f\n", lmin, lmax);
+
+                const int N = 32;
+                int chistogram[N];
+                int lhistogram[N];
+                memset(chistogram, 0, sizeof(chistogram)); 
+                memset(lhistogram, 0, sizeof(lhistogram));
+
+                tmp.histogram(0, 0, 1, N, chistogram);
+                tmp.histogram(1, 0, 1, N, chistogram);
+                tmp.histogram(2, 0, 1, N, chistogram);
+                tmp.histogram(3, 0, 1, N, lhistogram);
+
+                printf("Color histogram:\n");
+                for (int i = 0; i < N; i++) {
+                    printf("%d, ", chistogram[i]);
+                }
+                printf("\n");
+
+                printf("Luminance histogram:\n");
+                for (int i = 0; i < N; i++) {
+                    printf("%d, ", lhistogram[i]);
+                }
+                printf("\n");*/
+            }
+            else if (mode == Mode_BC3_Lightmap_2) {
+                tmp.toLUVW(4);
+            }
+
 
             printf("Compressing: \t'%s'\n", set.fileNames[i]);
 
@@ -540,12 +611,8 @@ int main(int argc, char *argv[])
             totalTime += timer.elapsed();
 
             nvtt::TexImage img_out = outputHandler.decompress(mode, decoder);
-            if (mode == Mode_BC3_Alpha) {
-                img_out.setAlphaMode(nvtt::AlphaMode_Transparency);
-            }
-            if (mode == Mode_BC3_Normal || mode == Mode_BC5_Normal) {
-                img_out.setNormalMap(true);
-            }
+            img_out.setAlphaMode(img.alphaMode());
+            img_out.setNormalMap(img.isNormalMap());
 
             if (mode == Mode_BC3_YCoCg) {
                 img_out.scaleBias(0, 1.0, -0.5);
@@ -555,11 +622,30 @@ int main(int argc, char *argv[])
             else if (mode == Mode_BC3_RGBM) {
                 img_out.fromRGBM();
             }
+            else if (mode == Mode_BC3_LUVW) {
+                img_out.fromLUVW();
+            }
+            else if (mode == Mode_BC3_Lightmap_1) {
+                img_out.fromRGBM(4);
+            }
+            else if (mode == Mode_BC3_Lightmap_2) {
+                img_out.fromLUVW(4);
+            }
+
+
+            Path outputFilePath;
+            outputFilePath.format("%s/%s", outPath, s_modeNames[test.modes[t]]);
+            FileSystem::createDirectory(outputFilePath.str());
 
             Path outputFileName;
-            outputFileName.format("%s/%s", outPath, set.fileNames[i]);
+            outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
             outputFileName.stripExtension();
-            outputFileName.append(".png");
+            if (mode == Mode_BC3_Lightmap_1 || mode == Mode_BC3_Lightmap_2) {
+                outputFileName.append(".dds");
+            }
+            else {
+                outputFileName.append(".png");
+            }
             if (!img_out.save(outputFileName.str()))
             {
                 printf("Error saving file '%s'.\n", outputFileName.str());
@@ -572,6 +658,12 @@ int main(int argc, char *argv[])
 
             graphWriter << rmse;
             if (i != set.fileCount-1) graphWriter << ",";
+
+
+            outputFileName.stripExtension();
+            outputFileName.append("_diff.png");
+            nvtt::diff(img, img_out, 4.0f).save(outputFileName.str());
+
 
             // Output csv file
             //csvWriter << "\"" << fileNames[i] << "\"," << rmse << "\n";
@@ -615,7 +707,7 @@ int main(int argc, char *argv[])
         printf("  Total Time: \t%.3f sec\n", totalTime);
         printf("  Average RMSE:\t%.4f\n", totalRMSE);
 
-        if (t != s_testCount-1) graphWriter << "|";
+        if (t != test.count-1) graphWriter << "|";
     }
 
     /*if (regressPath != NULL)

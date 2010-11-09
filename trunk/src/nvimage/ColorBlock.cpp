@@ -458,7 +458,8 @@ float ColorBlock::volume() const
 }*/
 
 
-void FloatColorBlock::init(const Image * img, uint x, uint y)
+
+void ColorSet::init(const Image * img, uint x, uint y)
 {
     w = min(4U, img->width() - x);
     h = min(4U, img->height() - y);
@@ -485,15 +486,15 @@ void FloatColorBlock::init(const Image * img, uint x, uint y)
     }
 }
 
-void FloatColorBlock::init(const FloatImage * img, uint x, uint y)
+void ColorSet::init(const FloatImage * img, uint x, uint y)
 {
 }
 
-void FloatColorBlock::init(const uint * data, uint w, uint h, uint x, uint y)
+void ColorSet::init(const uint * data, uint w, uint h, uint x, uint y)
 {
 }
 
-void FloatColorBlock::init(const float * data, uint w, uint h, uint x, uint y)
+void ColorSet::init(const float * data, uint w, uint h, uint x, uint y)
 {
 }
 

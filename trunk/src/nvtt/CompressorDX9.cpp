@@ -109,27 +109,39 @@ void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
 }
 
 
+inline static Vector3 vec(nvsquish::Vec3 v) { return Vector3(v.X(), v.Y(), v.Z()); }
+
 void NormalCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
 	nvsquish::WeightedClusterFit fit;
 	fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
-	if (rgba.isSingleColor())
+    BlockDXT1 * block = new(output) BlockDXT1;
+    if (rgba.isSingleColor())
 	{
-		BlockDXT1 * block = new(output) BlockDXT1;
 		OptimalCompress::compressDXT1(rgba.color(0), block);
 	}
 	else
 	{
 		nvsquish::ColourSet colours((uint8 *)rgba.colors(), 0);
 		fit.SetColourSet(&colours, nvsquish::kDxt1);
-		fit.Compress(output);
+		
+        nvsquish::Vec3 start, end;
+        
+        fit.Compress4(&start, &end);
+        QuickCompress::outputBlock4(rgba, vec(start), vec(end), block);
+
+        if (fit.Compress3(&start, &end)) {
+            QuickCompress::outputBlock3(rgba, vec(start), vec(end), block);
+        }
 	}
 }
 
 
 void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
+#pragma NV_MESSAGE("NormalCompressorDXT1a - Not implemented!")
+    /*
     uint alphaMask = 0;
 	for (uint i = 0; i < 16; i++)
 	{
@@ -137,7 +149,7 @@ void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
 	}
 
 	const bool isSingleColor = rgba.isSingleColor();
-		
+	
 	if (isSingleColor)
 	{
 		BlockDXT1 * block = new(output) BlockDXT1;
@@ -156,11 +168,14 @@ void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
 
 		fit.Compress(output);
 	}
+    */
 }
 
 
 void NormalCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
+#pragma NV_MESSAGE("NormalCompressorDXT1a - Not implemented!")
+    /*
 	BlockDXT3 * block = new(output) BlockDXT3;
 
 	// Compress explicit alpha.
@@ -183,11 +198,14 @@ void NormalCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 		fit.SetColourSet(&colours, 0);
 		fit.Compress(&block->color);
 	}
+    */
 }
 
 
 void NormalCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
+#pragma NV_MESSAGE("NormalCompressorDXT1a - Not implemented!")
+    /*
 	BlockDXT5 * block = new(output) BlockDXT5;
 
 	// Compress alpha.
@@ -217,11 +235,14 @@ void NormalCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 		fit.SetColourSet(&colours, 0);
 		fit.Compress(&block->color);
 	}
+    */
 }
 
 
 void NormalCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
+#pragma NV_MESSAGE("NormalCompressorDXT1a - Not implemented!")
+    /*
 	BlockDXT5 * block = new(output) BlockDXT5;
 
 	// Compress Y.
@@ -263,6 +284,7 @@ void NormalCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
 	{
 		QuickCompress::compressDXT5A(rgba, &block->alpha);
 	}
+    */
 }
 
 

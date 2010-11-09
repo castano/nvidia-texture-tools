@@ -12,10 +12,10 @@
 #endif
 
 #if !defined(_M_X64)
-#define HAVE_FREEIMAGE
-//#define HAVE_PNG
-//#define HAVE_JPEG
-//#define HAVE_TIFF
+//#define HAVE_FREEIMAGE
+#define HAVE_PNG
+#define HAVE_JPEG
+#define HAVE_TIFF
 #endif
 
 #endif // NV_CONFIG

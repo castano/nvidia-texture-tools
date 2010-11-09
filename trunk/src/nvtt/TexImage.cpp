@@ -299,6 +299,46 @@ const float * TexImage::data() const
     return m->image->channel(0);
 }
 
+void TexImage::histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const
+{
+    // We assume it's clear in case we want to accumulate multiple histograms.
+    //memset(bins, 0, sizeof(int)*count);
+
+    if (m->image == NULL) return;
+
+    const float * c = m->image->channel(channel);
+
+    float scale = float(binCount) / rangeMax;
+    float bias = - scale * rangeMin;
+
+    const uint count = m->image->width() * m->image->height();
+    for (uint i = 0; i < count; i++) {
+        float f = c[i] * scale + bias;
+        int idx = ifloor(f);
+        if (idx < 0) idx = 0;
+        if (idx > binCount-1) idx = binCount-1;
+        binPtr[idx]++;
+    }
+}
+
+void TexImage::range(int channel, float * rangeMin, float * rangeMax)
+{
+    Vector2 range(FLT_MAX, -FLT_MAX);
+
+    FloatImage * img = m->image;
+    float * c = img->channel(channel);
+
+    const uint count = img->width() * img->height();
+    for (uint p = 0; p < count; p++) {
+        float f = c[p];
+        if (f < range.x) range.x = f;
+        if (f > range.y) range.y = f;
+    }
+
+    *rangeMin = range.x;
+    *rangeMax = range.y;
+}
+
 
 bool TexImage::load(const char * fileName)
 {
@@ -320,8 +360,6 @@ bool TexImage::load(const char * fileName)
 
 bool TexImage::save(const char * fileName) const
 {
-#pragma NV_MESSAGE("TODO: Add support for DDS textures in TexImage::save")
-
     if (m->image != NULL)
     {
         return ImageIO::saveFloat(fileName, m->image, 0, 4);
@@ -989,33 +1027,19 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
     m->image->scaleAlphaToCoverage(coverage, alphaRef, 3);
 }
 
-bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
+/*bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
 {
     if (m->image == NULL) return false;
 
-    Vector2 range(FLT_MAX, -FLT_MAX);
+    range(0, rangeMin, rangeMax);
 
-    // Compute range.
-    FloatImage * img = m->image;
-
-    const uint count = img->count();
-    for (uint p = 0; p < count; p++) {
-        float c = img->pixel(p);
-
-        if (c < range.x) range.x = c;
-        if (c > range.y) range.y = c;
-    }
-
-    if (range.x == range.y) {
+    if (*rangeMin == *rangeMax) {
         // Single color image.
         return false;
     }
 
-    *rangeMin = range.x;
-    *rangeMax = range.y;
-
-    const float scale = 1.0f / (range.y - range.x);
-    const float bias = range.x * scale;
+    const float scale = 1.0f / (*rangeMax - *rangeMin);
+    const float bias = *rangeMin * scale;
 
     if (range.x == 0.0f && range.y == 1.0f) {
         // Already normalized.
@@ -1029,7 +1053,7 @@ bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
     //img->clamp(0, 4, 0.0f, 1.0f);
 
     return true;
-}
+}*/
 
 // Ideally you should compress/quantize the RGB and M portions independently.
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.
@@ -1054,7 +1078,6 @@ void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
         float B = nv::clamp(b[i] * irange, 0.0f, 1.0f);
 
         float M = max(max(R, G), max(B, 1e-6f)); // Avoid division by zero.
-        //m = quantizeCeil(m, 8);
 
         r[i] = R / M;
         g[i] = G / M;
@@ -1233,20 +1256,19 @@ void TexImage::toLUVW(float range/*= 1.0f*/)
         float G = nv::clamp(g[i] * irange, 0.0f, 1.0f);
         float B = nv::clamp(b[i] * irange, 0.0f, 1.0f);
 
-        float L = max(sqrtf(R*R + G*G + B*B), 1e-6f)); // Avoid division by zero.
-        //m = quantizeCeil(m, 8);
+        float L = max(sqrtf(R*R + G*G + B*B), 1e-6f); // Avoid division by zero.
 
         r[i] = R / L;
         g[i] = G / L;
         b[i] = B / L;
-        a[i] = L;
+        a[i] = L / sqrtf(3);
     }
 }
 
 void TexImage::fromLUVW(float range/*= 1.0f*/)
 {
     // Decompression is the same as in RGBM.
-    fromRGBM(range);
+    fromRGBM(range * sqrtf(3));
 }
 
 
@@ -1435,10 +1457,52 @@ float nvtt::rmsAlphaError(const TexImage & reference, const TexImage & image)
     return float(sqrt(mse / count));
 }
 
-TexImage nvtt::diff(const TexImage & reference, const TexImage & image)
+TexImage nvtt::diff(const TexImage & reference, const TexImage & image, float scale)
 {
-    // @@ TODO.
-    return TexImage();
+    const FloatImage * ref = reference.m->image;
+    const FloatImage * img = image.m->image;
+
+    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
+        return TexImage();
+    }
+    nvDebugCheck(img->componentNum() == 4);
+    nvDebugCheck(ref->componentNum() == 4);
+
+    nvtt::TexImage diffImage;
+    FloatImage * diff = diffImage.m->image = new FloatImage;
+    diff->allocate(4, img->width(), img->height());
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++)
+    {
+        float r0 = img->pixel(i, 0);
+        float g0 = img->pixel(i, 1);
+        float b0 = img->pixel(i, 2);
+        //float a0 = img->pixel(i, 3);
+        float r1 = ref->pixel(i, 0);
+        float g1 = ref->pixel(i, 1);
+        float b1 = ref->pixel(i, 2);
+        float a1 = ref->pixel(i, 3);
+
+        float dr = r0 - r1;
+        float dg = g0 - g1;
+        float db = b0 - b1;
+        //float da = a0 - a1;
+
+        if (reference.alphaMode() == nvtt::AlphaMode_Transparency)
+        {
+            dr *= a1;
+            dg *= a1;
+            db *= a1;
+        }
+
+        diff->pixel(i, 0) = dr * scale;
+        diff->pixel(i, 1) = dg * scale;
+        diff->pixel(i, 2) = db * scale;
+        diff->pixel(i, 3) = a1;
+    }
+
+    return diffImage;
 }
 
 
