@@ -86,7 +86,7 @@ void CompressionOptions::setQuality(Quality quality)
 
 
 /// Set the weights of each color channel. 
-/// The choice for these values is subjective. In many case uniform color weights 
+/// The choice for these values is subjective. In most cases uniform color weights
 /// (1.0, 1.0, 1.0) work very well. A popular choice is to use the NTSC luma encoding 
 /// weights (0.2126, 0.7152, 0.0722), but I think that blue contributes to our 
 /// perception more than a 7%. A better choice in my opinion is (3, 4, 2).

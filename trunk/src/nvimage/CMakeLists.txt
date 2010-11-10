@@ -2,29 +2,18 @@ PROJECT(nvimage)
 
 SET(IMAGE_SRCS	
     nvimage.h
-    FloatImage.h 
-    FloatImage.cpp
-    Filter.h
-    Filter.cpp
-    Image.h
-    Image.cpp
-    ImageIO.h
-    ImageIO.cpp
-    ColorBlock.h
-    ColorBlock.cpp
-    BlockDXT.h
-    BlockDXT.cpp
-    DirectDrawSurface.h
-    DirectDrawSurface.cpp
-    Quantize.h
-    Quantize.cpp
-    NormalMap.h
-    NormalMap.cpp
-    PsdFile.h
-    TgaFile.h
+    BlockDXT.h BlockDXT.cpp
+    ColorBlock.h ColorBlock.cpp
+    DirectDrawSurface.h DirectDrawSurface.cpp
+    Filter.h Filter.cpp
+    FloatImage.h FloatImage.cpp
+    Image.h Image.cpp
+    ImageIO.h ImageIO.cpp
+    NormalMap.h NormalMap.cpp
     PixelFormat.h
-    ColorSpace.h
-    ColorSpace.cpp)
+    PsdFile.h
+    Quantize.h Quantize.cpp
+    TgaFile.h)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

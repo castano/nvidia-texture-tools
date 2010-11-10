@@ -175,6 +175,16 @@ namespace nv
         return Vector4(c.r * scale, c.g * scale, c.b * scale, c.a * scale);
     }
 
+
+    inline float perceptualColorDistance(Vector3::Arg c0, Vector3::Arg c1)
+    {
+        float rmean = (c0.r + c1.r) * 0.5f;
+        float r = c1.r - c0.r;
+        float g = c1.g - c0.g;
+        float b = c1.b - c0.b;
+        return sqrtf((2 + rmean)*r*r + 4*g*g + (3 - rmean)*b*b);
+    }
+
 } // nv namespace
 
 #endif // NV_MATH_COLOR_H
