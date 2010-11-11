@@ -23,7 +23,7 @@
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
    -------------------------------------------------------------------------- */
-   
+
 #ifndef NV_SQUISH_WEIGHTEDCLUSTERFIT_H
 #define NV_SQUISH_WEIGHTEDCLUSTERFIT_H
 
@@ -45,8 +45,8 @@ public:
 	float GetBestError() const;
 
 	// Make them public
-	bool Compress3( Vec3 * start, Vec3 * end );
-	bool Compress4( Vec3 * start, Vec3 * end );
+	virtual void Compress3( void* block );
+	virtual void Compress4( void* block );
 	
 private:
 
