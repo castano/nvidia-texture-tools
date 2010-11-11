@@ -22,7 +22,7 @@
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
    -------------------------------------------------------------------------- */
-   
+
 #include "colourfit.h"
 #include "colourset.h"
 
@@ -38,21 +38,21 @@ void ColourFit::SetColourSet( ColourSet const* colours, int flags )
 	m_flags = flags;
 }
 
-void ColourFit::Compress( Vec3 * start, Vec3 * end )
+void ColourFit::Compress( void* block )
 {
 	bool isDxt1 = ( ( m_flags & kDxt1 ) != 0 );
 	if( isDxt1 )
 	{
-		Compress3( start, end );
+		Compress3( block );
 	
 		if( !m_colours->IsTransparent() )
 		{		
-			Compress4( start, end );
+			Compress4( block );
 		}
 	}
 	else
 	{
-		Compress4( start, end );
+		Compress4( block );
 	}
 }
 

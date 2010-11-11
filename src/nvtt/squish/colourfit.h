@@ -40,11 +40,11 @@ public:
 
 	void SetColourSet( ColourSet const* colours, int flags );
 
-	void Compress( Vec3 * start, Vec3 * end );
+	void Compress( void* block );
 
 protected:
-	virtual bool Compress3( Vec3 * start, Vec3 * end ) = 0;
-	virtual bool Compress4( Vec3 * start, Vec3 * end ) = 0;
+	virtual void Compress3( void* block ) = 0;
+	virtual void Compress4( void* block ) = 0;
 
 	ColourSet const* m_colours;
 	int m_flags;
