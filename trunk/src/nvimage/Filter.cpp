@@ -265,6 +265,19 @@ void KaiserFilter::setParameters(float alpha, float stretch)
     this->stretch = stretch;
 }
 
+GaussianFilter::GaussianFilter(float w) : Filter(w) { setParameters(1); }
+
+float GaussianFilter::evaluate(float x) const
+{
+    // variance = sigma^2
+    return (1.0f / sqrtf(2 * PI * variance)) * expf(-x*x / (2 * variance));
+}
+
+void GaussianFilter::setParameters(float variance)
+{
+    this->variance = variance;
+}
+
 
 
 /// Ctor.

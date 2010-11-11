@@ -116,6 +116,19 @@ namespace nv
         float stretch;
     };
 
+    // Gaussian filter.
+    class GaussianFilter : public Filter
+    {
+    public:
+        GaussianFilter(float w);
+        virtual float evaluate(float x) const;
+
+        void setParameters(float variance);
+
+    private:
+        float variance;
+    };
+
 
 
     /// A 1D kernel. Used to precompute filter weights.

@@ -7,6 +7,7 @@ SET(IMAGE_SRCS
     DirectDrawSurface.h DirectDrawSurface.cpp
     Filter.h Filter.cpp
     FloatImage.h FloatImage.cpp
+	ErrorMetric.h ErrorMetric.cpp
     Image.h Image.cpp
     ImageIO.h ImageIO.cpp
     NormalMap.h NormalMap.cpp
