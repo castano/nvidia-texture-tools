@@ -129,7 +129,7 @@ float WeightedClusterFit::GetBestError() const
 
 #if SQUISH_USE_SIMD
 
-bool WeightedClusterFit::Compress3( Vec3 * start, Vec3 * end )
+void WeightedClusterFit::Compress3( void* block )
 {
     int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
@@ -212,7 +212,7 @@ bool WeightedClusterFit::Compress3( Vec3 * start, Vec3 * end )
 	if( CompareAnyLessThan( besterror, m_besterror ) )
 	{
 		// compute indices from cluster sizes.
-		/*u8 bestindices[16];
+		u8 bestindices[16];
 		{
 			int i = 0;
 			for(; i < b0; i++) {
@@ -233,22 +233,16 @@ bool WeightedClusterFit::Compress3( Vec3 * start, Vec3 * end )
 		
 		m_colours->RemapIndices( ordered, bestindices );
 
+
 		// save the block
-		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );*/
-
-        *start = beststart.GetVec3();
-        *end = bestend.GetVec3();
-
+		WriteColourBlock3( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );
+		
 		// save the error
 		m_besterror = besterror;
-
-        return true;
 	}
-
-    return false;
 }
 
-bool WeightedClusterFit::Compress4( Vec3 * start, Vec3 * end )
+void WeightedClusterFit::Compress4( void* block )
 {
     int const count = m_colours->GetCount();
 	Vec4 const one = VEC4_CONST(1.0f);
@@ -340,7 +334,7 @@ bool WeightedClusterFit::Compress4( Vec3 * start, Vec3 * end )
 	// save the block if necessary
 	if( CompareAnyLessThan( besterror, m_besterror ) )
 	{
-		/*// compute indices from cluster sizes.
+		// compute indices from cluster sizes.
 		u8 bestindices[16];
 		{
 			int i = 0;
@@ -366,18 +360,11 @@ bool WeightedClusterFit::Compress4( Vec3 * start, Vec3 * end )
         m_colours->RemapIndices( ordered, bestindices );
 
 		// save the block
-		WriteColourBlock4( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );*/
-
-        *start = beststart.GetVec3();
-        *end = bestend.GetVec3();
+		WriteColourBlock4( beststart.GetVec3(), bestend.GetVec3(), bestindices, block );
 		
 		// save the error
 		m_besterror = besterror;
-
-        return true;
 	}
-
-    return false;
 }
 
 #else
