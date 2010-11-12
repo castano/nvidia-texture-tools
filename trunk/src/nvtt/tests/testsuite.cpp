@@ -147,6 +147,8 @@ static const char * s_witnessImageSet[] = {
 
 static const char * s_witnessLmapImageSet[] = {
     "specruin.dds",
+    "cottage.dds",
+    "tower.dds",
 };
 
 
@@ -158,39 +160,46 @@ enum Mode {
     Mode_BC3_YCoCg,
     Mode_BC3_RGBM,
     Mode_BC3_LUVW,
+    Mode_BC3_RGBS,
     Mode_BC1_Normal,
     Mode_BC3_Normal,
     Mode_BC5_Normal,
-    Mode_BC3_Lightmap_1,
-    Mode_BC3_Lightmap_2,
+    Mode_Count
 };
 static const char * s_modeNames[] = {
-    "BC1",
-    "BC1-Alpha",
-    "BC2-Alpha",
-    "BC3-Alpha",
-    "BC3-YCoCg",
-    "BC3-RGBM",
-    "BC3-LUVW",
-    "BC1-Normal",
-    "BC3-Normal",
-    "BC5-Normal",
-    "BC3-RGBM",
-    "BC3-LUVW",
+    "BC1",          // Mode_BC1,
+    "BC1-Alpha",    // Mode_BC1_Alpha,
+    "BC2-Alpha",    // Mode_BC2_Alpha,
+    "BC3-Alpha",    // Mode_BC3_Alpha,
+    "BC3-YCoCg",    // Mode_BC3_YCoCg,
+    "BC3-RGBM",     // Mode_BC3_RGBM,
+    "BC3-LUVW",     // Mode_BC3_LUVW,
+    "BC3-RGBS",     // Mode_BC3_RGBS,
+    "BC1-Normal",   // Mode_BC1_Normal,
+    "BC3-Normal",   // Mode_BC3_Normal,
+    "BC5-Normal",   // Mode_BC5_Normal,
 };
+nvStaticCheck(ARRAY_SIZE(s_modeNames) == Mode_Count);
 
 struct Test {
     const char * name;
     int count;
-    Mode modes[4];
+    Mode modes[6];
 };
 static Test s_imageTests[] = {
-    {"DXT Color", 1, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_LUVW}},
-    {"DXT Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
-    {"DXT Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
-    {"DXT Lightmap", 2, {Mode_BC3_Lightmap_1, Mode_BC3_Lightmap_2}},
+    {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_LUVW}},
+    {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
+    {"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
+    {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
 };
 const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
+
+enum ImageType {
+    ImageType_RGB,
+    ImageType_RGBA,
+    ImageType_Normal,
+    ImageType_HDR,
+};
 
 struct ImageSet
 {
@@ -198,16 +207,17 @@ struct ImageSet
     const char * basePath;
     const char ** fileNames;
     int fileCount;
+    ImageType type;
 };
 static ImageSet s_imageSets[] = {
-    {"Kodak",       "kodak",        s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet)},       // 0
-    {"Waterloo",    "waterloo",     s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet)},    // 1
-    {"Epic",        "epic",         s_epicImageSet,         ARRAY_SIZE(s_epicImageSet)},        // 2
-    {"Farbraush",   "farbrausch",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet)},  // 3
-    {"Lugaru",      "lugaru",       s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet)},      // 4
-    {"Quake3",      "quake3",       s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet)},      // 5
-    {"Witness",     "witness",      s_witnessImageSet,      ARRAY_SIZE(s_witnessImageSet)},     // 6
-    {"Lightmap",    "lightmap",     s_witnessLmapImageSet,  ARRAY_SIZE(s_witnessLmapImageSet)}, // 7
+    {"Kodak",       "kodak",        s_kodakImageSet,        ARRAY_SIZE(s_kodakImageSet),        ImageType_RGB},     // 0
+    {"Waterloo",    "waterloo",     s_waterlooImageSet,     ARRAY_SIZE(s_waterlooImageSet),     ImageType_RGB},     // 1
+    {"Epic",        "epic",         s_epicImageSet,         ARRAY_SIZE(s_epicImageSet),         ImageType_RGB},     // 2
+    {"Farbraush",   "farbrausch",   s_farbrauschImageSet,   ARRAY_SIZE(s_farbrauschImageSet),   ImageType_RGB},     // 3
+    {"Lugaru",      "lugaru",       s_lugaruImageSet,       ARRAY_SIZE(s_lugaruImageSet),       ImageType_RGBA},    // 4
+    {"Quake3",      "quake3",       s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet),       ImageType_RGBA},    // 5
+    {"Witness",     "witness",      s_witnessImageSet,      ARRAY_SIZE(s_witnessImageSet),      ImageType_RGB},     // 6
+    {"Lightmap",    "lightmap",     s_witnessLmapImageSet,  ARRAY_SIZE(s_witnessLmapImageSet),  ImageType_HDR},     // 7
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
@@ -237,14 +247,8 @@ struct MyOutputHandler : public nvtt::OutputHandler
         return true;
     }
 
-    nvtt::TexImage decompress(Mode mode, nvtt::Decoder decoder)
+    nvtt::TexImage decompress(Mode mode, nvtt::Format format, nvtt::Decoder decoder)
     {
-        nvtt::Format format; 
-        if (mode == Mode_BC1 || mode == Mode_BC1_Alpha || mode == Mode_BC1_Normal) format = nvtt::Format_BC1;
-        else if (mode == Mode_BC2_Alpha) format = nvtt::Format_BC2;
-        else if (mode == Mode_BC5_Normal) format = nvtt::Format_BC5;
-        else format = nvtt::Format_BC3;
-
         nvtt::TexImage img;
         img.setImage2D(format, decoder, m_width, m_height, m_data);
 
@@ -427,7 +431,8 @@ int main(int argc, char *argv[])
     //TextWriter csvWriter(&csvStream);
 
     Path graphFileName;
-    graphFileName.format("%s/chart.txt", outPath/*, test.name*/);
+    graphFileName.format("%s/chart_%s_CIE-Lab.txt", outPath, test.name);
+    //graphFileName.format("%s/chart_%s_RMSE.txt", outPath, test.name);
     StdOutputStream graphStream(graphFileName.str());
     TextWriter graphWriter(&graphStream);
 
@@ -446,7 +451,8 @@ int main(int argc, char *argv[])
     graphWriter << "&chxt=x,y&chxtc=0,-1000|1,-1000";
 
     // Labels.
-    graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01";
+    graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01"; // rmse
+    //graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,4,22,1";  // cielab
     graphWriter << "&chdlp=b"; // Labels at the bottom.
 
     // Line colors.
@@ -473,7 +479,8 @@ int main(int argc, char *argv[])
     graphWriter << "&chds=";
     for (int t = 0; t < test.count; t++)
     {
-        graphWriter << "0,0.05";
+        graphWriter << "0,0.05"; // rmse
+        //graphWriter << "4,22";   // cielab
         if (t != test.count-1) graphWriter << ",";
     }
 
@@ -486,15 +493,14 @@ int main(int argc, char *argv[])
     }
 
     // Title
-    graphWriter << "&chtt=" << set.name << " - " << test.name;
-
-    float totalTime = 0;
-    float totalRMSE = 0;
-    //int failedTests = 0;
-    float totalDiff = 0;
+    graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20RMSE";
+    //graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20CIE-Lab";
+    
 
 
     Timer timer;
+    //int failedTests = 0;
+    //float totalDiff = 0;
 
     nvtt::TexImage img;
 
@@ -504,26 +510,42 @@ int main(int argc, char *argv[])
 
     for (int t = 0; t < test.count; t++)
     {
+        float totalTime = 0;
+        float totalRMSE = 0;
+        float totalDeltaE = 0;
+
         Mode mode = test.modes[t];
-        if (mode == Mode_BC1 || mode == Mode_BC1_Alpha || mode == Mode_BC1_Normal) {
-            compressionOptions.setFormat(nvtt::Format_BC1);
+
+        nvtt::Format format;
+        if (mode == Mode_BC1 || mode == Mode_BC1_Alpha || mode == Mode_BC1_Normal || mode == Mode_BC3_RGBS) {
+            format = nvtt::Format_BC1;
         }
-        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_RGBM || mode == Mode_BC3_LUVW || mode == Mode_BC3_Lightmap_1 || mode == Mode_BC3_Lightmap_2) {
-            compressionOptions.setFormat(nvtt::Format_BC3);
+        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_RGBM || mode == Mode_BC3_LUVW) {
+            format = nvtt::Format_BC3;
         }
         else if (mode == Mode_BC3_Normal) {
-            compressionOptions.setFormat(nvtt::Format_BC3n);
+            format = nvtt::Format_BC3n;
         }
         else if (mode == Mode_BC5_Normal) {
-            compressionOptions.setFormat(nvtt::Format_BC5);
+            format = nvtt::Format_BC5;
         }
+        
+        compressionOptions.setFormat(format);
 
-        if (mode == Mode_BC3_Alpha || mode == Mode_BC3_Lightmap_1 || mode == Mode_BC3_Lightmap_2) { // Lightmap's alpha channel is coverage.
+        if (set.type == ImageType_RGBA) {
             img.setAlphaMode(nvtt::AlphaMode_Transparency);
         }
-        if (mode == Mode_BC1_Normal || mode == Mode_BC3_Normal || mode == Mode_BC5_Normal) {
+        else if (set.type == ImageType_Normal) { 
             img.setNormalMap(true);
         }
+        else if (set.type == ImageType_HDR) { // Lightmap's alpha channel is coverage.
+            img.setAlphaMode(nvtt::AlphaMode_Transparency);
+        }
+
+        // Create output directory.
+        Path outputFilePath;
+        outputFilePath.format("%s/%s", outPath, s_modeNames[test.modes[t]]);
+        FileSystem::createDirectory(outputFilePath.str());
 
 
         printf("Processing Set: %s\n", set.name);
@@ -538,65 +560,72 @@ int main(int argc, char *argv[])
             if (img.isNormalMap()) {
                 img.normalizeNormalMap();
             }
+            if (set.type == ImageType_HDR) {
+                img.scaleBias(0, 1.0f/4.0f, 0.0f); img.clamp(0);
+                img.scaleBias(1, 1.0f/4.0f, 0.0f); img.clamp(1);
+                img.scaleBias(2, 1.0f/4.0f, 0.0f); img.clamp(2);
+                img.toGamma(2);
+            }
 
             nvtt::TexImage tmp = img;
+            if (mode == Mode_BC1) {
+                if (set.type == ImageType_HDR) {
+                    /*for (int i = 0; i < 3; i++) {
+                        tmp.scaleBias(i, 0.25f, 0);
+                        tmp.clamp(i);
+                    }*/
+                }
+            }
             if (mode == Mode_BC3_YCoCg) {
-                tmp.toYCoCg();
-                tmp.blockScaleCoCg();
-                tmp.scaleBias(0, 0.5, 0.5);
-                tmp.scaleBias(1, 0.5, 0.5);
+                tmp.setAlphaMode(nvtt::AlphaMode_None);
+                if (set.type == ImageType_HDR) {
+                    /*for (int i = 0; i < 3; i++) {
+                        tmp.scaleBias(i, 1.0f/4.0f, 0);
+                        tmp.clamp(i);
+                    }*/
+                }
+                tmp.toYCoCg();          // Y=3, Co=0, Cg=1
+                tmp.blockScaleCoCg();   // Co=0, Cg=1, Scale=2, ScaleBits = 5
+
+                tmp.scaleBias(0, 123.0f/255.0f, 123.0f/255.0f); tmp.clamp(0, 0, 246.0f/255.0f); // -1->0, 0->123, 1->246
+                tmp.scaleBias(1, 125.0f/255.0f, 125.0f/255.0f); tmp.clamp(1, 0, 250.0f/255.0f); // -1->0, 0->125, 1->250
+
+                //tmp.scaleBias(0, 0.5f, 0.5f); tmp.clamp(0);
+                //tmp.scaleBias(1, 0.5f, 0.5f); tmp.clamp(1);
+
+                tmp.clamp(2);
+                tmp.clamp(3);
             }
             else if (mode == Mode_BC3_RGBM) {
-                tmp.toRGBM();
+                tmp.setAlphaMode(nvtt::AlphaMode_None);
+                if (set.type == ImageType_HDR) {
+                    tmp.toRGBM(/*4*/);
+                }
+                else {
+                    tmp.toRGBM();
+                }
             }
             else if (mode == Mode_BC3_LUVW) {
-                tmp.toLUVW();
-            }
-            else if (mode == Mode_BC3_Lightmap_1) {
-                tmp.toRGBM(4);
-
-                /*float rmin, rmax;
-                tmp.range(0, &rmin, &rmax);
-
-                float gmin, gmax;
-                tmp.range(1, &gmin, &gmax);
-
-                float bmin, bmax;
-                tmp.range(2, &bmin, &bmax);
-
-                float lmin, lmax;
-                tmp.range(3, &lmin, &lmax);
-
-                printf("rmin: %.3f   rmax: %.3f\n", rmin, rmax);
-                printf("gmin: %.3f   gmax: %.3f\n", gmin, gmax);
-                printf("bmin: %.3f   bmax: %.3f\n", bmin, bmax);
-                printf("lmin: %.3f   lmax: %.3f\n", lmin, lmax);
-
-                const int N = 32;
-                int chistogram[N];
-                int lhistogram[N];
-                memset(chistogram, 0, sizeof(chistogram)); 
-                memset(lhistogram, 0, sizeof(lhistogram));
-
-                tmp.histogram(0, 0, 1, N, chistogram);
-                tmp.histogram(1, 0, 1, N, chistogram);
-                tmp.histogram(2, 0, 1, N, chistogram);
-                tmp.histogram(3, 0, 1, N, lhistogram);
-
-                printf("Color histogram:\n");
-                for (int i = 0; i < N; i++) {
-                    printf("%d, ", chistogram[i]);
+                tmp.setAlphaMode(nvtt::AlphaMode_None);
+                if (set.type == ImageType_HDR) {
+                    tmp.toLUVW(/*4*/);
                 }
-                printf("\n");
-
-                printf("Luminance histogram:\n");
-                for (int i = 0; i < N; i++) {
-                    printf("%d, ", lhistogram[i]);
+                else {
+                    tmp.toLUVW();
                 }
-                printf("\n");*/
             }
-            else if (mode == Mode_BC3_Lightmap_2) {
-                tmp.toLUVW(4);
+            else if (mode == Mode_BC3_RGBS) {
+                //tmp.toJPEGLS();
+                //tmp.scaleBias(0, 123.0f/255.0f, 123.0f/255.0f); tmp.clamp(0, 0, 246.0f/255.0f); // -1->0, 0->123, 1->246
+                //tmp.scaleBias(2, 123.0f/255.0f, 123.0f/255.0f); tmp.clamp(0, 0, 246.0f/255.0f); // -1->0, 0->123, 1->246
+
+                // Not helping...
+                //tmp.blockLuminanceScale(0.1f);
+                /*tmp.toYCoCg();
+                tmp.scaleBias(0, 0.5, 0.5);
+                tmp.scaleBias(1, 0.5, 0.5);
+                tmp.swizzle(0, 3, 1, 4); // Co Cg 1 Y -> Co Y Cg 1
+                tmp.copyChannel(img, 3); // Restore alpha channel for weighting.*/
             }
 
 
@@ -610,59 +639,152 @@ int main(int argc, char *argv[])
             printf("  Time: \t%.3f sec\n", timer.elapsed());
             totalTime += timer.elapsed();
 
-            nvtt::TexImage img_out = outputHandler.decompress(mode, decoder);
+            nvtt::TexImage img_out = outputHandler.decompress(mode, format, decoder);
             img_out.setAlphaMode(img.alphaMode());
             img_out.setNormalMap(img.isNormalMap());
 
-            if (mode == Mode_BC3_YCoCg) {
-                img_out.scaleBias(0, 1.0, -0.5);
-                img_out.scaleBias(1, 1.0, -0.5);
+            if (mode == Mode_BC1) {
+                if (set.type == ImageType_HDR) {
+                    /*for (int i = 0; i < 3; i++) {
+                        img_out.scaleBias(i, 4.0f, 0);
+                    }*/
+                }
+            }
+            else if (mode == Mode_BC3_YCoCg) {
+                img_out.scaleBias(0, 255.0f/123, -1.0f); // 0->-1, 123->0, 246->1
+                img_out.scaleBias(1, 255.0f/125, -1.0f); // 0->-1, 125->0, 150->1
+
+                //img_out.scaleBias(0, 2.0f, -1.0f);
+                //img_out.scaleBias(1, 2.0f, -1.0f);
+                
                 img_out.fromYCoCg();
+                img_out.clamp(0);
+                img_out.clamp(1);
+                img_out.clamp(2);
+                if (set.type == ImageType_HDR) {
+                    /*for (int i = 0; i < 3; i++) {
+                        img_out.scaleBias(i, 4.0f, 0);
+                    }*/
+                }
             }
             else if (mode == Mode_BC3_RGBM) {
-                img_out.fromRGBM();
+                if (set.type == ImageType_HDR) {
+                    img_out.fromRGBM(/*4*/);
+                }
+                else {
+                    img_out.fromRGBM();
+                }
             }
             else if (mode == Mode_BC3_LUVW) {
-                img_out.fromLUVW();
+                if (set.type == ImageType_HDR) {
+                    img_out.fromLUVW(/*4*/);
+                }
+                else {
+                    img_out.fromLUVW();
+                }
             }
-            else if (mode == Mode_BC3_Lightmap_1) {
-                img_out.fromRGBM(4);
-            }
-            else if (mode == Mode_BC3_Lightmap_2) {
-                img_out.fromLUVW(4);
+            else if (mode == Mode_BC3_RGBS) {
+                //img_out.scaleBias(0, 255.0f/123, -1.0f);
+                //img_out.scaleBias(2, 255.0f/123, -1.0f);
+                //img_out.fromJPEGLS();
+                /*img_out.swizzle(0, 2, 4, 1);    // Co Y Cg 1 - > Co Cg 1 Y
+                img_out.scaleBias(0, 1.0, -0.5);
+                img_out.scaleBias(1, 1.0, -0.5);
+                img_out.fromYCoCg();*/
             }
 
+            nvtt::TexImage diff = nvtt::diff(img, img_out, 1.0f);
 
-            Path outputFilePath;
-            outputFilePath.format("%s/%s", outPath, s_modeNames[test.modes[t]]);
-            FileSystem::createDirectory(outputFilePath.str());
+            //bool residualCompression = (set.type == ImageType_HDR);
+            bool residualCompression = (mode == Mode_BC3_RGBS);
+            if (residualCompression)
+            {
+                float residualScale = 8.0f;
+                nvtt::TexImage residual = diff;
+                for (int j = 0; j < 3; j++) {
+                    residual.scaleBias(j, residualScale, 0.5); // @@ The residual scale is fairly arbitrary.
+                    residual.clamp(j);
+                }
+                residual.toGreyScale(1, 1, 1, 0);
 
+                /*outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
+                outputFileName.stripExtension();
+                outputFileName.append("_residual.png");
+                residual.save(outputFileName.str());*/
+
+                nvtt::CompressionOptions residualCompressionOptions;
+                residualCompressionOptions.setFormat(nvtt::Format_BC4);
+                residualCompressionOptions.setQuality(nvtt::Quality_Production);
+                
+                context.compress(residual, 0, 0, compressionOptions, outputOptions);
+
+                nvtt::TexImage residual_out = outputHandler.decompress(mode, format, decoder);
+
+                /*outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
+                outputFileName.stripExtension();
+                outputFileName.append("_residual_out.png");
+                residual_out.save(outputFileName.str());*/
+
+                residual_out.scaleBias(0, 1.0f/residualScale, -0.5f/residualScale);
+                residual_out.scaleBias(1, 1.0f/residualScale, -0.5f/residualScale);
+                residual_out.scaleBias(2, 1.0f/residualScale, -0.5f/residualScale);
+
+                img_out.addChannel(residual_out, 0, 0, -1.0f); img_out.clamp(0);
+                img_out.addChannel(residual_out, 1, 1, -1.0f); img_out.clamp(1);
+                img_out.addChannel(residual_out, 2, 2, -1.0f); img_out.clamp(2);
+            }
+
+            if (set.type == ImageType_HDR)
+            {
+                Path outputFileName;
+                outputFileName.format("%s/%s", outPath, set.fileNames[i]);
+                outputFileName.stripExtension();
+                if (set.type == ImageType_HDR) outputFileName.append(".dds");
+                else outputFileName.append(".png");
+                if (!img.save(outputFileName.str()))
+                {
+                    printf("Error saving file '%s'.\n", outputFileName.str());
+                }
+            }
+
+            // Output compressed image.
             Path outputFileName;
             outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
             outputFileName.stripExtension();
-            if (mode == Mode_BC3_Lightmap_1 || mode == Mode_BC3_Lightmap_2) {
-                outputFileName.append(".dds");
-            }
-            else {
-                outputFileName.append(".png");
-            }
+            if (set.type == ImageType_HDR) outputFileName.append(".dds");
+            else outputFileName.append(".png");
             if (!img_out.save(outputFileName.str()))
             {
                 printf("Error saving file '%s'.\n", outputFileName.str());
             }
 
+            // Output RMSE.
             float rmse = nvtt::rmsError(img, img_out);
+            if (set.type == ImageType_HDR) rmse *= 4;
             totalRMSE += rmse;
+            printf("  RMSE:          \t%.4f\n", rmse);
 
-            printf("  RMSE:  \t%.4f\n", rmse);
+            float deltae = nvtt::cieLabError(img, img_out);
+            totalDeltaE += deltae;
+            printf("  CIE-Lab DeltaE:\t%.4f\n", deltae);
+
 
             graphWriter << rmse;
+            //graphWriter << deltae;
             if (i != set.fileCount-1) graphWriter << ",";
 
 
+            // Output diff.
+            for (int j = 0; j < 3; j++) {
+                diff.scaleBias(j, 4.0f, 0.0f); 
+                diff.abs(j);
+                diff.clamp(j);
+            }
+
+            outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
             outputFileName.stripExtension();
             outputFileName.append("_diff.png");
-            nvtt::diff(img, img_out, 4.0f).save(outputFileName.str());
+            diff.save(outputFileName.str());
 
 
             // Output csv file
@@ -701,11 +823,13 @@ int main(int argc, char *argv[])
         }
 
         totalRMSE /= set.fileCount;
-        totalDiff /= set.fileCount;
+        totalDeltaE /= set.fileCount;
+        //totalDiff /= set.fileCount;
 
         printf("Total Results:\n");
-        printf("  Total Time: \t%.3f sec\n", totalTime);
-        printf("  Average RMSE:\t%.4f\n", totalRMSE);
+        printf("  Total Time:            \t%.3f sec\n", totalTime);
+        printf("  Average RMSE:          \t%.4f\n", totalRMSE);
+        printf("  Average CIE-Lab DeltaE:\t%.4f\n", totalDeltaE);
 
         if (t != test.count-1) graphWriter << "|";
     }

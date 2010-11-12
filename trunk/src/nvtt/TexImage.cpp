@@ -35,6 +35,7 @@
 #include "nvimage/BlockDXT.h"
 #include "nvimage/ColorBlock.h"
 #include "nvimage/PixelFormat.h"
+#include "nvimage/ErrorMetric.h"
 
 #include <float.h>
 
@@ -332,7 +333,8 @@ void TexImage::range(int channel, float * rangeMin, float * rangeMax)
     for (uint p = 0; p < count; p++) {
         float f = c[p];
         if (f < range.x) range.x = f;
-        if (f > range.y) range.y = f;
+        if (f > range.y) 
+            range.y = f;
     }
 
     *rangeMin = range.x;
@@ -340,7 +342,7 @@ void TexImage::range(int channel, float * rangeMin, float * rangeMax)
 }
 
 
-bool TexImage::load(const char * fileName)
+bool TexImage::load(const char * fileName, bool * hasAlpha/*= NULL*/)
 {
     AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
     if (img == NULL) {
@@ -348,6 +350,10 @@ bool TexImage::load(const char * fileName)
     }
 
     detach();
+
+    if (hasAlpha != NULL) {
+        *hasAlpha = (img->componentNum() == 4);
+    }
 
     // @@ Have loadFloat allocate the image with the desired number of channels.
     img->resizeChannelCount(4);
@@ -388,52 +394,52 @@ bool TexImage::setImage2D(nvtt::InputFormat format, int w, int h, const void * d
     {
         const Color32 * src = (const Color32 *)data;
 
-	try {
-	    for (int i = 0; i < count; i++)
-	    {
-		rdst[i] = float(src[i].r) / 255.0f;
-		gdst[i] = float(src[i].g) / 255.0f;
-		bdst[i] = float(src[i].b) / 255.0f;
-		adst[i] = float(src[i].a) / 255.0f;
-	    }
-	}
-	catch(...) {
-	    return false;
-	}
+        try {
+            for (int i = 0; i < count; i++)
+            {
+                rdst[i] = float(src[i].r) / 255.0f;
+                gdst[i] = float(src[i].g) / 255.0f;
+                bdst[i] = float(src[i].b) / 255.0f;
+                adst[i] = float(src[i].a) / 255.0f;
+            }
+        }
+        catch(...) {
+            return false;
+        }
     }
     else if (format == InputFormat_RGBA_16F)
     {
         const uint16 * src = (const uint16 *)data;
 
-	try {
-	    for (int i = 0; i < count; i++)
-	    {
-		((uint32 *)rdst)[i] = half_to_float(src[4*i+0]);
-		((uint32 *)gdst)[i] = half_to_float(src[4*i+1]);
-		((uint32 *)bdst)[i] = half_to_float(src[4*i+2]);
-		((uint32 *)adst)[i] = half_to_float(src[4*i+3]);
-	    }
-	}
-	catch(...) {
-	    return false;
-	}
+        try {
+            for (int i = 0; i < count; i++)
+            {
+                ((uint32 *)rdst)[i] = half_to_float(src[4*i+0]);
+                ((uint32 *)gdst)[i] = half_to_float(src[4*i+1]);
+                ((uint32 *)bdst)[i] = half_to_float(src[4*i+2]);
+                ((uint32 *)adst)[i] = half_to_float(src[4*i+3]);
+            }
+        }
+        catch(...) {
+            return false;
+        }
     }
     else if (format == InputFormat_RGBA_32F)
     {
         const float * src = (const float *)data;
 
-	try {
-	    for (int i = 0; i < count; i++)
-	    {
-		rdst[i] = src[4 * i + 0];
-		gdst[i] = src[4 * i + 1];
-		bdst[i] = src[4 * i + 2];
-		adst[i] = src[4 * i + 3];
-	    }
-	}
-	catch(...) {
-	    return false;
-	}
+        try {
+            for (int i = 0; i < count; i++)
+            {
+                rdst[i] = src[4 * i + 0];
+                gdst[i] = src[4 * i + 1];
+                bdst[i] = src[4 * i + 2];
+                adst[i] = src[4 * i + 3];
+            }
+        }
+        catch(...) {
+            return false;
+        }
     }
 
     return true;
@@ -462,15 +468,15 @@ bool TexImage::setImage2D(InputFormat format, int w, int h, const void * r, cons
         const uint8 * bsrc = (const uint8 *)b;
         const uint8 * asrc = (const uint8 *)a;
 
-	try {
-	    for (int i = 0; i < count; i++) rdst[i] = float(rsrc[i]) / 255.0f;
-	    for (int i = 0; i < count; i++) gdst[i] = float(gsrc[i]) / 255.0f;
-	    for (int i = 0; i < count; i++) bdst[i] = float(bsrc[i]) / 255.0f;
-	    for (int i = 0; i < count; i++) adst[i] = float(asrc[i]) / 255.0f;
-	}
-	catch(...) {
-	    return false;
-	}
+        try {
+            for (int i = 0; i < count; i++) rdst[i] = float(rsrc[i]) / 255.0f;
+            for (int i = 0; i < count; i++) gdst[i] = float(gsrc[i]) / 255.0f;
+            for (int i = 0; i < count; i++) bdst[i] = float(bsrc[i]) / 255.0f;
+            for (int i = 0; i < count; i++) adst[i] = float(asrc[i]) / 255.0f;
+        }
+        catch(...) {
+            return false;
+        }
     }
     else if (format == InputFormat_RGBA_16F)
     {
@@ -479,15 +485,15 @@ bool TexImage::setImage2D(InputFormat format, int w, int h, const void * r, cons
         const uint16 * bsrc = (const uint16 *)b;
         const uint16 * asrc = (const uint16 *)a;
 
-	try {
-	    for (int i = 0; i < count; i++) ((uint32 *)rdst)[i] = half_to_float(rsrc[i]);
-	    for (int i = 0; i < count; i++) ((uint32 *)gdst)[i] = half_to_float(gsrc[i]);
-	    for (int i = 0; i < count; i++) ((uint32 *)bdst)[i] = half_to_float(bsrc[i]);
-	    for (int i = 0; i < count; i++) ((uint32 *)adst)[i] = half_to_float(asrc[i]);
-	}
-	catch(...) {
-	    return false;
-	}
+        try {
+            for (int i = 0; i < count; i++) ((uint32 *)rdst)[i] = half_to_float(rsrc[i]);
+            for (int i = 0; i < count; i++) ((uint32 *)gdst)[i] = half_to_float(gsrc[i]);
+            for (int i = 0; i < count; i++) ((uint32 *)bdst)[i] = half_to_float(bsrc[i]);
+            for (int i = 0; i < count; i++) ((uint32 *)adst)[i] = half_to_float(asrc[i]);
+        }
+        catch(...) {
+            return false;
+        }
     }
     else if (format == InputFormat_RGBA_32F)
     {
@@ -496,15 +502,15 @@ bool TexImage::setImage2D(InputFormat format, int w, int h, const void * r, cons
         const float * bsrc = (const float *)b;
         const float * asrc = (const float *)a;
 
-	try {
-	    memcpy(rdst, rsrc, count * sizeof(float));
-	    memcpy(gdst, gsrc, count * sizeof(float));
-	    memcpy(bdst, bsrc, count * sizeof(float));
-	    memcpy(adst, asrc, count * sizeof(float));
-	}
-	catch(...) {
-	    return false;
-	}
+        try {
+            memcpy(rdst, rsrc, count * sizeof(float));
+            memcpy(gdst, gsrc, count * sizeof(float));
+            memcpy(bdst, bsrc, count * sizeof(float));
+            memcpy(adst, asrc, count * sizeof(float));
+        }
+        catch(...) {
+            return false;
+        }
     }
 
     return true;
@@ -987,10 +993,10 @@ void TexImage::setBorder(float r, float g, float b, float a)
         img->pixel(0, i, 2) = b;
         img->pixel(0, i, 3) = a;
 
-	img->pixel(w-1, i, 0) = r;
-	img->pixel(w-1, i, 1) = g;
-	img->pixel(w-1, i, 2) = b;
-	img->pixel(w-1, i, 3) = a;
+        img->pixel(w-1, i, 0) = r;
+        img->pixel(w-1, i, 1) = g;
+        img->pixel(w-1, i, 2) = b;
+        img->pixel(w-1, i, 3) = a;
     }
 }
 
@@ -1164,11 +1170,14 @@ void TexImage::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
         for (uint bi = 0; bi < bw; bi++) {
 
             // Compute per block scale.
-            float m = 1.0f / 256.0f;
+            float m = 1.0f / 255.0f;
             for (uint j = 0; j < 4; j++) {
+                const uint y = bj*4 + j;
+                if (y >= h) continue;
+
                 for (uint i = 0; i < 4; i++) {
-                    uint x = min(bi*4 + i, w);
-                    uint y = min(bj*4 + j, h);
+                    const uint x = bi*4 + i;
+                    if (x >= w) continue;
 
                     float Co = img->pixel(x, y, 0);
                     float Cg = img->pixel(x, y, 1);
@@ -1219,7 +1228,7 @@ void TexImage::fromYCoCg()
     for (uint i = 0; i < count; i++) {
         float Co = r[i];
         float Cg = g[i];
-        float scale = b[i];
+        float scale = b[i] * 0.5f;
         float Y = a[i];
 
         Co *= scale;
@@ -1270,6 +1279,141 @@ void TexImage::fromLUVW(float range/*= 1.0f*/)
     // Decompression is the same as in RGBM.
     fromRGBM(range * sqrtf(3));
 }
+
+void TexImage::abs(int channel)
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    float * c = img->channel(channel);
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++) {
+        c[i] = fabsf(c[i]);
+    }
+}
+
+void TexImage::blockLuminanceScale(float scale)
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+
+    //float * r = img->channel(0);
+    //float * g = img->channel(1);
+    //float * b = img->channel(2);
+    //float * a = img->channel(3);
+
+    const uint w = img->width();
+    const uint h = img->height();
+    const uint bw = max(1U, w/4);
+    const uint bh = max(1U, h/4);
+
+    Vector3 L = normalize(Vector3(1, 1, 1));
+
+    for (uint bj = 0; bj < bh; bj++) {
+        for (uint bi = 0; bi < bw; bi++) {
+
+            // Compute block centroid.
+            Vector3 centroid(0.0f);
+            int count = 0;
+            for (uint j = 0; j < 4; j++) {
+                const uint y = bj*4 + j;
+                if (y >= h) continue;
+
+                for (uint i = 0; i < 4; i++) {
+                    const uint x = bi*4 + i;
+                    if (x >= w) continue;
+
+                    float r = img->pixel(x, y, 0);
+                    float g = img->pixel(x, y, 1);
+                    float b = img->pixel(x, y, 2);
+                    Vector3 rgb(r, g, b);
+
+                    centroid += rgb;
+                    count++;
+                }
+            }
+
+            centroid /= float(count);
+
+            // Project to luminance plane.
+            for (uint j = 0; j < 4; j++) {
+                const uint y = bj*4 + j;
+                if (y >= h) continue;
+
+                for (uint i = 0; i < 4; i++) {
+                    const uint x = bi*4 + i;
+                    if (x >= w) continue;
+
+                    float & r = img->pixel(x, y, 0);
+                    float & g = img->pixel(x, y, 1);
+                    float & b = img->pixel(x, y, 2);
+                    Vector3 rgb(r, g, b);
+
+                    Vector3 delta = rgb - centroid;
+
+                    delta -= scale * dot(delta, L) * L;
+
+                    r = centroid.x + delta.x;
+                    g = centroid.y + delta.y;
+                    b = centroid.z + delta.z;
+                }
+            }
+        }
+    }
+}
+
+void TexImage::toJPEGLS()
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++) {
+        float R = nv::clamp(r[i], 0.0f, 1.0f);
+        float G = nv::clamp(g[i], 0.0f, 1.0f);
+        float B = nv::clamp(b[i], 0.0f, 1.0f);
+
+        r[i] = R-G;
+        g[i] = G;
+        b[i] = B-G;
+    }
+}
+
+void TexImage::fromJPEGLS()
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++) {
+        float R = nv::clamp(r[i], -1.0f, 1.0f);
+        float G = nv::clamp(g[i], 0.0f, 1.0f);
+        float B = nv::clamp(b[i], -1.0f, 1.0f);
+
+        r[i] = R+G;
+        g[i] = G;
+        b[i] = B+G;
+    }
+}
+
 
 
 void TexImage::binarize(int channel, float threshold, bool dither)
@@ -1350,112 +1494,51 @@ bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel, int dstCha
     return true;
 }
 
+bool TexImage::addChannel(const TexImage & srcImage, int srcChannel, int dstChannel, float scale)
+{
+    if (srcChannel < 0 || srcChannel > 3 || dstChannel < 0 || dstChannel > 3) return false;
+
+    FloatImage * dst = m->image;
+    const FloatImage * src = srcImage.m->image;
+
+    if (dst == NULL || src == NULL || dst->width() != src->width() || dst->height() != src->height()) {
+        return false;
+    }
+    nvDebugCheck(dst->componentNum() == 4 && src->componentNum() == 4);
+
+    detach();
+
+    const uint w = src->width();
+    const uint h = src->height();
+
+    float * d = dst->channel(dstChannel);
+    const float * s = src->channel(srcChannel);
+    for (uint i = 0; i < w*h; i++) {
+        d[i] += s[i] * scale;
+    }
+
+    return true;
+}
 
 
 
 float nvtt::rmsError(const TexImage & reference, const TexImage & image)
 {
-    double mse = 0;
-
-    const FloatImage * ref = reference.m->image;
-    const FloatImage * img = image.m->image;
-
-    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
-        return FLT_MAX;
-    }
-    nvDebugCheck(img->componentNum() == 4);
-    nvDebugCheck(ref->componentNum() == 4);
-
-    const uint count = img->width() * img->height();
-    for (uint i = 0; i < count; i++)
-    {
-        float r0 = img->pixel(i + count * 0);
-        float g0 = img->pixel(i + count * 1);
-        float b0 = img->pixel(i + count * 2);
-        //float a0 = img->pixel(i + count * 3);
-        float r1 = ref->pixel(i + count * 0);
-        float g1 = ref->pixel(i + count * 1);
-        float b1 = ref->pixel(i + count * 2);
-        float a1 = ref->pixel(i + count * 3);
-
-        float r = r0 - r1;
-        float g = g0 - g1;
-        float b = b0 - b1;
-        //float a = a0 - a1;
-
-        if (reference.alphaMode() == nvtt::AlphaMode_Transparency)
-        {
-            mse += double(r * r) * a1;
-            mse += double(g * g) * a1;
-            mse += double(b * b) * a1;
-        }
-        else
-        {
-            mse += r * r;
-            mse += g * g;
-            mse += b * b;
-        }
-    }
-
-    return float(sqrt(mse / count));
+    return nv::rmsColorError(reference.m->image, image.m->image, reference.alphaMode() == nvtt::AlphaMode_Transparency);
 }
-
-
-/*float rmsError(const Image * a, const Image * b)
-{
-    nvCheck(a != NULL);
-    nvCheck(b != NULL);
-    nvCheck(a->width() == b->width());
-    nvCheck(a->height() == b->height());
-
-    double mse = 0;
-
-    const uint count = a->width() * a->height();
-
-    for (uint i = 0; i < count; i++)
-    {
-        Color32 c0 = a->pixel(i);
-        Color32 c1 = b->pixel(i);
-
-        int r = c0.r - c1.r;
-        int g = c0.g - c1.g;
-        int b = c0.b - c1.b;
-        int a = c0.a - c1.a;
-
-        mse += double(r * r * c0.a) / 255;
-        mse += double(g * g * c0.a) / 255;
-        mse += double(b * b * c0.a) / 255;
-    }
-
-    return float(sqrt(mse / count));
-}*/
 
 
 float nvtt::rmsAlphaError(const TexImage & reference, const TexImage & image)
 {
-    double mse = 0;
-
-    const FloatImage * img = image.m->image;
-    const FloatImage * ref = reference.m->image;
-
-    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
-        return FLT_MAX;
-    }
-    nvDebugCheck(img->componentNum() == 4 && ref->componentNum() == 4);
-
-    const uint count = img->width() * img->height();
-    for (uint i = 0; i < count; i++)
-    {
-        float a0 = img->pixel(i + count * 3);
-        float a1 = ref->pixel(i + count * 3);
-
-        float a = a0 - a1;
-
-        mse += double(a * a);
-    }
-
-    return float(sqrt(mse / count));
+    return nv::rmsAlphaError(reference.m->image, image.m->image);
 }
+
+
+float nvtt::cieLabError(const TexImage & reference, const TexImage & image)
+{
+    return nv::cieLabError(reference.m->image, image.m->image);
+}
+
 
 TexImage nvtt::diff(const TexImage & reference, const TexImage & image, float scale)
 {

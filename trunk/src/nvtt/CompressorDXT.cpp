@@ -111,33 +111,33 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
 }
 
 
-#include "bc6h/tile.h"
+//#include "bc6h/tile.h"
 
-void TileCompressor::compress(AlphaMode alphaMode, uint w, uint h, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
     const uint bs = blockSize();
     const uint bw = (w + 3) / 4;
     const uint bh = (h + 3) / 4;
 
-    bool singleThreaded = true;
-
-    if (singleThreaded)
+    //bool singleThreaded = true;
+    //if (singleThreaded)
     {
-        nvDebugCheck(bs <= 16);
-        uint8 mem[16]; // @@ Output one row at a time!
+        uint8 * mem = malloc<uint8>(bs * bw);
+        uint8 * ptr = mem;
+
+        ColorSet set;
 
         for (uint y = 0; y < h; y += 4) {
-            for (uint x = 0; x < w; x += 4) {
+            for (uint x = 0; x < w; x += 4, ptr += bs) {
+                set.setColors(data, w, h, x, y);
+                compressBlock(set, alphaMode, compressionOptions, ptr);
+            }
 
-                Tile tile;
-                //tile.init((const float *)data, w, h, x, y);
-
-                compressBlock(tile, alphaMode, compressionOptions, mem);
-
-                if (outputOptions.outputHandler != NULL) {
-                    outputOptions.outputHandler->writeData(mem, bs);
-                }
+            if (outputOptions.outputHandler != NULL) {
+                outputOptions.outputHandler->writeData(mem, bs * bw);
             }
         }
+
+        free(mem);
     }
 }

@@ -399,7 +399,7 @@ namespace nvtt
         NVTT_API void range(int channel, float * rangeMin, float * rangeMax);
 
         // Texture data.
-        NVTT_API bool load(const char * fileName);
+        NVTT_API bool load(const char * fileName, bool * hasAlpha = 0);
         NVTT_API bool save(const char * fileName) const;
         NVTT_API bool setImage2D(InputFormat format, int w, int h, const void * data);
         NVTT_API bool setImage2D(InputFormat format, int w, int h, const void * r, const void * g, const void * b, const void * a);
@@ -436,6 +436,11 @@ namespace nvtt
         NVTT_API void fromYCoCg();
         NVTT_API void toLUVW(float range = 1.0f);
         NVTT_API void fromLUVW(float range = 1.0f);
+        NVTT_API void abs(int channel);
+        NVTT_API void toJPEGLS();
+        NVTT_API void fromJPEGLS();
+
+        NVTT_API void blockLuminanceScale(float scale);
 
         // Color quantization.
         NVTT_API void binarize(int channel, float threshold, bool dither);
@@ -452,9 +457,12 @@ namespace nvtt
         NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel);
         NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel);
 
+        NVTT_API bool addChannel(const TexImage & img, int srcChannel, int dstChannel, float scale);
+
         // Error compare.
         NVTT_API friend float rmsError(const TexImage & reference, const TexImage & img);
         NVTT_API friend float rmsAlphaError(const TexImage & reference, const TexImage & img);
+        NVTT_API friend float cieLabError(const TexImage & reference, const TexImage & img);
         NVTT_API friend TexImage diff(const TexImage & reference, const TexImage & img, float scale);
 
     private:
@@ -473,7 +481,9 @@ namespace nvtt
 
     NVTT_API float rmsError(const TexImage & reference, const TexImage & img);
     NVTT_API float rmsAlphaError(const TexImage & reference, const TexImage & img);
+    NVTT_API float cieLabError(const TexImage & reference, const TexImage & img);
     NVTT_API TexImage diff(const TexImage & reference, const TexImage & img, float scale);
+
 
 } // nvtt namespace
 

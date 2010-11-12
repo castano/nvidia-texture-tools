@@ -445,7 +445,7 @@ void ZOH::decompresstwo(const char *block, Tile &t)
         // reserved mode, return all zeroes
         for (int y = 0; y < Tile::TILE_H; y++)
             for (int x = 0; x < Tile::TILE_W; x++)
-                t.data[y][x] = Vector3 (zero);
+                t.data[y][x] = Vector3(0.0f);
 
         return;
     }
