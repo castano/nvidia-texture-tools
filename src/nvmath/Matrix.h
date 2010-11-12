@@ -9,6 +9,8 @@
 
 namespace nv
 {
+    enum zero_t { zero };
+    enum identity_t { identity };
 
     class NVMATH_CLASS Matrix3
     {

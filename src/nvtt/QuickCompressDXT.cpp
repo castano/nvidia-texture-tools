@@ -83,7 +83,7 @@ inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * res
 {
 	Vector3 center = (*maxColor + *minColor) * 0.5;
 
-	Vector2 covariance = Vector2(zero);
+	Vector2 covariance = Vector2(0.0f);
 	for (uint i = 0; i < num; i++)
 	{
 		Vector3 t = block[i] - center;
@@ -166,6 +166,40 @@ inline static uint computeIndices4(const Vector3 block[16], Vector3::Arg maxColo
 	return indices;
 }
 
+inline static uint computeIndices4(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
+{
+	Vector3 palette[4];
+	palette[0] = maxColor;
+	palette[1] = minColor;
+	palette[2] = lerp(palette[0], palette[1], 1.0f / 3.0f);
+	palette[3] = lerp(palette[0], palette[1], 2.0f / 3.0f);
+	
+	uint indices = 0;
+	for(int i = 0; i < 16; i++)
+	{
+        Vector3 color = set.color(i).xyz();
+
+		float d0 = colorDistance(palette[0], color);
+		float d1 = colorDistance(palette[1], color);
+		float d2 = colorDistance(palette[2], color);
+		float d3 = colorDistance(palette[3], color);
+		
+		uint b0 = d0 > d3;
+		uint b1 = d1 > d2;
+		uint b2 = d0 > d2;
+		uint b3 = d1 > d3;
+		uint b4 = d2 > d3;
+		
+		uint x0 = b1 & b2;
+		uint x1 = b0 & b3;
+		uint x2 = b0 & b4;
+		
+		indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
+	}
+
+	return indices;
+}
+
 inline static float evaluatePaletteError4(const Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
@@ -188,7 +222,7 @@ inline static float evaluatePaletteError4(const Vector3 block[16], Vector3::Arg 
 	return total;
 }
 
-inline static uint computeIndices3(const ColorBlock & rgba, Vector3::Arg maxColor, Vector3::Arg minColor)
+inline static uint computeIndices3(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
 	palette[0] = minColor;
@@ -198,15 +232,15 @@ inline static uint computeIndices3(const ColorBlock & rgba, Vector3::Arg maxColo
 	uint indices = 0;
 	for(int i = 0; i < 16; i++)
 	{
-		Color32 c = rgba.color(i);
-		Vector3 color = Vector3(c.r, c.g, c.b);
+        Vector3 color = set.color(i).xyz();
+		float alpha = set.color(i).w;
 		
 		float d0 = colorDistance(palette[0], color);
 		float d1 = colorDistance(palette[1], color);
 		float d2 = colorDistance(palette[2], color);
 		
 		uint index;
-		if (c.a < 128) index = 3;
+		if (alpha == 0) index = 3;
 		else if (d0 < d1 && d0 < d2) index = 0;
 		else if (d1 < d2) index = 1;
 		else index = 2;
@@ -250,8 +284,8 @@ static void optimizeEndPoints4(Vector3 block[16], BlockDXT1 * dxtBlock)
 	float alpha2_sum = 0.0f;
 	float beta2_sum = 0.0f;
 	float alphabeta_sum = 0.0f;
-	Vector3 alphax_sum(zero);
-	Vector3 betax_sum(zero);
+	Vector3 alphax_sum(0.0f);
+	Vector3 betax_sum(0.0f);
 	
 	for( int i = 0; i < 16; ++i )
 	{
@@ -298,8 +332,8 @@ static void optimizeEndPoints3(Vector3 block[16], BlockDXT1 * dxtBlock)
 	float alpha2_sum = 0.0f;
 	float beta2_sum = 0.0f;
 	float alphabeta_sum = 0.0f;
-	Vector3 alphax_sum(zero);
-	Vector3 betax_sum(zero);
+	Vector3 alphax_sum(0.0f);
+	Vector3 betax_sum(0.0f);
 	
 	for( int i = 0; i < 16; ++i )
 	{
@@ -664,11 +698,8 @@ void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, 
 
 
 
-void QuickCompress::outputBlock4(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * dxtBlock)
+void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
-	Vector3 block[16];
-	extractColorBlockRGB(rgba, block);
-
     Vector3 maxColor = start * 255;
     Vector3 minColor = end * 255;
 	uint16 color0 = roundAndExpand(&maxColor);
@@ -680,18 +711,15 @@ void QuickCompress::outputBlock4(const ColorBlock & rgba, const Vector3 & start,
 		swap(color0, color1);
 	}
 
-	dxtBlock->col0 = Color16(color0);
-	dxtBlock->col1 = Color16(color1);
-	dxtBlock->indices = computeIndices4(block, maxColor, minColor);
+	block->col0 = Color16(color0);
+	block->col1 = Color16(color1);
+	block->indices = computeIndices4(set, maxColor, minColor);
 
-	optimizeEndPoints4(block, dxtBlock);
+	//optimizeEndPoints4(set, block);
 }
 
-void QuickCompress::outputBlock3(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * dxtBlock)
+void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
-	Vector3 block[16];
-	extractColorBlockRGB(rgba, block);
-
     Vector3 maxColor = start * 255;
     Vector3 minColor = end * 255;
 	uint16 color0 = roundAndExpand(&maxColor);
@@ -703,9 +731,9 @@ void QuickCompress::outputBlock3(const ColorBlock & rgba, const Vector3 & start,
 		swap(color0, color1);
 	}
 
-	dxtBlock->col0 = Color16(color0);
-	dxtBlock->col1 = Color16(color1);
-    dxtBlock->indices = computeIndices3(block, maxColor, minColor);
+	block->col0 = Color16(color0);
+	block->col1 = Color16(color1);
+    block->indices = computeIndices3(set, maxColor, minColor);
 
-	optimizeEndPoints3(block, dxtBlock);
+	//optimizeEndPoints3(set, block);
 }

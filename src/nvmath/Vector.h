@@ -10,9 +10,6 @@
 namespace nv
 {
 
-    enum zero_t { zero };
-    enum identity_t { identity };
-
     // I should probably use templates.
     typedef float scalar;
 
@@ -22,7 +19,6 @@ namespace nv
         typedef Vector2 const & Arg;
 
         Vector2();
-        explicit Vector2(zero_t);
         explicit Vector2(scalar f);
         Vector2(scalar x, scalar y);
         Vector2(Vector2::Arg v);
@@ -57,7 +53,7 @@ namespace nv
         typedef Vector3 const & Arg;
 
         Vector3();
-        explicit Vector3(zero_t);
+        explicit Vector3(scalar x);
         Vector3(scalar x, scalar y, scalar z);
         Vector3(Vector2::Arg v, scalar z);
         Vector3(Vector3::Arg v);
@@ -99,7 +95,7 @@ namespace nv
         typedef Vector4 const & Arg;
 
         Vector4();
-        explicit Vector4(zero_t);
+        explicit Vector4(scalar x);
         Vector4(scalar x, scalar y, scalar z, scalar w);
         Vector4(Vector2::Arg v, scalar z, scalar w);
         Vector4(Vector3::Arg v, scalar w);
@@ -136,7 +132,6 @@ namespace nv
     // Vector2
 
     inline Vector2::Vector2() {}
-    inline Vector2::Vector2(zero_t) : x(0.0f), y(0.0f) {}
     inline Vector2::Vector2(scalar f) : x(f), y(f) {}
     inline Vector2::Vector2(scalar x, scalar y) : x(x), y(y) {}
     inline Vector2::Vector2(Vector2::Arg v) : x(v.x), y(v.y) {}
@@ -201,7 +196,7 @@ namespace nv
     // Vector3
 
     inline Vector3::Vector3() {}
-    inline Vector3::Vector3(zero_t) : x(0.0f), y(0.0f), z(0.0f) {}
+    inline Vector3::Vector3(scalar f) : x(f), y(f), z(f) {}
     inline Vector3::Vector3(scalar x, scalar y, scalar z) : x(x), y(y), z(z) {}
     inline Vector3::Vector3(Vector2::Arg v, scalar z) : x(v.x), y(v.y), z(z) {}
     inline Vector3::Vector3(Vector3::Arg v) : x(v.x), y(v.y), z(v.z) {}
@@ -286,7 +281,7 @@ namespace nv
     // Vector4
 
     inline Vector4::Vector4() {}
-    inline Vector4::Vector4(zero_t) : x(0.0f), y(0.0f), z(0.0f), w(0.0f) {}
+    inline Vector4::Vector4(scalar f) : x(f), y(f), z(f), w(f) {}
     inline Vector4::Vector4(scalar x, scalar y, scalar z, scalar w) : x(x), y(y), z(z), w(w) {}
     inline Vector4::Vector4(Vector2::Arg v, scalar z, scalar w) : x(v.x), y(v.y), z(z), w(w) {}
     inline Vector4::Vector4(Vector3::Arg v, scalar w) : x(v.x), y(v.y), z(v.z), w(w) {}
@@ -640,6 +635,15 @@ namespace nv
         return isFinite(v.x) && isFinite(v.y) && isFinite(v.z);
     }
 
+    inline Vector3 floor(Vector3::Arg v)
+    {
+        return Vector3(floorf(v.x), floorf(v.y), floorf(v.z));
+    }
+
+    inline Vector3 ceil(Vector3::Arg v)
+    {
+        return Vector3(ceilf(v.x), ceilf(v.y), ceilf(v.z));
+    }
 
     // Vector4
 

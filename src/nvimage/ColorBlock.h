@@ -82,22 +82,33 @@ namespace nv
 
     struct ColorSet
     {
-        ColorSet() : w(4), h(4) {}
-        ColorSet(uint w, uint h) : w(w), h(h) {}
+        void setColors(const float * data, uint img_w, uint img_h, uint img_x, uint img_y);
 
-        void init(const Image * img, uint x, uint y);
-        void init(const FloatImage * img, uint x, uint y);
-        void init(const uint * data, uint w, uint h, uint x, uint y);
-        void init(const float * data, uint w, uint h, uint x, uint y);
+        void setAlphaWeights();
+        void setUniformWeights();
 
-        Vector4 color(uint x, uint y) const { nvDebugCheck(x < w && y < h); return colors[y * 4 + x]; }
-        Vector4 & color(uint x, uint y) { nvDebugCheck(x < w && y < h); return colors[y * 4 + x]; }
+        void createMinimalSet(bool ignoreTransparent);
+        void wrapIndices();
 
-        Vector4 color(uint i) const { nvDebugCheck(i < 16); return colors[i]; }
-        Vector4 & color(uint i) { nvDebugCheck(i < 16); return colors[i]; }
+        void swizzle(uint x, uint y, uint z, uint w); // 0=r, 1=g, 2=b, 3=a, 4=0xFF, 5=0
+
+        bool isSingleColor(bool ignoreAlpha) const;
+        bool hasAlpha() const;
+
+        // These methods require indices to be set:
+        Vector4 color(uint x, uint y) const { nvDebugCheck(x < w && y < h); return colors[remap[y * 4 + x]]; }
+        Vector4 & color(uint x, uint y) { nvDebugCheck(x < w && y < h); return colors[remap[y * 4 + x]]; }
+
+        Vector4 color(uint i) const { nvDebugCheck(i < 16); return colors[remap[i]]; }
+        Vector4 & color(uint i) { nvDebugCheck(i < 16); return colors[remap[i]]; }
+
+
+        uint count;
+        uint w, h;
 
         Vector4 colors[16];
-        uint w, h;
+        float weights[16];
+        int remap[16];
     };
 
 } // nv namespace

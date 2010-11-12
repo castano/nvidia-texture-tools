@@ -6,6 +6,7 @@
 #include "nvmath/Box.h"
 #include "nvcore/Utils.h" // swap
 
+#include <string.h> // memcpy
 
 using namespace nv;
 
@@ -457,44 +458,176 @@ float ColorBlock::volume() const
     return bounds.volume();
 }*/
 
+#include "FloatImage.h"
 
-
-void ColorSet::init(const Image * img, uint x, uint y)
+void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x, uint img_y)
 {
-    w = min(4U, img->width() - x);
-    h = min(4U, img->height() - y);
+    nvDebugCheck(img_x < img_w && img_y < img_h);
+
+    w = min(4U, img_w - img_x);
+    h = min(4U, img_h - img_y);
     nvDebugCheck(w != 0 && h != 0);
 
-    // Blocks that are smaller than 4x4 are handled by repeating the pixels.
-    // @@ Thats only correct when block size is 1, 2 or 4, but not with 3. :(
-    // @@ Ideally we should zero the weights of the pixels out of range.
+    count = w * h;
 
-    for (uint i = 0; i < 4; i++)
+    const float * r = data + img_w * img_h * 0;
+    const float * g = data + img_w * img_h * 1;
+    const float * b = data + img_w * img_h * 2;
+    const float * a = data + img_w * img_h * 3;
+
+    // Set colors.
+    for (uint y = 0, i = 0; y < h; y++)
     {
-        const uint by = i % h;
-
-        for (uint e = 0; e < 4; e++)
+        for (uint x = 0; x < w; x++, i++)
         {
-            const uint bx = e % w;
-            Color32 c = img->pixel(x+bx, y+by);
-            Vector4 & v = color(e, i);
-            v.x = c.r / 255.0f;
-            v.y = c.g / 255.0f;
-            v.z = c.b / 255.0f;
-            v.w = c.a / 255.0f;
+            colors[i].x = r[x + img_x, y + img_y];
+            colors[i].y = g[x + img_x, y + img_y];
+            colors[i].z = b[x + img_x, y + img_y];
+            colors[i].w = a[x + img_x, y + img_y];
         }
     }
 }
 
-void ColorSet::init(const FloatImage * img, uint x, uint y)
+void ColorSet::setAlphaWeights()
 {
+    for (uint i = 0; i < count; i++)
+    {
+        weights[i] = max(colors[i].w, 0.001f); // Avoid division by zero.
+    }
 }
 
-void ColorSet::init(const uint * data, uint w, uint h, uint x, uint y)
+void ColorSet::setUniformWeights()
 {
+    for (uint i = 0; i < count; i++)
+    {
+        weights[i] = 1.0f;
+    }
 }
 
-void ColorSet::init(const float * data, uint w, uint h, uint x, uint y)
+
+void ColorSet::createMinimalSet(bool ignoreTransparent)
 {
+    nvDebugCheck(count == w*h); // Do not call this method multiple times.
+
+    Vector4 C[16];
+    float W[16];
+    memcpy(C, colors, sizeof(Vector4)*count);
+    memcpy(W, weights, sizeof(float)*count);
+
+    uint n = 0;
+    for (uint y = 0, i = 0; y < h; y++)
+    {
+        for (uint x = 0; x < w; x++, i++)
+        {
+            if (ignoreTransparent && C[i].w == 0) {
+                continue;
+            }
+
+            uint idx = y * 4 + x;
+
+            // loop over previous points for a match
+            for (int j = 0; ; j++)
+            {
+                // allocate a new point
+                if (j == i)
+                {
+				    colors[n] = C[i];
+				    weights[n] = W[i];
+                    remap[idx] = n;
+                    n++;
+                    break;
+                }
+
+                // check for a match
+                bool colorMatch = (C[i].x == C[j].x) && (C[i].w == C[j].w) && (C[i].z == C[j].z);
+                //bool alphaMatch = (C[i].w == C[j].w);
+
+			    if (colorMatch)
+			    {
+				    // get the index of the match
+				    int index = remap[j];
+    				
+				    // map to this point and increase the weight
+				    weights[index] += W[i];
+				    remap[idx] = index;
+				    break;
+			    }
+            }
+        }
+    }
+
+    count = n;
+
+    // Avoid empty blocks.
+    if (count == 0) {
+        count = 1;
+        //colors[0] = C[0];
+        //weights[0] = W[0];
+        memset(remap, 0, sizeof(int)*16);
+    }
 }
 
+
+// Fill blocks that are smaller than (4,4) by wrapping indices.
+void ColorSet::wrapIndices()
+{
+    for (uint y = h; y < 4; y++)
+    {
+        uint base = (y % h) * w;
+        for (uint x = w; x < 4; x++)
+        {
+            remap[y*4+3] = remap[base + (x % w)];
+        }
+    }
+}
+
+bool ColorSet::isSingleColor(bool ignoreAlpha) const
+{
+    Vector4 v = colors[0];
+    if (ignoreAlpha) v.w = 1.0f;
+
+    for (uint i = 1; i < count; i++)
+    {
+        Vector4 c = colors[i];
+        if (ignoreAlpha) c.w = 1.0f;
+
+        if (v != c) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+// 0=r, 1=g, 2=b, 3=a, 4=0xFF, 5=0
+static inline float component(Vector4::Arg c, uint i)
+{
+    if (i == 0) return c.x;
+    if (i == 1) return c.y;
+    if (i == 2) return c.z;
+    if (i == 3) return c.w;
+    if (i == 4) return 0xFF;
+    return 0;
+}
+
+void ColorSet::swizzle(uint x, uint y, uint z, uint w)
+{
+    for (uint i = 0; i < count; i++)
+    {
+        Vector4 c = colors[i];
+        colors[i].x = component(c, x);
+        colors[i].y = component(c, y);
+        colors[i].z = component(c, z);
+        colors[i].w = component(c, w);
+    }
+}
+
+bool ColorSet::hasAlpha() const
+{
+    for (uint i = 0; i < count; i++)
+    {
+        if (colors[i].w != 0.0f) return true;
+    }
+    return false;
+}

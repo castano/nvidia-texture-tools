@@ -312,6 +312,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvimage\ErrorMetric.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvimage\ErrorMetric.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvimage\Filter.cpp"
 			>
 		</File>

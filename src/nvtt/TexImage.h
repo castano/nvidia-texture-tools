@@ -49,7 +49,7 @@ namespace nvtt
             wrapMode = WrapMode_Mirror;
             alphaMode = AlphaMode_None;
             isNormalMap = false;
-
+            
             image = NULL;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.

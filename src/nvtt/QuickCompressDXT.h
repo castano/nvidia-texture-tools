@@ -30,6 +30,7 @@
 namespace nv
 {
 	struct ColorBlock;
+    struct ColorSet;
 	struct BlockDXT1;
 	struct BlockDXT3;
 	struct BlockDXT5;
@@ -47,8 +48,8 @@ namespace nv
 		void compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock, int iterationCount=8);
 		void compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, int iterationCount=8);
 
-        void outputBlock4(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
-        void outputBlock3(const ColorBlock & rgba, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
+        void outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
+        void outputBlock3(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
 	}
 } // nv namespace
 

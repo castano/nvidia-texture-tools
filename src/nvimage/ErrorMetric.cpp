@@ -146,7 +146,7 @@ static Vector3 xyzToCieLab(Vector3::Arg c)
     // Normalized white point.
     const float Xn = 0.950456f;
     const float Yn = 1.0f;
-    const float Zn = 1.088754;
+    const float Zn = 1.088754f;
 
     float Xr = c.x / Xn;
     float Yr = c.y / Yn;
@@ -159,6 +159,8 @@ static Vector3 xyzToCieLab(Vector3::Arg c)
     float L = 116 * fx - 16;
     float a = 500 * (fx - fy);
     float b = 200 * (fy - fz);
+
+    return Vector3(L, a, b);
 }
 
 static Vector3 rgbToCieLab(Vector3::Arg c)
@@ -222,6 +224,9 @@ float nv::cieLabError(const FloatImage * img0, const FloatImage * img1)
         Vector3 lab1 = rgbToCieLab(Vector3(r1[i], g1[i], b1[i]));
 
         // @@ Measure Delta E.
+        Vector3 delta = lab0 - lab1;
+        
+        error += length(delta);
     }
 
     return float(error / count);
