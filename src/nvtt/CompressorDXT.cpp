@@ -26,6 +26,7 @@
 #include "OutputOptions.h"
 
 #include "nvtt.h"
+#include "TaskDispatcher.h"
 
 #include "nvcore/Memory.h"
 
@@ -36,14 +37,14 @@
 #include <new> // placement new
 
 
+using namespace nv;
+using namespace nvtt;
+
+/*
 // OpenMP
 #if defined(HAVE_OPENMP)
 #include <omp.h>
 #endif
-
-using namespace nv;
-using namespace nvtt;
-
 
 void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
@@ -109,9 +110,73 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
     }
 #endif
 }
+*/
 
 
-//#include "bc6h/tile.h"
+struct CompressorContext
+{
+    nvtt::AlphaMode alphaMode;
+    uint w, h;
+    const float * data;
+    const nvtt::CompressionOptions::Private * compressionOptions;
+
+    uint bw, bh, bs;
+    uint8 * mem;
+    FixedBlockCompressor * compressor;
+};
+
+// Each task compresses one row.
+void CompressorTask(void * data, size_t y)
+{
+    CompressorContext * d = (CompressorContext *) data;
+
+    for (uint x = 0; x < d->bw; x++)
+    {
+        ColorBlock rgba;
+        rgba.init(d->w, d->h, d->data, 4*x, 4*y);
+
+        uint8 * ptr = d->mem + (y * d->bw + x) * d->bs;
+        d->compressor->compressBlock(rgba, d->alphaMode, *d->compressionOptions, ptr);
+    }
+}
+
+void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+{
+    CompressorContext context;
+    context.alphaMode = alphaMode;
+    context.w = w;
+    context.h = h;
+    context.data = data;
+    context.compressionOptions = &compressionOptions;
+
+    context.bs = blockSize();
+    context.bw = (w + 3) / 4;
+    context.bh = (h + 3) / 4;
+
+    context.compressor = this;
+
+    static SequentialTaskDispatcher sequential;
+    static AppleTaskDispatcher concurrent;
+
+    //TaskDispatcher * dispatcher = &sequential;
+    TaskDispatcher * dispatcher = &concurrent;
+
+    // Use a single thread to compress small textures.
+    if (context.bh < 4) dispatcher = &sequential;
+
+    const uint count = context.bw * context.bh;
+    const uint size = context.bs * count;
+    context.mem = new uint8[size];
+
+    dispatcher->dispatch(CompressorTask, &context, context.bh);
+
+    outputOptions.writeData(context.mem, size);
+
+    delete [] context.mem;
+}
+
+
+
 
 void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, const float * data, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {

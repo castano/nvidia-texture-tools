@@ -56,7 +56,7 @@
 using namespace nv;
 using namespace nvtt;
 
-
+#include <dispatch/dispatch.h>
 
 Compressor::Compressor() : m(*new Compressor::Private())
 {
@@ -71,7 +71,6 @@ Compressor::Compressor() : m(*new Compressor::Private())
 Compressor::~Compressor()
 {
     delete &m;
-    cuda::exit();
 }
 
 
@@ -84,22 +83,12 @@ void Compressor::enableCudaAcceleration(bool enable)
 
     if (m.cudaEnabled && m.cuda == NULL)
     {
-        // Select fastest CUDA device. @@ This is done automatically on current CUDA versions.
-        int device = cuda::getFastestDevice();
-        if (!cuda::setDevice(device))
+        m.cuda = new CudaContext();
+
+        if (!m.cuda->isValid())
         {
             m.cudaEnabled = false;
             m.cuda = NULL;
-        }
-        else
-        {
-            m.cuda = new CudaContext();
-
-            if (!m.cuda->isValid())
-            {
-                m.cudaEnabled = false;
-                m.cuda = NULL;
-            }
         }
     }
 }

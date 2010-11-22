@@ -26,6 +26,8 @@
 #ifndef NVTT_H
 #define NVTT_H
 
+#include <stddef.h> // size_t @@ Use or own define?
+
 // Function linkage
 #if NVTT_SHARED
 
@@ -331,6 +333,12 @@ namespace nvtt
         NVTT_API void setUserVersion(int version);
     };
 
+    typedef void Task(void * context, size_t id);
+
+    struct TaskDispatcher
+    {
+        virtual void dispatch(Task * task, void * context, size_t count) = 0;
+    };
 
     /// Context.
     struct Compressor
@@ -344,6 +352,7 @@ namespace nvtt
         // Context settings.
         NVTT_API void enableCudaAcceleration(bool enable);
         NVTT_API bool isCudaAccelerationEnabled() const;
+        NVTT_API void setTaskDispatcher(TaskDispatcher * disp);
 
         // InputOptions API.
         NVTT_API bool process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
