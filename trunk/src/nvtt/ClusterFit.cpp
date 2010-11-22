@@ -28,6 +28,8 @@
 #include "nvmath/Fitting.h"
 #include "nvimage/ColorBlock.h"
 
+#include <float.h> // FLT_MAX
+
 using namespace nv;
 
 ClusterFit::ClusterFit()
