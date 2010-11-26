@@ -6,8 +6,7 @@
 #include <omp.h>
 #endif
 
-#if NV_OS_DARWIN
-//#if defined(HAVE_DISPATCH)
+#if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
 #include <dispatch/dispatch.h>
 #endif
 
@@ -22,7 +21,7 @@ namespace nvtt {
         }
     };
 
-#if NV_OS_DARWIN
+#if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
 
     // Task dispatcher using Apple's Grand Central Dispatch.
     struct AppleTaskDispatcher : public TaskDispatcher

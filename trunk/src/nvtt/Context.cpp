@@ -56,8 +56,6 @@
 using namespace nv;
 using namespace nvtt;
 
-#include <dispatch/dispatch.h>
-
 Compressor::Compressor() : m(*new Compressor::Private())
 {
     // CUDA initialization.

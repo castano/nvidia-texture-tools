@@ -156,10 +156,10 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
     context.compressor = this;
 
     static SequentialTaskDispatcher sequential;
-    static AppleTaskDispatcher concurrent;
+	//#static AppleTaskDispatcher concurrent;
 
-    //TaskDispatcher * dispatcher = &sequential;
-    TaskDispatcher * dispatcher = &concurrent;
+    TaskDispatcher * dispatcher = &sequential;
+    //TaskDispatcher * dispatcher = &concurrent;
 
     // Use a single thread to compress small textures.
     if (context.bh < 4) dispatcher = &sequential;
