@@ -2,7 +2,7 @@
 #error "Do not include this file directly."
 #endif
 
-//#include <cstddef> // size_t, NULL
+#include <cstddef> // operator new, size_t, NULL
 
 // Function linkage
 #define DLL_IMPORT
