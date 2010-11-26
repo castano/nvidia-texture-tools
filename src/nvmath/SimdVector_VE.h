@@ -35,12 +35,13 @@ namespace nv {
 
     class SimdVector
     {
+	public:
         vector float vec;
 
         typedef SimdVector Arg;
 
         SimdVector() {}
-        explicit SimdVector(float v) : vec((vector float)(X)) {}	
+        explicit SimdVector(float v) : vec((vector float)(v)) {}	
         explicit SimdVector(vector float v) : vec(v) {}
         SimdVector(const SimdVector & arg) : vec(arg.vec) {}
 
@@ -115,34 +116,34 @@ namespace nv {
         }
     };
 
-    SimdVector operator+( SimdVector::Arg left, SimdVector::Arg right  )
+    inline SimdVector operator+( SimdVector::Arg left, SimdVector::Arg right  )
     {
         return SimdVector( vec_add( left.vec, right.vec ) );
     }
 
-    SimdVector operator-( SimdVector::Arg left, SimdVector::Arg right  )
+    inline SimdVector operator-( SimdVector::Arg left, SimdVector::Arg right  )
     {
         return SimdVector( vec_sub( left.vec, right.vec ) );
     }
 
-    SimdVector operator*( SimdVector::Arg left, SimdVector::Arg right  )
+    inline SimdVector operator*( SimdVector::Arg left, SimdVector::Arg right  )
     {
         return SimdVector( vec_madd( left.vec, right.vec, ( vector float )( -0.0f ) ) );
     }
 
     // Returns a*b + c
-    SimdVector multiplyAdd( SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c )
+    inline SimdVector multiplyAdd( SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c )
     {
         return SimdVector( vec_madd( a.vec, b.vec, c.vec ) );
     }
 
     // Returns -( a*b - c )
-    SimdVector negativeMultiplySubtract( SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c )
+    inline SimdVector negativeMultiplySubtract( SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c )
     {
         return SimdVector( vec_nmsub( a.vec, b.vec, c.vec ) );
     }
 
-    SimdVector reciprocal( SimdVector::Arg v )
+    inline SimdVector reciprocal( SimdVector::Arg v )
     {
         // get the reciprocal estimate
         vector float estimate = vec_re( v.vec );
@@ -152,32 +153,32 @@ namespace nv {
         return SimdVector( vec_madd( diff, estimate, estimate ) );
     }
 
-    SimdVector min( SimdVector::Arg left, SimdVector::Arg right )
+    inline SimdVector min( SimdVector::Arg left, SimdVector::Arg right )
     {
         return SimdVector( vec_min( left.vec, right.vec ) );
     }
 
-    SimdVector max( SimdVector::Arg left, SimdVector::Arg right )
+    inline SimdVector max( SimdVector::Arg left, SimdVector::Arg right )
     {
         return SimdVector( vec_max( left.vec, right.vec ) );
     }
 
-    SimdVector truncate( SimdVector::Arg v )
+    inline SimdVector truncate( SimdVector::Arg v )
     {
         return SimdVector( vec_trunc( v.vec ) );
     }
 
-    SimdVector compareEqual( SimdVector::Arg left, SimdVector::Arg right )
+    inline SimdVector compareEqual( SimdVector::Arg left, SimdVector::Arg right )
     {
         return SimdVector( ( vector float )vec_cmpeq( left.vec, right.vec ) );
     }
 
-    SimdVector select( SimdVector::Arg off, SimdVector::Arg on, SimdVector::Arg bits )
+    inline SimdVector select( SimdVector::Arg off, SimdVector::Arg on, SimdVector::Arg bits )
     {
         return SimdVector( vec_sel( off.vec, on.vec, ( vector unsigned int )bits.vec ) );
     }
 
-    bool compareAnyLessThan( SimdVector::Arg left, SimdVector::Arg right ) 
+    inline bool compareAnyLessThan( SimdVector::Arg left, SimdVector::Arg right ) 
     {
         return vec_any_lt( left.vec, right.vec ) != 0;
     }
