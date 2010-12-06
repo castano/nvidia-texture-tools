@@ -188,11 +188,11 @@ void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, const flo
     //if (singleThreaded)
     {
         uint8 * mem = malloc<uint8>(bs * bw);
-        uint8 * ptr = mem;
 
         ColorSet set;
 
         for (uint y = 0; y < h; y += 4) {
+        	uint8 * ptr = mem;
             for (uint x = 0; x < w; x += 4, ptr += bs) {
                 set.setColors(data, w, h, x, y);
                 compressBlock(set, alphaMode, compressionOptions, ptr);
