@@ -749,7 +749,7 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
 bool TexImage::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params)
 {
     FloatImage * img = m->image;
-    if (img == NULL || img->width() == 1 || img->height() == 1) {
+    if (img == NULL || (img->width() == 1 && img->height() == 1)) {
         return false;
     }
 
