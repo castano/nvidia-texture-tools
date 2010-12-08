@@ -29,7 +29,6 @@ do
 		--debug )				build="Debug" ;;
 		--release )				build="Release" ;;
 		--prefix=* )			prefix="${i#--prefix=}" ;;
-		--prefix=* )			prefix="${i#--prefix=}" ;;
 		* )						echo "Unrecognised argument $i" ;;
 	esac
 done
