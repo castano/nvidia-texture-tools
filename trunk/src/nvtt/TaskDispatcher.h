@@ -10,16 +10,14 @@
 // Gran Central Dispatch (GCD/libdispatch)
 // http://developer.apple.com/mac/library/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html
 #if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
+#define HAVE_GCD 1
 #include <dispatch/dispatch.h>
-#endif
-
-#if NV_OS_WIN32 && _MSC_VER >= 1600
-#define HAVE_PPL 1
 #endif
 
 // Parallel Patterns Library (PPL) is part of Microsoft's concurrency runtime: 
 // http://msdn.microsoft.com/en-us/library/dd504870.aspx
-#if defined(HAVE_PPL)
+#if NV_OS_WIN32 && _MSC_VER >= 1600
+#define HAVE_PPL 1
 #include <array>
 //#include <ppl.h>
 #endif
@@ -35,8 +33,8 @@ namespace nvtt {
 
     struct SequentialTaskDispatcher : public TaskDispatcher
     {
-        virtual void dispatch(Task * task, void * context, size_t count) {
-            for (size_t i = 0; i < count; i++) {
+        virtual void dispatch(Task * task, void * context, int count) {
+            for (int i = 0; i < count; i++) {
                 task(context, i);
             }
         }
@@ -46,9 +44,9 @@ namespace nvtt {
 
     struct OpenMPTaskDispatcher : public TaskDispatcher
     {
-        virtual void dispatch(Task * task, void * context, size_t count) {
+        virtual void dispatch(Task * task, void * context, int count) {
             #pragma omp parallel for
-            for (int i = 0; i < int(count); i++) {
+            for (int i = 0; i < count; i++) {
                 task(context, i);
             }
         }
@@ -61,9 +59,21 @@ namespace nvtt {
     // Task dispatcher using Apple's Grand Central Dispatch.
     struct AppleTaskDispatcher : public TaskDispatcher
     {
-        virtual void dispatch(Task * task, void * context, size_t count) {
-            dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
-            dispatch_apply_f(count, q, context, task);
+        // @@ This is really lame, but I refuse to use size_t in the public API.
+        struct BlockContext {
+            Task * task;
+            void * context;
+        };
+
+        static void block(void * context, size_t id) {
+            BlockContext * ctx = (BlockContext *)context;
+            ctx->task(ctx->context, int(id));
+        }
+
+        virtual void dispatch(Task * task, void * context, int count) {
+            dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+            BlockContext blockCtx = { task, context };
+            dispatch_apply_f(count, q, &blockCtx, block);
         }
     };
 
@@ -78,7 +88,6 @@ namespace nvtt {
         CountingIterator(const CountingIterator & rhs) : i(0) {}
         explicit CountingIterator(int x) : i(x) {}
 
-        //const int & base() const;
         const int & operator*() const { return i; }
         CountingIterator & operator++() { i++; return *this; }
         CountingIterator & operator--() { i--; return *this; }
@@ -96,17 +105,17 @@ namespace nvtt {
         void * context;
     };
 
-    // Using Microsoft's concurrency runtime.
+    // Task dispatcher using Microsoft's concurrency runtime.
     struct MicrosoftTaskDispatcher : public TaskDispatcher
     {
-        virtual void dispatch(Task * task, void * context, size_t count)
+        virtual void dispatch(Task * task, void * context, int count)
         {
             CountingIterator begin(0);
             CountingIterator end((int)count);
             TaskFunctor func(task, context);
 
             std::for_each(begin, end, func);
-            //std::parallel_for_each(begin, end, func);
+            //parallel_for_each(begin, end, func);
         }
     };
 
@@ -123,13 +132,26 @@ namespace nvtt {
         void * context;
     };
 
+    // Task dispatcher using Inte's Thread Building Blocks.
     struct IntelTaskDispatcher : public TaskDispatcher
     {
-        virtual void dispatch(Task * task, void * context, size_t count) {
-            parallel_for(blocked_range<size_t>(0, count, 1), TaskFunctor(task, context));
+        virtual void dispatch(Task * task, void * context, int count) {
+            parallel_for(blocked_range<int>(0, count, 1), TaskFunctor(task, context));
         }
     };
 
+#endif
+
+#if defined(HAVE_OPENMP)
+    typedef OpenMPTaskDispatcher        ConcurrentTaskDispatcher;
+#elif defined(HAVE_TBB)
+    typedef IntelTaskDispatcher         ConcurrentTaskDispatcher;
+#elif defined(HAVE_PPL)
+    typedef MicrosoftTaskDispatcher     ConcurrentTaskDispatcher;
+#elif defined(HAVE_GCD)
+    typedef AppleTaskDispatcher         ConcurrentTaskDispatcher;
+#else
+    typedef SequentialTaskDispatcher    ConcurrentTaskDispatcher;
 #endif
 
 } // namespace nvtt

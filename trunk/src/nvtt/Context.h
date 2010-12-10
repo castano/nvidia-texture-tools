@@ -30,6 +30,7 @@
 #include "nvtt/Compressor.h"
 #include "nvtt/cuda/CudaCompressorDXT.h"
 #include "nvtt.h"
+#include "TaskDispatcher.h"
 
 namespace nv
 {
@@ -51,18 +52,19 @@ namespace nvtt
         void quantize(TexImage & tex, const CompressionOptions::Private & compressionOptions) const;
 
         bool outputHeader(nvtt::TextureType textureType, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
-        //bool outputHeader(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
-	nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
-	nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
-
+        nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
+        nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
 
 
-	bool cudaSupported;
-	bool cudaEnabled;
+        bool cudaSupported;
+        bool cudaEnabled;
 
-	nv::AutoPtr<nv::CudaContext> cuda;
+        nv::AutoPtr<nv::CudaContext> cuda;
 
+        TaskDispatcher * dispatcher;
+        //SequentialTaskDispatcher defaultDispatcher;
+        ConcurrentTaskDispatcher defaultDispatcher;
     };
 
 } // nvtt namespace

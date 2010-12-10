@@ -26,8 +26,6 @@
 #ifndef NVTT_H
 #define NVTT_H
 
-#include <stddef.h> // size_t @@ Use or own define?
-
 // Function linkage
 #if NVTT_SHARED
 
@@ -333,11 +331,11 @@ namespace nvtt
         NVTT_API void setUserVersion(int version);
     };
 
-    typedef void Task(void * context, size_t id);
+    typedef void Task(void * context, int id);
 
     struct TaskDispatcher
     {
-        virtual void dispatch(Task * task, void * context, size_t count) = 0;
+        virtual void dispatch(Task * task, void * context, int count) = 0;
     };
 
     /// Context.

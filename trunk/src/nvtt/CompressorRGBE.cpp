@@ -56,7 +56,7 @@ static Color32 toRgbe8(float r, float g, float b)
 }
 
 
-void CompressorRGBE::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void CompressorRGBE::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     nvDebugCheck (compressionOptions.format == nvtt::Format_RGBE);
 

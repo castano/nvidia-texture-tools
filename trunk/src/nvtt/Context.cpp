@@ -64,6 +64,8 @@ Compressor::Compressor() : m(*new Compressor::Private())
     m.cuda = NULL;
 
     enableCudaAcceleration(m.cudaSupported);
+
+    m.dispatcher = &m.defaultDispatcher;
 }
 
 Compressor::~Compressor()
@@ -94,6 +96,16 @@ void Compressor::enableCudaAcceleration(bool enable)
 bool Compressor::isCudaAccelerationEnabled() const
 {
     return m.cudaEnabled;
+}
+
+void Compressor::setTaskDispatcher(TaskDispatcher * disp)
+{
+    if (disp == NULL) {
+        m.dispatcher = &m.defaultDispatcher;
+    }
+    else {
+        m.dispatcher = disp;
+    }
 }
 
 
@@ -318,7 +330,7 @@ bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, int
     }
     else
     {
-        compressor->compress(alphaMode, w, h, rgba, compressionOptions, outputOptions);
+        compressor->compress(alphaMode, w, h, rgba, dispatcher, compressionOptions, outputOptions);
     }
 
     return true;

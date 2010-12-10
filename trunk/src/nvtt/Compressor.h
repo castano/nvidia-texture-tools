@@ -30,11 +30,11 @@
 
 namespace nv
 {
-	struct CompressorInterface
-	{
-		virtual ~CompressorInterface() {}
-		virtual void compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * rgba, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions) = 0;
-	};
+    struct CompressorInterface
+    {
+        virtual ~CompressorInterface() {}
+        virtual void compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * rgba, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions) = 0;
+    };
 
 } // nv namespace
 
