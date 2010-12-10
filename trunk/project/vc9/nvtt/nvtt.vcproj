@@ -218,6 +218,7 @@
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				EnableEnhancedInstructionSet="2"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -305,6 +306,7 @@
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -1118,6 +1120,10 @@
 		</File>
 		<File
 			RelativePath="..\..\..\src\nvtt\SingleColorLookup.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\TaskDispatcher.h"
 			>
 		</File>
 		<File
