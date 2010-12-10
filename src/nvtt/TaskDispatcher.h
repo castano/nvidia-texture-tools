@@ -2,10 +2,13 @@
 #include "nvtt.h"
 
 // OpenMP
+// http://en.wikipedia.org/wiki/OpenMP
 #if defined(HAVE_OPENMP)
 #include <omp.h>
 #endif
 
+// Gran Central Dispatch (GCD/libdispatch)
+// http://developer.apple.com/mac/library/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html
 #if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
 #include <dispatch/dispatch.h>
 #endif
@@ -14,11 +17,15 @@
 #define HAVE_PPL 1
 #endif
 
+// Parallel Patterns Library (PPL) is part of Microsoft's concurrency runtime: 
+// http://msdn.microsoft.com/en-us/library/dd504870.aspx
 #if defined(HAVE_PPL)
 #include <array>
 //#include <ppl.h>
 #endif
 
+// Intel Thread Building Blocks (TBB).
+// http://www.threadingbuildingblocks.org/
 #if defined(HAVE_TBB)
 #include <tbb/parallel_for.h>
 #endif
@@ -35,6 +42,20 @@ namespace nvtt {
         }
     };
 
+#if defined(HAVE_OPENMP)
+
+    struct OpenMPTaskDispatcher : public TaskDispatcher
+    {
+        virtual void dispatch(Task * task, void * context, size_t count) {
+            #pragma omp parallel for
+            for (int i = 0; i < int(count); i++) {
+                task(context, i);
+            }
+        }
+    };
+
+#endif
+
 #if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
 
     // Task dispatcher using Apple's Grand Central Dispatch.
@@ -43,20 +64,6 @@ namespace nvtt {
         virtual void dispatch(Task * task, void * context, size_t count) {
             dispatch_queue_t q = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
             dispatch_apply_f(count, q, context, task);
-        }
-    };
-
-#endif
-
-#if defined(HAVE_OPENMP)
-
-    struct OpenMPTaskDispatcher : public TaskDispatcher
-    {
-        virtual void dispatch(Task * task, void * context, size_t count) {
-            #pragma omp parallel for
-            for (size_t i = 0; i < count; i++) {
-                task(context, i);
-            }
         }
     };
 
@@ -124,6 +131,5 @@ namespace nvtt {
     };
 
 #endif
-
 
 } // namespace nvtt
