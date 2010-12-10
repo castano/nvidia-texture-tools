@@ -126,11 +126,14 @@ struct CompressorContext
 };
 
 // Each task compresses one row.
-void CompressorTask(void * data, size_t y)
+void CompressorTask(void * data, size_t i)
 {
     CompressorContext * d = (CompressorContext *) data;
 
-    for (uint x = 0; x < d->bw; x++)
+    uint x = i % d->bw;
+    uint y = i / d->bw;
+
+    //for (uint x = 0; x < d->bw; x++)
     {
         ColorBlock rgba;
         rgba.init(d->w, d->h, d->data, 4*x, 4*y);
@@ -156,10 +159,11 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
     context.compressor = this;
 
     static SequentialTaskDispatcher sequential;
-	//#static AppleTaskDispatcher concurrent;
+	//static AppleTaskDispatcher concurrent;
+    static OpenMPTaskDispatcher concurrent;
 
-    TaskDispatcher * dispatcher = &sequential;
-    //TaskDispatcher * dispatcher = &concurrent;
+    //TaskDispatcher * dispatcher = &sequential;
+    TaskDispatcher * dispatcher = &concurrent;
 
     // Use a single thread to compress small textures.
     if (context.bh < 4) dispatcher = &sequential;
@@ -168,7 +172,7 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
     const uint size = context.bs * count;
     context.mem = new uint8[size];
 
-    dispatcher->dispatch(CompressorTask, &context, context.bh);
+    dispatcher->dispatch(CompressorTask, &context, count);
 
     outputOptions.writeData(context.mem, size);
 
