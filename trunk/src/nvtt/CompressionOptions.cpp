@@ -24,6 +24,7 @@
 
 #include "nvtt.h"
 #include "CompressionOptions.h"
+#include "nvimage/DirectDrawSurface.h"
 
 using namespace nv;
 using namespace nvtt;
@@ -92,10 +93,10 @@ void CompressionOptions::setQuality(Quality quality)
 /// perception more than a 7%. A better choice in my opinion is (3, 4, 2).
 void CompressionOptions::setColorWeights(float red, float green, float blue, float alpha/*=1.0f*/)
 {
-//	float total = red + green + blue;
-//	float x = red / total;
-//	float y = green / total;
-//	m.colorWeight.set(x, y, 1.0f - x - y);
+//    float total = red + green + blue;
+//    float x = red / total;
+//    float y = green / total;
+//    m.colorWeight.set(x, y, 1.0f - x - y);
     m.colorWeight.set(red, green, blue, alpha);
 }
 
@@ -185,4 +186,64 @@ void CompressionOptions::setQuantization(bool colorDithering, bool alphaDitherin
 }
 
 
+// Translate to and from D3D formats.
+unsigned int CompressionOptions::d3d9Format() const
+{
+    if (m.format == Format_RGB) {
+        if (m.pixelType == PixelType_UnsignedNorm) {
+            
+            uint bitcount = m.bitcount;
+            uint rmask = m.rmask;
+            uint gmask = m.gmask;
+            uint bmask = m.bmask;
+            uint amask = m.amask;
 
+            if (bitcount == 0) {
+                bitcount = m.rsize + m.gsize + m.bsize + m.asize;
+                rmask = ((1 << m.rsize) - 1) << (m.asize + m.bsize + m.gsize);
+                gmask = ((1 << m.gsize) - 1) << (m.asize + m.bsize);
+                bmask = ((1 << m.bsize) - 1) << m.asize;
+                amask = ((1 << m.asize) - 1) << 0;
+            }
+
+            if (bitcount <= 32) {
+                return nv::findD3D9Format(bitcount, rmask, gmask, bmask, amask);
+            }
+        }
+
+        return 0;
+    }
+    else {
+        uint d3d9_formats[] = {
+            0,              // Format_RGB,
+            FOURCC_DXT1,    // Format_DXT1
+            FOURCC_DXT1,    // Format_DXT1a
+            FOURCC_DXT3,    // Format_DXT3
+            FOURCC_DXT5,    // Format_DXT5
+            FOURCC_DXT5,    // Format_DXT5n
+            FOURCC_ATI1,    // Format_BC4
+            FOURCC_ATI2,    // Format_BC5
+            FOURCC_DXT1,    // Format_DXT1n
+		    0,              // Format_CTX1
+            0,              // Format_BC6
+            0,              // Format_BC7
+            0,              // Format_RGBE
+        };
+
+        return d3d9_formats[m.format];
+    }
+}
+
+/*
+bool CompressionOptions::setDirect3D9Format(unsigned int format)
+{
+}
+
+unsigned int CompressionOptions::dxgiFormat() const
+{
+}
+
+bool CompressionOptions::setDXGIFormat(unsigned int format)
+{
+}
+*/

@@ -147,6 +147,12 @@ namespace nvtt
         NVTT_API void setPitchAlignment(int pitchAlignment);
 
         NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
+
+        // Translate to and from D3D formats.
+        NVTT_API unsigned int d3d9Format() const;
+        //NVTT_API bool setD3D9Format(unsigned int format);
+        //NVTT_API unsigned int dxgiFormat() const;
+        //NVTT_API bool setDxgiFormat(unsigned int format);
     };
 
     /*
@@ -329,6 +335,7 @@ namespace nvtt
         NVTT_API void setOutputHeader(bool outputHeader);
         NVTT_API void setContainer(Container container);
         NVTT_API void setUserVersion(int version);
+        NVTT_API void setSrgbFlag(bool b);
     };
 
     typedef void Task(void * context, int id);
@@ -392,6 +399,7 @@ namespace nvtt
         NVTT_API void setNormalMap(bool isNormalMap);
 
         // Queries.
+        NVTT_API bool isNull() const;
         NVTT_API int width() const;
         NVTT_API int height() const;
         NVTT_API int depth() const;

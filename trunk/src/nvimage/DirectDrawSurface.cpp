@@ -44,17 +44,19 @@ using namespace nv;
 
 const uint nv::FOURCC_NVTT = MAKEFOURCC('N', 'V', 'T', 'T');
 
+const uint nv::FOURCC_DDS = MAKEFOURCC('D', 'D', 'S', ' ');
+const uint nv::FOURCC_DXT1 = MAKEFOURCC('D', 'X', 'T', '1');
+const uint nv::FOURCC_DXT2 = MAKEFOURCC('D', 'X', 'T', '2');
+const uint nv::FOURCC_DXT3 = MAKEFOURCC('D', 'X', 'T', '3');
+const uint nv::FOURCC_DXT4 = MAKEFOURCC('D', 'X', 'T', '4');
+const uint nv::FOURCC_DXT5 = MAKEFOURCC('D', 'X', 'T', '5');
+const uint nv::FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B');
+const uint nv::FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
+const uint nv::FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
+
+
 namespace
 {
-    static const uint FOURCC_DDS = MAKEFOURCC('D', 'D', 'S', ' ');
-    static const uint FOURCC_DXT1 = MAKEFOURCC('D', 'X', 'T', '1');
-    static const uint FOURCC_DXT2 = MAKEFOURCC('D', 'X', 'T', '2');
-    static const uint FOURCC_DXT3 = MAKEFOURCC('D', 'X', 'T', '3');
-    static const uint FOURCC_DXT4 = MAKEFOURCC('D', 'X', 'T', '4');
-    static const uint FOURCC_DXT5 = MAKEFOURCC('D', 'X', 'T', '5');
-    static const uint FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B');
-    static const uint FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
-    static const uint FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
 
     static const uint FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y');
 
@@ -133,7 +135,10 @@ namespace
     static const uint DDPF_PALETTEINDEXED8 = 0x00000020U;
     static const uint DDPF_LUMINANCE = 0x00020000U;
     static const uint DDPF_ALPHAPREMULT = 0x00008000U;
-    static const uint DDPF_NORMAL = 0x80000000U;  // @@ Custom nv flag.
+
+    // Custom NVTT flags.
+    static const uint DDPF_NORMAL = 0x80000000U;  
+    static const uint DDPF_SRGB = 0x40000000U;
 
     // DX10 formats.
     enum DXGI_FORMAT
@@ -522,24 +527,26 @@ namespace
 
     static const uint s_d3dFormatCount = sizeof(s_d3dFormats) / sizeof(s_d3dFormats[0]);
 
-    static uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
-    {
-        for (uint i = 0; i < s_d3dFormatCount; i++)
-        {
-            if (s_d3dFormats[i].bitcount == bitcount &&
-                s_d3dFormats[i].rmask == rmask &&
-                s_d3dFormats[i].gmask == gmask &&
-                s_d3dFormats[i].bmask == bmask &&
-                s_d3dFormats[i].amask == amask)
-            {
-                return s_d3dFormats[i].format;
-            }
-        }
+} // namespace
 
-        return 0;
+uint nv::findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+{
+    for (int i = 0; i < s_d3dFormatCount; i++)
+    {
+        if (s_d3dFormats[i].bitcount == bitcount &&
+            s_d3dFormats[i].rmask == rmask &&
+            s_d3dFormats[i].gmask == gmask &&
+            s_d3dFormats[i].bmask == bmask &&
+            s_d3dFormats[i].amask == amask)
+        {
+            return s_d3dFormats[i].format;
+        }
     }
 
-} // namespace
+    return 0;
+}
+
+
 
 DDSHeader::DDSHeader()
 {
@@ -755,6 +762,12 @@ void DDSHeader::setNormalFlag(bool b)
     else this->pf.flags &= ~DDPF_NORMAL;
 }
 
+void DDSHeader::setSrgbFlag(bool b)
+{
+    if (b) this->pf.flags |= DDPF_SRGB;
+    else this->pf.flags &= ~DDPF_SRGB;
+}
+
 void DDSHeader::setHasAlphaFlag(bool b)
 {
     if (b) this->pf.flags |= DDPF_ALPHAPIXELS;
@@ -829,6 +842,11 @@ uint DDSHeader::userVersion() const
 bool DDSHeader::isNormalMap() const
 {
     return (pf.flags & DDPF_NORMAL) != 0;
+}
+
+bool DDSHeader::isSrgb() const
+{
+    return (pf.flags & DDPF_SRGB) != 0;
 }
 
 bool DDSHeader::hasAlpha() const
@@ -1160,7 +1178,7 @@ void * DirectDrawSurface::readData(uint * sizePtr)
     void * data = new unsigned char [size];
     
     size = stream->serialize(data, size);
-    nvDebugCheck(uint(size) == *sizePtr);
+    nvDebugCheck(size == *sizePtr);
 
     return data;
 }

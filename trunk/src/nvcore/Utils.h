@@ -95,21 +95,21 @@ namespace nv
     }
 
 
+    inline uint sdbmHash(const void * data_in, uint size, uint h = 5381)
+    {
+        const uint8 * data = (const uint8 *) data_in;
+        uint i = 0;
+        while (i < size) {
+            h = (h << 16) + (h << 6) - h + (uint) data[i++];
+        }
+        return h;
+    }
+
     // Some hash functors:
     template <typename Key> struct Hash 
     {
-        inline uint sdbm_hash(const void * data_in, uint size, uint h = 5381) const
-        {
-            const uint8 * data = (const uint8 *) data_in;
-            uint i = 0;
-            while (i < size) {
-                h = (h << 16) + (h << 6) - h + (uint) data[i++];
-            }
-            return h;
-        }
-
         uint operator()(const Key & k) const {
-            return sdbm_hash(&k, sizeof(Key));
+            return sdbmHash(&k, sizeof(Key));
         }
     };
     template <> struct Hash<int>

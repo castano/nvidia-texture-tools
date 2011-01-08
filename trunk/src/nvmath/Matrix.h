@@ -33,6 +33,8 @@ namespace nv
         void operator+=(const Matrix3 & m);
         void operator-=(const Matrix3 & m);
 
+        float determinant() const;
+
     private:
         scalar m_data[9];
     };
@@ -177,6 +179,17 @@ namespace nv
     inline Matrix3 operator*(const Matrix3 & a, const Matrix3 & b)
     {
         return mul(a, b);
+    }
+
+    inline float Matrix3::determinant() const
+    {
+        return 
+            get(0,0) * get(1,1) * get(2,2) + 
+            get(0,1) * get(1,2) * get(2,0) + 
+            get(0,2) * get(1,0) * get(2,1) -
+            get(0,2) * get(1,1) * get(2,0) - 
+            get(0,1) * get(1,0) * get(2,2) -
+            get(0,0) * get(1,2) * get(2,1);
     }
 
 

@@ -34,6 +34,17 @@ namespace nv
     struct ColorBlock;
 
     extern const uint FOURCC_NVTT;
+    extern const uint FOURCC_DDS;
+    extern const uint FOURCC_DXT1;
+    extern const uint FOURCC_DXT2;
+    extern const uint FOURCC_DXT3;
+    extern const uint FOURCC_DXT4;
+    extern const uint FOURCC_DXT5;
+    extern const uint FOURCC_RXGB;
+    extern const uint FOURCC_ATI1;
+    extern const uint FOURCC_ATI2;
+
+    extern uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 
     struct NVIMAGE_CLASS DDSPixelFormat
     {
@@ -101,6 +112,7 @@ namespace nv
         void setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
         void setDX10Format(uint format);
         void setNormalFlag(bool b);
+        void setSrgbFlag(bool b);
         void setHasAlphaFlag(bool b);
         void setUserVersion(int version);
 
@@ -111,6 +123,7 @@ namespace nv
         uint toolVersion() const;
         uint userVersion() const;
         bool isNormalMap() const;
+        bool isSrgb() const;
         bool hasAlpha() const;
         uint d3d9Format() const;
     };
