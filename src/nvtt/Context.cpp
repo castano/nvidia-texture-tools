@@ -571,7 +571,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                         header.setSwizzleCode('A', '2', 'X', 'Y');
                     }
                 }
-                else if (compressionOptions.format == Format_BC6) {
+                else if (compressionOptions.format == Format_BC6) { // @@ This is not supported by D3DX. Always use DX10 header with BC6-7 formats.
                     header.setFourCC('Z', 'O', 'H', ' ');
                 }
                 else if (compressionOptions.format == Format_BC7) {
@@ -586,6 +586,8 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                     supported = false;
                 }
             }
+
+            if (outputOptions.srgb) header.setSrgbFlag(true);
         }
 
         if (!supported)
@@ -595,15 +597,15 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             return false;
         }
 
-        // Swap bytes if necessary.
-        header.swapBytes();
-
         uint headerSize = 128;
         if (header.hasDX10Header())
         {
             nvStaticCheck(sizeof(DDSHeader) == 128 + 20);
             headerSize = 128 + 20;
         }
+
+        // Swap bytes if necessary.
+        header.swapBytes();
 
         bool writeSucceed = outputOptions.writeData(&header, headerSize);
         if (!writeSucceed)
@@ -796,37 +798,3 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 
     return NULL;
 }
-
-/*
-int Compressor::Private::estimateSize(const InputOptions::Private & inputOptions, const CompressionOptions::Private & compressionOptions) const
-{
-    const Format format = compressionOptions.format;
-
-    const uint bitCount = compressionOptions.getBitCount();
-    const uint pitchAlignment = compressionOptions.pitchAlignment;
-
-    uint mipmapCount, width, height, depth;
-    inputOptions.computeExtents(&mipmapCount, &width, &height, &depth);
-
-    int size = 0;
-
-    for (uint f = 0; f < inputOptions.faceCount; f++)
-    {
-        uint w = inputOptions.targetWidth;
-        uint h = inputOptions.targetHeight;
-        uint d = inputOptions.targetDepth;
-
-        for (uint m = 0; m < mipmapCount; m++)
-        {
-            size += computeImageSize(w, h, d, bitCount, pitchAlignment, format);
-
-            // Compute extents of next mipmap:
-            w = max(1U, w / 2);
-            h = max(1U, h / 2);
-            d = max(1U, d / 2);
-        }
-    }
-
-    return size;
-}
-*/

@@ -51,6 +51,7 @@ void OutputOptions::reset()
     m.outputHeader = true;
     m.container = Container_DDS;
     m.version = 0;
+    m.srgb = false;
 }
 
 
@@ -106,6 +107,12 @@ void OutputOptions::setContainer(Container container)
 void OutputOptions::setUserVersion(int version)
 {
     m.version = version;
+}
+
+/// Set SRGB flag.
+void OutputOptions::setSrgbFlag(bool b)
+{
+    m.srgb = b;
 }
 
 bool OutputOptions::Private::hasValidOutputHandler() const

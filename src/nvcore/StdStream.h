@@ -6,6 +6,7 @@
 
 #include "nvcore.h"
 #include "Stream.h"
+#include "Array.h"
 
 #include <stdio.h> // fopen
 #include <string.h> // memcpy
@@ -305,6 +306,38 @@ namespace nv
         const uint8 * m_ptr;
         uint m_size;
 
+    };
+
+
+    /// Buffer output stream.
+    class NVCORE_CLASS BufferOutputStream : public Stream
+    {
+        NV_FORBID_COPY(BufferOutputStream);
+    public:
+
+        BufferOutputStream(Array<uint8> & buffer) : m_buffer(buffer) { }
+
+        virtual uint serialize( void * data, uint len )
+        {
+            nvDebugCheck(data != NULL);
+            m_buffer.append((uint8 *)data, len);
+            return len;
+        }
+
+        virtual void seek( uint pos ) { /*Not implemented*/ }
+        virtual uint tell() const { return m_buffer.size(); }
+        virtual uint size() const { return m_buffer.size(); }
+
+        virtual bool isError() const { return false; }
+        virtual void clearError() {}
+
+        virtual bool isAtEnd() const { return true; }
+        virtual bool isSeekable() const { return false; }
+        virtual bool isLoading() const { return false; }
+        virtual bool isSaving() const { return true; }
+
+    private:
+        Array<uint8> & m_buffer;
     };
 
 

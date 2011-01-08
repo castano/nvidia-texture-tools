@@ -446,6 +446,14 @@ namespace nv
             return *this;
         }
 
+        // Release ownership of allocated memory and returns pointer to it.
+        T * release() {
+            T * tmp = m_buffer;
+            m_buffer = NULL;
+            m_size = 0;
+            m_buffer_size = 0;
+            return tmp;
+        }
 
         /// Array serialization.
         friend Stream & operator<< ( Stream & s, Array<T> & p )

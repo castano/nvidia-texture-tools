@@ -451,7 +451,7 @@ int main(int argc, char *argv[])
     }
 
     // Block compressed textures with mipmaps must be powers of two.
-    //if (!noMipmaps && format != nvtt::Format_RGB)
+    if (!noMipmaps && format != nvtt::Format_RGB)
     {
         inputOptions.setRoundMode(nvtt::RoundMode_ToNearestPowerOfTwo);
     }

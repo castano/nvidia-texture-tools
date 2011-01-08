@@ -27,6 +27,9 @@ namespace nv
         /// Init ctor.
         Box(Vector3::Arg mins, Vector3::Arg maxs) : minCorner(mins), maxCorner(maxs) { }
 
+        // Assignment operator.
+        Box & operator=(const Box & b) { minCorner = b.minCorner; maxCorner = b.maxCorner; return *this; }
+
         // Cast operators.
         operator const float * () const { return reinterpret_cast<const float *>(this); }
 

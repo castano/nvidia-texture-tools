@@ -66,6 +66,7 @@ namespace nvtt
 		bool outputHeader;
 		Container container;
         int version;
+        bool srgb;
 		
 		bool hasValidOutputHandler() const;
 

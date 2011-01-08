@@ -199,65 +199,65 @@ namespace
     	
         nvDebug( "\nDumping stacktrace:\n" );
 
-	// Resolve PC to function names
-	for (int i = start; i < size; i++)
-	{
-	    // Check for end of stack walk
-	    DWORD64 ip = (DWORD64)trace[i];
-	    if (ip == NULL)
-		break;
+	    // Resolve PC to function names
+	    for (int i = start; i < size; i++)
+	    {
+		    // Check for end of stack walk
+		    DWORD64 ip = (DWORD64)trace[i];
+		    if (ip == NULL)
+			    break;
 
-	    // Get function name
-	    #define MAX_STRING_LEN	(512)
-	    unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
-	    IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
-	    pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-	    pSymbol->MaxNameLength = MAX_STRING_LEN;
+		    // Get function name
+		    #define MAX_STRING_LEN	(512)
+		    unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
+		    IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
+		    pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+		    pSymbol->MaxNameLength = MAX_STRING_LEN;
 
-	    DWORD64 dwDisplacement;
+		    DWORD64 dwDisplacement;
+    		
+		    if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
+		    {
+			    pSymbol->Name[MAX_STRING_LEN-1] = 0;
+    			
+			    /*
+			    // Make the symbol readable for humans
+			    UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE, 
+				    UNDNAME_COMPLETE | 
+				    UNDNAME_NO_THISTYPE |
+				    UNDNAME_NO_SPECIAL_SYMS |
+				    UNDNAME_NO_MEMBER_TYPE |
+				    UNDNAME_NO_MS_KEYWORDS |
+				    UNDNAME_NO_ACCESS_SPECIFIERS );
+			    */
+    			
+			    // pSymbol->Name
+			    const char * pFunc = pSymbol->Name;
+    			
+			    // Get file/line number
+			    IMAGEHLP_LINE64 theLine = { 0 };
+			    theLine.SizeOfStruct = sizeof(theLine);
 
-            if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
-            {
-                pSymbol->Name[MAX_STRING_LEN-1] = 0;
-
-                /*
-                // Make the symbol readable for humans
-                UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE,
-                    UNDNAME_COMPLETE |
-                    UNDNAME_NO_THISTYPE |
-                    UNDNAME_NO_SPECIAL_SYMS |
-                    UNDNAME_NO_MEMBER_TYPE |
-                    UNDNAME_NO_MS_KEYWORDS |
-                    UNDNAME_NO_ACCESS_SPECIFIERS );
-                */
-
-                // pSymbol->Name
-                const char * pFunc = pSymbol->Name;
-
-                // Get file/line number
-                IMAGEHLP_LINE64 theLine = { 0 };
-                theLine.SizeOfStruct = sizeof(theLine);
-
-		DWORD dwDisplacement;
-		if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
-		{
-		    nvDebug("unknown(%08X) : %s\n", (uint32)ip, pFunc);
-		}
-		else
-		{
-		    /*
-		    const char* pFile = strrchr(theLine.FileName, '\\');
-		    if ( pFile == NULL ) pFile = theLine.FileName;
-		    else pFile++;
-		    */
-		    const char * pFile = theLine.FileName;
-
-		    int line = theLine.LineNumber;
-
-		    nvDebug("%s(%d) : %s\n", pFile, line, pFunc);
-		}
+			    DWORD dwDisplacement;
+			    if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
+			    {
+				    nvDebug("unknown(%08X) : %s\n", (uint32)ip, pFunc);
+			    }
+			    else
+			    {
+				    /*
+				    const char* pFile = strrchr(theLine.FileName, '\\');
+				    if ( pFile == NULL ) pFile = theLine.FileName;
+				    else pFile++;
+				    */
+				    const char * pFile = theLine.FileName;
+    				
+				    int line = theLine.LineNumber;
+    				
+				    nvDebug("%s(%d) : %s\n", pFile, line, pFunc);
+			    }
+		    }
 	    }
-	}
     }
 
 

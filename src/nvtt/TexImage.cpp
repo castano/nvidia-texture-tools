@@ -234,6 +234,11 @@ void TexImage::setNormalMap(bool isNormalMap)
     }
 }
 
+bool TexImage::isNull() const
+{
+    return m->image == NULL;
+}
+
 int TexImage::width() const
 {
     if (m->image != NULL) return m->image->width();

@@ -66,7 +66,7 @@ Vector3 nv::Fit::computeCentroid(int n, const Vector3 *__restrict points)
 
 Vector3 nv::Fit::computeCentroid(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
 {
-    Vector3 centroid(0.0f   );
+    Vector3 centroid(0.0f);
     float total = 0.0f;
 
     for (int i = 0; i < n; i++)

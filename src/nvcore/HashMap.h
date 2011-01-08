@@ -400,6 +400,66 @@ namespace nv
         }
 #endif
 
+        // These two functions are not tested:
+
+        // By default we serialize the key-value pairs compactly.
+        friend Stream & operator<< (Stream & s, HashMap<T, U, H, E> & map)
+        {
+            int entry_count = map.entry_count;
+            s << entry_count;
+
+            if (s.isLoading()) {
+                map.clear();
+                map.entry_count = entry_count;
+                map.size_mask = nextPowerOfTwo(entry_count) - 1;
+                map.table = malloc<Entry>(map.size_mask + 1);
+                
+                for (int i = 0; i <= map.size_mask; i++) {
+                    map.table[i].next_in_chain = -2;	// mark empty
+                }
+
+                T key;
+                U value;
+                for (int i = 0; i < entry_count; i++) {
+                    s << key << value;
+                    map.add(key, value);
+                }
+            }
+            else {
+                foreach(i, map) {
+                    s << map[i].key << map[i].value;
+                }
+            }
+
+            return s;
+        }
+
+        // This requires more storage, but saves us from rehashing the elements.
+        friend Stream & rawSerialize(Stream & s, HashMap<T, U, H, E> & map)
+        {
+            if (s.isLoading()) {
+                map.clear();
+            }
+
+            s << map.size_mask;
+
+            if (map.size_mask != -1) {
+                s << map.entry_count;
+
+                if (s.isLoading()) {
+                    map.table = new Entry[map.size_mask+1];
+                }
+
+                for (int i = 0; i <= map.size_mask; i++) {
+                    Entry & e = map.table[i];
+                    s << e.next_in_chain << e.hash_value;
+                    s << e.key;
+                    s << e.value;
+                }
+            }
+
+            return s;
+        }
 
 
     private:

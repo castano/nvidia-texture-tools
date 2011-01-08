@@ -153,6 +153,8 @@ typedef uint32      uint;
 #define NV_STRING2(x) #x
 #define NV_STRING(x) NV_STRING2(x)
 
+#define NV_ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
 #if 1
 #if NV_CC_MSVC
 #define NV_MESSAGE(x) message(__FILE__ "(" NV_STRING(__LINE__) ") : " x)
