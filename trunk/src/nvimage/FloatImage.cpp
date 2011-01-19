@@ -761,7 +761,7 @@ float FloatImage::applyKernel(const Kernel2 * k, int x, int y, uint c, WrapMode 
     nvDebugCheck(k != NULL);
 
     const uint kernelWindow = k->windowSize();
-    const int kernelOffset = int(kernelWindow / 2) - 1;
+    const int kernelOffset = int(kernelWindow / 2);
 
     const float * channel = this->channel(c);
 
@@ -790,7 +790,7 @@ float FloatImage::applyKernelVertical(const Kernel1 * k, int x, int y, uint c, W
     nvDebugCheck(k != NULL);
 
     const uint kernelWindow = k->windowSize();
-    const int kernelOffset = int(kernelWindow / 2) - 1;
+    const int kernelOffset = int(kernelWindow / 2);
 
     const float * channel = this->channel(c);
 
@@ -812,7 +812,7 @@ float FloatImage::applyKernelHorizontal(const Kernel1 * k, int x, int y, uint c,
     nvDebugCheck(k != NULL);
 
     const uint kernelWindow = k->windowSize();
-    const int kernelOffset = int(kernelWindow / 2) - 1;
+    const int kernelOffset = int(kernelWindow / 2);
 
     const float * channel = this->channel(c);
 
