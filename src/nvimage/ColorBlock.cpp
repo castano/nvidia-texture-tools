@@ -480,10 +480,11 @@ void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x,
     {
         for (uint x = 0; x < w; x++, i++)
         {
-            colors[i].x = r[x + img_x, y + img_y];
-            colors[i].y = g[x + img_x, y + img_y];
-            colors[i].z = b[x + img_x, y + img_y];
-            colors[i].w = a[x + img_x, y + img_y];
+            uint idx = x + img_x + (y + img_y) * img_w;
+            colors[i].x = r[idx];
+            colors[i].y = g[idx];
+            colors[i].z = b[idx];
+            colors[i].w = a[idx];
         }
     }
 }
@@ -531,8 +532,8 @@ void ColorSet::createMinimalSet(bool ignoreTransparent)
                 // allocate a new point
                 if (j == i)
                 {
-				    colors[n] = C[i];
-				    weights[n] = W[i];
+                    colors[n] = C[i];
+                    weights[n] = W[i];
                     remap[idx] = n;
                     n++;
                     break;
@@ -542,16 +543,16 @@ void ColorSet::createMinimalSet(bool ignoreTransparent)
                 bool colorMatch = (C[i].x == C[j].x) && (C[i].w == C[j].w) && (C[i].z == C[j].z);
                 //bool alphaMatch = (C[i].w == C[j].w);
 
-			    if (colorMatch)
-			    {
-				    // get the index of the match
-				    int index = remap[j];
-    				
-				    // map to this point and increase the weight
-				    weights[index] += W[i];
-				    remap[idx] = index;
-				    break;
-			    }
+                if (colorMatch)
+                {
+                    // get the index of the match
+                    int index = remap[j];
+
+                    // map to this point and increase the weight
+                    weights[index] += W[i];
+                    remap[idx] = index;
+                    break;
+                }
             }
         }
     }
