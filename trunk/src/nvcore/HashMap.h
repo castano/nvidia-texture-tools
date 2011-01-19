@@ -426,7 +426,8 @@ namespace nv
                 }
             }
             else {
-                foreach(i, map) {
+                for(int i = start(); !isDone(i); advance(i)) {
+                //foreach(i, map) {
                     s << map[i].key << map[i].value;
                 }
             }
