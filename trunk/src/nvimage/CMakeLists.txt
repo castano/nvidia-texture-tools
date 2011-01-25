@@ -7,13 +7,12 @@ SET(IMAGE_SRCS
     DirectDrawSurface.h DirectDrawSurface.cpp
     Filter.h Filter.cpp
     FloatImage.h FloatImage.cpp
-	ErrorMetric.h ErrorMetric.cpp
+    ErrorMetric.h ErrorMetric.cpp
     Image.h Image.cpp
     ImageIO.h ImageIO.cpp
     NormalMap.h NormalMap.cpp
     PixelFormat.h
     PsdFile.h
-    Quantize.h Quantize.cpp
     TgaFile.h)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
