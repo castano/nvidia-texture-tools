@@ -1038,33 +1038,6 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
     m->image->scaleAlphaToCoverage(coverage, alphaRef, 3);
 }
 
-/*bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
-{
-    if (m->image == NULL) return false;
-
-    range(0, rangeMin, rangeMax);
-
-    if (*rangeMin == *rangeMax) {
-        // Single color image.
-        return false;
-    }
-
-    const float scale = 1.0f / (*rangeMax - *rangeMin);
-    const float bias = *rangeMin * scale;
-
-    if (range.x == 0.0f && range.y == 1.0f) {
-        // Already normalized.
-        return true;
-    }
-
-    detach();
-
-    // Scale to range.
-    img->scaleBias(0, 4, scale, bias);
-    //img->clamp(0, 4, 0.0f, 1.0f);
-
-    return true;
-}*/
 
 // Ideally you should compress/quantize the RGB and M portions independently.
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.
@@ -1300,6 +1273,7 @@ void TexImage::abs(int channel)
     }
 }
 
+/*
 void TexImage::blockLuminanceScale(float scale)
 {
     if (m->image == NULL) return;
@@ -1372,7 +1346,9 @@ void TexImage::blockLuminanceScale(float scale)
         }
     }
 }
+*/
 
+/*
 void TexImage::toJPEGLS()
 {
     if (m->image == NULL) return;
@@ -1418,17 +1394,127 @@ void TexImage::fromJPEGLS()
         b[i] = B+G;
     }
 }
-
+*/
 
 
 void TexImage::binarize(int channel, float threshold, bool dither)
 {
-#pragma NV_MESSAGE("binarize not implemented")
+    if (m->image == NULL) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    const uint w = img->width();
+    const uint h = img->height();
+
+    if (!dither) {
+        float * c = img->channel(channel);
+        const uint count = w * h;
+        for (uint i = 0; i < count; i++) {
+            c[i] = float(c[i] > threshold);
+        }
+    }
+    else {
+        float * row0 = new float[(w+2)];
+        float * row1 = new float[(w+2)];
+        memset(row0, 0, sizeof(float)*(w+2));
+        memset(row1, 0, sizeof(float)*(w+2));
+
+        for (uint y = 0; y < h; y++) {
+            for (uint x = 0; x < w; x++) {
+
+                float & f = img->pixel(x, y, channel);
+
+                // Add error and quantize.
+                float qf = float(f + row0[1+x] > threshold);
+
+                // Compute new error:
+                float diff = f - qf;
+
+                // Store color.
+                f = qf;
+
+                // Propagate new error.
+                row0[1+x+1] += (7.0f / 16.0f) * diff;
+                row1[1+x-1] += (3.0f / 16.0f) * diff;
+                row1[1+x+0] += (5.0f / 16.0f) * diff;
+                row1[1+x+1] += (1.0f / 16.0f) * diff;
+            }
+
+            swap(row0, row1);
+            memset(row1, 0, sizeof(float)*(w+2));
+        }
+
+        delete [] row0;
+        delete [] row1;
+    }
 }
 
-void TexImage::quantize(int channel, int bits, bool dither)
+// Uniform quantizer.
+// Assumes input is in [0, 1] range. Output is in the [0, 1] range, but rounded to the middle of each bin.
+// If exactEndPoints is true, [0, 1] are represented exactly, and the correponding bins are half the size, so quantization is not truly uniform.
+void TexImage::quantize(int channel, int bits, bool exactEndPoints, bool dither)
 {
-#pragma NV_MESSAGE("quantize not implemented")
+    if (m->image == NULL) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    const uint w = img->width();
+    const uint h = img->height();
+
+    float scale, offset;
+
+    if (exactEndPoints) {
+        scale = (1 << bits) - 1;
+        offset = 0.0f;
+    }
+    else {
+        scale = (1 << bits);
+        offset = 0.5f;
+    }
+
+    if (!dither) {
+        float * c = img->channel(channel);
+        const uint count = w * h;
+        for (uint i = 0; i < count; i++) {
+            c[i] = floorf(c[i] * scale + offset) / scale;
+        }
+    }
+    else {
+        float * row0 = new float[(w+2)];
+        float * row1 = new float[(w+2)];
+        memset(row0, 0, sizeof(float)*(w+2));
+        memset(row1, 0, sizeof(float)*(w+2));
+
+        for (uint y = 0; y < h; y++) {
+            for (uint x = 0; x < w; x++) {
+
+                float & f = img->pixel(x, y, channel);
+
+                // Add error and quantize.
+                float qf = floorf((f + row0[1+x]) * scale + offset) / scale;
+
+                // Compute new error:
+                float diff = f - qf;
+
+                // Store color.
+                f = qf;
+
+                // Propagate new error.
+                row0[1+x+1] += (7.0f / 16.0f) * diff;
+                row1[1+x-1] += (3.0f / 16.0f) * diff;
+                row1[1+x+0] += (5.0f / 16.0f) * diff;
+                row1[1+x+1] += (1.0f / 16.0f) * diff;
+            }
+
+            swap(row0, row1);
+            memset(row1, 0, sizeof(float)*(w+2));
+        }
+
+        delete [] row0;
+        delete [] row1;
+    }
 }
 
 

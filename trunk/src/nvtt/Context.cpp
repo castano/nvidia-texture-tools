@@ -341,21 +341,19 @@ void Compressor::Private::quantize(TexImage & img, const CompressionOptions::Pri
 {
     if (compressionOptions.enableColorDithering) {
         if (compressionOptions.format >= Format_BC1 && compressionOptions.format <= Format_BC3) {
-            img.quantize(0, 5, true);
-            img.quantize(1, 6, true);
-            img.quantize(2, 5, true);
+            img.quantize(0, 5, true, true);
+            img.quantize(1, 6, true, true);
+            img.quantize(2, 5, true, true);
         }
         else if (compressionOptions.format == Format_RGB) {
-            img.quantize(0, compressionOptions.rsize, true);
-            img.quantize(1, compressionOptions.gsize, true);
-            img.quantize(2, compressionOptions.bsize, true);
+            img.quantize(0, compressionOptions.rsize, true, true);
+            img.quantize(1, compressionOptions.gsize, true, true);
+            img.quantize(2, compressionOptions.bsize, true, true);
         }
     }
     if (compressionOptions.enableAlphaDithering) {
         if (compressionOptions.format == Format_RGB) {
-            img.quantize(0, compressionOptions.rsize, true);
-            img.quantize(1, compressionOptions.gsize, true);
-            img.quantize(2, compressionOptions.bsize, true);
+            img.quantize(3, compressionOptions.asize, true, true);
         }
     }
     else if (compressionOptions.binaryAlpha) {
