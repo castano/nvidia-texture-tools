@@ -443,7 +443,6 @@ namespace nvtt
         NVTT_API void setBorder(float r, float g, float b, float a);
         NVTT_API void fill(float r, float g, float b, float a);
         NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
-        //NVTT_API bool normalizeRange(float * rangeMin, float * rangeMax);
         NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void fromRGBM(float range = 1.0f);
         NVTT_API void toYCoCg();
@@ -452,14 +451,12 @@ namespace nvtt
         NVTT_API void toLUVW(float range = 1.0f);
         NVTT_API void fromLUVW(float range = 1.0f);
         NVTT_API void abs(int channel);
-        NVTT_API void toJPEGLS();
-        NVTT_API void fromJPEGLS();
 
-        NVTT_API void blockLuminanceScale(float scale);
+        //NVTT_API void blockLuminanceScale(float scale);
 
         // Color quantization.
         NVTT_API void binarize(int channel, float threshold, bool dither);
-        NVTT_API void quantize(int channel, int bits, bool dither);
+        NVTT_API void quantize(int channel, int bits, bool exactEndPoints, bool dither);
 
         // Normal map transforms.
         NVTT_API void toNormalMap(float sm, float medium, float big, float large);
