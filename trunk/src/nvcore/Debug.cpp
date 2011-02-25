@@ -174,6 +174,8 @@ namespace
         return i - skip;
     }
 
+#pragma warning(push)
+#pragma warning(disable:4748)
     static NV_NOINLINE int backtrace(void * trace[], int maxcount) {
         CONTEXT ctx = { 0 };
 #if NV_CPU_X86 && !NV_CPU_X86_64
@@ -191,7 +193,7 @@ namespace
 
         return backtraceWithSymbols(&ctx, trace, maxcount, 1);
     }
-
+#pragma warning(pop)
 
     static NV_NOINLINE void printStackTrace(void * trace[], int size, int start=0)
     {

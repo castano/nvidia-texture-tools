@@ -32,7 +32,7 @@ using namespace nv;
 
 
 /*----------------------------------------------------------------------------
-    BlockDXT1
+BlockDXT1
 ----------------------------------------------------------------------------*/
 
 uint BlockDXT1::evaluatePalette(Color32 color_array[4], bool d3d9/*= false*/) const
@@ -216,19 +216,19 @@ void BlockDXT1::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 
 void BlockDXT1::decodeBlockNV5x(ColorBlock * block) const
 {
-	nvDebugCheck(block != NULL);
+    nvDebugCheck(block != NULL);
 
-	// Decode color block.
-	Color32 color_array[4];
-	evaluatePaletteNV5x(color_array);
+    // Decode color block.
+    Color32 color_array[4];
+    evaluatePaletteNV5x(color_array);
 
-	// Write color block.
-	for( uint j = 0; j < 4; j++ ) {
-		for( uint i = 0; i < 4; i++ ) {
-			uint idx = (row[j] >> (2 * i)) & 3;
-			block->color(i, j) = color_array[idx];
-		}
-	}
+    // Write color block.
+    for( uint j = 0; j < 4; j++ ) {
+        for( uint i = 0; i < 4; i++ ) {
+            uint idx = (row[j] >> (2 * i)) & 3;
+            block->color(i, j) = color_array[idx];
+        }
+    }
 }
 
 void BlockDXT1::setIndices(int * idx)
@@ -255,7 +255,7 @@ inline void BlockDXT1::flip2()
 
 
 /*----------------------------------------------------------------------------
-    BlockDXT3
+BlockDXT3
 ----------------------------------------------------------------------------*/
 
 void BlockDXT3::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
@@ -271,10 +271,10 @@ void BlockDXT3::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 
 void BlockDXT3::decodeBlockNV5x(ColorBlock * block) const
 {
-	nvDebugCheck(block != NULL);
-	
-	color.decodeBlockNV5x(block);
-	alpha.decodeBlock(block);
+    nvDebugCheck(block != NULL);
+
+    color.decodeBlockNV5x(block);
+    alpha.decodeBlock(block);
 }
 
 void AlphaBlockDXT3::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
@@ -328,7 +328,7 @@ void BlockDXT3::flip2()
 
 
 /*----------------------------------------------------------------------------
-    BlockDXT5
+BlockDXT5
 ----------------------------------------------------------------------------*/
 
 void AlphaBlockDXT5::evaluatePalette(uint8 alpha[8], bool d3d9) const
@@ -467,13 +467,13 @@ void BlockDXT5::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 
 void BlockDXT5::decodeBlockNV5x(ColorBlock * block) const
 {
-	nvDebugCheck(block != NULL);
-	
-	// Decode color.
-	color.decodeBlockNV5x(block);
-	
-	// Decode alpha.
-	alpha.decodeBlock(block);
+    nvDebugCheck(block != NULL);
+
+    // Decode color.
+    color.decodeBlockNV5x(block);
+
+    // Decode alpha.
+    alpha.decodeBlock(block);
 }
 
 /// Flip DXT5 block vertically.
