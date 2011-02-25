@@ -186,7 +186,7 @@ namespace
              mov ctx.Esp, esp
         }
 #else
-        RtlCaptureContext(&ctx);
+        RtlCaptureContext(&ctx); // Not implemented correctly in x86.
 #endif
 
         return backtraceWithSymbols(&ctx, trace, maxcount, 1);
