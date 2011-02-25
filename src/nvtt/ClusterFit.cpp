@@ -331,7 +331,7 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 
 bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 {
-    int const count = m_count;
+    const uint count = m_count;
     const Vector3 one( 1.0f );
     const Vector3 zero( 0.0f );
     const Vector3 half( 0.5f );
@@ -418,7 +418,7 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 
 bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
 {
-    int const count = m_count;
+    const uint count = m_count;
     Vector3 const one( 1.0f );
     Vector3 const zero( 0.0f );
     Vector3 const half( 0.5f );

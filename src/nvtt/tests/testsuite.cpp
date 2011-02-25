@@ -179,7 +179,7 @@ static const char * s_modeNames[] = {
     "BC3-Normal",   // Mode_BC3_Normal,
     "BC5-Normal",   // Mode_BC5_Normal,
 };
-nvStaticCheck(ARRAY_SIZE(s_modeNames) == Mode_Count);
+nvStaticCheck(NV_ARRAY_SIZE(s_modeNames) == Mode_Count);
 
 struct Test {
     const char * name;
@@ -251,7 +251,6 @@ struct MyOutputHandler : public nvtt::OutputHandler
     {
         nvtt::TexImage img;
         img.setImage2D(format, decoder, m_width, m_height, m_data);
-
         return img;
     }
 
@@ -280,7 +279,7 @@ int main(int argc, char *argv[])
     bool fast = false;
     bool nocuda = false;
     bool showHelp = false;
-    nvtt::Decoder decoder = nvtt::Decoder_Reference;
+    nvtt::Decoder decoder = nvtt::Decoder_D3D10;
     Path basePath = "";
     const char * outPath = "output";
     const char * regressPath = NULL;
@@ -378,7 +377,8 @@ int main(int argc, char *argv[])
             printf("    %i:           \t%s.\n", i, s_imageTests[i].name);
         }
         printf("  -dec x         \tDecompressor.\n");
-        printf("    0:           \tReference.\n");
+        printf("    0:           \tReference (D3D10).\n");
+        printf("    1:           \tReference (D3D9).\n");
         printf("    1:           \tNVIDIA.\n");
 
         printf("Compression options:\n");

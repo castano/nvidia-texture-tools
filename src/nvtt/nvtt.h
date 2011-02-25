@@ -380,7 +380,8 @@ namespace nvtt
     /// DXT decoder.
     enum Decoder
     {
-        Decoder_Reference,
+        Decoder_D3D10,
+        Decoder_D3D9,
         Decoder_NV5x,
     };
 

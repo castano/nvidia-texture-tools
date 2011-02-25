@@ -47,13 +47,13 @@ namespace nv
 	
 		bool isFourColorMode() const;
 	
-		uint evaluatePalette(Color32 color_array[4]) const;
+		uint evaluatePalette(Color32 color_array[4], bool d3d9) const;
 		uint evaluatePaletteNV5x(Color32 color_array[4]) const;
 
-		void evaluatePalette3(Color32 color_array[4]) const;
-		void evaluatePalette4(Color32 color_array[4]) const;
+		void evaluatePalette3(Color32 color_array[4], bool d3d9) const;
+		void evaluatePalette4(Color32 color_array[4], bool d3d9) const;
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void setIndices(int * idx);
@@ -94,7 +94,7 @@ namespace nv
 			uint16 row[4];
 		};
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		
 		void flip4();
 		void flip2();
@@ -107,7 +107,7 @@ namespace nv
 		AlphaBlockDXT3 alpha;
 		BlockDXT1 color;
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void flip4();
@@ -142,15 +142,15 @@ namespace nv
 			uint64 u;
 		};
 		
-		void evaluatePalette(uint8 alpha[8]) const;
-		void evaluatePalette8(uint8 alpha[8]) const;
-		void evaluatePalette6(uint8 alpha[8]) const;
+		void evaluatePalette(uint8 alpha[8], bool d3d9) const;
+		void evaluatePalette8(uint8 alpha[8], bool d3d9) const;
+		void evaluatePalette6(uint8 alpha[8], bool d3d9) const;
 		void indices(uint8 index_array[16]) const;
 
 		uint index(uint index) const;
 		void setIndex(uint index, uint value);
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		
 		void flip4();
 		void flip2();
@@ -163,7 +163,7 @@ namespace nv
 		AlphaBlockDXT5 alpha;
 		BlockDXT1 color;
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		void decodeBlockNV5x(ColorBlock * block) const;
 		
 		void flip4();
@@ -175,7 +175,7 @@ namespace nv
 	{
 		AlphaBlockDXT5 alpha;
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		
 		void flip4();
 		void flip2();
@@ -187,7 +187,7 @@ namespace nv
 		AlphaBlockDXT5 x;
 		AlphaBlockDXT5 y;
 		
-		void decodeBlock(ColorBlock * block) const;
+		void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
 		
 		void flip4();
 		void flip2();

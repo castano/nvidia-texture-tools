@@ -35,7 +35,7 @@ using namespace nv;
     BlockDXT1
 ----------------------------------------------------------------------------*/
 
-uint BlockDXT1::evaluatePalette(Color32 color_array[4]) const
+uint BlockDXT1::evaluatePalette(Color32 color_array[4], bool d3d9/*= false*/) const
 {
     // Does bit expansion before interpolation.
     color_array[0].b = (col0.b << 3) | (col0.b >> 2);
@@ -62,15 +62,18 @@ uint BlockDXT1::evaluatePalette(Color32 color_array[4]) const
     //	color_array[1].u = c.u;
 
     if( col0.u > col1.u ) {
+        int bias = 0;
+        if (d3d9) bias = 1;
+
         // Four-color block: derive the other two colors.
-        color_array[2].r = (2 * color_array[0].r + color_array[1].r) / 3;
-        color_array[2].g = (2 * color_array[0].g + color_array[1].g) / 3;
-        color_array[2].b = (2 * color_array[0].b + color_array[1].b) / 3;
+        color_array[2].r = (2 * color_array[0].r + color_array[1].r + bias) / 3;
+        color_array[2].g = (2 * color_array[0].g + color_array[1].g + bias) / 3;
+        color_array[2].b = (2 * color_array[0].b + color_array[1].b + bias) / 3;
         color_array[2].a = 0xFF;
 
-        color_array[3].r = (2 * color_array[1].r + color_array[0].r) / 3;
-        color_array[3].g = (2 * color_array[1].g + color_array[0].g) / 3;
-        color_array[3].b = (2 * color_array[1].b + color_array[0].b) / 3;
+        color_array[3].r = (2 * color_array[1].r + color_array[0].r + bias) / 3;
+        color_array[3].g = (2 * color_array[1].g + color_array[0].g + bias) / 3;
+        color_array[3].b = (2 * color_array[1].b + color_array[0].b + bias) / 3;
         color_array[3].a = 0xFF;
 
         return 4;
@@ -140,7 +143,7 @@ uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
 }
 
 // Evaluate palette assuming 3 color block.
-void BlockDXT1::evaluatePalette3(Color32 color_array[4]) const
+void BlockDXT1::evaluatePalette3(Color32 color_array[4], bool d3d9) const
 {
     color_array[0].b = (col0.b << 3) | (col0.b >> 2);
     color_array[0].g = (col0.g << 2) | (col0.g >> 4);
@@ -166,7 +169,7 @@ void BlockDXT1::evaluatePalette3(Color32 color_array[4]) const
 }
 
 // Evaluate palette assuming 4 color block.
-void BlockDXT1::evaluatePalette4(Color32 color_array[4]) const
+void BlockDXT1::evaluatePalette4(Color32 color_array[4], bool d3d9) const
 {
     color_array[0].b = (col0.b << 3) | (col0.b >> 2);
     color_array[0].g = (col0.g << 2) | (col0.g >> 4);
@@ -178,26 +181,29 @@ void BlockDXT1::evaluatePalette4(Color32 color_array[4]) const
     color_array[1].b = (col1.b << 3) | (col1.b >> 2);
     color_array[1].a = 0xFF;
 
+    int bias = 0;
+    if (d3d9) bias = 1;
+
     // Four-color block: derive the other two colors.
-    color_array[2].r = (2 * color_array[0].r + color_array[1].r) / 3;
-    color_array[2].g = (2 * color_array[0].g + color_array[1].g) / 3;
-    color_array[2].b = (2 * color_array[0].b + color_array[1].b) / 3;
+    color_array[2].r = (2 * color_array[0].r + color_array[1].r + bias) / 3;
+    color_array[2].g = (2 * color_array[0].g + color_array[1].g + bias) / 3;
+    color_array[2].b = (2 * color_array[0].b + color_array[1].b + bias) / 3;
     color_array[2].a = 0xFF;
 
-    color_array[3].r = (2 * color_array[1].r + color_array[0].r) / 3;
-    color_array[3].g = (2 * color_array[1].g + color_array[0].g) / 3;
-    color_array[3].b = (2 * color_array[1].b + color_array[0].b) / 3;
+    color_array[3].r = (2 * color_array[1].r + color_array[0].r + bias) / 3;
+    color_array[3].g = (2 * color_array[1].g + color_array[0].g + bias) / 3;
+    color_array[3].b = (2 * color_array[1].b + color_array[0].b + bias) / 3;
     color_array[3].a = 0xFF;
 }
 
 
-void BlockDXT1::decodeBlock(ColorBlock * block) const
+void BlockDXT1::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     nvDebugCheck(block != NULL);
 
     // Decode color block.
     Color32 color_array[4];
-    evaluatePalette(color_array);
+    evaluatePalette(color_array, d3d9);
 
     // Write color block.
     for( uint j = 0; j < 4; j++ ) {
@@ -252,15 +258,15 @@ inline void BlockDXT1::flip2()
     BlockDXT3
 ----------------------------------------------------------------------------*/
 
-void BlockDXT3::decodeBlock(ColorBlock * block) const
+void BlockDXT3::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     nvDebugCheck(block != NULL);
 
     // Decode color.
-    color.decodeBlock(block);
+    color.decodeBlock(block, d3d9);
 
     // Decode alpha.
-    alpha.decodeBlock(block);
+    alpha.decodeBlock(block, d3d9);
 }
 
 void BlockDXT3::decodeBlockNV5x(ColorBlock * block) const
@@ -271,7 +277,7 @@ void BlockDXT3::decodeBlockNV5x(ColorBlock * block) const
 	alpha.decodeBlock(block);
 }
 
-void AlphaBlockDXT3::decodeBlock(ColorBlock * block) const
+void AlphaBlockDXT3::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     nvDebugCheck(block != NULL);
 
@@ -325,42 +331,48 @@ void BlockDXT3::flip2()
     BlockDXT5
 ----------------------------------------------------------------------------*/
 
-void AlphaBlockDXT5::evaluatePalette(uint8 alpha[8]) const
+void AlphaBlockDXT5::evaluatePalette(uint8 alpha[8], bool d3d9) const
 {
     if (alpha0 > alpha1) {
-        evaluatePalette8(alpha);
+        evaluatePalette8(alpha, d3d9);
     }
     else {
-        evaluatePalette6(alpha);
+        evaluatePalette6(alpha, d3d9);
     }
 }
 
-void AlphaBlockDXT5::evaluatePalette8(uint8 alpha[8]) const
+void AlphaBlockDXT5::evaluatePalette8(uint8 alpha[8], bool d3d9) const
 {
+    int bias = 0;
+    if (d3d9) bias = 3;
+
     // 8-alpha block:  derive the other six alphas.
     // Bit code 000 = alpha0, 001 = alpha1, others are interpolated.
     alpha[0] = alpha0;
     alpha[1] = alpha1;
-    alpha[2] = (6 * alpha[0] + 1 * alpha[1]) / 7;	// bit code 010
-    alpha[3] = (5 * alpha[0] + 2 * alpha[1]) / 7;	// bit code 011
-    alpha[4] = (4 * alpha[0] + 3 * alpha[1]) / 7;	// bit code 100
-    alpha[5] = (3 * alpha[0] + 4 * alpha[1]) / 7;	// bit code 101
-    alpha[6] = (2 * alpha[0] + 5 * alpha[1]) / 7;	// bit code 110
-    alpha[7] = (1 * alpha[0] + 6 * alpha[1]) / 7;	// bit code 111
+    alpha[2] = (6 * alpha[0] + 1 * alpha[1] + bias) / 7;    // bit code 010
+    alpha[3] = (5 * alpha[0] + 2 * alpha[1] + bias) / 7;    // bit code 011
+    alpha[4] = (4 * alpha[0] + 3 * alpha[1] + bias) / 7;    // bit code 100
+    alpha[5] = (3 * alpha[0] + 4 * alpha[1] + bias) / 7;    // bit code 101
+    alpha[6] = (2 * alpha[0] + 5 * alpha[1] + bias) / 7;    // bit code 110
+    alpha[7] = (1 * alpha[0] + 6 * alpha[1] + bias) / 7;    // bit code 111
 }
 
-void AlphaBlockDXT5::evaluatePalette6(uint8 alpha[8]) const
+void AlphaBlockDXT5::evaluatePalette6(uint8 alpha[8], bool d3d9) const
 {
+    int bias = 0;
+    if (d3d9) bias = 2;
+
     // 6-alpha block.
     // Bit code 000 = alpha0, 001 = alpha1, others are interpolated.
     alpha[0] = alpha0;
     alpha[1] = alpha1;
-    alpha[2] = (4 * alpha[0] + 1 * alpha[1]) / 5;	// Bit code 010
-    alpha[3] = (3 * alpha[0] + 2 * alpha[1]) / 5;	// Bit code 011
-    alpha[4] = (2 * alpha[0] + 3 * alpha[1]) / 5;	// Bit code 100
-    alpha[5] = (1 * alpha[0] + 4 * alpha[1]) / 5;	// Bit code 101
-    alpha[6] = 0x00;							// Bit code 110
-    alpha[7] = 0xFF;							// Bit code 111
+    alpha[2] = (4 * alpha[0] + 1 * alpha[1] + bias) / 5;    // Bit code 010
+    alpha[3] = (3 * alpha[0] + 2 * alpha[1] + bias) / 5;    // Bit code 011
+    alpha[4] = (2 * alpha[0] + 3 * alpha[1] + bias) / 5;    // Bit code 100
+    alpha[5] = (1 * alpha[0] + 4 * alpha[1] + bias) / 5;    // Bit code 101
+    alpha[6] = 0x00;                                        // Bit code 110
+    alpha[7] = 0xFF;                                        // Bit code 111
 }
 
 void AlphaBlockDXT5::indices(uint8 index_array[16]) const
@@ -401,12 +413,12 @@ void AlphaBlockDXT5::setIndex(uint index, uint value)
     this->u = (this->u & ~mask) | (uint64(value) << offset);
 }
 
-void AlphaBlockDXT5::decodeBlock(ColorBlock * block) const
+void AlphaBlockDXT5::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     nvDebugCheck(block != NULL);
 
     uint8 alpha_array[8];
-    evaluatePalette(alpha_array);
+    evaluatePalette(alpha_array, d3d9);
 
     uint8 index_array[16];
     indices(index_array);
@@ -442,15 +454,15 @@ void AlphaBlockDXT5::flip2()
     *b = tmp;
 }
 
-void BlockDXT5::decodeBlock(ColorBlock * block) const
+void BlockDXT5::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     nvDebugCheck(block != NULL);
 
     // Decode color.
-    color.decodeBlock(block);
+    color.decodeBlock(block, d3d9);
 
     // Decode alpha.
-    alpha.decodeBlock(block);
+    alpha.decodeBlock(block, d3d9);
 }
 
 void BlockDXT5::decodeBlockNV5x(ColorBlock * block) const
@@ -480,10 +492,10 @@ void BlockDXT5::flip2()
 
 
 /// Decode ATI1 block.
-void BlockATI1::decodeBlock(ColorBlock * block) const
+void BlockATI1::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     uint8 alpha_array[8];
-    alpha.evaluatePalette(alpha_array);
+    alpha.evaluatePalette(alpha_array, d3d9);
 
     uint8 index_array[16];
     alpha.indices(index_array);
@@ -509,12 +521,12 @@ void BlockATI1::flip2()
 
 
 /// Decode ATI2 block.
-void BlockATI2::decodeBlock(ColorBlock * block) const
+void BlockATI2::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
 {
     uint8 alpha_array[8];
     uint8 index_array[16];
 
-    x.evaluatePalette(alpha_array);
+    x.evaluatePalette(alpha_array, d3d9);
     x.indices(index_array);
 
     for(uint i = 0; i < 16; i++) {
@@ -522,7 +534,7 @@ void BlockATI2::decodeBlock(ColorBlock * block) const
         c.r = alpha_array[index_array[i]];
     }
 
-    y.evaluatePalette(alpha_array);
+    y.evaluatePalette(alpha_array, d3d9);
     y.indices(index_array);
 
     for(uint i = 0; i < 16; i++) {
