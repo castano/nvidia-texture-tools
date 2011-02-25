@@ -553,8 +553,11 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const vo
 		        {
 		            const BlockDXT1 * block = (const BlockDXT1 *)ptr;
 
-		            if (decoder == Decoder_Reference) {
-			            block->decodeBlock(&colors);
+		            if (decoder == Decoder_D3D10) {
+			            block->decodeBlock(&colors, false);
+		            }
+		            else if (decoder == Decoder_D3D9) {
+			            block->decodeBlock(&colors, false);
 		            }
 		            else if (decoder == Decoder_NV5x) {
 			            block->decodeBlockNV5x(&colors);
@@ -564,8 +567,11 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const vo
 		        {
 		            const BlockDXT3 * block = (const BlockDXT3 *)ptr;
 
-		            if (decoder == Decoder_Reference) {
-			            block->decodeBlock(&colors);
+		            if (decoder == Decoder_D3D10) {
+			            block->decodeBlock(&colors, false);
+		            }
+		            else if (decoder == Decoder_D3D9) {
+			            block->decodeBlock(&colors, false);
 		            }
 		            else if (decoder == Decoder_NV5x) {
 		    	        block->decodeBlockNV5x(&colors);
@@ -575,8 +581,11 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const vo
 		        {
 		            const BlockDXT5 * block = (const BlockDXT5 *)ptr;
 
-		            if (decoder == Decoder_Reference) {
-	    		        block->decodeBlock(&colors);
+		            if (decoder == Decoder_D3D10) {
+			            block->decodeBlock(&colors, false);
+		            }
+		            else if (decoder == Decoder_D3D9) {
+			            block->decodeBlock(&colors, false);
 		            }
 		            else if (decoder == Decoder_NV5x) {
     			        block->decodeBlockNV5x(&colors);
@@ -585,12 +594,12 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const vo
 		        else if (format == nvtt::Format_BC4)
 		        {
                     const BlockATI1 * block = (const BlockATI1 *)ptr;
-                    block->decodeBlock(&colors);
+                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
                 }
                 else if (format == nvtt::Format_BC5)
                 {
                     const BlockATI2 * block = (const BlockATI2 *)ptr;
-                    block->decodeBlock(&colors);
+                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
                 }
 
 		        for (int yy = 0; yy < 4; yy++)
@@ -1466,11 +1475,11 @@ void TexImage::quantize(int channel, int bits, bool exactEndPoints, bool dither)
     float scale, offset;
 
     if (exactEndPoints) {
-        scale = (1 << bits) - 1;
+        scale = float((1 << bits) - 1);
         offset = 0.0f;
     }
     else {
-        scale = (1 << bits);
+        scale = float(1 << bits);
         offset = 0.5f;
     }
 

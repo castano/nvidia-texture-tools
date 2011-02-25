@@ -188,7 +188,7 @@ namespace
 	static uint computeAlphaError(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
 	{
 		uint8 alphas[8];
-		block->evaluatePalette(alphas);
+		block->evaluatePalette(alphas, false); // @@ Use target decoder.
 
 		int totalError = 0;
 
@@ -218,7 +218,7 @@ namespace
 	static void computeAlphaIndices(const ColorBlock & rgba, AlphaBlockDXT5 * block)
 	{
 		uint8 alphas[8];
-		block->evaluatePalette(alphas);
+		block->evaluatePalette(alphas, false); // @@ Use target decoder.
 
 		for (uint i = 0; i < 16; i++)
 		{
@@ -375,7 +375,7 @@ void OptimalCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 
 
 	Color32 palette[4];
-	block->evaluatePalette(palette);
+	block->evaluatePalette(palette, false); // @@ Use target decoder.
 	block->indices = computeGreenIndices(rgba, palette);
 }
 

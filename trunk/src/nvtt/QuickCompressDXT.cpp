@@ -381,7 +381,7 @@ namespace
 	static uint computeAlphaIndices(const ColorBlock & rgba, AlphaBlockDXT5 * block)
 	{
 		uint8 alphas[8];
-		block->evaluatePalette(alphas);
+		block->evaluatePalette(alphas, false); // @@ Use target decoder.
 
 		uint totalError = 0;
 
