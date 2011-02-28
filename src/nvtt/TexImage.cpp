@@ -1564,6 +1564,8 @@ void TexImage::transformNormals(NormalTransform xform)
 
     detach();
 
+    m->image->expandNormals(0);
+
     const uint count = m->image->width() * m->image->height();
     for (uint i = 0; i < count; i++) {
         float & x = m->image->pixel(i, 0);
@@ -1596,6 +1598,8 @@ void TexImage::transformNormals(NormalTransform xform)
         y = n.y;
         z = n.z;
     }
+
+    m->image->packNormals(0);
 }
 
 void TexImage::reconstructNormals(NormalTransform xform)
@@ -1603,6 +1607,8 @@ void TexImage::reconstructNormals(NormalTransform xform)
     if (m->image == NULL) return;
 
     detach();
+
+    m->image->expandNormals(0);
 
     const uint count = m->image->width() * m->image->height();
     for (uint i = 0; i < count; i++) {
@@ -1612,10 +1618,10 @@ void TexImage::reconstructNormals(NormalTransform xform)
         Vector3 n(x, y, z);
 
         if (xform == NormalTransform_Orthographic) {
-            n.z = sqrtf(n.x * n.x + n.y * n.y);
+            n.z = sqrtf(1 - nv::clamp(n.x * n.x + n.y * n.y, 0.0f, 1.0f));
         }
         else if (xform == NormalTransform_Stereographic) {
-            float denom = 2.0f / (1 + n.x * n.x + n.y * n.y);
+            float denom = 2.0f / (1 + nv::clamp(n.x * n.x + n.y * n.y, 0.0f, 1.0f));
             n.x *= denom;
             n.y *= denom;
             n.z = denom - 1;
@@ -1631,6 +1637,8 @@ void TexImage::reconstructNormals(NormalTransform xform)
         y = n.y;
         z = n.z;
     }
+
+    m->image->packNormals(0);
 }
 
 void TexImage::flipVertically()

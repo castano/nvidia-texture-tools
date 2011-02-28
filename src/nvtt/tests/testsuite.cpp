@@ -151,6 +151,25 @@ static const char * s_witnessLmapImageSet[] = {
     "tower.dds",
 };
 
+static const char * s_normalMapImageSet[] = {
+    "01_dot1.png",
+    "02_dot2.png",
+    "03_dot3.png",
+    "04_dot4.png",
+    "05_lumpy.png",
+    "06_voronoi.png",
+    "07_turtle.png",
+    "08_normalmap.png",
+    "09_metal.png",
+    "10_skin.png",
+    "11_onetile.png",
+    "12_barrel.png",
+    "13_arcade.png",
+    "14_tentacle.png",
+    "15_chest.png",
+    "16_face.png",
+};
+
 
 enum Mode {
     Mode_BC1,
@@ -164,6 +183,8 @@ enum Mode {
     Mode_BC1_Normal,
     Mode_BC3_Normal,
     Mode_BC5_Normal,
+    Mode_BC5_Normal_Stereographic,
+    Mode_BC5_Normal_Paraboloid,
     Mode_Count
 };
 static const char * s_modeNames[] = {
@@ -178,6 +199,8 @@ static const char * s_modeNames[] = {
     "BC1-Normal",   // Mode_BC1_Normal,
     "BC3-Normal",   // Mode_BC3_Normal,
     "BC5-Normal",   // Mode_BC5_Normal,
+    "BC5-Normal-Stereographic",     // Mode_BC5_Normal_Stereographic,
+    "BC5-Normal-Paraboloid",        // Mode_BC5_Normal_Paraboloid,
 };
 nvStaticCheck(NV_ARRAY_SIZE(s_modeNames) == Mode_Count);
 
@@ -189,7 +212,8 @@ struct Test {
 static Test s_imageTests[] = {
     {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_LUVW}},
     {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
-    {"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
+    //{"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
+    {"Normal", 3, {Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid}},
     {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
 };
 const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
@@ -218,6 +242,7 @@ static ImageSet s_imageSets[] = {
     {"Quake3",      "quake3",       s_quake3ImageSet,       ARRAY_SIZE(s_quake3ImageSet),       ImageType_RGBA},    // 5
     {"Witness",     "witness",      s_witnessImageSet,      ARRAY_SIZE(s_witnessImageSet),      ImageType_RGB},     // 6
     {"Lightmap",    "lightmap",     s_witnessLmapImageSet,  ARRAY_SIZE(s_witnessLmapImageSet),  ImageType_HDR},     // 7
+    {"Normal",      "id_tnmap",     s_normalMapImageSet,    ARRAY_SIZE(s_normalMapImageSet),    ImageType_Normal},  // 8
 };
 const int s_imageSetCount = sizeof(s_imageSets)/sizeof(s_imageSets[0]);
 
@@ -431,8 +456,8 @@ int main(int argc, char *argv[])
     //TextWriter csvWriter(&csvStream);
 
     Path graphFileName;
-    graphFileName.format("%s/chart_%s_CIE-Lab.txt", outPath, test.name);
-    //graphFileName.format("%s/chart_%s_RMSE.txt", outPath, test.name);
+    //graphFileName.format("%s/chart_%s_CIE-Lab.txt", outPath, test.name);
+    graphFileName.format("%s/chart_%s_RMSE.txt", outPath, test.name);
     StdOutputStream graphStream(graphFileName.str());
     TextWriter graphWriter(&graphStream);
 
@@ -512,7 +537,7 @@ int main(int argc, char *argv[])
     {
         float totalTime = 0;
         float totalRMSE = 0;
-        float totalDeltaE = 0;
+        //float totalDeltaE = 0;
 
         Mode mode = test.modes[t];
 
@@ -627,6 +652,15 @@ int main(int argc, char *argv[])
                 tmp.swizzle(0, 3, 1, 4); // Co Cg 1 Y -> Co Y Cg 1
                 tmp.copyChannel(img, 3); // Restore alpha channel for weighting.*/
             }
+            else if (mode == Mode_BC5_Normal) {
+                tmp.transformNormals(nvtt::NormalTransform_Orthographic);
+            }
+            else if (mode == Mode_BC5_Normal_Stereographic) {
+                tmp.transformNormals(nvtt::NormalTransform_Stereographic);
+            }
+            else if (mode == Mode_BC5_Normal_Paraboloid) {
+                tmp.transformNormals(nvtt::NormalTransform_Paraboloid);
+            }
 
 
             printf("Compressing: \t'%s'\n", set.fileNames[i]);
@@ -691,6 +725,15 @@ int main(int argc, char *argv[])
                 img_out.scaleBias(0, 1.0, -0.5);
                 img_out.scaleBias(1, 1.0, -0.5);
                 img_out.fromYCoCg();*/
+            }
+            else if (mode == Mode_BC5_Normal) {
+                img_out.reconstructNormals(nvtt::NormalTransform_Orthographic);
+            }
+            else if (mode == Mode_BC5_Normal_Stereographic) {
+                img_out.reconstructNormals(nvtt::NormalTransform_Stereographic);
+            }
+            else if (mode == Mode_BC5_Normal_Paraboloid) {
+                img_out.reconstructNormals(nvtt::NormalTransform_Paraboloid);
             }
 
             nvtt::TexImage diff = nvtt::diff(img, img_out, 1.0f);
@@ -764,9 +807,9 @@ int main(int argc, char *argv[])
             totalRMSE += rmse;
             printf("  RMSE:          \t%.4f\n", rmse);
 
-            float deltae = nvtt::cieLabError(img, img_out);
-            totalDeltaE += deltae;
-            printf("  CIE-Lab DeltaE:\t%.4f\n", deltae);
+            //float deltae = nvtt::cieLabError(img, img_out);
+            //totalDeltaE += deltae;
+            //printf("  CIE-Lab DeltaE:\t%.4f\n", deltae);
 
 
             graphWriter << rmse;
@@ -823,13 +866,13 @@ int main(int argc, char *argv[])
         }
 
         totalRMSE /= set.fileCount;
-        totalDeltaE /= set.fileCount;
+        //totalDeltaE /= set.fileCount;
         //totalDiff /= set.fileCount;
 
         printf("Total Results:\n");
         printf("  Total Time:            \t%.3f sec\n", totalTime);
         printf("  Average RMSE:          \t%.4f\n", totalRMSE);
-        printf("  Average CIE-Lab DeltaE:\t%.4f\n", totalDeltaE);
+        //printf("  Average CIE-Lab DeltaE:\t%.4f\n", totalDeltaE);
 
         if (t != test.count-1) graphWriter << "|";
     }
