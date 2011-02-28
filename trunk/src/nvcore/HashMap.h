@@ -14,7 +14,7 @@ HashMap based on Thatcher Ulrich <tu@tulrich.com> container, donated to the Publ
 #include "Debug.h"
 #include "Stream.h"
 #include "Utils.h" // hash
-#include "Array.h" // foreach/pseudoindex
+#include "ForEach.h"
 
 #include <new>		// for placement new
 
