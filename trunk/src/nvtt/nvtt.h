@@ -121,6 +121,15 @@ namespace nvtt
         Quality_Highest,
     };
 
+    /// DXT decoder.
+    enum Decoder
+    {
+        Decoder_D3D10,
+        Decoder_D3D9,
+        Decoder_NV5x,
+    };
+
+
     /// Compression options. This class describes the desired compression format and other compression settings.
     struct CompressionOptions
     {
@@ -147,6 +156,8 @@ namespace nvtt
         NVTT_API void setPitchAlignment(int pitchAlignment);
 
         NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
+
+        NVTT_API void setTargetDecoder(Decoder decoder);
 
         // Translate to and from D3D formats.
         NVTT_API unsigned int d3d9Format() const;
@@ -376,14 +387,6 @@ namespace nvtt
     // "Compressor" is deprecated. This should have been called "Context"
     typedef Compressor Context;
 
-
-    /// DXT decoder.
-    enum Decoder
-    {
-        Decoder_D3D10,
-        Decoder_D3D9,
-        Decoder_NV5x,
-    };
 
     /// A texture mipmap.
     struct TexImage

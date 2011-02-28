@@ -69,6 +69,8 @@ void CompressionOptions::reset()
     m.enableAlphaDithering = false;
     m.binaryAlpha = false;
     m.alphaThreshold = 127;
+
+    m.decoder = Decoder_D3D10;
 }
 
 
@@ -184,6 +186,13 @@ void CompressionOptions::setQuantization(bool colorDithering, bool alphaDitherin
     m.binaryAlpha = binaryAlpha;
     m.alphaThreshold = alphaThreshold;
 }
+
+/// Set target decoder to optimize for.
+void CompressionOptions::setTargetDecoder(Decoder decoder)
+{
+    m.decoder = decoder;
+}
+
 
 
 // Translate to and from D3D formats.
