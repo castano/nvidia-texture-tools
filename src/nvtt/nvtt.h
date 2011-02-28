@@ -387,6 +387,11 @@ namespace nvtt
     // "Compressor" is deprecated. This should have been called "Context"
     typedef Compressor Context;
 
+    enum NormalTransform {
+        NormalTransform_Orthographic,
+        NormalTransform_Stereographic,
+        NormalTransform_Paraboloid,
+    };
 
     /// A texture mipmap.
     struct TexImage
@@ -465,6 +470,8 @@ namespace nvtt
         // Normal map transforms.
         NVTT_API void toNormalMap(float sm, float medium, float big, float large);
         NVTT_API void normalizeNormalMap();
+        NVTT_API void transformNormals(NormalTransform xform);
+        NVTT_API void reconstructNormals(NormalTransform xform);
 
         // Geometric transforms.
         NVTT_API void flipVertically();

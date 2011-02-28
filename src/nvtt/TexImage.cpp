@@ -1558,6 +1558,81 @@ void TexImage::normalizeNormalMap()
     nv::normalizeNormalMap(m->image);
 }
 
+void TexImage::transformNormals(NormalTransform xform)
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    const uint count = m->image->width() * m->image->height();
+    for (uint i = 0; i < count; i++) {
+        float & x = m->image->pixel(i, 0);
+        float & y = m->image->pixel(i, 1);
+        float & z = m->image->pixel(i, 2);
+        Vector3 n(x, y, z);
+
+        n = normalizeSafe(n, Vector3(0.0f), 0.0f);
+
+        if (xform == NormalTransform_Orthographic) {
+            n.z = 0.0f;
+        }
+        else if (xform == NormalTransform_Stereographic) {
+            n.x = n.x / (1 + n.z);
+            n.y = n.y / (1 + n.z);
+            n.z = 0.0f;
+        }
+        else if (xform == NormalTransform_Paraboloid) {
+            float a = (n.x * n.x) + (n.y * n.y);
+            float b = n.z;
+            float c = -1.0f;
+            float discriminant = b * b - 4.0f * a * c;
+            float t = (-b + sqrtf(discriminant)) / (2.0f * a);
+            n.x = n.x * t;
+            n.y = n.y * t;
+            n.z = 0.0f;
+        }
+
+        x = n.x;
+        y = n.y;
+        z = n.z;
+    }
+}
+
+void TexImage::reconstructNormals(NormalTransform xform)
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    const uint count = m->image->width() * m->image->height();
+    for (uint i = 0; i < count; i++) {
+        float & x = m->image->pixel(i, 0);
+        float & y = m->image->pixel(i, 1);
+        float & z = m->image->pixel(i, 2);
+        Vector3 n(x, y, z);
+
+        if (xform == NormalTransform_Orthographic) {
+            n.z = sqrtf(n.x * n.x + n.y * n.y);
+        }
+        else if (xform == NormalTransform_Stereographic) {
+            float denom = 2.0f / (1 + n.x * n.x + n.y * n.y);
+            n.x *= denom;
+            n.y *= denom;
+            n.z = denom - 1;
+        }
+        else if (xform == NormalTransform_Paraboloid) {
+            n.x = n.x;
+            n.y = n.y;
+            n.z = 1.0f - nv::clamp(n.x * n.x + n.y * n.y, 0.0f, 1.0f);
+            n = normalizeSafe(n, Vector3(0.0f), 0.0f);
+        }
+
+        x = n.x;
+        y = n.y;
+        z = n.z;
+    }
+}
+
 void TexImage::flipVertically()
 {
     if (m->image == NULL) return;
