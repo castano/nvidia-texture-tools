@@ -193,7 +193,7 @@
 				OmitFramePointers="true"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
+				EnableFunctionLevelLinking="false"
 				EnableEnhancedInstructionSet="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -272,7 +272,7 @@
 				WholeProgramOptimization="true"
 				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
+				EnableFunctionLevelLinking="false"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
