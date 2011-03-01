@@ -391,6 +391,7 @@ namespace nvtt
         NormalTransform_Orthographic,
         NormalTransform_Stereographic,
         NormalTransform_Paraboloid,
+        NormalTransform_DualParaboloid,
     };
 
     /// A texture mipmap.
