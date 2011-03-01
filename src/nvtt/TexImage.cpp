@@ -1593,6 +1593,31 @@ void TexImage::transformNormals(NormalTransform xform)
             n.y = n.y * t;
             n.z = 0.0f;
         }
+        else if (xform == NormalTransform_DualParaboloid) {
+            // Use Newton's method to solve equation:
+            // f(t) = 1 - zt - (x^2+y^2)t^2 + x^2y^2t^4 = 0
+            // f'(t) = - z - 2(x^2+y^2)t + 4x^2y^2t^3
+
+            // Initial approximation:
+            float a = (n.x * n.x) + (n.y * n.y);
+            float b = n.z;
+            float c = -1.0f;
+            float discriminant = b * b - 4.0f * a * c;
+            float t = (-b + sqrtf(discriminant)) / (2.0f * a);
+
+            float d = fabs(n.z * t - (1 - n.x*n.x*t*t) * (1 - n.y*n.y*t*t));
+
+            while (d > 0.0001) {
+                float ft = 1 - n.z * t - (n.x*n.x + n.y*n.y)*t*t + n.x*n.x*n.y*n.y*t*t*t*t;
+                float fit = - n.z - 2*(n.x*n.x + n.y*n.y)*t + 4*n.x*n.x*n.y*n.y*t*t*t;
+                t -= ft / fit;
+                d = fabs(n.z * t - (1 - n.x*n.x*t*t) * (1 - n.y*n.y*t*t));
+            };
+
+            n.x = n.x * t;
+            n.y = n.y * t;
+            n.z = 0.0f;
+        }
 
         x = n.x;
         y = n.y;
@@ -1630,6 +1655,12 @@ void TexImage::reconstructNormals(NormalTransform xform)
             n.x = n.x;
             n.y = n.y;
             n.z = 1.0f - nv::clamp(n.x * n.x + n.y * n.y, 0.0f, 1.0f);
+            n = normalizeSafe(n, Vector3(0.0f), 0.0f);
+        }
+        else if (xform == NormalTransform_DualParaboloid) {
+            n.x = n.x;
+            n.y = n.y;
+            n.z = nv::clamp((1 - n.x * n.x) * (1 - n.y * n.y), 0.0f, 1.0f);
             n = normalizeSafe(n, Vector3(0.0f), 0.0f);
         }
 

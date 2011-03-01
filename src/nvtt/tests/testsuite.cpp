@@ -185,6 +185,7 @@ enum Mode {
     Mode_BC5_Normal,
     Mode_BC5_Normal_Stereographic,
     Mode_BC5_Normal_Paraboloid,
+    Mode_BC5_Normal_DualParaboloid,
     Mode_Count
 };
 static const char * s_modeNames[] = {
@@ -201,6 +202,7 @@ static const char * s_modeNames[] = {
     "BC5-Normal",   // Mode_BC5_Normal,
     "BC5-Normal-Stereographic",     // Mode_BC5_Normal_Stereographic,
     "BC5-Normal-Paraboloid",        // Mode_BC5_Normal_Paraboloid,
+    "BC5-Normal-DualParaboloid",    // Mode_BC5_Normal_DualParaboloid,
 };
 nvStaticCheck(NV_ARRAY_SIZE(s_modeNames) == Mode_Count);
 
@@ -213,7 +215,7 @@ static Test s_imageTests[] = {
     {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_LUVW}},
     {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
     //{"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
-    {"Normal", 3, {Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid}},
+    {"Normal", 4, {Mode_BC5_Normal_DualParaboloid, Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid}},
     {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
 };
 const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
@@ -404,7 +406,7 @@ int main(int argc, char *argv[])
         printf("  -dec x         \tDecompressor.\n");
         printf("    0:           \tReference (D3D10).\n");
         printf("    1:           \tReference (D3D9).\n");
-        printf("    1:           \tNVIDIA.\n");
+        printf("    2:           \tNVIDIA.\n");
 
         printf("Compression options:\n");
         printf("  -fast          \tFast compression.\n");
@@ -551,7 +553,7 @@ int main(int argc, char *argv[])
         else if (mode == Mode_BC3_Normal) {
             format = nvtt::Format_BC3n;
         }
-        else if (mode == Mode_BC5_Normal) {
+        else if (mode == Mode_BC5_Normal || mode == Mode_BC5_Normal_Stereographic || mode == Mode_BC5_Normal_Paraboloid || mode == Mode_BC5_Normal_DualParaboloid) {
             format = nvtt::Format_BC5;
         }
         
@@ -661,6 +663,9 @@ int main(int argc, char *argv[])
             else if (mode == Mode_BC5_Normal_Paraboloid) {
                 tmp.transformNormals(nvtt::NormalTransform_Paraboloid);
             }
+            else if (mode == Mode_BC5_Normal_DualParaboloid) {
+                tmp.transformNormals(nvtt::NormalTransform_DualParaboloid);
+            }
 
 
             printf("Compressing: \t'%s'\n", set.fileNames[i]);
@@ -734,6 +739,9 @@ int main(int argc, char *argv[])
             }
             else if (mode == Mode_BC5_Normal_Paraboloid) {
                 img_out.reconstructNormals(nvtt::NormalTransform_Paraboloid);
+            }
+            else if (mode == Mode_BC5_Normal_DualParaboloid) {
+                img_out.reconstructNormals(nvtt::NormalTransform_DualParaboloid);
             }
 
             nvtt::TexImage diff = nvtt::diff(img, img_out, 1.0f);
