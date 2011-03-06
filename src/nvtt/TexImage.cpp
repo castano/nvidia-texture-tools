@@ -1593,7 +1593,7 @@ void TexImage::transformNormals(NormalTransform xform)
             n.y = n.y * t;
             n.z = 0.0f;
         }
-        else if (xform == NormalTransform_DualParaboloid) {
+        else if (xform == NormalTransform_Quartic) {
             // Use Newton's method to solve equation:
             // f(t) = 1 - zt - (x^2+y^2)t^2 + x^2y^2t^4 = 0
             // f'(t) = - z - 2(x^2+y^2)t + 4x^2y^2t^3
@@ -1618,6 +1618,9 @@ void TexImage::transformNormals(NormalTransform xform)
             n.y = n.y * t;
             n.z = 0.0f;
         }
+        /*else if (xform == NormalTransform_DualParaboloid) {
+
+        }*/
 
         x = n.x;
         y = n.y;
@@ -1657,12 +1660,15 @@ void TexImage::reconstructNormals(NormalTransform xform)
             n.z = 1.0f - nv::clamp(n.x * n.x + n.y * n.y, 0.0f, 1.0f);
             n = normalizeSafe(n, Vector3(0.0f), 0.0f);
         }
-        else if (xform == NormalTransform_DualParaboloid) {
+        else if (xform == NormalTransform_Quartic) {
             n.x = n.x;
             n.y = n.y;
             n.z = nv::clamp((1 - n.x * n.x) * (1 - n.y * n.y), 0.0f, 1.0f);
             n = normalizeSafe(n, Vector3(0.0f), 0.0f);
         }
+        /*else if (xform == NormalTransform_DualParaboloid) {
+
+        }*/
 
         x = n.x;
         y = n.y;
@@ -1751,6 +1757,12 @@ float nvtt::rmsAlphaError(const TexImage & reference, const TexImage & image)
 float nvtt::cieLabError(const TexImage & reference, const TexImage & image)
 {
     return nv::cieLabError(reference.m->image, image.m->image);
+}
+
+float nvtt::angularError(const TexImage & reference, const TexImage & image)
+{
+    //return nv::averageAngularError(reference.m->image, image.m->image);
+    return nv::rmsAngularError(reference.m->image, image.m->image);
 }
 
 
