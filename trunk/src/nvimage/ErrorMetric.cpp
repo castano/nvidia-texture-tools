@@ -11,13 +11,13 @@ using namespace nv;
 
 float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight)
 {
-    double mse = 0;
-
     if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
         return FLT_MAX;
     }
     nvDebugCheck(img->componentNum() == 4);
     nvDebugCheck(ref->componentNum() == 4);
+
+    double mse = 0;
 
     const uint count = img->width() * img->height();
     for (uint i = 0; i < count; i++)
@@ -34,20 +34,13 @@ float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alp
         float r = r0 - r1;
         float g = g0 - g1;
         float b = b0 - b1;
-        //float a = a0 - a1;
 
-        if (alphaWeight)
-        {
-            mse += r * r * a1;
-            mse += g * g * a1;
-            mse += b * b * a1;
-        }
-        else
-        {
-            mse += r * r;
-            mse += g * g;
-            mse += b * b;
-        }
+        float a = 1;
+        if (alphaWeight) a = a1;
+
+        mse += r * r * a;
+        mse += g * g * a;
+        mse += b * b * a;
     }
 
     return float(sqrt(mse / count));
@@ -55,12 +48,12 @@ float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alp
 
 float nv::rmsAlphaError(const FloatImage * img, const FloatImage * ref)
 {
-    double mse = 0;
-
     if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
         return FLT_MAX;
     }
     nvDebugCheck(img->componentNum() == 4 && ref->componentNum() == 4);
+
+    double mse = 0;
 
     const uint count = img->width() * img->height();
     for (uint i = 0; i < count; i++)
@@ -75,6 +68,68 @@ float nv::rmsAlphaError(const FloatImage * img, const FloatImage * ref)
 
     return float(sqrt(mse / count));
 }
+
+
+float nv::averageColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight)
+{
+    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
+        return FLT_MAX;
+    }
+    nvDebugCheck(img->componentNum() == 4);
+    nvDebugCheck(ref->componentNum() == 4);
+
+    double mae = 0;
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++)
+    {
+        float r0 = img->pixel(i + count * 0);
+        float g0 = img->pixel(i + count * 1);
+        float b0 = img->pixel(i + count * 2);
+        //float a0 = img->pixel(i + count * 3);
+        float r1 = ref->pixel(i + count * 0);
+        float g1 = ref->pixel(i + count * 1);
+        float b1 = ref->pixel(i + count * 2);
+        float a1 = ref->pixel(i + count * 3);
+
+        float r = fabs(r0 - r1);
+        float g = fabs(g0 - g1);
+        float b = fabs(b0 - b1);
+
+        float a = 1;
+        if (alphaWeight) a = a1;
+
+        mae += r * a;
+        mae += g * a;
+        mae += b * a;
+    }
+
+    return float(mae / count);
+}
+
+float nv::averageAlphaError(const FloatImage * img, const FloatImage * ref)
+{
+    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
+        return FLT_MAX;
+    }
+    nvDebugCheck(img->componentNum() == 4 && ref->componentNum() == 4);
+
+    double mae = 0;
+
+    const uint count = img->width() * img->height();
+    for (uint i = 0; i < count; i++)
+    {
+        float a0 = img->pixel(i + count * 3);
+        float a1 = ref->pixel(i + count * 3);
+
+        float a = a0 - a1;
+
+        mae += fabs(a);
+    }
+
+    return float(mae / count);
+}
+
 
 // Assumes input is in *linear* sRGB color space.
 static Vector3 rgbToXyz(Vector3::Arg c)
@@ -269,5 +324,81 @@ float nv::spatialCieLabError(const FloatImage * img0, const FloatImage * img1)
 }
 
 
+// Assumes input images are normal maps.
+float nv::averageAngularError(const FloatImage * img0, const FloatImage * img1)
+{
+    if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
+        return FLT_MAX;
+    }
+    nvDebugCheck(img0->componentNum() == 4 && img0->componentNum() == 4);
 
+    uint w = img0->width();
+    uint h = img0->height();
+
+    const float * x0 = img0->channel(0);
+    const float * y0 = img0->channel(1);
+    const float * z0 = img0->channel(2);
+
+    const float * x1 = img1->channel(0);
+    const float * y1 = img1->channel(1);
+    const float * z1 = img1->channel(2);
+
+    double error = 0.0f;
+
+    const uint count = w*h;
+    for (uint i = 0; i < count; i++)
+    {
+        Vector3 n0 = Vector3(x0[i], y0[i], z0[i]);
+        Vector3 n1 = Vector3(x1[i], y1[i], z1[i]);
+
+        n0 = 2 * n0 - Vector3(1);
+        n1 = 2 * n1 - Vector3(1);
+
+        n0 = normalizeSafe(n0, Vector3(0), 0.0f);
+        n1 = normalizeSafe(n1, Vector3(0), 0.0f);
+
+        error += acos(clamp(dot(n0, n1), -1.0f, 1.0f));
+    }
+
+    return float(error / count);
+}
+
+float nv::rmsAngularError(const FloatImage * img0, const FloatImage * img1)
+{
+    if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
+        return FLT_MAX;
+    }
+    nvDebugCheck(img0->componentNum() == 4 && img0->componentNum() == 4);
+
+    uint w = img0->width();
+    uint h = img0->height();
+
+    const float * x0 = img0->channel(0);
+    const float * y0 = img0->channel(1);
+    const float * z0 = img0->channel(2);
+
+    const float * x1 = img1->channel(0);
+    const float * y1 = img1->channel(1);
+    const float * z1 = img1->channel(2);
+
+    double error = 0.0f;
+
+    const uint count = w*h;
+    for (uint i = 0; i < count; i++)
+    {
+        Vector3 n0 = Vector3(x0[i], y0[i], z0[i]);
+        Vector3 n1 = Vector3(x1[i], y1[i], z1[i]);
+
+        n0 = 2 * n0 - Vector3(1);
+        n1 = 2 * n1 - Vector3(1);
+
+        n0 = normalizeSafe(n0, Vector3(0), 0.0f);
+        n1 = normalizeSafe(n1, Vector3(0), 0.0f);
+
+        float angle = acos(clamp(dot(n0, n1), -1.0f, 1.0f));
+        error += angle * angle;
+    }
+
+    return float(sqrt(error / count));
+}
 

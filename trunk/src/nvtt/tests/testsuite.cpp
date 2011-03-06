@@ -185,7 +185,8 @@ enum Mode {
     Mode_BC5_Normal,
     Mode_BC5_Normal_Stereographic,
     Mode_BC5_Normal_Paraboloid,
-    Mode_BC5_Normal_DualParaboloid,
+    Mode_BC5_Normal_Quartic,
+    //Mode_BC5_Normal_DualParaboloid,
     Mode_Count
 };
 static const char * s_modeNames[] = {
@@ -202,7 +203,8 @@ static const char * s_modeNames[] = {
     "BC5-Normal",   // Mode_BC5_Normal,
     "BC5-Normal-Stereographic",     // Mode_BC5_Normal_Stereographic,
     "BC5-Normal-Paraboloid",        // Mode_BC5_Normal_Paraboloid,
-    "BC5-Normal-DualParaboloid",    // Mode_BC5_Normal_DualParaboloid,
+    "BC5-Normal-Quartic",           // Mode_BC5_Normal_Quartic,
+    //"BC5-Normal-DualParaboloid",    // Mode_BC5_Normal_DualParaboloid,
 };
 nvStaticCheck(NV_ARRAY_SIZE(s_modeNames) == Mode_Count);
 
@@ -215,7 +217,7 @@ static Test s_imageTests[] = {
     {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_LUVW}},
     {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
     //{"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
-    {"Normal", 4, {Mode_BC5_Normal_DualParaboloid, Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid}},
+    {"Normal", 4, {Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid, Mode_BC5_Normal_Quartic}},
     {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
 };
 const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
@@ -288,6 +290,12 @@ struct MyOutputHandler : public nvtt::OutputHandler
     unsigned char * m_ptr;
 };
 
+enum ErrorMode {
+    ErrorMode_RMSE,
+    ErrorMode_CieLab,
+    ErrorMode_AngularRMSE
+};
+
 
 int main(int argc, char *argv[])
 {
@@ -303,6 +311,7 @@ int main(int argc, char *argv[])
 
     int setIndex = 0;
     int testIndex = 0;
+    int errorMode = 0;
     bool fast = false;
     bool nocuda = false;
     bool showHelp = false;
@@ -340,6 +349,13 @@ int main(int argc, char *argv[])
         {
             if (i+1 < argc && argv[i+1][0] != '-') {
                 decoder = (nvtt::Decoder)atoi(argv[i+1]);
+                i++;
+            }
+        }
+        else if (strcmp("-err", argv[i]) == 0)
+        {
+            if (i+1 < argc && argv[i+1][0] != '-') {
+                errorMode = atoi(argv[i+1]);
                 i++;
             }
         }
@@ -403,9 +419,9 @@ int main(int argc, char *argv[])
         for (int i = 0; i < s_imageTestCount; i++) {
             printf("    %i:           \t%s.\n", i, s_imageTests[i].name);
         }
-        printf("  -dec x         \tDecompressor.\n");
-        printf("    0:           \tReference (D3D10).\n");
-        printf("    1:           \tReference (D3D9).\n");
+        printf("  -dec [0:2]     \tDecompressor.\n");
+        printf("    0:           \tReference D3D10 (default).\n");
+        printf("    1:           \tReference D3D9.\n");
         printf("    2:           \tNVIDIA.\n");
 
         printf("Compression options:\n");
@@ -414,6 +430,10 @@ int main(int argc, char *argv[])
 
         printf("Output options:\n");
         printf("  -out <path>    \tOutput directory.\n");
+        printf("  -err [0:2]     \tError mode.\n");
+        printf("    0:           \tRMSE (default).\n");
+        printf("    1:           \tCieLab.\n");
+        printf("    2:           \tAngular RMSE.\n");
 
         return 1;
     }
@@ -477,10 +497,19 @@ int main(int argc, char *argv[])
     // Grid lines.
     graphWriter << "&chxt=x,y&chxtc=0,-1000|1,-1000";
 
-    // Labels.
-    graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01"; // rmse
-    //graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,4,22,1";  // cielab
-    graphWriter << "&chdlp=b"; // Labels at the bottom.
+    // Labels on the left side.
+    if (errorMode == ErrorMode_RMSE) {
+        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01";
+    }
+    else if (errorMode == ErrorMode_CieLab) {
+       graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,4,22,1";
+    }
+    else if (errorMode == ErrorMode_AngularRMSE) {
+        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01";
+    }
+
+    // Labels at the bottom.
+    graphWriter << "&chdlp=b";
 
     // Line colors.
     graphWriter << "&chco=";
@@ -506,8 +535,15 @@ int main(int argc, char *argv[])
     graphWriter << "&chds=";
     for (int t = 0; t < test.count; t++)
     {
-        graphWriter << "0,0.05"; // rmse
-        //graphWriter << "4,22";   // cielab
+        if (errorMode == ErrorMode_RMSE) {
+            graphWriter << "0,0.05";
+        }
+        else if (errorMode == ErrorMode_CieLab) {
+            graphWriter << "4,22";
+        }
+        else if (errorMode == ErrorMode_AngularRMSE) {
+            graphWriter << "0,0.05";
+        }
         if (t != test.count-1) graphWriter << ",";
     }
 
@@ -520,8 +556,15 @@ int main(int argc, char *argv[])
     }
 
     // Title
-    graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20RMSE";
-    //graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20CIE-Lab";
+    if (errorMode == ErrorMode_RMSE) {
+        graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20RMSE";
+    }
+    else if (errorMode == ErrorMode_CieLab) {
+        graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20CIE-Lab";
+    }
+    else if (errorMode == ErrorMode_AngularRMSE) {
+        graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20Angular RMSE";
+    }
     
 
 
@@ -538,8 +581,7 @@ int main(int argc, char *argv[])
     for (int t = 0; t < test.count; t++)
     {
         float totalTime = 0;
-        float totalRMSE = 0;
-        //float totalDeltaE = 0;
+        float totalError = 0;
 
         Mode mode = test.modes[t];
 
@@ -553,7 +595,7 @@ int main(int argc, char *argv[])
         else if (mode == Mode_BC3_Normal) {
             format = nvtt::Format_BC3n;
         }
-        else if (mode == Mode_BC5_Normal || mode == Mode_BC5_Normal_Stereographic || mode == Mode_BC5_Normal_Paraboloid || mode == Mode_BC5_Normal_DualParaboloid) {
+        else if (mode == Mode_BC5_Normal || mode == Mode_BC5_Normal_Stereographic || mode == Mode_BC5_Normal_Paraboloid || mode == Mode_BC5_Normal_Quartic) {
             format = nvtt::Format_BC5;
         }
         
@@ -663,9 +705,12 @@ int main(int argc, char *argv[])
             else if (mode == Mode_BC5_Normal_Paraboloid) {
                 tmp.transformNormals(nvtt::NormalTransform_Paraboloid);
             }
-            else if (mode == Mode_BC5_Normal_DualParaboloid) {
-                tmp.transformNormals(nvtt::NormalTransform_DualParaboloid);
+            else if (mode == Mode_BC5_Normal_Quartic) {
+                tmp.transformNormals(nvtt::NormalTransform_Quartic);
             }
+            /*else if (mode == Mode_BC5_Normal_DualParaboloid) {
+                tmp.transformNormals(nvtt::NormalTransform_DualParaboloid);
+            }*/
 
 
             printf("Compressing: \t'%s'\n", set.fileNames[i]);
@@ -740,9 +785,12 @@ int main(int argc, char *argv[])
             else if (mode == Mode_BC5_Normal_Paraboloid) {
                 img_out.reconstructNormals(nvtt::NormalTransform_Paraboloid);
             }
-            else if (mode == Mode_BC5_Normal_DualParaboloid) {
-                img_out.reconstructNormals(nvtt::NormalTransform_DualParaboloid);
+            else if (mode == Mode_BC5_Normal_Quartic) {
+                img_out.reconstructNormals(nvtt::NormalTransform_Quartic);
             }
+            /*else if (mode == Mode_BC5_Normal_DualParaboloid) {
+                tmp.transformNormals(nvtt::NormalTransform_DualParaboloid);
+            }*/
 
             nvtt::TexImage diff = nvtt::diff(img, img_out, 1.0f);
 
@@ -810,18 +858,22 @@ int main(int argc, char *argv[])
             }
 
             // Output RMSE.
-            float rmse = nvtt::rmsError(img, img_out);
-            if (set.type == ImageType_HDR) rmse *= 4;
-            totalRMSE += rmse;
-            printf("  RMSE:          \t%.4f\n", rmse);
+            float error;
+            if (errorMode == ErrorMode_RMSE) {
+                error = nvtt::rmsError(img, img_out);
+                if (set.type == ImageType_HDR) error *= 4;
+            }
+            else if (errorMode == ErrorMode_CieLab) {
+                error = nvtt::cieLabError(img, img_out);
+            }
+            else if (errorMode == ErrorMode_AngularRMSE) {
+                error = nvtt::angularError(img, img_out);
+            }
 
-            //float deltae = nvtt::cieLabError(img, img_out);
-            //totalDeltaE += deltae;
-            //printf("  CIE-Lab DeltaE:\t%.4f\n", deltae);
+            totalError += error;
+            printf("  Error:          \t%.4f\n", error);
 
-
-            graphWriter << rmse;
-            //graphWriter << deltae;
+            graphWriter << error;
             if (i != set.fileCount-1) graphWriter << ",";
 
 
@@ -873,14 +925,11 @@ int main(int argc, char *argv[])
             fflush(stdout);
         }
 
-        totalRMSE /= set.fileCount;
-        //totalDeltaE /= set.fileCount;
-        //totalDiff /= set.fileCount;
+        totalError /= set.fileCount;
 
         printf("Total Results:\n");
         printf("  Total Time:            \t%.3f sec\n", totalTime);
-        printf("  Average RMSE:          \t%.4f\n", totalRMSE);
-        //printf("  Average CIE-Lab DeltaE:\t%.4f\n", totalDeltaE);
+        printf("  Average Error:         \t%.4f\n", totalError);
 
         if (t != test.count-1) graphWriter << "|";
     }

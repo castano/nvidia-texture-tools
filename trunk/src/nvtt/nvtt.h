@@ -391,7 +391,8 @@ namespace nvtt
         NormalTransform_Orthographic,
         NormalTransform_Stereographic,
         NormalTransform_Paraboloid,
-        NormalTransform_DualParaboloid,
+        NormalTransform_Quartic,
+        //NormalTransform_DualParaboloid,
     };
 
     /// A texture mipmap.
@@ -487,6 +488,7 @@ namespace nvtt
         NVTT_API friend float rmsError(const TexImage & reference, const TexImage & img);
         NVTT_API friend float rmsAlphaError(const TexImage & reference, const TexImage & img);
         NVTT_API friend float cieLabError(const TexImage & reference, const TexImage & img);
+        NVTT_API friend float angularError(const TexImage & reference, const TexImage & img);
         NVTT_API friend TexImage diff(const TexImage & reference, const TexImage & img, float scale);
 
     private:
@@ -506,6 +508,7 @@ namespace nvtt
     NVTT_API float rmsError(const TexImage & reference, const TexImage & img);
     NVTT_API float rmsAlphaError(const TexImage & reference, const TexImage & img);
     NVTT_API float cieLabError(const TexImage & reference, const TexImage & img);
+    NVTT_API float angularError(const TexImage & reference, const TexImage & img);
     NVTT_API TexImage diff(const TexImage & reference, const TexImage & img, float scale);
 
 
