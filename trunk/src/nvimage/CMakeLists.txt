@@ -5,11 +5,12 @@ SET(IMAGE_SRCS
     BlockDXT.h BlockDXT.cpp
     ColorBlock.h ColorBlock.cpp
     DirectDrawSurface.h DirectDrawSurface.cpp
+    ErrorMetric.h ErrorMetric.cpp
     Filter.h Filter.cpp
     FloatImage.h FloatImage.cpp
-    ErrorMetric.h ErrorMetric.cpp
     Image.h Image.cpp
     ImageIO.h ImageIO.cpp
+    #KtxFile.h KtxFile.cpp
     NormalMap.h NormalMap.cpp
     PixelFormat.h
     PsdFile.h
