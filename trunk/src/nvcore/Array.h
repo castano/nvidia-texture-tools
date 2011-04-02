@@ -6,7 +6,8 @@
 
 /*
 This array class requires the elements to be relocable; it uses memmove and realloc. Ideally I should be 
-using swap, but I honestly don't care.
+using swap, but I honestly don't care. The only thing that you should be aware of is that internal pointers
+are not supported.
 
 The foreach macros that I use are very non-standard and somewhat confusing. It would be nice to have
 standard foreach as in Qt.
@@ -37,6 +38,94 @@ namespace nv
         }
     }
 
+    template <typename T>
+    void construct(T * ptr, uint count) {
+        for (uint i = 0; i < count; i++) {
+            new(ptr+i) T;	// placement new
+        }
+    }
+
+    template <typename T>
+    void destroy(T * ptr, uint count) {
+        for (uint i = 0; i < count; i++) {
+            (ptr+i)->~T();
+        }
+    }
+
+    template <typename T>
+    void fill(T * restrict dst, const T & value, uint count) {
+        for (uint i = 0; i < count; i++) {
+            dst[i] = value;
+        }
+    }
+
+    template <typename T>
+    void copy(T * restrict dst, const T * restrict src, uint count) {
+        for (uint i = 0; i < count; i++) {
+            dst[i] = src[i];
+        }
+    }
+
+
+    class Buffer
+    {
+        NV_FORBID_COPY(Buffer)
+    public:
+        // Ctor.
+        Buffer() : m_buffer(NULL), m_buffer_size(0), m_size(0)
+        {
+        }
+
+        // Dtor.
+        ~Buffer() {
+            allocate(0, 0);
+        }
+
+
+        // Get vector size.
+        NV_FORCEINLINE uint size() const { return m_size; }
+
+        // Get vector size.
+        NV_FORCEINLINE uint count() const { return m_size; }
+
+        // Is a null vector.
+        NV_FORCEINLINE bool isNull() const	{ return m_buffer == NULL; }
+
+
+        // Swap the members of this vector and the given vector.
+        friend void swap(Buffer & a, Buffer & b)
+        {
+            swap(a.m_buffer, b.m_buffer);
+            swap(a.m_buffer_size, b.m_buffer_size);
+            swap(a.m_size, b.m_size);
+        }
+
+    protected:
+
+        /// Change buffer size.
+        NV_NOINLINE void allocate(uint count, uint size)
+        {
+            if (count == 0) {
+                // free the buffer.
+                if (m_buffer != NULL) {
+                    ::free(m_buffer);
+                    m_buffer = NULL;
+                }
+            }
+            else {
+                // realloc the buffer
+                m_buffer = ::realloc(m_buffer, count * size);
+            }
+
+            m_buffer_size = count;
+        }
+
+
+    protected:
+        void * m_buffer;
+        uint m_buffer_size;
+        uint m_size;
+    };
 
 
     /**
@@ -44,38 +133,30 @@ namespace nv
     * some nice foreach enumerators. 
     */
     template<typename T>
-    class NVCORE_CLASS Array {
+    class NVCORE_CLASS Array : public Buffer {
     public:
 
-        /// Ctor.
-        Array() : m_buffer(NULL), m_size(0), m_buffer_size(0)
-        {
+        // Default constructor.
+        NV_FORCEINLINE Array() : Buffer() {}
+
+        // Copy constructor.
+        NV_FORCEINLINE Array(const Array & a) : Buffer() {
+            copy(a.buffer(), a.m_size);
         }
 
-        /// Copy ctor.
-        Array( const Array & a ) : m_buffer(NULL), m_size(0), m_buffer_size(0)
-        {
-            copy(a.m_buffer, a.m_size); 
-        }
-
-        /// Ctor that initializes the vector with the given elements.
-        Array( const T * ptr, int num ) : m_buffer(NULL), m_size(0), m_buffer_size(0)
-        {
+        // Constructor that initializes the vector with the given elements.
+        NV_FORCEINLINE Array(const T * ptr, int num) : Buffer() {
             copy(ptr, num);
         }
 
-        /// Allocate array.
-        explicit Array(uint capacity) : m_buffer(NULL), m_size(0), m_buffer_size(0)
-        {
+        // Allocate array.
+        NV_FORCEINLINE explicit Array(uint capacity) : Buffer() {
             allocate(capacity);
         }
 
-
-        /// Dtor.
-        ~Array()
-        {
+        // Destructor.
+        NV_FORCEINLINE ~Array() {
             clear();
-            allocate(0);
         }
 
 
@@ -83,24 +164,24 @@ namespace nv
         NV_FORCEINLINE const T & operator[]( uint index ) const
         {
             nvDebugCheck(index < m_size);
-            return m_buffer[index];
+            return buffer()[index];
         }
         NV_FORCEINLINE const T & at( uint index ) const
         {
             nvDebugCheck(index < m_size);
-            return m_buffer[index];
+            return buffer()[index];
         }
 
         /// Element access.
         NV_FORCEINLINE T & operator[] ( uint index )
         {
             nvDebugCheck(index < m_size);
-            return m_buffer[index];
+            return buffer()[index];
         }
         NV_FORCEINLINE T & at( uint index )
         {
             nvDebugCheck(index < m_size);
-            return m_buffer[index];
+            return buffer()[index];
         }
 
         /// Get vector size.
@@ -110,16 +191,16 @@ namespace nv
         NV_FORCEINLINE uint count() const { return m_size; }
 
         /// Get const vector pointer.
-        NV_FORCEINLINE const T * buffer() const { return m_buffer; }
+        NV_FORCEINLINE const T * buffer() const { return (const T *)m_buffer; }
 
         /// Get vector pointer.
-        NV_FORCEINLINE T * mutableBuffer() { return m_buffer; }
+        NV_FORCEINLINE T * buffer() { return (T *)m_buffer; }
 
         /// Is vector empty.
         NV_FORCEINLINE bool isEmpty() const { return m_size == 0; }
 
         /// Is a null vector.
-        NV_FORCEINLINE bool isNull() const	{ return m_buffer == NULL; }
+        NV_FORCEINLINE bool isNull() const { return m_buffer == NULL; }
 
 
         /// Push an element at the end of the vector.
@@ -131,12 +212,12 @@ namespace nv
             {
                 const T copy(val);	// create a copy in case value is inside of this array.
                 resize(new_size);
-                m_buffer[new_size-1] = copy;
+                buffer()[new_size-1] = copy;
             }
             else
             {
                 m_size = new_size;
-                new(m_buffer+new_size-1) T(val);
+                new(buffer()+new_size-1) T(val);
             }
         }
         NV_FORCEINLINE void pushBack( const T & val )
@@ -155,8 +236,8 @@ namespace nv
             return *this;
         }
 
-        /// Pop and return element at the end of the vector.
-        void pop_back()
+        /// Pop the element at the end of the vector.
+        NV_FORCEINLINE void pop_back()
         {
             nvDebugCheck( m_size > 0 );
             resize( m_size - 1 );
@@ -170,28 +251,28 @@ namespace nv
         NV_FORCEINLINE const T & back() const
         {
             nvDebugCheck( m_size > 0 );
-            return m_buffer[m_size-1];
+            return buffer()[m_size-1];
         }
 
         /// Get back element.
         NV_FORCEINLINE T & back()
         {
             nvDebugCheck( m_size > 0 );
-            return m_buffer[m_size-1];
+            return buffer()[m_size-1];
         }
 
         /// Get front element.
         NV_FORCEINLINE const T & front() const
         {
             nvDebugCheck( m_size > 0 );
-            return m_buffer[0];
+            return buffer()[0];
         }
 
         /// Get front element.
         NV_FORCEINLINE T & front()
         {
             nvDebugCheck( m_size > 0 );
-            return m_buffer[0];
+            return buffer()[0];
         }
 
         /// Return true if element found.
@@ -204,7 +285,7 @@ namespace nv
         bool find(const T & element, uint first, uint count, uint * index) const
         {
             for (uint i = first; i < first+count; i++) {
-                if (m_buffer[i] == element) {
+                if (buffer()[i] == element) {
                     if (index != NULL) *index = i;
                     return true;
                 }
@@ -219,17 +300,17 @@ namespace nv
         }
 
         /// Remove the element at the given index. This is an expensive operation!
-        void removeAt( uint index )
+        void removeAt(uint index)
         {
             nvCheck(index >= 0 && index < m_size);
 
-            if( m_size == 1 ) {
+            if (m_size == 1) {
                 clear();
             }
             else {
-                m_buffer[index].~T();
+                buffer()[index].~T();
 
-                memmove( m_buffer+index, m_buffer+index+1, sizeof(T) * (m_size - 1 - index) );
+                memmove(buffer()+index, buffer()+index+1, sizeof(T) * (m_size - 1 - index));
                 m_size--;
             }
         }
@@ -246,35 +327,35 @@ namespace nv
         }
 
         /// Insert the given element at the given index shifting all the elements up.
-        void insertAt( uint index, const T & val = T() )
+        void insertAt(uint index, const T & val = T())
         {
             nvCheck( index >= 0 && index <= m_size );
 
             resize( m_size + 1 );
 
-            if( index < m_size - 1 ) {
-                memmove( m_buffer+index+1, m_buffer+index, sizeof(T) * (m_size - 1 - index) );
+            if (index < m_size - 1) {
+                memmove(buffer()+index+1, buffer()+index, sizeof(T) * (m_size - 1 - index));
             }
 
             // Copy-construct into the newly opened slot.
-            new(m_buffer+index) T(val);
+            new(buffer()+index) T(val);
         }
 
         /// Append the given data to our vector.
         NV_FORCEINLINE void append(const Array<T> & other)
         {
-            append(other.m_buffer, other.m_size);
+            append(other.buffer(), other.m_size);
         }
 
         /// Append the given data to our vector.
         void append(const T other[], uint count)
         {
-            if( count > 0 ) {
+            if (count > 0) {
                 const uint old_size = m_size;
                 resize(m_size + count);
                 // Must use operator=() to copy elements, in case of side effects (e.g. ref-counting).
-                for( uint i = 0; i < count; i++ ) {
-                    m_buffer[old_size + i] = other[i];
+                for (uint i = 0; i < count; i++ ) {
+                    buffer()[old_size + i] = other[i];
                 }
             }
         }
@@ -284,9 +365,8 @@ namespace nv
         void replaceWithLast(uint index)
         {
             nvDebugCheck( index < m_size );
-            nv::swap(m_buffer[index], back());
-            //m_buffer[index] = back();
-            (m_buffer+m_size-1)->~T();
+            nv::swap(buffer()[index], back());
+            (buffer()+m_size-1)->~T();
             m_size--;
         }
 
@@ -294,38 +374,33 @@ namespace nv
         /// Resize the vector preserving existing elements.
         NV_NOINLINE void resize(uint new_size)
         {
-            uint i;
             uint old_size = m_size;
             m_size = new_size;
 
+            // @@ Use nv::destruct(...)
             // Destruct old elements (if we're shrinking).
-            for( i = new_size; i < old_size; i++ ) {
-                (m_buffer+i)->~T();                         // Explicit call to the destructor
+            for (uint i = new_size; i < old_size; i++) {
+                (buffer()+i)->~T();                         // Explicit call to the destructor
             }
 
-            if( m_size == 0 ) {
-                //allocate(0);	// Don't shrink automatically.
-            }
-            else if( m_size <= m_buffer_size/* && m_size > m_buffer_size >> 1*/) {
-                // don't compact yet.
-                nvDebugCheck(m_buffer != NULL);
-            }
-            else {
+            // @@ Move allocation logic to Buffer::allocate
+            if (new_size > m_buffer_size) {
                 uint new_buffer_size;
-                if( m_buffer_size == 0 ) {
+                if (m_buffer_size == 0) {
                     // first allocation
-                    new_buffer_size = m_size;
+                    new_buffer_size = new_size;
                 }
                 else {
                     // growing
-                    new_buffer_size = m_size + (m_size >> 2);
+                    new_buffer_size = new_size + (new_size >> 2);
                 }
                 allocate( new_buffer_size );
             }
 
+            // @@ Use nv::construct(...)
             // Call default constructors
-            for( i = old_size; i < new_size; i++ ) {
-                new(m_buffer+i) T;	// placement new
+            for (uint i = old_size; i < new_size; i++) {
+                new(buffer()+i) T;	// placement new
             }
         }
 
@@ -334,24 +409,19 @@ namespace nv
         /// new ones with the given value.
         NV_NOINLINE void resize( uint new_size, const T &elem )
         {
-            uint i;
             uint old_size = m_size;
             m_size = new_size;
 
+            // @@ Use nv::destruct(...)
             // Destruct old elements (if we're shrinking).
-            for( i = new_size; i < old_size; i++ ) {
-                (m_buffer+i)->~T();                         // Explicit call to the destructor
+            for (uint i = new_size; i < old_size; i++ ) {
+                (buffer()+i)->~T();                         // Explicit call to the destructor
             }
 
-            if( m_size == 0 ) {
-                //allocate(0);	// Don't shrink automatically.
-            }
-            else if( m_size <= m_buffer_size && m_size > m_buffer_size >> 1 ) {
-                // don't compact yet.
-            }
-            else {
+            // @@ Move allocation logic to Buffer::allocate
+            if (new_size > m_buffer_size) {
                 uint new_buffer_size;
-                if( m_buffer_size == 0 ) {
+                if (m_buffer_size == 0) {
                     // first allocation
                     new_buffer_size = m_size;
                 }
@@ -362,9 +432,10 @@ namespace nv
                 allocate( new_buffer_size );
             }
 
+            // @@ Use nv::fill(...)
             // Call copy constructors
-            for( i = old_size; i < new_size; i++ ) {
-                new(m_buffer+i) T( elem );	// placement new
+            for (uint i = old_size; i < new_size; i++ ) {
+                new(buffer()+i) T( elem );	// placement new
             }
         }
 
@@ -386,39 +457,37 @@ namespace nv
         NV_FORCEINLINE void reserve(uint desired_size)
         {
             if (desired_size > m_buffer_size) {
-                allocate( desired_size );
+                allocate(desired_size);
             }
         }
 
         /// Copy elements to this array. Resizes it if needed.
-        void copy(const T * ptr, uint num)
+        NV_FORCEINLINE void copy(const T * ptr, uint num)
         {
             resize( num );
-            for (uint i = 0; i < m_size; i++) {
-                m_buffer[i] = ptr[i];
-            }
+            ::nv::copy(buffer(), ptr, num);
         }
 
         /// Assignment operator.
         NV_FORCEINLINE Array<T> & operator=( const Array<T> & a )
         {
-            copy(a.m_buffer, a.m_size);
+            copy(a.buffer(), a.m_size);
             return *this;
         }
 
         // Release ownership of allocated memory and returns pointer to it.
         T * release() {
-            T * tmp = m_buffer;
+            T * tmp = buffer();
             m_buffer = NULL;
-            m_size = 0;
             m_buffer_size = 0;
+            m_size = 0;
             return tmp;
         }
 
         /// Array serialization.
         friend Stream & operator<< ( Stream & s, Array<T> & p )
         {
-            if( s.isLoading() ) {
+            if (s.isLoading()) {
                 uint size;
                 s << size;
                 p.resize( size );
@@ -427,8 +496,8 @@ namespace nv
                 s << p.m_size;
             }
 
-            for( uint i = 0; i < p.m_size; i++ ) {
-                s << p.m_buffer[i];
+            for (uint i = 0; i < p.m_size; i++) {
+                s << buffer()[i];
             }
 
             return s;
@@ -439,54 +508,24 @@ namespace nv
         typedef uint PseudoIndex;
 
         NV_FORCEINLINE PseudoIndex start() const { return 0; }
-        NV_FORCEINLINE bool isDone(const PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); return i == this->m_size; };
+        NV_FORCEINLINE bool isDone(const PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); return i == this->m_size; }
         NV_FORCEINLINE void advance(PseudoIndex & i) const { nvDebugCheck(i <= this->m_size); i++; }
 
 #if NV_CC_MSVC
         NV_FORCEINLINE T & operator[]( const PseudoIndexWrapper & i ) {
-            return m_buffer[i(this)];
+            return at(i(this));
         }
         NV_FORCEINLINE const T & operator[]( const PseudoIndexWrapper & i ) const {
-            return m_buffer[i(this)];		
+            return at(i(this));
         }
 #endif
 
+protected:
 
-        /// Swap the members of this vector and the given vector.
-        friend void swap(Array<T> & a, Array<T> & b)
-        {
-            swap(a.m_buffer, b.m_buffer);
-            swap(a.m_size, b.m_size);
-            swap(a.m_buffer_size, b.m_buffer_size);
+        NV_FORCEINLINE void allocate(uint count) {
+            Buffer::allocate(count, sizeof(T));
         }
 
-
-    private:
-
-        /// Change buffer size.
-        NV_NOINLINE void allocate( uint rsize )
-        {
-            m_buffer_size = rsize;
-
-            // free the buffer.
-            if (m_buffer_size == 0) {
-                if (m_buffer) {
-                    free( m_buffer );
-                    m_buffer = NULL;
-                }
-            }
-
-            // realloc the buffer
-            else {
-                m_buffer = realloc<T>(m_buffer, m_buffer_size);
-            }
-        }
-
-
-    private:
-        T * m_buffer;
-        uint m_size;
-        uint m_buffer_size;
     };
 
 } // nv namespace
