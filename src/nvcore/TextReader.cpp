@@ -48,7 +48,7 @@ const char * TextReader::readToEnd()
 	m_text.reserve(size + 1);
 	m_text.resize(size);
 	
-	m_stream->serialize(m_text.mutableBuffer(), size);
+	m_stream->serialize(m_text.buffer(), size);
 	m_text.pushBack('\0');
 	
 	return m_text.buffer();

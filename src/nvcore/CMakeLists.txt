@@ -9,8 +9,8 @@ SET(CORE_SRCS
     DefsGnucWin32.h
     DefsVcWin32.h
     FileSystem.h FileSystem.cpp
-	ForEach.h
-	HashMap.h
+    ForEach.h
+    HashMap.h
     Library.h Library.cpp
     Memory.h Memory.cpp
     Ptr.h

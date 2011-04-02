@@ -10,11 +10,12 @@
 #cmakedefine HAVE_OPENMP
 #cmakedefine HAVE_DISPATCH_H
 
-#cmakedefine HAVE_PNG
-#cmakedefine HAVE_JPEG
-#cmakedefine HAVE_TIFF
-#cmakedefine HAVE_OPENEXR
-#cmakedefine HAVE_FREEIMAGE
+#define HAVE_STBIMAGE
+//#cmakedefine HAVE_PNG
+//#cmakedefine HAVE_JPEG
+//#cmakedefine HAVE_TIFF
+//#cmakedefine HAVE_OPENEXR
+//#cmakedefine HAVE_FREEIMAGE
 
 #cmakedefine HAVE_MAYA
 
