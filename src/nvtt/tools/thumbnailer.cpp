@@ -40,118 +40,126 @@
 
 static bool loadImage(nv::Image & image, const char * fileName)
 {
-	if (nv::strCaseCmp(nv::Path::extension(fileName), ".dds") == 0)
-	{
-		nv::DirectDrawSurface dds(fileName);
-		if (!dds.isValid())
-		{
-			fprintf(stderr, "The file '%s' is not a valid DDS file.\n", fileName);
-			return false;
-		}
-		
-		dds.mipmap(&image, 0, 0); // get first image
-	}
-	else
-	{
-		// Regular image.
-		if (!image.load(fileName))
-		{
-			fprintf(stderr, "The file '%s' is not a supported image type.\n", fileName);
-			return false;
-		}
-	}
+    if (nv::strCaseCmp(nv::Path::extension(fileName), ".dds") == 0)
+    {
+        nv::DirectDrawSurface dds(fileName);
+        if (!dds.isValid())
+        {
+            fprintf(stderr, "The file '%s' is not a valid DDS file.\n", fileName);
+            return false;
+        }
 
-	return true;
+        dds.mipmap(&image, 0, 0); // get first image
+    }
+    else
+    {
+        // Regular image.
+        if (!image.load(fileName))
+        {
+                fprintf(stderr, "The file '%s' is not a supported image type.\n", fileName);
+                return false;
+        }
+    }
+
+    return true;
 }
 
 
 int main(int argc, char *argv[])
 {
-	//MyAssertHandler assertHandler;
-	MyMessageHandler messageHandler;
+    //MyAssertHandler assertHandler;
+    MyMessageHandler messageHandler;
 
-	float gamma = 2.2f;
-	nv::Path input;
-	nv::Path output;
-	uint size = 128;
-	
-	// Parse arguments.
-	for (int i = 1; i < argc; i++)
-	{
-		// Input options.
-		if (strcmp("-s", argv[i]) == 0)
-		{
-			if (i+1 < argc && argv[i+1][0] != '-') {
-				size = (uint)atoi(argv[i+1]);
-				i++;
-			}
-		}
-		else if (argv[i][0] != '-')
-		{
-			input = argv[i];
+    float gamma = 2.2f;
+    nv::Path input;
+    nv::Path output;
+    uint size = 128;
 
-			if (i+1 < argc && argv[i+1][0] != '-') {
-				output = argv[i+1];
-			}
-			else
-			{
-				fprintf(stderr, "No output filename.\n");
-				return 1;
-			}
+    // Parse arguments.
+    for (int i = 1; i < argc; i++)
+    {
+        // Input options.
+        if (strcmp("-s", argv[i]) == 0)
+        {
+            if (i+1 < argc && argv[i+1][0] != '-') {
+                size = (uint)atoi(argv[i+1]);
+                i++;
+            }
+        }
+        else if (argv[i][0] != '-')
+        {
+            input = argv[i];
 
-			break;
-		}
+            if (i+1 < argc && argv[i+1][0] != '-') {
+                output = argv[i+1];
+            }
+            else {
+                fprintf(stderr, "No output filename.\n");
+                return 1;
+            }
+
+	    break;
 	}
+    }
 
-	if (input.isNull() || output.isNull())
-	{
-		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");	
-		
-		printf("usage: nv-gnome-thumbnailer [options] input output\n\n");
-		
-		printf("Options:\n");
-		printf("  -s size\tThumbnail size (default = 128)\n");
+    if (input.isNull() || output.isNull())
+    {
+        printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
 
-		return 1;
-	}
-	
-	nv::Image image;
+        printf("usage: nv-gnome-thumbnailer [options] input output\n\n");
+
+        printf("Options:\n");
+        printf("  -s size\tThumbnail size (default = 128)\n");
+
+        return 1;
+    }
+
+    nv::Image image;
     if (!loadImage(image, input.str())) return 1;
 
-	nv::ImageIO::ImageMetaData metaData;
-	metaData.tagMap.add("Thumb::Image::Width", nv::StringBuilder().number (image.width()));
-	metaData.tagMap.add("Thumb::Image::Height", nv::StringBuilder().number (image.height()));
+    nv::StringBuilder widthString;
+    widthString.number(image.width());
+    nv::StringBuilder heightString;
+    heightString.number(image.height());
 
-	if ((image.width() > size) || (image.height() > size))
+    nv::Array<const char *> metaData;
+    metaData.append("Thumb::Image::Width");
+    metaData.append(widthString.str());
+    metaData.append("Thumb::Image::Height");
+    metaData.append(heightString.str());
+    metaData.append(NULL);
+    metaData.append(NULL);
+
+    if ((image.width() > size) || (image.height() > size))
+    {
+        nv::FloatImage fimage(&image);
+        fimage.toLinear(0, 3, gamma);
+
+	uint thumbW, thumbH;
+	if (image.width() > image.height())
 	{
-		nv::FloatImage fimage(&image);
-		fimage.toLinear(0, 3, gamma);
-
-		uint thumbW, thumbH;
-		if (image.width() > image.height())
-		{
-			thumbW = size;
-			thumbH = uint ((float (image.height()) / float (image.width())) * size);
-		}
-		else
-		{
-			thumbW = uint ((float (image.width()) / float (image.height())) * size);
-			thumbH = size;
-		}
-		nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(nv::BoxFilter(), thumbW, thumbH, nv::FloatImage::WrapMode_Clamp));
-		
-		nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
-		result->setFormat(nv::Image::Format_ARGB);
-
-        nv::StdOutputStream stream(output.str());
-        nv::ImageIO::save(output.str(), stream, result.ptr(), &metaData);
+	    thumbW = size;
+	    thumbH = uint ((float (image.height()) / float (image.width())) * size);
 	}
 	else
 	{
-        nv::StdOutputStream stream(output.str());
-        nv::ImageIO::save(output.str(), stream, &image, &metaData);
+	    thumbW = uint ((float (image.width()) / float (image.height())) * size);
+	    thumbH = size;
 	}
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(nv::BoxFilter(), thumbW, thumbH, nv::FloatImage::WrapMode_Clamp));
+
+	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
+	result->setFormat(nv::Image::Format_ARGB);
+
+        nv::StdOutputStream stream(output.str());
+        nv::ImageIO::save(output.str(), stream, result.ptr(), metaData.buffer());
+    }
+    else
+    {
+        nv::StdOutputStream stream(output.str());
+        nv::ImageIO::save(output.str(), stream, &image, metaData.buffer());
+    }
 	
-	return 0;
+    return 0;
 }
 
