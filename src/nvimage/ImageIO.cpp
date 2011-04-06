@@ -64,7 +64,7 @@ namespace nv
         static Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
         static FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
 
-        static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const char * tags);
+        static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const char ** tags);
         static bool saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img, uint base_component, uint num_components);
 
     #else // defined(HAVE_FREEIMAGE)
@@ -82,7 +82,7 @@ namespace nv
 
     #if defined(HAVE_PNG)
         static Image * loadPNG(Stream & s);
-        static bool savePNG(Stream & s, const Image * img, const char * tags);
+        static bool savePNG(Stream & s, const Image * img, const char ** tags);
     #endif
 
     #if defined(HAVE_JPEG)
@@ -166,7 +166,7 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
     return NULL;
 }
 
-bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, const char * tags/*=NULL*/)
+bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, const char ** tags/*=NULL*/)
 {
     nvDebugCheck(fileName != NULL);
     nvDebugCheck(s.isSaving());
@@ -194,7 +194,7 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, con
     return false;
 }
 
-bool nv::ImageIO::save(const char * fileName, const Image * img, const char * tags/*=NULL*/)
+bool nv::ImageIO::save(const char * fileName, const Image * img, const char ** tags/*=NULL*/)
 {
     nvDebugCheck(fileName != NULL);
     nvDebugCheck(img != NULL);
@@ -598,7 +598,7 @@ FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
     return floatImage;
 }
 
-bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const char * tags)
+bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const char ** tags)
 {
     nvCheck(!s.isError());
 
@@ -1241,7 +1241,7 @@ static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t leng
 
 static void user_write_flush(png_structp png_ptr) { }
 
-bool nv::ImageIO::savePNG(Stream & s, const Image * img, const char * tags/*=NULL*/)
+bool nv::ImageIO::savePNG(Stream & s, const Image * img, const char ** tags/*=NULL*/)
 {
     nvCheck(!s.isError());
     nvCheck(img != NULL);
