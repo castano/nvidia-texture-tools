@@ -23,8 +23,8 @@ namespace nv
         NVIMAGE_API FloatImage * loadFloat(const char * fileName);
         NVIMAGE_API FloatImage * loadFloat(const char * fileName, Stream & s);
 
-        NVIMAGE_API bool save(const char * fileName, const Image * img, const char * tags=NULL); // NULL terminated list.
-        NVIMAGE_API bool save(const char * fileName, Stream & s, const Image * img, const char * tags=NULL);
+        NVIMAGE_API bool save(const char * fileName, const Image * img, const char ** tags=NULL); // NULL terminated list.
+        NVIMAGE_API bool save(const char * fileName, Stream & s, const Image * img, const char ** tags=NULL);
 
         NVIMAGE_API bool saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount);
         NVIMAGE_API bool saveFloat(const char * fileName, Stream & s, const FloatImage * fimage, uint baseComponent, uint componentCount);
