@@ -30,8 +30,8 @@
 #include <nvimage/FloatImage.h>
 #include <nvimage/DirectDrawSurface.h>
 
-#include <nvcore/Ptr.h>
-#include <nvcore/StrLib.h>
+#include <nvcore/Ptr.h> // AutoPtr
+#include <nvcore/StrLib.h> // Path
 #include <nvcore/StdStream.h>
 #include <nvcore/FileSystem.h>
 #include <nvcore/Timer.h>

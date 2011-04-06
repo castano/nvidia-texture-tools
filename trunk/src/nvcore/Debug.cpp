@@ -1,7 +1,7 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "Debug.h"
-#include "StrLib.h"
+#include "StrLib.h" // StringBuilder
 
 // Extern
 #if NV_OS_WIN32 //&& NV_CC_MSVC

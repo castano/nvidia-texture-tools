@@ -64,7 +64,7 @@ namespace nv
         static Image * loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
         static FloatImage * loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s);
 
-        static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags);
+        static bool saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const char * tags);
         static bool saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const FloatImage * img, uint base_component, uint num_components);
 
     #else // defined(HAVE_FREEIMAGE)
@@ -82,7 +82,7 @@ namespace nv
 
     #if defined(HAVE_PNG)
         static Image * loadPNG(Stream & s);
-        static bool savePNG(Stream & s, const Image * img, const ImageMetaData * tags);
+        static bool savePNG(Stream & s, const Image * img, const char * tags);
     #endif
 
     #if defined(HAVE_JPEG)
@@ -166,7 +166,7 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
     return NULL;
 }
 
-bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, const ImageMetaData * tags/*=NULL*/)
+bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, const char * tags/*=NULL*/)
 {
     nvDebugCheck(fileName != NULL);
     nvDebugCheck(s.isSaving());
@@ -194,7 +194,7 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, con
     return false;
 }
 
-bool nv::ImageIO::save(const char * fileName, const Image * img, const ImageMetaData * tags/*=NULL*/)
+bool nv::ImageIO::save(const char * fileName, const Image * img, const char * tags/*=NULL*/)
 {
     nvDebugCheck(fileName != NULL);
     nvDebugCheck(img != NULL);
@@ -598,7 +598,7 @@ FloatImage * nv::ImageIO::loadFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
     return floatImage;
 }
 
-bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const ImageMetaData * tags)
+bool nv::ImageIO::saveFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Image * img, const char * tags)
 {
     nvCheck(!s.isError());
 
@@ -1241,7 +1241,7 @@ static void user_write_data(png_structp png_ptr, png_bytep data, png_size_t leng
 
 static void user_write_flush(png_structp png_ptr) { }
 
-bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * tags/*=NULL*/)
+bool nv::ImageIO::savePNG(Stream & s, const Image * img, const char * tags/*=NULL*/)
 {
     nvCheck(!s.isError());
     nvCheck(img != NULL);
@@ -1291,19 +1291,21 @@ bool nv::ImageIO::savePNG(Stream & s, const Image * img, const ImageMetaData * t
     png_set_rows(png_ptr, info_ptr, row_data);
 
     png_text * text = NULL;
-    if (tags != NULL && tags->tagMap.count() > 0)
+    if (tags != NULL)
     {
-        text = new png_text[tags->tagMap.count()];
-        memset(text, 0, tags->tagMap.count() * sizeof(png_text));
-        int n = 0;
-        foreach (i, tags->tagMap)
-        {
-            text[n].compression = PNG_TEXT_COMPRESSION_NONE;
-            text[n].key = const_cast<char*> (tags->tagMap[i].key.str());
-            text[n].text = const_cast<char*> (tags->tagMap[i].value.str());
-            n++;
+        int count = 0;
+        while(tags[2 * count] != NULL) count++;
+
+        text = new png_text[count];
+        memset(text, 0, count * sizeof(png_text);
+
+        for (int i = 0; i < count; i++) {
+            text[i].compression = PNG_TEXT_COMPRESSION_NONE;
+            text[i].key = tags[2 * i + 0];
+            text[i].text = tags[2 * i + 1];
         }
-        png_set_text(png_ptr, info_ptr, text, tags->tagMap.count());
+
+        png_set_text(png_ptr, info_ptr, text, count);
     }
 
     png_write_png(png_ptr, info_ptr,

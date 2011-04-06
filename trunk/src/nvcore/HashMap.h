@@ -6,6 +6,12 @@
 
 /*
 HashMap based on Thatcher Ulrich <tu@tulrich.com> container, donated to the Public Domain.
+
+I'd like to do something to reduce the amount of code generated with this template. The type of 
+U is largely irrelevant to the generated code, except for calls to constructors and destructors,
+but the combination of all T and U pairs, generate a large amounts of code.
+
+HashMap is not used in NVTT, so it could be removed from the repository.
 */
 
 

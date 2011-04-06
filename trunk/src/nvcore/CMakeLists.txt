@@ -10,7 +10,6 @@ SET(CORE_SRCS
     DefsVcWin32.h
     FileSystem.h FileSystem.cpp
     ForEach.h
-    HashMap.h
     Library.h Library.cpp
     Memory.h Memory.cpp
     Ptr.h
