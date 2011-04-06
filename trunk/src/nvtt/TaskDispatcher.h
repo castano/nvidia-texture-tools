@@ -92,13 +92,16 @@ namespace nvtt {
         CountingIterator & operator++() { i++; return *this; }
         CountingIterator & operator--() { i--; return *this; }
 
+        bool operator==(const CountingIterator& o) const { return i == o.i; }
+        bool operator!=(const CountingIterator& o) const { return i != o.i; }
+
     private:
         int i;
     };
 
     struct TaskFunctor {
         TaskFunctor(Task * task, void * context) : task(task), context(context) {}
-        void operator()(int & n) const {
+        void operator()(int n) const {
             task(context, n);
         }
         Task * task;
