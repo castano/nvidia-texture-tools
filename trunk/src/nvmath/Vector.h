@@ -46,6 +46,9 @@ namespace nv
         };
     };
 
+    // Helpers to convert vector types. Assume T has x,y members and 2 argument constructor.
+    template <typename T> T to(Vector2::Arg v) { return T(v.x, v.y); }
+
 
     class NVMATH_CLASS Vector3
     {
@@ -85,7 +88,6 @@ namespace nv
     };
 
     // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
-    template <typename T> Vector3 from(const T & v) { return Vector3(v.x, v.y, v.z); }
     template <typename T> T to(Vector3::Arg v) { return T(v.x, v.y, v.z); }
 
 
@@ -127,6 +129,10 @@ namespace nv
             scalar component[4];
         };
     };
+
+    // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
+    template <typename T> T to(Vector4::Arg v) { return T(v.x, v.y, v.z, v.w); }
+
 
 
     // Vector2
@@ -484,6 +490,14 @@ namespace nv
         return isFinite(v.x) && isFinite(v.y);
     }
 
+    inline Vector2 validate(Vector2::Arg v, Vector2::Arg fallback = Vector2(0.0f))
+    {
+        if (!isValid(v)) return fallback;
+        Vector2 vf = v;
+        nv::floatCleanup(vf.component, 2);
+        return vf;
+    }
+
 
     // Vector3
 
@@ -630,11 +644,6 @@ namespace nv
         return Vector3(clamp(v.x, min, max), clamp(v.y, min, max), clamp(v.z, min, max));
     }
 
-    inline bool isValid(Vector3::Arg v)
-    {
-        return isFinite(v.x) && isFinite(v.y) && isFinite(v.z);
-    }
-
     inline Vector3 floor(Vector3::Arg v)
     {
         return Vector3(floorf(v.x), floorf(v.y), floorf(v.z));
@@ -644,6 +653,21 @@ namespace nv
     {
         return Vector3(ceilf(v.x), ceilf(v.y), ceilf(v.z));
     }
+
+    inline bool isValid(Vector3::Arg v)
+    {
+        return isFinite(v.x) && isFinite(v.y) && isFinite(v.z);
+    }
+
+    inline Vector3 validate(Vector3::Arg v, Vector3::Arg fallback = Vector3(0.0f))
+    {
+        if (!isValid(v)) return fallback;
+        Vector3 vf = v;
+        nv::floatCleanup(vf.component, 3);
+        return vf;
+    }
+
+
 
     // Vector4
 
@@ -756,6 +780,14 @@ namespace nv
     inline bool isValid(Vector4::Arg v)
     {
         return isFinite(v.x) && isFinite(v.y) && isFinite(v.z) && isFinite(v.w);
+    }
+
+    inline Vector4 validate(Vector4::Arg v, Vector4::Arg fallback = Vector4(0.0f))
+    {
+        if (!isValid(v)) return fallback;
+        Vector4 vf = v;
+        nv::floatCleanup(vf.component, 4);
+        return vf;
     }
 
 } // nv namespace

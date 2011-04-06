@@ -46,7 +46,7 @@ namespace nv
     }
 
     template <typename T>
-    void construct(T * restrict ptr, uint new_size, uint old_size, const T & value) {
+    void construct(T * restrict ptr, uint new_size, uint old_size, const T & elem) {
         for (uint i = old_size; i < new_size; i++) {
             new(ptr+i) T(elem);	// placement new
         }
@@ -498,7 +498,7 @@ namespace nv
             }
 
             for (uint i = 0; i < p.m_size; i++) {
-                s << buffer()[i];
+                s << p.buffer()[i];
             }
 
             return s;

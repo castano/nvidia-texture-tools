@@ -169,6 +169,17 @@ namespace nv
         return color;
     }
 
+    inline Color32 toColor32(Vector4::Arg v)
+    {
+        Color32 color;
+        color.r = uint8(clamp(v.x, 0.0f, 1.0f) * 255);
+        color.g = uint8(clamp(v.y, 0.0f, 1.0f) * 255);
+        color.b = uint8(clamp(v.z, 0.0f, 1.0f) * 255);
+        color.a = uint8(clamp(v.w, 0.0f, 1.0f) * 255);
+
+        return color;
+    }
+
     inline Vector4 toVector4(Color32 c)
     {
         const float scale = 1.0f / 255.0f;

@@ -285,19 +285,40 @@ float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
     return m->image->alphaTestCoverage(alphaRef, 3);
 }
 
-float TexImage::average(int channel) const
+float TexImage::average(int channel, int alpha_channel/*= -1*/, float gamma /*= 2.2f*/) const
 {
     if (m->image == NULL) return 0.0f;
+
+    const uint count = m->image->width() * m->image->height();
 
     float sum = 0.0f;
     const float * c = m->image->channel(channel);
 
-    const uint count = m->image->width() * m->image->height();
-    for (uint i = 0; i < count; i++) {
-        sum += c[i];
+    float denom;
+
+    if (alpha_channel == -1) {
+        for (uint i = 0; i < count; i++) {
+            sum += powf(c[i], gamma);
+        }
+
+        denom = float(count);
+    }
+    else {
+        float alpha_sum = 0.0f;
+        const float * a = m->image->channel(alpha_channel);
+        
+        for (uint i = 0; i < count; i++) {
+            sum += powf(c[i], gamma) * a[i];
+            alpha_sum += a[i];
+        }
+
+        denom = alpha_sum;
     }
 
-    return sum / count;
+    // Avoid division by zero.
+    if (denom == 0.0f) return 0.0f;
+
+    return sum / denom;
 }
 
 const float * TexImage::data() const
@@ -1047,6 +1068,33 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
     m->image->scaleAlphaToCoverage(coverage, alphaRef, 3);
 }
 
+/*bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
+{
+    if (m->image == NULL) return false;
+
+    range(0, rangeMin, rangeMax);
+
+    if (*rangeMin == *rangeMax) {
+        // Single color image.
+        return false;
+    }
+
+    const float scale = 1.0f / (*rangeMax - *rangeMin);
+    const float bias = *rangeMin * scale;
+
+    if (range.x == 0.0f && range.y == 1.0f) {
+        // Already normalized.
+        return true;
+    }
+
+    detach();
+
+    // Scale to range.
+    img->scaleBias(0, 4, scale, bias);
+    //img->clamp(0, 4, 0.0f, 1.0f);
+
+    return true;
+}*/
 
 // Ideally you should compress/quantize the RGB and M portions independently.
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.

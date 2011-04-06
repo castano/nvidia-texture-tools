@@ -416,6 +416,9 @@ namespace nv
 
             if (s.isLoading()) {
                 map.clear();
+                if(entry_count == 0) {
+                    return s;
+                }
                 map.entry_count = entry_count;
                 map.size_mask = nextPowerOfTwo(entry_count) - 1;
                 map.table = malloc<Entry>(map.size_mask + 1);
@@ -468,6 +471,13 @@ namespace nv
             return s;
         }
 
+        /// Swap the members of this vector and the given vector.
+        friend void swap(HashMap<T, U, H, E> & a, HashMap<T, U, H, E> & b)
+        {
+            swap(a.entry_count, b.entry_count);
+            swap(a.size_mask, b.size_mask);
+            swap(a.table, b.table);
+        }
 
     private:
         static const uint TOMBSTONE_HASH = (uint) -1;

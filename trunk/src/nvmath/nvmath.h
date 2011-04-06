@@ -176,7 +176,7 @@ namespace nv
     // http://chrishecker.com/Miscellaneous_Technical_Articles#Floating_Point
     inline int iround(float f)
     {
-        return int(f);
+        return int(floorf(f + 0.5f));
     }
 
     inline int ifloor(float f)
@@ -198,6 +198,16 @@ namespace nv
     {
         // @@ Do something better.
         return float(iround(f));
+    }
+
+    // Eliminates negative zeros from a float array.
+    inline void floatCleanup(float * fp, int n)
+    {
+        nvDebugCheck(isFinite(*fp));
+        for (int i = 0; i < n; i++) {
+            union { float f; uint32 i; } x = { fp[i] };
+            if (x.i == 0x80000000) fp[i] = 0.0f;
+        }
     }
 
 } // nv

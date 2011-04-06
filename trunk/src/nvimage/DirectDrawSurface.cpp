@@ -54,6 +54,16 @@ const uint nv::FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B');
 const uint nv::FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
 const uint nv::FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
 
+const uint nv::D3DFMT_A16B16G16R16 = 36;
+
+// Floating point formats
+const uint nv::D3DFMT_R16F = 111;
+const uint nv::D3DFMT_G16R16F = 112;
+const uint nv::D3DFMT_A16B16G16R16F = 113;
+const uint nv::D3DFMT_R32F = 114;
+const uint nv::D3DFMT_G32R32F = 115;
+const uint nv::D3DFMT_A32B32G32R32F = 116;
+
 
 namespace
 {
@@ -82,8 +92,6 @@ namespace
     static const uint D3DFMT_G16R16 = 34;
     static const uint D3DFMT_A2R10G10B10 = 35;
 
-    static const uint D3DFMT_A16B16G16R16 = 36;
-
     // Palette formats.
     static const uint D3DFMT_A8P8 = 40;
     static const uint D3DFMT_P8 = 41;
@@ -94,13 +102,6 @@ namespace
     static const uint D3DFMT_A4L4 = 52;
     static const uint D3DFMT_L16 = 81;
 
-    // Floating point formats
-    static const uint D3DFMT_R16F = 111;
-    static const uint D3DFMT_G16R16F = 112;
-    static const uint D3DFMT_A16B16G16R16F = 113;
-    static const uint D3DFMT_R32F = 114;
-    static const uint D3DFMT_G32R32F = 115;
-    static const uint D3DFMT_A32B32G32R32F = 116;
 
     static const uint DDSD_CAPS = 0x00000001U;
     static const uint DDSD_PIXELFORMAT = 0x00001000U;
@@ -501,7 +502,7 @@ namespace
         uint amask;
     };
 
-    static const FormatDescriptor s_d3dFormats[] =
+    static const FormatDescriptor s_d3d9Formats[] =
     {
         { D3DFMT_R8G8B8,		24, 0xFF0000,   0xFF00,	    0xFF,       0 },
         { D3DFMT_A8R8G8B8,		32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 },  // DXGI_FORMAT_B8G8R8A8_UNORM
@@ -525,27 +526,26 @@ namespace
         { D3DFMT_L16,			16, 16,         0,          0,          0 },           // DXGI_FORMAT_R16_UNORM
     };
 
-    static const uint s_d3dFormatCount = sizeof(s_d3dFormats) / sizeof(s_d3dFormats[0]);
+    static const uint s_d3d9FormatCount = NV_ARRAY_SIZE(s_d3d9Formats);
 
 } // namespace
 
 uint nv::findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 {
-    for (int i = 0; i < s_d3dFormatCount; i++)
+    for (int i = 0; i < s_d3d9FormatCount; i++)
     {
-        if (s_d3dFormats[i].bitcount == bitcount &&
-            s_d3dFormats[i].rmask == rmask &&
-            s_d3dFormats[i].gmask == gmask &&
-            s_d3dFormats[i].bmask == bmask &&
-            s_d3dFormats[i].amask == amask)
+        if (s_d3d9Formats[i].bitcount == bitcount &&
+            s_d3d9Formats[i].rmask == rmask &&
+            s_d3d9Formats[i].gmask == gmask &&
+            s_d3d9Formats[i].bmask == bmask &&
+            s_d3d9Formats[i].amask == amask)
         {
-            return s_d3dFormats[i].format;
+            return s_d3d9Formats[i].format;
         }
     }
 
     return 0;
 }
-
 
 
 DDSHeader::DDSHeader()

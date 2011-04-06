@@ -105,6 +105,19 @@ namespace nv
         return h;
     }
 
+    // Note that this hash does not handle NaN properly.
+    inline uint sdbmFloatHash(const float * f, uint count, uint h = 5381)
+    {
+        for (uint i = 0; i < count; i++) {
+            //nvDebugCheck(nv::isFinite(*f));
+            union { float f; uint32 i; } x = { *f };
+            if (x.i == 0x80000000) x.i = 0;
+            h = sdbmHash(&x, 4, h);
+        }
+        return h;
+    }
+
+
     // Some hash functors:
     template <typename Key> struct Hash 
     {
@@ -119,6 +132,12 @@ namespace nv
     template <> struct Hash<uint>
     {
         uint operator()(uint x) const { return x; }
+    };
+    template <> struct Hash<float>
+    {
+        uint operator()(float f) const {
+            return sdbmFloatHash(&f, 1);
+        }
     };
 
     template <typename Key> struct Equal
