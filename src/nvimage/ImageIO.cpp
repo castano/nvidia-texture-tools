@@ -244,13 +244,14 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
         }
     }
 #else // defined(HAVE_FREEIMAGE)
-#pragma NV_MESSAGE("TODO: Load TIFF and EXR files from stream.")
 #if defined(HAVE_TIFF)
+#pragma NV_MESSAGE("TODO: Load TIFF from stream.")
     if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
         return loadFloatTIFF(fileName, s);
     }
 #endif
 #if defined(HAVE_OPENEXR)
+    #pragma NV_MESSAGE("TODO: Load EXR from stream.")
     if (strCaseCmp(extension, ".exr") == 0) {
         return loadFloatEXR(fileName, s);
     }
@@ -647,15 +648,15 @@ bool nv::ImageIO::saveFloatFreeImage(FREE_IMAGE_FORMAT fif, Stream & s, const Fl
     FREE_IMAGE_TYPE type;
     if (componentCount == 1)
     {
-            type = FIT_FLOAT;
+        type = FIT_FLOAT;
     }
     else if (componentCount == 3)
     {
-            type = FIT_RGBF;
+        type = FIT_RGBF;
     }
     else if (componentCount == 4)
     {
-            type = FIT_RGBAF;
+        type = FIT_RGBAF;
     }
     else {
         return false;
