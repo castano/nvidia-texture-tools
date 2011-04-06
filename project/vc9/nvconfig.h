@@ -7,15 +7,15 @@
 //#cmakedefine HAVE_EXECINFO_H
 #define HAVE_MALLOC_H
 
-#if !defined(_DEBUG)
+#if defined(_OPENMP)
 #define HAVE_OPENMP
 #endif
 
-#if !defined(_M_X64)
+/*#if !defined(_M_X64)
 //#define HAVE_FREEIMAGE
 #define HAVE_PNG
 #define HAVE_JPEG
 #define HAVE_TIFF
-#endif
+#endif*/
 
 #endif // NV_CONFIG

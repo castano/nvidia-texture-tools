@@ -395,7 +395,7 @@ float nv::rmsAngularError(const FloatImage * img0, const FloatImage * img1)
         n0 = normalizeSafe(n0, Vector3(0), 0.0f);
         n1 = normalizeSafe(n1, Vector3(0), 0.0f);
 
-        float angle = acos(clamp(dot(n0, n1), -1.0f, 1.0f));
+        float angle = acosf(clamp(dot(n0, n1), -1.0f, 1.0f));
         error += angle * angle;
     }
 

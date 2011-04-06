@@ -149,6 +149,11 @@ int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const Compre
 
 
 // Raw API.
+bool Compressor::outputHeader(TextureType type, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+{
+    return m.outputHeader(type, w, h, d, mipmapCount, isNormalMap, compressionOptions.m, outputOptions.m);
+}
+
 bool Compressor::compress(int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
     return m.compress(AlphaMode_None, w, h, d, face, mipmap, rgba, compressionOptions.m, outputOptions.m);

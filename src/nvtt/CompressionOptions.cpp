@@ -218,6 +218,18 @@ unsigned int CompressionOptions::d3d9Format() const
             if (bitcount <= 32) {
                 return nv::findD3D9Format(bitcount, rmask, gmask, bmask, amask);
             }
+            else {
+                //if (m.rsize == 16 && m.gsize == 16 && m.bsize == 0 && m.asize == 0) return D3DFMT_G16R16;
+                if (m.rsize == 16 && m.gsize == 16 && m.bsize == 16 && m.asize == 16) return D3DFMT_A16B16G16R16;
+            }
+        }
+        else if (m.pixelType == PixelType_Float) {
+            if (m.rsize == 16 && m.gsize == 0 && m.bsize == 0 && m.asize == 0) return D3DFMT_R16F;
+            if (m.rsize == 32 && m.gsize == 0 && m.bsize == 0 && m.asize == 0) return D3DFMT_R32F;
+            if (m.rsize == 16 && m.gsize == 16 && m.bsize == 0 && m.asize == 0) return D3DFMT_G16R16F;
+            if (m.rsize == 32 && m.gsize == 32 && m.bsize == 0 && m.asize == 0) return D3DFMT_G32R32F;
+            if (m.rsize == 16 && m.gsize == 16 && m.bsize == 16 && m.asize == 16) return D3DFMT_A16B16G16R16F;
+            if (m.rsize == 32 && m.gsize == 32 && m.bsize == 32 && m.asize == 32) return D3DFMT_A32B32G32R32F;
         }
 
         return 0;

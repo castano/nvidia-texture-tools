@@ -380,6 +380,7 @@ namespace nvtt
         NVTT_API int estimateSize(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions) const;
 
         // Raw API.
+        NVTT_API bool outputHeader(TextureType type, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API bool compress(int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API int estimateSize(int w, int h, int d, int mipmapCount, const CompressionOptions & compressionOptions) const;
     };
@@ -419,7 +420,7 @@ namespace nvtt
         NVTT_API bool isNormalMap() const;
         NVTT_API int countMipmaps() const;
         NVTT_API float alphaTestCoverage(float alphaRef = 0.5) const;
-        NVTT_API float average(int channel) const;
+        NVTT_API float average(int channel, int alpha_channel = -1, float gamma = 2.2f) const;
         NVTT_API const float * data() const;
         NVTT_API void histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const;
         NVTT_API void range(int channel, float * rangeMin, float * rangeMax);
@@ -454,6 +455,7 @@ namespace nvtt
         NVTT_API void setBorder(float r, float g, float b, float a);
         NVTT_API void fill(float r, float g, float b, float a);
         NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
+        //NVTT_API bool normalizeRange(float * rangeMin, float * rangeMax);
         NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void fromRGBM(float range = 1.0f);
         NVTT_API void toYCoCg();

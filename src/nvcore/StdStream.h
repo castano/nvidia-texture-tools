@@ -299,6 +299,8 @@ namespace nv
         }
         //@}
 
+        const uint8 * ptr() const { return m_ptr; }
+
 
     private:
 

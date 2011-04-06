@@ -44,6 +44,15 @@ namespace nv
     extern const uint FOURCC_ATI1;
     extern const uint FOURCC_ATI2;
 
+    extern const uint D3DFMT_G16R16;
+    extern const uint D3DFMT_A16B16G16R16;
+    extern const uint D3DFMT_R16F;
+    extern const uint D3DFMT_R32F;
+    extern const uint D3DFMT_G16R16F;
+    extern const uint D3DFMT_G32R32F;
+    extern const uint D3DFMT_A16B16G16R16F;
+    extern const uint D3DFMT_A32B32G32R32F;
+
     extern uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 
     struct NVIMAGE_CLASS DDSPixelFormat
