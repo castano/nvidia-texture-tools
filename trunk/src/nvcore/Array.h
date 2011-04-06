@@ -39,21 +39,28 @@ namespace nv
     }
 
     template <typename T>
-    void construct(T * ptr, uint count) {
-        for (uint i = 0; i < count; i++) {
+    void construct(T * restrict ptr, uint new_size, uint old_size) {
+        for (uint i = old_size; i < new_size; i++) {
             new(ptr+i) T;	// placement new
         }
     }
 
     template <typename T>
-    void destroy(T * ptr, uint count) {
-        for (uint i = 0; i < count; i++) {
-            (ptr+i)->~T();
+    void construct(T * restrict ptr, uint new_size, uint old_size, const T & value) {
+        for (uint i = old_size; i < new_size; i++) {
+            new(ptr+i) T(elem);	// placement new
         }
     }
 
     template <typename T>
-    void fill(T * restrict dst, const T & value, uint count) {
+    void destroy(T * restrict ptr, uint new_size, uint old_size) {
+        for (uint i = new_size; i < old_size; i++) {
+            (ptr+i)->~T();  // Explicit call to the destructor
+        }
+    }
+
+    template <typename T>
+    void fill(T * restrict dst, uint count, const T & value) {
         for (uint i = 0; i < count; i++) {
             dst[i] = value;
         }
@@ -65,6 +72,18 @@ namespace nv
             dst[i] = src[i];
         }
     }
+
+    template <typename T>
+    bool find(const T & element, const T * restrict ptr, uint count, uint * index) {
+        for (uint i = 0; i < count; i++) {
+            if (ptr[i] == element) {
+                if (index != NULL) *index = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 
     class Buffer
@@ -102,8 +121,36 @@ namespace nv
 
     protected:
 
+        // Release ownership of allocated memory and returns pointer to it.
+        NV_NOINLINE void * release() {
+            void * tmp = m_buffer;
+            m_buffer = NULL;
+            m_buffer_size = 0;
+            m_size = 0;
+            return tmp;
+        }
+
+        NV_NOINLINE void resize(uint new_size, uint element_size)
+        {
+            m_size = new_size;
+
+            if (new_size > m_buffer_size) {
+                uint new_buffer_size;
+                if (m_buffer_size == 0) {
+                    // first allocation
+                    new_buffer_size = new_size;
+                }
+                else {
+                    // growing
+                    new_buffer_size = new_size + (new_size >> 2);
+                }
+                allocate( new_buffer_size, element_size );
+            }
+        }
+
+
         /// Change buffer size.
-        NV_NOINLINE void allocate(uint count, uint size)
+        NV_NOINLINE void allocate(uint count, uint element_size)
         {
             if (count == 0) {
                 // free the buffer.
@@ -114,7 +161,7 @@ namespace nv
             }
             else {
                 // realloc the buffer
-                m_buffer = ::realloc(m_buffer, count * size);
+                m_buffer = ::realloc(m_buffer, count * element_size);
             }
 
             m_buffer_size = count;
@@ -210,9 +257,11 @@ namespace nv
 
             if (new_size > m_buffer_size)
             {
-                const T copy(val);	// create a copy in case value is inside of this array.
-                resize(new_size);
-                buffer()[new_size-1] = copy;
+                const T copy(val);	// create a copy in case value is inside of this array. // @@ Create a copy without side effects. Do not call constructor/destructor here.
+
+                Buffer::resize(new_size, sizeof(T));
+
+                new (buffer()+new_size-1) T(copy);
             }
             else
             {
@@ -275,6 +324,12 @@ namespace nv
             return buffer()[0];
         }
 
+        /// Check if the given element is contained in the array.
+        NV_FORCEINLINE bool contains(const T & e) const
+        {
+            return find(e, NULL);
+        }
+
         /// Return true if element found.
         NV_FORCEINLINE bool find(const T & element, uint * index) const
         {
@@ -282,21 +337,9 @@ namespace nv
         }
 
         /// Return true if element found within the given range.
-        bool find(const T & element, uint first, uint count, uint * index) const
+        NV_FORCEINLINE bool find(const T & element, uint first, uint count, uint * index) const
         {
-            for (uint i = first; i < first+count; i++) {
-                if (buffer()[i] == element) {
-                    if (index != NULL) *index = i;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// Check if the given element is contained in the array.
-        NV_FORCEINLINE bool contains(const T & e) const
-        {
-            return find(e, NULL);
+            return ::nv::find(element, buffer() + first, count, index);
         }
 
         /// Remove the element at the given index. This is an expensive operation!
@@ -372,71 +415,33 @@ namespace nv
 
 
         /// Resize the vector preserving existing elements.
-        NV_NOINLINE void resize(uint new_size)
+        void resize(uint new_size)
         {
             uint old_size = m_size;
-            m_size = new_size;
 
-            // @@ Use nv::destruct(...)
             // Destruct old elements (if we're shrinking).
-            for (uint i = new_size; i < old_size; i++) {
-                (buffer()+i)->~T();                         // Explicit call to the destructor
-            }
+            destroy(buffer(), new_size, old_size);
 
-            // @@ Move allocation logic to Buffer::allocate
-            if (new_size > m_buffer_size) {
-                uint new_buffer_size;
-                if (m_buffer_size == 0) {
-                    // first allocation
-                    new_buffer_size = new_size;
-                }
-                else {
-                    // growing
-                    new_buffer_size = new_size + (new_size >> 2);
-                }
-                allocate( new_buffer_size );
-            }
+            Buffer::resize(new_size, sizeof(T));
 
-            // @@ Use nv::construct(...)
             // Call default constructors
-            for (uint i = old_size; i < new_size; i++) {
-                new(buffer()+i) T;	// placement new
-            }
+            construct(buffer(), new_size, old_size);
         }
 
 
         /// Resize the vector preserving existing elements and initializing the
         /// new ones with the given value.
-        NV_NOINLINE void resize( uint new_size, const T &elem )
+        void resize( uint new_size, const T &elem )
         {
             uint old_size = m_size;
-            m_size = new_size;
 
-            // @@ Use nv::destruct(...)
             // Destruct old elements (if we're shrinking).
-            for (uint i = new_size; i < old_size; i++ ) {
-                (buffer()+i)->~T();                         // Explicit call to the destructor
-            }
+            destroy(buffer(), new_size, old_size);
 
-            // @@ Move allocation logic to Buffer::allocate
-            if (new_size > m_buffer_size) {
-                uint new_buffer_size;
-                if (m_buffer_size == 0) {
-                    // first allocation
-                    new_buffer_size = m_size;
-                }
-                else {
-                    // growing
-                    new_buffer_size = m_size + (m_size >> 2);
-                }
-                allocate( new_buffer_size );
-            }
+            Buffer::resize(new_size, sizeof(T));
 
-            // @@ Use nv::fill(...)
             // Call copy constructors
-            for (uint i = old_size; i < new_size; i++ ) {
-                new(buffer()+i) T( elem );	// placement new
-            }
+            construct(buffer(), new_size, old_size, elem);
         }
 
         /// Clear the buffer.
@@ -477,11 +482,7 @@ namespace nv
 
         // Release ownership of allocated memory and returns pointer to it.
         T * release() {
-            T * tmp = buffer();
-            m_buffer = NULL;
-            m_buffer_size = 0;
-            m_size = 0;
-            return tmp;
+            return (T *)Buffer::release();
         }
 
         /// Array serialization.
