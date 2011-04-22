@@ -119,6 +119,7 @@ namespace nv
         // Destructor.
         NV_FORCEINLINE ~Array() {
             clear();
+            free<T>(m_buffer);
         }
 
 
