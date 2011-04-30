@@ -190,7 +190,7 @@ When the `alphaMode` is `AlphaMode_None` the alpha and color channels are proces
 
 === Gamma Correction ===
 
-For a good discussion about why gamma correction is important and why you should filter your images in linear space, read <a href="http://number-none.com/product/Mipmapping,%20Part%202/index.html">Jon Blow's Mipmapping article on the Inner Product</a>.
+For a good discussion about why gamma correction is important and why you should filter your images in linear space, read <a href="http://number-none.com/product/Mipmapping,%20Part%202/index.html">Jon Blow's Mipmapping article at the Inner Product</a>.
 
 In order to process images that are not in linear space, and output images in the desired gamma space, NVTT allows you to specify the input and output gamma values with the following method:
 
