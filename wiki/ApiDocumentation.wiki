@@ -572,8 +572,8 @@ outputOptions.setContainer(container);
 
 where container is one of:
 
-* `Container_DDS`
-* `Container_DDS10`
+ * `Container_DDS`
+ * `Container_DDS10`
 
 In the future it may be interesting to add support for other formats such as [http://developer.valvesoftware.com/wiki/Valve_Texture_Format VTF] or [http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/ KTX].
 
