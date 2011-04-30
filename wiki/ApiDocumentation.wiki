@@ -542,27 +542,40 @@ OutputOptions::setOutputHandler(OutputHandler *);
 
 === Output Handler ===
 
-The output handler is an interface that defines two methods:
+The output handler is an interface that defines these three methods:
 
 {{{
-virtual void mipmap(int size, int width, int height, int depth, int face, int miplevel) = 0;
+virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel) = 0;
 virtual bool writeData(const void * data, int size) = 0;
+virtual void endImage() = 0;
 }}}
 
-Applications need to implement this interface in order to receive compressed data from the compressor.
+Applications need to implement this interface in order to receive compressed textures from the compressor. The `writeData` method is first called with the contents of the texture header, and after that, the compressor calls `beginImage` and `endImage` to delimitate the data that corresponds to each image of the texture. You can use these two methods for example to allocate and deallocate temporary memory to hold the data 
+received through the `writeData` method.
 
-*TODO*
-
-In order to minimize memory allocations NVTT will call `writeData` as soon as compressed data is available. Some compressors output one block at a time, while others output many.
+Note that some compressors output one compressed block at a time, while others output one image at a time, so your implementation of the `OutputHanlder` needs to be designed to handle multiple consecutive calls to `writeData` for each compressed image.
 
 
-=== Producing DDS Files ===
+=== Producing Texture Files ===
 
-By default the compressor calls the `writeData` method before indicating the image that the data belongs to. That means that the data does not belong to any of the surface images, but is part of the header file. If you don't want to output the header file, you can ignore these calls, or disable this behavior with:
+By default the compressor calls the `writeData` method with the contents of a texture header. If you don't want to output the texture to a file, you can ignore these calls, or disable them with:
 
 {{{
 outputOptions.setOutputHeader(false);
 }}}
+
+If however, you want to generate a texture file, you can choose what container format as follows:
+
+{{{
+outputOptions.setContainer(container);
+}}}
+
+where container is one of:
+
+* `Container_DDS`
+* `Container_DDS10`
+
+In the future it may be interesting to add support for other formats such as [http://developer.valvesoftware.com/wiki/Valve_Texture_Format VTF] or [http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/ KTX].
 
 
 === Reporting Progress ===
