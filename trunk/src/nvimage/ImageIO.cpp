@@ -1789,8 +1789,23 @@ Image * nv::ImageIO::loadSTB(Stream & s)
 
     if (data != NULL) {
         Image * img = new Image;
-        img->wrap(data, w, h);
-        img->setFormat(n == 4 ? Image::Format_ARGB : Image::Format_RGB);
+		img->allocate(w, h);
+       img->setFormat(n == 4 ? Image::Format_ARGB : Image::Format_RGB);
+
+		for (int y = 0; y < h; ++y)
+		{
+			nv::Color32* dest = img->scanline(y);
+			uint8* src = data + y * w * 4;
+
+			for (int x = 0; x < w; ++x)
+			{
+				dest[x].r = src[x * 4 + 0];
+				dest[x].g = src[x * 4 + 1];
+				dest[x].b = src[x * 4 + 2];
+				dest[x].a = src[x * 4 + 3];
+			}
+		}
+        
         return img;
     }
 
