@@ -506,10 +506,10 @@ By default pixel rows of unaligned pixel formats are aligned to the next byte bo
 void CompressionOptions:: setPitchAlignment(int pitchAlignment);
 }}}
 
-Where `pitchAlignment` must be a positive number given in bytes. Note, that previous versions of NVTT incorrectly aligned the pitch to 4 bytes by default, so obtain the same behavior you now have to explicitly set the alignment as follows:
+Where `pitchAlignment` must be a positive number and a power of two, and is given in bits. Note, that previous versions of NVTT incorrectly aligned the pitch to 32 bits by default, so obtain the same behavior you now have to explicitly set the alignment as follows:
 
 {{{
-compressionOptions.setPitchAlignment(4);
+compressionOptions.setPitchAlignment(32);
 }}}
 
 
