@@ -1419,7 +1419,7 @@ uint DirectDrawSurface::mipmapSize(uint mipmap) const
     {
         nvDebugCheck((header.pf.flags & DDPF_RGB) || (header.pf.flags & DDPF_LUMINANCE));
 
-        uint pitch = computePitch(w, header.pf.bitcount, 8); // Asuming 8 bit alignment, which is the same D3DX expects.
+        uint pitch = computeBytePitch(w, header.pf.bitcount, 8); // Asuming 8 bit alignment, which is the same D3DX expects.
 
         return pitch * h * d;
     }

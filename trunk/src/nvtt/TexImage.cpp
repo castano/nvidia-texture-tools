@@ -109,10 +109,10 @@ uint nv::countMipmaps(uint w, uint h, uint d)
     return mipmap + 1;
 }
 
-uint nv::computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignment, Format format)
+uint nv::computeImageSize(uint w, uint h, uint d, uint bitCount, uint pitchAlignmentInBits, Format format)
 {
     if (format == Format_RGBA) {
-        return d * h * computePitch(w, bitCount, alignment);
+        return d * h * computeBytePitch(w, bitCount, pitchAlignmentInBits);
     }
     else {
         // @@ Handle 3D textures. DXT and VTC have different behaviors.
