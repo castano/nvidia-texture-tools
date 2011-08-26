@@ -321,6 +321,7 @@ float nv::spatialCieLabError(const FloatImage * img0, const FloatImage * img1)
     */
     // @@ Measure Delta E between lab0 and lab1.
 
+    return 0.0f;
 }
 
 

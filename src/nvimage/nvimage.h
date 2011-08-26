@@ -4,7 +4,9 @@
 #ifndef NV_IMAGE_H
 #define NV_IMAGE_H
 
-#include <nvcore/nvcore.h>
+#include "nvcore/nvcore.h"
+#include "nvcore/Debug.h" // nvDebugCheck
+#include "nvcore/Utils.h" // isPowerOfTwo
 
 // Function linkage
 #if NVIMAGE_SHARED
@@ -21,13 +23,27 @@
 #endif
 
 
-// Some utility functions:
+namespace nv {
 
-inline uint computePitch(uint w, uint bitsize, uint alignment)
-{
-	return ((w * bitsize +  8 * alignment - 1) / (8 * alignment)) * alignment;
-}
+    // Some utility functions:
+
+    inline uint computeBitPitch(uint w, uint bitsize, uint alignmentInBits)
+    {
+        nvDebugCheck(isPowerOfTwo(alignmentInBits));
+
+        return ((w * bitsize +  alignmentInBits - 1) / alignmentInBits) * alignmentInBits;
+    }
+
+    inline uint computeBytePitch(uint w, uint bitsize, uint alignmentInBits)
+    {
+        nvDebugCheck(alignmentInBits >= 8);
+
+        uint pitch = computeBitPitch(w, bitsize, alignmentInBits);
+
+        return (pitch + 7) / 8;
+    }
 
 
+} // nv namespace
 
 #endif // NV_IMAGE_H

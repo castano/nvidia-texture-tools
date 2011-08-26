@@ -63,7 +63,7 @@ void CompressionOptions::reset()
     m.asize = 8;
 	
     m.pixelType = PixelType_UnsignedNorm;
-    m.pitchAlignment = 1;
+    m.pitchAlignment = 8;
 
     m.enableColorDithering = false;
     m.enableAlphaDithering = false;

@@ -479,7 +479,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             if (compressionOptions.format == Format_RGBA)
             {
                 // Get output bit count.
-                header.setPitch(computePitch(w, compressionOptions.getBitCount(), compressionOptions.pitchAlignment));
+                header.setPitch(computeBytePitch(w, compressionOptions.getBitCount(), compressionOptions.pitchAlignment));
 
                 if (compressionOptions.pixelType == PixelType_Float)
                 {
