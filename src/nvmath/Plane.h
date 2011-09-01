@@ -1,11 +1,11 @@
-// This code is in the public domain -- castanyo@yahoo.es
+// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #pragma once
 #ifndef NV_MATH_PLANE_H
 #define NV_MATH_PLANE_H
 
-#include <nvmath/nvmath.h>
-#include <nvmath/Vector.h>
+#include "nvmath.h"
+#include "Vector.h"
 
 namespace nv
 {

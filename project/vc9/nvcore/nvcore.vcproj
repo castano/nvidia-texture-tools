@@ -313,14 +313,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvcore\Library.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Library.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\..\src\nvcore\Memory.cpp"
 			>
 		</File>
@@ -346,14 +338,6 @@
 		</File>
 		<File
 			RelativePath="..\..\..\src\nvcore\StrLib.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\TextReader.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\TextReader.h"
 			>
 		</File>
 		<File
