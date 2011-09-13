@@ -751,7 +751,7 @@ void DDSHeader::setPixelFormat(uint bitcount, uint rmask, uint gmask, uint bmask
 
 void DDSHeader::setDX10Format(uint format)
 {
-    //this->pf.flags = 0;
+    this->pf.flags = DDPF_FOURCC;
     this->pf.fourcc = FOURCC_DX10;
     this->header10.dxgiFormat = format;
 }
@@ -818,7 +818,10 @@ void DDSHeader::swapBytes()
 
 bool DDSHeader::hasDX10Header() const
 {
-    return this->pf.fourcc == FOURCC_DX10;
+    //if (pf.flags & DDPF_FOURCC) {
+        return this->pf.fourcc == FOURCC_DX10;
+    //}
+    //return false;
 }
 
 uint DDSHeader::signature() const
