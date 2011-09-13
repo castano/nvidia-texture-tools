@@ -79,7 +79,7 @@ namespace nvtt
 
 namespace nv {
     uint countMipmaps(uint w, uint h, uint d);
-    uint computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignment, nvtt::Format format);
+    uint computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignmentInBytes, nvtt::Format format);
     void getTargetExtent(int & w, int & h, int & d, int maxExtent, nvtt::RoundMode roundMode, nvtt::TextureType textureType);
 }
 

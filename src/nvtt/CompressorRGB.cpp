@@ -188,12 +188,11 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
         }
     }
 
-    const uint pitch = computeBitPitch(w, bitCount, compressionOptions.pitchAlignment);
-    const uint pitchInBytes = (pitch + 7) / 8;
+    const uint pitch = computeBytePitch(w, bitCount, compressionOptions.pitchAlignment);
     const uint wh = w * h;
 
     // Allocate output scanline.
-    uint8 * const dst = malloc<uint8>(pitchInBytes);
+    uint8 * const dst = malloc<uint8>(pitch);
 
     for (uint y = 0; y < h; y++)
     {
@@ -252,15 +251,15 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
 
         // Zero padding.
         stream.align(compressionOptions.pitchAlignment);
-        nvDebugCheck(stream.ptr == dst + pitchInBytes);
+        nvDebugCheck(stream.ptr == dst + pitch);
 
-        /*for (uint x = w * byteCount; x < pitchInBytes; x++)
+        /*for (uint x = w * byteCount; x < pitch; x++)
         {
                 *(dst + x) = 0;
         }*/
 
         // @@ This code does not truly support less than byte-aligned textures.
-        outputOptions.writeData(dst, pitchInBytes);
+        outputOptions.writeData(dst, pitch);
     }
 
     free(dst);
