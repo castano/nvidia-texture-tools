@@ -112,22 +112,25 @@ float Filter::sampleDelta(float x, float scale) const
 
 float Filter::sampleBox(float x, float scale, int samples) const
 {
-    float sum = 0;
+    double sum = 0;
     float isamples = 1.0f / float(samples);
 
     for(int s = 0; s < samples; s++)
     {
         float p = (x + (float(s) + 0.5f) * isamples) * scale;
         float value = evaluate(p);
+
+        //printf("%f: %.8f (%X)\n", p, value, *(uint32 *)&value);
+
         sum += value;
     }
 
-    return sum * isamples;
+    return float(sum * isamples);
 }
 
 float Filter::sampleTriangle(float x, float scale, int samples) const
 {
-    float sum = 0;
+    double sum = 0;
     float isamples = 1.0f / float(samples);
 
     for(int s = 0; s < samples; s++)
@@ -142,7 +145,7 @@ float Filter::sampleTriangle(float x, float scale, int samples) const
         sum += value * weight;
     }
 
-    return 2 * sum * isamples;
+    return float(2 * sum * isamples);
 }
 
 
@@ -585,6 +588,8 @@ PolyphaseKernel::PolyphaseKernel(const Filter & f, uint srcLength, uint dstLengt
         for (int j = 0; j < m_windowSize; j++)
         {
             const float sample = f.sampleBox(left + j - center, scale, samples);
+
+            //printf("%f %X\n", sample, *(uint32 *)&sample);
 
             m_data[i * m_windowSize + j] = sample;
             total += sample;
