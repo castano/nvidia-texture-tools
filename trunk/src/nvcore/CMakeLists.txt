@@ -17,7 +17,6 @@ SET(CORE_SRCS
     StrLib.h StrLib.cpp
     Stream.h
     StdStream.h
-    TextReader.h TextReader.cpp
     TextWriter.h TextWriter.cpp
     Timer.h
     Utils.h)
