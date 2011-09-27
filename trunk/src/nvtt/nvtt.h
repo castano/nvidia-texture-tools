@@ -536,7 +536,7 @@ namespace nvtt
         TexImage & face(int face);
 
         // Layout conversion.
-        void fold(TexImage & img, CubeLayout layout);
+        void fold(const TexImage & img, CubeLayout layout);
         TexImage unfold(CubeLayout layout);
 
         // @@ Angular extent filtering.
