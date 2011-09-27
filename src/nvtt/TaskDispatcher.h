@@ -18,8 +18,8 @@
 // http://msdn.microsoft.com/en-us/library/dd504870.aspx
 #if NV_OS_WIN32 && _MSC_VER >= 1600
 #define HAVE_PPL 1
-//#include <array>
-#include <ppl.h>
+#include <array>
+//#include <ppl.h>
 #endif
 
 // Intel Thread Building Blocks (TBB).
@@ -27,6 +27,8 @@
 #if defined(HAVE_TBB)
 #include <tbb/parallel_for.h>
 #endif
+
+#include "nvthread/ParallelFor.h"
 
 
 namespace nvtt {
@@ -39,6 +41,15 @@ namespace nvtt {
             }
         }
     };
+
+    struct ParallelTaskDispatcher : public TaskDispatcher
+    {
+        virtual void dispatch(Task * task, void * context, int count) {
+            nv::ParallelFor parallelFor(task, context);
+            parallelFor.run(count); // @@ Add support for custom grain.
+        }
+    };
+
 
 #if defined(HAVE_OPENMP)
 
@@ -81,9 +92,24 @@ namespace nvtt {
 
 #if defined(HAVE_PPL)
 
+    class CountingIterator
+    {
+    public:
+        CountingIterator() : i(0) {}
+        CountingIterator(const CountingIterator & rhs) : i(0) {}
+        explicit CountingIterator(int x) : i(x) {}
+
+        const int & operator*() const { return i; }
+        CountingIterator & operator++() { i++; return *this; }
+        CountingIterator & operator--() { i--; return *this; }
+
+    private:
+        int i;
+    };
+
     struct TaskFunctor {
         TaskFunctor(Task * task, void * context) : task(task), context(context) {}
-        void operator()(int n) const {
+        void operator()(int & n) const {
             task(context, n);
         }
         Task * task;
@@ -95,12 +121,16 @@ namespace nvtt {
     {
         virtual void dispatch(Task * task, void * context, int count)
         {
+            CountingIterator begin(0);
+            CountingIterator end((int)count);
             TaskFunctor func(task, context);
-            Concurrency::parallel_for(0, count, func);
+
+            std::for_each(begin, end, func);
+            //parallel_for_each(begin, end, func);
         }
     };
 
-#endif // HAVE_PPL
+#endif
 
 #if defined(HAVE_TBB)
 
@@ -132,7 +162,8 @@ namespace nvtt {
 #elif defined(HAVE_GCD)
     typedef AppleTaskDispatcher         ConcurrentTaskDispatcher;
 #else
-    typedef SequentialTaskDispatcher    ConcurrentTaskDispatcher;
+    //typedef SequentialTaskDispatcher    ConcurrentTaskDispatcher;
+    typedef ParallelTaskDispatcher        ConcurrentTaskDispatcher;
 #endif
 
 } // namespace nvtt

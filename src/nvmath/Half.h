@@ -9,8 +9,9 @@ namespace nv {
     uint32 half_to_float( uint16 h );
     uint16 half_from_float( uint32 f );
 
-    // Does not handle NaN or infinity.
-    uint32 fast_half_to_float( uint16 h );
+    void half_init_tables();
+
+    uint32 fast_half_to_float(uint16 h);
 
     inline uint16 to_half(float c) {
         union { float f; uint32 u; } f;

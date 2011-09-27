@@ -349,6 +349,8 @@ bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, int
         compressor->compress(alphaMode, w, h, d, rgba, dispatcher, compressionOptions, outputOptions);
     }
 
+    outputOptions.endImage();
+
     return true;
 }
 

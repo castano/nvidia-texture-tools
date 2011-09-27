@@ -100,6 +100,7 @@ namespace nv
         explicit Vector4(scalar x);
         Vector4(scalar x, scalar y, scalar z, scalar w);
         Vector4(Vector2::Arg v, scalar z, scalar w);
+        Vector4(Vector2::Arg v, Vector2::Arg u);
         Vector4(Vector3::Arg v, scalar w);
         Vector4(Vector4::Arg v);
         //	Vector4(const Quaternion & v);
@@ -107,6 +108,7 @@ namespace nv
         const Vector4 & operator=(Vector4::Arg v);
 
         Vector2 xy() const;
+        Vector2 zw() const;
         Vector3 xyz() const;
 
         const scalar * ptr() const;
@@ -290,6 +292,7 @@ namespace nv
     inline Vector4::Vector4(scalar f) : x(f), y(f), z(f), w(f) {}
     inline Vector4::Vector4(scalar x, scalar y, scalar z, scalar w) : x(x), y(y), z(z), w(w) {}
     inline Vector4::Vector4(Vector2::Arg v, scalar z, scalar w) : x(v.x), y(v.y), z(z), w(w) {}
+    inline Vector4::Vector4(Vector2::Arg v, Vector2::Arg u) : x(v.x), y(v.y), z(u.x), w(u.y) {}
     inline Vector4::Vector4(Vector3::Arg v, scalar w) : x(v.x), y(v.y), z(v.z), w(w) {}
     inline Vector4::Vector4(Vector4::Arg v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 
@@ -305,6 +308,11 @@ namespace nv
     inline Vector2 Vector4::xy() const
     {
         return Vector2(x, y);
+    }
+
+    inline Vector2 Vector4::zw() const
+    {
+        return Vector2(z, w);
     }
 
     inline Vector3 Vector4::xyz() const
@@ -469,6 +477,14 @@ namespace nv
         return scale(v, 1.0f / l);
     }
 
+    // Safe, branchless normalization from Andy Firth. All error checking ommitted.
+    // http://altdevblogaday.com/2011/08/21/practical-flt-point-tricks/
+    inline Vector2 normalizeFast(Vector2::Arg v)
+    {
+        const float very_small_float = 1.0e-037f;
+        float l = very_small_float + length(v);
+        return scale(v, 1.0f / l);
+    }
 
     inline bool equal(Vector2::Arg v1, Vector2::Arg v2, float epsilon = NV_EPSILON)
     {
@@ -496,6 +512,14 @@ namespace nv
         Vector2 vf = v;
         nv::floatCleanup(vf.component, 2);
         return vf;
+    }
+
+    inline float triangleArea(Vector2::Arg a, Vector2::Arg b, Vector2::Arg c)
+    {
+	    Vector2 v0 = a - c;
+	    Vector2 v1 = b - c;
+
+	    return (v0.x * v1.y - v0.y * v1.x);
     }
 
 
@@ -570,10 +594,10 @@ namespace nv
         return scale(v, 1.0f/s);
     }
 
-    inline Vector3 add_scaled(Vector3::Arg a, Vector3::Arg b, scalar s)
+    /*inline Vector3 add_scaled(Vector3::Arg a, Vector3::Arg b, scalar s)
     {
         return Vector3(a.x + b.x * s, a.y + b.y * s, a.z + b.z * s);
-    }
+    }*/
 
     inline Vector3 lerp(Vector3::Arg v1, Vector3::Arg v2, scalar t)
     {
@@ -621,6 +645,15 @@ namespace nv
         if (isZero(l, epsilon)) {
             return fallback;
         }
+        return scale(v, 1.0f / l);
+    }
+
+    // Safe, branchless normalization from Andy Firth. All error checking ommitted.
+    // http://altdevblogaday.com/2011/08/21/practical-flt-point-tricks/
+    inline Vector3 normalizeFast(Vector3::Arg v)
+    {
+        const float very_small_float = 1.0e-037f;
+        float l = very_small_float + length(v);
         return scale(v, 1.0f / l);
     }
 
@@ -759,6 +792,15 @@ namespace nv
         if (isZero(l, epsilon)) {
             return fallback;
         }
+        return scale(v, 1.0f / l);
+    }
+
+    // Safe, branchless normalization from Andy Firth. All error checking ommitted.
+    // http://altdevblogaday.com/2011/08/21/practical-flt-point-tricks/
+    inline Vector4 normalizeFast(Vector4::Arg v)
+    {
+        const float very_small_float = 1.0e-037f;
+        float l = very_small_float + length(v);
         return scale(v, 1.0f / l);
     }
 

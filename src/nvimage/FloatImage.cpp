@@ -181,7 +181,7 @@ void FloatImage::normalize(uint baseComponent)
     for (uint i = 0; i < count; i++) {
 
         Vector3 normal(xChannel[i], yChannel[i], zChannel[i]);
-        normal = normalizeSafe(normal, Vector3(zero), 0.0f);
+        normal = normalizeSafe(normal, Vector3(0), 0.0f);
 
         xChannel[i] = normal.x;
         yChannel[i] = normal.y;

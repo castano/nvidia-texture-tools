@@ -135,6 +135,11 @@ bool OutputOptions::Private::writeData(const void * data, int size) const
     return outputHandler == NULL || outputHandler->writeData(data, size);
 }
 
+void OutputOptions::Private::endImage() const
+{
+    if (outputHandler != NULL) outputHandler->endImage();
+}
+
 void OutputOptions::Private::error(Error e) const
 {
     if (errorHandler != NULL) errorHandler->error(e);

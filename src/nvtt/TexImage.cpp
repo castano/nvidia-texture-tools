@@ -615,7 +615,7 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const vo
 			    block->decodeBlock(&colors, false);
 		    }
 		    else if (decoder == Decoder_NV5x) {
-			block->decodeBlockNV5x(&colors);
+			    block->decodeBlockNV5x(&colors);
 		    }
 		}
 		else if (format == nvtt::Format_BC3)
@@ -629,19 +629,19 @@ bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const vo
 			    block->decodeBlock(&colors, false);
 		    }
 		    else if (decoder == Decoder_NV5x) {
-			block->decodeBlockNV5x(&colors);
+			    block->decodeBlockNV5x(&colors);
 		    }
 		}
 		else if (format == nvtt::Format_BC4)
 		{
-                    const BlockATI1 * block = (const BlockATI1 *)ptr;
-                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
-                }
-                else if (format == nvtt::Format_BC5)
-                {
-                    const BlockATI2 * block = (const BlockATI2 *)ptr;
-                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
-                }
+            const BlockATI1 * block = (const BlockATI1 *)ptr;
+            block->decodeBlock(&colors, decoder == Decoder_D3D9);
+        }
+        else if (format == nvtt::Format_BC5)
+        {
+            const BlockATI2 * block = (const BlockATI2 *)ptr;
+            block->decodeBlock(&colors, decoder == Decoder_D3D9);
+        }
 
 		for (int yy = 0; yy < 4; yy++)
 		{
@@ -864,6 +864,42 @@ bool TexImage::buildNextMipmap(MipmapFilter filter, float filterWidth, const flo
     return true;
 }
 
+void TexImage::canvasSize(int w, int h, int d)
+{
+    nvDebugCheck(w > 0 && h > 0 && d > 0);
+
+    FloatImage * img = m->image;
+    if (img == NULL || (w == img->width() && h == img->height() && d == img->depth())) {
+        return;
+    }
+
+    detach();
+
+    FloatImage * new_img = new FloatImage;
+    new_img->allocate(4, w, h, d);
+    new_img->clear();
+
+    w = min(uint(w), img->width());
+    h = min(uint(h), img->height());
+    d = min(uint(d), img->depth());
+
+    for (int z = 0; z < d; z++) {
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                new_img->pixel(0, x, y, z) = img->pixel(0, x, y, z);
+                new_img->pixel(1, x, y, z) = img->pixel(1, x, y, z);
+                new_img->pixel(2, x, y, z) = img->pixel(2, x, y, z);
+                new_img->pixel(3, x, y, z) = img->pixel(3, x, y, z);
+            }
+        }
+    }
+
+    delete m->image;
+    m->image = new_img;
+    m->type = (d == 1) ? TextureType_2D : TextureType_3D;
+}
+
+
 // Color transforms.
 void TexImage::toLinear(float gamma)
 {
@@ -884,6 +920,66 @@ void TexImage::toGamma(float gamma)
 
     m->image->toGamma(0, 3, gamma);
 }
+
+
+static float toSrgb(float f) {
+    if (f <= 0.0)               f = 0.0f;
+    else if (f <= 0.0031308f)   f = 12.92f * f;
+    else if (f <= 1.0f)         f = (powf(f, 0.41666f) * 1.055f) - 0.055f;
+    else                        f = 1.0f;
+    return f;
+}
+
+void TexImage::toSrgb()
+{
+    FloatImage * img = m->image;
+    if (img == NULL) return;
+
+    detach();
+
+    const uint count = img->pixelCount();
+    for (uint j = 0; j < count; j++)
+    {
+        float & r = img->pixel(0, j);
+        float & g = img->pixel(1, j);
+        float & b = img->pixel(2, j);
+
+        r = ::toSrgb(r);
+        g = ::toSrgb(g);
+        b = ::toSrgb(b);
+    }
+}
+
+static float toXenonSrgb(float f) {
+    if (f < 0)                  f = 0;
+    else if (f < (1.0f/16.0f))  f = 4.0f * f;
+    else if (f < (1.0f/8.0f))   f = 0.25f  + 2.0f * (f - 0.0625f);
+    else if (f < 0.5f)          f = 0.375f + 1.0f * (f - 0.125f);
+    else if (f < 1.0f)          f = 0.75f  + 0.5f * (f - 0.50f);
+    else                        f = 1.0f;
+    return f;
+}
+
+void TexImage::toXenonSrgb()
+{
+    FloatImage * img = m->image;
+    if (img == NULL) return;
+
+    detach();
+
+    const uint count = img->pixelCount();
+    for (uint j = 0; j < count; j++)
+    {
+        float & r = img->pixel(0, j);
+        float & g = img->pixel(1, j);
+        float & b = img->pixel(2, j);
+
+        r = ::toXenonSrgb(r);
+        g = ::toXenonSrgb(g);
+        b = ::toXenonSrgb(b);
+    }
+}
+
 
 void TexImage::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
 {
@@ -1140,9 +1236,9 @@ void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
-        float R = nv::clamp(r[i] * irange, 0.0f, 1.0f);
-        float G = nv::clamp(g[i] * irange, 0.0f, 1.0f);
-        float B = nv::clamp(b[i] * irange, 0.0f, 1.0f);
+        float R = nv::clamp(r[i], 0.0f, 1.0f);
+        float G = nv::clamp(g[i], 0.0f, 1.0f);
+        float B = nv::clamp(b[i], 0.0f, 1.0f);
 #if 1
         float M = max(max(R, G), max(B, threshold));
 

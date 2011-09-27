@@ -4,6 +4,7 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nvtt", "nvtt\nvtt.vcproj", "{1AEB7681-57D8-48EE-813D-5C41CC38B647}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CE017322-01FC-4851-9C8B-64E9A8E26C38} = {CE017322-01FC-4851-9C8B-64E9A8E26C38}
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB} = {3DD3A43D-C6EA-460F-821B-6C339A03C5BB}
 		{F143D180-D4C4-4037-B3DE-BE89A21C8D1D} = {F143D180-D4C4-4037-B3DE-BE89A21C8D1D}
 		{4046F392-A18B-4C66-9639-3EABFFF5D531} = {4046F392-A18B-4C66-9639-3EABFFF5D531}
 		{C33787E3-5564-4834-9FE3-A9020455A669} = {C33787E3-5564-4834-9FE3-A9020455A669}
@@ -87,6 +88,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imperativeapi", "imperative
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bc6h", "bc6h\bc6h.vcproj", "{C33787E3-5564-4834-9FE3-A9020455A669}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nvthread", "nvthread\nvthread.vcproj", "{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -457,6 +460,28 @@ Global
 		{C33787E3-5564-4834-9FE3-A9020455A669}.Release|Win32.Build.0 = Release|Win32
 		{C33787E3-5564-4834-9FE3-A9020455A669}.Release|x64.ActiveCfg = Release|x64
 		{C33787E3-5564-4834-9FE3-A9020455A669}.Release|x64.Build.0 = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug (no cuda)|Mixed Platforms.ActiveCfg = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug (no cuda)|Mixed Platforms.Build.0 = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug (no cuda)|Win32.ActiveCfg = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug (no cuda)|x64.ActiveCfg = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug (no cuda)|x64.Build.0 = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug|Win32.Build.0 = Debug|Win32
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug|x64.ActiveCfg = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Debug|x64.Build.0 = Debug|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release (no cuda)|Mixed Platforms.ActiveCfg = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release (no cuda)|Mixed Platforms.Build.0 = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release (no cuda)|Win32.ActiveCfg = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release (no cuda)|x64.ActiveCfg = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release (no cuda)|x64.Build.0 = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|Mixed Platforms.Build.0 = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|Win32.ActiveCfg = Release|Win32
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|Win32.Build.0 = Release|Win32
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|x64.ActiveCfg = Release|x64
+		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -56,6 +56,7 @@ namespace nv
         //@{
         NVIMAGE_API void clear(float f = 0.0f);
         NVIMAGE_API void clear(uint component, float f = 0.0f);
+        NVIMAGE_API void copyChannel(uint src, uint dst);
 
         NVIMAGE_API void normalize(uint base_component);
 
@@ -112,8 +113,6 @@ namespace nv
         uint floatCount() const { return m_floatCount; }
         uint pixelCount() const { return m_pixelCount; }
 
-
-        // @@ It would make sense to swap the order of the arguments so that 'c' is always first.
 
         /** @name Pixel access. */
         //@{

@@ -215,7 +215,7 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName)
     StdInputStream stream(fileName);
 
     if (stream.isError()) {
-        return false;
+        return NULL;
     }
 
     return loadFloat(fileName, stream);
@@ -324,9 +324,9 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 
 bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, uint baseComponent, uint componentCount)
 {
+#if !defined(HAVE_FREEIMAGE)
     const char * extension = Path::extension(fileName);
 
-#if !defined(HAVE_FREEIMAGE)
 #if defined(HAVE_OPENEXR)
     if (strCaseCmp(extension, ".exr") == 0) {
         return saveFloatEXR(fileName, fimage, baseComponent, componentCount);
@@ -711,7 +711,7 @@ Image * nv::ImageIO::loadTGA(Stream & s)
         case TGA_TYPE_INDEXED:
             if( tga.colormap_type!=1 || tga.colormap_size!=24 || tga.colormap_length>256 ) {
                 nvDebug( "*** loadTGA: Error, only 24bit paletted images are supported.\n" );
-                return false;
+                return NULL;
             }
             pal = true;
             break;
@@ -732,7 +732,7 @@ Image * nv::ImageIO::loadTGA(Stream & s)
 
 	default:
 	    nvDebug( "*** loadTGA: Error, unsupported image type.\n" );
-	    return false;
+	    return NULL;
     }
 
     const uint pixel_size = (tga.pixel_size/8);
@@ -1369,7 +1369,7 @@ Image * nv::ImageIO::loadJPG(Stream & s)
     // Read the entire file.
     Array<uint8> byte_array;
     byte_array.resize(s.size());
-    s.serialize(byte_array.mutableBuffer(), s.size());
+    s.serialize(byte_array.buffer(), s.size());
 
     jpeg_decompress_struct cinfo;
     jpeg_error_mgr jerr;

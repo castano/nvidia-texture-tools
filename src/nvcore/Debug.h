@@ -10,6 +10,9 @@
 #   include <stdarg.h> // va_list
 #endif
 
+// Make sure we are using our assert.
+#undef assert
+
 #define NV_ABORT_DEBUG      1
 #define NV_ABORT_IGNORE     2
 #define NV_ABORT_EXIT       3
@@ -116,12 +119,6 @@
 #endif
 
 
-#if __cplusplus > 199711L
-#define nvStaticCheck(x) static_assert(x)
-#else
-#define nvStaticCheck(x) typedef char NV_DO_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
-#endif
-
 NVCORE_API int nvAbort(const char *exp, const char *file, int line, const char * func = NULL);
 NVCORE_API void NV_CDECL nvDebugPrint( const char *msg, ... ) __attribute__((format (printf, 1, 2)));
 
@@ -166,6 +163,8 @@ namespace nv
 
         NVCORE_API void enableSigHandler();
         NVCORE_API void disableSigHandler();
+
+        NVCORE_API bool isDebuggerPresent();
     }
 
 } // nv namespace

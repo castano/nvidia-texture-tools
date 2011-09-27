@@ -448,19 +448,6 @@ namespace
     /** Win32 assert handler. */
     struct Win32AssertHandler : public AssertHandler 
     {
-        // Code from Daniel Vogel.
-        static bool isDebuggerPresent()
-        {
-            HINSTANCE kernel32 = GetModuleHandle("kernel32.dll");
-            if (kernel32) {
-                FARPROC IsDebuggerPresent = GetProcAddress(kernel32, "IsDebuggerPresent");
-                if (IsDebuggerPresent != NULL && IsDebuggerPresent()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         // Flush the message queue. This is necessary for the message box to show up.
         static void flushMessageQueue()
         {
@@ -487,7 +474,7 @@ namespace
                 nvDebug( error_string.str() );
             }
 
-            if (isDebuggerPresent()) {
+            if (debug::isDebuggerPresent()) {
                 return NV_ABORT_DEBUG;
             }
 
@@ -522,15 +509,6 @@ namespace
     /** Xbox360 assert handler. */
     struct Xbox360AssertHandler : public AssertHandler 
     {
-        static bool isDebuggerPresent()
-        {
-#ifdef _DEBUG
-            return DmIsDebuggerPresent() == TRUE;
-#else
-            return false;
-#endif
-        }
-
         // Assert handler method.
         virtual int assertion( const char * exp, const char * file, int line, const char * func/*=NULL*/ )
         {
@@ -546,7 +524,7 @@ namespace
                 nvDebug( error_string.str() );
             }
 
-            if (isDebuggerPresent()) {
+            if (debug::isDebuggerPresent()) {
                 return NV_ABORT_DEBUG;
             }
 
@@ -563,26 +541,6 @@ namespace
     /** Unix assert handler. */
     struct UnixAssertHandler : public AssertHandler
     {
-        bool isDebuggerPresent()
-        {
-#if NV_OS_DARWIN
-            int mib[4];
-            struct kinfo_proc info;
-            size_t size;
-            mib[0] = CTL_KERN;
-            mib[1] = KERN_PROC;
-            mib[2] = KERN_PROC_PID;
-            mib[3] = getpid();
-            size = sizeof(info);
-            info.kp_proc.p_flag = 0;
-            sysctl(mib,4,&info,&size,NULL,0);
-            return ((info.kp_proc.p_flag & P_TRACED) == P_TRACED);
-#else
-            // if ppid != sid, some process spawned our app, probably a debugger. 
-            return getsid(getpid()) != getppid();
-#endif
-        }
-
         // Assert handler method.
         virtual int assertion(const char * exp, const char * file, int line, const char * func)
         {
@@ -594,7 +552,7 @@ namespace
             }
 
 #if _DEBUG
-            if (isDebuggerPresent()) {
+            if (debug::isDebuggerPresent()) {
                 return NV_ABORT_DEBUG;
             }
 #endif
@@ -702,7 +660,10 @@ void debug::enableSigHandler()
     // SYMOPT_DEFERRED_LOADS make us not take a ton of time unless we actual log traces
     SymSetOptions(SYMOPT_DEFERRED_LOADS|SYMOPT_FAIL_CRITICAL_ERRORS|SYMOPT_LOAD_LINES|SYMOPT_UNDNAME);
 
-    SymInitialize(GetCurrentProcess(), NULL, TRUE);
+    if (!SymInitialize(GetCurrentProcess(), NULL, TRUE)) {
+        DWORD error = GetLastError();
+        nvDebug("SymInitialize returned error : %d\n", error);
+    }
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H)
 
@@ -743,3 +704,38 @@ void debug::disableSigHandler()
 #endif
 }
 
+
+bool debug::isDebuggerPresent()
+{
+#if NV_OS_WIN32
+    HINSTANCE kernel32 = GetModuleHandle("kernel32.dll");
+    if (kernel32) {
+        FARPROC IsDebuggerPresent = GetProcAddress(kernel32, "IsDebuggerPresent");
+        if (IsDebuggerPresent != NULL && IsDebuggerPresent()) {
+            return true;
+        }
+    }
+    return false;
+#elif NV_OS_XBOX
+#ifdef _DEBUG
+    return DmIsDebuggerPresent() == TRUE;
+#else
+    return false;
+#endif
+#elif NV_OS_DARWIN
+    int mib[4];
+    struct kinfo_proc info;
+    size_t size;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = getpid();
+    size = sizeof(info);
+    info.kp_proc.p_flag = 0;
+    sysctl(mib,4,&info,&size,NULL,0);
+    return ((info.kp_proc.p_flag & P_TRACED) == P_TRACED);
+#else
+    // if ppid != sid, some process spawned our app, probably a debugger. 
+    return getsid(getpid()) != getppid();
+#endif
+}

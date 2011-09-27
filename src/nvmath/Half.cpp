@@ -487,46 +487,126 @@ nv::half_to_float( uint16 h )
     return (f_result);
 }
 
-uint32 
-nv::fast_half_to_float( uint16 h )
-{
-    const uint32 h_e_mask              = _uint32_li( 0x00007c00 );
-    const uint32 h_m_mask              = _uint32_li( 0x000003ff );
-    const uint32 h_s_mask              = _uint32_li( 0x00008000 );
-    const uint32 h_f_s_pos_offset      = _uint32_li( 0x00000010 );
-    const uint32 h_f_e_pos_offset      = _uint32_li( 0x0000000d );
-    const uint32 h_f_bias_offset       = _uint32_li( 0x0001c000 );
-    const uint32 f_e_mask              = _uint32_li( 0x7f800000 );
-    const uint32 f_m_mask              = _uint32_li( 0x007fffff );
-    const uint32 h_f_e_denorm_bias     = _uint32_li( 0x0000007e );
-    const uint32 h_f_m_denorm_sa_bias  = _uint32_li( 0x00000008 );
-    const uint32 f_e_pos               = _uint32_li( 0x00000017 );
-    const uint32 h_e_mask_minus_one    = _uint32_li( 0x00007bff );
-    const uint32 h_e                   = _uint32_and( h, h_e_mask );
-    const uint32 h_m                   = _uint32_and( h, h_m_mask );
-    const uint32 h_s                   = _uint32_and( h, h_s_mask );
-    const uint32 h_e_f_bias            = _uint32_add( h_e, h_f_bias_offset );
-    const uint32 h_m_nlz               = _uint32_cntlz( h_m );
-    const uint32 f_s                   = _uint32_sll( h_s,        h_f_s_pos_offset );
-    const uint32 f_e                   = _uint32_sll( h_e_f_bias, h_f_e_pos_offset );
-    const uint32 f_m                   = _uint32_sll( h_m,        h_f_e_pos_offset );
-    const uint32 f_em                  = _uint32_or(  f_e,        f_m              );
-    const uint32 h_f_m_sa              = _uint32_sub( h_m_nlz,             h_f_m_denorm_sa_bias );
-    const uint32 f_e_denorm_unpacked   = _uint32_sub( h_f_e_denorm_bias,   h_f_m_sa             );
-    const uint32 h_f_m                 = _uint32_sll( h_m,                 h_f_m_sa             );
-    const uint32 f_m_denorm            = _uint32_and( h_f_m,               f_m_mask             );
-    const uint32 f_e_denorm            = _uint32_sll( f_e_denorm_unpacked, f_e_pos              );
-    const uint32 f_em_denorm           = _uint32_or(  f_e_denorm,          f_m_denorm           );
-    const uint32 f_em_nan              = _uint32_or(  f_e_mask,            f_m                  );
-    const uint32 is_e_eqz_msb          = _uint32_dec(  h_e );
-    const uint32 is_m_nez_msb          = _uint32_neg(  h_m );
-    const uint32 is_e_flagged_msb      = _uint32_sub(  h_e_mask_minus_one, h_e );
-    const uint32 is_zero_msb           = _uint32_andc( is_e_eqz_msb,       is_m_nez_msb );
-    const uint32 is_denorm_msb         = _uint32_and(  is_m_nez_msb,       is_e_eqz_msb );
-    const uint32 is_zero               = _uint32_ext(  is_zero_msb );
-    const uint32 f_zero_result         = _uint32_andc( f_em, is_zero );
-    const uint32 f_denorm_result       = _uint32_sels( is_denorm_msb, f_em_denorm, f_zero_result );
-    const uint32 f_result              = _uint32_or( f_s, f_denorm_result );
 
-    return (f_result);
+// @@ These tables could be smaller.
+static uint32 mantissa_table[2048];
+static uint32 exponent_table[64];
+static uint32 offset_table[64];
+
+void nv::half_init_tables()
+{
+    // Init mantissa table.
+	mantissa_table[0] = 0;
+
+	for (int i = 1; i < 1024; i++) {
+		uint m = i << 13;
+		uint e = 0;
+
+		while ((m & 0x00800000) == 0) {
+			e -= 0x00800000;
+			m <<= 1;
+		}
+		m &= ~0x00800000;
+		e += 0x38800000;
+		mantissa_table[i] = m | e;
+	}
+
+    for (int i = 1024; i < 2048; i++) {
+		mantissa_table[i] = 0x38000000 + ((i - 1024) << 13);
+    }
+
+
+    // Init exponent table.
+	exponent_table[0] = 0;
+
+    for (int i = 1; i < 31; i++) {
+		exponent_table[i] = (i << 23);
+    }
+
+	exponent_table[31] = 0x47800000;
+	exponent_table[32] = 0x80000000;
+
+    for (int i = 33; i < 63; i++) {
+		exponent_table[i] = 0x80000000 + ((i - 32) << 23);
+    }
+
+	exponent_table[63] = 0xC7800000;
+
+
+    // Init offset table.
+	offset_table[0] = 0;
+
+    for (int i = 1; i < 32; i++) {
+		offset_table[i] = 1024;
+    }
+
+	offset_table[32] = 0;
+
+    for (int i = 33; i < 64; i++) {
+		offset_table[i] = 1024;
+    }
+
+    /*for (int i = 0; i < 64; i++) {
+        offset_table[i] = ((i & 31) != 0) * 1024;
+    }*/
 }
+
+// Fast half to float conversion based on:
+// http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+uint32 nv::fast_half_to_float(uint16 h)
+{
+	uint exp = h >> 10;
+	return mantissa_table[offset_table[exp] + (h & 0x3ff)] + exponent_table[exp];
+}
+
+
+#if 0
+// Inaccurate conversion suggested at the ffmpeg mailing list:
+// http://lists.mplayerhq.hu/pipermail/ffmpeg-devel/2009-July/068949.html
+uint32 nv::fast_half_to_float(uint16 v)
+{
+    if (v & 0x8000) return 0;
+    uint exp = v >> 10;
+    if (!exp) return (v>>9)&1;
+    if (exp >= 15) return 0xffff;
+    v <<= 6;
+    return (v+(1<<16)) >> (15-exp);
+}
+
+#endif
+
+#if 0
+
+// Some more from a gamedev thread:
+// http://www.devmaster.net/forums/showthread.php?t=10924
+
+// I believe it does not handle specials either.
+
+// Mike Acton's code should be fairly easy to vectorize and that would handle all cases too, the table method might still be faster, though.
+
+
+static __declspec(align(16)) unsigned half_sign[4]	  = {0x00008000, 0x00008000, 0x00008000, 0x00008000};
+static __declspec(align(16)) unsigned half_exponent[4]	  = {0x00007C00, 0x00007C00, 0x00007C00, 0x00007C00};
+static __declspec(align(16)) unsigned half_mantissa[4]	  = {0x000003FF, 0x000003FF, 0x000003FF, 0x000003FF};
+static __declspec(align(16)) unsigned half_bias_offset[4] = {0x0001C000, 0x0001C000, 0x0001C000, 0x0001C000};
+
+__asm
+{
+	movaps	xmm1, xmm0  // Input in xmm0
+	movaps	xmm2, xmm0
+
+	andps	xmm0, half_sign
+	andps	xmm1, half_exponent
+	andps	xmm2, half_mantissa
+	paddd	xmm1, half_bias_offset
+
+	pslld	xmm0, 16
+	pslld	xmm1, 13
+	pslld	xmm2, 13
+
+	orps	xmm1, xmm2
+	orps	xmm0, xmm1  // Result in xmm0
+}
+
+
+#endif

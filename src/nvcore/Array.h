@@ -78,8 +78,8 @@ namespace nv
     }
 
     template <typename T>
-    bool find(const T & element, const T * restrict ptr, uint count, uint * index) {
-        for (uint i = 0; i < count; i++) {
+    bool find(const T & element, const T * restrict ptr, uint begin, uint end, uint * index) {
+        for (uint i = begin; i < end; i++) {
             if (ptr[i] == element) {
                 if (index != NULL) *index = i;
                 return true;
@@ -257,15 +257,15 @@ namespace nv
         }
 
         /// Return true if element found.
-        NV_FORCEINLINE bool find(const T & element, uint * index) const
+        NV_FORCEINLINE bool find(const T & element, uint * indexPtr) const
         {
-            return find(element, 0, m_size, index);
+            return find(element, 0, m_size, indexPtr);
         }
 
         /// Return true if element found within the given range.
-        NV_FORCEINLINE bool find(const T & element, uint first, uint count, uint * index) const
+        NV_FORCEINLINE bool find(const T & element, uint begin, uint end, uint * indexPtr) const
         {
-            return ::nv::find(element, m_buffer + first, count, index);
+            return ::nv::find(element, m_buffer, begin, end, indexPtr);
         }
 
         /// Remove the element at the given index. This is an expensive operation!

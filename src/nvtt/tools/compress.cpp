@@ -56,6 +56,11 @@ struct MyOutputHandler : public nvtt::OutputHandler
         // ignore.
     }
 
+    virtual void endImage()
+    {
+        // Ignore.
+    }
+
     // Output data.
     virtual bool writeData(const void * data, int size)
     {
