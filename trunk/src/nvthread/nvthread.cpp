@@ -1,11 +1,16 @@
+// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "nvthread.h"
 
 #include "Thread.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <windows.h>
+#if NV_OS_WIN32
+    #include "Win32.h"
+#elif NV_OS_UNIX
+    #include <sys/types.h>
+    #include <sys/sysctl.h>
+#endif
+
 
 using namespace nv;
 

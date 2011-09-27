@@ -11,23 +11,23 @@
 namespace nv
 {
     // This is intended to be used by a single waiter thread.
-	class NVTHREAD_CLASS Event
-	{
-		NV_FORBID_COPY(Event);
-	public:
-		Event();
-		~Event();
+    class NVTHREAD_CLASS Event
+    {
+        NV_FORBID_COPY(Event);
+    public:
+        Event();
+        ~Event();
 
-		void post();
-		void wait();    // Wait resets the event.
+	void post();
+	void wait();    // Wait resets the event.
 
         static void post(Event * events, uint count);
         static void wait(Event * events, uint count);
 
-	private:
-		struct Private;
-		AutoPtr<Private> m;
-	};
+    private:
+        struct Private;
+        AutoPtr<Private> m;
+    };
 
 } // nv namespace
 

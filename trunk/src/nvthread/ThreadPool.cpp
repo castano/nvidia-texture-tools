@@ -4,6 +4,8 @@
 #include "Mutex.h"
 #include "Thread.h"
 
+#include "nvcore/Utils.h"
+
 // Most of the time it's not necessary to protect the thread pool, but if it doesn't add a significant overhead, then it'd be safer to do it.
 #define PROTECT_THREAD_POOL 1
 
@@ -47,7 +49,7 @@ AutoPtr<ThreadPool> s_pool;
 
 
 /*static*/ void ThreadPool::workerFunc(void * arg) {
-    uint i = (uint)arg;
+    uint i = toU32((uintptr_t)arg); // This is OK, because workerCount should always be <<< 2^32
 
     while(true) 
     {

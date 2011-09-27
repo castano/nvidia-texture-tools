@@ -269,6 +269,10 @@ struct MyOutputHandler : public nvtt::OutputHandler
         m_ptr = m_data;
     }
 
+    virtual void endImage()
+    {
+    }
+
     virtual bool writeData(const void * data, int size)
     {
         memcpy(m_ptr, data, size);

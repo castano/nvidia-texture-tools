@@ -13,7 +13,7 @@ using namespace nv;
 #if NV_OS_WIN32
 
 struct Event::Private {
-	HANDLE handle;
+    HANDLE handle;
 };
 
 Event::Event() : m(new Private) {
@@ -48,5 +48,6 @@ void Event::wait() {
 }
 
 #elif NV_OS_UNIX
-    // @@ 
+    // @@ TODO
+#pragma NV_MESSAGE("Implement event using pthreads!")
 #endif	

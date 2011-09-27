@@ -34,16 +34,16 @@ extern "C"
 namespace nv {
 
     // Load and stores.
-	inline uint32 loadRelaxed(const uint32 * ptr) { return *ptr; }
-	inline void storeRelaxed(uint32 * ptr, uint32 value) { *ptr = value; }
+    inline uint32 loadRelaxed(const uint32 * ptr) { return *ptr; }
+    inline void storeRelaxed(uint32 * ptr, uint32 value) { *ptr = value; }
 
-	inline uint32 loadAcquire(const volatile uint32 * ptr)
+    inline uint32 loadAcquire(const volatile uint32 * ptr)
     {
         nvDebugCheck((intptr_t(ptr) & 3) == 0);
 
 #if POSH_CPU_X86 || POSH_CPU_X86_64
         nvCompilerReadBarrier();
-		uint32 ret = *ptr;  // on x86, loads are Acquire
+        uint32 ret = *ptr;  // on x86, loads are Acquire
         nvCompilerReadBarrier();
         return ret;
 #else
@@ -51,17 +51,17 @@ namespace nv {
 #endif
     }
 
-	inline void storeRelease(volatile uint32 * ptr, uint32 value)
+    inline void storeRelease(volatile uint32 * ptr, uint32 value)
     {
         nvDebugCheck((intptr_t(ptr) & 3) == 0);
         nvDebugCheck((intptr_t(&value) & 3) == 0);
 
 #if POSH_CPU_X86 || POSH_CPU_X86_64
         nvCompilerWriteBarrier();
-		*ptr = value;   // on x86, stores are Release
-		nvCompilerWriteBarrier();
+        *ptr = value;   // on x86, stores are Release
+        nvCompilerWriteBarrier();
 #else
-#error "Not implemented"
+#error "Atomics not implemented."
 #endif
     }
 
@@ -84,6 +84,25 @@ namespace nv {
 
         return (uint32)_InterlockedDecrement((long *)value);
     }
+#elif NV_CC_GNUC
+    // Many alternative implementations at:
+    // http://www.memoryhole.net/kyle/2007/05/atomic_incrementing.html
+
+    inline uint32 atomicIncrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+
+        return __sync_fetch_and_add(value, 1);
+    }
+
+    inline uint32 atomicDecrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+
+        return __sync_fetch_and_sub(value, 1);
+    }
+#else
+#error "Atomics not implemented."
 #endif
 
 
@@ -107,19 +126,19 @@ namespace nv {
 
 
 
-	template <typename T>
-	class Atomic
-	{
-	public:
-		explicit Atomic()  : m_value() { }
-		explicit Atomic( T val ) : m_value(val) { }
-		~Atomic() { }
-		
-		T loadRelaxed()  const { return m_value; }
-		void storeRelaxed(T val) { m_value = val; }
+    template <typename T>
+    class Atomic
+    {
+    public:
+        explicit Atomic()  : m_value() { }
+        explicit Atomic( T val ) : m_value(val) { }
+        ~Atomic() { }
+
+        T loadRelaxed()  const { return m_value; }
+        void storeRelaxed(T val) { m_value = val; }
 
         //T loadAcquire() const volatile { return nv::loadAcquire(&m_value); }
-		//void storeRelease(T val) volatile { nv::storeRelease(&m_value, val); }
+        //void storeRelease(T val) volatile { nv::storeRelease(&m_value, val); }
 
         void increment() /*volatile*/ { nv::atomicIncrement(m_value); }
         void decrement() /*volatile*/ { nv::atomicDecrement(m_value); }
@@ -128,14 +147,14 @@ namespace nv {
         T compareAndExchange(T oldVal, T newVal) { nv::atomicCompareAndStore(&m_value, oldVal, newVal); }
         T exchange(T newVal) { nv::atomicExchange(&m_value, newVal); }
 
-	private:
-		// don't provide operator = or == ; make the client write Store( Load() )
-		NV_FORBID_COPY(Atomic);
+    private:
+        // don't provide operator = or == ; make the client write Store( Load() )
+        NV_FORBID_COPY(Atomic);
 		
-		NV_COMPILER_CHECK(sizeof(T) == sizeof(uint32) || sizeof(T) == sizeof(uint64));
-		
-		T m_value;
-	};
+	NV_COMPILER_CHECK(sizeof(T) == sizeof(uint32) || sizeof(T) == sizeof(uint64));
+
+        T m_value;
+    };
 #endif
 
 } // nv namespace 
