@@ -5,6 +5,8 @@
 
 #include "nvimage.h"
 
+#include "nvmath/nvmath.h" // lerp
+
 #include "nvcore/Debug.h"
 #include "nvcore/Utils.h" // clamp
 
@@ -45,7 +47,7 @@ namespace nv
 
         /** @name Allocation. */
         //@{
-        NVIMAGE_API void allocate(uint c, uint w, uint h);
+        NVIMAGE_API void allocate(uint c, uint w, uint h, uint d = 1);
         NVIMAGE_API void free(); // Does not clear members.
         NVIMAGE_API void resizeChannelCount(uint c);
         //@}
@@ -74,21 +76,30 @@ namespace nv
         NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
         NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;
         NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
+        NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm) const;
         NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
+        NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm, uint alpha) const;
+
 
         //NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
         //NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
         //@}
 
-        NVIMAGE_API float applyKernel(const Kernel2 * k, int x, int y, uint c, WrapMode wm) const;
-        NVIMAGE_API float applyKernelVertical(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const;
-        NVIMAGE_API float applyKernelHorizontal(const Kernel1 * k, int x, int y, uint c, WrapMode wm) const;
-        NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, uint c, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelVertical(const PolyphaseKernel & k, int x, uint c, uint a, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelHorizontal(const PolyphaseKernel & k, int y, uint c, uint a, WrapMode wm, float * output) const;
+        NVIMAGE_API float applyKernelXY(const Kernel2 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        NVIMAGE_API float applyKernelX(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        NVIMAGE_API float applyKernelY(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        NVIMAGE_API float applyKernelZ(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        NVIMAGE_API void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, uint a, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, uint a, WrapMode wm, float * output) const;
 
-        NVIMAGE_API void flip();
+
+        NVIMAGE_API void flipX();
+        NVIMAGE_API void flipY();
+        NVIMAGE_API void flipZ();
 
         NVIMAGE_API float alphaTestCoverage(float alphaRef, int alphaChannel) const;
         NVIMAGE_API void scaleAlphaToCoverage(float coverage, float alphaRef, int alphaChannel);
@@ -96,37 +107,58 @@ namespace nv
 
         uint width() const { return m_width; }
         uint height() const { return m_height; }
-        uint componentNum() const { return m_componentNum; }
-        uint count() const { return m_count; }
+        uint depth() const { return m_depth; }
+        uint componentCount() const { return m_componentCount; }
+        uint floatCount() const { return m_floatCount; }
+        uint pixelCount() const { return m_pixelCount; }
 
+
+        // @@ It would make sense to swap the order of the arguments so that 'c' is always first.
 
         /** @name Pixel access. */
         //@{
         const float * channel(uint c) const;
         float * channel(uint c);
 
-        const float * scanline(uint y, uint c) const;
-        float * scanline(uint y, uint c);
+        const float * plane(uint c, uint z) const;
+        float * plane(uint c, uint z);
 
-        float pixel(uint x, uint y, uint c) const;
-        float & pixel(uint x, uint y, uint c);
+        const float * scanline(uint c, uint y, uint z) const;
+        float * scanline(uint c, uint y, uint z);
 
-        float pixel(uint idx, uint c) const;
-        float & pixel(uint idx, uint c);
+        //float pixel(uint c, uint x, uint y) const;
+        //float & pixel(uint c, uint x, uint y);
+
+        float pixel(uint c, uint x, uint y, uint z) const;
+        float & pixel(uint c, uint x, uint y, uint z);
+
+        float pixel(uint c, uint idx) const;
+        float & pixel(uint c, uint idx);
 
         float pixel(uint idx) const;
         float & pixel(uint idx);
 
-        float sampleNearest(float x, float y, int c, WrapMode wm) const;
-        float sampleLinear(float x, float y, int c, WrapMode wm) const;
+        float sampleNearest(uint c, float x, float y, WrapMode wm) const;
+        float sampleLinear(uint c, float x, float y, WrapMode wm) const;
 
-        float sampleNearestClamp(float x, float y, int c) const;
-        float sampleNearestRepeat(float x, float y, int c) const;
-        float sampleNearestMirror(float x, float y, int c) const;
+        float sampleNearest(uint c, float x, float y, float z, WrapMode wm) const;
+        float sampleLinear(uint c, float x, float y, float z, WrapMode wm) const;
 
-        float sampleLinearClamp(float x, float y, int c) const;
-        float sampleLinearRepeat(float x, float y, int c) const;
-        float sampleLinearMirror(float x, float y, int c) const;
+        float sampleNearestClamp(uint c, float x, float y) const;
+        float sampleNearestRepeat(uint c, float x, float y) const;
+        float sampleNearestMirror(uint c, float x, float y) const;
+
+        float sampleNearestClamp(uint c, float x, float y, float z) const;
+        float sampleNearestRepeat(uint c, float x, float y, float z) const;
+        float sampleNearestMirror(uint c, float x, float y, float z) const;
+
+        float sampleLinearClamp(uint c, float x, float y) const;
+        float sampleLinearRepeat(uint c, float x, float y) const;
+        float sampleLinearMirror(uint c, float x, float y) const;
+
+        float sampleLinearClamp(uint c, float x, float y, float z) const;
+        float sampleLinearRepeat(uint c, float x, float y, float z) const;
+        float sampleLinearMirror(uint c, float x, float y, float z) const;
         //@}
 
 
@@ -134,18 +166,23 @@ namespace nv
 
     public:
 
-        uint index(uint x, uint y) const;
-        uint indexClamp(int x, int y) const;
-        uint indexRepeat(int x, int y) const;
-        uint indexMirror(int x, int y) const;
-        uint index(int x, int y, WrapMode wm) const;
+        uint index(uint x, uint y, uint z) const;
+        uint indexClamp(int x, int y, int z) const;
+        uint indexRepeat(int x, int y, int z) const;
+        uint indexMirror(int x, int y, int z) const;
+        uint index(int x, int y, int z, WrapMode wm) const;
+
+        float bilerp(uint c, int ix0, int iy0, int ix1, int iy1, float fx, float fy) const;
+        float trilerp(uint c, int ix0, int iy0, int iz0, int ix1, int iy1, int iz1, float fx, float fy, float fz) const;
 
     public:
 
-        uint16 m_width;			///< Width of the texture.
-        uint16 m_height;		///< Height of the texture.
-        uint32 m_componentNum;	///< Number of components.
-        uint32 m_count;			///< Image pixel count.
+        uint16 m_componentCount;
+        uint16 m_width;
+        uint16 m_height;
+        uint16 m_depth;
+        uint32 m_pixelCount;
+        uint32 m_floatCount;
         float * m_mem;
 
     };
@@ -155,131 +192,201 @@ namespace nv
     inline const float * FloatImage::channel(uint c) const
     {
         nvDebugCheck(m_mem != NULL);
-        nvDebugCheck(c < m_componentNum);
-        return m_mem + c * m_width * m_height;
+        nvDebugCheck(c < m_componentCount);
+        return m_mem + c * m_pixelCount;
     }
 
     /// Get channel pointer.
     inline float * FloatImage::channel(uint c) {
         nvDebugCheck(m_mem != NULL);
-        nvDebugCheck(c < m_componentNum);
-        return m_mem + c * m_width * m_height;
+        nvDebugCheck(c < m_componentCount);
+        return m_mem + c * m_pixelCount;
+    }
+
+    inline const float * FloatImage::plane(uint c, uint z) const {
+        nvDebugCheck(z < m_depth);
+        return channel(c) + z * m_width * m_height;        
+    }
+
+    inline float * FloatImage::plane(uint c, uint z) {
+        nvDebugCheck(z < m_depth);
+        return channel(c) + z * m_width * m_height;        
     }
 
     /// Get const scanline pointer.
-    inline const float * FloatImage::scanline(uint y, uint c) const
+    inline const float * FloatImage::scanline(uint c, uint y, uint z) const
     {
         nvDebugCheck(y < m_height);
-        return channel(c) + y * m_width;
+        return plane(c, z) + y * m_width;
     }
 
     /// Get scanline pointer.
-    inline float * FloatImage::scanline(uint y, uint c)
+    inline float * FloatImage::scanline(uint z, uint y, uint c)
     {
         nvDebugCheck(y < m_height);
-        return channel(c) + y * m_width;
+        return plane(c, z) + y * m_width;
     }
 
     /// Get pixel component.
-    inline float FloatImage::pixel(uint x, uint y, uint c) const
+    inline float FloatImage::pixel(uint c, uint x, uint y, uint z) const
     {
         nvDebugCheck(m_mem != NULL);
+        nvDebugCheck(c < m_componentCount);
         nvDebugCheck(x < m_width);
         nvDebugCheck(y < m_height);
-        nvDebugCheck(c < m_componentNum);
-        return m_mem[(c * m_height + y) * m_width + x];
+        nvDebugCheck(z < m_depth);
+        return m_mem[((c * m_depth + z) * m_height + y) * m_width + x];
     }
 
     /// Get pixel component.
-    inline float & FloatImage::pixel(uint x, uint y, uint c)
+    inline float & FloatImage::pixel(uint c, uint x, uint y, uint z)
     {
         nvDebugCheck(m_mem != NULL);
+        nvDebugCheck(c < m_componentCount);
         nvDebugCheck(x < m_width);
         nvDebugCheck(y < m_height);
-        nvDebugCheck(c < m_componentNum);
-        return m_mem[(c * m_height + y) * m_width + x];
+        nvDebugCheck(z < m_depth);
+        return m_mem[((c * m_depth + z) * m_height + y) * m_width + x];
     }
 
     /// Get pixel component.
-    inline float FloatImage::pixel(uint idx, uint c) const
+    inline float FloatImage::pixel(uint c, uint idx) const
     {
         nvDebugCheck(m_mem != NULL);
-        nvDebugCheck(idx < uint(m_width*m_height));
-        nvDebugCheck(c < m_componentNum);
+        nvDebugCheck(c < m_componentCount);
+        nvDebugCheck(idx < m_pixelCount);
         return m_mem[c * m_height * m_width + idx];
     }
 
     /// Get pixel component.
-    inline float & FloatImage::pixel(uint idx, uint c)
+    inline float & FloatImage::pixel(uint c, uint idx)
     {
         nvDebugCheck(m_mem != NULL);
-        nvDebugCheck(idx < uint(m_width*m_height));
-        nvDebugCheck(c < m_componentNum);
+        nvDebugCheck(c < m_componentCount);
+        nvDebugCheck(idx < m_pixelCount);
         return m_mem[c * m_height * m_width + idx];
     }
 
     /// Get pixel component.
     inline float FloatImage::pixel(uint idx) const
     {
-        nvDebugCheck(idx < m_count);
+        nvDebugCheck(m_mem != NULL);
+        nvDebugCheck(idx < m_floatCount);
         return m_mem[idx];
     }
 
     /// Get pixel component.
     inline float & FloatImage::pixel(uint idx)
     {
-        nvDebugCheck(idx < m_count);
+        nvDebugCheck(m_mem != NULL);
+        nvDebugCheck(idx < m_floatCount);
         return m_mem[idx];
     }
 
-    inline uint FloatImage::index(uint x, uint y) const
+    inline uint FloatImage::index(uint x, uint y, uint z) const
     {
         nvDebugCheck(x < m_width);
         nvDebugCheck(y < m_height);
-        return y * m_width + x;
+        nvDebugCheck(z < m_depth);
+        return (z * m_height + y) * m_width + x;
     }
 
-    inline uint FloatImage::indexClamp(int x, int y) const
-    {
-        return nv::clamp(y, int(0), int(m_height-1)) * m_width + nv::clamp(x, int(0), int(m_width-1));
-    }
 
-    inline int repeat_remainder(int a, int b)
+    inline int wrapClamp(int x, int w)
     {
-        if (a >= 0) return a % b;
-        else return (a + 1) % b + b - 1;
+        return nv::clamp(x, 0, w - 1);
     }
-
-    inline uint FloatImage::indexRepeat(int x, int y) const
+    inline int wrapRepeat(int x, int w)
     {
-        return repeat_remainder(y, m_height) * m_width + repeat_remainder(x, m_width);
+        if (x >= 0) return x % w;
+        else return (x + 1) % w + w - 1;
     }
-
-    inline uint FloatImage::indexMirror(int x, int y) const
+    inline int wrapMirror(int x, int w)
     {
-        if (m_width == 1) x = 0;
+        if (w == 1) x = 0;
 
         x = abs(x);
-        while (x >= m_width) {
-            x = abs(m_width + m_width - x - 2);
+        while (x >= w) {
+            x = abs(w + w - x - 2);
         }
 
-        if (m_height == 1) y = 0;
-
-        y = abs(y);
-        while (y >= m_height) {
-            y = abs(m_height + m_height - y - 2);
-        }
-
-        return index(x, y);
+        return x;
     }
 
-    inline uint FloatImage::index(int x, int y, WrapMode wm) const
+
+
+    inline uint FloatImage::indexClamp(int x, int y, int z) const
     {
-        if (wm == WrapMode_Clamp) return indexClamp(x, y);
-        if (wm == WrapMode_Repeat) return indexRepeat(x, y);
-        /*if (wm == WrapMode_Mirror)*/ return indexMirror(x, y);
+        x = wrapClamp(x, m_width - 1);
+        y = wrapClamp(y, m_height - 1);
+        z = wrapClamp(z, m_depth - 1);
+        return index(x, y, z);
     }
+
+
+    inline uint FloatImage::indexRepeat(int x, int y, int z) const
+    {
+        x = wrapRepeat(x, m_width);
+        y = wrapRepeat(y, m_height);
+        z = wrapRepeat(z, m_depth);
+        return index(x, y, z);
+   }
+
+    inline uint FloatImage::indexMirror(int x, int y, int z) const
+    {
+        x = wrapMirror(x, m_width);
+        y = wrapMirror(y, m_height);
+        z = wrapMirror(z, m_depth);
+        return index(x, y, z);
+    }
+
+    inline uint FloatImage::index(int x, int y, int z, WrapMode wm) const
+    {
+        if (wm == WrapMode_Clamp) return indexClamp(x, y, z);
+        if (wm == WrapMode_Repeat) return indexRepeat(x, y, z);
+        /*if (wm == WrapMode_Mirror)*/ return indexMirror(x, y, z);
+    }
+
+    inline float FloatImage::bilerp(uint c, int ix0, int iy0, int ix1, int iy1, float fx, float fy) const {
+        int iz = 0;
+        float f1 = pixel(c, ix0, iy0, iz);
+        float f2 = pixel(c, ix1, iy0, iz);
+        float f3 = pixel(c, ix0, iy1, iz);
+        float f4 = pixel(c, ix1, iy1, iz);
+
+        float i1 = lerp(f1, f2, fx);
+        float i2 = lerp(f3, f4, fx);
+
+        return lerp(i1, i2, fy);
+    }
+
+    inline float FloatImage::trilerp(uint c, int ix0, int iy0, int iz0, int ix1, int iy1, int iz1, float fx, float fy, float fz) const {
+        float f000 = pixel(c, ix0, iy0, iz0);
+        float f100 = pixel(c, ix1, iy0, iz0);
+        float f010 = pixel(c, ix0, iy1, iz0);
+        float f110 = pixel(c, ix1, iy1, iz0);
+        float f001 = pixel(c, ix0, iy0, iz1);
+        float f101 = pixel(c, ix1, iy0, iz1);
+        float f011 = pixel(c, ix0, iy1, iz1);
+        float f111 = pixel(c, ix1, iy1, iz1);
+
+        float i1 = lerp(f000, f001, fz);
+        float i2 = lerp(f010, f011, fz);
+        float j1 = lerp(f100, f101, fz);
+        float j2 = lerp(f110, f111, fz);
+
+        float w1 = lerp(i1, i2, fy);
+        float w2 = lerp(j1, j2, fy);
+
+        return lerp(w1, w2, fx);
+    }
+
+    // Does not compare channel count.
+    inline bool sameLayout(const FloatImage * img0, const FloatImage * img1) {
+        if (img0 == NULL || img1 == NULL) return false;
+        return img0->width() == img1->width() && img0->height() == img1->height() && img0->depth() == img1->depth();
+    }
+
 
 } // nv namespace
 

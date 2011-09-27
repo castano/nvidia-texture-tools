@@ -176,9 +176,6 @@ void InputOptions::resetTextureLayout()
 // Copies the data to our internal structures.
 bool InputOptions::setMipmapData(const void * data, int width, int height, int depth /*= 1*/, int face /*= 0*/, int mipLevel /*= 0*/)
 {
-    if (depth != 1) {
-        return false;
-    }
     if (uint(face) >= m.faceCount) {
         return false;
     }

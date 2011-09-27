@@ -56,17 +56,17 @@ static Color32 toRgbe8(float r, float g, float b)
 }
 
 
-void CompressorRGBE::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void CompressorRGBE::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     nvDebugCheck (compressionOptions.format == nvtt::Format_RGBE);
 
     uint srcPitch = w;
-    uint srcPlane = w * h;
+    uint srcPlane = w * h * d;
 
     // Allocate output scanline.
     Color32 * dst = new Color32[w];
 
-    for (uint y = 0; y < h; y++)
+    for (uint y = 0; y < h*d; y++)
     {
         const float * src = (const float *)data + y * srcPitch;
 
@@ -75,14 +75,14 @@ void CompressorRGBE::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, con
             float r = src[x + 0 * srcPlane];
             float g = src[x + 1 * srcPlane];
             float b = src[x + 2 * srcPlane];
-            
+
             dst[x] = toRgbe8(r, g, b);
         }
 
-	if (outputOptions.outputHandler != NULL)
-	{
-	    outputOptions.outputHandler->writeData(dst, w * 4);
-	}
+        if (outputOptions.outputHandler != NULL)
+        {
+            outputOptions.outputHandler->writeData(dst, w * 4);
+        }
     }
 
     delete [] dst;
