@@ -3,10 +3,10 @@
 #include "Thread.h"
 
 #if NV_OS_WIN32
-	#include "Win32.h"
+    #include "Win32.h"
 #elif NV_OS_UNIX
-	#include <pthread.h>
-	#include <unistd.h> // usleep
+    #include <pthread.h>
+    #include <unistd.h> // usleep
 #endif
 
 using namespace nv;
@@ -14,14 +14,15 @@ using namespace nv;
 struct Thread::Private
 {
 #if NV_OS_WIN32
-	HANDLE thread;
+    HANDLE thread;
 #elif NV_OS_UNIX
-	pthread_t thread;
+    pthread_t thread;
 #endif
 
     ThreadFunc * func;
     void * arg;
 };
+
 
 #if NV_OS_WIN32
 
@@ -32,11 +33,13 @@ unsigned long __stdcall threadFunc(void * arg) {
 }
 
 #elif NV_OS_UNIX
+
 extern "C" void * threadFunc(void * arg) {
     Thread * thread = (Thread *)arg;
-	thread->func(thread->arg);
-	pthread_exit(0);
+    thread->func(thread->arg);
+    pthread_exit(0);
 }
+
 #endif
 
 
@@ -47,7 +50,7 @@ Thread::Thread() : p(new Private)
 
 Thread::~Thread()
 {
-	nvDebugCheck(p->thread == 0);
+    nvDebugCheck(p->thread == 0);
 }
 
 void Thread::start(ThreadFunc * func, void * arg)
@@ -57,11 +60,11 @@ void Thread::start(ThreadFunc * func, void * arg)
 
 #if NV_OS_WIN32
     p->thread = CreateThread(NULL, 0, threadFunc, this, 0, NULL);
-	//p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, this, 0, NULL);     // @@ So that we can call CRT functions...
-	nvDebugCheck(p->thread != NULL);
+    //p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, this, 0, NULL);     // @@ So that we can call CRT functions...
+    nvDebugCheck(p->thread != NULL);
 #elif NV_OS_UNIX
-	int result = pthread_create(&p->thread, NULL, threadFunc, this);
-	nvDebugCheck(result == 0);
+    int result = pthread_create(&p->thread, NULL, threadFunc, this);
+    nvDebugCheck(result == 0);
 #endif
 }
 
@@ -74,42 +77,42 @@ void Thread::wait()
     p->thread = NULL;
     nvCheck (ok);
 #elif NV_OS_UNIX
-	int result = pthread_join(p->thread, NULL); 
+    int result = pthread_join(p->thread, NULL);
     p->thread = 0;
-	nvDebugCheck(result == 0);
+    nvDebugCheck(result == 0);
 #endif
 }
 
 bool Thread::isRunning () const
 {
 #if NV_OS_WIN32
-	return p->thread != NULL;
+    return p->thread != NULL;
 #elif NV_OS_UNIX
-	return p->thread != 0;
+    return p->thread != 0;
 #endif
 }
 
 /*static*/ void Thread::spinWait(uint count)
 {
-	for (uint i = 0; i < count; i++) {}
+    for (uint i = 0; i < count; i++) {}
 }
 
 /*static*/ void Thread::yield()
 {
 #if NV_OS_WIN32
-	SwitchToThread();
+    SwitchToThread();
 #elif NV_OS_UNIX
-	int result = sched_yield();
-	nvDebugCheck(result == 0);
+    int result = sched_yield();
+    nvDebugCheck(result == 0);
 #endif
 }
 
 /*static*/ void Thread::sleep(uint ms)
 {
 #if NV_OS_WIN32
-	Sleep(ms);
+    Sleep(ms);
 #elif NV_OS_UNIX
-	usleep(1000 * ms);
+    usleep(1000 * ms);
 #endif
 }
 
@@ -134,3 +137,4 @@ bool Thread::isRunning () const
     }
 //#endif
 }
+

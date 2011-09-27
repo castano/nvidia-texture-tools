@@ -25,6 +25,12 @@ namespace nv
     inline uint32 asUnsigned(int32 x) { return (uint32) x; }
     inline uint64 asUnsigned(int64 x) { return (uint64) x; }
 
+    template <typename T> inline uint32 toU32(T x) {
+        nvDebugCheck(x <= UINT32_MAX);
+        nvDebugCheck(x >= 0);
+        return (uint32) x;
+    }
+
     /*
     template <typename T> inline int8 toI8(T x) { 
         nvDebugCheck(x <= INT8_MAX);
