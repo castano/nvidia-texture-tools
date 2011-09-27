@@ -22,6 +22,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CubeImage.h"
+#include "TexImage.h"
 
 using namespace nv;
 using namespace nvtt;
@@ -113,14 +114,14 @@ TexImage CubeImage::unfold(CubeLayout layout)
 void CubeImage::toLinear(float gamma)
 {
     for (int i = 0; i < 6; i++) {
-        m->face.toLinear(gamma);
+        m->face[i].toLinear(gamma);
     }
 }
 
 void CubeImage::toGamma(float gamma)
 {
     for (int i = 0; i < 6; i++) {
-        m->face.toGamma(gamma);
+        m->face[i].toGamma(gamma);
     }
 }
 
