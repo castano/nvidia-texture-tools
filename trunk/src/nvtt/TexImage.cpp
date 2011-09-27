@@ -55,14 +55,14 @@ namespace
         const uint np2 = nextPowerOfTwo(v);
         const uint pp2 = previousPowerOfTwo(v);
 
-	if (np2 - v <= v - pp2)
-	{
-	    return np2;
-	}
-	else
-	{
-	    return pp2;
-	}
+        if (np2 - v <= v - pp2)
+        {
+            return np2;
+        }
+        else
+        {
+            return pp2;
+        }
     }
 
     static int blockSize(Format format)
@@ -95,6 +95,18 @@ namespace
     }
 }
 
+uint nv::countMipmaps(uint w)
+{
+    uint mipmap = 0;
+
+    while (w != 1) {
+        w = max(1U, w / 2);
+        mipmap++;
+    }
+
+    return mipmap + 1;
+}
+
 uint nv::countMipmaps(uint w, uint h, uint d)
 {
     uint mipmap = 0;
@@ -115,9 +127,7 @@ uint nv::computeImageSize(uint w, uint h, uint d, uint bitCount, uint pitchAlign
         return d * h * computeBytePitch(w, bitCount, pitchAlignmentInBytes);
     }
     else {
-        nvDebugCheck(d == 1);
-        // @@ Handle 3D textures. DXT and VTC have different behaviors.
-        return ((w + 3) / 4) * ((h + 3) / 4) * blockSize(format);
+        return ((w + 3) / 4) * ((h + 3) / 4) * blockSize(format) * d;
     }
 }
 
@@ -1118,6 +1128,8 @@ void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 
     detach();
 
+    //threshold = clamp(threshold, 1e-6f, 1.0f);
+    threshold = 1e-6f;
     float irange = 1.0f / range;
 
     FloatImage * img = m->image;
@@ -1131,13 +1143,51 @@ void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
         float R = nv::clamp(r[i] * irange, 0.0f, 1.0f);
         float G = nv::clamp(g[i] * irange, 0.0f, 1.0f);
         float B = nv::clamp(b[i] * irange, 0.0f, 1.0f);
-
-        float M = max(max(R, G), max(B, 1e-6f)); // Avoid division by zero.
+#if 1
+        float M = max(max(R, G), max(B, threshold));
 
         r[i] = R / M;
         g[i] = G / M;
         b[i] = B / M;
         a[i] = M;
+
+#else
+
+        // The optimal compressor theoretically produces the best results, but unfortunately introduces
+        // severe interpolation errors!
+        float bestM;
+        float bestError = FLT_MAX;
+
+        int minM = iround(min(R, G, B) * 255.0f);
+
+        for (int m = minM; m < 256; m++) {
+            float fm = float(m) / 255.0f;
+
+            // Encode.
+            int ir = iround(255.0f * nv::clamp(R / fm, 0.0f, 1.0f));
+            int ig = iround(255.0f * nv::clamp(G / fm, 0.0f, 1.0f));
+            int ib = iround(255.0f * nv::clamp(B / fm, 0.0f, 1.0f));
+
+            // Decode.
+            float fr = (float(ir) / 255.0f) * fm;
+            float fg = (float(ig) / 255.0f) * fm;
+            float fb = (float(ib) / 255.0f) * fm;
+
+            // Measure error.
+            float error = square(R-fr) + square(G-fg) + square(B-fb);
+
+            if (error < bestError) {
+                bestError = error;
+                bestM = fm;
+            }
+        }
+
+        M = bestM;
+        r[i] = nv::clamp(R / M, 0.0f, 1.0f);
+        g[i] = nv::clamp(G / M, 0.0f, 1.0f);
+        b[i] = nv::clamp(B / M, 0.0f, 1.0f);
+        a[i] = M;
+#endif
     }
 }
 

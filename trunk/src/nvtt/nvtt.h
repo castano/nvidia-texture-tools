@@ -507,7 +507,15 @@ namespace nvtt
     };
 
 
-    /// A texture mipmap.
+    enum CubeLayout {
+        CubeLayout_VerticalCross,
+        CubeLayout_HorizontalCross,
+        CubeLayout_Column,
+        CubeLayout_Row,
+        CubeLayout_LatitudeLongitude,
+    };
+
+    /// A cubemap mipmap.
     struct CubeImage
     {
         NVTT_API CubeImage();
@@ -520,20 +528,24 @@ namespace nvtt
         NVTT_API bool isNull() const;
         NVTT_API int size() const;
         NVTT_API int countMipmaps() const;
-        NVTT_API float average(int channel, int alpha_channel = -1, float gamma = 2.2f) const;
 
         // Texture data.
         NVTT_API bool load(const char * fileName);
         NVTT_API bool save(const char * fileName) const;
-        NVTT_API bool setImage2D(InputFormat format, int face, int w, int h, const void * data);
-        NVTT_API bool setImage2D(InputFormat format, int face, int w, int h, const void * r, const void * g, const void * b, const void * a);
-        NVTT_API bool setImage2D(Format format, Decoder decoder, int face, int w, int h, const void * data);
 
         TexImage & face(int face);
 
-        //
+        // Layout conversion.
+        void fold(TexImage & img, CubeLayout layout);
+        TexImage unfold(CubeLayout layout);
+
+        // @@ Angular extent filtering.
 
         // @@ Add resizing methods.
+
+        // @@ Irradiance cubemaps.
+        CubeImage irradiance(int size);
+
         /*
         NVTT_API void resize(int w, int h, ResizeFilter filter);
         NVTT_API void resize(int w, int h, ResizeFilter filter, float filterWidth, const float * params = 0);
