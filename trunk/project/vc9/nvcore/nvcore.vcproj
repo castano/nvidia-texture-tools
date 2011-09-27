@@ -313,6 +313,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvcore\Library.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvcore\Library.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvcore\Memory.cpp"
 			>
 		</File>
