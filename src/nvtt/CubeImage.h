@@ -1,5 +1,4 @@
 // Copyright (c) 2009-2011 Ignacio Castano <castano@gmail.com>
-// Copyright (c) 2007-2009 NVIDIA Corporation -- Ignacio Castano <icastano@nvidia.com>
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -22,21 +21,19 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NVTT_TEXIMAGE_H
-#define NVTT_TEXIMAGE_H
+#ifndef NVTT_CUBEIMAGE_H
+#define NVTT_CUBEIMAGE_H
 
 #include "nvtt.h"
 
 #include "nvcore/RefCounted.h"
 #include "nvcore/Ptr.h"
 
-#include "nvimage/Image.h"
-#include "nvimage/FloatImage.h"
 
 namespace nvtt
 {
 
-    struct TexImage::Private : public nv::RefCounted
+    struct CubeImage::Private : public nv::RefCounted
     {
         void operator=(const Private &);
     public:
@@ -44,45 +41,26 @@ namespace nvtt
         {
             nvDebugCheck( refCount() == 0 );
 
-            type = TextureType_2D;
-            wrapMode = WrapMode_Mirror;
-            alphaMode = AlphaMode_None;
-            isNormalMap = false;
-            
-            image = NULL;
+            size = 0;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
         {
             nvDebugCheck( refCount() == 0 );
 
-            type = p.type;
-            wrapMode = p.wrapMode;
-            alphaMode = p.alphaMode;
-            isNormalMap = p.isNormalMap;
-
-            image = p.image->clone();
+            size = p.size;
+            for (uint i = 0; i < 6; i++) {
+                face[i] = p.face[6];
+            }
         }
         ~Private()
         {
-            delete image;
         }
 
-        TextureType type;
-        WrapMode wrapMode;
-        AlphaMode alphaMode;
-        bool isNormalMap;
-
-        nv::FloatImage * image;
+        int size;
+        TexImage face[6];
     };
 
 } // nvtt namespace
 
-namespace nv {
-    uint countMipmaps(uint w);
-    uint countMipmaps(uint w, uint h, uint d);
-    uint computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignmentInBytes, nvtt::Format format);
-    void getTargetExtent(int & w, int & h, int & d, int maxExtent, nvtt::RoundMode roundMode, nvtt::TextureType textureType);
-}
 
-
-#endif // NVTT_TEXIMAGE_H
+#endif // NVTT_CUBEIMAGE_H

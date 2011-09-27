@@ -24,12 +24,11 @@ SET(NVTT_SRCS
     OutputOptions.h OutputOptions.cpp
     TaskDispatcher.h TaskDispatcher.cpp
     TexImage.h TexImage.cpp
-    cuda/CudaUtils.h
-    cuda/CudaUtils.cpp
+    CubeImage.h CubeImage.cpp
+    cuda/CudaUtils.h cuda/CudaUtils.cpp
     cuda/CudaMath.h
     cuda/BitmapTable.h
-    cuda/CudaCompressorDXT.h
-    cuda/CudaCompressorDXT.cpp)
+    cuda/CudaCompressorDXT.h cuda/CudaCompressorDXT.cpp)
 
 IF (CUDA_FOUND)
     ADD_DEFINITIONS(-DHAVE_CUDA)
