@@ -2,7 +2,7 @@
 #error "Do not include this file directly."
 #endif
 
-//#include <stdint.h> // uint8_t, int8_t, ...
+#include <stdint.h> // uint8_t, int8_t, ... uintptr_t
 #include <cstddef> // operator new, size_t, NULL
 
 // Function linkage

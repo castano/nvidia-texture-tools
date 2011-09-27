@@ -7,9 +7,76 @@
 #include "nvcore.h"
 #include "Debug.h" // nvDebugCheck
 
+// Just in case. Grrr.
+#undef min
+#undef max
+
 namespace nv
 {
+    // Less error prone than casting. From CB:
+    // http://cbloomrants.blogspot.com/2011/06/06-17-11-c-casting-is-devil.html
+    inline int8  asSigned(uint8 x)  { return (int8) x; }
+    inline int16 asSigned(uint16 x) { return (int16) x; }
+    inline int32 asSigned(uint32 x) { return (int32) x; }
+    inline int64 asSigned(uint64 x) { return (int64) x; }
 
+    inline uint8  asUnsigned(int8 x)  { return (uint8) x; }
+    inline uint16 asUnsigned(int16 x) { return (uint16) x; }
+    inline uint32 asUnsigned(int32 x) { return (uint32) x; }
+    inline uint64 asUnsigned(int64 x) { return (uint64) x; }
+
+    /*
+    template <typename T> inline int8 toI8(T x) { 
+        nvDebugCheck(x <= INT8_MAX);
+        nvDebugCheck(x >= INT8_MIN);
+        int8 y = (int8) x;
+        nvDebugCheck(x == (T)y);
+        return y;
+    }
+    
+    template <typename T> inline uint8 toU8(T x) { 
+        nvDebugCheck(x <= UINT8_MAX);
+        nvDebugCheck(x >= 0);
+        return (uint8) x;
+    }
+
+    template <typename T> inline int16 toI16(T x) { 
+        nvDebugCheck(x <= INT16_MAX);
+        nvDebugCheck(x >= INT16_MIN);
+        return (int16) x;
+    }
+    
+    template <typename T> inline uint16 toU16(T x) { 
+        nvDebugCheck(x <= UINT16_MAX);
+        nvDebugCheck(x >= 0);
+        return (uint16) x;
+    }
+    
+    template <typename T> inline int32 toI32(T x) { 
+        nvDebugCheck(x <= INT32_MAX);
+        nvDebugCheck(x >= INT32_MIN);
+        return (int32) x;
+    }
+
+    template <typename T> inline uint32 toU32(T x) { 
+        nvDebugCheck(x <= UINT32_MAX);
+        nvDebugCheck(x >= 0);
+        return (uint32) x;
+    }
+    
+    template <typename T> inline int64 toI64(T x) { 
+        nvDebugCheck(x <= INT64_MAX);
+        nvDebugCheck(x >= INT64_MIN);
+        return (int64) x;
+    }
+    
+    template <typename T> inline uint64 toU64(T x) { 
+        nvDebugCheck(x <= UINT64_MAX);
+        nvDebugCheck(x >= 0);
+        return (uint64) x;
+    }
+    */
+    
     /// Swap two values.
     template <typename T> 
     inline void swap(T & a, T & b)

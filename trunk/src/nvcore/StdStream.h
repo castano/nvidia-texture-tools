@@ -72,7 +72,7 @@ namespace nv
 #if NV_OS_WIN32
             return _ftell_nolock(m_fp);
 #else
-            return ftell(m_fp);
+            return (uint)ftell(m_fp);
 #endif
         }
 
@@ -85,9 +85,9 @@ namespace nv
             uint end = _ftell_nolock(m_fp);
             _fseek_nolock(m_fp, pos, SEEK_SET);
 #else
-            uint pos = ftell(m_fp);
+            uint pos = (uint)ftell(m_fp);
             fseek(m_fp, 0, SEEK_END);
-            uint end = ftell(m_fp);
+            uint end = (uint)ftell(m_fp);
             fseek(m_fp, pos, SEEK_SET);            
 #endif
             return end;

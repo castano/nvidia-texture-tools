@@ -189,7 +189,7 @@ StringBuilder::StringBuilder() : m_size(0), m_str(NULL)
 }
 
 /** Preallocate space. */
-StringBuilder::StringBuilder( int size_hint ) : m_size(size_hint)
+StringBuilder::StringBuilder( uint size_hint ) : m_size(size_hint)
 {
     nvDebugCheck(m_size > 0);
     m_str = strAlloc(m_size);
@@ -203,9 +203,15 @@ StringBuilder::StringBuilder( const StringBuilder & s ) : m_size(0), m_str(NULL)
 }
 
 /** Copy string. */
-StringBuilder::StringBuilder( const char * s, int extra_size_hint/*=0*/ ) : m_size(0), m_str(NULL)
+StringBuilder::StringBuilder(const char * s) : m_size(0), m_str(NULL)
 {
-    copy(s, extra_size_hint);
+    copy(s);
+}
+
+/** Copy string. */
+StringBuilder::StringBuilder(const char * s, uint len) : m_size(0), m_str(NULL)
+{
+    copy(s, len);
 }
 
 /** Delete the string. */
@@ -396,12 +402,22 @@ StringBuilder & StringBuilder::reserve( uint size_hint )
 
 
 /** Copy a string safely. */
-StringBuilder & StringBuilder::copy( const char * s, int extra_size/*=0*/ )
+StringBuilder & StringBuilder::copy(const char * s)
 {
     nvCheck( s != NULL );
     const uint str_size = uint(strlen( s )) + 1;
-    reserve(str_size + extra_size);
+    reserve(str_size);
     memcpy(m_str, s, str_size);
+    return *this;
+}
+
+/** Copy a string safely. */
+StringBuilder & StringBuilder::copy(const char * s, uint len)
+{
+    nvCheck( s != NULL );
+    const uint str_size = len + 1;
+    reserve(str_size);
+    strCpy(m_str, str_size, s, len);
     return *this;
 }
 

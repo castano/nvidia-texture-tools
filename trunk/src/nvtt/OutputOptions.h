@@ -52,6 +52,11 @@ namespace nvtt
 			return true;
 		}
 
+		virtual void endImage()
+		{
+			// ignore.
+		}
+
 		nv::StdOutputStream stream;
 	};
 
@@ -72,6 +77,7 @@ namespace nvtt
 
 		void beginImage(int size, int width, int height, int depth, int face, int miplevel) const;
 		bool writeData(const void * data, int size) const;
+        void endImage() const;
 		void error(Error e) const;
 	};
 

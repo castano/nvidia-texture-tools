@@ -4,9 +4,6 @@
 #ifndef NV_CORE_H
 #define NV_CORE_H
 
-// cmake config
-#include <nvconfig.h>
-
 // Function linkage
 #if NVCORE_SHARED
 #ifdef NVCORE_EXPORTS
@@ -91,7 +88,11 @@
 // @@ NV_CC_MSVC7
 // @@ NV_CC_MSVC8
 
-#if defined POSH_COMPILER_GCC
+#if defined POSH_COMPILER_CLANG
+#   define NV_CC_CLANG  1
+#   define NV_CC_GCC    1    // Clang is compatible with GCC.
+#   define NV_CC_STRING "clang"
+#elif defined POSH_COMPILER_GCC
 #   define NV_CC_GNUC   1
 #   define NV_CC_STRING "gcc"
 #elif defined POSH_COMPILER_MSVC
@@ -106,6 +107,18 @@
 #define NV_LITTLE_ENDIAN    POSH_LITTLE_ENDIAN
 #define NV_BIG_ENDIAN       POSH_BIG_ENDIAN
 #define NV_ENDIAN_STRING    POSH_ENDIAN_STRING
+
+
+// Define the right printf prefix for size_t arguments:
+#if POSH_64BIT_POINTER
+#  define NV_SIZET_PRINTF_PREFIX POSH_I64_PRINTF_PREFIX
+#else
+#  define NV_SIZET_PRINTF_PREFIX
+#endif
+
+
+// cmake config
+#include "nvconfig.h"
 
 
 // Type definitions:
@@ -144,6 +157,8 @@ typedef uint32      uint;
     private: \
     void *operator new(size_t size); \
     void *operator new[](size_t size);
+    //static void *operator new(size_t size); \
+    //static void *operator new[](size_t size);
 
 // String concatenation macros.
 #define NV_STRING_JOIN2(arg1, arg2) NV_DO_STRING_JOIN2(arg1, arg2)
@@ -152,6 +167,25 @@ typedef uint32      uint;
 #define NV_DO_STRING_JOIN3(arg1, arg2, arg3) arg1 ## arg2 ## arg3
 #define NV_STRING2(x) #x
 #define NV_STRING(x) NV_STRING2(x)
+
+
+#if __cplusplus > 199711L
+#define nvStaticCheck(x) static_assert(x)
+#else
+#define nvStaticCheck(x) typedef char NV_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
+#endif
+#define NV_COMPILER_CHECK(x) nvStaticCheck(x)   // I like this name best.
+
+// Make sure type definitions are fine.
+NV_COMPILER_CHECK(sizeof(int8) == 1);
+NV_COMPILER_CHECK(sizeof(uint8) == 1);
+NV_COMPILER_CHECK(sizeof(int16) == 2);
+NV_COMPILER_CHECK(sizeof(uint16) == 2);
+NV_COMPILER_CHECK(sizeof(int32) == 4);
+NV_COMPILER_CHECK(sizeof(uint32) == 4);
+NV_COMPILER_CHECK(sizeof(int32) == 4);
+NV_COMPILER_CHECK(sizeof(uint32) == 4);
+
 
 #define NV_ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -180,6 +214,7 @@ typedef uint32      uint;
 
 // Null index. @@ Move this somewhere else... it's only used by nvmesh.
 //const unsigned int NIL = unsigned int(~0);
+//#define NIL uint(~0)
 
 // Null pointer.
 #ifndef NULL

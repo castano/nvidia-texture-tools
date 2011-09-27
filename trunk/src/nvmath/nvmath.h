@@ -4,8 +4,9 @@
 #ifndef NV_MATH_H
 #define NV_MATH_H
 
-#include <nvcore/nvcore.h>
-#include <nvcore/Debug.h>
+#include "nvcore/nvcore.h"
+#include "nvcore/Debug.h"
+#include "nvcore/Utils.h" // clamp
 
 #include <math.h>
 #include <limits.h> // INT_MAX
@@ -194,7 +195,7 @@ namespace nv
         return f - floor(f);
     }
 
-    inline float fround(float f)
+    inline float fround(float f)    // @@ rename floatRound
     {
         // @@ Do something better.
         return float(iround(f));
@@ -208,6 +209,29 @@ namespace nv
             union { float f; uint32 i; } x = { fp[i] };
             if (x.i == 0x80000000) fp[i] = 0.0f;
         }
+    }
+
+    inline float saturate(float f) {
+        return clamp(f, 0.0f, 1.0f);
+    }
+
+    inline float linearstep(float edge0, float edge1, float x) {
+        // Scale, bias and saturate x to 0..1 range
+        return saturate((x - edge0) / (edge1 - edge0));
+    }
+
+    inline float smoothstep(float edge0, float edge1, float x) {
+        x = linearstep(edge0, edge1, x); 
+
+        // Evaluate polynomial
+        return x*x*(3 - 2*x);
+    }
+
+    inline int sign(float a)
+    {
+        if (a > 0.0f) return 1;
+        if (a < 0.0f) return -1;
+        return 0;
     }
 
 } // nv

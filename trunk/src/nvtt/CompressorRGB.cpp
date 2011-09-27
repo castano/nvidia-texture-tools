@@ -110,7 +110,7 @@ namespace
         {
             nvDebugCheck(alignment >= 1);
             flush();
-            int remainder = (size_t)ptr % alignment;
+            int remainder = (int)((uintptr_t)ptr % alignment);
             if (remainder != 0) {
                 putBits(0, (alignment - remainder) * 8);
             }

@@ -6,6 +6,7 @@ INCLUDE_DIRECTORIES(${NV_SOURCE_DIR}/extern/stb)
 SUBDIRS(nvcore)
 SUBDIRS(nvmath)
 SUBDIRS(nvimage)
+SUBDIRS(nvthread)
 SUBDIRS(nvtt)
 
 # OpenGL

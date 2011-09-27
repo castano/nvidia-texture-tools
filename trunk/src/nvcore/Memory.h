@@ -43,15 +43,15 @@ extern "C" {
 namespace nv {
 
     // C++ helpers.
-    template <typename T> T * malloc(size_t count) {
+    template <typename T> NV_FORCEINLINE T * malloc(size_t count) {
         return (T *)::malloc(sizeof(T) * count);
     }
 
-    template <typename T> T * realloc(T * ptr, size_t count) {
+    template <typename T> NV_FORCEINLINE T * realloc(T * ptr, size_t count) {
         return (T *)::realloc(ptr, sizeof(T) * count);
     }
 
-    template <typename T> void free(const T * ptr) {
+    template <typename T> NV_FORCEINLINE void free(const T * ptr) {
         ::free((void *)ptr);
     }
 

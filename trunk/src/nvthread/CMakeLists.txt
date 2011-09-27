@@ -1,0 +1,26 @@
+PROJECT(nvthreads)
+
+SET(THREADS_SRCS
+	nvthreads.h
+	Mutex.h Mutex.cpp
+	SpinWaiter.h SpinWaiter.cpp
+	Thread.h Thread.cpp
+	ThreadLocalStorage.h ThreadLocalStorage.cpp)
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+# targets
+ADD_DEFINITIONS(-DNVTHREADS_EXPORTS)
+
+IF(NVTHREADS_SHARED)
+	ADD_LIBRARY(nvthreads SHARED ${THREADS_SRCS})
+ELSE(NVTHREADS_SHARED)
+	ADD_LIBRARY(nvthreads ${THREADS_SRCS})
+ENDIF(NVTHREADS_SHARED)
+
+TARGET_LINK_LIBRARIES(nvthreads ${LIBS} nvcore)
+
+INSTALL(TARGETS nvthreads
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION lib
+	ARCHIVE DESTINATION lib/static)

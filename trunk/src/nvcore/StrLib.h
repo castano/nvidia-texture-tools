@@ -59,9 +59,10 @@ namespace nv
     public:
 
         StringBuilder();
-        explicit StringBuilder( int size_hint );
-        StringBuilder( const char * str, int extra_size_hint = 0);
-        StringBuilder( const StringBuilder & );
+        explicit StringBuilder( uint size_hint );
+        StringBuilder(const char * str);
+        StringBuilder(const char * str, uint len);
+        StringBuilder(const StringBuilder & other);
 
         ~StringBuilder();
 
@@ -75,9 +76,10 @@ namespace nv
         StringBuilder & number( int i, int base = 10 );
         StringBuilder & number( uint i, int base = 10 );
 
-        StringBuilder & reserve( uint size_hint );
-        StringBuilder & copy( const char * str, int extra_size/*=0*/ );
-        StringBuilder & copy( const StringBuilder & str );
+        StringBuilder & reserve(uint size_hint);
+        StringBuilder & copy(const char * str);
+        StringBuilder & copy(const char * str, uint len);
+        StringBuilder & copy(const StringBuilder & str);
 
         StringBuilder & toLower();
         StringBuilder & toUpper();
@@ -145,7 +147,7 @@ namespace nv
     public:
         Path() : StringBuilder() {}
         explicit Path(int size_hint) : StringBuilder(size_hint) {}
-        Path(const char * str, int extra_size_hint = 0) : StringBuilder(str, extra_size_hint) {}
+        Path(const char * str) : StringBuilder(str) {}
         Path(const Path & path) : StringBuilder(path) {}
 
         const char * fileName() const;

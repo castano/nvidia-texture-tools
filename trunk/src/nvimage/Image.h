@@ -70,14 +70,14 @@ namespace nv
 
     inline const Color32 & Image::pixel(uint x, uint y) const
     {
-        nvDebugCheck(x < width() && y < height());
-        return pixel(y * width() + x);
+        nvDebugCheck(x < m_width && y < m_height);
+        return pixel(y * m_width + x);
     }
 
     inline Color32 & Image::pixel(uint x, uint y)
     {
-        nvDebugCheck(x < width() && y < height());
-        return pixel(y * width() + x);
+        nvDebugCheck(x < m_width && y < m_height);
+        return pixel(y * m_width + x);
     }
 
 } // nv namespace

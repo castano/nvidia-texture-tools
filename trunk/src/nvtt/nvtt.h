@@ -294,6 +294,9 @@ namespace nvtt
 
         /// Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
         virtual bool writeData(const void * data, int size) = 0;
+
+        /// Indicate the end of a the compressed image.
+        virtual void endImage() = 0;
     };
 
     /// Error codes.
@@ -440,10 +443,13 @@ namespace nvtt
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter, float filterWidth, const float * params = 0);
         NVTT_API bool buildNextMipmap(MipmapFilter filter);
         NVTT_API bool buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params = 0);
+        NVTT_API void canvasSize(int w, int h, int d);
 
         // Color transforms.
         NVTT_API void toLinear(float gamma);
         NVTT_API void toGamma(float gamma);
+        NVTT_API void toSrgb();
+        NVTT_API void toXenonSrgb();
         NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
         NVTT_API void swizzle(int r, int g, int b, int a);
         NVTT_API void scaleBias(int channel, float scale, float bias);

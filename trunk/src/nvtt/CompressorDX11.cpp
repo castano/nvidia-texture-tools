@@ -37,7 +37,7 @@ using namespace nv;
 using namespace nvtt;
 
 
-void CompressorBC6::compressBlock(Tile & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
+void CompressorBC6::compressBlock(ColorSet & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
 {
     NV_UNUSED(alphaMode); // ZOH does not support alpha.
 
@@ -56,7 +56,7 @@ void CompressorBC6::compressBlock(Tile & tile, AlphaMode alphaMode, const Compre
 }
 
 
-void CompressorBC7::compressBlock(Tile & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
+void CompressorBC7::compressBlock(ColorSet & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
 {
     // @@ TODO
 }

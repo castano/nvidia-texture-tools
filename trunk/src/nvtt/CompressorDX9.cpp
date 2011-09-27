@@ -481,10 +481,10 @@ void D3DXCompressorDXT1::compress(nvtt::InputFormat inputFormat, nvtt::AlphaMode
 
         err = surface->LockRect(&rect, NULL, D3DLOCK_READONLY);
 
-	if (outputOptions.outputHandler != NULL) {
-	    int size = rect.Pitch * ((h + 3) / 4);
-	    outputOptions.outputHandler->writeData(rect.pBits, size);
-	}
+	    if (outputOptions.outputHandler != NULL) {
+	        int size = rect.Pitch * ((h + 3) / 4);
+	        outputOptions.outputHandler->writeData(rect.pBits, size);
+	    }
 
         err = surface->UnlockRect();
     }

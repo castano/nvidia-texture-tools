@@ -9,15 +9,14 @@
 
 namespace nv
 {
-    enum zero_t { zero };
     enum identity_t { identity };
 
     class NVMATH_CLASS Matrix3
     {
     public:
         Matrix3();
-        Matrix3(zero_t);
-        Matrix3(identity_t);
+        explicit Matrix3(float f);
+        explicit Matrix3(identity_t);
         Matrix3(const Matrix3 & m);
         Matrix3(Vector3::Arg v0, Vector3::Arg v1, Vector3::Arg v2);
 
@@ -41,10 +40,10 @@ namespace nv
 
     inline Matrix3::Matrix3() {}
     
-    inline Matrix3::Matrix3(zero_t)
+    inline Matrix3::Matrix3(float f)
     {
         for(int i = 0; i < 9; i++) {
-            m_data[i] = 0.0f;
+            m_data[i] = f;
         }
     }
 
@@ -204,11 +203,11 @@ namespace nv
         typedef Matrix const & Arg;
 
         Matrix();
-        Matrix(zero_t);
-        Matrix(identity_t);
+        explicit Matrix(float f);
+        explicit Matrix(identity_t);
         Matrix(const Matrix & m);
         Matrix(Vector4::Arg v0, Vector4::Arg v1, Vector4::Arg v2, Vector4::Arg v3);
-        Matrix(const scalar m[]);	// m is assumed to contain 16 elements
+        //explicit Matrix(const scalar m[]);	// m is assumed to contain 16 elements
 
         scalar data(uint idx) const;
         scalar & data(uint idx);
@@ -237,7 +236,7 @@ namespace nv
     {
     }
 
-    inline Matrix::Matrix(zero_t)
+    inline Matrix::Matrix(float f)
     {
         for(int i = 0; i < 16; i++) {
             m_data[i] = 0.0f;
@@ -268,12 +267,12 @@ namespace nv
         m_data[12] = v3.x; m_data[13] = v3.y; m_data[14] = v3.z; m_data[15] = v3.w;
     }
 
-    inline Matrix::Matrix(const scalar m[])
+    /*inline Matrix::Matrix(const scalar m[])
     {
         for(int i = 0; i < 16; i++) {
             m_data[i] = m[i];
         }
-    }
+    }*/
 
 
     // Accessors
@@ -456,7 +455,7 @@ namespace nv
     /// Get frustum matrix.
     inline Matrix frustum(scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNear, scalar zFar)
     {
-        Matrix m(zero);
+        Matrix m(0.0f);
 
         scalar doubleznear = 2.0f * zNear;
         scalar one_deltax = 1.0f / (xmax - xmin);
@@ -477,7 +476,7 @@ namespace nv
     /// Get infinite frustum matrix.
     inline Matrix frustum(scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNear)
     {
-        Matrix m(zero);
+        Matrix m(0.0f);
 
         scalar doubleznear = 2.0f * zNear;
         scalar one_deltax = 1.0f / (xmax - xmin);
