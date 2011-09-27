@@ -11,6 +11,18 @@
 #undef min
 #undef max
 
+#define NV_INT8_MIN    (-128)
+#define NV_INT8_MAX    127
+#define NV_INT16_MIN    (-32768)
+#define NV_INT16_MAX    32767
+#define NV_UINT16_MAX   0xffff
+#define NV_INT32_MIN    (-2147483648)
+#define NV_INT32_MAX    2147483647
+#define NV_UINT32_MAX   0xffffffff
+#define NV_INT64_MAX    POSH_I64(9223372036854775807)
+#define NV_INT64_MIN    (-POSH_I64(9223372036854775808))
+#define NV_UINT64_MAX   POSH_U64(0xffffffffffffffff)
+
 namespace nv
 {
     // Less error prone than casting. From CB:
@@ -26,7 +38,7 @@ namespace nv
     inline uint64 asUnsigned(int64 x) { return (uint64) x; }
 
     template <typename T> inline uint32 toU32(T x) {
-        nvDebugCheck(x <= UINT32_MAX);
+        nvDebugCheck(x <= NV_UINT32_MAX);
         nvDebugCheck(x >= 0);
         return (uint32) x;
     }
