@@ -943,6 +943,26 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, uint d, W
 }
 
 
+void FloatImage::convolve(const Kernel2 & k, uint c, WrapMode wm)
+{
+    AutoPtr<FloatImage> tmpImage = clone();
+
+    uint w = m_width;
+    uint h = m_height;
+    uint d = m_depth;
+
+    for (uint z = 0; z < d; z++)
+    {
+        for (uint y = 0; y < h; y++)
+        {
+            for (uint x = 0; x < w; x++)
+            {
+                pixel(c, x, y, 0) = tmpImage->applyKernelXY(&k, x, y, z, c, wm);
+            }
+        }
+    }
+}
+
 
 /// Apply 2D kernel at the given coordinates and return result.
 float FloatImage::applyKernelXY(const Kernel2 * k, int x, int y, int z, uint c, WrapMode wm) const

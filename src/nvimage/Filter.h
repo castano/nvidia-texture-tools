@@ -166,6 +166,7 @@ namespace nv
     {
     public:
         Kernel2(uint width);
+        Kernel2(uint width, const float * data);
         Kernel2(const Kernel2 & k);
         ~Kernel2();
 

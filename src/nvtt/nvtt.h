@@ -471,6 +471,7 @@ namespace nvtt
         NVTT_API void toLUVW(float range = 1.0f);
         NVTT_API void fromLUVW(float range = 1.0f);
         NVTT_API void abs(int channel);
+        NVTT_API void convolve(int channel, int kernelSize, float * kernelData);
 
         //NVTT_API void blockLuminanceScale(float scale);
 
