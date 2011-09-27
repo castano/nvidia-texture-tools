@@ -29,14 +29,15 @@ namespace nv
         const Image & operator=(const Image & img);
 
 
-        void allocate(uint w, uint h);
+        void allocate(uint w, uint h, uint d = 1);
         bool load(const char * name);
 
-        void wrap(void * data, uint w, uint h);
+        void wrap(void * data, uint w, uint h, uint d = 1);
         void unwrap();
 
         uint width() const;
         uint height() const;
+        uint depth() const;
 
         const Color32 * scanline(uint h) const;
         Color32 * scanline(uint h);
@@ -61,6 +62,7 @@ namespace nv
     private:
         uint m_width;
         uint m_height;
+        uint m_depth;
         Format m_format;
         Color32 * m_data;
     };

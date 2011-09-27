@@ -983,12 +983,6 @@ bool DirectDrawSurface::isSupported() const
             // Cubemaps must contain all faces.
             return false;
         }
-
-        if (isTexture3D())
-        {
-            // @@ 3D textures not supported yet.
-            return false;
-        }
     }
 
     return true;
@@ -1127,15 +1121,17 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 
     uint w = width();
     uint h = height();
+	uint d = depth();
 
     // Compute width and height.
     for (uint m = 0; m < mipmap; m++)
     {
         w = max(1U, w / 2);
         h = max(1U, h / 2);
+		d = max(1U, d / 2);
     }
 
-    img->allocate(w, h);
+    img->allocate(w, h, d);
 
     if (hasAlpha())
     {
@@ -1416,7 +1412,7 @@ uint DirectDrawSurface::mipmapSize(uint mipmap) const
         // @@ How are 3D textures aligned?
         w = (w + 3) / 4;
         h = (h + 3) / 4;
-        return blockSize() * w * h;
+        return blockSize() * w * h * d;
     }
     else
     {

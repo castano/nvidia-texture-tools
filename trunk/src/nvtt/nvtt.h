@@ -190,7 +190,7 @@ namespace nvtt
     {
         TextureType_2D,
         TextureType_Cube,
-    //  TextureType_3D,
+        TextureType_3D,
     };
 
     /// Input formats.
@@ -415,6 +415,7 @@ namespace nvtt
         NVTT_API int width() const;
         NVTT_API int height() const;
         NVTT_API int depth() const;
+        NVTT_API TextureType type() const;
         NVTT_API WrapMode wrapMode() const;
         NVTT_API AlphaMode alphaMode() const;
         NVTT_API bool isNormalMap() const;
@@ -428,13 +429,13 @@ namespace nvtt
         // Texture data.
         NVTT_API bool load(const char * fileName, bool * hasAlpha = 0);
         NVTT_API bool save(const char * fileName) const;
-        NVTT_API bool setImage2D(InputFormat format, int w, int h, const void * data);
-        NVTT_API bool setImage2D(InputFormat format, int w, int h, const void * r, const void * g, const void * b, const void * a);
+        NVTT_API bool setImage(InputFormat format, int w, int h, int d, const void * data);
+        NVTT_API bool setImage(InputFormat format, int w, int h, int d, const void * r, const void * g, const void * b, const void * a);
         NVTT_API bool setImage2D(Format format, Decoder decoder, int w, int h, const void * data);
 
         // Resizing methods.
-        NVTT_API void resize(int w, int h, ResizeFilter filter);
-        NVTT_API void resize(int w, int h, ResizeFilter filter, float filterWidth, const float * params = 0);
+        NVTT_API void resize(int w, int h, int d, ResizeFilter filter);
+        NVTT_API void resize(int w, int h, int d, ResizeFilter filter, float filterWidth, const float * params = 0);
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter, float filterWidth, const float * params = 0);
         NVTT_API bool buildNextMipmap(MipmapFilter filter);
@@ -471,14 +472,19 @@ namespace nvtt
         NVTT_API void binarize(int channel, float threshold, bool dither);
         NVTT_API void quantize(int channel, int bits, bool exactEndPoints, bool dither);
 
-        // Normal map transforms.
+        // Normal map transforms. @@ All these methods assume packed normals.
         NVTT_API void toNormalMap(float sm, float medium, float big, float large);
         NVTT_API void normalizeNormalMap();
         NVTT_API void transformNormals(NormalTransform xform);
         NVTT_API void reconstructNormals(NormalTransform xform);
+        NVTT_API void toCleanNormalMap();
+        NVTT_API void packNormals();   // [-1,1] -> [ 0,1]
+        NVTT_API void expandNormals(); // [ 0,1] -> [-1,1]
 
         // Geometric transforms.
-        NVTT_API void flipVertically();
+        NVTT_API void flipX();
+        NVTT_API void flipY();
+        NVTT_API void flipZ();
 
         // Copy image data.
         NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel);
@@ -492,6 +498,54 @@ namespace nvtt
         NVTT_API friend float cieLabError(const TexImage & reference, const TexImage & img);
         NVTT_API friend float angularError(const TexImage & reference, const TexImage & img);
         NVTT_API friend TexImage diff(const TexImage & reference, const TexImage & img, float scale);
+
+    private:
+        void detach();
+
+        struct Private;
+        Private * m;
+    };
+
+
+    /// A texture mipmap.
+    struct CubeImage
+    {
+        NVTT_API CubeImage();
+        NVTT_API CubeImage(const CubeImage & tex);
+        NVTT_API ~CubeImage();
+
+        NVTT_API void operator=(const CubeImage & tex);
+
+        // Queries.
+        NVTT_API bool isNull() const;
+        NVTT_API int size() const;
+        NVTT_API int countMipmaps() const;
+        NVTT_API float average(int channel, int alpha_channel = -1, float gamma = 2.2f) const;
+
+        // Texture data.
+        NVTT_API bool load(const char * fileName);
+        NVTT_API bool save(const char * fileName) const;
+        NVTT_API bool setImage2D(InputFormat format, int face, int w, int h, const void * data);
+        NVTT_API bool setImage2D(InputFormat format, int face, int w, int h, const void * r, const void * g, const void * b, const void * a);
+        NVTT_API bool setImage2D(Format format, Decoder decoder, int face, int w, int h, const void * data);
+
+        TexImage & face(int face);
+
+        //
+
+        // @@ Add resizing methods.
+        /*
+        NVTT_API void resize(int w, int h, ResizeFilter filter);
+        NVTT_API void resize(int w, int h, ResizeFilter filter, float filterWidth, const float * params = 0);
+        NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
+        NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter, float filterWidth, const float * params = 0);
+        NVTT_API bool buildNextMipmap(MipmapFilter filter);
+        NVTT_API bool buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params = 0);
+        */
+
+        // Color transforms.
+        NVTT_API void toLinear(float gamma);
+        NVTT_API void toGamma(float gamma);
 
     private:
         void detach();

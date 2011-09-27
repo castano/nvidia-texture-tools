@@ -2,6 +2,7 @@
 
 #include "ColorBlock.h"
 #include "Image.h"
+#include "FloatImage.h"
 
 #include "nvmath/Box.h"
 #include "nvcore/Utils.h" // swap
@@ -458,7 +459,6 @@ float ColorBlock::volume() const
     return bounds.volume();
 }*/
 
-#include "FloatImage.h"
 
 void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x, uint img_y)
 {

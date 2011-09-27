@@ -11,15 +11,15 @@ using namespace nv;
 
 float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight)
 {
-    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
+    if (!sameLayout(img, ref)) {
         return FLT_MAX;
     }
-    nvDebugCheck(img->componentNum() == 4);
-    nvDebugCheck(ref->componentNum() == 4);
+    nvDebugCheck(img->componentCount() == 4);
+    nvDebugCheck(ref->componentCount() == 4);
 
     double mse = 0;
 
-    const uint count = img->width() * img->height();
+    const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++)
     {
         float r0 = img->pixel(i + count * 0);
@@ -48,14 +48,14 @@ float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alp
 
 float nv::rmsAlphaError(const FloatImage * img, const FloatImage * ref)
 {
-    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
+    if (!sameLayout(img, ref)) {
         return FLT_MAX;
     }
-    nvDebugCheck(img->componentNum() == 4 && ref->componentNum() == 4);
+    nvDebugCheck(img->componentCount() == 4 && ref->componentCount() == 4);
 
     double mse = 0;
 
-    const uint count = img->width() * img->height();
+    const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++)
     {
         float a0 = img->pixel(i + count * 3);
@@ -72,15 +72,15 @@ float nv::rmsAlphaError(const FloatImage * img, const FloatImage * ref)
 
 float nv::averageColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight)
 {
-    if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
+    if (!sameLayout(img, ref)) {
         return FLT_MAX;
     }
-    nvDebugCheck(img->componentNum() == 4);
-    nvDebugCheck(ref->componentNum() == 4);
+    nvDebugCheck(img->componentCount() == 4);
+    nvDebugCheck(ref->componentCount() == 4);
 
     double mae = 0;
 
-    const uint count = img->width() * img->height();
+    const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++)
     {
         float r0 = img->pixel(i + count * 0);
@@ -112,7 +112,7 @@ float nv::averageAlphaError(const FloatImage * img, const FloatImage * ref)
     if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img->componentNum() == 4 && ref->componentNum() == 4);
+    nvDebugCheck(img->componentCount() == 4 && ref->componentCount() == 4);
 
     double mae = 0;
 
@@ -227,7 +227,7 @@ static void rgbToCieLab(const FloatImage * rgbImage, FloatImage * LabImage)
 {
     nvDebugCheck(rgbImage != NULL && LabImage != NULL);
     nvDebugCheck(rgbImage->width() == LabImage->width() && rgbImage->height() == LabImage->height());
-    nvDebugCheck(rgbImage->componentNum() >= 3 && LabImage->componentNum() >= 3);
+    nvDebugCheck(rgbImage->componentCount() >= 3 && LabImage->componentCount() >= 3);
 
     const uint w = rgbImage->width();
     const uint h = LabImage->height();
@@ -254,13 +254,8 @@ static void rgbToCieLab(const FloatImage * rgbImage, FloatImage * LabImage)
 // Assumes input images are in linear sRGB space.
 float nv::cieLabError(const FloatImage * img0, const FloatImage * img1)
 {
-    if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
-        return FLT_MAX;
-    }
-    nvDebugCheck(img0->componentNum() == 4 && img0->componentNum() == 4);
-
-    uint w = img0->width();
-    uint h = img0->height();
+    if (!sameLayout(img0, img1)) return FLT_MAX;
+    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
 
     const float * r0 = img0->channel(0);
     const float * g0 = img0->channel(1);
@@ -272,7 +267,7 @@ float nv::cieLabError(const FloatImage * img0, const FloatImage * img1)
 
     double error = 0.0f;
 
-    const uint count = w*h;
+    const uint count = img0->pixelCount();
     for (uint i = 0; i < count; i++)
     {
         Vector3 lab0 = rgbToCieLab(Vector3(r0[i], g0[i], b0[i]));
@@ -292,14 +287,15 @@ float nv::spatialCieLabError(const FloatImage * img0, const FloatImage * img1)
     if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img0->componentNum() == 4 && img0->componentNum() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
 
     uint w = img0->width();
     uint h = img0->height();
+    uint d = img0->depth();
 
     FloatImage lab0, lab1; // Original images in CIE-Lab space.
-    lab0.allocate(3, w, h);
-    lab1.allocate(3, w, h);
+    lab0.allocate(3, w, h, d);
+    lab1.allocate(3, w, h, d);
 
     // Convert input images to CIE-Lab.
     rgbToCieLab(img0, &lab0);
@@ -331,7 +327,7 @@ float nv::averageAngularError(const FloatImage * img0, const FloatImage * img1)
     if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img0->componentNum() == 4 && img0->componentNum() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
 
     uint w = img0->width();
     uint h = img0->height();
@@ -369,7 +365,7 @@ float nv::rmsAngularError(const FloatImage * img0, const FloatImage * img1)
     if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img0->componentNum() == 4 && img0->componentNum() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
 
     uint w = img0->width();
     uint h = img0->height();

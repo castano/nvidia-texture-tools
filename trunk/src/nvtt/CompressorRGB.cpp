@@ -26,14 +26,14 @@
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
 
-#include <nvimage/Image.h>
-#include <nvimage/FloatImage.h>
-#include <nvimage/PixelFormat.h>
+#include "nvimage/Image.h"
+#include "nvimage/FloatImage.h"
+#include "nvimage/PixelFormat.h"
 
-#include <nvmath/Color.h>
-#include <nvmath/Half.h>
+#include "nvmath/Color.h"
+#include "nvmath/Half.h"
 
-#include <nvcore/Debug.h>
+#include "nvcore/Debug.h"
 
 using namespace nv;
 using namespace nvtt;
@@ -125,7 +125,7 @@ namespace
 
 
 
-void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     nvDebugCheck (compressionOptions.format == nvtt::Format_RGBA);
 
@@ -189,77 +189,68 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
     }
 
     const uint pitch = computeBytePitch(w, bitCount, compressionOptions.pitchAlignment);
-    const uint wh = w * h;
+    const uint whd = w * h * d;
 
     // Allocate output scanline.
     uint8 * const dst = malloc<uint8>(pitch);
 
-    for (uint y = 0; y < h; y++)
+    for (uint z = 0; z < d; z++)
     {
-        const uint * src = (const uint *)data + y * w;
-        const float * fsrc = (const float *)data + y * w;
-
-        BitStream stream(dst);
-
-        for (uint x = 0; x < w; x++)
+        for (uint y = 0; y < h; y++)
         {
-            float r = fsrc[x + 0 * wh];
-            float g = fsrc[x + 1 * wh];
-            float b = fsrc[x + 2 * wh];
-            float a = fsrc[x + 3 * wh];
+            const float * src = (const float *)data + y * w;
 
-            if (compressionOptions.pixelType == nvtt::PixelType_Float)
+            BitStream stream(dst);
+
+            for (uint x = 0; x < w; x++)
             {
-                if (rsize == 32) stream.putFloat(r);
-                else if (rsize == 16) stream.putHalf(r);
+                float r = src[x + 0 * whd];
+                float g = src[x + 1 * whd];
+                float b = src[x + 2 * whd];
+                float a = src[x + 3 * whd];
 
-                if (gsize == 32) stream.putFloat(g);
-                else if (gsize == 16) stream.putHalf(g);
-
-                if (bsize == 32) stream.putFloat(b);
-                else if (bsize == 16) stream.putHalf(b);
-
-                if (asize == 32) stream.putFloat(a);
-                else if (asize == 16) stream.putHalf(a);
-            }
-            else
-            {
-                Color32 c;
-                if (compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm) {
-                    c.r = uint8(clamp(r * 255, 0.0f, 255.0f));
-                    c.g = uint8(clamp(g * 255, 0.0f, 255.0f));
-                    c.b = uint8(clamp(b * 255, 0.0f, 255.0f));
-                    c.a = uint8(clamp(a * 255, 0.0f, 255.0f));
-                }
-                // @@ Add support for nvtt::PixelType_SignedInt, nvtt::PixelType_SignedNorm, nvtt::PixelType_UnsignedInt
-
-                uint p = 0;
-                p |= PixelFormat::convert(c.r, 8, rsize) << rshift;
-                p |= PixelFormat::convert(c.g, 8, gsize) << gshift;
-                p |= PixelFormat::convert(c.b, 8, bsize) << bshift;
-                p |= PixelFormat::convert(c.a, 8, asize) << ashift;
-
-                stream.putBits(p, bitCount);
-
-                // Output one byte at a time.
-                /*for (uint i = 0; i < byteCount; i++)
+                if (compressionOptions.pixelType == nvtt::PixelType_Float)
                 {
-                        *(dst + x * byteCount + i) = (p >> (i * 8)) & 0xFF;
-                }*/
+                    if (rsize == 32) stream.putFloat(r);
+                    else if (rsize == 16) stream.putHalf(r);
+
+                    if (gsize == 32) stream.putFloat(g);
+                    else if (gsize == 16) stream.putHalf(g);
+
+                    if (bsize == 32) stream.putFloat(b);
+                    else if (bsize == 16) stream.putHalf(b);
+
+                    if (asize == 32) stream.putFloat(a);
+                    else if (asize == 16) stream.putHalf(a);
+                }
+                else
+                {
+                    Color32 c;
+                    if (compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm) {
+                        c.r = uint8(clamp(r * 255, 0.0f, 255.0f));
+                        c.g = uint8(clamp(g * 255, 0.0f, 255.0f));
+                        c.b = uint8(clamp(b * 255, 0.0f, 255.0f));
+                        c.a = uint8(clamp(a * 255, 0.0f, 255.0f));
+                    }
+                    // @@ Add support for nvtt::PixelType_SignedInt, nvtt::PixelType_SignedNorm, nvtt::PixelType_UnsignedInt
+
+                    uint p = 0;
+                    p |= PixelFormat::convert(c.r, 8, rsize) << rshift;
+                    p |= PixelFormat::convert(c.g, 8, gsize) << gshift;
+                    p |= PixelFormat::convert(c.b, 8, bsize) << bshift;
+                    p |= PixelFormat::convert(c.a, 8, asize) << ashift;
+
+                    stream.putBits(p, bitCount);
+                }
             }
+
+            // Zero padding.
+            stream.align(compressionOptions.pitchAlignment);
+            nvDebugCheck(stream.ptr == dst + pitch);
+
+            // Scanlines are always byte-aligned.
+            outputOptions.writeData(dst, pitch);
         }
-
-        // Zero padding.
-        stream.align(compressionOptions.pitchAlignment);
-        nvDebugCheck(stream.ptr == dst + pitch);
-
-        /*for (uint x = w * byteCount; x < pitch; x++)
-        {
-                *(dst + x) = 0;
-        }*/
-
-        // @@ This code does not truly support less than byte-aligned textures.
-        outputOptions.writeData(dst, pitch);
     }
 
     free(dst);

@@ -143,8 +143,10 @@ void CompressorTask(void * data, int i)
     }
 }
 
-void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
+    nvDebugCheck(d == 1);
+
     CompressorContext context;
     context.alphaMode = alphaMode;
     context.w = w;
@@ -177,8 +179,10 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
 
 
 
-void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, const float * data, nvtt::TaskDispatcher * dispatcher, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
+void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
+    nvDebugCheck(d == 1);
+
     const uint bs = blockSize();
     const uint bw = (w + 3) / 4;
     const uint bh = (h + 3) / 4;

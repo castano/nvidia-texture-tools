@@ -122,7 +122,12 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
     int d = inputOptions.m.depth;
     getTargetExtent(w, h, d, inputOptions.m.maxExtent, inputOptions.m.roundMode, inputOptions.m.textureType);
 
-    int mipmapCount = countMipmaps(w, h, d);
+    int mipmapCount = 1;
+    if (inputOptions.m.generateMipmaps) {
+        mipmapCount = countMipmaps(w, h, d);
+        if (inputOptions.m.maxLevel > 0) mipmapCount = min(mipmapCount, inputOptions.m.maxLevel);
+    }
+
     return inputOptions.m.faceCount * estimateSize(w, h, d, mipmapCount, compressionOptions);
 }
 
@@ -130,7 +135,7 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 // TexImage API.
 bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-    return m.outputHeader(TextureType_2D, tex.width(), tex.height(), tex.depth(), mipmapCount, tex.isNormalMap(), compressionOptions.m, outputOptions.m);
+    return m.outputHeader(tex.type(), tex.width(), tex.height(), tex.depth(), mipmapCount, tex.isNormalMap(), compressionOptions.m, outputOptions.m);
 }
 
 bool Compressor::compress(const TexImage & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
@@ -228,7 +233,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     // Output images.
     for (int f = 0; f < faceCount; f++)
     {
-        img.setImage2D(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.images[f]);
+        img.setImage(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.depth, inputOptions.images[f]);
 
         // To normal map.
         if (inputOptions.convertToNormalMap) {
@@ -242,7 +247,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         }
 
         // Resize input.
-        img.resize(w, h, ResizeFilter_Box);
+        img.resize(w, h, d, ResizeFilter_Box);
 
         nvtt::TexImage tmp = img;
         if (!img.isNormalMap()) {
@@ -269,7 +274,12 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             }
 
             if (useSourceImages) {
-                img.setImage2D(inputOptions.inputFormat, w, h, inputOptions.images[idx]);
+                img.setImage(inputOptions.inputFormat, w, h, d, inputOptions.images[idx]);
+
+                // For already generated mipmaps, we need to convert to linear.
+                if (!img.isNormalMap()) {
+                    img.toLinear(inputOptions.inputGamma);
+                }
             }
             else {
                 if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
@@ -282,6 +292,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             }
             nvDebugCheck(img.width() == w);
             nvDebugCheck(img.height() == h);
+            nvDebugCheck(img.depth() == d);
 
             if (img.isNormalMap()) {
                 if (inputOptions.normalizeMipmaps) {
@@ -313,7 +324,7 @@ bool Compressor::Private::compress(const TexImage & tex, int face, int mipmap, c
 
 bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
-    int size = computeImageSize(w, h, d, compressionOptions.bitcount, compressionOptions.pitchAlignment, compressionOptions.format);
+    int size = computeImageSize(w, h, d, compressionOptions.getBitCount(), compressionOptions.pitchAlignment, compressionOptions.format);
     outputOptions.beginImage(size, w, h, d, face, mipmap);
 
     // Decide what compressor to use.
@@ -335,7 +346,7 @@ bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, int
     }
     else
     {
-        compressor->compress(alphaMode, w, h, rgba, dispatcher, compressionOptions, outputOptions);
+        compressor->compress(alphaMode, w, h, d, rgba, dispatcher, compressionOptions, outputOptions);
     }
 
     return true;
@@ -393,10 +404,10 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
         else if (textureType == TextureType_Cube) {
             header.setTextureCube();
         }
-        /*else if (textureType == TextureType_3D) {
+        else if (textureType == TextureType_3D) {
             header.setTexture3D();
             header.setDepth(d);
-        }*/
+        }
 
         header.setWidth(w);
         header.setHeight(h);
@@ -408,10 +419,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
         {
             if (compressionOptions.format == Format_RGBA)
             {
-                int bitcount = compressionOptions.bitcount;
-                if (bitcount == 0) {
-                    bitcount = compressionOptions.rsize + compressionOptions.gsize + compressionOptions.bsize + compressionOptions.asize;
-                }
+                const uint bitcount = compressionOptions.getBitCount();
 
                 if (bitcount == 16)
                 {

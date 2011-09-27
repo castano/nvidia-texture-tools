@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     // Output compressed image.
     context.outputHeader(image, image.countMipmaps(), compressionOptions, outputOptions);
 
-    image.flipVertically();
+    image.flipY();
     image.setAlphaMode(nvtt::AlphaMode_Transparency);
 
     // Output first mipmap.

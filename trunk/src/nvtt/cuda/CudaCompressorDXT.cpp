@@ -125,8 +125,9 @@ CudaCompressor::CudaCompressor(CudaContext & ctx) : m_ctx(ctx)
 
 }
 
-void CudaCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void CudaCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
+    nvDebugCheck(d == 1);
     nvDebugCheck(cuda::isHardwarePresent());
 
 #if defined HAVE_CUDA

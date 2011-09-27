@@ -275,9 +275,9 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 {
     if (componentCount == 0)
     {
-        componentCount = fimage->componentNum() - baseComponent;
+        componentCount = fimage->componentCount() - baseComponent;
     }
-    if (baseComponent + componentCount < fimage->componentNum())
+    if (baseComponent + componentCount < fimage->componentCount())
     {
         return false;
     }
@@ -430,7 +430,7 @@ Image * nv::ImageIO::loadFreeImage(FREE_IMAGE_FORMAT fif, Stream & s)
 
 
     Image * image = new Image();
-    image->allocate(w, h);
+    image->allocate(w, h, 1); // freeimage can only load 2d images:
 
     // Copy the image over to our internal format, FreeImage has the scanlines bottom to top though.
     for (int y=0; y < h; y++)
@@ -1575,7 +1575,7 @@ bool nv::ImageIO::saveFloatTIFF(const char * fileName, const FloatImage * fimage
 {
     nvCheck(fileName != NULL);
     nvCheck(fimage != NULL);
-    nvCheck(base_component + num_components <= fimage->componentNum());
+    nvCheck(base_component + num_components <= fimage->componentCount());
 
     const int iW = fimage->width();
     const int iH = fimage->height();
@@ -1740,7 +1740,7 @@ bool nv::ImageIO::saveFloatEXR(const char * fileName, const FloatImage * fimage,
 {
     nvCheck(fileName != NULL);
     nvCheck(fimage != NULL);
-    nvCheck(base_component + num_components <= fimage->componentNum());
+    nvCheck(base_component + num_components <= fimage->componentCount());
     nvCheck(num_components > 0 && num_components <= 4);
 
     const int w = fimage->width();

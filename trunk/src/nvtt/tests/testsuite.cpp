@@ -839,7 +839,7 @@ int main(int argc, char *argv[])
                 outputFileName.format("%s/%s", outPath, set.fileNames[i]);
                 outputFileName.stripExtension();
                 if (set.type == ImageType_HDR) outputFileName.append(".dds");
-                else outputFileName.append(".png");
+                else outputFileName.append(".tga");
                 if (!img.save(outputFileName.str()))
                 {
                     printf("Error saving file '%s'.\n", outputFileName.str());
@@ -851,7 +851,7 @@ int main(int argc, char *argv[])
             outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
             outputFileName.stripExtension();
             if (set.type == ImageType_HDR) outputFileName.append(".dds");
-            else outputFileName.append(".png");
+            else outputFileName.append(".tga");
             if (!img_out.save(outputFileName.str()))
             {
                 printf("Error saving file '%s'.\n", outputFileName.str());
@@ -886,7 +886,7 @@ int main(int argc, char *argv[])
 
             outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
             outputFileName.stripExtension();
-            outputFileName.append("_diff.png");
+            outputFileName.append("_diff.tga");
             diff.save(outputFileName.str());
 
 
