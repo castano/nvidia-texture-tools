@@ -1490,6 +1490,16 @@ void TexImage::abs(int channel)
     }
 }
 
+void TexImage::convolve(int channel, int kernelSize, float * kernelData)
+{
+    if (m->image == NULL) return;
+
+    detach();
+
+    Kernel2 k(kernelSize, kernelData);
+    m->image->convolve(k, channel, (FloatImage::WrapMode)m->wrapMode);
+}
+
 /*
 void TexImage::blockLuminanceScale(float scale)
 {

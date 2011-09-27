@@ -81,6 +81,7 @@ namespace nv
         NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
         NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm, uint alpha) const;
 
+        NVIMAGE_API void convolve(const Kernel2 & k, uint c, WrapMode wm);
 
         //NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
         //NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
