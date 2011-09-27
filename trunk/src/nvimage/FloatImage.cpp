@@ -303,30 +303,30 @@ void FloatImage::swizzle(uint baseComponent, uint r, uint g, uint b, uint a)
 
 float FloatImage::sampleNearest(uint c, float x, float y, const WrapMode wm) const
 {
-    if( wm == WrapMode_Clamp ) return sampleNearestClamp(x, y, c);
-    else if( wm == WrapMode_Repeat ) return sampleNearestRepeat(x, y, c);
-    else /*if( wm == WrapMode_Mirror )*/ return sampleNearestMirror(x, y, c);
+    if( wm == WrapMode_Clamp ) return sampleNearestClamp(c, x, y);
+    else if( wm == WrapMode_Repeat ) return sampleNearestRepeat(c, x, y);
+    else /*if( wm == WrapMode_Mirror )*/ return sampleNearestMirror(c, x, y);
 }
 
 float FloatImage::sampleLinear(uint c, float x, float y, WrapMode wm) const
 {
-    if( wm == WrapMode_Clamp ) return sampleLinearClamp(x, y, c);
-    else if( wm == WrapMode_Repeat ) return sampleLinearRepeat(x, y, c);
-    else /*if( wm == WrapMode_Mirror )*/ return sampleLinearMirror(x, y, c);
+    if( wm == WrapMode_Clamp ) return sampleLinearClamp(c, x, y);
+    else if( wm == WrapMode_Repeat ) return sampleLinearRepeat(c, x, y);
+    else /*if( wm == WrapMode_Mirror )*/ return sampleLinearMirror(c, x, y);
 }
 
 float FloatImage::sampleNearest(uint c, float x, float y, float z, WrapMode wm) const
 {
-    if( wm == WrapMode_Clamp ) return sampleNearestClamp(x, y, z, c);
-    else if( wm == WrapMode_Repeat ) return sampleNearestRepeat(x, y, z, c);
-    else /*if( wm == WrapMode_Mirror )*/ return sampleNearestMirror(x, y, z, c);
+    if( wm == WrapMode_Clamp ) return sampleNearestClamp(c, x, y, z);
+    else if( wm == WrapMode_Repeat ) return sampleNearestRepeat(c, x, y, z);
+    else /*if( wm == WrapMode_Mirror )*/ return sampleNearestMirror(c, x, y, z);
 }
 
 float FloatImage::sampleLinear(uint c, float x, float y, float z, WrapMode wm) const
 {
-    if( wm == WrapMode_Clamp ) return sampleLinearClamp(x, y, z, c);
-    else if( wm == WrapMode_Repeat ) return sampleLinearRepeat(x, y, z, c);
-    else /*if( wm == WrapMode_Mirror )*/ return sampleLinearMirror(x, y, z, c);
+    if( wm == WrapMode_Clamp ) return sampleLinearClamp(c, x, y, z);
+    else if( wm == WrapMode_Repeat ) return sampleLinearRepeat(c, x, y, z);
+    else /*if( wm == WrapMode_Mirror )*/ return sampleLinearMirror(c, x, y, z);
 }
 
 float FloatImage::sampleNearestClamp(uint c, float x, float y) const
