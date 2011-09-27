@@ -1019,9 +1019,9 @@ void TexImage::setBorder(float r, float g, float b, float a)
     const uint h = img->height();
     const uint d = img->depth();
 
-    for (int z = 0; z < d; z++)
+    for (uint z = 0; z < d; z++)
     {
-        for (int i = 0; i < w; i++)
+        for (uint i = 0; i < w; i++)
         {
             img->pixel(0, i, 0, z) = r;
             img->pixel(1, i, 0, z) = g;
@@ -1034,7 +1034,7 @@ void TexImage::setBorder(float r, float g, float b, float a)
             img->pixel(3, i, h-1, z) = a;
         }
 
-        for (int i = 0; i < h; i++)
+        for (uint i = 0; i < h; i++)
         {
             img->pixel(0, 0, i, z) = r;
             img->pixel(1, 0, i, z) = g;
