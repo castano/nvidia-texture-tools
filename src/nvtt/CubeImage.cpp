@@ -87,32 +87,57 @@ TexImage & CubeImage::face(int f)
     return m->face[f];
 }
 
+const TexImage & CubeImage::face(int f) const
+{
+    nvDebugCheck(f >= 0 && f < 6);
+    return m->face[f];
+}
+
 
 bool CubeImage::load(const char * fileName)
 {
+    // @@ TODO
     return false;
 }
 
 bool CubeImage::save(const char * fileName) const
 {
+    // @@ TODO
     return false;
 }
 
 
 void CubeImage::fold(const TexImage & tex, CubeLayout layout)
 {
-    
+    // @@ TODO
 }
 
-TexImage CubeImage::unfold(CubeLayout layout)
+TexImage CubeImage::unfold(CubeLayout layout) const
 {
-
+    // @@ TODO
+    return TexImage();
 }
 
+
+CubeImage CubeImage::irradianceFilter(int size) const
+{
+    // @@ TODO
+    return CubeImage();
+}
+
+CubeImage CubeImage::cosinePowerFilter(int size, float cosinePower) const
+{
+    // @@ TODO
+    return CubeImage();
+}
 
 
 void CubeImage::toLinear(float gamma)
 {
+    if (isNull()) return;
+
+    detach();
+
     for (int i = 0; i < 6; i++) {
         m->face[i].toLinear(gamma);
     }
@@ -120,6 +145,10 @@ void CubeImage::toLinear(float gamma)
 
 void CubeImage::toGamma(float gamma)
 {
+    if (isNull()) return;
+
+    detach();
+
     for (int i = 0; i < 6; i++) {
         m->face[i].toGamma(gamma);
     }

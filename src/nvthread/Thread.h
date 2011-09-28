@@ -19,21 +19,21 @@ namespace nv
         Thread();
         ~Thread();
 
-	void start(ThreadFunc * func, void * arg);
-	void wait();
+        void start(ThreadFunc * func, void * arg);
+        void wait();
 
-	bool isRunning() const;
+        bool isRunning() const;
 
-	static void spinWait(uint count);
-	static void yield();
-	static void sleep(uint ms);
+        static void spinWait(uint count);
+        static void yield();
+        static void sleep(uint ms);
 
-	static void wait(Thread * threads, uint count);
+        static void wait(Thread * threads, uint count);
 
     private:
 
-	struct Private;
-	AutoPtr<Private> p;
+        struct Private;
+        AutoPtr<Private> p;
 
     public: // @@ Why public? Also in private?!
         ThreadFunc * func;
