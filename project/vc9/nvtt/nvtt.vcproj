@@ -1069,6 +1069,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvtt\CubeImage.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CubeImage.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvtt\InputOptions.cpp"
 			>
 		</File>
