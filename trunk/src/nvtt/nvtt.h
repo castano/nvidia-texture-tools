@@ -70,6 +70,11 @@ namespace nvtt
     struct Surface;
     struct CubeSurface;
 
+
+    // @@ I wish I had distinguished between "formats" and compressors.
+    // That is, 'DXT1' is a format 'DXT1a' and 'DXT1n' are DXT1 compressors.
+    // That is, 'DXT3' is a format 'DXT3n' is a DXT3 compressor.
+    // Having multiple enums for the same ids only creates confusion. Clean this up.
     /// Supported compression formats.
     enum Format
     {
@@ -98,8 +103,6 @@ namespace nvtt
 
         Format_BC6,     // Not supported yet.
         Format_BC7,     // Not supported yet.
-
-        Format_RGBE,
     };
 
     /// Pixel types. These basically indicate how the output should be interpreted, but do not have any influence over the input.
@@ -472,6 +475,8 @@ namespace nvtt
         //NVTT_API bool normalizeRange(float * rangeMin, float * rangeMax);
         NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void fromRGBM(float range = 1.0f);
+        NVTT_API void toRGBE(int mantissaBits, int exponentBits);
+        NVTT_API void fromRGBE(int mantissaBits, int exponentBits);
         NVTT_API void toYCoCg();
         NVTT_API void blockScaleCoCg(int bits = 5, float threshold = 0.0f);
         NVTT_API void fromYCoCg();

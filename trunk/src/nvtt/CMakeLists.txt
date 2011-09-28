@@ -14,7 +14,6 @@ SET(NVTT_SRCS
     CompressorDX10.h CompressorDX10.cpp
 #    CompressorDX11.h CompressorDX11.cpp
     CompressorRGB.h CompressorRGB.cpp
-    CompressorRGBE.h CompressorRGBE.cpp
     Context.h Context.cpp
     QuickCompressDXT.h QuickCompressDXT.cpp
     OptimalCompressDXT.h OptimalCompressDXT.cpp
