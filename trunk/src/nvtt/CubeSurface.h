@@ -25,7 +25,7 @@
 #define NVTT_CUBEIMAGE_H
 
 #include "nvtt.h"
-#include "TexImage.h"
+#include "Surface.h"
 
 #include "nvimage/FloatImage.h"
 

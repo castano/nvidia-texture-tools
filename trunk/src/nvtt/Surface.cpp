@@ -22,7 +22,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "TexImage.h"
+#include "Surface.h"
 
 #include "nvmath/Vector.h"
 #include "nvmath/Matrix.h"

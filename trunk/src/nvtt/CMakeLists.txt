@@ -23,8 +23,8 @@ SET(NVTT_SRCS
     InputOptions.h InputOptions.cpp
     OutputOptions.h OutputOptions.cpp
     TaskDispatcher.h TaskDispatcher.cpp
-    TexImage.h TexImage.cpp
-    CubeImage.h CubeImage.cpp
+    Surface.h Surface.cpp
+    CubeSurface.h CubeSurface.cpp
     cuda/CudaUtils.h cuda/CudaUtils.cpp
     cuda/CudaMath.h
     cuda/BitmapTable.h

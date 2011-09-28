@@ -21,8 +21,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "CubeImage.h"
-#include "TexImage.h"
+#include "CubeSurface.h"
+#include "Surface.h"
 
 #include "nvmath/Vector.h"
 
