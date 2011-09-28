@@ -169,6 +169,17 @@ void FloatImage::clear(uint c, float f/*= 0.0f*/)
     }
 }
 
+void FloatImage::copyChannel(uint src, uint dst)
+{
+    nvCheck(src < m_componentCount);
+    nvCheck(dst < m_componentCount);
+
+    const float * srcChannel = this->channel(src);
+    float * dstChannel = this->channel(dst);
+
+    memcpy(dstChannel, srcChannel, sizeof(float)*m_pixelCount);
+}
+
 void FloatImage::normalize(uint baseComponent)
 {
     nvCheck(baseComponent + 3 <= m_componentCount);

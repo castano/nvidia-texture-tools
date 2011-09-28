@@ -48,6 +48,6 @@ void Event::wait() {
 }
 
 #elif NV_OS_UNIX
-    // @@ TODO
+// @@ TODO
 #pragma NV_MESSAGE("Implement event using pthreads!")
 #endif	

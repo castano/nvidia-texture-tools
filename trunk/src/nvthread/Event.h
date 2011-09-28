@@ -18,8 +18,8 @@ namespace nv
         Event();
         ~Event();
 
-	void post();
-	void wait();    // Wait resets the event.
+        void post();
+        void wait();    // Wait resets the event.
 
         static void post(Event * events, uint count);
         static void wait(Event * events, uint count);

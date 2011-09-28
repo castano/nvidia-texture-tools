@@ -150,8 +150,8 @@ namespace nv {
     private:
         // don't provide operator = or == ; make the client write Store( Load() )
         NV_FORBID_COPY(Atomic);
-		
-	NV_COMPILER_CHECK(sizeof(T) == sizeof(uint32) || sizeof(T) == sizeof(uint64));
+
+        NV_COMPILER_CHECK(sizeof(T) == sizeof(uint32) || sizeof(T) == sizeof(uint64));
 
         T m_value;
     };

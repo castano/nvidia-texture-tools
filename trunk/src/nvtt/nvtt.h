@@ -68,6 +68,7 @@ namespace nvtt
 {
     // Forward declarations.
     struct TexImage;
+    struct CubeImage;
 
     /// Supported compression formats.
     enum Format
@@ -382,6 +383,11 @@ namespace nvtt
         NVTT_API bool compress(const TexImage & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API int estimateSize(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions) const;
 
+        // CubeImage API.
+        NVTT_API bool outputHeader(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API bool compress(const CubeImage & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API int estimateSize(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions) const;
+
         // Raw API.
         NVTT_API bool outputHeader(TextureType type, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API bool compress(int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
@@ -541,17 +547,20 @@ namespace nvtt
         NVTT_API bool save(const char * fileName) const;
 
         TexImage & face(int face);
+        const TexImage & face(int face) const;
 
         // Layout conversion.
         void fold(const TexImage & img, CubeLayout layout);
-        TexImage unfold(CubeLayout layout);
+        TexImage unfold(CubeLayout layout) const;
 
         // @@ Angular extent filtering.
 
         // @@ Add resizing methods.
 
-        // @@ Irradiance cubemaps.
-        CubeImage irradiance(int size);
+        // Filtering.
+        CubeImage irradianceFilter(int size) const;
+        CubeImage cosinePowerFilter(int size, float cosinePower) const;
+
 
         /*
         NVTT_API void resize(int w, int h, ResizeFilter filter);

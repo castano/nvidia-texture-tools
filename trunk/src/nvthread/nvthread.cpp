@@ -5,10 +5,10 @@
 #include "Thread.h"
 
 #if NV_OS_WIN32
-    #include "Win32.h"
+#include "Win32.h"
 #elif NV_OS_UNIX
-    #include <sys/types.h>
-    #include <sys/sysctl.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 #endif
 
 
@@ -40,12 +40,12 @@ uint nv::hardwareThreadCount() {
     sysctl(mib, 2, &numCPU, &len, NULL, 0);
 
     if (numCPU < 1) {
-         mib[1] = HW_NCPU;
-         sysctl( mib, 2, &numCPU, &len, NULL, 0 );
+        mib[1] = HW_NCPU;
+        sysctl( mib, 2, &numCPU, &len, NULL, 0 );
 
-         if (numCPU < 1) {
-              return 1; // Assume single core.
-         }
+        if (numCPU < 1) {
+            return 1; // Assume single core.
+        }
     }
 
     return numCPU;

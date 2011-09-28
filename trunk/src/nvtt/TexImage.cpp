@@ -1224,8 +1224,7 @@ void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 
     detach();
 
-    //threshold = clamp(threshold, 1e-6f, 1.0f);
-    threshold = 1e-6f;
+    threshold = ::clamp(threshold, 1e-6f, 1.0f);
     float irange = 1.0f / range;
 
     FloatImage * img = m->image;

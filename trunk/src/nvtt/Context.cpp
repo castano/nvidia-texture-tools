@@ -152,6 +152,26 @@ int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const Compre
     return estimateSize(w, h, d, mipmapCount, compressionOptions);
 }
 
+bool Compressor::outputHeader(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+{
+    return m.outputHeader(TextureType_Cube, cube.size(), cube.size(), 1, mipmapCount, false, compressionOptions.m, outputOptions.m);
+}
+
+bool Compressor::compress(const CubeImage & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+{
+    for (int i = 0; i < 6; i++) {
+        if(!m.compress(cube.face(i), i, mipmap, compressionOptions.m, outputOptions.m)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int Compressor::estimateSize(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions) const
+{
+    return 6 * estimateSize(cube.size(), cube.size(), 1, mipmapCount, compressionOptions);
+}
+
 
 // Raw API.
 bool Compressor::outputHeader(TextureType type, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const

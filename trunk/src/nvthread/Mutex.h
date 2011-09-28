@@ -18,14 +18,14 @@ namespace nv
         Mutex ();
         ~Mutex ();
 
-	void lock();
-	bool tryLock();
-	void unlock();
+        void lock();
+        bool tryLock();
+        void unlock();
 
     private:
         struct Private;
         AutoPtr<Private> m;
-};
+    };
 
 
     // Templated lock that can be used with any mutex.
@@ -35,8 +35,8 @@ namespace nv
         NV_FORBID_COPY(Lock);
     public:
 
-	Lock (M & m) : m_mutex (m) { m_mutex.lock(); }
-	~Lock () { m_mutex.unlock(); }
+        Lock (M & m) : m_mutex (m) { m_mutex.lock(); }
+        ~Lock () { m_mutex.unlock(); }
 
     private:
         M & m_mutex;
