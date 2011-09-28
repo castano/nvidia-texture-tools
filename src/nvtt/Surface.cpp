@@ -1310,6 +1310,232 @@ void Surface::fromRGBM(float range/*= 1*/)
 }
 
 
+static Color32 toRgbe8(float r, float g, float b)
+{
+    Color32 c;
+    float v = max(max(r, g), b);
+    if (v < 1e-32) {
+        c.r = c.g = c.b = c.a = 0;
+    }
+    else {
+        int e;
+        v = frexp(v, &e) * 256.0f / v;
+        c.r = uint8(clamp(r * v, 0.0f, 255.0f));
+        c.g = uint8(clamp(g * v, 0.0f, 255.0f));
+        c.b = uint8(clamp(b * v, 0.0f, 255.0f));
+        c.a = e + 128;
+    }
+
+    return c;
+}
+
+
+/*
+  Alen Ladavac @ GDAlgorithms-list on Feb 7, 2007:
+    One trick that we use to alleviate such problems is to use RGBE5.3 -
+    i.e. have a fixed point exponent. Note that it is not enough to just
+    shift the exponent up for 3 bits, but you actually have to convert
+    each pixel in the RGBE8 texture by unpacking it to floats and then
+    repacking it with a non-integer exponent, which gives different
+    mantissas as well. Now your jumps in exponent are much smaller, thus
+    the bands are not that noticeable. It is still not as good as FP16,
+    but it is much better than RGBE8. I hope this explanation is
+    understandable, if not I can fill in more details.
+
+    Though there still are some bands, you can get an even better
+    precision if you upload that same texture as RGBA16, because you'll
+    get even more interpolation then, and it works good as a scalable
+    option for people with more GPU RAM). Alternatively, when some of the
+    future cards (hopefully, because I'm trying to lobby for that
+    everywhere :) ), start returning more than 8 bits, your scenes will
+    automatically look better even without using RGBA16.
+
+  Jon Watte:
+    The interpolation of 5.3 is the same as that of 8 bits, because it's a
+    fixed point format.
+
+    The reason using 5.3 helps, is that each bit of quantization in the
+    interpolation only means 1/8th of a fully significant bit. The
+    quantization still happens, it's just less visible. The trade-off is
+    that you get less dynamic range.
+
+  Alen Ladavac:
+    True, but it is just a small part of the improvement. The greater part
+    is that RGB values have to be calculated according to the fractional
+    exponent. With integer exponent, the RGB values jump by a factor of 2
+    when each bit changes in exponent, and 5.3 with correct adjustment of
+    RGB lowers this jump to be about 1.09, which is much better. I may not
+    be entirely correct on the numbers, which I'm pulling out from my
+    memory now, but it's a rough estimate.
+*/
+/* Ward's version:
+static Color32 toRgbe8(float r, float g, float b)
+{
+    Color32 c;
+    float v = max(max(r, g), b);
+    if (v < 1e-32) {
+        c.r = c.g = c.b = c.a = 0;
+    }
+    else {
+        int e;
+        v = frexp(v, &e) * 256.0f / v;
+        c.r = uint8(clamp(r * v, 0.0f, 255.0f));
+        c.g = uint8(clamp(g * v, 0.0f, 255.0f));
+        c.b = uint8(clamp(b * v, 0.0f, 255.0f));
+        c.a = e + 128;
+    }
+
+    return c;
+}
+*/
+// For R9G9B9E5, use toRGBE(9, 5), for Ward's RGBE, use toRGBE(8, 8)
+void Surface::toRGBE(int mantissaBits, int exponentBits)
+{
+    // According to the OpenGL extension:
+    // http://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt
+    //
+    // Components red, green, and blue are first clamped (in the process,
+    // mapping NaN to zero) so:
+    //
+    //     red_c   = max(0, min(sharedexp_max, red))
+    //     green_c = max(0, min(sharedexp_max, green))
+    //     blue_c  = max(0, min(sharedexp_max, blue))
+    //
+    // where sharedexp_max is (2^N-1)/2^N * 2^(Emax-B), N is the number
+    // of mantissa bits per component, Emax is the maximum allowed biased
+    // exponent value (careful: not necessarily 2^E-1 when E is the number of
+    // exponent bits), bits, and B is the exponent bias.  For the RGB9_E5_EXT
+    // format, N=9, Emax=31, and B=15.
+    //
+    // The largest clamped component, max_c, is determined:
+    //
+    //     max_c = max(red_c, green_c, blue_c)
+    //
+    // A preliminary shared exponent is computed:
+    //
+    //     exp_shared_p = max(-B-1, floor(log2(max_c))) + 1 + B
+    //
+    // A refined shared exponent is then computed as:
+    //
+    //     max_s   = floor(max_c   / 2^(exp_shared_p - B - N) + 0.5)
+    //
+    //                  { exp_shared_p,    0 <= max_s <  2^N
+    //     exp_shared = {
+    //                  { exp_shared_p+1,       max_s == 2^N
+    //
+    // These integers values in the range 0 to 2^N-1 are then computed:
+    //
+    //     red_s   = floor(red_c   / 2^(exp_shared - B - N) + 0.5)
+    //     green_s = floor(green_c / 2^(exp_shared - B - N) + 0.5)
+    //     blue_s  = floor(blue_c  / 2^(exp_shared - B - N) + 0.5)
+
+    if (isNull()) return;
+
+    detach();
+
+    // mantissaBits = N
+    // exponentBits = E
+    // exponentMax = Emax
+    // exponentBias = B
+    // maxValue = sharedexp_max
+
+    // max exponent: 5 -> 31, 8 -> 255
+    const int exponentMax = (1 << exponentBits) - 1;
+
+    // exponent bias: 5 -> 15, 8 -> 127
+    const int exponentBias = (1 << (exponentBits - 1)) - 1;
+
+    // Maximum representable value: 5 -> 63488, 8 -> HUGE
+    const float maxValue = float(exponentMax) / float(exponentMax + 1) * float(1 << (exponentMax - exponentBias));
+
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+    float * a = img->channel(3);
+
+    const uint count = img->pixelCount();
+    for (uint i = 0; i < count; i++) {
+        // Clamp components:
+        float R = ::clamp(r[i], 0.0f, maxValue);
+        float G = ::clamp(g[i], 0.0f, maxValue);
+        float B = ::clamp(b[i], 0.0f, maxValue);
+
+        // Compute max:
+        float M = max(R, G, B);
+
+        // Preliminary exponent:
+        float E = max(- exponentBias - 1, ifloor(log2f(M))) + 1 + exponentBias;
+
+        // Refine exponent:
+        int max_s = iround(M / exp2(E - exponentBias - mantissaBits));
+        if (max_s == (1 << mantissaBits)) E += 1.0f;
+
+        R = floatRound(R / exp2(E - exponentBias - mantissaBits));
+        G = floatRound(G / exp2(E - exponentBias - mantissaBits));
+        B = floatRound(B / exp2(E - exponentBias - mantissaBits));
+
+        nvDebugCheck(R >= 0 && R <= ((1 << mantissaBits) - 1));
+        nvDebugCheck(G >= 0 && G <= ((1 << mantissaBits) - 1));
+        nvDebugCheck(B >= 0 && B <= ((1 << mantissaBits) - 1));
+
+        // Store in [0, 1] range.
+        r[i] = R / ((1 << mantissaBits) - 1);
+        g[i] = G / ((1 << mantissaBits) - 1);
+        b[i] = B / ((1 << mantissaBits) - 1);
+        a[i] = E / ((1 << exponentBits) - 1);
+    }
+}
+
+void Surface::fromRGBE(int mantissaBits, int exponentBits)
+{
+    // According to the OpenGL extension:
+    // http://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt
+    //
+    // The 1st, 2nd, 3rd, and 4th components are called
+    // p_red, p_green, p_blue, and p_exp respectively and are treated as
+    // unsigned integers.  These are then used to compute floating-point
+    // RGB components (ignoring the "Conversion to floating-point" section
+    // below in this case) as follows:
+    //
+    // red   = p_red   * 2^(p_exp - B - N)
+    // green = p_green * 2^(p_exp - B - N)
+    // blue  = p_blue  * 2^(p_exp - B - N)
+    //
+    // where B is 15 (the exponent bias) and N is 9 (the number of mantissa
+    // bits)."
+
+    if (isNull()) return;
+
+    detach();
+
+    // exponent bias: 5 -> 15, 8 -> 127
+    const float exponentBias = (1 << (exponentBits - 1)) - 1;
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+    float * a = img->channel(3);
+
+    const uint count = img->pixelCount();
+    for (uint i = 0; i < count; i++) {
+        // RGBE are assumed to be in the [0, 1] range.
+        float R = r[i] * ((1 << mantissaBits) - 1);
+        float G = g[i] * ((1 << mantissaBits) - 1);
+        float B = b[i] * ((1 << mantissaBits) - 1);
+        float E = a[i] * ((1 << exponentBits) - 1);
+
+        float M = pow(2, E - exponentBias - mantissaBits);
+
+        r[i] = R * M;
+        g[i] = G * M;
+        b[i] = B * M;
+        a[i] = 1;
+    }
+}
+
 // Y is in the [0, 1] range, while CoCg are in the [-1, 1] range.
 void Surface::toYCoCg()
 {

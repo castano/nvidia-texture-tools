@@ -35,7 +35,6 @@
 #include "CompressorDX10.h"
 #include "CompressorDX11.h"
 #include "CompressorRGB.h"
-#include "CompressorRGBE.h"
 #include "cuda/CudaUtils.h"
 #include "cuda/CudaCompressorDXT.h"
 
@@ -762,10 +761,6 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     else if (compressionOptions.format == Format_BC7)
     {
         // Not supported.
-    }
-    else if (compressionOptions.format == Format_RGBE)
-    {
-        return new CompressorRGBE;
     }
 
     return NULL;

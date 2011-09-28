@@ -956,7 +956,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, uint d, W
 
 void FloatImage::convolve(const Kernel2 & k, uint c, WrapMode wm)
 {
-    AutoPtr<FloatImage> tmpImage = clone();
+    AutoPtr<FloatImage> tmpImage(clone());
 
     uint w = m_width;
     uint h = m_height;

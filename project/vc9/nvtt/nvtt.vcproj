@@ -1053,14 +1053,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\CompressorRGBE.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvtt\CompressorRGBE.h"
-			>
-		</File>
-		<File
 			RelativePath="..\..\..\src\nvtt\Context.cpp"
 			>
 		</File>

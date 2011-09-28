@@ -152,11 +152,13 @@ namespace nv
         return value;
     }
 
+#if NV_CC_MSVC
     inline float log2f(float x)
     {
         nvCheck(x >= 0);
         return logf(x) / logf(2.0f);
     }
+#endif
 
     inline float lerp(float f0, float f1, float t)
     {
@@ -195,10 +197,9 @@ namespace nv
         return f - floor(f);
     }
 
-    inline float fround(float f)    // @@ rename floatRound
+    inline float floatRound(float f)
     {
-        // @@ Do something better.
-        return float(iround(f));
+        return floorf(f + 0.5f);
     }
 
     // Eliminates negative zeros from a float array.
@@ -233,6 +234,22 @@ namespace nv
         if (a < 0.0f) return -1;
         return 0;
     }
+
+    // I'm always confused about which quantizer to use. I think we should choose a quantizer based on how the values are expanded later and this is generally using the 'exact endpoints' rule.
+
+    // Quantize a [0, 1] full precision float, using exact endpoints.
+    inline float quantizeFloat(float f, int bits) {
+        float scale = (1 << bits) - 1;
+        float offset = 0.0f;
+        return floor(saturate(f) * scale + offset) / scale;
+    }
+
+    // Quantize a [0, 1] full precision float, using uniform bins.
+    /*inline float quantizeFloat(float f, int bits) {
+        float scale = (1 << bits);
+        float offset = 0.5f;
+        return floor(saturate(f) * scale + offset) / scale;
+    }*/
 
 } // nv
 
