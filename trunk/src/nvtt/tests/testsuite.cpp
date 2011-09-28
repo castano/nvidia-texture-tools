@@ -280,9 +280,9 @@ struct MyOutputHandler : public nvtt::OutputHandler
         return true;
     }
 
-    nvtt::TexImage decompress(Mode mode, nvtt::Format format, nvtt::Decoder decoder)
+    nvtt::Surface decompress(Mode mode, nvtt::Format format, nvtt::Decoder decoder)
     {
-        nvtt::TexImage img;
+        nvtt::Surface img;
         img.setImage2D(format, decoder, m_width, m_height, m_data);
         return img;
     }
@@ -576,7 +576,7 @@ int main(int argc, char *argv[])
     //int failedTests = 0;
     //float totalDiff = 0;
 
-    nvtt::TexImage img;
+    nvtt::Surface img;
 
     printf("Running Test: %s\n", set.name);
 
@@ -640,7 +640,7 @@ int main(int argc, char *argv[])
                 img.toGamma(2);
             }
 
-            nvtt::TexImage tmp = img;
+            nvtt::Surface tmp = img;
             if (mode == Mode_BC1) {
                 if (set.type == ImageType_HDR) {
                     /*for (int i = 0; i < 3; i++) {
@@ -727,7 +727,7 @@ int main(int argc, char *argv[])
             printf("  Time: \t%.3f sec\n", timer.elapsed());
             totalTime += timer.elapsed();
 
-            nvtt::TexImage img_out = outputHandler.decompress(mode, format, decoder);
+            nvtt::Surface img_out = outputHandler.decompress(mode, format, decoder);
             img_out.setAlphaMode(img.alphaMode());
             img_out.setNormalMap(img.isNormalMap());
 
@@ -796,14 +796,14 @@ int main(int argc, char *argv[])
                 tmp.transformNormals(nvtt::NormalTransform_DualParaboloid);
             }*/
 
-            nvtt::TexImage diff = nvtt::diff(img, img_out, 1.0f);
+            nvtt::Surface diff = nvtt::diff(img, img_out, 1.0f);
 
             //bool residualCompression = (set.type == ImageType_HDR);
             bool residualCompression = (mode == Mode_BC3_RGBS);
             if (residualCompression)
             {
                 float residualScale = 8.0f;
-                nvtt::TexImage residual = diff;
+                nvtt::Surface residual = diff;
                 for (int j = 0; j < 3; j++) {
                     residual.scaleBias(j, residualScale, 0.5); // @@ The residual scale is fairly arbitrary.
                     residual.clamp(j);
@@ -821,7 +821,7 @@ int main(int argc, char *argv[])
                 
                 context.compress(residual, 0, 0, compressionOptions, outputOptions);
 
-                nvtt::TexImage residual_out = outputHandler.decompress(mode, format, decoder);
+                nvtt::Surface residual_out = outputHandler.decompress(mode, format, decoder);
 
                 /*outputFileName.format("%s/%s", outputFilePath.str(), set.fileNames[i]);
                 outputFileName.stripExtension();
@@ -904,7 +904,7 @@ int main(int argc, char *argv[])
                 regressFileName.stripExtension();
                 regressFileName.append(".png");
 
-                nvtt::TexImage img_reg;
+                nvtt::Surface img_reg;
                 if (!img_reg.load(regressFileName.str()))
                 {
                     printf("Regression image '%s' not found.\n", regressFileName.str());

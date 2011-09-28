@@ -132,18 +132,18 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
 }
 
 
-// TexImage API.
-bool Compressor::outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+// Surface API.
+bool Compressor::outputHeader(const Surface & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
     return m.outputHeader(tex.type(), tex.width(), tex.height(), tex.depth(), mipmapCount, tex.isNormalMap(), compressionOptions.m, outputOptions.m);
 }
 
-bool Compressor::compress(const TexImage & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+bool Compressor::compress(const Surface & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
     return m.compress(tex, face, mipmap, compressionOptions.m, outputOptions.m);
 }
 
-int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions) const
+int Compressor::estimateSize(const Surface & tex, int mipmapCount, const CompressionOptions & compressionOptions) const
 {
     const int w = tex.width();
     const int h = tex.height();
@@ -152,12 +152,12 @@ int Compressor::estimateSize(const TexImage & tex, int mipmapCount, const Compre
     return estimateSize(w, h, d, mipmapCount, compressionOptions);
 }
 
-bool Compressor::outputHeader(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+bool Compressor::outputHeader(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
     return m.outputHeader(TextureType_Cube, cube.size(), cube.size(), 1, mipmapCount, false, compressionOptions.m, outputOptions.m);
 }
 
-bool Compressor::compress(const CubeImage & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
+bool Compressor::compress(const CubeSurface & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
     for (int i = 0; i < 6; i++) {
         if(!m.compress(cube.face(i), i, mipmap, compressionOptions.m, outputOptions.m)) {
@@ -167,7 +167,7 @@ bool Compressor::compress(const CubeImage & cube, int mipmap, const CompressionO
     return true;
 }
 
-int Compressor::estimateSize(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions) const
+int Compressor::estimateSize(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions) const
 {
     return 6 * estimateSize(cube.size(), cube.size(), 1, mipmapCount, compressionOptions);
 }
@@ -223,7 +223,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         return false;
     }
 
-    nvtt::TexImage img;
+    nvtt::Surface img;
     img.setWrapMode(inputOptions.wrapMode);
     img.setAlphaMode(inputOptions.alphaMode);
     img.setNormalMap(inputOptions.isNormalMap);
@@ -269,7 +269,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         // Resize input.
         img.resize(w, h, d, ResizeFilter_Box);
 
-        nvtt::TexImage tmp = img;
+        nvtt::Surface tmp = img;
         if (!img.isNormalMap()) {
             tmp.toGamma(inputOptions.outputGamma);
         }
@@ -333,7 +333,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     return true;
 }
 
-bool Compressor::Private::compress(const TexImage & tex, int face, int mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
+bool Compressor::Private::compress(const Surface & tex, int face, int mipmap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
 {
     if (!compress(tex.alphaMode(), tex.width(), tex.height(), tex.depth(), face, mipmap, tex.data(), compressionOptions, outputOptions)) {
         return false;
@@ -375,7 +375,7 @@ bool Compressor::Private::compress(AlphaMode alphaMode, int w, int h, int d, int
 }
 
 
-void Compressor::Private::quantize(TexImage & img, const CompressionOptions::Private & compressionOptions) const
+void Compressor::Private::quantize(Surface & img, const CompressionOptions::Private & compressionOptions) const
 {
     if (compressionOptions.enableColorDithering) {
         if (compressionOptions.format >= Format_BC1 && compressionOptions.format <= Format_BC3) {

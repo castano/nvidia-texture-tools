@@ -67,8 +67,8 @@
 namespace nvtt
 {
     // Forward declarations.
-    struct TexImage;
-    struct CubeImage;
+    struct Surface;
+    struct CubeSurface;
 
     /// Supported compression formats.
     enum Format
@@ -378,15 +378,15 @@ namespace nvtt
         NVTT_API bool process(const InputOptions & inputOptions, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API int estimateSize(const InputOptions & inputOptions, const CompressionOptions & compressionOptions) const;
 
-        // TexImage API.
-        NVTT_API bool outputHeader(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-        NVTT_API bool compress(const TexImage & tex, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-        NVTT_API int estimateSize(const TexImage & tex, int mipmapCount, const CompressionOptions & compressionOptions) const;
+        // Surface API.
+        NVTT_API bool outputHeader(const Surface & img, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API bool compress(const Surface & img, int face, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API int estimateSize(const Surface & img, int mipmapCount, const CompressionOptions & compressionOptions) const;
 
-        // CubeImage API.
-        NVTT_API bool outputHeader(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-        NVTT_API bool compress(const CubeImage & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
-        NVTT_API int estimateSize(const CubeImage & cube, int mipmapCount, const CompressionOptions & compressionOptions) const;
+        // CubeSurface API.
+        NVTT_API bool outputHeader(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API bool compress(const CubeSurface & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API int estimateSize(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions) const;
 
         // Raw API.
         NVTT_API bool outputHeader(TextureType type, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
@@ -405,14 +405,15 @@ namespace nvtt
         //NormalTransform_DualParaboloid,
     };
 
-    /// A texture mipmap.
-    struct TexImage
-    {
-        NVTT_API TexImage();
-        NVTT_API TexImage(const TexImage & tex);
-        NVTT_API ~TexImage();
 
-        NVTT_API void operator=(const TexImage & tex);
+    /// A surface is a texture mipmap. Can be 2D or 3D.
+    struct Surface
+    {
+        NVTT_API Surface();
+        NVTT_API Surface(const Surface & img);
+        NVTT_API ~Surface();
+
+        NVTT_API void operator=(const Surface & img);
 
         // Texture parameters.
         NVTT_API void setWrapMode(WrapMode mode);
@@ -500,19 +501,12 @@ namespace nvtt
         NVTT_API void flipZ();
 
         // Copy image data.
-        NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel);
-        NVTT_API bool copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel);
+        NVTT_API bool copyChannel(const Surface & srcImage, int srcChannel);
+        NVTT_API bool copyChannel(const Surface & srcImage, int srcChannel, int dstChannel);
 
-        NVTT_API bool addChannel(const TexImage & img, int srcChannel, int dstChannel, float scale);
+        NVTT_API bool addChannel(const Surface & img, int srcChannel, int dstChannel, float scale);
 
-        // Error compare.
-        NVTT_API friend float rmsError(const TexImage & reference, const TexImage & img);
-        NVTT_API friend float rmsAlphaError(const TexImage & reference, const TexImage & img);
-        NVTT_API friend float cieLabError(const TexImage & reference, const TexImage & img);
-        NVTT_API friend float angularError(const TexImage & reference, const TexImage & img);
-        NVTT_API friend TexImage diff(const TexImage & reference, const TexImage & img, float scale);
-
-    private:
+    //private:
         void detach();
 
         struct Private;
@@ -528,14 +522,14 @@ namespace nvtt
         CubeLayout_LatitudeLongitude,
     };
 
-    /// A cubemap mipmap.
-    struct CubeImage
+    /// A cubemap mipmap. CubeSurface?
+    struct CubeSurface
     {
-        NVTT_API CubeImage();
-        NVTT_API CubeImage(const CubeImage & tex);
-        NVTT_API ~CubeImage();
+        NVTT_API CubeSurface();
+        NVTT_API CubeSurface(const CubeSurface & img);
+        NVTT_API ~CubeSurface();
 
-        NVTT_API void operator=(const CubeImage & tex);
+        NVTT_API void operator=(const CubeSurface & img);
 
         // Queries.
         NVTT_API bool isNull() const;
@@ -546,20 +540,20 @@ namespace nvtt
         NVTT_API bool load(const char * fileName);
         NVTT_API bool save(const char * fileName) const;
 
-        TexImage & face(int face);
-        const TexImage & face(int face) const;
+        Surface & face(int face);
+        const Surface & face(int face) const;
 
         // Layout conversion.
-        void fold(const TexImage & img, CubeLayout layout);
-        TexImage unfold(CubeLayout layout) const;
+        void fold(const Surface & img, CubeLayout layout);
+        Surface unfold(CubeLayout layout) const;
 
         // @@ Angular extent filtering.
 
         // @@ Add resizing methods.
 
         // Filtering.
-        CubeImage irradianceFilter(int size) const;
-        CubeImage cosinePowerFilter(int size, float cosinePower) const;
+        CubeSurface irradianceFilter(int size) const;
+        CubeSurface cosinePowerFilter(int size, float cosinePower) const;
 
 
         /*
@@ -575,7 +569,7 @@ namespace nvtt
         NVTT_API void toLinear(float gamma);
         NVTT_API void toGamma(float gamma);
 
-    private:
+    //private:
         void detach();
 
         struct Private;
@@ -589,11 +583,11 @@ namespace nvtt
     // Return NVTT version.
     NVTT_API unsigned int version();
 
-    NVTT_API float rmsError(const TexImage & reference, const TexImage & img);
-    NVTT_API float rmsAlphaError(const TexImage & reference, const TexImage & img);
-    NVTT_API float cieLabError(const TexImage & reference, const TexImage & img);
-    NVTT_API float angularError(const TexImage & reference, const TexImage & img);
-    NVTT_API TexImage diff(const TexImage & reference, const TexImage & img, float scale);
+    NVTT_API float rmsError(const Surface & reference, const Surface & img);
+    NVTT_API float rmsAlphaError(const Surface & reference, const Surface & img);
+    NVTT_API float cieLabError(const Surface & reference, const Surface & img);
+    NVTT_API float angularError(const Surface & reference, const Surface & img);
+    NVTT_API Surface diff(const Surface & reference, const Surface & img, float scale);
 
 
 } // nvtt namespace

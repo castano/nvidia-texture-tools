@@ -184,41 +184,41 @@ void nv::getTargetExtent(int & w, int & h, int & d, int maxExtent, RoundMode rou
 
 
 
-TexImage::TexImage() : m(new TexImage::Private())
+Surface::Surface() : m(new Surface::Private())
 {
     m->addRef();
 }
 
-TexImage::TexImage(const TexImage & tex) : m(tex.m)
+Surface::Surface(const Surface & tex) : m(tex.m)
 {
     if (m != NULL) m->addRef();
 }
 
-TexImage::~TexImage()
+Surface::~Surface()
 {
     if (m != NULL) m->release();
     m = NULL;
 }
 
-void TexImage::operator=(const TexImage & tex)
+void Surface::operator=(const Surface & tex)
 {
     if (tex.m != NULL) tex.m->addRef();
     if (m != NULL) m->release();
     m = tex.m;
 }
 
-void TexImage::detach()
+void Surface::detach()
 {
     if (m->refCount() > 1)
     {
         m->release();
-        m = new TexImage::Private(*m);
+        m = new Surface::Private(*m);
         m->addRef();
         nvDebugCheck(m->refCount() == 1);
     }
 }
 
-void TexImage::setWrapMode(WrapMode wrapMode)
+void Surface::setWrapMode(WrapMode wrapMode)
 {
     if (m->wrapMode != wrapMode)
     {
@@ -227,7 +227,7 @@ void TexImage::setWrapMode(WrapMode wrapMode)
     }
 }
 
-void TexImage::setAlphaMode(AlphaMode alphaMode)
+void Surface::setAlphaMode(AlphaMode alphaMode)
 {
     if (m->alphaMode != alphaMode)
     {
@@ -236,7 +236,7 @@ void TexImage::setAlphaMode(AlphaMode alphaMode)
     }
 }
 
-void TexImage::setNormalMap(bool isNormalMap)
+void Surface::setNormalMap(bool isNormalMap)
 {
     if (m->isNormalMap != isNormalMap)
     {
@@ -245,63 +245,63 @@ void TexImage::setNormalMap(bool isNormalMap)
     }
 }
 
-bool TexImage::isNull() const
+bool Surface::isNull() const
 {
     return m->image == NULL;
 }
 
-int TexImage::width() const
+int Surface::width() const
 {
     if (m->image != NULL) return m->image->width();
     return 0;
 }
 
-int TexImage::height() const
+int Surface::height() const
 {
     if (m->image != NULL) return m->image->height();
     return 0;
 }
 
-int TexImage::depth() const
+int Surface::depth() const
 {
     if (m->image != NULL) return m->image->depth();
     return 0;
 }
 
-WrapMode TexImage::wrapMode() const
+WrapMode Surface::wrapMode() const
 {
     return m->wrapMode;
 }
 
-AlphaMode TexImage::alphaMode() const
+AlphaMode Surface::alphaMode() const
 {
     return m->alphaMode;
 }
 
-bool TexImage::isNormalMap() const
+bool Surface::isNormalMap() const
 {
     return m->isNormalMap;
 }
 
-TextureType TexImage::type() const
+TextureType Surface::type() const
 {
     return m->type;
 }
 
-int TexImage::countMipmaps() const
+int Surface::countMipmaps() const
 {
     if (m->image == NULL) return 0;
     return ::countMipmaps(m->image->width(), m->image->height(), 1);
 }
 
-float TexImage::alphaTestCoverage(float alphaRef/*= 0.5*/) const
+float Surface::alphaTestCoverage(float alphaRef/*= 0.5*/) const
 {
     if (m->image == NULL) return 0.0f;
 
     return m->image->alphaTestCoverage(alphaRef, 3);
 }
 
-float TexImage::average(int channel, int alpha_channel/*= -1*/, float gamma /*= 2.2f*/) const
+float Surface::average(int channel, int alpha_channel/*= -1*/, float gamma /*= 2.2f*/) const
 {
     if (m->image == NULL) return 0.0f;
 
@@ -337,12 +337,12 @@ float TexImage::average(int channel, int alpha_channel/*= -1*/, float gamma /*= 
     return sum / denom;
 }
 
-const float * TexImage::data() const
+const float * Surface::data() const
 {
     return m->image->channel(0);
 }
 
-void TexImage::histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const
+void Surface::histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const
 {
     // We assume it's clear in case we want to accumulate multiple histograms.
     //memset(bins, 0, sizeof(int)*count);
@@ -364,7 +364,7 @@ void TexImage::histogram(int channel, float rangeMin, float rangeMax, int binCou
     }
 }
 
-void TexImage::range(int channel, float * rangeMin, float * rangeMax)
+void Surface::range(int channel, float * rangeMin, float * rangeMax)
 {
     Vector2 range(FLT_MAX, -FLT_MAX);
 
@@ -384,7 +384,7 @@ void TexImage::range(int channel, float * rangeMin, float * rangeMax)
 }
 
 
-bool TexImage::load(const char * fileName, bool * hasAlpha/*= NULL*/)
+bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
 {
     AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
     if (img == NULL) {
@@ -406,7 +406,7 @@ bool TexImage::load(const char * fileName, bool * hasAlpha/*= NULL*/)
     return true;
 }
 
-bool TexImage::save(const char * fileName) const
+bool Surface::save(const char * fileName) const
 {
     if (m->image != NULL)
     {
@@ -416,7 +416,7 @@ bool TexImage::save(const char * fileName) const
     return false;
 }
 
-bool TexImage::setImage(nvtt::InputFormat format, int w, int h, int d, const void * data)
+bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void * data)
 {
     detach();
 
@@ -488,7 +488,7 @@ bool TexImage::setImage(nvtt::InputFormat format, int w, int h, int d, const voi
     return true;
 }
 
-bool TexImage::setImage(InputFormat format, int w, int h, int d, const void * r, const void * g, const void * b, const void * a)
+bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, const void * g, const void * b, const void * a)
 {
     detach();
 
@@ -561,7 +561,7 @@ bool TexImage::setImage(InputFormat format, int w, int h, int d, const void * r,
 }
 
 // @@ Add support for compressed 3D textures.
-bool TexImage::setImage2D(Format format, Decoder decoder, int w, int h, const void * data)
+bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const void * data)
 {
     if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3 && format != nvtt::Format_BC4 && format != nvtt::Format_BC5)
     {
@@ -693,7 +693,7 @@ static void getDefaultFilterWidthAndParams(int filter, float * filterWidth, floa
     }
 }
 
-void TexImage::resize(int w, int h, int d, ResizeFilter filter)
+void Surface::resize(int w, int h, int d, ResizeFilter filter)
 {
     float filterWidth;
     float params[2];
@@ -702,7 +702,7 @@ void TexImage::resize(int w, int h, int d, ResizeFilter filter)
     resize(w, h, d, filter, filterWidth, params);
 }
 
-void TexImage::resize(int w, int h, int d, ResizeFilter filter, float filterWidth, const float * params)
+void Surface::resize(int w, int h, int d, ResizeFilter filter, float filterWidth, const float * params)
 {
     FloatImage * img = m->image;
     if (img == NULL || (w == img->width() && h == img->height() && d == img->depth())) {
@@ -770,7 +770,7 @@ void TexImage::resize(int w, int h, int d, ResizeFilter filter, float filterWidt
     m->image = img;
 }
 
-void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
+void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 {
     float filterWidth;
     float params[2];
@@ -779,7 +779,7 @@ void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
     resize(maxExtent, roundMode, filter, filterWidth, params);
 }
 
-void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, float filterWidth, const float * params)
+void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, float filterWidth, const float * params)
 {
     if (m->image == NULL) return;
 
@@ -792,7 +792,7 @@ void TexImage::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, f
     resize(w, h, d, filter, filterWidth, params);
 }
 
-bool TexImage::buildNextMipmap(MipmapFilter filter)
+bool Surface::buildNextMipmap(MipmapFilter filter)
 {
     float filterWidth;
     float params[2];
@@ -801,7 +801,7 @@ bool TexImage::buildNextMipmap(MipmapFilter filter)
     return buildNextMipmap(filter, filterWidth, params);
 }
 
-bool TexImage::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params)
+bool Surface::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params)
 {
     FloatImage * img = m->image;
     if (img == NULL || (img->width() == 1 && img->height() == 1 && img->depth() == 1)) {
@@ -864,7 +864,7 @@ bool TexImage::buildNextMipmap(MipmapFilter filter, float filterWidth, const flo
     return true;
 }
 
-void TexImage::canvasSize(int w, int h, int d)
+void Surface::canvasSize(int w, int h, int d)
 {
     nvDebugCheck(w > 0 && h > 0 && d > 0);
 
@@ -901,7 +901,7 @@ void TexImage::canvasSize(int w, int h, int d)
 
 
 // Color transforms.
-void TexImage::toLinear(float gamma)
+void Surface::toLinear(float gamma)
 {
     if (m->image == NULL) return;
     if (equal(gamma, 1.0f)) return;
@@ -911,7 +911,7 @@ void TexImage::toLinear(float gamma)
     m->image->toLinear(0, 3, gamma);
 }
 
-void TexImage::toGamma(float gamma)
+void Surface::toGamma(float gamma)
 {
     if (m->image == NULL) return;
     if (equal(gamma, 1.0f)) return;
@@ -930,7 +930,7 @@ static float toSrgb(float f) {
     return f;
 }
 
-void TexImage::toSrgb()
+void Surface::toSrgb()
 {
     FloatImage * img = m->image;
     if (img == NULL) return;
@@ -960,7 +960,7 @@ static float toXenonSrgb(float f) {
     return f;
 }
 
-void TexImage::toXenonSrgb()
+void Surface::toXenonSrgb()
 {
     FloatImage * img = m->image;
     if (img == NULL) return;
@@ -981,7 +981,7 @@ void TexImage::toXenonSrgb()
 }
 
 
-void TexImage::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
+void Surface::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
 {
     if (m->image == NULL) return;
 
@@ -998,7 +998,7 @@ void TexImage::transform(const float w0[4], const float w1[4], const float w2[4]
     m->image->transform(0, xform, voffset);
 }
 
-void TexImage::swizzle(int r, int g, int b, int a)
+void Surface::swizzle(int r, int g, int b, int a)
 {
     if (m->image == NULL) return;
     if (r == 0 && g == 1 && b == 2 && a == 3) return;
@@ -1009,7 +1009,7 @@ void TexImage::swizzle(int r, int g, int b, int a)
 }
 
 // color * scale + bias
-void TexImage::scaleBias(int channel, float scale, float bias)
+void Surface::scaleBias(int channel, float scale, float bias)
 {
     if (m->image == NULL) return;
     if (equal(scale, 1.0f) && equal(bias, 0.0f)) return;
@@ -1019,7 +1019,7 @@ void TexImage::scaleBias(int channel, float scale, float bias)
     m->image->scaleBias(channel, 1, scale, bias);
 }
 
-void TexImage::clamp(int channel, float low, float high)
+void Surface::clamp(int channel, float low, float high)
 {
     if (m->image == NULL) return;
 
@@ -1028,14 +1028,14 @@ void TexImage::clamp(int channel, float low, float high)
     m->image->clamp(channel, 1, low, high);
 }
 
-void TexImage::packNormal()
+void Surface::packNormal()
 {
     scaleBias(0, 0.5f, 0.5f);
     scaleBias(1, 0.5f, 0.5f);
     scaleBias(2, 0.5f, 0.5f);
 }
 
-void TexImage::expandNormal()
+void Surface::expandNormal()
 {
     scaleBias(0, 2.0f, -1.0f);
     scaleBias(1, 2.0f, -1.0f);
@@ -1043,7 +1043,7 @@ void TexImage::expandNormal()
 }
 
 
-void TexImage::blend(float red, float green, float blue, float alpha, float t)
+void Surface::blend(float red, float green, float blue, float alpha, float t)
 {
     if (m->image == NULL) return;
 
@@ -1065,7 +1065,7 @@ void TexImage::blend(float red, float green, float blue, float alpha, float t)
     }
 }
 
-void TexImage::premultiplyAlpha()
+void Surface::premultiplyAlpha()
 {
     if (m->image == NULL) return;
 
@@ -1087,7 +1087,7 @@ void TexImage::premultiplyAlpha()
 }
 
 
-void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale)
+void Surface::toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale)
 {
     if (m->image == NULL) return;
 
@@ -1114,7 +1114,7 @@ void TexImage::toGreyScale(float redScale, float greenScale, float blueScale, fl
 }
 
 // Draw colored border.
-void TexImage::setBorder(float r, float g, float b, float a)
+void Surface::setBorder(float r, float g, float b, float a)
 {
     if (m->image == NULL) return;
 
@@ -1156,7 +1156,7 @@ void TexImage::setBorder(float r, float g, float b, float a)
 }
 
 // Fill image with the given color.
-void TexImage::fill(float red, float green, float blue, float alpha)
+void Surface::fill(float red, float green, float blue, float alpha)
 {
     if (m->image == NULL) return;
 
@@ -1179,7 +1179,7 @@ void TexImage::fill(float red, float green, float blue, float alpha)
 }
 
 
-void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
+void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 {
     if (m->image == NULL) return;
 
@@ -1188,7 +1188,7 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
     m->image->scaleAlphaToCoverage(coverage, alphaRef, 3);
 }
 
-/*bool TexImage::normalizeRange(float * rangeMin, float * rangeMax)
+/*bool Surface::normalizeRange(float * rangeMin, float * rangeMax)
 {
     if (m->image == NULL) return false;
 
@@ -1218,7 +1218,7 @@ void TexImage::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 
 // Ideally you should compress/quantize the RGB and M portions independently.
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.
-void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
+void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 {
     if (m->image == NULL) return;
 
@@ -1286,7 +1286,7 @@ void TexImage::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
     }
 }
 
-void TexImage::fromRGBM(float range/*= 1*/)
+void Surface::fromRGBM(float range/*= 1*/)
 {
     if (m->image == NULL) return;
 
@@ -1311,7 +1311,7 @@ void TexImage::fromRGBM(float range/*= 1*/)
 
 
 // Y is in the [0, 1] range, while CoCg are in the [-1, 1] range.
-void TexImage::toYCoCg()
+void Surface::toYCoCg()
 {
     if (m->image == NULL) return;
 
@@ -1348,7 +1348,7 @@ void TexImage::toYCoCg()
 // @@ Add support for threshold.
 // We could do something to prevent scale values from adjacent blocks from being too different to each other
 // and minimize bilinear interpolation artifacts.
-void TexImage::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
+void Surface::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
 {
     if (m->image == NULL || m->image->depth() != 1) return;
 
@@ -1406,7 +1406,7 @@ void TexImage::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
     }
 }
 
-void TexImage::fromYCoCg()
+void Surface::fromYCoCg()
 {
     if (m->image == NULL) return;
 
@@ -1439,7 +1439,7 @@ void TexImage::fromYCoCg()
     }
 }
 
-void TexImage::toLUVW(float range/*= 1.0f*/)
+void Surface::toLUVW(float range/*= 1.0f*/)
 {
     if (m->image == NULL) return;
 
@@ -1468,13 +1468,13 @@ void TexImage::toLUVW(float range/*= 1.0f*/)
     }
 }
 
-void TexImage::fromLUVW(float range/*= 1.0f*/)
+void Surface::fromLUVW(float range/*= 1.0f*/)
 {
     // Decompression is the same as in RGBM.
     fromRGBM(range * sqrtf(3));
 }
 
-void TexImage::abs(int channel)
+void Surface::abs(int channel)
 {
     if (m->image == NULL) return;
 
@@ -1489,7 +1489,7 @@ void TexImage::abs(int channel)
     }
 }
 
-void TexImage::convolve(int channel, int kernelSize, float * kernelData)
+void Surface::convolve(int channel, int kernelSize, float * kernelData)
 {
     if (m->image == NULL) return;
 
@@ -1500,7 +1500,7 @@ void TexImage::convolve(int channel, int kernelSize, float * kernelData)
 }
 
 /*
-void TexImage::blockLuminanceScale(float scale)
+void Surface::blockLuminanceScale(float scale)
 {
     if (m->image == NULL) return;
 
@@ -1575,7 +1575,7 @@ void TexImage::blockLuminanceScale(float scale)
 */
 
 /*
-void TexImage::toJPEGLS()
+void Surface::toJPEGLS()
 {
     if (m->image == NULL) return;
 
@@ -1598,7 +1598,7 @@ void TexImage::toJPEGLS()
     }
 }
 
-void TexImage::fromJPEGLS()
+void Surface::fromJPEGLS()
 {
     if (m->image == NULL) return;
 
@@ -1624,7 +1624,7 @@ void TexImage::fromJPEGLS()
 
 
 // If dither is true, this uses Floyd-Steinberg dithering method.
-void TexImage::binarize(int channel, float threshold, bool dither)
+void Surface::binarize(int channel, float threshold, bool dither)
 {
     if (m->image == NULL) return;
 
@@ -1687,7 +1687,7 @@ void TexImage::binarize(int channel, float threshold, bool dither)
 // Assumes input is in [0, 1] range. Output is in the [0, 1] range, but rounded to the middle of each bin.
 // If exactEndPoints is true, [0, 1] are represented exactly, and the correponding bins are half the size, so quantization is not truly uniform.
 // When dither is true, this uses Floyd-Steinberg dithering.
-void TexImage::quantize(int channel, int bits, bool exactEndPoints, bool dither)
+void Surface::quantize(int channel, int bits, bool exactEndPoints, bool dither)
 {
     if (m->image == NULL) return;
 
@@ -1758,7 +1758,7 @@ void TexImage::quantize(int channel, int bits, bool exactEndPoints, bool dither)
 
 
 // Set normal map options.
-void TexImage::toNormalMap(float sm, float medium, float big, float large)
+void Surface::toNormalMap(float sm, float medium, float big, float large)
 {
     if (m->image == NULL) return;
 
@@ -1777,7 +1777,7 @@ void TexImage::toNormalMap(float sm, float medium, float big, float large)
     m->isNormalMap = true;
 }
 
-void TexImage::normalizeNormalMap()
+void Surface::normalizeNormalMap()
 {
     if (m->image == NULL) return;
     if (!m->isNormalMap) return;
@@ -1787,7 +1787,7 @@ void TexImage::normalizeNormalMap()
     nv::normalizeNormalMap(m->image);
 }
 
-void TexImage::transformNormals(NormalTransform xform)
+void Surface::transformNormals(NormalTransform xform)
 {
     if (m->image == NULL) return;
 
@@ -1860,7 +1860,7 @@ void TexImage::transformNormals(NormalTransform xform)
     img->packNormals(0);
 }
 
-void TexImage::reconstructNormals(NormalTransform xform)
+void Surface::reconstructNormals(NormalTransform xform)
 {
     if (m->image == NULL) return;
 
@@ -1909,7 +1909,7 @@ void TexImage::reconstructNormals(NormalTransform xform)
     img->packNormals(0);
 }
 
-void TexImage::toCleanNormalMap()
+void Surface::toCleanNormalMap()
 {
     if (m->image == NULL) return;
 
@@ -1929,21 +1929,21 @@ void TexImage::toCleanNormalMap()
 }
 
 // [-1,1] -> [ 0,1]
-void TexImage::packNormals() {
+void Surface::packNormals() {
     if (m->image == NULL) return;
     detach();
     m->image->packNormals(0);
 }
 
 // [ 0,1] -> [-1,1]
-void TexImage::expandNormals() {
+void Surface::expandNormals() {
     if (m->image == NULL) return;
     detach();
     m->image->expandNormals(0);
 }
 
 
-void TexImage::flipX()
+void Surface::flipX()
 {
     if (m->image == NULL) return;
 
@@ -1952,7 +1952,7 @@ void TexImage::flipX()
     m->image->flipX();
 }
 
-void TexImage::flipY()
+void Surface::flipY()
 {
     if (m->image == NULL) return;
 
@@ -1961,7 +1961,7 @@ void TexImage::flipY()
     m->image->flipY();
 }
 
-void TexImage::flipZ()
+void Surface::flipZ()
 {
     if (m->image == NULL) return;
 
@@ -1970,12 +1970,12 @@ void TexImage::flipZ()
     m->image->flipZ();
 }
 
-bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel)
+bool Surface::copyChannel(const Surface & srcImage, int srcChannel)
 {
     return copyChannel(srcImage, srcChannel, srcChannel);
 }
 
-bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel, int dstChannel)
+bool Surface::copyChannel(const Surface & srcImage, int srcChannel, int dstChannel)
 {
     if (srcChannel < 0 || srcChannel > 3 || dstChannel < 0 || dstChannel > 3) return false;
 
@@ -1994,7 +1994,7 @@ bool TexImage::copyChannel(const TexImage & srcImage, int srcChannel, int dstCha
     return true;
 }
 
-bool TexImage::addChannel(const TexImage & srcImage, int srcChannel, int dstChannel, float scale)
+bool Surface::addChannel(const Surface & srcImage, int srcChannel, int dstChannel, float scale)
 {
     if (srcChannel < 0 || srcChannel > 3 || dstChannel < 0 || dstChannel > 3) return false;
 
@@ -2024,43 +2024,43 @@ bool TexImage::addChannel(const TexImage & srcImage, int srcChannel, int dstChan
 
 
 
-float nvtt::rmsError(const TexImage & reference, const TexImage & image)
+float nvtt::rmsError(const Surface & reference, const Surface & image)
 {
     return nv::rmsColorError(reference.m->image, image.m->image, reference.alphaMode() == nvtt::AlphaMode_Transparency);
 }
 
 
-float nvtt::rmsAlphaError(const TexImage & reference, const TexImage & image)
+float nvtt::rmsAlphaError(const Surface & reference, const Surface & image)
 {
     return nv::rmsAlphaError(reference.m->image, image.m->image);
 }
 
 
-float nvtt::cieLabError(const TexImage & reference, const TexImage & image)
+float nvtt::cieLabError(const Surface & reference, const Surface & image)
 {
     return nv::cieLabError(reference.m->image, image.m->image);
 }
 
-float nvtt::angularError(const TexImage & reference, const TexImage & image)
+float nvtt::angularError(const Surface & reference, const Surface & image)
 {
     //return nv::averageAngularError(reference.m->image, image.m->image);
     return nv::rmsAngularError(reference.m->image, image.m->image);
 }
 
 
-TexImage nvtt::diff(const TexImage & reference, const TexImage & image, float scale)
+Surface nvtt::diff(const Surface & reference, const Surface & image, float scale)
 {
     const FloatImage * ref = reference.m->image;
     const FloatImage * img = image.m->image;
 
     if (!sameLayout(img, ref)) {
-        return TexImage();
+        return Surface();
     }
 
     nvDebugCheck(img->componentCount() == 4);
     nvDebugCheck(ref->componentCount() == 4);
 
-    nvtt::TexImage diffImage;
+    nvtt::Surface diffImage;
     FloatImage * diff = diffImage.m->image = new FloatImage;
     diff->allocate(4, img->width(), img->height(), img->depth());
 
