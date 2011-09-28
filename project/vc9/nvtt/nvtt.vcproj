@@ -1069,11 +1069,11 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\CubeImage.cpp"
+			RelativePath="..\..\..\src\nvtt\CubeSurface.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\CubeImage.h"
+			RelativePath="..\..\..\src\nvtt\CubeSurface.h"
 			>
 		</File>
 		<File
@@ -1133,11 +1133,11 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\TexImage.cpp"
+			RelativePath="..\..\..\src\nvtt\Surface.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\TexImage.h"
+			RelativePath="..\..\..\src\nvtt\Surface.h"
 			>
 		</File>
 	</Files>
