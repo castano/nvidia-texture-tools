@@ -29,7 +29,7 @@
 #include "InputOptions.h"
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
-#include "TexImage.h"
+#include "Surface.h"
 
 #include "CompressorDX9.h"
 #include "CompressorDX10.h"
