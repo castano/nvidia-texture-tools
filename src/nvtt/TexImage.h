@@ -36,7 +36,7 @@
 namespace nvtt
 {
 
-    struct TexImage::Private : public nv::RefCounted
+    struct Surface::Private : public nv::RefCounted
     {
         void operator=(const Private &);
     public:

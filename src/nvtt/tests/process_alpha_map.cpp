@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     context.enableCudaAcceleration(false);
 
     // Load color map.
-    nvtt::TexImage colorMap;
+    nvtt::Surface colorMap;
     if (!colorMap.load(inputFileNameColor)) {
         printf("Image '%s' could not be loaded.\n", inputFileNameColor);
         return EXIT_FAILURE;
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     colorOutputOptions.setFileName(outputFileNameColor.str());
 
     // Load normal map.
-    nvtt::TexImage normalMap;
+    nvtt::Surface normalMap;
     if (inputFileNameNormal != NULL) {
         if (!normalMap.load(inputFileNameColor)) {
             printf("Image '%s' could not be loaded.\n", inputFileNameNormal);
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     {
         colorMap.scaleAlphaToCoverage(coverage, alphaRef);
             
-        nvtt::TexImage tmpColorMap = colorMap;
+        nvtt::Surface tmpColorMap = colorMap;
         tmpColorMap.toGamma(gamma);
 
         context.compress(tmpColorMap, 0, m, colorCompressionOptions, colorOutputOptions);

@@ -25,6 +25,9 @@
 #define NVTT_CUBEIMAGE_H
 
 #include "nvtt.h"
+#include "TexImage.h"
+
+#include "nvimage/FloatImage.h"
 
 #include "nvcore/RefCounted.h"
 #include "nvcore/Ptr.h"
@@ -33,7 +36,7 @@
 namespace nvtt
 {
 
-    struct CubeImage::Private : public nv::RefCounted
+    struct CubeSurface::Private : public nv::RefCounted
     {
         void operator=(const Private &);
     public:
@@ -56,8 +59,18 @@ namespace nvtt
         {
         }
 
+        void allocate(int size)
+        {
+            this->size = size;
+            for (uint i = 0; i < 6; i++) {
+                face[i].detach();
+                face[i].m->image = new nv::FloatImage;
+                face[i].m->image->allocate(size, size, 1);
+            }
+        }
+
         int size;
-        TexImage face[6];
+        Surface face[6];
     };
 
 } // nvtt namespace
