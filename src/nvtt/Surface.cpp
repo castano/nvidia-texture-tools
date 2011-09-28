@@ -1469,10 +1469,10 @@ void Surface::toRGBE(int mantissaBits, int exponentBits)
         int E = max(- exponentBias - 1, floatExponent(M)) + 1 + exponentBias;
         nvDebugCheck(E >= 0 && E < (1 << exponentBits));
 
-        double denom = pow(2, E - exponentBias - mantissaBits);
+        double denom = pow(2.0, double(E - exponentBias - mantissaBits));
 
         // Refine exponent:
-        int m = iround(M / denom);
+        int m = iround(float(M / denom));
         nvDebugCheck(m <= (1 << mantissaBits));
 
         if (m == (1 << mantissaBits)) {
@@ -1481,9 +1481,9 @@ void Surface::toRGBE(int mantissaBits, int exponentBits)
             nvDebugCheck(E < (1 << exponentBits));
         }
 
-        R = floatRound(R / denom);
-        G = floatRound(G / denom);
-        B = floatRound(B / denom);
+        R = floatRound(float(R / denom));
+        G = floatRound(float(G / denom));
+        B = floatRound(float(B / denom));
 
         nvDebugCheck(R >= 0 && R < (1 << mantissaBits));
         nvDebugCheck(G >= 0 && G < (1 << mantissaBits));
@@ -1493,7 +1493,7 @@ void Surface::toRGBE(int mantissaBits, int exponentBits)
         r[i] = R / ((1 << mantissaBits) - 1);
         g[i] = G / ((1 << mantissaBits) - 1);
         b[i] = B / ((1 << mantissaBits) - 1);
-        a[i] = E / ((1 << exponentBits) - 1);
+        a[i] = float(E) / ((1 << exponentBits) - 1);
     }
 }
 
@@ -1529,7 +1529,7 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
     detach();
 
     // exponent bias: 5 -> 15, 8 -> 127
-    const float exponentBias = (1 << (exponentBits - 1)) - 1;
+    const int exponentBias = (1 << (exponentBits - 1)) - 1;
 
     FloatImage * img = m->image;
     float * r = img->channel(0);
@@ -1545,7 +1545,7 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
         int B = iround(b[i] * ((1 << mantissaBits) - 1));
         int E = iround(a[i] * ((1 << exponentBits) - 1));
 
-        float scale = powf(2, E - exponentBias - mantissaBits);
+        float scale = powf(2, float(E - exponentBias - mantissaBits));
 
         r[i] = R * scale;
         g[i] = G * scale;
