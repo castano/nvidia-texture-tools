@@ -692,8 +692,8 @@ typedef unsigned long posh_u64_t;
 #  define POSH_64BIT_INTEGER 1
 typedef __int64 posh_i64_t;
 typedef unsigned __int64 posh_u64_t;
-#  define POSH_I64( x ) ((posh_i64_t)x)
-#  define POSH_U64( x ) ((posh_u64_t)x)
+#  define POSH_I64( x ) ((posh_i64_t)(x##i64))
+#  define POSH_U64( x ) ((posh_u64_t)(x##ui64))
 #  define POSH_I64_PRINTF_PREFIX "I64"
 #elif defined __GNUC__ || defined __MWERKS__ || defined __SUNPRO_C || defined __SUNPRO_CC || defined __APPLE_CC__ || defined POSH_OS_IRIX || defined _LONG_LONG || defined _CRAYC
 #  define POSH_64BIT_INTEGER 1

@@ -238,15 +238,17 @@ namespace nv
     // I'm always confused about which quantizer to use. I think we should choose a quantizer based on how the values are expanded later and this is generally using the 'exact endpoints' rule.
 
     // Quantize a [0, 1] full precision float, using exact endpoints.
-    inline float quantizeFloat(float f, int bits) {
-        float scale = (1 << bits) - 1;
+    inline float quantizeFloat(float f, uint bits) {
+        nvDebugCheck(bits <= 16);
+        float scale = float((1 << bits) - 1);
         float offset = 0.0f;
         return floor(saturate(f) * scale + offset) / scale;
     }
 
     // Quantize a [0, 1] full precision float, using uniform bins.
-    /*inline float quantizeFloat(float f, int bits) {
-        float scale = (1 << bits);
+    /*inline float quantizeFloat(float f, uint bits) {
+        nvDebugCheck(bits <= 16);
+        float scale = float(1 << bits);
         float offset = 0.5f;
         return floor(saturate(f) * scale + offset) / scale;
     }*/
