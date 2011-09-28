@@ -1466,21 +1466,30 @@ void Surface::toRGBE(int mantissaBits, int exponentBits)
         float M = max(R, G, B);
 
         // Preliminary exponent:
-        float E = max(- exponentBias - 1, ifloor(log2f(M))) + 1 + exponentBias;
+        int E = max(- exponentBias - 1, floatExponent(M)) + 1 + exponentBias;
+        nvDebugCheck(E >= 0 && E < (1 << exponentBits));
+
+        double denom = pow(2, E - exponentBias - mantissaBits);
 
         // Refine exponent:
-        int max_s = iround(M / exp2(E - exponentBias - mantissaBits));
-        if (max_s == (1 << mantissaBits)) E += 1.0f;
+        int m = iround(M / denom);
+        nvDebugCheck(m <= (1 << mantissaBits));
 
-        R = floatRound(R / exp2(E - exponentBias - mantissaBits));
-        G = floatRound(G / exp2(E - exponentBias - mantissaBits));
-        B = floatRound(B / exp2(E - exponentBias - mantissaBits));
+        if (m == (1 << mantissaBits)) {
+            denom *= 2;
+            E += 1;
+            nvDebugCheck(E < (1 << exponentBits));
+        }
 
-        nvDebugCheck(R >= 0 && R <= ((1 << mantissaBits) - 1));
-        nvDebugCheck(G >= 0 && G <= ((1 << mantissaBits) - 1));
-        nvDebugCheck(B >= 0 && B <= ((1 << mantissaBits) - 1));
+        R = floatRound(R / denom);
+        G = floatRound(G / denom);
+        B = floatRound(B / denom);
 
-        // Store in [0, 1] range.
+        nvDebugCheck(R >= 0 && R < (1 << mantissaBits));
+        nvDebugCheck(G >= 0 && G < (1 << mantissaBits));
+        nvDebugCheck(B >= 0 && B < (1 << mantissaBits));
+
+        // Store as normalized float.
         r[i] = R / ((1 << mantissaBits) - 1);
         g[i] = G / ((1 << mantissaBits) - 1);
         b[i] = B / ((1 << mantissaBits) - 1);
@@ -1499,12 +1508,21 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
     // RGB components (ignoring the "Conversion to floating-point" section
     // below in this case) as follows:
     //
-    // red   = p_red   * 2^(p_exp - B - N)
-    // green = p_green * 2^(p_exp - B - N)
-    // blue  = p_blue  * 2^(p_exp - B - N)
+    //   red   = p_red   * 2^(p_exp - B - N)
+    //   green = p_green * 2^(p_exp - B - N)
+    //   blue  = p_blue  * 2^(p_exp - B - N)
     //
     // where B is 15 (the exponent bias) and N is 9 (the number of mantissa
     // bits)."
+
+
+    // int exponent = v.field.biasedexponent - RGB9E5_EXP_BIAS - RGB9E5_MANTISSA_BITS;
+    // float scale = (float) pow(2, exponent);
+    //
+    // retval[0] = v.field.r * scale;
+    // retval[1] = v.field.g * scale;
+    // retval[2] = v.field.b * scale;
+
 
     if (isNull()) return;
 
@@ -1521,17 +1539,17 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
-        // RGBE are assumed to be in the [0, 1] range.
-        float R = r[i] * ((1 << mantissaBits) - 1);
-        float G = g[i] * ((1 << mantissaBits) - 1);
-        float B = b[i] * ((1 << mantissaBits) - 1);
-        float E = a[i] * ((1 << exponentBits) - 1);
+        // Expand normalized float to to 9995
+        int R = iround(r[i] * ((1 << mantissaBits) - 1));
+        int G = iround(g[i] * ((1 << mantissaBits) - 1));
+        int B = iround(b[i] * ((1 << mantissaBits) - 1));
+        int E = iround(a[i] * ((1 << exponentBits) - 1));
 
-        float M = pow(2, E - exponentBias - mantissaBits);
+        float scale = powf(2, E - exponentBias - mantissaBits);
 
-        r[i] = R * M;
-        g[i] = G * M;
-        b[i] = B * M;
+        r[i] = R * scale;
+        g[i] = G * scale;
+        b[i] = B * scale;
         a[i] = 1;
     }
 }
