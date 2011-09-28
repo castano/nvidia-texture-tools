@@ -251,6 +251,29 @@ namespace nv
         return floor(saturate(f) * scale + offset) / scale;
     }*/
 
+    union Float754 {
+        unsigned int raw;
+        float value;
+        struct {
+        #if NV_BIG_ENDIAN
+            unsigned int negative:1;
+            unsigned int biasedexponent:8;
+            unsigned int mantissa:23;
+        #else
+            unsigned int mantissa:23;
+            unsigned int biasedexponent:8;
+            unsigned int negative:1;
+        #endif
+        } field;
+    };
+
+    // Return the exponent of x ~ Floor(Log2(x))
+    inline int floatExponent(float x)
+    {
+        Float754 f;
+        f.value = x;
+        return (f.field.biasedexponent - 127);
+    }
 } // nv
 
 #endif // NV_MATH_H
