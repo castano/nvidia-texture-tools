@@ -44,13 +44,13 @@ namespace nvtt
         {
             nvDebugCheck( refCount() == 0 );
 
-            size = 0;
+            edgeLength = 0;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
         {
             nvDebugCheck( refCount() == 0 );
 
-            size = p.size;
+            edgeLength = p.edgeLength;
             for (uint i = 0; i < 6; i++) {
                 face[i] = p.face[6];
             }
@@ -59,17 +59,17 @@ namespace nvtt
         {
         }
 
-        void allocate(int size)
+        void allocate(uint edgeLength)
         {
-            this->size = size;
+            this->edgeLength = edgeLength;
             for (uint i = 0; i < 6; i++) {
                 face[i].detach();
                 face[i].m->image = new nv::FloatImage;
-                face[i].m->image->allocate(size, size, 1);
+                face[i].m->image->allocate(edgeLength, edgeLength, 1);
             }
         }
 
-        int size;
+        uint edgeLength;
         Surface face[6];
     };
 
