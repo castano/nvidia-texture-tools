@@ -40,22 +40,123 @@ using namespace nvtt;
 
 namespace 
 {
-    inline void convert_to_a8r8g8b8(const void * src, void * dst, uint w)
-    {
-        memcpy(dst, src, 4 * w);
+    /* 11 and 10 bit floating point numbers according to the OpenGL packed float extension:
+       http://www.opengl.org/registry/specs/EXT/packed_float.txt
+
+       2.1.A  Unsigned 11-Bit Floating-Point Numbers
+
+        An unsigned 11-bit floating-point number has no sign bit, a 5-bit
+        exponent (E), and a 6-bit mantissa (M).  The value of an unsigned
+        11-bit floating-point number (represented as an 11-bit unsigned
+        integer N) is determined by the following:
+
+            0.0,                      if E == 0 and M == 0,
+            2^-14 * (M / 64),         if E == 0 and M != 0,
+            2^(E-15) * (1 + M/64),    if 0 < E < 31,
+            INF,                      if E == 31 and M == 0, or
+            NaN,                      if E == 31 and M != 0,
+
+        where
+
+            E = floor(N / 64), and
+            M = N mod 64.
+
+        Implementations are also allowed to use any of the following
+        alternative encodings:
+
+            0.0,                      if E == 0 and M != 0
+            2^(E-15) * (1 + M/64)     if E == 31 and M == 0
+            2^(E-15) * (1 + M/64)     if E == 31 and M != 0
+
+        When a floating-point value is converted to an unsigned 11-bit
+        floating-point representation, finite values are rounded to the closet
+        representable finite value.  While less accurate, implementations
+        are allowed to always round in the direction of zero.  This means
+        negative values are converted to zero.  Likewise, finite positive
+        values greater than 65024 (the maximum finite representable unsigned
+        11-bit floating-point value) are converted to 65024.  Additionally:
+        negative infinity is converted to zero; positive infinity is converted
+        to positive infinity; and both positive and negative NaN are converted
+        to positive NaN.
+
+        Any representable unsigned 11-bit floating-point value is legal
+        as input to a GL command that accepts 11-bit floating-point data.
+        The result of providing a value that is not a floating-point number
+        (such as infinity or NaN) to such a command is unspecified, but must
+        not lead to GL interruption or termination.  Providing a denormalized
+        number or negative zero to GL must yield predictable results.
+
+        2.1.B  Unsigned 10-Bit Floating-Point Numbers
+
+        An unsigned 10-bit floating-point number has no sign bit, a 5-bit
+        exponent (E), and a 5-bit mantissa (M).  The value of an unsigned
+        10-bit floating-point number (represented as an 10-bit unsigned
+        integer N) is determined by the following:
+
+            0.0,                      if E == 0 and M == 0,
+            2^-14 * (M / 32),         if E == 0 and M != 0,
+            2^(E-15) * (1 + M/32),    if 0 < E < 31,
+            INF,                      if E == 31 and M == 0, or
+            NaN,                      if E == 31 and M != 0,
+
+        where
+
+            E = floor(N / 32), and
+            M = N mod 32.
+
+        When a floating-point value is converted to an unsigned 10-bit
+        floating-point representation, finite values are rounded to the closet
+        representable finite value.  While less accurate, implementations
+        are allowed to always round in the direction of zero.  This means
+        negative values are converted to zero.  Likewise, finite positive
+        values greater than 64512 (the maximum finite representable unsigned
+        10-bit floating-point value) are converted to 64512.  Additionally:
+        negative infinity is converted to zero; positive infinity is converted
+        to positive infinity; and both positive and negative NaN are converted
+        to positive NaN.
+
+        Any representable unsigned 10-bit floating-point value is legal
+        as input to a GL command that accepts 10-bit floating-point data.
+        The result of providing a value that is not a floating-point number
+        (such as infinity or NaN) to such a command is unspecified, but must
+        not lead to GL interruption or termination.  Providing a denormalized
+        number or negative zero to GL must yield predictable results.
+    */
+
+    // @@ Is this correct? Not tested!
+    // 6 bits of mantissa, 5 bits of exponent.
+    static uint toFloat11(float f) {
+        if (f < 0) f = 0;           // Flush to 0 or to epsilon?
+        if (f > 65024) f = 65024;   // Flush to infinity or max?
+
+        Float754 F;
+        F.value = f;
+
+        uint E = F.field.biasedexponent - 127 + 15;
+        nvDebugCheck(E < 32);
+
+        uint M = F.field.mantissa >> (23 - 6);
+
+        return (E << 6) | M;
     }
 
-    inline void convert_to_x8r8g8b8(const void * src, void * dst, uint w)
-    {
-        memcpy(dst, src, 4 * w);
+    // @@ Is this correct? Not tested!
+    // 5 bits of mantissa, 5 bits of exponent.
+    static uint toFloat10(float f) {
+        if (f < 0) f = 0;           // Flush to 0 or to epsilon?
+        if (f > 64512) f = 64512;   // Flush to infinity or max?
+
+        Float754 F;
+        F.value = f;
+
+        uint E = F.field.biasedexponent - 127 + 15;
+        nvDebugCheck(E < 32);
+
+        uint M = F.field.mantissa >> (23 - 5);
+
+        return (E << 5) | M;
     }
 
-    static uint16 to_half(float f)
-    {
-        union { float f; uint32 u; } c;
-        c.f = f;
-        return half_from_float(c.u);
-    }
 
     struct BitStream
     {
@@ -84,16 +185,26 @@ namespace
 
         void putFloat(float f)
         {
-            nvDebugCheck(bits == 0);
+            nvDebugCheck(bits == 0); // @@ Do not require alignment.
             *((float *)ptr) = f;
             ptr += 4;
         }
 
         void putHalf(float f)
         {
-            nvDebugCheck(bits == 0);
+            nvDebugCheck(bits == 0); // @@ Do not require alignment.
             *((uint16 *)ptr) = to_half(f);
             ptr += 2;
+        }
+
+        void putFloat11(float f)
+        {
+            putBits(toFloat11(f), 11);
+        }
+
+        void putFloat10(float f)
+        {
+            putBits(toFloat10(f), 10);
         }
 
         void flush()
@@ -142,10 +253,11 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
         bsize = compressionOptions.bsize;
         asize = compressionOptions.asize;
 
-        nvCheck(rsize == 0 || rsize == 16 || rsize == 32);
-        nvCheck(gsize == 0 || gsize == 16 || gsize == 32);
-        nvCheck(bsize == 0 || bsize == 16 || bsize == 32);
-        nvCheck(asize == 0 || asize == 16 || asize == 32);
+        // Other float sizes are not supported and will be zero-padded.
+        nvDebugCheck(rsize == 0 || rsize == 10 || rsize == 11 || rsize == 16 || rsize == 32);
+        nvDebugCheck(gsize == 0 || gsize == 10 || gsize == 11 || gsize == 16 || gsize == 32);
+        nvDebugCheck(bsize == 0 || bsize == 10 || bsize == 11 || bsize == 16 || bsize == 32);
+        nvDebugCheck(asize == 0 || asize == 10 || asize == 11 || asize == 16 || asize == 32);
 
         bitCount = rsize + gsize + bsize + asize;
     }
@@ -213,15 +325,27 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                 {
                     if (rsize == 32) stream.putFloat(r);
                     else if (rsize == 16) stream.putHalf(r);
+                    else if (rsize == 11) stream.putFloat11(r);
+                    else if (rsize == 10) stream.putFloat10(r);
+                    else stream.putBits(0, rsize);
 
                     if (gsize == 32) stream.putFloat(g);
                     else if (gsize == 16) stream.putHalf(g);
+                    else if (gsize == 11) stream.putFloat11(g);
+                    else if (gsize == 10) stream.putFloat10(g);
+                    else stream.putBits(0, gsize);
 
                     if (bsize == 32) stream.putFloat(b);
                     else if (bsize == 16) stream.putHalf(b);
+                    else if (bsize == 11) stream.putFloat11(b);
+                    else if (bsize == 10) stream.putFloat10(b);
+                    else stream.putBits(0, bsize);
 
                     if (asize == 32) stream.putFloat(a);
                     else if (asize == 16) stream.putHalf(a);
+                    else if (asize == 11) stream.putFloat11(a);
+                    else if (asize == 10) stream.putFloat10(a);
+                    else stream.putBits(0, asize);
                 }
                 else
                 {

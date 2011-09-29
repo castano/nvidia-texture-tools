@@ -71,11 +71,11 @@ namespace nvtt
     struct CubeSurface;
 
 
+    // Supported compression formats.
     // @@ I wish I had distinguished between "formats" and compressors.
     // That is, 'DXT1' is a format 'DXT1a' and 'DXT1n' are DXT1 compressors.
     // That is, 'DXT3' is a format 'DXT3n' is a DXT3 compressor.
     // Having multiple enums for the same ids only creates confusion. Clean this up.
-    /// Supported compression formats.
     enum Format
     {
         // No compression.
@@ -105,7 +105,7 @@ namespace nvtt
         Format_BC7,     // Not supported yet.
     };
 
-    /// Pixel types. These basically indicate how the output should be interpreted, but do not have any influence over the input.
+    // Pixel types. These basically indicate how the output should be interpreted, but do not have any influence over the input. They are only relevant in RGBA mode.
     enum PixelType
     {
         PixelType_UnsignedNorm = 0,
@@ -116,7 +116,7 @@ namespace nvtt
         PixelType_UnsignedFloat = 5,
     };
 
-    /// Quality modes.
+    // Quality modes.
     enum Quality
     {
         Quality_Fastest,
@@ -125,16 +125,17 @@ namespace nvtt
         Quality_Highest,
     };
 
-    /// DXT decoder.
+    // DXT decoder.
     enum Decoder
     {
         Decoder_D3D10,
         Decoder_D3D9,
         Decoder_NV5x,
+        //Decoder_RSX, // To take advantage of DXT5 bug.
     };
 
 
-    /// Compression options. This class describes the desired compression format and other compression settings.
+    // Compression options. This class describes the desired compression format and other compression settings.
     struct CompressionOptions
     {
         NVTT_FORBID_COPY(CompressionOptions);
@@ -159,6 +160,7 @@ namespace nvtt
 
         NVTT_API void setPitchAlignment(int pitchAlignment);
 
+        // @@ I wish this wasn't part of the compression options. Quantization is applied before compression. We don't have compressors with error diffusion.
         NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 
         NVTT_API void setTargetDecoder(Decoder decoder);
@@ -181,7 +183,7 @@ namespace nvtt
     */
 
 
-    /// Wrap modes.
+    // Wrap modes.
     enum WrapMode
     {
         WrapMode_Clamp,
@@ -189,7 +191,7 @@ namespace nvtt
         WrapMode_Mirror,
     };
 
-    /// Texture types.
+    // Texture types.
     enum TextureType
     {
         TextureType_2D,
@@ -197,23 +199,23 @@ namespace nvtt
         TextureType_3D,
     };
 
-    /// Input formats.
+    // Input formats.
     enum InputFormat
     {
-        InputFormat_BGRA_8UB, // Normalized [0, 1] 8 bit fixed point.
-        InputFormat_RGBA_16F, // 16 bit floating point.
-        InputFormat_RGBA_32F, // 32 bit floating point.
+        InputFormat_BGRA_8UB,   // Normalized [0, 1] 8 bit fixed point.
+        InputFormat_RGBA_16F,   // 16 bit floating point.
+        InputFormat_RGBA_32F,   // 32 bit floating point.
     };
 
-    /// Mipmap downsampling filters.
+    // Mipmap downsampling filters.
     enum MipmapFilter
     {
-        MipmapFilter_Box,       ///< Box filter is quite good and very fast.
-        MipmapFilter_Triangle,  ///< Triangle filter blurs the results too much, but that might be what you want.
-        MipmapFilter_Kaiser,    ///< Kaiser-windowed Sinc filter is the best downsampling filter.
+        MipmapFilter_Box,       // Box filter is quite good and very fast.
+        MipmapFilter_Triangle,  // Triangle filter blurs the results too much, but that might be what you want.
+        MipmapFilter_Kaiser,    // Kaiser-windowed Sinc filter is the best downsampling filter.
     };
 
-    /// Texture resize filters.
+    // Texture resize filters.
     enum ResizeFilter
     {
         ResizeFilter_Box,
@@ -222,7 +224,7 @@ namespace nvtt
         ResizeFilter_Mitchell,
     };
 
-    /// Extents rounding mode.
+    // Extents rounding mode.
     enum RoundMode
     {
         RoundMode_None,
@@ -231,7 +233,7 @@ namespace nvtt
         RoundMode_ToPreviousPowerOfTwo,
     };
 
-    /// Alpha mode.
+    // Alpha mode.
     enum AlphaMode
     {
         AlphaMode_None,
@@ -239,7 +241,7 @@ namespace nvtt
         AlphaMode_Premultiplied,
     };
 
-    /// Input options. Specify format and layout of the input texture.
+    // Input options. Specify format and layout of the input texture.
     struct InputOptions
     {
         NVTT_FORBID_COPY(InputOptions);
@@ -288,22 +290,22 @@ namespace nvtt
     };
 
 
-    /// Output handler.
+    // Output handler.
     struct OutputHandler
     {
         virtual ~OutputHandler() {}
 
-        /// Indicate the start of a new compressed image that's part of the final texture.
+        // Indicate the start of a new compressed image that's part of the final texture.
         virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel) = 0;
 
-        /// Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
+        // Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
         virtual bool writeData(const void * data, int size) = 0;
 
-        /// Indicate the end of a the compressed image.
+        // Indicate the end of a the compressed image.
         virtual void endImage() = 0;
     };
 
-    /// Error codes.
+    // Error codes.
     enum Error
     {
         Error_Unknown,
@@ -315,7 +317,7 @@ namespace nvtt
         Error_UnsupportedOutputFormat,
     };
 
-    /// Error handler.
+    // Error handler.
     struct ErrorHandler
     {
         virtual ~ErrorHandler() {}
@@ -324,16 +326,18 @@ namespace nvtt
         virtual void error(Error e) = 0;
     };
 
-    /// Container.
+    // Container.
     enum Container
     {
         Container_DDS,
         Container_DDS10,
+        // Container_KTX,   // Khronos Texture: http://www.khronos.org/opengles/sdk/tools/KTX/
+        // Container_VTF,   // Valve Texture Format: http://developer.valvesoftware.com/wiki/Valve_Texture_Format
     };
 
 
-    /// Output Options. This class holds pointers to the interfaces that are used to report the output of
-    /// the compressor to the user.
+    // Output Options. This class holds pointers to the interfaces that are used to report the output of
+    // the compressor to the user.
     struct OutputOptions
     {
         NVTT_FORBID_COPY(OutputOptions);
@@ -363,7 +367,7 @@ namespace nvtt
         virtual void dispatch(Task * task, void * context, int count) = 0;
     };
 
-    /// Context.
+    // Context.
     struct Compressor
     {
         NVTT_FORBID_COPY(Compressor);
@@ -404,12 +408,13 @@ namespace nvtt
         NormalTransform_Orthographic,
         NormalTransform_Stereographic,
         NormalTransform_Paraboloid,
-        NormalTransform_Quartic,
+        NormalTransform_Quartic
         //NormalTransform_DualParaboloid,
     };
 
 
-    /// A surface is a texture mipmap. Can be 2D or 3D.
+    // A surface is one level of a 2D or 3D texture.
+    // @@ It would be nice to add support for texture borders for correct resizing of tiled textures and constrained DXT compression.
     struct Surface
     {
         NVTT_API Surface();
@@ -519,15 +524,16 @@ namespace nvtt
     };
 
 
+    // Cube layout formats.
     enum CubeLayout {
         CubeLayout_VerticalCross,
         CubeLayout_HorizontalCross,
         CubeLayout_Column,
         CubeLayout_Row,
-        CubeLayout_LatitudeLongitude,
+        CubeLayout_LatitudeLongitude
     };
 
-    /// A cubemap mipmap. CubeSurface?
+    // A CubeSurface is one level of a cube map texture.
     struct CubeSurface
     {
         NVTT_API CubeSurface();
@@ -548,7 +554,7 @@ namespace nvtt
         Surface & face(int face);
         const Surface & face(int face) const;
 
-        // Layout conversion.
+        // Layout conversion. @@ Not implemented.
         void fold(const Surface & img, CubeLayout layout);
         Surface unfold(CubeLayout layout) const;
 
@@ -556,10 +562,11 @@ namespace nvtt
 
         // @@ Add resizing methods.
 
+        // @@ Add edge fixup methods.
+
         // Filtering.
         CubeSurface irradianceFilter(int size) const;
         CubeSurface cosinePowerFilter(int size, float cosinePower) const;
-
 
         /*
         NVTT_API void resize(int w, int h, ResizeFilter filter);
