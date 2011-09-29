@@ -153,7 +153,7 @@ int Compressor::estimateSize(const Surface & tex, int mipmapCount, const Compres
 
 bool Compressor::outputHeader(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
 {
-    return m.outputHeader(TextureType_Cube, cube.size(), cube.size(), 1, mipmapCount, false, compressionOptions.m, outputOptions.m);
+    return m.outputHeader(TextureType_Cube, cube.edgeLength(), cube.edgeLength(), 1, mipmapCount, false, compressionOptions.m, outputOptions.m);
 }
 
 bool Compressor::compress(const CubeSurface & cube, int mipmap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const
@@ -168,7 +168,7 @@ bool Compressor::compress(const CubeSurface & cube, int mipmap, const Compressio
 
 int Compressor::estimateSize(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions) const
 {
-    return 6 * estimateSize(cube.size(), cube.size(), 1, mipmapCount, compressionOptions);
+    return 6 * estimateSize(cube.edgeLength(), cube.edgeLength(), 1, mipmapCount, compressionOptions);
 }
 
 

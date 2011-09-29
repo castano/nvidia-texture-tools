@@ -538,7 +538,7 @@ namespace nvtt
 
         // Queries.
         NVTT_API bool isNull() const;
-        NVTT_API int size() const;
+        NVTT_API int edgeLength() const;
         NVTT_API int countMipmaps() const;
 
         // Texture data.

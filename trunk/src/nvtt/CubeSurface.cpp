@@ -24,9 +24,12 @@
 #include "CubeSurface.h"
 #include "Surface.h"
 
+#include "nvimage/DirectDrawSurface.h"
+
 #include "nvmath/Vector.h"
 
 #include "nvcore/Array.h"
+#include "nvcore/StrLib.h"
 
 
 using namespace nv;
@@ -73,17 +76,17 @@ void CubeSurface::detach()
 
 bool CubeSurface::isNull() const
 {
-    return m->size == 0;
+    return m->edgeLength == 0;
 }
 
-int CubeSurface::size() const
+int CubeSurface::edgeLength() const
 {
-    return m->size;
+    return m->edgeLength;
 }
 
 int CubeSurface::countMipmaps() const
 {
-    return nv::countMipmaps(m->size);
+    return nv::countMipmaps(m->edgeLength);
 }
 
 Surface & CubeSurface::face(int f)
@@ -101,6 +104,52 @@ const Surface & CubeSurface::face(int f) const
 
 bool CubeSurface::load(const char * fileName)
 {
+    if (strcmp(Path::extension(fileName), ".dds") == 0) {
+        nv::DirectDrawSurface dds(fileName);
+
+        if (!dds.isValid()/* || !dds.isSupported()*/) {
+            return false;
+        }
+
+        if (!dds.isTextureCube()) {
+            return false;
+        }
+
+        // Make sure it's a valid cube.
+        if (dds.header.width != dds.header.height) return false;
+        //if ((dds.header.caps.caps2 & DDSCAPS2_CUBEMAP_ALL_FACES) != DDSCAPS2_CUBEMAP_ALL_FACES) return false;
+
+
+        nvtt::InputFormat inputFormat = nvtt::InputFormat_RGBA_16F;
+
+        if (dds.header.hasDX10Header()) {
+            if (dds.header10.dxgiFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) inputFormat = nvtt::InputFormat_RGBA_16F;
+            else if (dds.header10.dxgiFormat == DXGI_FORMAT_R32G32B32A32_FLOAT) inputFormat = nvtt::InputFormat_RGBA_32F;
+            else return false;
+        }
+        else {
+            if ((dds.header.pf.flags & DDPF_FOURCC) == 0) return false;
+
+            if (dds.header.pf.fourcc == D3DFMT_A16B16G16R16F) inputFormat = nvtt::InputFormat_RGBA_16F;
+            else if (dds.header.pf.fourcc == D3DFMT_A32B32G32R32F) inputFormat = nvtt::InputFormat_RGBA_32F;
+            else return false;
+        }
+        
+        uint edgeLength = dds.header.width;
+
+        uint size = dds.surfaceSize(0);
+        void * data = malloc(size);
+
+        for (int f = 0; f < 6; f++) {
+            dds.readSurface(f, 0, data, size);
+            m->face[f].setImage(inputFormat, edgeLength, edgeLength, 1, data);
+        }
+
+        m->edgeLength = edgeLength;
+
+        free(data);
+    }
+
     // @@ TODO
     return false;
 }
@@ -205,7 +254,7 @@ Vector3 texelDirection(uint face, uint x, uint y, float ilen)
 }
 
 struct VectorTable {
-    VectorTable(int edgeLength) : size(edgeLength) {
+    VectorTable(uint edgeLength) : size(edgeLength) {
         float invEdgeLength = 1.0f / edgeLength;
 
         for (uint f = 0; f < 6; f++) {
@@ -222,14 +271,14 @@ struct VectorTable {
         return data[(f * size + y) * size + x];
     }
 
-    int size;
+    uint size;
     nv::Array<Vector3> data;
 };
 
 
 CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
 {
-    const uint edgeLength = m->size;
+    const uint edgeLength = m->edgeLength;
 
     // Allocate output cube.
     CubeSurface filteredCube;
@@ -256,15 +305,15 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
                 float g = face.m->image->pixel(1, x, y, 0) * solidAngle;;
                 float b = face.m->image->pixel(2, x, y, 0) * solidAngle;;
 
-                Vector3 texelDir = texelDirection(f, x, y, edgeLength);
+                Vector3 texelDir = texelDirection(f, x, y, 1.0f / edgeLength);
 
                 for (uint ff = 0; ff < 6; ff++) {
                     FloatImage * filteredFace = filteredCube.m->face[ff].m->image;
 
-                    for (uint yy = 0; yy < size; yy++) {
-                        for (uint xx = 0; xx < size; xx++) {
+                    for (uint yy = 0; yy < uint(size); yy++) {
+                        for (uint xx = 0; xx < uint(size); xx++) {
 
-                            Vector3 filterDir = texelDirection(ff, xx, yy, size);
+                            Vector3 filterDir = texelDirection(ff, xx, yy, 1.0f / size);
 
                             float power = powf(saturate(dot(texelDir, filterDir)), cosinePower);
 
