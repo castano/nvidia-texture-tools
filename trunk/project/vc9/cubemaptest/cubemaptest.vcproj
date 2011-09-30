@@ -2,11 +2,10 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="nvcore"
-	ProjectGUID="{F143D180-D4C4-4037-B3DE-BE89A21C8D1D}"
-	RootNamespace="nvcore"
-	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
+	Name="cubemaptest"
+	ProjectGUID="{CFB3FEAC-5720-4B16-9D7E-039DB180B641}"
+	RootNamespace="cubemaptest"
+	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
 		<Platform
@@ -23,7 +22,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			>
@@ -45,12 +44,9 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -64,10 +60,18 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
+				GenerateDebugInformation="true"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -79,6 +83,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -86,9 +93,9 @@
 			Name="Debug|x64"
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
-			CharacterSet="0"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -109,12 +116,9 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -128,10 +132,17 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
+				GenerateDebugInformation="true"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -143,6 +154,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -150,7 +164,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
@@ -177,14 +191,10 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="true"
-				EnableFiberSafeOptimizations="true"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
 				EnableEnhancedInstructionSet="2"
-				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -198,10 +208,20 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
+				GenerateDebugInformation="true"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -213,6 +233,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -220,9 +243,9 @@
 			Name="Release|x64"
 			OutputDirectory="$(ConfigurationName)\$(PlatformName)"
 			IntermediateDirectory="$(ConfigurationName)\$(PlatformName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			InheritedPropertySheets="$(SolutionDir)\nvtt.vsprops"
-			CharacterSet="0"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -247,12 +270,9 @@
 				EnableIntrinsicFunctions="true"
 				OmitFramePointers="true"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;__SSE2__;__SSE__;__MMX__"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
-				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -266,10 +286,19 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
+				Name="VCLinkerTool"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).exe"
+				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
+				GenerateDebugInformation="true"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -281,6 +310,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -289,111 +321,7 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="..\..\..\src\nvcore\Array.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Debug.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Debug.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\DefsVcWin32.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\FileSystem.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\FileSystem.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Library.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Library.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Memory.cpp"
-			>
-			<FileConfiguration
-				Name="Debug|Win32"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|Win32"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|x64"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Memory.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\nvcore.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Ptr.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\RefCounted.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\StrLib.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\StrLib.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\TextWriter.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\TextWriter.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Timer.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvcore\Utils.h"
+			RelativePath="..\..\..\src\nvtt\tests\cubemaptest.cpp"
 			>
 		</File>
 	</Files>

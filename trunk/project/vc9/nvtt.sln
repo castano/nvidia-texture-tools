@@ -91,6 +91,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bc6h", "bc6h\bc6h.vcproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nvthread", "nvthread\nvthread.vcproj", "{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cubemaptest", "cubemaptest\cubemaptest.vcproj", "{CFB3FEAC-5720-4B16-9D7E-039DB180B641}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1AEB7681-57D8-48EE-813D-5C41CC38B647} = {1AEB7681-57D8-48EE-813D-5C41CC38B647}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug (no cuda)|Mixed Platforms = Debug (no cuda)|Mixed Platforms
@@ -482,6 +487,28 @@ Global
 		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|Win32.Build.0 = Release|Win32
 		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|x64.ActiveCfg = Release|x64
 		{3DD3A43D-C6EA-460F-821B-6C339A03C5BB}.Release|x64.Build.0 = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug (no cuda)|Mixed Platforms.ActiveCfg = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug (no cuda)|Mixed Platforms.Build.0 = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug (no cuda)|Win32.ActiveCfg = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug (no cuda)|x64.ActiveCfg = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug (no cuda)|x64.Build.0 = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug|Win32.Build.0 = Debug|Win32
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug|x64.ActiveCfg = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Debug|x64.Build.0 = Debug|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release (no cuda)|Mixed Platforms.ActiveCfg = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release (no cuda)|Mixed Platforms.Build.0 = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release (no cuda)|Win32.ActiveCfg = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release (no cuda)|x64.ActiveCfg = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release (no cuda)|x64.Build.0 = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release|Mixed Platforms.Build.0 = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release|Win32.ActiveCfg = Release|Win32
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release|Win32.Build.0 = Release|Win32
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release|x64.ActiveCfg = Release|x64
+		{CFB3FEAC-5720-4B16-9D7E-039DB180B641}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

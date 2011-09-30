@@ -34,11 +34,10 @@ namespace nv {
         return ((w * bitsize +  alignmentInBits - 1) / alignmentInBits) * alignmentInBits;
     }
 
-    inline uint computeBytePitch(uint w, uint bitsize, uint alignmentInBits)
+    inline uint computeBytePitch(uint w, uint bitsize, uint alignmentInBytes)
     {
-        nvDebugCheck(alignmentInBits >= 8);
-
-        uint pitch = computeBitPitch(w, bitsize, alignmentInBits);
+        uint pitch = computeBitPitch(w, bitsize, 8*alignmentInBytes);
+        nvDebugCheck((pitch & 7) == 0);
 
         return (pitch + 7) / 8;
     }
