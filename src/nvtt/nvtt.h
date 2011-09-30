@@ -568,6 +568,7 @@ namespace nvtt
         NVTT_API CubeSurface irradianceFilter(int size) const;
         NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower) const;
 
+
         /*
         NVTT_API void resize(int w, int h, ResizeFilter filter);
         NVTT_API void resize(int w, int h, ResizeFilter filter, float filterWidth, const float * params = 0);
