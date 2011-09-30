@@ -228,42 +228,35 @@ static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
 
 
 // Small solid angle table that takes into account cube map symmetry.
-struct SolidAngleTable {
+SolidAngleTable::SolidAngleTable(uint edgeLength) : size(edgeLength/2) {
+    // Allocate table.
+    data.resize(size * size);
 
-    SolidAngleTable(uint edgeLength) : size(edgeLength/2) {
-        // Allocate table.
-        data.resize(size * size);
+    // Init table.
+    const float inverseEdgeLength = 1.0f / edgeLength;
 
-        // Init table.
-        const float inverseEdgeLength = 1.0f / edgeLength;
-
-        for (uint y = 0; y < size; y++) {
-            for (uint x = 0; x < size; x++) {
-                data[y * size + x] = solidAngleTerm(128+x, 128+y, inverseEdgeLength);
-            }
+    for (uint y = 0; y < size; y++) {
+        for (uint x = 0; x < size; x++) {
+            data[y * size + x] = solidAngleTerm(128+x, 128+y, inverseEdgeLength);
         }
     }
+}
 
-    float lookup(uint x, uint y) const {
-        if (x >= size) x -= size;
-        else if (x < size) x = size - x - 1;
-        if (y >= size) y -= size;
-        else if (y < size) y = size - y - 1;
+float SolidAngleTable::lookup(uint x, uint y) const {
+    if (x >= size) x -= size;
+    else if (x < size) x = size - x - 1;
+    if (y >= size) y -= size;
+    else if (y < size) y = size - y - 1;
 
-        return data[y * size + x];
-    }
-
-    uint size;
-    nv::Array<float> data;
-};
+    return data[y * size + x];
+}
 
 
-// ilen = inverse edge length.
-static Vector3 texelDirection(uint face, uint x, uint y, float ilen)
+static Vector3 texelDirection(uint face, uint x, uint y, float inverseEdgeLength)
 {
     // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
-    float u = (float(x) + 0.5f) * (2 * ilen) - 1.0f;
-    float v = (float(y) + 0.5f) * (2 * ilen) - 1.0f;
+    float u = (float(x) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
+    float v = (float(y) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
     nvDebugCheck(u >= -1.0f && u <= 1.0f);
     nvDebugCheck(v >= -1.0f && v <= 1.0f);
 
@@ -305,29 +298,105 @@ static Vector3 texelDirection(uint face, uint x, uint y, float ilen)
     return normalizeFast(n);
 }
 
-struct VectorTable {
-    VectorTable(uint edgeLength) : size(edgeLength) {
-        float invEdgeLength = 1.0f / edgeLength;
 
-        data.resize(size*size*6);
+VectorTable::VectorTable(uint edgeLength) : size(edgeLength) {
+    float invEdgeLength = 1.0f / edgeLength;
 
-        for (uint f = 0; f < 6; f++) {
-            for (uint y = 0; y < size; y++) {
-                for (uint x = 0; x < size; x++) {
-                    data[(f * size + y) * size + x] = texelDirection(f, x, y, invEdgeLength);
+    data.resize(size*size*6);
+
+    for (uint f = 0; f < 6; f++) {
+        for (uint y = 0; y < size; y++) {
+            for (uint x = 0; x < size; x++) {
+                data[(f * size + y) * size + x] = texelDirection(f, x, y, invEdgeLength);
+            }
+        }
+    }
+}
+
+const Vector3 & VectorTable::lookup(uint f, uint x, uint y) const {
+    nvDebugCheck(f < 6 && x < size && y < size);
+    return data[(f * size + y) * size + x];
+}
+
+
+
+// We want to find the alpha such that:
+// cos(alpha)^cosinePower = epsilon
+// That's: acos(epsilon^(1/cosinePower))
+
+// We can cull texels in two different ways:
+// - culling faces that do not touch the cone.
+// - computing one rectangle per face, find intersection between cone and face.
+// -
+
+// Other speedups:
+// - parallelize.
+// - use ISPC?
+
+static Vector3 faceNormals[6] = {
+    Vector3(1, 0, 0),
+    Vector3(-1, 0, 0),
+    Vector3(0, 1, 0),
+    Vector3(0, -1, 0),
+    Vector3(0, 0, 1),
+    Vector3(0, 0, -1),
+};
+
+
+// Convolve filter against this cube.
+Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float cosineConeAngle, float cosinePower)
+{
+    const float coneAngle = acos(cosineConeAngle);
+
+    Vector3 color(0);
+    float sum = 0;
+
+    // For each texel of the input cube.
+    for (uint f = 0; f < 6; f++) {
+
+        // Test face cone agains filter cone.
+        float cosineFaceAngle = dot(filterDir, faceNormals[f]);
+
+        if (cosineFaceAngle > cos(coneAngle + atan(sqrt(2)))) { // @@ Simplify this with cos(a+b) = cos(a)cos(b) - sin(a)sin(b) formula?
+            // Skip face.
+            continue;
+        }
+
+        // @@ We could do a less conservative test and test the face frustum against the cone...
+
+        // @@ Compute bounding box of cone intersection against face.
+        // The intersection of the cone with the face is an elipse, we want the extents of that elipse.
+        // Hmm... we could even rasterize an elipse! Sounds like FUN!
+        uint x0 = 0, x1 = edgeLength-1;
+        uint y0 = 0, y1 = edgeLength-1;
+
+        const Surface & inputFace = face[f];
+        const FloatImage * inputImage = inputFace.m->image;
+
+        for (uint y = y0; y <= y1; y++) {
+            for (uint x = x0; x <= x1; x++) {
+
+                Vector3 dir = vectorTable->lookup(f, x, y);
+                float cosineAngle = dot(dir, filterDir);
+
+                if (cosineAngle > cosineConeAngle) {
+                    float solidAngle = solidAngleTable->lookup(x, y);
+                    float scale = powf(saturate(cosineAngle), cosinePower);
+                    float contribution = solidAngle * scale;
+
+                    sum += contribution;
+                    color.x += contribution * inputImage->pixel(0, x, y, 0);
+                    color.y += contribution * inputImage->pixel(1, x, y, 0);
+                    color.z += contribution * inputImage->pixel(2, x, y, 0);
                 }
             }
         }
     }
 
-    const Vector3 & lookup(uint f, uint x, uint y) {
-        nvDebugCheck(f < 6 && x < size && y < size);
-        return data[(f * size + y) * size + x];
-    }
+    color *= (1.0f / sum);
 
-    uint size;
-    nv::Array<Vector3> data;
-};
+    return color;
+}
 
 
 CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
@@ -338,10 +407,18 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
     CubeSurface filteredCube;
     filteredCube.m->allocate(size);
 
-    SolidAngleTable solidAngleTable(edgeLength);
-    VectorTable vectorTable(edgeLength);
+    // Store these tables along with the surface. Compute them only once!
+    if (m->solidAngleTable == NULL) {
+        m->solidAngleTable = new SolidAngleTable(edgeLength);
+    }
+    if (m->vectorTable == NULL) {
+        m->vectorTable = new VectorTable(edgeLength);
+    }
 
     const float threshold = 0.0001f;
+    const float cosineConeAngle = pow(threshold, 1/cosinePower);
+    //const float coneAngle = acos(cosineConeAngle);
+
 
 #if 0
     // Scatter approach.
@@ -421,41 +498,8 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
 
                 const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
 
-                Vector3 color(0);
-                float sum = 0;
-
-                // For each texel of the input cube.
-                for (uint ff = 0; ff < 6; ff++) {
-                    const Surface & inputFace = m->face[ff];
-                    const FloatImage * inputImage = inputFace.m->image;
-
-                    for (uint yy = 0; yy < edgeLength; yy++) {
-                        for (uint xx = 0; xx < edgeLength; xx++) {
-
-                            // @@ We should probably store solid angle and direction together.
-                            Vector3 inputDir = vectorTable.lookup(ff, xx, yy);
-
-                            float scale = powf(saturate(dot(inputDir, filterDir)), cosinePower);
-
-                            if (scale > threshold) {
-                                float solidAngle = solidAngleTable.lookup(xx, yy);
-                                float contribution = solidAngle * scale;
-
-                                sum += contribution;
-
-                                float r = inputImage->pixel(0, xx, yy, 0);
-                                float g = inputImage->pixel(1, xx, yy, 0);
-                                float b = inputImage->pixel(2, xx, yy, 0);
-
-                                color.x += r * contribution;
-                                color.y += g * contribution;
-                                color.z += b * contribution;
-                            }
-                        }
-                    }
-                }
-
-                color *= (1.0f / sum);
+                // Convolve filter against cube.
+                Vector3 color = m->applyCosinePowerFilter(filterDir, cosineConeAngle, cosinePower);
 
                 filteredImage->pixel(0, x, y, 0) = color.x;
                 filteredImage->pixel(1, x, y, 0) = color.y;
@@ -463,6 +507,26 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
             }
         }
     }
+
+    /*int jobCount = 6 * size * size;
+    for (int i = 0; i < jobCount; i++) {
+        int f = i / (size * size);
+        int idx = i % (size * size);
+        int y = idx / size;
+        int x = idx % size;
+
+        nvtt::Surface filteredFace = filteredCube.m->face[f];
+        FloatImage * filteredImage = filteredFace.m->image;
+
+        const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
+
+        // Convolve filter against cube.
+        Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower);
+
+        filteredImage->pixel(0, idx) = color.x;
+        filteredImage->pixel(1, idx) = color.y;
+        filteredImage->pixel(2, idx) = color.z;
+    }*/
 
 #endif
 

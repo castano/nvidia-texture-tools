@@ -29,12 +29,32 @@
 
 #include "nvimage/FloatImage.h"
 
+#include "nvmath/Vector.h"
+
 #include "nvcore/RefCounted.h"
 #include "nvcore/Ptr.h"
+#include "nvcore/Array.h"
 
 
 namespace nvtt
 {
+    struct SolidAngleTable {
+        SolidAngleTable(uint edgeLength);
+        float lookup(uint x, uint y) const;
+
+        uint size;
+        nv::Array<float> data;
+
+    };
+
+    struct VectorTable {
+        VectorTable(uint edgeLength);
+        const nv::Vector3 & lookup(uint f, uint x, uint y) const;
+
+        uint size;
+        nv::Array<nv::Vector3> data;
+    };
+
 
     struct CubeSurface::Private : public nv::RefCounted
     {
@@ -45,6 +65,8 @@ namespace nvtt
             nvDebugCheck( refCount() == 0 );
 
             edgeLength = 0;
+            solidAngleTable = NULL;
+            vectorTable = NULL;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
         {
@@ -54,9 +76,13 @@ namespace nvtt
             for (uint i = 0; i < 6; i++) {
                 face[i] = p.face[6];
             }
+            solidAngleTable = NULL; // @@ Transfer tables. Needs refcounting?
+            vectorTable = NULL;
         }
         ~Private()
         {
+            delete solidAngleTable;
+            delete vectorTable;
         }
 
         void allocate(uint edgeLength)
@@ -69,8 +95,13 @@ namespace nvtt
             }
         }
 
+        // Filtering helpers:
+        nv::Vector3 applyCosinePowerFilter(const nv::Vector3 & dir, float coneAngle, float cosinePower);
+
         uint edgeLength;
         Surface face[6];
+        SolidAngleTable * solidAngleTable;
+        VectorTable * vectorTable;
     };
 
 } // nvtt namespace
