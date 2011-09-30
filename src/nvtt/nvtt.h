@@ -548,15 +548,15 @@ namespace nvtt
         NVTT_API int countMipmaps() const;
 
         // Texture data.
-        NVTT_API bool load(const char * fileName);
+        NVTT_API bool load(const char * fileName, int mipmap);
         NVTT_API bool save(const char * fileName) const;
 
-        Surface & face(int face);
-        const Surface & face(int face) const;
+        NVTT_API Surface & face(int face);
+        NVTT_API const Surface & face(int face) const;
 
         // Layout conversion. @@ Not implemented.
-        void fold(const Surface & img, CubeLayout layout);
-        Surface unfold(CubeLayout layout) const;
+        NVTT_API void fold(const Surface & img, CubeLayout layout);
+        NVTT_API Surface unfold(CubeLayout layout) const;
 
         // @@ Angular extent filtering.
 
@@ -565,8 +565,8 @@ namespace nvtt
         // @@ Add edge fixup methods.
 
         // Filtering.
-        CubeSurface irradianceFilter(int size) const;
-        CubeSurface cosinePowerFilter(int size, float cosinePower) const;
+        NVTT_API CubeSurface irradianceFilter(int size) const;
+        NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower) const;
 
         /*
         NVTT_API void resize(int w, int h, ResizeFilter filter);

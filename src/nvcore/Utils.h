@@ -7,16 +7,18 @@
 #include "nvcore.h"
 #include "Debug.h" // nvDebugCheck
 
+#include <stddef.h>
+
 // Just in case. Grrr.
 #undef min
 #undef max
 
 #define NV_INT8_MIN    (-128)
 #define NV_INT8_MAX    127
-#define NV_INT16_MIN    (-32768)
+#define NV_INT16_MIN    (-32767-1)
 #define NV_INT16_MAX    32767
 #define NV_UINT16_MAX   0xffff
-#define NV_INT32_MIN    (-2147483648)
+#define NV_INT32_MIN    (-2147483647-1)
 #define NV_INT32_MAX    2147483647
 #define NV_UINT32_MAX   0xffffffff
 #define NV_INT64_MAX    POSH_I64(9223372036854775807)
@@ -37,63 +39,29 @@ namespace nv
     inline uint32 asUnsigned(int32 x) { return (uint32) x; }
     inline uint64 asUnsigned(int64 x) { return (uint64) x; }
 
-    template <typename T> inline uint32 toU32(T x) {
-        nvDebugCheck(x <= NV_UINT32_MAX);
-        nvDebugCheck(x >= 0);
-        return (uint32) x;
-    }
 
-    /*
-    template <typename T> inline int8 toI8(T x) { 
-        nvDebugCheck(x <= INT8_MAX);
-        nvDebugCheck(x >= INT8_MIN);
-        int8 y = (int8) x;
-        nvDebugCheck(x == (T)y);
-        return y;
-    }
-    
-    template <typename T> inline uint8 toU8(T x) { 
-        nvDebugCheck(x <= UINT8_MAX);
-        nvDebugCheck(x >= 0);
-        return (uint8) x;
-    }
+    // uint32 casts:
+    template <typename T> inline uint32 toU32(T x) { return x; }
+    template <> inline uint32 toU32<uint64>(uint64 x) { nvDebugCheck(x <= NV_UINT32_MAX); return (uint32)x; }
+    template <> inline uint32 toU32<int64>(int64 x) { nvDebugCheck(x >= 0 && x <= NV_UINT32_MAX); return (uint32)x; }
+    //template <> inline uint32 toU32<uint32>(uint32 x) { return x; }
+    template <> inline uint32 toU32<int32>(int32 x) { nvDebugCheck(x >= 0); return (uint32)x; }
+    //template <> inline uint32 toU32<uint16>(uint16 x) { return x; }
+    template <> inline uint32 toU32<int16>(int16 x) { nvDebugCheck(x >= 0); return (uint32)x; }
+    //template <> inline uint32 toU32<uint8>(uint8 x) { return x; }
+    template <> inline uint32 toU32<int8>(int8 x) { nvDebugCheck(x >= 0); return (uint32)x; }
 
-    template <typename T> inline int16 toI16(T x) { 
-        nvDebugCheck(x <= INT16_MAX);
-        nvDebugCheck(x >= INT16_MIN);
-        return (int16) x;
-    }
-    
-    template <typename T> inline uint16 toU16(T x) { 
-        nvDebugCheck(x <= UINT16_MAX);
-        nvDebugCheck(x >= 0);
-        return (uint16) x;
-    }
-    
-    template <typename T> inline int32 toI32(T x) { 
-        nvDebugCheck(x <= INT32_MAX);
-        nvDebugCheck(x >= INT32_MIN);
-        return (int32) x;
-    }
+    // int32 casts:
+    template <typename T> inline int32 toI32(T x) { return x; }
+    template <> inline int32 toI32<uint64>(uint64 x) { nvDebugCheck(x <= NV_INT32_MAX); return (int32)x; }
+    template <> inline int32 toI32<int64>(int64 x) { nvDebugCheck(x >= NV_INT32_MIN && x <= NV_UINT32_MAX); return (int32)x; }
+    template <> inline int32 toI32<uint32>(uint32 x) { nvDebugCheck(x <= NV_INT32_MAX); return (int32)x; }
+    //template <> inline int32 toI32<int32>(int32 x) { return x; }
+    //template <> inline int32 toI32<uint16>(uint16 x) { return x; }
+    //template <> inline int32 toI32<int16>(int16 x) { return x; }
+    //template <> inline int32 toI32<uint8>(uint8 x) { return x; }
+    //template <> inline int32 toI32<int8>(int8 x) { return x; }
 
-    template <typename T> inline uint32 toU32(T x) { 
-        nvDebugCheck(x <= UINT32_MAX);
-        nvDebugCheck(x >= 0);
-        return (uint32) x;
-    }
-    
-    template <typename T> inline int64 toI64(T x) { 
-        nvDebugCheck(x <= INT64_MAX);
-        nvDebugCheck(x >= INT64_MIN);
-        return (int64) x;
-    }
-    
-    template <typename T> inline uint64 toU64(T x) { 
-        nvDebugCheck(x <= UINT64_MAX);
-        nvDebugCheck(x >= 0);
-        return (uint64) x;
-    }
-    */
     
     /// Swap two values.
     template <typename T> 

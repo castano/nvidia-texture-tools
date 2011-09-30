@@ -102,7 +102,7 @@ const Surface & CubeSurface::face(int f) const
 }
 
 
-bool CubeSurface::load(const char * fileName)
+bool CubeSurface::load(const char * fileName, int mipmap)
 {
     if (strcmp(Path::extension(fileName), ".dds") == 0) {
         nv::DirectDrawSurface dds(fileName);
@@ -119,38 +119,48 @@ bool CubeSurface::load(const char * fileName)
         if (dds.header.width != dds.header.height) return false;
         //if ((dds.header.caps.caps2 & DDSCAPS2_CUBEMAP_ALL_FACES) != DDSCAPS2_CUBEMAP_ALL_FACES) return false;
 
+        if (mipmap < 0) {
+            mipmap = dds.mipmapCount() - 1 - mipmap;
+        }
+        if (mipmap < 0 || mipmap > toI32(dds.mipmapCount())) return false;
+        
 
         nvtt::InputFormat inputFormat = nvtt::InputFormat_RGBA_16F;
 
         if (dds.header.hasDX10Header()) {
-            if (dds.header10.dxgiFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) inputFormat = nvtt::InputFormat_RGBA_16F;
-            else if (dds.header10.dxgiFormat == DXGI_FORMAT_R32G32B32A32_FLOAT) inputFormat = nvtt::InputFormat_RGBA_32F;
+            if (dds.header.header10.dxgiFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) inputFormat = nvtt::InputFormat_RGBA_16F;
+            else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_R32G32B32A32_FLOAT) inputFormat = nvtt::InputFormat_RGBA_32F;
             else return false;
         }
         else {
-            if ((dds.header.pf.flags & DDPF_FOURCC) == 0) return false;
-
-            if (dds.header.pf.fourcc == D3DFMT_A16B16G16R16F) inputFormat = nvtt::InputFormat_RGBA_16F;
-            else if (dds.header.pf.fourcc == D3DFMT_A32B32G32R32F) inputFormat = nvtt::InputFormat_RGBA_32F;
-            else return false;
+            if ((dds.header.pf.flags & DDPF_FOURCC) != 0) {
+                if (dds.header.pf.fourcc == D3DFMT_A16B16G16R16F) inputFormat = nvtt::InputFormat_RGBA_16F;
+                else if (dds.header.pf.fourcc == D3DFMT_A32B32G32R32F) inputFormat = nvtt::InputFormat_RGBA_32F;
+                else return false;
+            }
+            else {
+                if (dds.header.pf.bitcount == 32 /*&& ...*/) inputFormat = nvtt::InputFormat_BGRA_8UB;
+                else return false;  // @@ Do pixel format conversions!
+            }
         }
         
-        uint edgeLength = dds.header.width;
+        uint edgeLength = dds.surfaceWidth(mipmap);
+        uint size = dds.surfaceSize(mipmap);
 
-        uint size = dds.surfaceSize(0);
         void * data = malloc(size);
 
         for (int f = 0; f < 6; f++) {
-            dds.readSurface(f, 0, data, size);
+            dds.readSurface(f, mipmap, data, size);
             m->face[f].setImage(inputFormat, edgeLength, edgeLength, 1, data);
         }
 
         m->edgeLength = edgeLength;
 
         free(data);
+
+        return true;
     }
 
-    // @@ TODO
     return false;
 }
 
@@ -180,20 +190,61 @@ CubeSurface CubeSurface::irradianceFilter(int size) const
 }
 
 
+
+// Solid angle of an axis aligned quad from (0,0,1) to (x,y,1)
+// See: http://www.fizzmoll11.com/thesis/ for a derivation of this formula.
+static float areaElement(float x, float y) {
+    return atan2(x*y, sqrtf(x*x + y*y + 1));
+}
+
+// Solid angle of a hemicube texel.
+static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
+    // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
+    float u = (float(x) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
+    float v = (float(y) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
+    nvDebugCheck(u >= -1.0f && u <= 1.0f);
+    nvDebugCheck(v >= -1.0f && v <= 1.0f);
+
+#if 1   
+    // Exact solid angle:
+    float x0 = u - inverseEdgeLength;
+    float y0 = v - inverseEdgeLength;
+    float x1 = u + inverseEdgeLength;
+    float y1 = v + inverseEdgeLength;
+    float solidAngle = areaElement(x0, y0) - areaElement(x0, y1) - areaElement(x1, y0) + areaElement(x1, y1);
+    nvDebugCheck(solidAngle > 0.0f);
+    
+    return solidAngle;
+#else
+    // This formula is equivalent, but not as precise.
+    float pixel_area = nv::square(2.0f * inverseEdgeLength);
+    float dist_square = 1.0f + nv::square(u) + nv::square(v);
+    float cos_theta = 1.0f / sqrt(dist_square);
+    float cos_theta_d2 = cos_theta / dist_square; // Funny this is just 1/dist^3 or cos(tetha)^3
+
+    return pixel_area * cos_theta_d2;
+#endif
+}
+
+
 // Small solid angle table that takes into account cube map symmetry.
 struct SolidAngleTable {
 
-    SolidAngleTable(int edgeLength) : size(edgeLength/2) {
+    SolidAngleTable(uint edgeLength) : size(edgeLength/2) {
         // Allocate table.
         data.resize(size * size);
 
-        // @@ Init table.
+        // Init table.
+        const float inverseEdgeLength = 1.0f / edgeLength;
 
+        for (uint y = 0; y < size; y++) {
+            for (uint x = 0; x < size; x++) {
+                data[y * size + x] = solidAngleTerm(128+x, 128+y, inverseEdgeLength);
+            }
+        }
     }
 
-
-    //
-    float lookup(int x, int y) const {
+    float lookup(uint x, uint y) const {
         if (x >= size) x -= size;
         else if (x < size) x = size - x - 1;
         if (y >= size) y -= size;
@@ -202,18 +253,19 @@ struct SolidAngleTable {
         return data[y * size + x];
     }
 
-    int size;
+    uint size;
     nv::Array<float> data;
 };
 
 
 // ilen = inverse edge length.
-Vector3 texelDirection(uint face, uint x, uint y, float ilen)
+static Vector3 texelDirection(uint face, uint x, uint y, float ilen)
 {
+    // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
     float u = (float(x) + 0.5f) * (2 * ilen) - 1.0f;
     float v = (float(y) + 0.5f) * (2 * ilen) - 1.0f;
-    nvDebugCheck(u >= 0.0f && u <= 1.0f);
-    nvDebugCheck(v >= 0.0f && v <= 1.0f);
+    nvDebugCheck(u >= -1.0f && u <= 1.0f);
+    nvDebugCheck(v >= -1.0f && v <= 1.0f);
 
     Vector3 n;
 
@@ -257,6 +309,8 @@ struct VectorTable {
     VectorTable(uint edgeLength) : size(edgeLength) {
         float invEdgeLength = 1.0f / edgeLength;
 
+        data.resize(size*size*6);
+
         for (uint f = 0; f < 6; f++) {
             for (uint y = 0; y < size; y++) {
                 for (uint x = 0; x < size; x++) {
@@ -287,7 +341,9 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
     SolidAngleTable solidAngleTable(edgeLength);
     VectorTable vectorTable(edgeLength);
 
-#if 1
+    const float threshold = 0.0001f;
+
+#if 0
     // Scatter approach.
 
     // For each texel of the input cube.
@@ -315,13 +371,13 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
 
                             Vector3 filterDir = texelDirection(ff, xx, yy, 1.0f / size);
 
-                            float power = powf(saturate(dot(texelDir, filterDir)), cosinePower);
+                            float scale = powf(saturate(dot(texelDir, filterDir)), cosinePower);
 
-                            if (power > 0.01) {
-                                filteredFace->pixel(0, xx, yy, 0) += r * power;
-                                filteredFace->pixel(1, xx, yy, 0) += g * power;
-                                filteredFace->pixel(2, xx, yy, 0) += b * power;
-                                filteredFace->pixel(3, xx, yy, 0) += solidAngle * power;
+                            if (scale > threshold) {
+                                filteredFace->pixel(0, xx, yy, 0) += r * scale;
+                                filteredFace->pixel(1, xx, yy, 0) += g * scale;
+                                filteredFace->pixel(2, xx, yy, 0) += b * scale;
+                                filteredFace->pixel(3, xx, yy, 0) += solidAngle * scale;
                             }
                         }
                     }
@@ -360,10 +416,10 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
         nvtt::Surface filteredFace = filteredCube.m->face[f];
         FloatImage * filteredImage = filteredFace.m->image;
 
-        for (uint y = 0; y < size; y++) {
-            for (uint x = 0; x < size; x++) {
+        for (uint y = 0; y < uint(size); y++) {
+            for (uint x = 0; x < uint(size); x++) {
 
-                const Vector3 filterDir = texelDirection(f, x, y, size);
+                const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
 
                 Vector3 color(0);
                 float sum = 0;
@@ -379,11 +435,11 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
                             // @@ We should probably store solid angle and direction together.
                             Vector3 inputDir = vectorTable.lookup(ff, xx, yy);
 
-                            float power = powf(saturate(dot(inputDir, filterDir)), cosinePower);
+                            float scale = powf(saturate(dot(inputDir, filterDir)), cosinePower);
 
-                            if (power > 0.01f) {    // @@ Adjustable threshold.
+                            if (scale > threshold) {
                                 float solidAngle = solidAngleTable.lookup(xx, yy);
-                                float contribution = solidAngle * power;
+                                float contribution = solidAngle * scale;
 
                                 sum += contribution;
 
@@ -391,9 +447,9 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
                                 float g = inputImage->pixel(1, xx, yy, 0);
                                 float b = inputImage->pixel(2, xx, yy, 0);
 
-                                color.r += r * contribution;
-                                color.g += g * contribution;
-                                color.b += b * contribution;
+                                color.x += r * contribution;
+                                color.y += g * contribution;
+                                color.z += b * contribution;
                             }
                         }
                     }

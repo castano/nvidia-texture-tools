@@ -317,9 +317,9 @@ namespace nv
 
     inline uint FloatImage::indexClamp(int x, int y, int z) const
     {
-        x = wrapClamp(x, m_width - 1);
-        y = wrapClamp(y, m_height - 1);
-        z = wrapClamp(z, m_depth - 1);
+        x = wrapClamp(x, m_width);
+        y = wrapClamp(y, m_height);
+        z = wrapClamp(z, m_depth);
         return index(x, y, z);
     }
 

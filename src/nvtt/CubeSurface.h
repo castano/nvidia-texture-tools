@@ -65,7 +65,7 @@ namespace nvtt
             for (uint i = 0; i < 6; i++) {
                 face[i].detach();
                 face[i].m->image = new nv::FloatImage;
-                face[i].m->image->allocate(edgeLength, edgeLength, 1);
+                face[i].m->image->allocate(4, edgeLength, edgeLength, 1);
             }
         }
 

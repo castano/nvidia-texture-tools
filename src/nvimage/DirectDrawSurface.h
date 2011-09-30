@@ -336,6 +336,9 @@ namespace nv
         bool isSrgb() const;
         bool hasAlpha() const;
         uint d3d9Format() const;
+        uint pixelSize() const; // In bits!
+        uint blockSize() const; // In bytes!
+        bool isBlockFormat() const;
     };
 
     NVIMAGE_API Stream & operator<< (Stream & s, DDSHeader & header);
@@ -373,25 +376,21 @@ namespace nv
 
         void mipmap(Image * img, uint f, uint m);
 
+        uint surfaceWidth(uint mipmap) const;
+        uint surfaceHeight(uint mipmap) const;
+        uint surfaceDepth(uint mipmap) const;
         uint surfaceSize(uint mipmap) const;
         bool readSurface(uint face, uint mipmap, void * data, uint size);
-
-        //	void mipmap(FloatImage * img, uint f, uint m);
-        //void * readData(uint * sizePtr);
 
         void printInfo() const;
 
         // Only initialized after loading.
         DDSHeader header;
-        DDSHeader10 header10;
 
     private:
 
-        uint blockSize() const;
         uint faceSize() const;
-        uint mipmapSize(uint m) const;
-
-        uint offset(uint f, uint m);
+        uint offset(uint face, uint mipmap);
 
         void readLinearImage(Image * img);
         void readBlockImage(Image * img);
