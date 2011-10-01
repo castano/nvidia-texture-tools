@@ -21,8 +21,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/StrLib.h>
+//#include <nvcore/StrLib.h>
+#include <nvcore/Timer.h>
 #include <nvtt/nvtt.h>
+#include <nvmath/nvmath.h>
+
+#include "../tools/cmdline.h"
 
 #include <stdlib.h> // EXIT_SUCCESS, EXIT_FAILURE
 #include <stdio.h> // printf
@@ -30,6 +34,9 @@
 
 int main(int argc, char *argv[])
 {
+    MyAssertHandler assertHandler;
+    MyMessageHandler messageHandler;
+
     // Init context.
     nvtt::Context context;
 
@@ -52,26 +59,43 @@ int main(int argc, char *argv[])
     // Setup output options.
     nvtt::OutputOptions outputOptions;
     outputOptions.setFileName("filtered_envmap.dds");
+    outputOptions.setSrgbFlag(true);
 
+
+    const int MAX_MIPMAP_COUNT = 7; // nv::log2(64) + 1;
+    //const int mipmapCount = MAX_MIPMAP_COUNT;
+    const int mipmapCount = 4;
+    //const int mipmapCount = 1;
 
     // Output header.
-    context.outputHeader(nvtt::TextureType_Cube, 64, 64, 1, 4, false, compressionOptions, outputOptions);
+    context.outputHeader(nvtt::TextureType_Cube, 64, 64, 1, mipmapCount, false, compressionOptions, outputOptions);
+
+    nv::Timer timer;
+    timer.start();
+
+    nvtt::CubeSurface filteredEnvmap[mipmapCount];
 
     // Output filtered mipmaps.
-    for (int m = 0; m < 4; m++) {
-        int size = 64 / (1 << m);               // 64, 32, 16, 8
-        float cosine_power = float(64) / (1 << (2 * m)); // 64, 16,  4, 1
+    for (int m = 0; m < mipmapCount; m++) {
+        int size = 64 / (1 << m);                           // 64, 32, 16, 8
+        float cosine_power = float(64) / (1 << (2 * m));    // 64, 16,  4, 1
+        cosine_power = nv::max(1.0f, cosine_power);
 
-        printf("filtering step: %d/4.\n", m+1);
+        printf("filtering step: %d/%d\n", m+1, mipmapCount);
 
-        nvtt::CubeSurface filteredEnvmap = envmap.cosinePowerFilter(size, cosine_power);
-
-        filteredEnvmap.toGamma(2.2f);
-
-        context.compress(filteredEnvmap, m, compressionOptions, outputOptions);
+        filteredEnvmap[m] = envmap.cosinePowerFilter(size, cosine_power);
+        filteredEnvmap[m].toGamma(2.2f);
     }
 
-    printf("done.\n");
+    for (int f = 0; f < 6; f++) {
+        for (int m = 0; m < mipmapCount; m++) {
+            context.compress(filteredEnvmap[m].face(f), f, m, compressionOptions, outputOptions);
+        }
+    }
+
+    timer.stop();
+
+    printf("done in %f seconds\n", timer.elapsed());
 
     return EXIT_SUCCESS;
 }
