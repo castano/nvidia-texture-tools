@@ -93,6 +93,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nvthread", "nvthread\nvthre
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cubemaptest", "cubemaptest\cubemaptest.vcproj", "{CFB3FEAC-5720-4B16-9D7E-039DB180B641}"
 	ProjectSection(ProjectDependencies) = postProject
+		{F143D180-D4C4-4037-B3DE-BE89A21C8D1D} = {F143D180-D4C4-4037-B3DE-BE89A21C8D1D}
 		{1AEB7681-57D8-48EE-813D-5C41CC38B647} = {1AEB7681-57D8-48EE-813D-5C41CC38B647}
 	EndProjectSection
 EndProject

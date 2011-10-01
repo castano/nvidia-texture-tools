@@ -333,7 +333,7 @@ const Vector3 & VectorTable::lookup(uint f, uint x, uint y) const {
 // - parallelize.
 // - use ISPC?
 
-static Vector3 faceNormals[6] = {
+static const Vector3 faceNormals[6] = {
     Vector3(1, 0, 0),
     Vector3(-1, 0, 0),
     Vector3(0, 1, 0),
@@ -342,11 +342,31 @@ static Vector3 faceNormals[6] = {
     Vector3(0, 0, -1),
 };
 
+static const Vector3 faceU[6] = {
+    Vector3(0, 0, -1),
+    Vector3(0, 0, 1),
+    Vector3(1, 0, 0),
+    Vector3(1, 0, 0),
+    Vector3(1, 0, 0),
+    Vector3(-1, 0, 0),
+};
+
+static const Vector3 faceV[6] = {
+    Vector3(0, -1, 0),
+    Vector3(0, -1, 0),
+    Vector3(0, 0, 1),
+    Vector3(0, 0, -1),
+    Vector3(0, -1, 0),
+    Vector3(0, -1, 0),
+};
+
+
 
 // Convolve filter against this cube.
-Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float cosineConeAngle, float cosinePower)
+Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float coneAngle, float cosinePower)
 {
-    const float coneAngle = acos(cosineConeAngle);
+    const float cosineConeAngle = cos(coneAngle);
+    nvDebugCheck(cosineConeAngle >= 0);
 
     Vector3 color(0);
     float sum = 0;
@@ -356,25 +376,74 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
 
         // Test face cone agains filter cone.
         float cosineFaceAngle = dot(filterDir, faceNormals[f]);
+        float faceAngle = acosf(cosineFaceAngle);
 
-        if (cosineFaceAngle > cos(coneAngle + atan(sqrt(2)))) { // @@ Simplify this with cos(a+b) = cos(a)cos(b) - sin(a)sin(b) formula?
+        /*if (faceAngle > coneAngle + atanf(sqrtf(2))) {
             // Skip face.
             continue;
-        }
+        }*/
 
         // @@ We could do a less conservative test and test the face frustum against the cone...
 
-        // @@ Compute bounding box of cone intersection against face.
+        // Compute bounding box of cone intersection against face.
         // The intersection of the cone with the face is an elipse, we want the extents of that elipse.
-        // Hmm... we could even rasterize an elipse! Sounds like FUN!
-        uint x0 = 0, x1 = edgeLength-1;
-        uint y0 = 0, y1 = edgeLength-1;
+        // @@ Hmm... we could even rasterize an elipse! Sounds like FUN!
+
+        const int L = toI32(edgeLength-1);
+        int x0 = 0, x1 = L;
+        int y0 = 0, y1 = L;
+
+        // @@ Ugh. This is wrong, or only right when filterDir is aligned to one axis.
+        if (false) {
+            // uv coordinates corresponding to filterDir.
+            //float u = dot(filterDir, faceU[f]) / cosineFaceAngle;
+            //float v = dot(filterDir, faceV[f]) / cosineFaceAngle;
+
+            // Angular coordinates corresponding to filterDir with respect to faceNormal.
+            float atu = atan2(dot(filterDir, faceU[f]), cosineFaceAngle);
+            float atv = atan2(dot(filterDir, faceV[f]), cosineFaceAngle);
+
+            // Expand angles and project back to the face plane.
+            float u0 = tan(clamp(atu - coneAngle, -PI/4, PI/4));
+            float v0 = tan(clamp(atv - coneAngle, -PI/4, PI/4));
+            float u1 = tan(clamp(atu + coneAngle, -PI/4, PI/4));
+            float v1 = tan(clamp(atv + coneAngle, -PI/4, PI/4));
+            nvDebugCheck(u0 >= -1 && u0 <= 1);
+            nvDebugCheck(v0 >= -1 && v0 <= 1);
+            nvDebugCheck(u1 >= -1 && u1 <= 1);
+            nvDebugCheck(v1 >= -1 && v1 <= 1);
+
+            // Expand uv coordinates from [-1,1] to [0, edgeLength)
+            u0 = (u0 + 1) * edgeLength * 0.5f - 0.5f;
+            v0 = (v0 + 1) * edgeLength * 0.5f - 0.5f;
+            u1 = (u1 + 1) * edgeLength * 0.5f - 0.5f;
+            v1 = (v1 + 1) * edgeLength * 0.5f - 0.5f;
+            nvDebugCheck(u0 >= -0.5f && u0 <= edgeLength - 0.5f);
+            nvDebugCheck(v0 >= -0.5f && v0 <= edgeLength - 0.5f);
+            nvDebugCheck(u1 >= -0.5f && u1 <= edgeLength - 0.5f);
+            nvDebugCheck(v1 >= -0.5f && v1 <= edgeLength - 0.5f);
+
+            x0 = clamp(ifloor(u0), 0, L);
+            y0 = clamp(ifloor(v0), 0, L);
+            x1 = clamp(iceil(u1), 0, L);
+            y1 = clamp(iceil(v1), 0, L);
+
+            nvDebugCheck(x1 >= x0);
+            nvDebugCheck(y1 >= y0);
+        }
+
+        if (x1 == x0 || y1 == y0) {
+            // Skip this face.
+            continue;
+        }
+
 
         const Surface & inputFace = face[f];
         const FloatImage * inputImage = inputFace.m->image;
 
-        for (uint y = y0; y <= y1; y++) {
-            for (uint x = x0; x <= x1; x++) {
+        for (int y = y0; y <= y1; y++) {
+            bool inside = false;
+            for (int x = x0; x <= x1; x++) {
 
                 Vector3 dir = vectorTable->lookup(f, x, y);
                 float cosineAngle = dot(dir, filterDir);
@@ -388,6 +457,13 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
                     color.x += contribution * inputImage->pixel(0, x, y, 0);
                     color.y += contribution * inputImage->pixel(1, x, y, 0);
                     color.z += contribution * inputImage->pixel(2, x, y, 0);
+
+                    inside = true;
+                }
+                else if (inside) {
+                    // Filter scale is monotonic, if we have been inside once and we just exit, then we can skip the rest of the row.
+                    // We could do the same thing for the columns and skip entire rows.
+                    break;
                 }
             }
         }
@@ -396,6 +472,39 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
     color *= (1.0f / sum);
 
     return color;
+}
+
+#include "nvthread/ParallelFor.h"
+
+struct ApplyCosinePowerFilterContext {
+    CubeSurface::Private * inputCube;
+    CubeSurface::Private * filteredCube;
+    float coneAngle;
+    float cosinePower;
+};
+
+void ApplyCosinePowerFilterTask(void * context, int id)
+{
+    ApplyCosinePowerFilterContext * ctx = (ApplyCosinePowerFilterContext *)context;
+
+    int size = ctx->filteredCube->edgeLength;
+
+    int f = id / (size * size);
+    int idx = id % (size * size);
+    int y = idx / size;
+    int x = idx % size;
+
+    nvtt::Surface & filteredFace = ctx->filteredCube->face[f];
+    FloatImage * filteredImage = filteredFace.m->image;
+
+    const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
+
+    // Convolve filter against cube.
+    Vector3 color = ctx->inputCube->applyCosinePowerFilter(filterDir, ctx->coneAngle, ctx->cosinePower);
+
+    filteredImage->pixel(0, idx) = color.x;
+    filteredImage->pixel(1, idx) = color.y;
+    filteredImage->pixel(2, idx) = color.z;
 }
 
 
@@ -415,12 +524,47 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
         m->vectorTable = new VectorTable(edgeLength);
     }
 
-    const float threshold = 0.0001f;
-    const float cosineConeAngle = pow(threshold, 1/cosinePower);
-    //const float coneAngle = acos(cosineConeAngle);
+    const float threshold = 0.001f;
+    const float coneAngle = acosf(powf(threshold, 1.0f/cosinePower));
 
 
-#if 0
+#if 1
+    // Gather approach. This should be easier to parallelize, because there's no contention in the filtered output.
+
+    // For each texel of the output cube.
+    // - Determine what texels of the input cube contribute to it.
+    // - Add weighted contributions. Normalize.
+
+    // For each texel of the output cube.
+    /*for (uint f = 0; f < 6; f++) {
+        nvtt::Surface filteredFace = filteredCube.m->face[f];
+        FloatImage * filteredImage = filteredFace.m->image;
+
+        for (uint y = 0; y < uint(size); y++) {
+            for (uint x = 0; x < uint(size); x++) {
+
+                const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
+
+                // Convolve filter against cube.
+                Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower);
+
+                filteredImage->pixel(0, x, y, 0) = color.x;
+                filteredImage->pixel(1, x, y, 0) = color.y;
+                filteredImage->pixel(2, x, y, 0) = color.z;
+            }
+        }
+    }*/
+
+    ApplyCosinePowerFilterContext context;
+    context.inputCube = m;
+    context.filteredCube = filteredCube.m;
+    context.coneAngle = coneAngle;
+    context.cosinePower = cosinePower;
+
+    nv::ParallelFor parallelFor(ApplyCosinePowerFilterTask, &context);
+    parallelFor.run(6 * size * size);
+
+#else
     // Scatter approach.
 
     // For each texel of the input cube.
@@ -479,54 +623,6 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
             sum = 1;
         }
     }
-
-#else
-
-    // Gather approach. This should be easier to parallelize, because there's no contention in the filtered output.
-
-    // For each texel of the output cube.
-    // - Determine what texels of the input cube contribute to it.
-    // - Add weighted contributions. Normalize.
-
-    // For each texel of the output cube. @@ Parallelize this loop.
-    for (uint f = 0; f < 6; f++) {
-        nvtt::Surface filteredFace = filteredCube.m->face[f];
-        FloatImage * filteredImage = filteredFace.m->image;
-
-        for (uint y = 0; y < uint(size); y++) {
-            for (uint x = 0; x < uint(size); x++) {
-
-                const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
-
-                // Convolve filter against cube.
-                Vector3 color = m->applyCosinePowerFilter(filterDir, cosineConeAngle, cosinePower);
-
-                filteredImage->pixel(0, x, y, 0) = color.x;
-                filteredImage->pixel(1, x, y, 0) = color.y;
-                filteredImage->pixel(2, x, y, 0) = color.z;
-            }
-        }
-    }
-
-    /*int jobCount = 6 * size * size;
-    for (int i = 0; i < jobCount; i++) {
-        int f = i / (size * size);
-        int idx = i % (size * size);
-        int y = idx / size;
-        int x = idx % size;
-
-        nvtt::Surface filteredFace = filteredCube.m->face[f];
-        FloatImage * filteredImage = filteredFace.m->image;
-
-        const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
-
-        // Convolve filter against cube.
-        Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower);
-
-        filteredImage->pixel(0, idx) = color.x;
-        filteredImage->pixel(1, idx) = color.y;
-        filteredImage->pixel(2, idx) = color.z;
-    }*/
 
 #endif
 

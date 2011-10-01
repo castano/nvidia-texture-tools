@@ -221,7 +221,7 @@ namespace nv
     }
 
     /// Get scanline pointer.
-    inline float * FloatImage::scanline(uint z, uint y, uint c)
+    inline float * FloatImage::scanline(uint c, uint y, uint z)
     {
         nvDebugCheck(y < m_height);
         return plane(c, z) + y * m_width;

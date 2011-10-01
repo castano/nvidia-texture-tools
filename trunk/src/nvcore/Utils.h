@@ -7,8 +7,6 @@
 #include "nvcore.h"
 #include "Debug.h" // nvDebugCheck
 
-#include <stddef.h>
-
 // Just in case. Grrr.
 #undef min
 #undef max
