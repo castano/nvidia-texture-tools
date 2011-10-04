@@ -414,6 +414,7 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
         }
 
         // @@ We could do a less conservative test and test the face frustum against the cone...
+        // Or maybe easier: the face quad against the cone.
 
         // Compute bounding box of cone intersection against face.
         // The intersection of the cone with the face is an elipse, we want the extents of that elipse.
@@ -465,21 +466,24 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
         // This is elegant and all that, but the problem is that the projection is not always an ellipse, but often a parabola.
         // A parabola has infinite bounds, so this approach is not very practical. Ugh.
         if (false) {
-            nvCheck(cosineFaceAngle >= 0.0f);
+            //nvCheck(cosineFaceAngle >= 0.0f); @@ Not true for wide angles.
 
             // Focal point in cartessian coordinates:
             Vector3 F = Vector3(dot(faceU[f], filterDir), dot(faceV[f], filterDir), cosineFaceAngle);
 
             // Focal point in polar coordinates:
             Vector2 Fp = toPolar(F);
-            nvCheck(Fp.y >= 0.0f);
+            nvCheck(Fp.y >= 0.0f);  // top
+            nvCheck(Fp.y <= PI/2);  // horizon
 
-            // If this is an ellipse, then we can handle it.
-            if (Fp.y - coneAngle > 0 && Fp.y + coneAngle < PI) {
+            // If this is an ellipse:
+            if (Fp.y + coneAngle < PI/2) {
+                nvCheck(Fp.y - coneAngle > -PI/2);
 
                 // Major axis endpoints:
-                Vector2 Fa1 = toPlane(Fp.x, Fp.y + coneAngle);
-                Vector2 Fa2 = toPlane(Fp.x, Fp.y - coneAngle);
+                Vector2 Fa1 = toPlane(Fp.x, Fp.y - cosineFaceAngle);  // near endpoint.
+                Vector2 Fa2 = toPlane(Fp.x, Fp.y + cosineFaceAngle);  // far endpoint.
+                nvCheck(length(Fa1) <= length(Fa2));
 
                 // Ellipse center:
                 Vector2 Fc = (Fa1 + Fa2) * 0.5f;
@@ -490,18 +494,29 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
                 // Focal point:
                 Vector2 F1 = toPlane(Fp.x, Fp.y);
 
-                // Focal point relative to center:
-                Vector2 F1c = F1 - Fc;
+                // If we project Fa1, Fa2, Fc, F1 onto the filter direction, then:
+                float da1 = dot(Fa1, F.xy()) / fabs(cosineFaceAngle);
+                float d1 = dot(F1, F.xy()) / fabs(cosineFaceAngle);
+                float dc = dot(Fc, F.xy()) / fabs(cosineFaceAngle);
+                float da2 = dot(Fa2, F.xy()) / fabs(cosineFaceAngle);
+                //nvDebug("%f <= %f <= %f <= %f   (%d: %f %f | %f %f)\n", da1, d1, dc, da2, f, F.x, F.y, Fp.y - coneAngle, Fp.y + coneAngle);
+                //nvCheck(da1 <= d1 && d1 <= dc && dc <= da2);
+
+                // Translate focal point relative to center:
+                F1 -= Fc;
 
                 // Focal distance:
-                //float f = length(F1c);  // @@ Overriding f!
+                //float f = length(F1);  // @@ Overriding f!
 
                 // Minor radius:
                 //float b = sqrtf(a*a - f*f);
 
                 // Second order quadric coefficients:
-                float A = a*a - F1c.x * F1c.x;
-                float B = a*a - F1c.y * F1c.y;
+                float A = a*a - F1.x * F1.x;
+                nvCheck(A >= 0);
+
+                float B = a*a - F1.y * F1.y;
+                nvCheck(B >= 0);
 
                 // Floating point bounds:
                 float u0 = clamp(Fc.x - sqrtf(B), -1.0f, 1.0f);
