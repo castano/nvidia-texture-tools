@@ -12,16 +12,18 @@ ADD_TEST(NVTT.TestSuite.Waterloo.nocuda nvtestsuite -path ${NV_SOURCE_DIR}/data/
 ADD_TEST(NVTT.TestSuite.Epic.nocuda nvtestsuite -path ${NV_SOURCE_DIR}/data/testsuite -set 2 -nocuda -out output-nocuda-epic)
 
 IF (CUDA_FOUND)
-	ADD_EXECUTABLE(driverapitest driverapi.cpp)
-	TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage)
+    ADD_EXECUTABLE(driverapitest driverapi.cpp)
+    TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage)
 ENDIF (CUDA_FOUND)
 
 ADD_EXECUTABLE(imperativeapi imperativeapi.cpp)
 TARGET_LINK_LIBRARIES(imperativeapi nvcore nvmath nvimage nvtt)
 
 ADD_EXECUTABLE(process_alpha_map process_alpha_map.cpp)
-TARGET_LINK_LIBRARIES(process_alpha_map
- nvcore nvmath nvimage nvtt)
+TARGET_LINK_LIBRARIES(process_alpha_map nvcore nvmath nvimage nvtt)
+
+ADD_EXECUTABLE(cubemaptest cubemaptest.cpp)
+TARGET_LINK_LIBRARIES(cubemaptest nvcore nvmath nvimage nvtt)
 
 INSTALL(TARGETS nvtestsuite DESTINATION bin)
  
