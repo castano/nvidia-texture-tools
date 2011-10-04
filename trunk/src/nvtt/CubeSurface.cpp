@@ -361,6 +361,36 @@ static const Vector3 faceV[6] = {
 };
 
 
+static Vector2 toPolar(Vector3::Arg v) {
+    Vector2 p;
+    p.x = atan2(v.x, v.y);  // theta
+    p.y = acosf(v.z);       // phi
+    return p;
+}
+
+static Vector2 toPlane(float theta, float phi) {
+    float x = sin(phi) * cos(theta);
+    float y = sin(phi) * sin(theta);
+    float z = cos(phi);
+
+    Vector2 p;
+    p.x = x / fabs(z);
+    p.y = y / fabs(z);
+    //p.x = tan(phi) * cos(theta);
+    //p.y = tan(phi) * sin(theta);
+
+    return p;
+}
+
+static Vector2 toPlane(Vector3::Arg v) {
+    Vector2 p;
+    p.x = v.x / fabs(v.z);
+    p.y = v.y / fabs(v.z);
+    return p;
+}
+
+
+
 
 // Convolve filter against this cube.
 Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float coneAngle, float cosinePower)
@@ -378,10 +408,10 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
         float cosineFaceAngle = dot(filterDir, faceNormals[f]);
         float faceAngle = acosf(cosineFaceAngle);
 
-        /*if (faceAngle > coneAngle + atanf(sqrtf(2))) {
+        if (faceAngle > coneAngle + atanf(sqrtf(2))) {
             // Skip face.
             continue;
-        }*/
+        }
 
         // @@ We could do a less conservative test and test the face frustum against the cone...
 
@@ -431,6 +461,76 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
             nvDebugCheck(x1 >= x0);
             nvDebugCheck(y1 >= y0);
         }
+
+        // This is elegant and all that, but the problem is that the projection is not always an ellipse, but often a parabola.
+        // A parabola has infinite bounds, so this approach is not very practical. Ugh.
+        if (false) {
+            nvCheck(cosineFaceAngle >= 0.0f);
+
+            // Focal point in cartessian coordinates:
+            Vector3 F = Vector3(dot(faceU[f], filterDir), dot(faceV[f], filterDir), cosineFaceAngle);
+
+            // Focal point in polar coordinates:
+            Vector2 Fp = toPolar(F);
+            nvCheck(Fp.y >= 0.0f);
+
+            // If this is an ellipse, then we can handle it.
+            if (Fp.y - coneAngle > 0 && Fp.y + coneAngle < PI) {
+
+                // Major axis endpoints:
+                Vector2 Fa1 = toPlane(Fp.x, Fp.y + coneAngle);
+                Vector2 Fa2 = toPlane(Fp.x, Fp.y - coneAngle);
+
+                // Ellipse center:
+                Vector2 Fc = (Fa1 + Fa2) * 0.5f;
+
+                // Major radius:
+                float a = 0.5f * length(Fa1 - Fa2);
+
+                // Focal point:
+                Vector2 F1 = toPlane(Fp.x, Fp.y);
+
+                // Focal point relative to center:
+                Vector2 F1c = F1 - Fc;
+
+                // Focal distance:
+                //float f = length(F1c);  // @@ Overriding f!
+
+                // Minor radius:
+                //float b = sqrtf(a*a - f*f);
+
+                // Second order quadric coefficients:
+                float A = a*a - F1c.x * F1c.x;
+                float B = a*a - F1c.y * F1c.y;
+
+                // Floating point bounds:
+                float u0 = clamp(Fc.x - sqrtf(B), -1.0f, 1.0f);
+                float u1 = clamp(Fc.x + sqrtf(B), -1.0f, 1.0f);
+                float v0 = clamp(Fc.y - sqrtf(A), -1.0f, 1.0f);
+                float v1 = clamp(Fc.y + sqrtf(A), -1.0f, 1.0f);
+
+                // Expand uv coordinates from [-1,1] to [0, edgeLength)
+                u0 = (u0 + 1) * edgeLength * 0.5f - 0.5f;
+                v0 = (v0 + 1) * edgeLength * 0.5f - 0.5f;
+                u1 = (u1 + 1) * edgeLength * 0.5f - 0.5f;
+                v1 = (v1 + 1) * edgeLength * 0.5f - 0.5f;
+                //nvDebugCheck(u0 >= -0.5f && u0 <= edgeLength - 0.5f);
+                //nvDebugCheck(v0 >= -0.5f && v0 <= edgeLength - 0.5f);
+                //nvDebugCheck(u1 >= -0.5f && u1 <= edgeLength - 0.5f);
+                //nvDebugCheck(v1 >= -0.5f && v1 <= edgeLength - 0.5f);
+
+                x0 = clamp(ifloor(u0), 0, L);
+                y0 = clamp(ifloor(v0), 0, L);
+                x1 = clamp(iceil(u1), 0, L);
+                y1 = clamp(iceil(v1), 0, L);
+
+                nvDebugCheck(x1 >= x0);
+                nvDebugCheck(y1 >= y0);
+            }
+
+            // @@ What to do with parabolas?
+        }
+
 
         if (x1 == x0 || y1 == y0) {
             // Skip this face.
