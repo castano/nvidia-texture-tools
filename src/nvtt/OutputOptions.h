@@ -25,9 +25,11 @@
 #ifndef NV_TT_OUTPUTOPTIONS_H
 #define NV_TT_OUTPUTOPTIONS_H
 
-#include <nvcore/StrLib.h> // Path
-#include <nvcore/StdStream.h>
 #include "nvtt.h"
+
+#include "nvcore/StrLib.h" // Path
+#include "nvcore/StdStream.h"
+
 
 namespace nvtt
 {
@@ -35,6 +37,7 @@ namespace nvtt
 	struct DefaultOutputHandler : public nvtt::OutputHandler
 	{
 		DefaultOutputHandler(const char * fileName) : stream(fileName) {}
+        DefaultOutputHandler(FILE * fp) : stream(fp, false) {}
 		
 		virtual ~DefaultOutputHandler() {}
 		
@@ -64,6 +67,7 @@ namespace nvtt
 	struct OutputOptions::Private
 	{
 		nv::Path fileName;
+        FILE * fileHandle;
 		
 		OutputHandler * outputHandler;
 		ErrorHandler * errorHandler;
@@ -72,6 +76,7 @@ namespace nvtt
 		Container container;
         int version;
         bool srgb;
+        bool deleteOutputHandler;
 		
 		bool hasValidOutputHandler() const;
 

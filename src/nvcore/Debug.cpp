@@ -453,7 +453,7 @@ namespace
         {
             MSG msg;
             while( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) ) {
-                if( msg.message == WM_QUIT ) break;
+                //if( msg.message == WM_QUIT ) break;
                 TranslateMessage( &msg );
                 DispatchMessage( &msg );
             }
@@ -467,12 +467,11 @@ namespace
             StringBuilder error_string;
             if( func != NULL ) {
                 error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On function: %s\n    On line: %d\n ", exp, file, func, line );
-                nvDebug( error_string.str() );
             }
             else {
                 error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On line: %d\n ", exp, file, line );
-                nvDebug( error_string.str() );
             }
+            nvDebug( error_string.str() );
 
             if (debug::isDebuggerPresent()) {
                 return NV_ABORT_DEBUG;

@@ -381,14 +381,14 @@ namespace nv
         return Vector2(max(a.x, b.x), max(a.y, b.y));
     }
 
-    inline bool isValid(Vector2::Arg v)
+    inline bool isFinite(Vector2::Arg v)
     {
         return isFinite(v.x) && isFinite(v.y);
     }
 
     inline Vector2 validate(Vector2::Arg v, Vector2::Arg fallback = Vector2(0.0f))
     {
-        if (!isValid(v)) return fallback;
+        if (!isFinite(v)) return fallback;
         Vector2 vf = v;
         nv::floatCleanup(vf.component, 2);
         return vf;
@@ -567,14 +567,14 @@ namespace nv
         return Vector3(ceilf(v.x), ceilf(v.y), ceilf(v.z));
     }
 
-    inline bool isValid(Vector3::Arg v)
+    inline bool isFinite(Vector3::Arg v)
     {
         return isFinite(v.x) && isFinite(v.y) && isFinite(v.z);
     }
 
     inline Vector3 validate(Vector3::Arg v, Vector3::Arg fallback = Vector3(0.0f))
     {
-        if (!isValid(v)) return fallback;
+        if (!isFinite(v)) return fallback;
         Vector3 vf = v;
         nv::floatCleanup(vf.component, 3);
         return vf;
@@ -699,14 +699,14 @@ namespace nv
         return Vector4(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z), max(a.w, b.w));
     }
 
-    inline bool isValid(Vector4::Arg v)
+    inline bool isFinite(Vector4::Arg v)
     {
         return isFinite(v.x) && isFinite(v.y) && isFinite(v.z) && isFinite(v.w);
     }
 
     inline Vector4 validate(Vector4::Arg v, Vector4::Arg fallback = Vector4(0.0f))
     {
-        if (!isValid(v)) return fallback;
+        if (!isFinite(v)) return fallback;
         Vector4 vf = v;
         nv::floatCleanup(vf.component, 4);
         return vf;

@@ -235,7 +235,7 @@ namespace nv
         nvDebugCheck(x < m_width);
         nvDebugCheck(y < m_height);
         nvDebugCheck(z < m_depth);
-        return m_mem[((c * m_depth + z) * m_height + y) * m_width + x];
+        return m_mem[c * m_pixelCount + index(x, y, z)];
     }
 
     /// Get pixel component.
@@ -246,7 +246,7 @@ namespace nv
         nvDebugCheck(x < m_width);
         nvDebugCheck(y < m_height);
         nvDebugCheck(z < m_depth);
-        return m_mem[((c * m_depth + z) * m_height + y) * m_width + x];
+        return m_mem[c * m_pixelCount + index(x, y, z)];
     }
 
     /// Get pixel component.
@@ -255,7 +255,7 @@ namespace nv
         nvDebugCheck(m_mem != NULL);
         nvDebugCheck(c < m_componentCount);
         nvDebugCheck(idx < m_pixelCount);
-        return m_mem[c * m_height * m_width + idx];
+        return m_mem[c * m_pixelCount + idx];
     }
 
     /// Get pixel component.
@@ -264,7 +264,7 @@ namespace nv
         nvDebugCheck(m_mem != NULL);
         nvDebugCheck(c < m_componentCount);
         nvDebugCheck(idx < m_pixelCount);
-        return m_mem[c * m_height * m_width + idx];
+        return m_mem[c * m_pixelCount + idx];
     }
 
     /// Get pixel component.
@@ -288,7 +288,9 @@ namespace nv
         nvDebugCheck(x < m_width);
         nvDebugCheck(y < m_height);
         nvDebugCheck(z < m_depth);
-        return (z * m_height + y) * m_width + x;
+        uint idx = (z * m_height + y) * m_width + x;
+        nvDebugCheck(idx < m_pixelCount);
+        return idx;
     }
 
 

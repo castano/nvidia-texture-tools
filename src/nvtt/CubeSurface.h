@@ -74,7 +74,7 @@ namespace nvtt
 
             edgeLength = p.edgeLength;
             for (uint i = 0; i < 6; i++) {
-                face[i] = p.face[6];
+                face[i] = p.face[i];
             }
             solidAngleTable = NULL; // @@ Transfer tables. Needs refcounting?
             vectorTable = NULL;

@@ -44,6 +44,7 @@ OutputOptions::~OutputOptions()
 void OutputOptions::reset()
 {
     m.fileName.reset();
+    m.fileHandle = NULL;
 
     m.outputHandler = NULL;
     m.errorHandler = NULL;
@@ -52,37 +53,67 @@ void OutputOptions::reset()
     m.container = Container_DDS;
     m.version = 0;
     m.srgb = false;
+    m.deleteOutputHandler = false;
 }
 
 
 /// Set output file name.
 void OutputOptions::setFileName(const char * fileName)
 {
-    if (!m.fileName.isNull())
+    if (m.deleteOutputHandler)
     {
-        // To close the file and avoid leak.
         delete m.outputHandler;
     }
 
     m.fileName = fileName;
+    m.fileHandle = NULL;
     m.outputHandler = NULL;
+    m.deleteOutputHandler = false;
 
     DefaultOutputHandler * oh = new DefaultOutputHandler(fileName);
-    if (!oh->stream.isError())
-    {
+    if (oh->stream.isError()) {
+        delete oh;
+    }
+    else {
+        m.deleteOutputHandler = true;
         m.outputHandler = oh;
     }
 }
 
+/// Set output file handle.
+void OutputOptions::setFileHandle(void * fp)
+{
+    if (m.deleteOutputHandler) {
+        delete m.outputHandler;
+    }
+
+    m.fileName.reset();
+    m.fileHandle = (FILE *)fp;
+    m.outputHandler = NULL;
+    m.deleteOutputHandler = false;
+
+    DefaultOutputHandler * oh = new DefaultOutputHandler(m.fileHandle);
+    if (oh->stream.isError()) {
+        delete oh;
+    }
+    else {
+        m.deleteOutputHandler = true;
+        m.outputHandler = oh;
+    }
+}
+
+
 /// Set output handler.
 void OutputOptions::setOutputHandler(OutputHandler * outputHandler)
 {
-    if (!m.fileName.isNull())
-    {
+    if (m.deleteOutputHandler) {
         delete m.outputHandler;
-        m.fileName.reset();
     }
+
+    m.fileName.reset();
+    m.fileHandle = NULL;
     m.outputHandler = outputHandler;
+    m.deleteOutputHandler = false;
 }
 
 /// Set error handler.
@@ -117,7 +148,7 @@ void OutputOptions::setSrgbFlag(bool b)
 
 bool OutputOptions::Private::hasValidOutputHandler() const
 {
-    if (!fileName.isNull())
+    if (!fileName.isNull() || fileHandle != NULL)
     {
         return outputHandler != NULL;
     }
