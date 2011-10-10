@@ -17,6 +17,7 @@ http://www.efg2.com/Lab/Library/ImageProcessing/DHALF.TXT
 #include "PixelFormat.h"
 
 #include "nvmath/Color.h"
+#include "nvmath/Vector.inl"
 
 #include "nvcore/Utils.h" // swap
 

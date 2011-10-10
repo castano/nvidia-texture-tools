@@ -4,6 +4,7 @@
 #include "Filter.h"
 
 #include "nvmath/Matrix.h"
+#include "nvmath/Vector.inl"
 
 #include <float.h> // FLT_MAX
 

@@ -43,6 +43,7 @@ See the License for the specific language governing permissions and limitations 
 #include "utils.h"
 
 #include "nvmath/Fitting.h"
+#include "nvmath/Vector.inl"
 
 #include <string.h> // strlen
 #include <float.h> // FLT_MAX

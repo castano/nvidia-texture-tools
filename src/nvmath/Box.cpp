@@ -1,7 +1,8 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
-#include "nvmath/Box.h"
-#include "nvmath/Sphere.h"
+#include "Box.h"
+#include "Box.inl"
+//#include "Sphere.h"
 
 using namespace nv;
 
@@ -25,6 +26,6 @@ float nv::distanceSquared(const Box &box, const Vector3 &point) {
     return lengthSquared(point - closest);
 }
 
-bool nv::overlap(const Box &box, const Sphere &sphere) {
+/*bool nv::overlap(const Box &box, const Sphere &sphere) {
     return distanceSquared(box, sphere.center) < sphere.radius * sphere.radius;
-}
+}*/

@@ -5,6 +5,7 @@
 #include "FloatImage.h"
 
 #include "nvmath/Box.h"
+#include "nvmath/Vector.inl"
 #include "nvcore/Utils.h" // swap
 
 #include <string.h> // memcpy

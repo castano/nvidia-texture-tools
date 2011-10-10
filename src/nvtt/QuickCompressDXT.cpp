@@ -22,16 +22,18 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/Utils.h> // swap
-
-#include <nvmath/Color.h>
-#include <nvmath/Fitting.h>
-
-#include <nvimage/ColorBlock.h>
-#include <nvimage/BlockDXT.h>
-
 #include "QuickCompressDXT.h"
 #include "OptimalCompressDXT.h"
+
+#include "nvimage/ColorBlock.h"
+#include "nvimage/BlockDXT.h"
+
+#include "nvmath/Color.h"
+#include "nvmath/Vector.inl"
+#include "nvmath/Fitting.h"
+
+#include "nvcore/Utils.h" // swap
+
 
 
 using namespace nv;

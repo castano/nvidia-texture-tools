@@ -22,15 +22,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
+#include "InputOptions.h"
+
+#include "nvmath/Vector.inl"
+
+#include "nvcore/Utils.h" // nextPowerOfTwo
+#include "nvcore/Memory.h"
+
 #include <string.h> // memcpy
 
-#include <nvcore/Utils.h> // nextPowerOfTwo
-#include <nvcore/Memory.h>
 
-#include <nvmath/Color.h>
-
-#include "nvtt.h"
-#include "InputOptions.h"
 
 using namespace nv;
 using namespace nvtt;

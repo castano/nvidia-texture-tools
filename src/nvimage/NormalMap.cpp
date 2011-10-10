@@ -26,7 +26,7 @@
 #include "FloatImage.h"
 #include "Image.h"
 
-#include "nvmath/Color.h"
+#include "nvmath/Color.inl"
 
 #include "nvcore/Ptr.h"
 

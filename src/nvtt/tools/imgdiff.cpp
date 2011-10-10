@@ -21,18 +21,19 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/StrLib.h>
-#include <nvcore/StdStream.h>
+#include "cmdline.h"
 
-#include <nvimage/Image.h>
-#include <nvimage/DirectDrawSurface.h>
+#include "nvmath/Color.h"
+#include "nvmath/Vector.inl"
 
-#include <nvmath/Color.h>
-#include <nvmath/Vector.h>
+#include "nvimage/Image.h"
+#include "nvimage/DirectDrawSurface.h"
+
+#include "nvcore/StrLib.h"
+#include "nvcore/StdStream.h"
 
 #include <math.h>
 
-#include "cmdline.h"
 
 static bool loadImage(nv::Image & image, const char * fileName)
 {

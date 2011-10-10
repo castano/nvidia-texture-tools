@@ -1,6 +1,7 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #include "Plane.h"
+#include "Plane.inl"
 #include "Matrix.h"
 
 namespace nv
