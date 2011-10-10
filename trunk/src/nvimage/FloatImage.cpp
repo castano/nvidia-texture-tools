@@ -5,6 +5,7 @@
 #include "Image.h"
 
 #include "nvmath/Color.h"
+#include "nvmath/Vector.inl"
 #include "nvmath/Matrix.h"
 
 #include "nvcore/Utils.h" // max

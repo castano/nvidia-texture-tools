@@ -40,9 +40,12 @@ int main(int argc, char *argv[])
     // Init context.
     nvtt::Context context;
 
+    const char * fileName = "envmap.dds";
+    if (argc > 1) fileName = argv[1];
+
     // Load cubemap.
     nvtt::CubeSurface envmap;
-    if (!envmap.load("envmap.dds", 0)) {
+    if (!envmap.load(fileName, 0)) {
         printf("Error loading envmap.dds\n");
         return EXIT_FAILURE;
     }

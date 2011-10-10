@@ -26,6 +26,7 @@
 
 #include "ClusterFit.h"
 #include "nvmath/Fitting.h"
+#include "nvmath/Vector.inl"
 #include "nvimage/ColorBlock.h"
 
 #include <float.h> // FLT_MAX

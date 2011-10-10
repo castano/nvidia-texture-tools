@@ -18,7 +18,7 @@ See the License for the specific language governing permissions and limitations 
 #include "zoh.h"
 #include "utils.h"
 
-#include "nvmath/Vector.h"
+#include "nvmath/Vector.inl"
 #include "nvmath/Fitting.h"
 
 #include <string.h> // strlen

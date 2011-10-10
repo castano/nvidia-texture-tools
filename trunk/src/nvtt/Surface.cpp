@@ -24,7 +24,7 @@
 
 #include "Surface.h"
 
-#include "nvmath/Vector.h"
+#include "nvmath/Vector.inl"
 #include "nvmath/Matrix.h"
 #include "nvmath/Color.h"
 #include "nvmath/Half.h"

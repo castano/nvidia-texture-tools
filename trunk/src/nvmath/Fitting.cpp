@@ -1,6 +1,9 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "Fitting.h"
+#include "Vector.inl"
+#include "Plane.inl"
+
 #include "nvcore/Utils.h" // max, swap
 
 #include <float.h> // FLT_MAX

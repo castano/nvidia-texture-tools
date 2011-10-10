@@ -27,6 +27,7 @@
 
 #include "nvcore/Debug.h"
 #include "nvmath/Color.h"
+#include "nvmath/Vector.inl"
 #include "nvimage/Image.h"
 #include "nvimage/ColorBlock.h"
 #include "nvimage/BlockDXT.h"
