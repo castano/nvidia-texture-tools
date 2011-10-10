@@ -350,6 +350,7 @@ namespace nvtt
         NVTT_API void reset();
 
         NVTT_API void setFileName(const char * fileName);
+        NVTT_API void setFileHandle(void * fp);
 
         NVTT_API void setOutputHandler(OutputHandler * outputHandler);
         NVTT_API void setErrorHandler(ErrorHandler * errorHandler);
@@ -464,6 +465,7 @@ namespace nvtt
         NVTT_API void toLinear(float gamma);
         NVTT_API void toGamma(float gamma);
         NVTT_API void toSrgb();
+        NVTT_API void toLinearFromSrgb();
         NVTT_API void toXenonSrgb();
         NVTT_API void transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4]);
         NVTT_API void swizzle(int r, int g, int b, int a);
@@ -563,6 +565,8 @@ namespace nvtt
         // @@ Add resizing methods.
 
         // @@ Add edge fixup methods.
+
+        NVTT_API float average(int channel) const;
 
         // Filtering.
         NVTT_API CubeSurface irradianceFilter(int size) const;

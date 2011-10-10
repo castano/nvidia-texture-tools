@@ -5,14 +5,13 @@
 #define NV_MATH_H
 
 #include "nvcore/nvcore.h"
-#include "nvcore/Debug.h"
-#include "nvcore/Utils.h" // clamp
+#include "nvcore/Debug.h"   // nvDebugCheck
+#include "nvcore/Utils.h"   // clamp
 
 #include <math.h>
-#include <limits.h> // INT_MAX
 
 #if NV_OS_WIN32 || NV_OS_XBOX
-#include <float.h>
+#include <float.h>  // finite, isnan
 #endif
 
 // Function linkage
@@ -105,9 +104,12 @@ namespace nv
     inline float toRadian(float degree) { return degree * (PI / 180.0f); }
     inline float toDegree(float radian) { return radian * (180.0f / PI); }
 
+    // Robust floating point comparisons:
+    // http://realtimecollisiondetection.net/blog/?p=89
     inline bool equal(const float f0, const float f1, const float epsilon = NV_EPSILON)
     {
-        return fabs(f0-f1) <= epsilon;
+        //return fabs(f0-f1) <= epsilon;
+        return fabs(f0-f1) <= epsilon * max(1.0f, fabs(f0), fabs(f1));
     }
 
     inline bool isZero(const float f, const float epsilon = NV_EPSILON)

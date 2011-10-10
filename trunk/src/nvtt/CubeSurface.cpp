@@ -183,6 +183,35 @@ Surface CubeSurface::unfold(CubeLayout layout) const
 }
 
 
+float CubeSurface::average(int channel) const
+{
+    const uint edgeLength = m->edgeLength;
+
+    // These tables along with the surface so that we only compute them once.
+    if (m->solidAngleTable == NULL) {
+        m->solidAngleTable = new SolidAngleTable(edgeLength);
+    }
+
+    float total = 0.0f;
+    float sum = 0.0f;
+
+    for (int f = 0; f < 6; f++) {
+        float * c = m->face[f].m->image->channel(channel);
+
+        for (uint y = 0; y < edgeLength; y++) {
+            for (uint x = 0; x < edgeLength; x++) {
+                float solidAngle = m->solidAngleTable->lookup(x, y);
+
+                total += solidAngle;
+                sum += c[y * edgeLength + x] * solidAngle;
+            }
+        }
+    }
+
+    return sum / total;
+}
+
+
 CubeSurface CubeSurface::irradianceFilter(int size) const
 {
     // @@ TODO
@@ -237,7 +266,7 @@ SolidAngleTable::SolidAngleTable(uint edgeLength) : size(edgeLength/2) {
 
     for (uint y = 0; y < size; y++) {
         for (uint x = 0; x < size; x++) {
-            data[y * size + x] = solidAngleTerm(128+x, 128+y, inverseEdgeLength);
+            data[y * size + x] = solidAngleTerm(size+x, size+y, inverseEdgeLength);
         }
     }
 }
@@ -631,7 +660,7 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
     CubeSurface filteredCube;
     filteredCube.m->allocate(size);
 
-    // Store these tables along with the surface. Compute them only once!
+    // These tables along with the surface so that we only compute them once.
     if (m->solidAngleTable == NULL) {
         m->solidAngleTable = new SolidAngleTable(edgeLength);
     }

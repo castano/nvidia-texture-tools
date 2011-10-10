@@ -704,12 +704,13 @@ void Surface::resize(int w, int h, int d, ResizeFilter filter)
 
 void Surface::resize(int w, int h, int d, ResizeFilter filter, float filterWidth, const float * params)
 {
-    FloatImage * img = m->image;
-    if (img == NULL || (w == img->width() && h == img->height() && d == img->depth())) {
+    if (isNull() || (w == width() && h == height() && d == depth())) {
         return;
     }
 
     detach();
+
+    FloatImage * img = m->image;
 
     FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
@@ -781,7 +782,7 @@ void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 
 void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, float filterWidth, const float * params)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     int w = m->image->width();
     int h = m->image->height();
@@ -803,12 +804,13 @@ bool Surface::buildNextMipmap(MipmapFilter filter)
 
 bool Surface::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params)
 {
-    FloatImage * img = m->image;
-    if (img == NULL || (img->width() == 1 && img->height() == 1 && img->depth() == 1)) {
+    if (isNull() || (width() == 1 && height() == 1 && depth() == 1)) {
         return false;
     }
 
     detach();
+
+    FloatImage * img = m->image;
 
     FloatImage::WrapMode wrapMode = (FloatImage::WrapMode)m->wrapMode;
 
@@ -868,12 +870,13 @@ void Surface::canvasSize(int w, int h, int d)
 {
     nvDebugCheck(w > 0 && h > 0 && d > 0);
 
-    FloatImage * img = m->image;
-    if (img == NULL || (w == img->width() && h == img->height() && d == img->depth())) {
+    if (isNull() || (w == width() && h == height() && d == depth())) {
         return;
     }
 
     detach();
+
+    FloatImage * img = m->image;
 
     FloatImage * new_img = new FloatImage;
     new_img->allocate(4, w, h, d);
@@ -903,7 +906,7 @@ void Surface::canvasSize(int w, int h, int d)
 // Color transforms.
 void Surface::toLinear(float gamma)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     if (equal(gamma, 1.0f)) return;
 
     detach();
@@ -913,7 +916,7 @@ void Surface::toLinear(float gamma)
 
 void Surface::toGamma(float gamma)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     if (equal(gamma, 1.0f)) return;
 
     detach();
@@ -923,7 +926,8 @@ void Surface::toGamma(float gamma)
 
 
 static float toSrgb(float f) {
-    if (f <= 0.0)               f = 0.0f;
+    if (isNan(f))               f = 0.0f;
+    else if (f <= 0.0f)         f = 0.0f;
     else if (f <= 0.0031308f)   f = 12.92f * f;
     else if (f <= 1.0f)         f = (powf(f, 0.41666f) * 1.055f) - 0.055f;
     else                        f = 1.0f;
@@ -932,21 +936,43 @@ static float toSrgb(float f) {
 
 void Surface::toSrgb()
 {
-    FloatImage * img = m->image;
-    if (img == NULL) return;
+    if (isNull()) return;
 
     detach();
 
-    const uint count = img->pixelCount();
-    for (uint j = 0; j < count; j++)
-    {
-        float & r = img->pixel(0, j);
-        float & g = img->pixel(1, j);
-        float & b = img->pixel(2, j);
+    FloatImage * img = m->image;
 
-        r = ::toSrgb(r);
-        g = ::toSrgb(g);
-        b = ::toSrgb(b);
+    const uint count = img->pixelCount();
+    for (uint c = 0; c < 3; c++) {
+        float * channel = img->channel(c);
+        for (uint i = 0; i < count; i++) {
+            channel[i] = ::toSrgb(channel[i]);
+        }
+    }
+}
+
+static float fromSrgb(float f) {
+    if (f < 0.0f)           f = 0.0f;
+    else if (f < 0.04045f)  f = f / 12.92f;
+    else if (f <= 1.0f)     f = powf((f + 0.055f) / 1.055f, 2.4f);
+    else                    f = 1.0f;
+    return f;
+}
+
+void Surface::toLinearFromSrgb()
+{
+    if (isNull()) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+
+    const uint count = img->pixelCount();
+    for (uint c = 0; c < 3; c++) {
+        float * channel = img->channel(c);
+        for (uint i = 0; i < count; i++) {
+            channel[i] = ::fromSrgb(channel[i]);
+        }
     }
 }
 
@@ -962,28 +988,25 @@ static float toXenonSrgb(float f) {
 
 void Surface::toXenonSrgb()
 {
-    FloatImage * img = m->image;
-    if (img == NULL) return;
+    if (isNull()) return;
 
     detach();
 
-    const uint count = img->pixelCount();
-    for (uint j = 0; j < count; j++)
-    {
-        float & r = img->pixel(0, j);
-        float & g = img->pixel(1, j);
-        float & b = img->pixel(2, j);
+    FloatImage * img = m->image;
 
-        r = ::toXenonSrgb(r);
-        g = ::toXenonSrgb(g);
-        b = ::toXenonSrgb(b);
+    const uint count = img->pixelCount();
+    for (uint c = 0; c < 3; c++) {
+        float * channel = img->channel(c);
+        for (uint i = 0; i < count; i++) {
+            channel[i] = ::toXenonSrgb(channel[i]);
+        }
     }
 }
 
 
 void Surface::transform(const float w0[4], const float w1[4], const float w2[4], const float w3[4], const float offset[4])
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1000,7 +1023,7 @@ void Surface::transform(const float w0[4], const float w1[4], const float w2[4],
 
 void Surface::swizzle(int r, int g, int b, int a)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     if (r == 0 && g == 1 && b == 2 && a == 3) return;
 
     detach();
@@ -1011,7 +1034,7 @@ void Surface::swizzle(int r, int g, int b, int a)
 // color * scale + bias
 void Surface::scaleBias(int channel, float scale, float bias)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     if (equal(scale, 1.0f) && equal(bias, 0.0f)) return;
 
     detach();
@@ -1021,7 +1044,7 @@ void Surface::scaleBias(int channel, float scale, float bias)
 
 void Surface::clamp(int channel, float low, float high)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1045,7 +1068,7 @@ void Surface::expandNormal()
 
 void Surface::blend(float red, float green, float blue, float alpha, float t)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1067,7 +1090,7 @@ void Surface::blend(float red, float green, float blue, float alpha, float t)
 
 void Surface::premultiplyAlpha()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1089,7 +1112,7 @@ void Surface::premultiplyAlpha()
 
 void Surface::toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1116,7 +1139,7 @@ void Surface::toGreyScale(float redScale, float greenScale, float blueScale, flo
 // Draw colored border.
 void Surface::setBorder(float r, float g, float b, float a)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1158,7 +1181,7 @@ void Surface::setBorder(float r, float g, float b, float a)
 // Fill image with the given color.
 void Surface::fill(float red, float green, float blue, float alpha)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1181,7 +1204,7 @@ void Surface::fill(float red, float green, float blue, float alpha)
 
 void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1220,7 +1243,7 @@ void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.
 void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1288,7 +1311,7 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 
 void Surface::fromRGBM(float range/*= 1*/)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1557,7 +1580,7 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
 // Y is in the [0, 1] range, while CoCg are in the [-1, 1] range.
 void Surface::toYCoCg()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1594,7 +1617,7 @@ void Surface::toYCoCg()
 // and minimize bilinear interpolation artifacts.
 void Surface::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
 {
-    if (m->image == NULL || m->image->depth() != 1) return;
+    if (isNull() || depth() != 1) return;
 
     detach();
 
@@ -1652,7 +1675,7 @@ void Surface::blockScaleCoCg(int bits/*= 5*/, float threshold/*= 0.0*/)
 
 void Surface::fromYCoCg()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1685,7 +1708,7 @@ void Surface::fromYCoCg()
 
 void Surface::toLUVW(float range/*= 1.0f*/)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1720,7 +1743,7 @@ void Surface::fromLUVW(float range/*= 1.0f*/)
 
 void Surface::abs(int channel)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1735,7 +1758,7 @@ void Surface::abs(int channel)
 
 void Surface::convolve(int channel, int kernelSize, float * kernelData)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1746,7 +1769,7 @@ void Surface::convolve(int channel, int kernelSize, float * kernelData)
 /*
 void Surface::blockLuminanceScale(float scale)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1821,7 +1844,7 @@ void Surface::blockLuminanceScale(float scale)
 /*
 void Surface::toJPEGLS()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1844,7 +1867,7 @@ void Surface::toJPEGLS()
 
 void Surface::fromJPEGLS()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1870,7 +1893,7 @@ void Surface::fromJPEGLS()
 // If dither is true, this uses Floyd-Steinberg dithering method.
 void Surface::binarize(int channel, float threshold, bool dither)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -1933,7 +1956,7 @@ void Surface::binarize(int channel, float threshold, bool dither)
 // When dither is true, this uses Floyd-Steinberg dithering.
 void Surface::quantize(int channel, int bits, bool exactEndPoints, bool dither)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2004,7 +2027,7 @@ void Surface::quantize(int channel, int bits, bool exactEndPoints, bool dither)
 // Set normal map options.
 void Surface::toNormalMap(float sm, float medium, float big, float large)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2023,7 +2046,7 @@ void Surface::toNormalMap(float sm, float medium, float big, float large)
 
 void Surface::normalizeNormalMap()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     if (!m->isNormalMap) return;
 
     detach();
@@ -2033,7 +2056,7 @@ void Surface::normalizeNormalMap()
 
 void Surface::transformNormals(NormalTransform xform)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2106,7 +2129,7 @@ void Surface::transformNormals(NormalTransform xform)
 
 void Surface::reconstructNormals(NormalTransform xform)
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2155,7 +2178,7 @@ void Surface::reconstructNormals(NormalTransform xform)
 
 void Surface::toCleanNormalMap()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2174,14 +2197,14 @@ void Surface::toCleanNormalMap()
 
 // [-1,1] -> [ 0,1]
 void Surface::packNormals() {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     detach();
     m->image->packNormals(0);
 }
 
 // [ 0,1] -> [-1,1]
 void Surface::expandNormals() {
-    if (m->image == NULL) return;
+    if (isNull()) return;
     detach();
     m->image->expandNormals(0);
 }
@@ -2189,7 +2212,7 @@ void Surface::expandNormals() {
 
 void Surface::flipX()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2198,7 +2221,7 @@ void Surface::flipX()
 
 void Surface::flipY()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2207,7 +2230,7 @@ void Surface::flipY()
 
 void Surface::flipZ()
 {
-    if (m->image == NULL) return;
+    if (isNull()) return;
 
     detach();
 
@@ -2233,6 +2256,8 @@ bool Surface::copyChannel(const Surface & srcImage, int srcChannel, int dstChann
 
     detach();
 
+    dst = m->image;
+
     memcpy(dst->channel(dstChannel), src->channel(srcChannel), dst->pixelCount()*sizeof(float));
 
     return true;
@@ -2251,6 +2276,8 @@ bool Surface::addChannel(const Surface & srcImage, int srcChannel, int dstChanne
     nvDebugCheck(dst->componentCount() == 4 && src->componentCount() == 4);
 
     detach();
+
+    dst = m->image;
 
     const uint w = src->width();
     const uint h = src->height();

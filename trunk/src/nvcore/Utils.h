@@ -70,15 +70,11 @@ namespace nv
         b = temp;
     }
 
-    /// Return the maximum of the two arguments.
+    /// Return the maximum of the two arguments. For floating point values, it returns the second value if the first is NaN.
     template <typename T> 
     inline const T & max(const T & a, const T & b)
     {
-        //return std::max(a, b);
-        if( a < b ) {
-            return b; 
-        }
-        return a;
+        return (b < a) ? a : b;
     }
 
     /// Return the maximum of the three arguments.
@@ -92,11 +88,7 @@ namespace nv
     template <typename T> 
     inline const T & min(const T & a, const T & b)
     {
-        //return std::min(a, b);
-        if( b < a ) {
-            return b; 
-        }
-        return a;
+        return (a < b) ? a : b;
     }
 
     /// Return the maximum of the three arguments.

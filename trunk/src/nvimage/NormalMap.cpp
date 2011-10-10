@@ -27,6 +27,7 @@
 #include "Image.h"
 
 #include "nvmath/Color.inl"
+#include "nvmath/Vector.h"
 
 #include "nvcore/Ptr.h"
 
