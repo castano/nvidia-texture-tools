@@ -9,6 +9,9 @@
 #elif NV_OS_UNIX
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#if NV_OS_LINUX
+#include <unistd.h>
+#endif
 #endif
 
 
