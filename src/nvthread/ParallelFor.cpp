@@ -5,6 +5,8 @@
 #include "Atomic.h"
 #include "ThreadPool.h"
 
+#include "nvcore/Utils.h" // toI32
+
 using namespace nv;
 
 #define ENABLE_PARALLEL_FOR 0
@@ -52,7 +54,7 @@ void ParallelFor::run(uint count) {
 
     nvDebugCheck(idx >= count);
 #else
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < toI32(count); i++) {
         task(context, i);
     }
 #endif

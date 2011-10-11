@@ -6,7 +6,7 @@
 
 #include "nvmath/Color.h"
 #include "nvmath/Vector.inl"
-#include "nvmath/Matrix.h"
+#include "nvmath/Matrix.inl"
 
 #include "nvcore/Utils.h" // max
 #include "nvcore/Ptr.h"

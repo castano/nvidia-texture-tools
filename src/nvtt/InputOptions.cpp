@@ -29,7 +29,7 @@
 #include "nvcore/Utils.h" // nextPowerOfTwo
 #include "nvcore/Memory.h"
 
-#include <string.h> // memcpy
+#include <string.h> // memcpy, memset
 
 
 

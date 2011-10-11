@@ -189,7 +189,7 @@ NV_COMPILER_CHECK(sizeof(uint32) == 4);
 
 #define NV_ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
-#if 1
+#if 0 // Disabled in The Witness.
 #if NV_CC_MSVC
 #define NV_MESSAGE(x) message(__FILE__ "(" NV_STRING(__LINE__) ") : " x)
 #else
