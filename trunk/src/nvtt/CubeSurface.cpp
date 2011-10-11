@@ -518,7 +518,7 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
             // Focal point in polar coordinates:
             Vector2 Fp = toPolar(F);
             nvCheck(Fp.y >= 0.0f);  // top
-            nvCheck(Fp.y <= PI/2);  // horizon
+            //nvCheck(Fp.y <= PI/2);  // horizon
 
             // If this is an ellipse:
             if (Fp.y + coneAngle < PI/2) {

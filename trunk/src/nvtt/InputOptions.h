@@ -25,12 +25,10 @@
 #ifndef NVTT_INPUTOPTIONS_H
 #define NVTT_INPUTOPTIONS_H
 
-#include <nvcore/Ptr.h>
-#include <nvmath/Vector.h>
-#include <nvmath/Matrix.h>
-#include <nvimage/Image.h>
-#include <nvimage/FloatImage.h>
 #include "nvtt.h"
+
+#include "nvmath/Vector.h"
+
 
 namespace nvtt
 {

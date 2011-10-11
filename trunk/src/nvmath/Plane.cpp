@@ -2,7 +2,7 @@
 
 #include "Plane.h"
 #include "Plane.inl"
-#include "Matrix.h"
+#include "Matrix.inl"
 
 namespace nv
 {
