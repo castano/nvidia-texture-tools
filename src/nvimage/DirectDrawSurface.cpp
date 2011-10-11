@@ -36,31 +36,8 @@
 
 using namespace nv;
 
-
-const uint nv::FOURCC_NVTT = MAKEFOURCC('N', 'V', 'T', 'T');
-
-const uint nv::FOURCC_DDS = MAKEFOURCC('D', 'D', 'S', ' ');
-const uint nv::FOURCC_DXT1 = MAKEFOURCC('D', 'X', 'T', '1');
-const uint nv::FOURCC_DXT2 = MAKEFOURCC('D', 'X', 'T', '2');
-const uint nv::FOURCC_DXT3 = MAKEFOURCC('D', 'X', 'T', '3');
-const uint nv::FOURCC_DXT4 = MAKEFOURCC('D', 'X', 'T', '4');
-const uint nv::FOURCC_DXT5 = MAKEFOURCC('D', 'X', 'T', '5');
-const uint nv::FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B');
-const uint nv::FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1');
-const uint nv::FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2');
-
-
-
 namespace
 {
-
-    static const uint FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y');
-
-    static const uint FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0');
-
-    static const uint FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R');
-
-
 
     static const uint DDSD_CAPS = 0x00000001U;
     static const uint DDSD_PIXELFORMAT = 0x00001000U;
@@ -210,16 +187,16 @@ namespace
 #undef CASE
     }
 
-    const char * getD3d10ResourceDimensionString(D3D10_RESOURCE_DIMENSION resourceDimension)
+    const char * getD3d10ResourceDimensionString(DDS_DIMENSION resourceDimension)
     {
         switch(resourceDimension)
         {
             default:
-            case D3D10_RESOURCE_DIMENSION_UNKNOWN: return "UNKNOWN";
-            case D3D10_RESOURCE_DIMENSION_BUFFER: return "BUFFER";
-            case D3D10_RESOURCE_DIMENSION_TEXTURE1D: return "TEXTURE1D";
-            case D3D10_RESOURCE_DIMENSION_TEXTURE2D: return "TEXTURE2D";
-            case D3D10_RESOURCE_DIMENSION_TEXTURE3D: return "TEXTURE3D";
+            case DDS_DIMENSION_UNKNOWN: return "UNKNOWN";
+            case DDS_DIMENSION_BUFFER: return "BUFFER";
+            case DDS_DIMENSION_TEXTURE1D: return "TEXTURE1D";
+            case DDS_DIMENSION_TEXTURE2D: return "TEXTURE2D";
+            case DDS_DIMENSION_TEXTURE3D: return "TEXTURE3D";
         }
     }
 
@@ -531,7 +508,7 @@ DDSHeader::DDSHeader()
     this->notused = 0;
 
     this->header10.dxgiFormat = DXGI_FORMAT_UNKNOWN;
-    this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_UNKNOWN;
+    this->header10.resourceDimension = DDS_DIMENSION_UNKNOWN;
     this->header10.miscFlag = 0;
     this->header10.arraySize = 0;
     this->header10.reserved = 0;
@@ -580,7 +557,8 @@ void DDSHeader::setMipmapCount(uint count)
 
 void DDSHeader::setTexture2D()
 {
-    this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+    this->header10.resourceDimension = DDS_DIMENSION_TEXTURE2D;
+    this->header10.miscFlag = 0;
     this->header10.arraySize = 1;
 }
 
@@ -588,7 +566,8 @@ void DDSHeader::setTexture3D()
 {
     this->caps.caps2 = DDSCAPS2_VOLUME;
 
-    this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+    this->header10.resourceDimension = DDS_DIMENSION_TEXTURE3D;
+    this->header10.miscFlag = 0;
     this->header10.arraySize = 1;
 }
 
@@ -597,8 +576,9 @@ void DDSHeader::setTextureCube()
     this->caps.caps1 |= DDSCAPS_COMPLEX;
     this->caps.caps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALL_FACES;
 
-    this->header10.resourceDimension = D3D10_RESOURCE_DIMENSION_TEXTURE2D;
-    this->header10.arraySize = 6;
+    this->header10.resourceDimension = DDS_DIMENSION_TEXTURE2D;
+    this->header10.miscFlag = DDS_MISC_TEXTURECUBE;
+    this->header10.arraySize = 1;
 }
 
 void DDSHeader::setLinearSize(uint size)
@@ -1084,7 +1064,7 @@ bool DirectDrawSurface::isTexture1D() const
     nvDebugCheck(isValid());
     if (header.hasDX10Header())
     {
-        return header.header10.resourceDimension == D3D10_RESOURCE_DIMENSION_TEXTURE1D;
+        return header.header10.resourceDimension == DDS_DIMENSION_TEXTURE1D;
     }
     return false;
 }
@@ -1094,7 +1074,7 @@ bool DirectDrawSurface::isTexture2D() const
     nvDebugCheck(isValid());
     if (header.hasDX10Header())
     {
-        return header.header10.resourceDimension == D3D10_RESOURCE_DIMENSION_TEXTURE2D;
+        return header.header10.resourceDimension == DDS_DIMENSION_TEXTURE2D;
     }
     else
     {
@@ -1107,7 +1087,7 @@ bool DirectDrawSurface::isTexture3D() const
     nvDebugCheck(isValid());
     if (header.hasDX10Header())
     {
-        return header.header10.resourceDimension == D3D10_RESOURCE_DIMENSION_TEXTURE3D;
+        return header.header10.resourceDimension == DDS_DIMENSION_TEXTURE3D;
     }
     else
     {
@@ -1597,7 +1577,7 @@ void DirectDrawSurface::printInfo() const
     {
         printf("DX10 Header:\n");
         printf("\tDXGI Format: %u (%s)\n", header.header10.dxgiFormat, getDxgiFormatString((DXGI_FORMAT)header.header10.dxgiFormat));
-        printf("\tResource dimension: %u (%s)\n", header.header10.resourceDimension, getD3d10ResourceDimensionString((D3D10_RESOURCE_DIMENSION)header.header10.resourceDimension));
+        printf("\tResource dimension: %u (%s)\n", header.header10.resourceDimension, getD3d10ResourceDimensionString((DDS_DIMENSION)header.header10.resourceDimension));
         printf("\tMisc flag: %u\n", header.header10.miscFlag);
         printf("\tArray size: %u\n", header.header10.arraySize);
     }

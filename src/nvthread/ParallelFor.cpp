@@ -7,7 +7,7 @@
 
 using namespace nv;
 
-#define ENABLE_PARALLEL_FOR 1
+#define ENABLE_PARALLEL_FOR 0
 
 
 void worker(void * arg) {

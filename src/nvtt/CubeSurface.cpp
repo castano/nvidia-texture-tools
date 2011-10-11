@@ -37,6 +37,199 @@ using namespace nvtt;
 
 
 
+// Solid angle of an axis aligned quad from (0,0,1) to (x,y,1)
+// See: http://www.fizzmoll11.com/thesis/ for a derivation of this formula.
+static float areaElement(float x, float y) {
+    return atan2(x*y, sqrtf(x*x + y*y + 1));
+}
+
+// Solid angle of a hemicube texel.
+static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
+    // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
+    float u = (float(x) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
+    float v = (float(y) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
+    nvDebugCheck(u >= -1.0f && u <= 1.0f);
+    nvDebugCheck(v >= -1.0f && v <= 1.0f);
+
+#if 1
+    // Exact solid angle:
+    float x0 = u - inverseEdgeLength;
+    float y0 = v - inverseEdgeLength;
+    float x1 = u + inverseEdgeLength;
+    float y1 = v + inverseEdgeLength;
+    float solidAngle = areaElement(x0, y0) - areaElement(x0, y1) - areaElement(x1, y0) + areaElement(x1, y1);
+    nvDebugCheck(solidAngle > 0.0f);
+
+    return solidAngle;
+#else
+    // This formula is equivalent, but not as precise.
+    float pixel_area = nv::square(2.0f * inverseEdgeLength);
+    float dist_square = 1.0f + nv::square(u) + nv::square(v);
+    float cos_theta = 1.0f / sqrt(dist_square);
+    float cos_theta_d2 = cos_theta / dist_square; // Funny this is just 1/dist^3 or cos(tetha)^3
+
+    return pixel_area * cos_theta_d2;
+#endif
+}
+
+
+static Vector3 texelDirection(uint face, uint x, uint y, int edgeLength, bool seamless)
+{
+    float u, v;
+    if (seamless) {
+        // Transform x,y to [-1, 1] range, match up edges exactly.
+        u = float(x) * 2 / (edgeLength - 1) - 1.0f;
+        v = float(y) * 2 / (edgeLength - 1) - 1.0f;
+    }
+    else {
+        // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
+        u = (float(x) + 0.5f) * (2 / edgeLength) - 1.0f;
+        v = (float(y) + 0.5f) * (2 / edgeLength) - 1.0f;
+    }
+    nvDebugCheck(u >= -1.0f && u <= 1.0f);
+    nvDebugCheck(v >= -1.0f && v <= 1.0f);
+
+    Vector3 n;
+
+    if (face == 0) {
+        n.x = 1;
+        n.y = -v;
+        n.z = -u;
+    }
+    if (face == 1) {
+        n.x = -1;
+        n.y = -v;
+        n.z = u;
+    }
+
+    if (face == 2) {
+        n.x = u;
+        n.y = 1;
+        n.z = v;
+    }
+    if (face == 3) {
+        n.x = u;
+        n.y = -1;
+        n.z = -v;
+    }
+
+    if (face == 4) {
+        n.x = u;
+        n.y = -v;
+        n.z = 1;
+    }
+    if (face == 5) {
+        n.x = -u;
+        n.y = -v;
+        n.z = -1;
+    }
+
+    return normalizeFast(n);
+}
+
+
+TexelTable::TexelTable(uint edgeLength, bool seamless) : size(edgeLength) {
+
+    uint hsize = size/2;
+
+    // Allocate a small solid angle table that takes into account cube map symmetry.
+    solidAngleArray.resize(hsize * hsize);
+
+    for (uint y = 0; y < hsize; y++) {
+        for (uint x = 0; x < hsize; x++) {
+            solidAngleArray[y * hsize + x] = solidAngleTerm(hsize+x, hsize+y, edgeLength);
+        }
+    }
+
+
+    directionArray.resize(size*size*6);
+
+    for (uint f = 0; f < 6; f++) {
+        for (uint y = 0; y < size; y++) {
+            for (uint x = 0; x < size; x++) {
+                directionArray[(f * size + y) * size + x] = texelDirection(f, x, y, edgeLength, seamless);
+            }
+        }
+    }
+
+
+}
+
+const Vector3 & TexelTable::direction(uint f, uint x, uint y) const {
+    nvDebugCheck(f < 6 && x < size && y < size);
+    return directionArray[(f * size + y) * size + x];
+}
+
+float TexelTable::solidAngle(uint f, uint x, uint y) const {
+    uint hsize = size/2;
+    if (x >= hsize) x -= hsize;
+    else if (x < hsize) x = hsize - x - 1;
+    if (y >= hsize) y -= hsize;
+    else if (y < hsize) y = hsize - y - 1;
+
+    return solidAngleArray[y * hsize + x];
+}
+
+
+static const Vector3 faceNormals[6] = {
+    Vector3(1, 0, 0),
+    Vector3(-1, 0, 0),
+    Vector3(0, 1, 0),
+    Vector3(0, -1, 0),
+    Vector3(0, 0, 1),
+    Vector3(0, 0, -1),
+};
+
+static const Vector3 faceU[6] = {
+    Vector3(0, 0, -1),
+    Vector3(0, 0, 1),
+    Vector3(1, 0, 0),
+    Vector3(1, 0, 0),
+    Vector3(1, 0, 0),
+    Vector3(-1, 0, 0),
+};
+
+static const Vector3 faceV[6] = {
+    Vector3(0, -1, 0),
+    Vector3(0, -1, 0),
+    Vector3(0, 0, 1),
+    Vector3(0, 0, -1),
+    Vector3(0, -1, 0),
+    Vector3(0, -1, 0),
+};
+
+
+static Vector2 toPolar(Vector3::Arg v) {
+    Vector2 p;
+    p.x = atan2(v.x, v.y);  // theta
+    p.y = acosf(v.z);       // phi
+    return p;
+}
+
+static Vector2 toPlane(float theta, float phi) {
+    float x = sin(phi) * cos(theta);
+    float y = sin(phi) * sin(theta);
+    float z = cos(phi);
+
+    Vector2 p;
+    p.x = x / fabs(z);
+    p.y = y / fabs(z);
+    //p.x = tan(phi) * cos(theta);
+    //p.y = tan(phi) * sin(theta);
+
+    return p;
+}
+
+static Vector2 toPlane(Vector3::Arg v) {
+    Vector2 p;
+    p.x = v.x / fabs(v.z);
+    p.y = v.y / fabs(v.z);
+    return p;
+}
+
+
+
+
 
 CubeSurface::CubeSurface() : m(new CubeSurface::Private())
 {
@@ -183,169 +376,50 @@ Surface CubeSurface::unfold(CubeLayout layout) const
 }
 
 
-float CubeSurface::average(int channel) const
+#include "nvmath/SphericalHarmonic.h"
+
+CubeSurface CubeSurface::irradianceFilter(int size, bool seamless) const
 {
+    m->allocateTexelTable();
+
+    // Transform this cube to spherical harmonic basis
+    Sh2 sh;
+
+    // For each texel of the input cube.
     const uint edgeLength = m->edgeLength;
+    for (uint f = 0; f < 6; f++) {
+        for (int y = 0; y < edgeLength; y++) {
+            for (int x = 0; x < edgeLength; x++) {
 
-    // These tables along with the surface so that we only compute them once.
-    if (m->solidAngleTable == NULL) {
-        m->solidAngleTable = new SolidAngleTable(edgeLength);
-    }
+                Vector3 dir = m->texelTable->direction(f, x, y);
+                float solidAngle = m->texelTable->solidAngle(f, x, y);
 
-    float total = 0.0f;
-    float sum = 0.0f;
+                Sh2 shDir;
+                shDir.eval(dir);
 
-    for (int f = 0; f < 6; f++) {
-        float * c = m->face[f].m->image->channel(channel);
-
-        for (uint y = 0; y < edgeLength; y++) {
-            for (uint x = 0; x < edgeLength; x++) {
-                float solidAngle = m->solidAngleTable->lookup(x, y);
-
-                total += solidAngle;
-                sum += c[y * edgeLength + x] * solidAngle;
+                sh.addScaled(sh, solidAngle);
             }
         }
     }
 
-    return sum / total;
-}
+
+    // Evaluate spherical harmonic for each output texel.
+    CubeSurface output;
+    output.m->allocate(size);
 
 
-CubeSurface CubeSurface::irradianceFilter(int size) const
-{
+
+
     // @@ TODO
     return CubeSurface();
 }
 
 
+// Warp uv coordinate from [-1, 1] to
+float warp(float u, int size) {
 
-// Solid angle of an axis aligned quad from (0,0,1) to (x,y,1)
-// See: http://www.fizzmoll11.com/thesis/ for a derivation of this formula.
-static float areaElement(float x, float y) {
-    return atan2(x*y, sqrtf(x*x + y*y + 1));
 }
 
-// Solid angle of a hemicube texel.
-static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
-    // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
-    float u = (float(x) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
-    float v = (float(y) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
-    nvDebugCheck(u >= -1.0f && u <= 1.0f);
-    nvDebugCheck(v >= -1.0f && v <= 1.0f);
-
-#if 1   
-    // Exact solid angle:
-    float x0 = u - inverseEdgeLength;
-    float y0 = v - inverseEdgeLength;
-    float x1 = u + inverseEdgeLength;
-    float y1 = v + inverseEdgeLength;
-    float solidAngle = areaElement(x0, y0) - areaElement(x0, y1) - areaElement(x1, y0) + areaElement(x1, y1);
-    nvDebugCheck(solidAngle > 0.0f);
-    
-    return solidAngle;
-#else
-    // This formula is equivalent, but not as precise.
-    float pixel_area = nv::square(2.0f * inverseEdgeLength);
-    float dist_square = 1.0f + nv::square(u) + nv::square(v);
-    float cos_theta = 1.0f / sqrt(dist_square);
-    float cos_theta_d2 = cos_theta / dist_square; // Funny this is just 1/dist^3 or cos(tetha)^3
-
-    return pixel_area * cos_theta_d2;
-#endif
-}
-
-
-// Small solid angle table that takes into account cube map symmetry.
-SolidAngleTable::SolidAngleTable(uint edgeLength) : size(edgeLength/2) {
-    // Allocate table.
-    data.resize(size * size);
-
-    // Init table.
-    const float inverseEdgeLength = 1.0f / edgeLength;
-
-    for (uint y = 0; y < size; y++) {
-        for (uint x = 0; x < size; x++) {
-            data[y * size + x] = solidAngleTerm(size+x, size+y, inverseEdgeLength);
-        }
-    }
-}
-
-float SolidAngleTable::lookup(uint x, uint y) const {
-    if (x >= size) x -= size;
-    else if (x < size) x = size - x - 1;
-    if (y >= size) y -= size;
-    else if (y < size) y = size - y - 1;
-
-    return data[y * size + x];
-}
-
-
-static Vector3 texelDirection(uint face, uint x, uint y, float inverseEdgeLength)
-{
-    // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
-    float u = (float(x) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
-    float v = (float(y) + 0.5f) * (2 * inverseEdgeLength) - 1.0f;
-    nvDebugCheck(u >= -1.0f && u <= 1.0f);
-    nvDebugCheck(v >= -1.0f && v <= 1.0f);
-
-    Vector3 n;
-
-    if (face == 0) {
-        n.x = 1;
-        n.y = -v;
-        n.z = -u;
-    }
-    if (face == 1) {
-        n.x = -1;
-        n.y = -v;
-        n.z = u;
-    }
-
-    if (face == 2) {
-        n.x = u;
-        n.y = 1;
-        n.z = v;
-    }
-    if (face == 3) {
-        n.x = u;
-        n.y = -1;
-        n.z = -v;
-    }
-
-    if (face == 4) {
-        n.x = u;
-        n.y = -v;
-        n.z = 1;
-    }
-    if (face == 5) {
-        n.x = -u;
-        n.y = -v;
-        n.z = -1;
-    }
-
-    return normalizeFast(n);
-}
-
-
-VectorTable::VectorTable(uint edgeLength) : size(edgeLength) {
-    float invEdgeLength = 1.0f / edgeLength;
-
-    data.resize(size*size*6);
-
-    for (uint f = 0; f < 6; f++) {
-        for (uint y = 0; y < size; y++) {
-            for (uint x = 0; x < size; x++) {
-                data[(f * size + y) * size + x] = texelDirection(f, x, y, invEdgeLength);
-            }
-        }
-    }
-}
-
-const Vector3 & VectorTable::lookup(uint f, uint x, uint y) const {
-    nvDebugCheck(f < 6 && x < size && y < size);
-    return data[(f * size + y) * size + x];
-}
 
 
 
@@ -359,67 +433,8 @@ const Vector3 & VectorTable::lookup(uint f, uint x, uint y) const {
 // -
 
 // Other speedups:
-// - parallelize.
+// - parallelize. Done.
 // - use ISPC?
-
-static const Vector3 faceNormals[6] = {
-    Vector3(1, 0, 0),
-    Vector3(-1, 0, 0),
-    Vector3(0, 1, 0),
-    Vector3(0, -1, 0),
-    Vector3(0, 0, 1),
-    Vector3(0, 0, -1),
-};
-
-static const Vector3 faceU[6] = {
-    Vector3(0, 0, -1),
-    Vector3(0, 0, 1),
-    Vector3(1, 0, 0),
-    Vector3(1, 0, 0),
-    Vector3(1, 0, 0),
-    Vector3(-1, 0, 0),
-};
-
-static const Vector3 faceV[6] = {
-    Vector3(0, -1, 0),
-    Vector3(0, -1, 0),
-    Vector3(0, 0, 1),
-    Vector3(0, 0, -1),
-    Vector3(0, -1, 0),
-    Vector3(0, -1, 0),
-};
-
-
-static Vector2 toPolar(Vector3::Arg v) {
-    Vector2 p;
-    p.x = atan2(v.x, v.y);  // theta
-    p.y = acosf(v.z);       // phi
-    return p;
-}
-
-static Vector2 toPlane(float theta, float phi) {
-    float x = sin(phi) * cos(theta);
-    float y = sin(phi) * sin(theta);
-    float z = cos(phi);
-
-    Vector2 p;
-    p.x = x / fabs(z);
-    p.y = y / fabs(z);
-    //p.x = tan(phi) * cos(theta);
-    //p.y = tan(phi) * sin(theta);
-
-    return p;
-}
-
-static Vector2 toPlane(Vector3::Arg v) {
-    Vector2 p;
-    p.x = v.x / fabs(v.z);
-    p.y = v.y / fabs(v.z);
-    return p;
-}
-
-
-
 
 // Convolve filter against this cube.
 Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float coneAngle, float cosinePower)
@@ -503,7 +518,7 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
             // Focal point in polar coordinates:
             Vector2 Fp = toPolar(F);
             nvCheck(Fp.y >= 0.0f);  // top
-            //nvCheck(Fp.y <= PI/2);  // horizon    @@ We should cull this earlier.
+            nvCheck(Fp.y <= PI/2);  // horizon
 
             // If this is an ellipse:
             if (Fp.y + coneAngle < PI/2) {
@@ -589,11 +604,11 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
             bool inside = false;
             for (int x = x0; x <= x1; x++) {
 
-                Vector3 dir = vectorTable->lookup(f, x, y);
+                Vector3 dir = texelTable->direction(f, x, y);
                 float cosineAngle = dot(dir, filterDir);
 
                 if (cosineAngle > cosineConeAngle) {
-                    float solidAngle = solidAngleTable->lookup(x, y);
+                    float solidAngle = texelTable->solidAngle(f, x, y);
                     float scale = powf(saturate(cosineAngle), cosinePower);
                     float contribution = solidAngle * scale;
 
@@ -641,7 +656,7 @@ void ApplyCosinePowerFilterTask(void * context, int id)
     nvtt::Surface & filteredFace = ctx->filteredCube->face[f];
     FloatImage * filteredImage = filteredFace.m->image;
 
-    const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
+    const Vector3 filterDir = texelDirection(f, x, y, size, ctx->filteredCube->seamless);
 
     // Convolve filter against cube.
     Vector3 color = ctx->inputCube->applyCosinePowerFilter(filterDir, ctx->coneAngle, ctx->cosinePower);
@@ -652,32 +667,21 @@ void ApplyCosinePowerFilterTask(void * context, int id)
 }
 
 
-CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
+CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, bool seamless) const
 {
     const uint edgeLength = m->edgeLength;
 
     // Allocate output cube.
     CubeSurface filteredCube;
     filteredCube.m->allocate(size);
+    filteredCube.m->seamless = seamless;
 
-    // These tables along with the surface so that we only compute them once.
-    if (m->solidAngleTable == NULL) {
-        m->solidAngleTable = new SolidAngleTable(edgeLength);
-    }
-    if (m->vectorTable == NULL) {
-        m->vectorTable = new VectorTable(edgeLength);
-    }
+    // Texel table is stored along with the surface so that it's compute only once.
+    m->allocateTexelTable();
 
     const float threshold = 0.001f;
     const float coneAngle = acosf(powf(threshold, 1.0f/cosinePower));
 
-
-#if 1
-    // Gather approach. This should be easier to parallelize, because there's no contention in the filtered output.
-
-    // For each texel of the output cube.
-    // - Determine what texels of the input cube contribute to it.
-    // - Add weighted contributions. Normalize.
 
     // For each texel of the output cube.
     /*for (uint f = 0; f < 6; f++) {
@@ -687,10 +691,10 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
         for (uint y = 0; y < uint(size); y++) {
             for (uint x = 0; x < uint(size); x++) {
 
-                const Vector3 filterDir = texelDirection(f, x, y, 1.0f / size);
+                const Vector3 filterDir = texelDirection(f, x, y, size, seamless);
 
                 // Convolve filter against cube.
-                Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower);
+                Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower, seamless);
 
                 filteredImage->pixel(0, x, y, 0) = color.x;
                 filteredImage->pixel(1, x, y, 0) = color.y;
@@ -707,68 +711,6 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower) const
 
     nv::ParallelFor parallelFor(ApplyCosinePowerFilterTask, &context);
     parallelFor.run(6 * size * size);
-
-#else
-    // Scatter approach.
-
-    // For each texel of the input cube.
-    // - Lookup our solid angle.
-    // - Determine to what texels of the output cube we contribute.
-    // - Add our contribution to the texels whose power is above threshold.
-
-    for (uint f = 0; f < 6; f++) {
-        const Surface & face = m->face[f];
-
-        for (uint y = 0; y < edgeLength; y++) {
-            for (uint x = 0; x < edgeLength; x++) {
-                float solidAngle = solidAngleTable.lookup(x, y);
-                float r = face.m->image->pixel(0, x, y, 0) * solidAngle;;
-                float g = face.m->image->pixel(1, x, y, 0) * solidAngle;;
-                float b = face.m->image->pixel(2, x, y, 0) * solidAngle;;
-
-                Vector3 texelDir = texelDirection(f, x, y, 1.0f / edgeLength);
-
-                for (uint ff = 0; ff < 6; ff++) {
-                    FloatImage * filteredFace = filteredCube.m->face[ff].m->image;
-
-                    for (uint yy = 0; yy < uint(size); yy++) {
-                        for (uint xx = 0; xx < uint(size); xx++) {
-
-                            Vector3 filterDir = texelDirection(ff, xx, yy, 1.0f / size);
-
-                            float scale = powf(saturate(dot(texelDir, filterDir)), cosinePower);
-
-                            if (scale > threshold) {
-                                filteredFace->pixel(0, xx, yy, 0) += r * scale;
-                                filteredFace->pixel(1, xx, yy, 0) += g * scale;
-                                filteredFace->pixel(2, xx, yy, 0) += b * scale;
-                                filteredFace->pixel(3, xx, yy, 0) += solidAngle * scale;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Normalize contributions.
-    for (uint f = 0; f < 6; f++) {
-        FloatImage * filteredFace = filteredCube.m->face[f].m->image;
-
-        for (int i = 0; i < size*size; i++) {
-            float & r = filteredFace->pixel(0, i);
-            float & g = filteredFace->pixel(1, i);
-            float & b = filteredFace->pixel(2, i);
-            float & sum = filteredFace->pixel(3, i);
-            float isum = 1.0f / sum;
-            r *= isum;
-            g *= isum;
-            b *= isum;
-            sum = 1;
-        }
-    }
-
-#endif
 
     return filteredCube;
 }

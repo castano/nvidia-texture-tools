@@ -38,21 +38,15 @@
 
 namespace nvtt
 {
-    struct SolidAngleTable {
-        SolidAngleTable(uint edgeLength);
-        float lookup(uint x, uint y) const;
+    struct TexelTable {
+        TexelTable(uint edgeLength, bool seamless);
+
+        float solidAngle(uint f, uint x, uint y) const;
+        const nv::Vector3 & direction(uint f, uint x, uint y) const;
 
         uint size;
-        nv::Array<float> data;
-
-    };
-
-    struct VectorTable {
-        VectorTable(uint edgeLength);
-        const nv::Vector3 & lookup(uint f, uint x, uint y) const;
-
-        uint size;
-        nv::Array<nv::Vector3> data;
+        nv::Array<float> solidAngleArray;
+        nv::Array<nv::Vector3> directionArray;
     };
 
 
@@ -65,24 +59,23 @@ namespace nvtt
             nvDebugCheck( refCount() == 0 );
 
             edgeLength = 0;
-            solidAngleTable = NULL;
-            vectorTable = NULL;
+            seamless = false;
+            texelTable = NULL;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
         {
             nvDebugCheck( refCount() == 0 );
 
             edgeLength = p.edgeLength;
+            seamless = p.seamless;
             for (uint i = 0; i < 6; i++) {
                 face[i] = p.face[i];
             }
-            solidAngleTable = NULL; // @@ Transfer tables. Needs refcounting?
-            vectorTable = NULL;
+            texelTable = NULL; // @@ Transfer tables. Needs refcounting?
         }
         ~Private()
         {
-            delete solidAngleTable;
-            delete vectorTable;
+            delete texelTable;
         }
 
         void allocate(uint edgeLength)
@@ -95,13 +88,20 @@ namespace nvtt
             }
         }
 
+        void allocateTexelTable()
+        {
+            if (texelTable == NULL) {
+                texelTable = new TexelTable(edgeLength, seamless);
+            }
+        }
+
         // Filtering helpers:
         nv::Vector3 applyCosinePowerFilter(const nv::Vector3 & dir, float coneAngle, float cosinePower);
 
         uint edgeLength;
+        bool seamless;
         Surface face[6];
-        SolidAngleTable * solidAngleTable;
-        VectorTable * vectorTable;
+        TexelTable * texelTable;
     };
 
 } // nvtt namespace

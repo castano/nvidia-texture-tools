@@ -2,13 +2,14 @@ PROJECT(nvmath)
 
 SET(MATH_SRCS
     nvmath.h
-    Vector.h
-    Matrix.h
-    Plane.h Plane.cpp
-    Box.h 
-    Color.h
+    Box.h Box.inl
+    Color.h Color.inl
+    Fitting.h Fitting.cpp
     Half.h Half.cpp
-    Fitting.h Fitting.cpp)
+    Matrix.h
+    Plane.h Plane.inl Plane.cpp
+    SphericalHarmonic.h SphericalHarmonic.cpp
+    Vector.h Vector.inl)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
