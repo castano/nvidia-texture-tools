@@ -39,17 +39,6 @@ namespace nv
     class Stream;
     struct ColorBlock;
 
-    extern const uint FOURCC_NVTT;
-    extern const uint FOURCC_DDS;
-    extern const uint FOURCC_DXT1;
-    extern const uint FOURCC_DXT2;
-    extern const uint FOURCC_DXT3;
-    extern const uint FOURCC_DXT4;
-    extern const uint FOURCC_DXT5;
-    extern const uint FOURCC_RXGB;
-    extern const uint FOURCC_ATI1;
-    extern const uint FOURCC_ATI2;
-
     enum DDPF
     {
         DDPF_ALPHAPIXELS = 0x00000001U,
@@ -110,15 +99,37 @@ namespace nv
         D3DFMT_A32B32G32R32F = 116,
     };
 
+    enum FOURCC
+    {
+        FOURCC_NVTT = MAKEFOURCC('N', 'V', 'T', 'T'),
+        FOURCC_DDS = MAKEFOURCC('D', 'D', 'S', ' '),
+        FOURCC_DXT1 = MAKEFOURCC('D', 'X', 'T', '1'),
+        FOURCC_DXT2 = MAKEFOURCC('D', 'X', 'T', '2'),
+        FOURCC_DXT3 = MAKEFOURCC('D', 'X', 'T', '3'),
+        FOURCC_DXT4 = MAKEFOURCC('D', 'X', 'T', '4'),
+        FOURCC_DXT5 = MAKEFOURCC('D', 'X', 'T', '5'),
+        FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B'),
+        FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1'),
+        FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2'),
+        FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y'),
+        FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0'),
+        FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R'),
+    };
+
 
     // D3D1x resource dimensions.
-    enum D3D10_RESOURCE_DIMENSION
+    enum DDS_DIMENSION // D3D10_RESOURCE_DIMENSION
     {
-        D3D10_RESOURCE_DIMENSION_UNKNOWN = 0,
-        D3D10_RESOURCE_DIMENSION_BUFFER = 1,
-        D3D10_RESOURCE_DIMENSION_TEXTURE1D = 2,
-        D3D10_RESOURCE_DIMENSION_TEXTURE2D = 3,
-        D3D10_RESOURCE_DIMENSION_TEXTURE3D = 4,
+        DDS_DIMENSION_UNKNOWN = 0,
+        DDS_DIMENSION_BUFFER = 1,
+        DDS_DIMENSION_TEXTURE1D = 2,
+        DDS_DIMENSION_TEXTURE2D = 3,
+        DDS_DIMENSION_TEXTURE3D = 4,
+    };
+
+    enum DDS_MISC_FLAG
+    {
+        DDS_MISC_TEXTURECUBE = 0x4,
     };
 
     // DXGI formats.

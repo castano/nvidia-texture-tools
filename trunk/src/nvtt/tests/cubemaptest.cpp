@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
         printf("filtering step: %d/%d\n", m+1, mipmapCount);
 
-        filteredEnvmap[m] = envmap.cosinePowerFilter(size, cosine_power);
+        filteredEnvmap[m] = envmap.cosinePowerFilter(size, cosine_power, false);
         filteredEnvmap[m].toGamma(2.2f);
     }
 

@@ -6,7 +6,7 @@
 
 #include "nvcore/nvcore.h"
 #include "nvcore/Debug.h"   // nvDebugCheck
-#include "nvcore/Utils.h"   // clamp
+#include "nvcore/Utils.h"   // max, clamp
 
 #include <math.h>
 
@@ -109,7 +109,7 @@ namespace nv
     inline bool equal(const float f0, const float f1, const float epsilon = NV_EPSILON)
     {
         //return fabs(f0-f1) <= epsilon;
-        return fabs(f0-f1) <= epsilon * max(1.0f, fabs(f0), fabs(f1));
+        return fabs(f0-f1) <= epsilon * max(1.0f, fabsf(f0), fabsf(f1));
     }
 
     inline bool isZero(const float f, const float epsilon = NV_EPSILON)

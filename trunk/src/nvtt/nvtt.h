@@ -548,6 +548,7 @@ namespace nvtt
         NVTT_API bool isNull() const;
         NVTT_API int edgeLength() const;
         NVTT_API int countMipmaps() const;
+        NVTT_API bool isSeamless() const;
 
         // Texture data.
         NVTT_API bool load(const char * fileName, int mipmap);
@@ -569,8 +570,8 @@ namespace nvtt
         NVTT_API float average(int channel) const;
 
         // Filtering.
-        NVTT_API CubeSurface irradianceFilter(int size) const;
-        NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower) const;
+        NVTT_API CubeSurface irradianceFilter(int size, bool seamless) const;
+        NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower, bool seamless) const;
 
 
         /*

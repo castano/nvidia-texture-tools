@@ -11,13 +11,13 @@
 namespace nv
 {
 
-    /// Clamp color components.
+    // Clamp color components.
     inline Vector3 colorClamp(Vector3::Arg c)
     {
         return Vector3(clamp(c.x, 0.0f, 1.0f), clamp(c.y, 0.0f, 1.0f), clamp(c.z, 0.0f, 1.0f));
     }
 
-    /// Clamp without allowing the hue to change.
+    // Clamp without allowing the hue to change.
     inline Vector3 colorNormalize(Vector3::Arg c)
     {
         float scale = 1.0f;
@@ -27,15 +27,15 @@ namespace nv
         return c / scale;
     }
 
-    /// Convert Color32 to Color16.
+    // Convert Color32 to Color16.
     inline Color16 toColor16(Color32 c)
     {
         Color16 color;
         //         rrrrrggggggbbbbb
         // rrrrr000gggggg00bbbbb000
-        //	color.u = (c.u >> 3) & 0x1F;
-        //	color.u |= (c.u >> 5) & 0x7E0;
-        //	color.u |= (c.u >> 8) & 0xF800;
+        // color.u = (c.u >> 3) & 0x1F;
+        // color.u |= (c.u >> 5) & 0x7E0;
+        // color.u |= (c.u >> 8) & 0xF800;
 
         color.r = c.r >> 3;
         color.g = c.g >> 2;
@@ -44,13 +44,13 @@ namespace nv
     }
 
 
-    /// Promote 16 bit color to 32 bit using regular bit expansion.
+    // Promote 16 bit color to 32 bit using regular bit expansion.
     inline Color32 toColor32(Color16 c)
     {
         Color32 color;
-        //	c.u = ((col0.u << 3) & 0xf8) | ((col0.u << 5) & 0xfc00) | ((col0.u << 8) & 0xf80000);
-        //	c.u |= (c.u >> 5) & 0x070007;
-        //	c.u |= (c.u >> 6) & 0x000300;
+        // c.u = ((col0.u << 3) & 0xf8) | ((col0.u << 5) & 0xfc00) | ((col0.u << 8) & 0xf80000);
+        // c.u |= (c.u >> 5) & 0x070007;
+        // c.u |= (c.u >> 6) & 0x000300;
 
         color.b = (c.b << 3) | (c.b >> 2);
         color.g = (c.g << 2) | (c.g >> 4);
