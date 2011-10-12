@@ -52,7 +52,7 @@ static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
     nvDebugCheck(v >= -1.0f && v <= 1.0f);
 
 #if 1
-    // Exact solid angle:
+    // Exact solid angle: @@ Not really exact when using seamless filtering...
     float x0 = u - inverseEdgeLength;
     float y0 = v - inverseEdgeLength;
     float x1 = u + inverseEdgeLength;
@@ -78,13 +78,13 @@ static Vector3 texelDirection(uint face, uint x, uint y, int edgeLength, bool se
     float u, v;
     if (seamless) {
         // Transform x,y to [-1, 1] range, match up edges exactly.
-        u = float(x) * 2 / (edgeLength - 1) - 1.0f;
-        v = float(y) * 2 / (edgeLength - 1) - 1.0f;
+        u = float(x) * 2.0f / (edgeLength - 1) - 1.0f;
+        v = float(y) * 2.0f / (edgeLength - 1) - 1.0f;
     }
     else {
         // Transform x,y to [-1, 1] range, offset by 0.5 to point to texel center.
-        u = (float(x) + 0.5f) * (2 / edgeLength) - 1.0f;
-        v = (float(y) + 0.5f) * (2 / edgeLength) - 1.0f;
+        u = (float(x) + 0.5f) * (2.0f / edgeLength) - 1.0f;
+        v = (float(y) + 0.5f) * (2.0f / edgeLength) - 1.0f;
     }
     nvDebugCheck(u >= -1.0f && u <= 1.0f);
     nvDebugCheck(v >= -1.0f && v <= 1.0f);
@@ -137,7 +137,7 @@ TexelTable::TexelTable(uint edgeLength, bool seamless) : size(edgeLength) {
 
     for (uint y = 0; y < hsize; y++) {
         for (uint x = 0; x < hsize; x++) {
-            solidAngleArray[y * hsize + x] = solidAngleTerm(hsize+x, hsize+y, edgeLength);
+            solidAngleArray[y * hsize + x] = solidAngleTerm(hsize+x, hsize+y, 1.0f/edgeLength);
         }
     }
 
@@ -388,8 +388,8 @@ CubeSurface CubeSurface::irradianceFilter(int size, bool seamless) const
     // For each texel of the input cube.
     const uint edgeLength = m->edgeLength;
     for (uint f = 0; f < 6; f++) {
-        for (int y = 0; y < edgeLength; y++) {
-            for (int x = 0; x < edgeLength; x++) {
+        for (uint y = 0; y < edgeLength; y++) {
+            for (uint x = 0; x < edgeLength; x++) {
 
                 Vector3 dir = m->texelTable->direction(f, x, y);
                 float solidAngle = m->texelTable->solidAngle(f, x, y);
@@ -416,9 +416,9 @@ CubeSurface CubeSurface::irradianceFilter(int size, bool seamless) const
 
 
 // Warp uv coordinate from [-1, 1] to
-float warp(float u, int size) {
+/*float warp(float u, int size) {
 
-}
+}*/
 
 
 
