@@ -1766,6 +1766,46 @@ void Surface::convolve(int channel, int kernelSize, float * kernelData)
     m->image->convolve(k, channel, (FloatImage::WrapMode)m->wrapMode);
 }
 
+void Surface::toneMap(ToneMapper tm, float exposure, float * parameters)
+{
+    if (isNull()) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+    const uint count = img->pixelCount();
+
+    if (tm == ToneMapper_Linear) {
+        // Clamp preserving the hue.
+        for (uint i = 0; i < count; i++) {
+            float m = max(r[i], g[i], b[i]);
+            if (m > 1.0f) {
+                r[i] *= 1.0f / m;
+                g[i] *= 1.0f / m;
+                b[i] *= 1.0f / m;
+            }
+        }
+    }
+    else if (tm == ToneMapper_Reindhart) {
+        for (uint i = 0; i < count; i++) {
+            r[i] /= r[i] + 1;
+            g[i] /= g[i] + 1;
+            b[i] /= b[i] + 1;
+        }
+    }
+    else if (tm == ToneMapper_Halo) {
+        for (uint i = 0; i < count; i++) {
+            r[i] = 1 - expf(-r[i]);
+            g[i] = 1 - expf(-g[i]);
+            b[i] = 1 - expf(-b[i]);
+        }
+    }
+}
+
+
 /*
 void Surface::blockLuminanceScale(float scale)
 {

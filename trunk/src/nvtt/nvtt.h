@@ -413,6 +413,12 @@ namespace nvtt
         //NormalTransform_DualParaboloid,
     };
 
+    enum ToneMapper {
+        ToneMapper_Linear,
+        ToneMapper_Reindhart,
+        ToneMapper_Halo,
+    };
+
 
     // A surface is one level of a 2D or 3D texture.
     // @@ It would be nice to add support for texture borders for correct resizing of tiled textures and constrained DXT compression.
@@ -492,6 +498,8 @@ namespace nvtt
         NVTT_API void abs(int channel);
         NVTT_API void convolve(int channel, int kernelSize, float * kernelData);
 
+        NVTT_API void toneMap(ToneMapper tm, float exposure, float * parameters);
+
         //NVTT_API void blockLuminanceScale(float scale);
 
         // Color quantization.
@@ -535,6 +543,13 @@ namespace nvtt
         CubeLayout_LatitudeLongitude
     };
 
+    enum EdgeFixup {
+        EdgeFixup_None,
+        EdgeFixup_Stretch,
+        EdgeFixup_Warp,
+        EdgeFixup_Average,
+    };
+
     // A CubeSurface is one level of a cube map texture.
     struct CubeSurface
     {
@@ -548,7 +563,6 @@ namespace nvtt
         NVTT_API bool isNull() const;
         NVTT_API int edgeLength() const;
         NVTT_API int countMipmaps() const;
-        NVTT_API bool isSeamless() const;
 
         // Texture data.
         NVTT_API bool load(const char * fileName, int mipmap);
@@ -570,8 +584,8 @@ namespace nvtt
         NVTT_API float average(int channel) const;
 
         // Filtering.
-        NVTT_API CubeSurface irradianceFilter(int size, bool seamless) const;
-        NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower, bool seamless) const;
+        NVTT_API CubeSurface irradianceFilter(int size, EdgeFixup fixupMethod) const;
+        NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod) const;
 
 
         /*
