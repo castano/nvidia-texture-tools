@@ -289,7 +289,15 @@
 	</References>
 	<Files>
 		<File
+			RelativePath="..\..\..\src\nvmath\Box.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvmath\Box.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\Box.inl"
 			>
 		</File>
 		<File
@@ -313,7 +321,15 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvmath\Matrix.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvmath\Matrix.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\Matrix.inl"
 			>
 		</File>
 		<File
@@ -329,6 +345,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvmath\Plane.inl"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvmath\SimdVector.h"
 			>
 		</File>
@@ -341,7 +361,23 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvmath\SphericalHarmonic.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\SphericalHarmonic.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\Vector.cpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvmath\Vector.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\Vector.inl"
 			>
 		</File>
 	</Files>
