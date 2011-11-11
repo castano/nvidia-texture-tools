@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    envmap.toLinear(2.2f);
+    //envmap.toLinear(2.2f);
 
 
     // Setup compression options.
@@ -59,19 +59,24 @@ int main(int argc, char *argv[])
     compressionOptions.setPixelType(nvtt::PixelType_Float);
     compressionOptions.setPixelFormat(16, 16, 16, 16);
 
+
     // Setup output options.
     nvtt::OutputOptions outputOptions;
     outputOptions.setFileName("filtered_envmap.dds");
-    outputOptions.setSrgbFlag(true);
+    //outputOptions.setSrgbFlag(true);
 
 
     const int MAX_MIPMAP_COUNT = 7; // nv::log2(64) + 1;
     //const int mipmapCount = MAX_MIPMAP_COUNT;
     const int mipmapCount = 4;
     //const int mipmapCount = 1;
+    const int firstMipmap = 0;
+
+    int topSize = 64;
+    float topPower = 64;
 
     // Output header.
-    context.outputHeader(nvtt::TextureType_Cube, 64, 64, 1, mipmapCount, false, compressionOptions, outputOptions);
+    context.outputHeader(nvtt::TextureType_Cube, topSize >> firstMipmap, topSize >> firstMipmap, 1, mipmapCount-firstMipmap, false, compressionOptions, outputOptions);
 
     nv::Timer timer;
     timer.start();
@@ -79,20 +84,20 @@ int main(int argc, char *argv[])
     nvtt::CubeSurface filteredEnvmap[mipmapCount];
 
     // Output filtered mipmaps.
-    for (int m = 0; m < mipmapCount; m++) {
-        int size = 64 / (1 << m);                           // 64, 32, 16, 8
-        float cosine_power = float(64) / (1 << (2 * m));    // 64, 16,  4, 1
+    for (int m = firstMipmap; m < mipmapCount; m++) {
+        int size = topSize >> m;                            // 64, 32, 16, 8
+        float cosine_power = topPower / (1 << (2 * m));     // 64, 16,  4, 1
         cosine_power = nv::max(1.0f, cosine_power);
 
         printf("filtering step: %d/%d\n", m+1, mipmapCount);
 
-        filteredEnvmap[m] = envmap.cosinePowerFilter(size, cosine_power, false);
-        filteredEnvmap[m].toGamma(2.2f);
+        filteredEnvmap[m] = envmap.cosinePowerFilter(size, cosine_power, nvtt::EdgeFixup_Warp);
+        //filteredEnvmap[m].toGamma(2.2f);
     }
 
     for (int f = 0; f < 6; f++) {
-        for (int m = 0; m < mipmapCount; m++) {
-            context.compress(filteredEnvmap[m].face(f), f, m, compressionOptions, outputOptions);
+        for (int m = firstMipmap; m < mipmapCount; m++) {
+            context.compress(filteredEnvmap[m].face(f), f, m-firstMipmap, compressionOptions, outputOptions);
         }
     }
 

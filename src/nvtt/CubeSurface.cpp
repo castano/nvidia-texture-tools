@@ -52,7 +52,7 @@ static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
     nvDebugCheck(v >= -1.0f && v <= 1.0f);
 
 #if 1
-    // Exact solid angle: @@ Not really exact when using seamless filtering...
+    // Exact solid angle:
     float x0 = u - inverseEdgeLength;
     float y0 = v - inverseEdgeLength;
     float x1 = u + inverseEdgeLength;
@@ -73,10 +73,10 @@ static float solidAngleTerm(uint x, uint y, float inverseEdgeLength) {
 }
 
 
-static Vector3 texelDirection(uint face, uint x, uint y, int edgeLength, bool seamless)
+static Vector3 texelDirection(uint face, uint x, uint y, int edgeLength, EdgeFixup fixupMethod)
 {
     float u, v;
-    if (seamless) {
+    if (fixupMethod == EdgeFixup_Stretch) {
         // Transform x,y to [-1, 1] range, match up edges exactly.
         u = float(x) * 2.0f / (edgeLength - 1) - 1.0f;
         v = float(y) * 2.0f / (edgeLength - 1) - 1.0f;
@@ -86,6 +86,14 @@ static Vector3 texelDirection(uint face, uint x, uint y, int edgeLength, bool se
         u = (float(x) + 0.5f) * (2.0f / edgeLength) - 1.0f;
         v = (float(y) + 0.5f) * (2.0f / edgeLength) - 1.0f;
     }
+
+    if (fixupMethod == EdgeFixup_Warp) {
+        // Warp texel centers in the proximity of the edges.
+        float a = powf(float(edgeLength), 2.0f) / powf(float(edgeLength - 1), 3.0f);
+        u = a * powf(u, 3) + u;
+        v = a * powf(v, 3) + v;
+    }
+
     nvDebugCheck(u >= -1.0f && u <= 1.0f);
     nvDebugCheck(v >= -1.0f && v <= 1.0f);
 
@@ -128,7 +136,7 @@ static Vector3 texelDirection(uint face, uint x, uint y, int edgeLength, bool se
 }
 
 
-TexelTable::TexelTable(uint edgeLength, bool seamless) : size(edgeLength) {
+TexelTable::TexelTable(uint edgeLength) : size(edgeLength) {
 
     uint hsize = size/2;
 
@@ -147,12 +155,10 @@ TexelTable::TexelTable(uint edgeLength, bool seamless) : size(edgeLength) {
     for (uint f = 0; f < 6; f++) {
         for (uint y = 0; y < size; y++) {
             for (uint x = 0; x < size; x++) {
-                directionArray[(f * size + y) * size + x] = texelDirection(f, x, y, edgeLength, seamless);
+                directionArray[(f * size + y) * size + x] = texelDirection(f, x, y, edgeLength, EdgeFixup_None);
             }
         }
     }
-
-
 }
 
 const Vector3 & TexelTable::direction(uint f, uint x, uint y) const {
@@ -376,9 +382,34 @@ Surface CubeSurface::unfold(CubeLayout layout) const
 }
 
 
+float CubeSurface::average(int channel) const
+{
+    const uint edgeLength = m->edgeLength;
+    m->allocateTexelTable();
+
+    float total = 0.0f;
+    float sum = 0.0f;
+
+    for (int f = 0; f < 6; f++) {
+        float * c = m->face[f].m->image->channel(channel);
+
+         for (uint y = 0; y < edgeLength; y++) {
+             for (uint x = 0; x < edgeLength; x++) {
+                float solidAngle = m->texelTable->solidAngle(f, x, y);
+
+                total += solidAngle;
+                sum += c[y * edgeLength + x] * solidAngle;
+            }
+        }
+    }
+
+    return sum / total;
+}
+
+
 #include "nvmath/SphericalHarmonic.h"
 
-CubeSurface CubeSurface::irradianceFilter(int size, bool seamless) const
+CubeSurface CubeSurface::irradianceFilter(int size, EdgeFixup fixupMethod) const
 {
     m->allocateTexelTable();
 
@@ -640,6 +671,7 @@ struct ApplyCosinePowerFilterContext {
     CubeSurface::Private * filteredCube;
     float coneAngle;
     float cosinePower;
+    EdgeFixup fixupMethod;
 };
 
 void ApplyCosinePowerFilterTask(void * context, int id)
@@ -656,7 +688,7 @@ void ApplyCosinePowerFilterTask(void * context, int id)
     nvtt::Surface & filteredFace = ctx->filteredCube->face[f];
     FloatImage * filteredImage = filteredFace.m->image;
 
-    const Vector3 filterDir = texelDirection(f, x, y, size, ctx->filteredCube->seamless);
+    const Vector3 filterDir = texelDirection(f, x, y, size, ctx->fixupMethod);
 
     // Convolve filter against cube.
     Vector3 color = ctx->inputCube->applyCosinePowerFilter(filterDir, ctx->coneAngle, ctx->cosinePower);
@@ -667,14 +699,13 @@ void ApplyCosinePowerFilterTask(void * context, int id)
 }
 
 
-CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, bool seamless) const
+CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod) const
 {
     const uint edgeLength = m->edgeLength;
 
     // Allocate output cube.
     CubeSurface filteredCube;
     filteredCube.m->allocate(size);
-    filteredCube.m->seamless = seamless;
 
     // Texel table is stored along with the surface so that it's compute only once.
     m->allocateTexelTable();
@@ -691,10 +722,10 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, bool sea
         for (uint y = 0; y < uint(size); y++) {
             for (uint x = 0; x < uint(size); x++) {
 
-                const Vector3 filterDir = texelDirection(f, x, y, size, seamless);
+                const Vector3 filterDir = texelDirection(f, x, y, size, fixupMethod);
 
                 // Convolve filter against cube.
-                Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower, seamless);
+                Vector3 color = m->applyCosinePowerFilter(filterDir, coneAngle, cosinePower);
 
                 filteredImage->pixel(0, x, y, 0) = color.x;
                 filteredImage->pixel(1, x, y, 0) = color.y;
@@ -708,9 +739,30 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, bool sea
     context.filteredCube = filteredCube.m;
     context.coneAngle = coneAngle;
     context.cosinePower = cosinePower;
+    context.fixupMethod = fixupMethod;
 
     nv::ParallelFor parallelFor(ApplyCosinePowerFilterTask, &context);
     parallelFor.run(6 * size * size);
+
+    // @@ Implement edge averaging.
+    if (fixupMethod == EdgeFixup_Average) {
+        for (uint f = 0; f < 6; f++) {
+            nvtt::Surface filteredFace = filteredCube.m->face[f];
+            FloatImage * filteredImage = filteredFace.m->image;
+
+            // For each component.
+            for (uint c = 0; c < 3; c++) {
+                // @@ For each corner, sample the two adjacent faces.
+                filteredImage->pixel(c, 0, 0, 0);
+                filteredImage->pixel(c, size-1, 0, 0);
+                filteredImage->pixel(c, 0, size-1, 0);
+                filteredImage->pixel(c, size-1, size-1, 0);
+
+                // @@ For each edge, sample the adjacent face.
+
+            }
+        }
+    }
 
     return filteredCube;
 }

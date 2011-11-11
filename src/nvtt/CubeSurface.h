@@ -39,7 +39,7 @@
 namespace nvtt
 {
     struct TexelTable {
-        TexelTable(uint edgeLength, bool seamless);
+        TexelTable(uint edgeLength);
 
         float solidAngle(uint f, uint x, uint y) const;
         const nv::Vector3 & direction(uint f, uint x, uint y) const;
@@ -59,7 +59,6 @@ namespace nvtt
             nvDebugCheck( refCount() == 0 );
 
             edgeLength = 0;
-            seamless = false;
             texelTable = NULL;
         }
         Private(const Private & p) : RefCounted() // Copy ctor. inits refcount to 0.
@@ -67,7 +66,6 @@ namespace nvtt
             nvDebugCheck( refCount() == 0 );
 
             edgeLength = p.edgeLength;
-            seamless = p.seamless;
             for (uint i = 0; i < 6; i++) {
                 face[i] = p.face[i];
             }
@@ -91,7 +89,7 @@ namespace nvtt
         void allocateTexelTable()
         {
             if (texelTable == NULL) {
-                texelTable = new TexelTable(edgeLength, seamless);
+                texelTable = new TexelTable(edgeLength);
             }
         }
 
@@ -99,7 +97,6 @@ namespace nvtt
         nv::Vector3 applyCosinePowerFilter(const nv::Vector3 & dir, float coneAngle, float cosinePower);
 
         uint edgeLength;
-        bool seamless;
         Surface face[6];
         TexelTable * texelTable;
     };
