@@ -239,6 +239,11 @@ Metrowerks:
 #  define POSH_COMPILER_GCC 1
 #endif
 
+#if defined __clang__
+#  define POSH_COMPILER_STRING "Clang"
+#  define POSH_COMPILER_CLANG 1
+#endif
+
 #if defined __APPLE_CC__
    /* we don't define the compiler string here, let it be GNU */
 #  define POSH_COMPILER_APPLECC 1
@@ -389,7 +394,7 @@ Metrowerks:
 #  define POSH_OS_STRING "Windows CE"
 #endif
 
-#if defined _XBOX
+#if defined _XBOX || defined _XBOX_VER
 #  define POSH_OS_XBOX 1
 #  define POSH_OS_STRING "XBOX"
 #endif
@@ -434,7 +439,7 @@ Metrowerks:
 #  define POSH_CPU_STRING "MC68000"
 #endif
 
-#if defined __PPC__ || defined __POWERPC__  || defined powerpc || defined _POWER || defined __ppc__ || defined __powerpc__
+#if defined __PPC__ || defined __POWERPC__  || defined powerpc || defined _POWER || defined __ppc__ || defined __powerpc__ || defined _M_PPC
 #  define POSH_CPU_PPC 1
 #  if !defined POSH_CPU_STRING
 #    if defined __powerpc64__
