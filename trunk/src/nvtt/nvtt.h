@@ -417,6 +417,7 @@ namespace nvtt
         ToneMapper_Linear,
         ToneMapper_Reindhart,
         ToneMapper_Halo,
+        ToneMapper_Lightmap,
     };
 
 
@@ -470,6 +471,8 @@ namespace nvtt
         // Color transforms.
         NVTT_API void toLinear(float gamma);
         NVTT_API void toGamma(float gamma);
+        NVTT_API void toLinear(int channel, float gamma);
+        NVTT_API void toGamma(int channel, float gamma);
         NVTT_API void toSrgb();
         NVTT_API void toLinearFromSrgb();
         NVTT_API void toXenonSrgb();
@@ -498,7 +501,7 @@ namespace nvtt
         NVTT_API void abs(int channel);
         NVTT_API void convolve(int channel, int kernelSize, float * kernelData);
 
-        NVTT_API void toneMap(ToneMapper tm, float exposure, float * parameters);
+        NVTT_API void toneMap(ToneMapper tm, float * parameters);
 
         //NVTT_API void blockLuminanceScale(float scale);
 
@@ -514,6 +517,8 @@ namespace nvtt
         NVTT_API void toCleanNormalMap();
         NVTT_API void packNormals();   // [-1,1] -> [ 0,1]
         NVTT_API void expandNormals(); // [ 0,1] -> [-1,1]
+        NVTT_API Surface createToksvigMap(float power) const;
+        NVTT_API Surface createCleanMap() const;
 
         // Geometric transforms.
         NVTT_API void flipX();
@@ -582,6 +587,8 @@ namespace nvtt
         // @@ Add edge fixup methods.
 
         NVTT_API float average(int channel) const;
+        NVTT_API void range(int channel, float * minimum_ptr, float * maximum_ptr) const;
+
 
         // Filtering.
         NVTT_API CubeSurface irradianceFilter(int size, EdgeFixup fixupMethod) const;

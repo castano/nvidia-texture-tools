@@ -924,6 +924,27 @@ void Surface::toGamma(float gamma)
     m->image->toGamma(0, 3, gamma);
 }
 
+void Surface::toLinear(int channel, float gamma)
+{
+    if (isNull()) return;
+    if (equal(gamma, 1.0f)) return;
+
+    detach();
+
+    m->image->toLinear(channel, 1, gamma);
+}
+
+void Surface::toGamma(int channel, float gamma)
+{
+    if (isNull()) return;
+    if (equal(gamma, 1.0f)) return;
+
+    detach();
+
+    m->image->toGamma(channel, 1, gamma);
+}
+
+
 
 static float toSrgb(float f) {
     if (isNan(f))               f = 0.0f;
@@ -1053,16 +1074,47 @@ void Surface::clamp(int channel, float low, float high)
 
 void Surface::packNormal()
 {
-    scaleBias(0, 0.5f, 0.5f);
-    scaleBias(1, 0.5f, 0.5f);
-    scaleBias(2, 0.5f, 0.5f);
+    if (isNull()) return;
+
+    detach();
+
+    m->image->scaleBias(0, 3, 0.5f, 0.5f);
 }
 
 void Surface::expandNormal()
 {
-    scaleBias(0, 2.0f, -1.0f);
-    scaleBias(1, 2.0f, -1.0f);
-    scaleBias(2, 2.0f, -1.0f);
+    if (isNull()) return;
+
+    detach();
+
+    m->image->scaleBias(0, 3, 2.0f, -1.0f);
+}
+
+// Create a Toksvig map for this normal map.
+// http://blog.selfshadow.com/2011/07/22/specular-showdown/
+// @@ Assumes this is a normal map expanded in the [-1, 1] range.
+Surface Surface::createToksvigMap(float power) const
+{
+    if (isNull()) return Surface();
+
+    // @@ TODO
+
+    return Surface();
+}
+
+// @@ Should I add support for LEAN maps? That requires 5 terms, which would have to be encoded in two textures.
+// There's nothing stopping us from having 5 channels in a surface, and then, let the user swizzle them as they wish.
+// CLEAN maps are probably more practical, though.
+// http://www.cs.umbc.edu/~olano/papers/lean/
+// http://gaim.umbc.edu/2011/07/24/shiny-and-clean/
+// http://gaim.umbc.edu/2011/07/26/on-error/
+NVTT_API Surface Surface::createCleanMap() const
+{
+    if (isNull()) return Surface();
+
+    // @@ TODO
+
+    return Surface();
 }
 
 
@@ -1267,7 +1319,7 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
         r[i] = R / M;
         g[i] = G / M;
         b[i] = B / M;
-        a[i] = M;
+        a[i] = (M - threshold) / (1 - threshold);
 
 #else
 
@@ -1411,7 +1463,10 @@ static Color32 toRgbe8(float r, float g, float b)
     return c;
 }
 */
+
 // For R9G9B9E5, use toRGBE(9, 5), for Ward's RGBE, use toRGBE(8, 8)
+// @@ Note that most Radiance HDR loaders use an exponent bias of 128 instead of 127! This implementation
+// matches the OpenGL extension.
 void Surface::toRGBE(int mantissaBits, int exponentBits)
 {
     // According to the OpenGL extension:
@@ -1568,6 +1623,7 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
         int B = iround(b[i] * ((1 << mantissaBits) - 1));
         int E = iround(a[i] * ((1 << exponentBits) - 1));
 
+        //float scale = ldexpf(1.0f, E - exponentBias - mantissaBits);
         float scale = powf(2, float(E - exponentBias - mantissaBits));
 
         r[i] = R * scale;
@@ -1766,7 +1822,8 @@ void Surface::convolve(int channel, int kernelSize, float * kernelData)
     m->image->convolve(k, channel, (FloatImage::WrapMode)m->wrapMode);
 }
 
-void Surface::toneMap(ToneMapper tm, float exposure, float * parameters)
+// Assumes input has already been scaled by exposure.
+void Surface::toneMap(ToneMapper tm, float * parameters)
 {
     if (isNull()) return;
 
@@ -1801,6 +1858,20 @@ void Surface::toneMap(ToneMapper tm, float exposure, float * parameters)
             r[i] = 1 - expf(-r[i]);
             g[i] = 1 - expf(-g[i]);
             b[i] = 1 - expf(-b[i]);
+        }
+    }
+    else if (tm == ToneMapper_Lightmap) {
+        // @@ Goals:
+        // Preserve hue.
+        // Avoid clamping abrubtly.
+        // Minimize color difference along most of the color range. [0, alpha)
+        for (uint i = 0; i < count; i++) {
+            float m = max(r[i], g[i], b[i]);
+            if (m > 1.0f) {
+                r[i] *= 1.0f / m;
+                g[i] *= 1.0f / m;
+                b[i] *= 1.0f / m;
+            }
         }
     }
 }

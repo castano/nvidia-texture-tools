@@ -406,6 +406,31 @@ float CubeSurface::average(int channel) const
     return sum / total;
 }
 
+void CubeSurface::range(int channel, float * minimum_ptr, float * maximum_ptr) const
+{
+    const uint edgeLength = m->edgeLength;
+    m->allocateTexelTable();
+
+    float minimum = FLT_MAX;
+    float maximum = 0.0f;
+
+    for (int f = 0; f < 6; f++) {
+        float * c = m->face[f].m->image->channel(channel);
+
+         for (uint y = 0; y < edgeLength; y++) {
+             for (uint x = 0; x < edgeLength; x++) {
+
+                 minimum = nv::min(minimum, c[y * edgeLength + x]);
+                 maximum = nv::max(maximum, c[y * edgeLength + x]);
+            }
+        }
+    }
+
+    *minimum_ptr = minimum;
+    *maximum_ptr = maximum;
+}
+
+
 
 #include "nvmath/SphericalHarmonic.h"
 
