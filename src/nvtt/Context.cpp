@@ -119,7 +119,8 @@ int Compressor::estimateSize(const InputOptions & inputOptions, const Compressio
     int w = inputOptions.m.width;
     int h = inputOptions.m.height;
     int d = inputOptions.m.depth;
-    getTargetExtent(w, h, d, inputOptions.m.maxExtent, inputOptions.m.roundMode, inputOptions.m.textureType);
+    
+    getTargetExtent(&w, &h, &d, inputOptions.m.maxExtent, inputOptions.m.roundMode, inputOptions.m.textureType);
 
     int mipmapCount = 1;
     if (inputOptions.m.generateMipmaps) {
@@ -216,8 +217,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     nvStaticCheck(FloatImage::WrapMode_Repeat == (FloatImage::WrapMode)WrapMode_Repeat);
 
     // Get output handler.
-    if (!outputOptions.hasValidOutputHandler())
-    {
+    if (!outputOptions.hasValidOutputHandler()) {
         outputOptions.error(Error_FileOpen);
         return false;
     }
@@ -228,23 +228,22 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     img.setNormalMap(inputOptions.isNormalMap);
 
     const int faceCount = inputOptions.faceCount;
-    int w = inputOptions.width;
-    int h = inputOptions.height;
-    int d = inputOptions.depth;
+    int width = inputOptions.width;
+    int height = inputOptions.height;
+    int depth = inputOptions.depth;
 
-    nv::getTargetExtent(w, h, d, inputOptions.maxExtent, inputOptions.roundMode, inputOptions.textureType);
+    nv::getTargetExtent(&width, &height, &depth, inputOptions.maxExtent, inputOptions.roundMode, inputOptions.textureType);
 
     // If the extents have not changed, then we can use source images for all mipmaps.
-    bool canUseSourceImages = (inputOptions.width == w && inputOptions.height == h && inputOptions.depth == d);
+    bool canUseSourceImages = (inputOptions.width == width && inputOptions.height == height && inputOptions.depth == depth);
 
     int mipmapCount = 1;
     if (inputOptions.generateMipmaps) {
-        mipmapCount = countMipmaps(w, h, d);
+        mipmapCount = countMipmaps(width, height, depth);
         if (inputOptions.maxLevel > 0) mipmapCount = min(mipmapCount, inputOptions.maxLevel);
     }
 
-    if (!outputHeader(inputOptions.textureType, w, h, d, mipmapCount, img.isNormalMap(), compressionOptions, outputOptions))
-    {
+    if (!outputHeader(inputOptions.textureType, width, height, depth, mipmapCount, img.isNormalMap(), compressionOptions, outputOptions)) {
         return false;
     }
 
@@ -252,6 +251,11 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
     // Output images.
     for (int f = 0; f < faceCount; f++)
     {
+        int w = width;
+        int h = height;
+        int d = depth;
+        bool canUseSourceImagesForThisFace = canUseSourceImages;
+
         img.setImage(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.depth, inputOptions.images[f]);
 
         // To normal map.
@@ -284,11 +288,12 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             int idx = m * faceCount + f;
 
             bool useSourceImages = false;
-            if (canUseSourceImages) {
-                useSourceImages = true;
+            if (canUseSourceImagesForThisFace) {
                 if (inputOptions.images[idx] == NULL) { // One face is missing in this mipmap level.
-                    useSourceImages = false;
-                    canUseSourceImages = false; // If one level is missing, ignore the following source images.
+                    canUseSourceImagesForThisFace = false; // If one level is missing, ignore the following source images.
+                }
+                else {
+                    useSourceImages = true;
                 }
             }
 

@@ -131,10 +131,14 @@ uint nv::computeImageSize(uint w, uint h, uint d, uint bitCount, uint pitchAlign
     }
 }
 
-void nv::getTargetExtent(int & w, int & h, int & d, int maxExtent, RoundMode roundMode, TextureType textureType) {
-    nvDebugCheck(w > 0);
-    nvDebugCheck(h > 0);
-    nvDebugCheck(d > 0);
+void nv::getTargetExtent(int * width, int * height, int * depth, int maxExtent, RoundMode roundMode, TextureType textureType) {
+    nvDebugCheck(width != NULL && *width > 0);
+    nvDebugCheck(height != NULL && *height > 0);
+    nvDebugCheck(depth != NULL && *depth > 0);
+
+    int w = *width;
+    int h = *height;
+    int d = *depth;
 
     if (roundMode != RoundMode_None && maxExtent > 0)
     {
@@ -180,6 +184,10 @@ void nv::getTargetExtent(int & w, int & h, int & d, int maxExtent, RoundMode rou
         h = previousPowerOfTwo(h);
         d = previousPowerOfTwo(d);
     }
+
+    *width = w;
+    *height = h;
+    *depth = d;
 }
 
 
@@ -788,7 +796,7 @@ void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, fl
     int h = m->image->height();
     int d = m->image->depth();
 
-    getTargetExtent(w, h, d, maxExtent, roundMode, m->type);
+    getTargetExtent(&w, &h, &d, maxExtent, roundMode, m->type);
 
     resize(w, h, d, filter, filterWidth, params);
 }
