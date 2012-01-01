@@ -64,7 +64,7 @@ namespace nv
 
 
     // Normal CPU compressors.
-#if 0
+#if 1
     struct NormalCompressorDXT1 : public ColorSetCompressor
     {
         virtual void compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);

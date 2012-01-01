@@ -83,6 +83,7 @@ void ClusterFit::setColourSet(const ColorSet * set)
     m_xxsum = SimdVector( 0.0f );
     m_xsum = SimdVector( 0.0f );
 #else
+    m_xxsum = Vector3(0.0f);
     m_xsum = Vector3(0.0f);
     m_wsum = 0.0f;
 #endif
@@ -91,11 +92,12 @@ void ClusterFit::setColourSet(const ColorSet * set)
     {
         int p = order[i];
 #if NVTT_USE_SIMD
-        m_weighted[i] = SimdVector(Vector4(set->weights[p] * values[p], set->weights[p]));
+        Vector4 tmp(values[p] * set->weights[p], set->weights[p]);
+        m_weighted[i] = SimdVector(tmp.component);
         m_xxsum += m_weighted[i] * m_weighted[i];
         m_xsum += m_weighted[i];
 #else
-        m_weighted[i] = values[p];
+        m_weighted[i] = values[p] * set->weights[p];
         m_xxsum += m_weighted[i] * m_weighted[i];
         m_xsum += m_weighted[i];
         m_weights[i] = set->weights[p];
@@ -108,7 +110,8 @@ void ClusterFit::setColourSet(const ColorSet * set)
 void ClusterFit::setMetric(Vector4::Arg w)
 {
 #if NVTT_USE_SIMD
-    m_metric = SimdVector(Vector4(w.xyz(), 1));
+    Vector4 tmp(w.xyz(), 1);
+    m_metric = SimdVector(tmp.component);
 #else
     m_metric = w.xyz();
 #endif
@@ -289,22 +292,22 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
                 SimdVector e3 = negativeMultiplySubtract( b, betax_sum, e2 );
                 SimdVector e4 = multiplyAdd( two, e3, e1 );
 
-		// apply the metric to the error term
-		SimdVector e5 = e4 * m_metricSqr;
-		SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
+                // apply the metric to the error term
+                SimdVector e5 = e4 * m_metricSqr;
+                SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
 
-		// keep the solution if it wins
-		if( compareAnyLessThan( error, besterror ) )
-		{
-		    besterror = error;
-		    beststart = a;
-		    bestend = b;
-		    b0 = c0;
-		    b1 = c1;
-		    b2 = c2;
-		}
+                // keep the solution if it wins
+                if( compareAnyLessThan( error, besterror ) )
+                {
+                    besterror = error;
+                    beststart = a;
+                    bestend = b;
+                    b0 = c0;
+                    b1 = c1;
+                    b2 = c2;
+                }
 
-		x2 += m_weighted[c0+c1+c2];
+                x2 += m_weighted[c0+c1+c2];
 	    }
 
 	    x1 += m_weighted[c0+c1];
@@ -333,9 +336,6 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 {
     const uint count = m_count;
-    const Vector3 one( 1.0f );
-    const Vector3 zero( 0.0f );
-    const Vector3 half( 0.5f );
     const Vector3 grid( 31.0f, 63.0f, 31.0f );
     const Vector3 gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
 
@@ -372,10 +372,10 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
             Vector3 b = (betax_sum*alpha2_sum - alphax_sum*alphabeta_sum) * factor;
 
             // clamp to the grid
-            a = min(one, max(zero, a));
-            b = min(one, max(zero, b));
-            a = floor(grid * a + half) * gridrcp;
-            b = floor(grid * b + half) * gridrcp;
+            a = clamp(a, 0, 1);
+            b = clamp(b, 0, 1);
+            a = floor(grid * a + 0.5f) * gridrcp;
+            b = floor(grid * b + 0.5f) * gridrcp;
 
             // compute the error
             Vector3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
@@ -420,9 +420,6 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
 {
     const uint count = m_count;
-    Vector3 const one( 1.0f );
-    Vector3 const zero( 0.0f );
-    Vector3 const half( 0.5f );
     Vector3 const grid( 31.0f, 63.0f, 31.0f );
     Vector3 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
 
@@ -462,10 +459,10 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
                 Vector3 b = ( betax_sum*alpha2_sum - alphax_sum*alphabeta_sum )*factor;
 
                 // clamp to the grid
-                a = min( one, max( zero, a ) );
-                b = min( one, max( zero, b ) );
-                a = floor( grid*a + half )*gridrcp;
-                b = floor( grid*b + half )*gridrcp;
+                a = clamp(a, 0, 1);
+                b = clamp(b, 0, 1);
+                a = floor(a * grid + 0.5f) * gridrcp;
+                b = floor(b * grid + 0.5f) * gridrcp;
 
                 // compute the error
                 Vector3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
@@ -474,7 +471,7 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
                 float error = dot( e1, m_metricSqr );
 
                 // keep the solution if it wins
-                if( error < besterror )
+                if (error < besterror)
                 {
                     besterror = error;
                     beststart = a;
@@ -497,13 +494,13 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
     }
 
     // save the block if necessary
-    if( besterror < m_besterror )
+    if (besterror < m_besterror)
     {
         *start = beststart;
         *end = bestend;
 
-	// save the error
-	m_besterror = besterror;
+        // save the error
+        m_besterror = besterror;
 
         return true;
     }

@@ -313,6 +313,10 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvtt\squish\config.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvtt\squish\maths.cpp"
 			>
 		</File>

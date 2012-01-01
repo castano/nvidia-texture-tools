@@ -109,7 +109,7 @@ void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
 	QuickCompress::compressDXT5(rgba, block);
 }
 
-#if 0
+#if 1
 void NormalCompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     set.setUniformWeights();
