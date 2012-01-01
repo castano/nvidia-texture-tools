@@ -17,5 +17,6 @@
 #define HAVE_JPEG
 #define HAVE_TIFF
 #endif*/
+#define HAVE_STBIMAGE
 
 #endif // NV_CONFIG

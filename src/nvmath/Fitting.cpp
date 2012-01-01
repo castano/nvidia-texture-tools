@@ -50,7 +50,7 @@ static inline Vector3 firstEigenVector_PowerMethod(const float *__restrict matri
         v = Vector3(x, y, z) / norm;
     }
 
-    return v;	
+    return v;
 }
 
 

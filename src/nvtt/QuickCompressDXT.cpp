@@ -115,6 +115,7 @@ inline static void insetBBox(Vector3 * restrict maxColor, Vector3 * restrict min
 	*minColor = clamp(*minColor + inset, 0.0f, 255.0f);
 }
 
+// Takes a normalized color in [0, 255] range and returns 
 inline static uint16 roundAndExpand(Vector3 * restrict v)
 {
 	uint r = uint(clamp(v->x * (31.0f / 255.0f), 0.0f, 31.0f) + 0.5f);
@@ -168,6 +169,7 @@ inline static uint computeIndices4(const Vector3 block[16], Vector3::Arg maxColo
 	return indices;
 }
 
+// maxColor and minColor are expected to be in the same range as the color set.
 inline static uint computeIndices4(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
@@ -224,6 +226,7 @@ inline static float evaluatePaletteError4(const Vector3 block[16], Vector3::Arg 
 	return total;
 }
 
+// maxColor and minColor are expected to be in the same range as the color set.
 inline static uint computeIndices3(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
@@ -702,8 +705,8 @@ void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, 
 
 void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
-    Vector3 maxColor = start * 255;
-    Vector3 minColor = end * 255;
+    Vector3 minColor = start * 255;
+    Vector3 maxColor = end * 255;
 	uint16 color0 = roundAndExpand(&maxColor);
 	uint16 color1 = roundAndExpand(&minColor);
 
@@ -715,17 +718,17 @@ void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, co
 
 	block->col0 = Color16(color0);
 	block->col1 = Color16(color1);
-	block->indices = computeIndices4(set, maxColor, minColor);
+	block->indices = computeIndices4(set, maxColor / 255, minColor / 255);
 
 	//optimizeEndPoints4(set, block);
 }
 
 void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
-    Vector3 maxColor = start * 255;
-    Vector3 minColor = end * 255;
-	uint16 color0 = roundAndExpand(&maxColor);
-	uint16 color1 = roundAndExpand(&minColor);
+    Vector3 minColor = start * 255;
+    Vector3 maxColor = end * 255;
+	uint16 color0 = roundAndExpand(&minColor);
+	uint16 color1 = roundAndExpand(&maxColor);
 
 	if (color0 > color1)
 	{
@@ -735,7 +738,7 @@ void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, co
 
 	block->col0 = Color16(color0);
 	block->col1 = Color16(color1);
-    block->indices = computeIndices3(set, maxColor, minColor);
+    block->indices = computeIndices3(set, maxColor / 255, minColor / 255);
 
 	//optimizeEndPoints3(set, block);
 }

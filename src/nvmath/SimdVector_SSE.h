@@ -46,10 +46,10 @@ namespace nv {
         explicit SimdVector(float f) : vec(_mm_set1_ps(f)) {}
         explicit SimdVector(__m128 v) : vec(v) {}
 
-        explicit SimdVector(Vector4::Arg v)
+        /*explicit SimdVector(const Vector4 & v)
         {
-            vec = _mm_load_ps( v.component );
-        }
+            vec = _mm_load_ps( v.components );
+        }*/
 
         explicit SimdVector(const float * v)
         {
