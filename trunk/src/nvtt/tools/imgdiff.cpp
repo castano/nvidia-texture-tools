@@ -72,11 +72,11 @@ struct Error
 		mse = 0.0f;
 	}
 
-	void addSample(float e)
+	void addSample(double e)
 	{
 		samples++;
-		mabse += fabsf(e);
-		maxabse = nv::max(maxabse, fabsf(e));
+		mabse += fabs(e);
+		maxabse = nv::max(maxabse, fabs(e));
 		mse += e * e;
 	}
 
@@ -84,8 +84,8 @@ struct Error
 	{
 		mabse /= samples;
 		mse /= samples;
-		rmse = sqrtf(mse);
-		psnr = (rmse == 0) ? 999.0f : 20.0f * log10(255.0f / rmse);
+		rmse = sqrt(mse);
+		psnr = (rmse == 0) ? 999.0 : 20.0 * log10(255.0 / rmse);
 	}
 
 	void print()
@@ -97,11 +97,11 @@ struct Error
 	}
 
 	int samples;
-	float mabse;
-	float maxabse;
-	float mse;
-	float rmse;
-	float psnr;
+	double mabse;
+	double maxabse;
+	double mse;
+	double rmse;
+	double psnr;
 };
 
 struct NormalError
@@ -230,10 +230,10 @@ int main(int argc, char *argv[])
 			const nv::Color32 c0(image0.pixel(e, i));
 			const nv::Color32 c1(image1.pixel(e, i));
 
-			float r = float(c0.r - c1.r);
-			float g = float(c0.g - c1.g);
-			float b = float(c0.b - c1.b);
-			float a = float(c0.a - c1.a);
+			double r = float(c0.r - c1.r);
+			double g = float(c0.g - c1.g);
+			double b = float(c0.b - c1.b);
+			double a = float(c0.a - c1.a);
 
 			error_r.addSample(r);
 			error_g.addSample(g);
@@ -247,9 +247,9 @@ int main(int argc, char *argv[])
 
 			if (compareAlpha)
 			{
-				error_total.addSample(r * c0.a / 255.0f);
-				error_total.addSample(g * c0.a / 255.0f);
-				error_total.addSample(b * c0.a / 255.0f);
+				error_total.addSample(r * c0.a / 255.0);
+				error_total.addSample(g * c0.a / 255.0);
+				error_total.addSample(b * c0.a / 255.0);
 			}
 			else
 			{

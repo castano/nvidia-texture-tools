@@ -56,7 +56,7 @@ namespace nv
     }
 
     // Return extents of the box.
-    scalar Box::extents(uint axis) const
+    float Box::extents(uint axis) const
     {
         nvDebugCheck(axis < 3);
         if (axis == 0) return (maxCorner.x - minCorner.x) * 0.5f;

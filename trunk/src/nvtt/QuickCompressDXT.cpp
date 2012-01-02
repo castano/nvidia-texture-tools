@@ -179,8 +179,13 @@ inline static uint computeIndices4(const ColorSet & set, Vector3::Arg maxColor, 
 	palette[3] = lerp(palette[0], palette[1], 2.0f / 3.0f);
 	
 	uint indices = 0;
-	for(int i = 0; i < 16; i++)
+    for(int i = 0; i < 16; i++)
 	{
+        if (!set.isValidIndex(i)) {
+            // Skip masked pixels and out of bounds.
+            continue;
+        }
+
         Vector3 color = set.color(i).xyz();
 
 		float d0 = colorDistance(palette[0], color);
@@ -237,16 +242,20 @@ inline static uint computeIndices3(const ColorSet & set, Vector3::Arg maxColor, 
 	uint indices = 0;
 	for(int i = 0; i < 16; i++)
 	{
+        if (!set.isValidIndex(i)) {
+            // Skip masked pixels and out of bounds.
+            indices |= 3 << (2 * i);
+            continue;
+        }
+
         Vector3 color = set.color(i).xyz();
-		float alpha = set.color(i).w;
 		
 		float d0 = colorDistance(palette[0], color);
 		float d1 = colorDistance(palette[1], color);
 		float d2 = colorDistance(palette[2], color);
 		
 		uint index;
-		if (alpha == 0) index = 3;
-		else if (d0 < d1 && d0 < d2) index = 0;
+		if (d0 < d1 && d0 < d2) index = 0;
 		else if (d1 < d2) index = 1;
 		else index = 2;
 		

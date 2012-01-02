@@ -49,7 +49,7 @@ void ClusterFit::setColourSet(const ColorSet * set)
 #endif
 
     // cache some values
-    m_count = set->count;
+    m_count = set->colorCount;
 
     Vector3 values[16];
     for (uint i = 0; i < m_count; i++)
@@ -148,7 +148,7 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
     SimdVector besterror = SimdVector( FLT_MAX );
 
     SimdVector x0 = zero;
-	
+
     int b0 = 0, b1 = 0;
 
     // check all possible clusters for this total order
@@ -191,22 +191,22 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
             SimdVector e3 = negativeMultiplySubtract( b, betax_sum, e2 );
             SimdVector e4 = multiplyAdd( two, e3, e1 );
 
-	    // apply the metric to the error term
-	    SimdVector e5 = e4 * m_metricSqr;
-	    SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
+            // apply the metric to the error term
+            SimdVector e5 = e4 * m_metricSqr;
+            SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
 
-	    // keep the solution if it wins
-	    if( compareAnyLessThan( error, besterror ) )
-	    {
-		besterror = error;
-		beststart = a;
-		bestend = b;
-		b0 = c0;
-		b1 = c1;
-	    }
+            // keep the solution if it wins
+            if( compareAnyLessThan( error, besterror ) )
+            {
+                besterror = error;
+                beststart = a;
+                bestend = b;
+                b0 = c0;
+                b1 = c1;
+            }
 
-	    x1 += m_weighted[c0+c1];
-	}
+            x1 += m_weighted[c0+c1];
+        }
 
         x0 += m_weighted[c0];
     }
@@ -218,8 +218,8 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
         *start = beststart.toVector3();
         *end = bestend.toVector3();
 
-	// save the error
-	m_besterror = besterror;
+        // save the error
+        m_besterror = besterror;
 
         return true;
     }
@@ -308,10 +308,10 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
                 }
 
                 x2 += m_weighted[c0+c1+c2];
-	    }
+            }
 
-	    x1 += m_weighted[c0+c1];
-	}
+            x1 += m_weighted[c0+c1];
+        }
 
         x0 += m_weighted[c0];
     }
@@ -321,9 +321,9 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
     {
         *start = beststart.toVector3();
         *end = bestend.toVector3();
-		
-	// save the error
-	m_besterror = besterror;
+
+        // save the error
+        m_besterror = besterror;
 
         return true;
     }
@@ -404,12 +404,12 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
     // save the block if necessary
     if( besterror < m_besterror )
     {
-		
+
         *start = beststart;
         *end = bestend;
 
-	// save the error
-	m_besterror = besterror;
+        // save the error
+        m_besterror = besterror;
 
         return true;
     }
@@ -420,8 +420,8 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
 {
     const uint count = m_count;
-    Vector3 const grid( 31.0f, 63.0f, 31.0f );
-    Vector3 const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
+    const Vector3 grid( 31.0f, 63.0f, 31.0f );
+    const Vector3 gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f );
 
     // declare variables
     Vector3 beststart( 0.0f );

@@ -22,8 +22,8 @@ namespace nv
 
     // Vector2
     inline Vector2::Vector2() {}
-    inline Vector2::Vector2(scalar f) : x(f), y(f) {}
-    inline Vector2::Vector2(scalar x, scalar y) : x(x), y(y) {}
+    inline Vector2::Vector2(float f) : x(f), y(f) {}
+    inline Vector2::Vector2(float x, float y) : x(x), y(y) {}
     inline Vector2::Vector2(Vector2::Arg v) : x(v.x), y(v.y) {}
 
     inline const Vector2 & Vector2::operator=(Vector2::Arg v)
@@ -33,12 +33,12 @@ namespace nv
         return *this;
     }
 
-    inline const scalar * Vector2::ptr() const
+    inline const float * Vector2::ptr() const
     {
         return &x;
     }
 
-    inline void Vector2::set(scalar x, scalar y)
+    inline void Vector2::set(float x, float y)
     {
         this->x = x;
         this->y = y;
@@ -61,7 +61,7 @@ namespace nv
         y -= v.y;
     }
 
-    inline void Vector2::operator*=(scalar s)
+    inline void Vector2::operator*=(float s)
     {
         x *= s;
         y *= s;
@@ -85,9 +85,9 @@ namespace nv
 
     // Vector3
     inline Vector3::Vector3() {}
-    inline Vector3::Vector3(scalar f) : x(f), y(f), z(f) {}
-    inline Vector3::Vector3(scalar x, scalar y, scalar z) : x(x), y(y), z(z) {}
-    inline Vector3::Vector3(Vector2::Arg v, scalar z) : x(v.x), y(v.y), z(z) {}
+    inline Vector3::Vector3(float f) : x(f), y(f), z(f) {}
+    inline Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+    inline Vector3::Vector3(Vector2::Arg v, float z) : x(v.x), y(v.y), z(z) {}
     inline Vector3::Vector3(Vector3::Arg v) : x(v.x), y(v.y), z(v.z) {}
 
     inline const Vector3 & Vector3::operator=(Vector3::Arg v)
@@ -104,12 +104,12 @@ namespace nv
         return Vector2(x, y);
     }
 
-    inline const scalar * Vector3::ptr() const
+    inline const float * Vector3::ptr() const
     {
         return &x;
     }
 
-    inline void Vector3::set(scalar x, scalar y, scalar z)
+    inline void Vector3::set(float x, float y, float z)
     {
         this->x = x;
         this->y = y;
@@ -135,14 +135,14 @@ namespace nv
         z -= v.z;
     }
 
-    inline void Vector3::operator*=(scalar s)
+    inline void Vector3::operator*=(float s)
     {
         x *= s;
         y *= s;
         z *= s;
     }
 
-    inline void Vector3::operator/=(scalar s)
+    inline void Vector3::operator/=(float s)
     {
         float is = 1.0f / s;
         x *= is;
@@ -169,11 +169,11 @@ namespace nv
 
     // Vector4
     inline Vector4::Vector4() {}
-    inline Vector4::Vector4(scalar f) : x(f), y(f), z(f), w(f) {}
-    inline Vector4::Vector4(scalar x, scalar y, scalar z, scalar w) : x(x), y(y), z(z), w(w) {}
-    inline Vector4::Vector4(Vector2::Arg v, scalar z, scalar w) : x(v.x), y(v.y), z(z), w(w) {}
+    inline Vector4::Vector4(float f) : x(f), y(f), z(f), w(f) {}
+    inline Vector4::Vector4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+    inline Vector4::Vector4(Vector2::Arg v, float z, float w) : x(v.x), y(v.y), z(z), w(w) {}
     inline Vector4::Vector4(Vector2::Arg v, Vector2::Arg u) : x(v.x), y(v.y), z(u.x), w(u.y) {}
-    inline Vector4::Vector4(Vector3::Arg v, scalar w) : x(v.x), y(v.y), z(v.z), w(w) {}
+    inline Vector4::Vector4(Vector3::Arg v, float w) : x(v.x), y(v.y), z(v.z), w(w) {}
     inline Vector4::Vector4(Vector4::Arg v) : x(v.x), y(v.y), z(v.z), w(v.w) {}
 
     inline const Vector4 & Vector4::operator=(const Vector4 & v)
@@ -200,12 +200,12 @@ namespace nv
         return Vector3(x, y, z);
     }
 
-    inline const scalar * Vector4::ptr() const
+    inline const float * Vector4::ptr() const
     {
         return &x;
     }
 
-    inline void Vector4::set(scalar x, scalar y, scalar z, scalar w)
+    inline void Vector4::set(float x, float y, float z, float w)
     {
         this->x = x;
         this->y = y;
@@ -234,7 +234,7 @@ namespace nv
         w -= v.w;
     }
 
-    inline void Vector4::operator*=(scalar s)
+    inline void Vector4::operator*=(float s)
     {
         x *= s;
         y *= s;
@@ -284,7 +284,7 @@ namespace nv
         return sub(a, b);
     }
 
-    inline Vector2 scale(Vector2::Arg v, scalar s)
+    inline Vector2 scale(Vector2::Arg v, float s)
     {
         return Vector2(v.x * s, v.y * s);
     }
@@ -294,7 +294,7 @@ namespace nv
         return Vector2(v.x * s.x, v.y * s.y);
     }
 
-    inline Vector2 operator*(Vector2::Arg v, scalar s)
+    inline Vector2 operator*(Vector2::Arg v, float s)
     {
         return scale(v, s);
     }
@@ -304,32 +304,32 @@ namespace nv
         return Vector2(v1.x*v2.x, v1.y*v2.y);
     }
 
-    inline Vector2 operator*(scalar s, Vector2::Arg v)
+    inline Vector2 operator*(float s, Vector2::Arg v)
     {
         return scale(v, s);
     }
 
-    inline Vector2 operator/(Vector2::Arg v, scalar s)
+    inline Vector2 operator/(Vector2::Arg v, float s)
     {
         return scale(v, 1.0f/s);
     }
 
-    inline scalar dot(Vector2::Arg a, Vector2::Arg b)
+    inline float dot(Vector2::Arg a, Vector2::Arg b)
     {
         return a.x * b.x + a.y * b.y;
     }
 
-    inline scalar lengthSquared(Vector2::Arg v)
+    inline float lengthSquared(Vector2::Arg v)
     {
         return v.x * v.x + v.y * v.y;
     }
 
-    inline scalar length(Vector2::Arg v)
+    inline float length(Vector2::Arg v)
     {
         return sqrtf(lengthSquared(v));
     }
 
-    inline scalar inverseLength(Vector2::Arg v)
+    inline float inverseLength(Vector2::Arg v)
     {
         return 1.0f / sqrtf(lengthSquared(v));
     }
@@ -444,7 +444,7 @@ namespace nv
         return Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
     }
 
-    inline Vector3 scale(Vector3::Arg v, scalar s)
+    inline Vector3 scale(Vector3::Arg v, float s)
     {
         return Vector3(v.x * s, v.y * s, v.z * s);
     }
@@ -454,12 +454,12 @@ namespace nv
         return Vector3(v.x * s.x, v.y * s.y, v.z * s.z);
     }
 
-    inline Vector3 operator*(Vector3::Arg v, scalar s)
+    inline Vector3 operator*(Vector3::Arg v, float s)
     {
         return scale(v, s);
     }
 
-    inline Vector3 operator*(scalar s, Vector3::Arg v)
+    inline Vector3 operator*(float s, Vector3::Arg v)
     {
         return scale(v, s);
     }
@@ -469,38 +469,38 @@ namespace nv
         return scale(v, s);
     }
 
-    inline Vector3 operator/(Vector3::Arg v, scalar s)
+    inline Vector3 operator/(Vector3::Arg v, float s)
     {
         return scale(v, 1.0f/s);
     }
 
-    /*inline Vector3 add_scaled(Vector3::Arg a, Vector3::Arg b, scalar s)
+    /*inline Vector3 add_scaled(Vector3::Arg a, Vector3::Arg b, float s)
     {
         return Vector3(a.x + b.x * s, a.y + b.y * s, a.z + b.z * s);
     }*/
 
-    inline Vector3 lerp(Vector3::Arg v1, Vector3::Arg v2, scalar t)
+    inline Vector3 lerp(Vector3::Arg v1, Vector3::Arg v2, float t)
     {
-        const scalar s = 1.0f - t;
+        const float s = 1.0f - t;
         return Vector3(v1.x * s + t * v2.x, v1.y * s + t * v2.y, v1.z * s + t * v2.z);
     }
 
-    inline scalar dot(Vector3::Arg a, Vector3::Arg b)
+    inline float dot(Vector3::Arg a, Vector3::Arg b)
     {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
-    inline scalar lengthSquared(Vector3::Arg v)
+    inline float lengthSquared(Vector3::Arg v)
     {
         return v.x * v.x + v.y * v.y + v.z * v.z;
     }
 
-    inline scalar length(Vector3::Arg v)
+    inline float length(Vector3::Arg v)
     {
         return sqrtf(lengthSquared(v));
     }
 
-    inline scalar inverseLength(Vector3::Arg v)
+    inline float inverseLength(Vector3::Arg v)
     {
         return 1.0f / sqrtf(lengthSquared(v));
     }
@@ -602,7 +602,7 @@ namespace nv
         return sub(a, b);
     }
 
-    inline Vector4 scale(Vector4::Arg v, scalar s)
+    inline Vector4 scale(Vector4::Arg v, float s)
     {
         return Vector4(v.x * s, v.y * s, v.z * s, v.w * s);
     }
@@ -612,42 +612,42 @@ namespace nv
         return Vector4(v.x * s.x, v.y * s.y, v.z * s.z, v.w * s.w);
     }
 
-    inline Vector4 operator*(Vector4::Arg v, scalar s)
+    inline Vector4 operator*(Vector4::Arg v, float s)
     {
         return scale(v, s);
     }
 
-    inline Vector4 operator*(scalar s, Vector4::Arg v)
+    inline Vector4 operator*(float s, Vector4::Arg v)
     {
         return scale(v, s);
     }
 
-    inline Vector4 operator/(Vector4::Arg v, scalar s)
+    inline Vector4 operator/(Vector4::Arg v, float s)
     {
         return scale(v, 1.0f/s);
     }
 
-    inline Vector4 add_scaled(Vector4::Arg a, Vector4::Arg b, scalar s)
+    inline Vector4 add_scaled(Vector4::Arg a, Vector4::Arg b, float s)
     {
         return Vector4(a.x + b.x * s, a.y + b.y * s, a.z + b.z * s, a.w + b.w * s);
     }
 
-    inline scalar dot(Vector4::Arg a, Vector4::Arg b)
+    inline float dot(Vector4::Arg a, Vector4::Arg b)
     {
         return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     }
 
-    inline scalar lengthSquared(Vector4::Arg v)
+    inline float lengthSquared(Vector4::Arg v)
     {
         return v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w;
     }
 
-    inline scalar length(Vector4::Arg v)
+    inline float length(Vector4::Arg v)
     {
         return sqrtf(lengthSquared(v));
     }
 
-    inline scalar inverseLength(Vector4::Arg v)
+    inline float inverseLength(Vector4::Arg v)
     {
         return 1.0f / sqrtf(lengthSquared(v));
     }

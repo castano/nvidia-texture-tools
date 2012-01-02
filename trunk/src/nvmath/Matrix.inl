@@ -40,17 +40,17 @@ namespace nv
         m_data[6] = v2.x; m_data[7] = v2.y; m_data[8] = v2.z;
     }
 
-    inline scalar Matrix3::get(uint row, uint col) const
+    inline float Matrix3::get(uint row, uint col) const
     {
         nvDebugCheck(row < 3 && col < 3);
         return m_data[col * 3 + row];
     }
-    inline scalar Matrix3::operator()(uint row, uint col) const
+    inline float Matrix3::operator()(uint row, uint col) const
     {
         nvDebugCheck(row < 3 && col < 3);
         return m_data[col * 3 + row];
     }
-    inline scalar & Matrix3::operator()(uint row, uint col)
+    inline float & Matrix3::operator()(uint row, uint col)
     {
         nvDebugCheck(row < 3 && col < 3);
         return m_data[col * 3 + row];
@@ -136,7 +136,7 @@ namespace nv
         Matrix3 m;
 
         for(int i = 0; i < 3; i++) {
-            const scalar ai0 = a(i,0), ai1 = a(i,1), ai2 = a(i,2);
+            const float ai0 = a(i,0), ai1 = a(i,1), ai2 = a(i,2);
             m(i, 0) = ai0 * b(0,0) + ai1 * b(1,0) + ai2 * b(2,0);
             m(i, 1) = ai0 * b(0,1) + ai1 * b(1,1) + ai2 * b(2,1);
             m(i, 2) = ai0 * b(0,2) + ai1 * b(1,2) + ai2 * b(2,2);
@@ -198,7 +198,7 @@ namespace nv
         m_data[12] = v3.x; m_data[13] = v3.y; m_data[14] = v3.z; m_data[15] = v3.w;
     }
 
-    /*inline Matrix::Matrix(const scalar m[])
+    /*inline Matrix::Matrix(const float m[])
     {
         for(int i = 0; i < 16; i++) {
             m_data[i] = m[i];
@@ -207,33 +207,33 @@ namespace nv
 
 
     // Accessors
-    inline scalar Matrix::data(uint idx) const
+    inline float Matrix::data(uint idx) const
     {
         nvDebugCheck(idx < 16);
         return m_data[idx];
     }
-    inline scalar & Matrix::data(uint idx)
+    inline float & Matrix::data(uint idx)
     {
         nvDebugCheck(idx < 16);
         return m_data[idx];
     }
-    inline scalar Matrix::get(uint row, uint col) const
+    inline float Matrix::get(uint row, uint col) const
     {
         nvDebugCheck(row < 4 && col < 4);
         return m_data[col * 4 + row];
     }
-    inline scalar Matrix::operator()(uint row, uint col) const
+    inline float Matrix::operator()(uint row, uint col) const
     {
         nvDebugCheck(row < 4 && col < 4);
         return m_data[col * 4 + row];
     }
-    inline scalar & Matrix::operator()(uint row, uint col)
+    inline float & Matrix::operator()(uint row, uint col)
     {
         nvDebugCheck(row < 4 && col < 4);
         return m_data[col * 4 + row];
     }
 
-    inline const scalar * Matrix::ptr() const
+    inline const float * Matrix::ptr() const
     {
         return m_data;
     }
@@ -251,7 +251,7 @@ namespace nv
     }
 
     // Apply scale.
-    inline void Matrix::scale(scalar s)
+    inline void Matrix::scale(float s)
     {
         m_data[0] *= s; m_data[1] *= s; m_data[2] *= s; m_data[3] *= s;
         m_data[4] *= s; m_data[5] *= s; m_data[6] *= s; m_data[7] *= s;
@@ -276,10 +276,10 @@ namespace nv
         m_data[15] = m_data[3] * t.x + m_data[7] * t.y + m_data[11] * t.z + m_data[15];
     }
 
-    Matrix rotation(scalar theta, scalar v0, scalar v1, scalar v2);
+    Matrix rotation(float theta, float v0, float v1, float v2);
 
     // Apply rotation.
-    inline void Matrix::rotate(scalar theta, scalar v0, scalar v1, scalar v2)
+    inline void Matrix::rotate(float theta, float v0, float v1, float v2)
     {
         Matrix R(rotation(theta, v0, v1, v2));
         apply(R);
@@ -291,7 +291,7 @@ namespace nv
         nvDebugCheck(this != &m);
 
         for(int i = 0; i < 4; i++) {
-            const scalar ai0 = get(i,0), ai1 = get(i,1), ai2 = get(i,2), ai3 = get(i,3);
+            const float ai0 = get(i,0), ai1 = get(i,1), ai2 = get(i,2), ai3 = get(i,3);
             m_data[0 + i] = ai0 * m(0,0) + ai1 * m(1,0) + ai2 * m(2,0) + ai3 * m(3,0);
             m_data[4 + i] = ai0 * m(0,1) + ai1 * m(1,1) + ai2 * m(2,1) + ai3 * m(3,1);
             m_data[8 + i] = ai0 * m(0,2) + ai1 * m(1,2) + ai2 * m(2,2) + ai3 * m(3,2);
@@ -310,7 +310,7 @@ namespace nv
     }
 
     // Get scale matrix.
-    inline Matrix scale(scalar s)
+    inline Matrix scale(float s)
     {
         Matrix m(identity);
         m(0,0) = m(1,1) = m(2,2) = s;
@@ -328,10 +328,10 @@ namespace nv
     }
 
     // Get rotation matrix.
-    inline Matrix rotation(scalar theta, scalar v0, scalar v1, scalar v2)
+    inline Matrix rotation(float theta, float v0, float v1, float v2)
     {
-        scalar cost = cosf(theta);
-        scalar sint = sinf(theta);
+        float cost = cosf(theta);
+        float sint = sinf(theta);
 
         Matrix m(identity);
 
@@ -348,18 +348,18 @@ namespace nv
             m(0,1) = sint; m(1,1) = cost;
         } 
         else {
-            scalar a2, b2, c2;
+            float a2, b2, c2;
             a2 = v0 * v0;
             b2 = v1 * v1;
             c2 = v2 * v2;
 
-            scalar iscale = 1.0f / sqrtf(a2 + b2 + c2);
+            float iscale = 1.0f / sqrtf(a2 + b2 + c2);
             v0 *= iscale;
             v1 *= iscale;
             v2 *= iscale;
 
-            scalar abm, acm, bcm;
-            scalar mcos, asin, bsin, csin;
+            float abm, acm, bcm;
+            float mcos, asin, bsin, csin;
             mcos = 1.0f - cost;
             abm = v0 * v1 * mcos;
             acm = v0 * v2 * mcos;
@@ -380,18 +380,18 @@ namespace nv
         return m;
     }
 
-    //Matrix rotation(scalar yaw, scalar pitch, scalar roll);
-    //Matrix skew(scalar angle, Vector3::Arg v1, Vector3::Arg v2);
+    //Matrix rotation(float yaw, float pitch, float roll);
+    //Matrix skew(float angle, Vector3::Arg v1, Vector3::Arg v2);
 
     // Get frustum matrix.
-    inline Matrix frustum(scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNear, scalar zFar)
+    inline Matrix frustum(float xmin, float xmax, float ymin, float ymax, float zNear, float zFar)
     {
         Matrix m(0.0f);
 
-        scalar doubleznear = 2.0f * zNear;
-        scalar one_deltax = 1.0f / (xmax - xmin);
-        scalar one_deltay = 1.0f / (ymax - ymin);
-        scalar one_deltaz = 1.0f / (zFar - zNear);
+        float doubleznear = 2.0f * zNear;
+        float one_deltax = 1.0f / (xmax - xmin);
+        float one_deltay = 1.0f / (ymax - ymin);
+        float one_deltaz = 1.0f / (zFar - zNear);
 
         m(0,0) = doubleznear * one_deltax;
         m(1,1) = doubleznear * one_deltay;
@@ -405,14 +405,14 @@ namespace nv
     }
 
     // Get infinite frustum matrix.
-    inline Matrix frustum(scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNear)
+    inline Matrix frustum(float xmin, float xmax, float ymin, float ymax, float zNear)
     {
         Matrix m(0.0f);
 
-        scalar doubleznear = 2.0f * zNear;
-        scalar one_deltax = 1.0f / (xmax - xmin);
-        scalar one_deltay = 1.0f / (ymax - ymin);
-        scalar nudge = 1.0; // 0.999;
+        float doubleznear = 2.0f * zNear;
+        float one_deltax = 1.0f / (xmax - xmin);
+        float one_deltay = 1.0f / (ymax - ymin);
+        float nudge = 1.0; // 0.999;
 
         m(0,0) = doubleznear * one_deltax;
         m(1,1) = doubleznear * one_deltay;
@@ -426,27 +426,27 @@ namespace nv
     }
 
     // Get perspective matrix.
-    inline Matrix perspective(scalar fovy, scalar aspect, scalar zNear, scalar zFar)
+    inline Matrix perspective(float fovy, float aspect, float zNear, float zFar)
     {
-        scalar xmax = zNear * tan(fovy / 2);
-        scalar xmin = -xmax;
+        float xmax = zNear * tan(fovy / 2);
+        float xmin = -xmax;
 
-        scalar ymax = xmax / aspect;
-        scalar ymin = -ymax;
+        float ymax = xmax / aspect;
+        float ymin = -ymax;
 
         return frustum(xmin, xmax, ymin, ymax, zNear, zFar);	
     }
 
     // Get infinite perspective matrix.
-    inline Matrix perspective(scalar fovy, scalar aspect, scalar zNear)
+    inline Matrix perspective(float fovy, float aspect, float zNear)
     {
-        scalar x = zNear * tan(fovy / 2);
-        scalar y = x / aspect;
+        float x = zNear * tan(fovy / 2);
+        float y = x / aspect;
         return frustum( -x, x, -y, y, zNear );	
     }
 
     // Get matrix determinant.
-    inline scalar Matrix::determinant() const
+    inline float Matrix::determinant() const
     {
         return 
             m_data[3] * m_data[6] * m_data[ 9] * m_data[12] - m_data[2] * m_data[7] * m_data[ 9] * m_data[12] - m_data[3] * m_data[5] * m_data[10] * m_data[12] + m_data[1] * m_data[7] * m_data[10] * m_data[12] +
@@ -563,9 +563,9 @@ void TranslationMatrix(const Vec3 & v) {
 }
 
 /** Rotate theta degrees around v. */
-void RotationMatrix( scalar theta, scalar v0, scalar v1, scalar v2 ) {
-    scalar cost = cos(theta);
-    scalar sint = sin(theta);
+void RotationMatrix( float theta, float v0, float v1, float v2 ) {
+    float cost = cos(theta);
+    float sint = sin(theta);
 
     if( 1 == v0 && 0 == v1 && 0 == v2 ) {
         data[0] = 1.0f;	data[1] = 0.0f;	data[2] = 0.0f;	data[3] = 0.0f;
@@ -587,18 +587,18 @@ void RotationMatrix( scalar theta, scalar v0, scalar v1, scalar v2 ) {
     } 
     else {
         //we need scale a,b,c to unit length.
-        scalar a2, b2, c2;
+        float a2, b2, c2;
         a2 = v0 * v0;
         b2 = v1 * v1;
         c2 = v2 * v2;
 
-        scalar iscale = 1.0f / sqrtf(a2 + b2 + c2);
+        float iscale = 1.0f / sqrtf(a2 + b2 + c2);
         v0 *= iscale;
         v1 *= iscale;
         v2 *= iscale;
 
-        scalar abm, acm, bcm;
-        scalar mcos, asin, bsin, csin;
+        float abm, acm, bcm;
+        float mcos, asin, bsin, csin;
         mcos = 1.0f - cost;
         abm = v0 * v1 * mcos;
         acm = v0 * v2 * mcos;
@@ -626,7 +626,7 @@ void RotationMatrix( scalar theta, scalar v0, scalar v1, scalar v2 ) {
 }
 
 /*
-void SkewMatrix(scalar angle, const Vec3 & v1, const Vec3 & v2) {
+void SkewMatrix(float angle, const Vec3 & v1, const Vec3 & v2) {
 v1.Normalize();
 v2.Normalize();
 
@@ -635,9 +635,9 @@ v3.Cross(v1, v2);
 v3.Normalize();
 
 // Get skew factor.
-scalar costheta = Vec3DotProduct(v1, v2);
-scalar sintheta = Real.Sqrt(1 - costheta * costheta);
-scalar skew = tan(Trig.DegreesToRadians(angle) + acos(sintheta)) * sintheta - costheta;
+float costheta = Vec3DotProduct(v1, v2);
+float sintheta = Real.Sqrt(1 - costheta * costheta);
+float skew = tan(Trig.DegreesToRadians(angle) + acos(sintheta)) * sintheta - costheta;
 
 // Build orthonormal matrix.
 v1 = FXVector3.Cross(v3, v2);
@@ -669,13 +669,13 @@ return R * S * R.Transpose;	// Not sure this is in the correct order...
 *
 * @todo Have to recompute this code for our new convention.
 **/
-void RotationMatrix( scalar yaw, scalar pitch, scalar roll ) {
-    scalar sy = sin(yaw+ToRadian(90));
-    scalar cy = cos(yaw+ToRadian(90));
-    scalar sp = sin(pitch-ToRadian(90));
-    scalar cp = cos(pitch-ToRadian(90));
-    scalar sr = sin(roll);
-    scalar cr = cos(roll);
+void RotationMatrix( float yaw, float pitch, float roll ) {
+    float sy = sin(yaw+ToRadian(90));
+    float cy = cos(yaw+ToRadian(90));
+    float sp = sin(pitch-ToRadian(90));
+    float cp = cos(pitch-ToRadian(90));
+    float sr = sin(roll);
+    float cr = cos(roll);
 
     data[0] = cr*cy + sr*sp*sy;
     data[1] = cp*sy;
@@ -699,35 +699,35 @@ void RotationMatrix( scalar yaw, scalar pitch, scalar roll ) {
 }
 
 /** Create a frustum matrix with the far plane at the infinity. */
-void Frustum( scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNear, scalar zFar ) {
-    scalar one_deltax, one_deltay, one_deltaz, doubleznear;
+void Frustum( float xmin, float xmax, float ymin, float ymax, float zNear, float zFar ) {
+    float one_deltax, one_deltay, one_deltaz, doubleznear;
 
     doubleznear = 2.0f * zNear;
     one_deltax = 1.0f / (xmax - xmin);
     one_deltay = 1.0f / (ymax - ymin);
     one_deltaz = 1.0f / (zFar - zNear);
 
-    data[0] = (scalar)(doubleznear * one_deltax);
+    data[0] = (float)(doubleznear * one_deltax);
     data[1] = 0.0f;
     data[2] = 0.0f;
     data[3] = 0.0f;
     data[4] = 0.0f;
-    data[5] = (scalar)(doubleznear * one_deltay);
+    data[5] = (float)(doubleznear * one_deltay);
     data[6] = 0.f;
     data[7] = 0.f;
-    data[8] = (scalar)((xmax + xmin) * one_deltax);
-    data[9] = (scalar)((ymax + ymin) * one_deltay);
-    data[10] = (scalar)(-(zFar + zNear) * one_deltaz);
+    data[8] = (float)((xmax + xmin) * one_deltax);
+    data[9] = (float)((ymax + ymin) * one_deltay);
+    data[10] = (float)(-(zFar + zNear) * one_deltaz);
     data[11] = -1.f;
     data[12] = 0.f;
     data[13] = 0.f;
-    data[14] = (scalar)(-(zFar * doubleznear) * one_deltaz);
+    data[14] = (float)(-(zFar * doubleznear) * one_deltaz);
     data[15] = 0.f;
 }
 
 /** Create a frustum matrix with the far plane at the infinity. */
-void FrustumInf( scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNear ) {
-    scalar one_deltax, one_deltay, doubleznear, nudge;
+void FrustumInf( float xmin, float xmax, float ymin, float ymax, float zNear ) {
+    float one_deltax, one_deltay, doubleznear, nudge;
 
     doubleznear = 2.0f * zNear;
     one_deltax = 1.0f / (xmax - xmin);
@@ -756,8 +756,8 @@ void FrustumInf( scalar xmin, scalar xmax, scalar ymin, scalar ymax, scalar zNea
 }
 
 /** Create an inverse frustum matrix with the far plane at the infinity. */
-void FrustumInfInv( scalar left, scalar right, scalar bottom, scalar top, scalar zNear ) {
-    // this matrix is wrong (not tested scalarly) I think it should be transposed.
+void FrustumInfInv( float left, float right, float bottom, float top, float zNear ) {
+    // this matrix is wrong (not tested floatly) I think it should be transposed.
     data[0] = (right - left) / (2 * zNear);
     data[1] = 0;
     data[2] = 0;
@@ -777,8 +777,8 @@ void FrustumInfInv( scalar left, scalar right, scalar bottom, scalar top, scalar
 }
 
 /** Create an homogeneous projection matrix. */
-void Perspective( scalar fov, scalar aspect, scalar zNear, scalar zFar ) {
-    scalar xmin, xmax, ymin, ymax;
+void Perspective( float fov, float aspect, float zNear, float zFar ) {
+    float xmin, xmax, ymin, ymax;
 
     xmax = zNear * tan( fov/2 );
     xmin = -xmax;
@@ -790,22 +790,22 @@ void Perspective( scalar fov, scalar aspect, scalar zNear, scalar zFar ) {
 }
 
 /** Create a projection matrix with the far plane at the infinity. */
-void PerspectiveInf( scalar fov, scalar aspect, scalar zNear ) {
-    scalar x = zNear * tan( fov/2 );
-    scalar y = x / aspect;
+void PerspectiveInf( float fov, float aspect, float zNear ) {
+    float x = zNear * tan( fov/2 );
+    float y = x / aspect;
     FrustumInf( -x, x, -y, y, zNear );
 }
 
 /** Create an inverse projection matrix with far plane at the infinity. */
-void PerspectiveInfInv( scalar fov, scalar aspect, scalar zNear ) {
-    scalar x = zNear * tan( fov/2 );
-    scalar y = x / aspect;
+void PerspectiveInfInv( float fov, float aspect, float zNear ) {
+    float x = zNear * tan( fov/2 );
+    float y = x / aspect;
     FrustumInfInv( -x, x, -y, y, zNear );
 }
 
 /** Build bone matrix from quatertion and offset. */
 void BoneMatrix(const Quat & q, const Vec3 & offset) {
-    scalar x2, y2, z2, xx, xy, xz, yy, yz, zz, wx, wy, wz;
+    float x2, y2, z2, xx, xy, xz, yy, yz, zz, wx, wy, wz;
 
     // calculate coefficients
     x2 = q.x + q.x;
@@ -844,7 +844,7 @@ void BoneMatrix(const Quat & q, const Vec3 & offset) {
 //@{
 
 /** Apply a general scale. */
-void Scale( scalar x, scalar y, scalar z ) {
+void Scale( float x, float y, float z ) {
     data[0] *= x;	data[4] *= y;	data[8]  *= z;
     data[1] *= x;	data[5] *= y;	data[9]  *= z;
     data[2] *= x;	data[6] *= y;	data[10] *= z;
@@ -852,14 +852,14 @@ void Scale( scalar x, scalar y, scalar z ) {
 }
 
 /** Apply a rotation of theta degrees around the axis v*/
-void Rotate( scalar theta, const Vec3 & v ) {
+void Rotate( float theta, const Vec3 & v ) {
     Matrix b;
     b.RotationMatrix( theta, v[0], v[1], v[2] );
     Multiply4x3( b );
 }
 
 /** Apply a rotation of theta degrees around the axis v*/
-void Rotate( scalar theta, scalar v0, scalar v1, scalar v2 ) {
+void Rotate( float theta, float v0, float v1, float v2 ) {
     Matrix b;
     b.RotationMatrix( theta, v0, v1, v2 );
     Multiply4x3( b );
@@ -881,7 +881,7 @@ void Translate( const Vec3 &t ) {
 * Translate the matrix by x, y, z. This is the same as multiplying by a 
 * translation matrix with the given offsets.
 */
-void Translate( scalar x, scalar y, scalar z ) {
+void Translate( float x, float y, float z ) {
     data[12] = data[0] * x + data[4] * y + data[8]  * z + data[12];
     data[13] = data[1] * x + data[5] * y + data[9]  * z + data[13];
     data[14] = data[2] * x + data[6] * y + data[10] * z + data[14];
@@ -922,7 +922,7 @@ void AffineInverse() {
 //@{
 
 /** Return the determinant of this matrix. */
-scalar Determinant() const {
+float Determinant() const {
     return	data[0] * data[5] * data[10] * data[15] + 
         data[1] * data[6] * data[11] * data[12] +
         data[2] * data[7] * data[ 8] * data[13] +
@@ -944,7 +944,7 @@ void Multiply4x4( const Matrix & A, const Matrix & restrict B ) {
     piDebugCheck(this != &B);
 
     for(int i = 0; i < 4; i++) {
-        const scalar ai0 = A(i,0), ai1 = A(i,1), ai2 = A(i,2), ai3 = A(i,3);
+        const float ai0 = A(i,0), ai1 = A(i,1), ai2 = A(i,2), ai3 = A(i,3);
         GetElem(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
         GetElem(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
         GetElem(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
@@ -981,7 +981,7 @@ void Multiply4x3( const Matrix & A, const Matrix & restrict B ) {
     piDebugCheck(this != &B);
 
     for(int i = 0; i < 3; i++) {
-        const scalar ai0 = A(i,0), ai1 = A(i,1), ai2 = A(i,2), ai3 = A(i,3);
+        const float ai0 = A(i,0), ai1 = A(i,1), ai2 = A(i,2), ai3 = A(i,3);
         GetElem(i,0) = ai0 * B(0,0) + ai1 * B(1,0) + ai2 * B(2,0) + ai3 * B(3,0);
         GetElem(i,1) = ai0 * B(0,1) + ai1 * B(1,1) + ai2 * B(2,1) + ai3 * B(3,1);
         GetElem(i,2) = ai0 * B(0,2) + ai1 * B(1,2) + ai2 * B(2,2) + ai3 * B(3,2);
@@ -1038,9 +1038,9 @@ void TransformPoint(const Vec3 & restrict orig, Vec3 * restrict dest) const {
 }
 
 /** Transform a point, normalize it, and return w. */
-scalar TransformPointAndNormalize(const Vec3 & restrict orig, Vec3 * restrict dest) const {
+float TransformPointAndNormalize(const Vec3 & restrict orig, Vec3 * restrict dest) const {
     piDebugCheck(&orig != dest);
-    scalar w;
+    float w;
     dest->x = orig.x * data[0] + orig.y * data[4] + orig.z * data[8] + data[12];
     dest->y = orig.x * data[1] + orig.y * data[5] + orig.z * data[9] + data[13];
     dest->z = orig.x * data[2] + orig.y * data[6] + orig.z * data[10] + data[14];
@@ -1050,7 +1050,7 @@ scalar TransformPointAndNormalize(const Vec3 & restrict orig, Vec3 * restrict de
 }
 
 /** Transform a point and return w. */
-scalar TransformPointReturnW(const Vec3 & restrict orig, Vec3 * restrict dest) const {
+float TransformPointReturnW(const Vec3 & restrict orig, Vec3 * restrict dest) const {
     piDebugCheck(&orig != dest);
     dest->x = orig.x * data[0] + orig.y * data[4] + orig.z * data[8] + data[12];
     dest->y = orig.x * data[1] + orig.y * data[5] + orig.z * data[9] + data[13];
@@ -1071,7 +1071,7 @@ void TransformVec4(const Vec3 & orig, Vec4 * dest) const {
 //@{
 
 /** Get the ZYZ euler angles from the matrix. Assumes the matrix is orthonormal. */
-void GetEulerAnglesZYZ(scalar * s, scalar * t, scalar * r) const {
+void GetEulerAnglesZYZ(float * s, float * t, float * r) const {
     if( GetElem(2,2) < 1.0f ) {
         if( GetElem(2,2) > -1.0f ) {
             // 	cs*ct*cr-ss*sr 		-ss*ct*cr-cs*sr		st*cr
@@ -1115,7 +1115,7 @@ void Print() const {
 
 public:
 
-    scalar data[16];
+    float data[16];
 
 };
 #endif

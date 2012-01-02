@@ -8,30 +8,26 @@
 
 namespace nv
 {
-
-    // I should probably use templates.
-    typedef float scalar;
-
     class NVMATH_CLASS Vector2
     {
     public:
         typedef Vector2 const & Arg;
 
         Vector2();
-        explicit Vector2(scalar f);
-        Vector2(scalar x, scalar y);
+        explicit Vector2(float f);
+        Vector2(float x, float y);
         Vector2(Vector2::Arg v);
 
         const Vector2 & operator=(Vector2::Arg v);
 
-        const scalar * ptr() const;
+        const float * ptr() const;
 
-        void set(scalar x, scalar y);
+        void set(float x, float y);
 
         Vector2 operator-() const;
         void operator+=(Vector2::Arg v);
         void operator-=(Vector2::Arg v);
-        void operator*=(scalar s);
+        void operator*=(float s);
         void operator*=(Vector2::Arg v);
 
         friend bool operator==(Vector2::Arg a, Vector2::Arg b);
@@ -39,9 +35,9 @@ namespace nv
 
         union {
             struct {
-                scalar x, y;
+                float x, y;
             };
-            scalar component[2];
+            float component[2];
         };
     };
 
@@ -55,24 +51,24 @@ namespace nv
         typedef Vector3 const & Arg;
 
         Vector3();
-        explicit Vector3(scalar x);
-        Vector3(scalar x, scalar y, scalar z);
-        Vector3(Vector2::Arg v, scalar z);
+        explicit Vector3(float x);
+        Vector3(float x, float y, float z);
+        Vector3(Vector2::Arg v, float z);
         Vector3(Vector3::Arg v);
 
         const Vector3 & operator=(Vector3::Arg v);
 
         Vector2 xy() const;
 
-        const scalar * ptr() const;
+        const float * ptr() const;
 
-        void set(scalar x, scalar y, scalar z);
+        void set(float x, float y, float z);
 
         Vector3 operator-() const;
         void operator+=(Vector3::Arg v);
         void operator-=(Vector3::Arg v);
-        void operator*=(scalar s);
-        void operator/=(scalar s);
+        void operator*=(float s);
+        void operator/=(float s);
         void operator*=(Vector3::Arg v);
 
         friend bool operator==(Vector3::Arg a, Vector3::Arg b);
@@ -80,9 +76,9 @@ namespace nv
 
         union {
             struct {
-                scalar x, y, z;
+                float x, y, z;
             };
-            scalar component[3];
+            float component[3];
         };
     };
 
@@ -96,11 +92,11 @@ namespace nv
         typedef Vector4 const & Arg;
 
         Vector4();
-        explicit Vector4(scalar x);
-        Vector4(scalar x, scalar y, scalar z, scalar w);
-        Vector4(Vector2::Arg v, scalar z, scalar w);
+        explicit Vector4(float x);
+        Vector4(float x, float y, float z, float w);
+        Vector4(Vector2::Arg v, float z, float w);
         Vector4(Vector2::Arg v, Vector2::Arg u);
-        Vector4(Vector3::Arg v, scalar w);
+        Vector4(Vector3::Arg v, float w);
         Vector4(Vector4::Arg v);
         //	Vector4(const Quaternion & v);
 
@@ -110,14 +106,14 @@ namespace nv
         Vector2 zw() const;
         Vector3 xyz() const;
 
-        const scalar * ptr() const;
+        const float * ptr() const;
 
-        void set(scalar x, scalar y, scalar z, scalar w);
+        void set(float x, float y, float z, float w);
 
         Vector4 operator-() const;
         void operator+=(Vector4::Arg v);
         void operator-=(Vector4::Arg v);
-        void operator*=(scalar s);
+        void operator*=(float s);
         void operator*=(Vector4::Arg v);
 
         friend bool operator==(Vector4::Arg a, Vector4::Arg b);
@@ -125,9 +121,9 @@ namespace nv
 
         union {
             struct {
-                scalar x, y, z, w;
+                float x, y, z, w;
             };
-            scalar component[4];
+            float component[4];
         };
     };
 
