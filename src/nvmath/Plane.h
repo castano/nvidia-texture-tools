@@ -25,12 +25,12 @@ namespace nv
         const Plane & operator=(Plane::Arg v);
 
         Vector3 vector() const;
-        scalar offset() const;
+        float offset() const;
 
         const Vector4 & asVector() const;
         Vector4 & asVector();
 
-        void operator*=(scalar s);
+        void operator*=(float s);
 
     private:
         Vector4 p;

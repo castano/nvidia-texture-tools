@@ -19,9 +19,9 @@ namespace nv
         Matrix3(const Matrix3 & m);
         Matrix3(Vector3::Arg v0, Vector3::Arg v1, Vector3::Arg v2);
 
-        scalar get(uint row, uint col) const;
-        scalar operator()(uint row, uint col) const;
-        scalar & operator()(uint row, uint col);
+        float get(uint row, uint col) const;
+        float operator()(uint row, uint col) const;
+        float & operator()(uint row, uint col);
 
         Vector3 row(uint i) const;
         Vector3 column(uint i) const;
@@ -34,7 +34,7 @@ namespace nv
         float determinant() const;
 
     private:
-        scalar m_data[9];
+        float m_data[9];
     };
 
 
@@ -52,28 +52,28 @@ namespace nv
         explicit Matrix(identity_t);
         Matrix(const Matrix & m);
         Matrix(Vector4::Arg v0, Vector4::Arg v1, Vector4::Arg v2, Vector4::Arg v3);
-        //explicit Matrix(const scalar m[]);	// m is assumed to contain 16 elements
+        //explicit Matrix(const float m[]);	// m is assumed to contain 16 elements
 
-        scalar data(uint idx) const;
-        scalar & data(uint idx);
-        scalar get(uint row, uint col) const;
-        scalar operator()(uint row, uint col) const;
-        scalar & operator()(uint row, uint col);
-        const scalar * ptr() const;
+        float data(uint idx) const;
+        float & data(uint idx);
+        float get(uint row, uint col) const;
+        float operator()(uint row, uint col) const;
+        float & operator()(uint row, uint col);
+        const float * ptr() const;
 
         Vector4 row(uint i) const;
         Vector4 column(uint i) const;
 
-        void scale(scalar s);
+        void scale(float s);
         void scale(Vector3::Arg s);
         void translate(Vector3::Arg t);
-        void rotate(scalar theta, scalar v0, scalar v1, scalar v2);
-        scalar determinant() const;
+        void rotate(float theta, float v0, float v1, float v2);
+        float determinant() const;
 
         void apply(Matrix::Arg m);
 
     private:
-        scalar m_data[16];
+        float m_data[16];
     };
 
 } // nv namespace

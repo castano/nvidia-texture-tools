@@ -461,15 +461,30 @@ float ColorBlock::volume() const
 }*/
 
 
+void ColorSet::allocate(uint w, uint h)
+{
+    nvDebugCheck(w <= 4 && h <= 4);
+
+    this->colorCount = w * h;
+    this->indexCount = 16;
+    this->w = 4;
+    this->h = 4;
+
+    //colors = new Vector4[colorCount];
+    //weights = new float[colorCount];
+    //indices = new int[indexCount];
+}
+
+// Allocate 4x4 block and fill with 
 void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x, uint img_y)
 {
     nvDebugCheck(img_x < img_w && img_y < img_h);
 
-    w = min(4U, img_w - img_x);
-    h = min(4U, img_h - img_y);
-    nvDebugCheck(w != 0 && h != 0);
+    const uint block_w = min(4U, img_w - img_x);
+    const uint block_h = min(4U, img_h - img_y);
+    nvDebugCheck(block_w != 0 && block_h != 0);
 
-    count = w * h;
+    allocate(block_w, block_h);
 
     const float * r = data + img_w * img_h * 0;
     const float * g = data + img_w * img_h * 1;
@@ -477,9 +492,9 @@ void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x,
     const float * a = data + img_w * img_h * 3;
 
     // Set colors.
-    for (uint y = 0, i = 0; y < h; y++)
+    for (uint y = 0, i = 0; y < block_h; y++)
     {
-        for (uint x = 0; x < w; x++, i++)
+        for (uint x = 0; x < block_w; x++, i++)
         {
             uint idx = x + img_x + (y + img_y) * img_w;
             colors[i].x = r[idx];
@@ -488,11 +503,25 @@ void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x,
             colors[i].w = a[idx];
         }
     }
+
+    // Set default indices.
+    for (uint y = 0, i = 0; y < 4; y++)
+    {
+        for (uint x = 0; x < 4; x++)
+        {
+            if (x < block_w && y < block_h) {
+                indices[y*4+x] = i++;
+            }
+            else {
+                indices[y*4+x] = -1;
+            }
+        }
+    }
 }
 
 void ColorSet::setAlphaWeights()
 {
-    for (uint i = 0; i < count; i++)
+    for (uint i = 0; i < colorCount; i++)
     {
         weights[i] = max(colors[i].w, 0.001f); // Avoid division by zero.
     }
@@ -500,72 +529,71 @@ void ColorSet::setAlphaWeights()
 
 void ColorSet::setUniformWeights()
 {
-    for (uint i = 0; i < count; i++)
+    for (uint i = 0; i < colorCount; i++)
     {
         weights[i] = 1.0f;
     }
 }
 
 
+// @@ Handle complex blocks (not 4x4).
 void ColorSet::createMinimalSet(bool ignoreTransparent)
 {
-    nvDebugCheck(count == w*h); // Do not call this method multiple times.
+    nvDebugCheck(colorCount <= 16);
 
     Vector4 C[16];
     float W[16];
-    memcpy(C, colors, sizeof(Vector4)*count);
-    memcpy(W, weights, sizeof(float)*count);
+    memcpy(C, colors, sizeof(Vector4)*colorCount);
+    memcpy(W, weights, sizeof(float)*colorCount);
 
     uint n = 0;
-    for (uint y = 0, i = 0; y < h; y++)
+    for (uint i = 0; i < indexCount; i++)
     {
-        for (uint x = 0; x < w; x++, i++)
-        {
-            if (ignoreTransparent && C[i].w == 0) {
-                continue;
-            }
+        if (indices[i] < 0) {
+            continue;
+        }
 
-            uint idx = y * 4 + x;
+        Vector4 ci = C[indices[i]];
+        float wi = W[indices[i]];
 
-            // loop over previous points for a match
-            for (int j = 0; ; j++)
-            {
-                // allocate a new point
-                if (j == i)
-                {
-                    colors[n] = C[i];
-                    weights[n] = W[i];
-                    remap[idx] = n;
-                    n++;
-                    break;
-                }
+        if (ignoreTransparent && ci.w == 0) {
+            indices[i] = -1;
+            continue;
+        }
 
-                // check for a match
-                bool colorMatch = (C[i].x == C[j].x) && (C[i].w == C[j].w) && (C[i].z == C[j].z);
-                //bool alphaMatch = (C[i].w == C[j].w);
+        // Find matching color.
+        uint j;
+        for (j = 0; j < n; j++) {
+            bool colorMatch = equal(colors[j].x, ci.x) && equal(colors[j].y, ci.y) && equal(colors[j].z, ci.z);
+            //bool alphaMatch = equal(colors[j].w, ci.w);
 
-                if (colorMatch)
-                {
-                    // get the index of the match
-                    int index = remap[j];
-
-                    // map to this point and increase the weight
-                    weights[index] += W[i];
-                    remap[idx] = index;
-                    break;
-                }
+            if (colorMatch) {
+                weights[j] += wi;
+                indices[i] = j;
+                break;
             }
         }
+
+        // No match found. Add new color.
+        if (j == n) {
+            colors[n] = ci;
+            weights[n] = wi;
+            indices[i] = n;
+            n++;
+        }
+    }
+    nvDebugCheck(n != 0);
+
+    for (uint i = n; i < colorCount; i++) {
+        weights[i] = 0;
     }
 
-    count = n;
+    colorCount = n;
 
     // Avoid empty blocks.
-    if (count == 0) {
-        count = 1;
-        //colors[0] = C[0];
-        //weights[0] = W[0];
-        memset(remap, 0, sizeof(int)*16);
+    if (colorCount == 0) {
+        colorCount = 1;
+        indices[0] = 0;
     }
 }
 
@@ -578,7 +606,7 @@ void ColorSet::wrapIndices()
         uint base = (y % h) * w;
         for (uint x = w; x < 4; x++)
         {
-            remap[y*4+3] = remap[base + (x % w)];
+            indices[y*4+3] = indices[base + (x % w)];
         }
     }
 }
@@ -588,7 +616,7 @@ bool ColorSet::isSingleColor(bool ignoreAlpha) const
     Vector4 v = colors[0];
     if (ignoreAlpha) v.w = 1.0f;
 
-    for (uint i = 1; i < count; i++)
+    for (uint i = 1; i < colorCount; i++)
     {
         Vector4 c = colors[i];
         if (ignoreAlpha) c.w = 1.0f;
@@ -615,7 +643,7 @@ static inline float component(Vector4::Arg c, uint i)
 
 void ColorSet::swizzle(uint x, uint y, uint z, uint w)
 {
-    for (uint i = 0; i < count; i++)
+    for (uint i = 0; i < colorCount; i++)
     {
         Vector4 c = colors[i];
         colors[i].x = component(c, x);
@@ -627,7 +655,7 @@ void ColorSet::swizzle(uint x, uint y, uint z, uint w)
 
 bool ColorSet::hasAlpha() const
 {
-    for (uint i = 0; i < count; i++)
+    for (uint i = 0; i < colorCount; i++)
     {
         if (colors[i].w != 0.0f) return true;
     }

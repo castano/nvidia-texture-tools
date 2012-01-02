@@ -43,7 +43,7 @@ namespace nv
         Vector3 extents() const;
 
         // Return extents of the box.
-        scalar extents(uint axis) const;
+        float extents(uint axis) const;
 
         // Add a point to this box.
         void addPointToBounds(const Vector3 & p);

@@ -83,6 +83,11 @@ namespace nv
 
     struct ColorSet
     {
+        ColorSet() : colorCount(0), indexCount(0), w(0), h(0) {}
+        //~ColorSet() {}
+
+        void allocate(uint w, uint h);
+
         void setColors(const float * data, uint img_w, uint img_h, uint img_x, uint img_y);
 
         void setAlphaWeights();
@@ -97,19 +102,22 @@ namespace nv
         bool hasAlpha() const;
 
         // These methods require indices to be set:
-        Vector4 color(uint x, uint y) const { nvDebugCheck(x < w && y < h); return colors[remap[y * 4 + x]]; }
-        Vector4 & color(uint x, uint y) { nvDebugCheck(x < w && y < h); return colors[remap[y * 4 + x]]; }
+        Vector4 color(uint x, uint y) const { nvDebugCheck(x < w && y < h); return colors[indices[y * 4 + x]]; }
+        Vector4 & color(uint x, uint y) { nvDebugCheck(x < w && y < h); return colors[indices[y * 4 + x]]; }
 
-        Vector4 color(uint i) const { nvDebugCheck(i < 16); return colors[remap[i]]; }
-        Vector4 & color(uint i) { nvDebugCheck(i < 16); return colors[remap[i]]; }
+        Vector4 color(uint i) const { nvDebugCheck(i < indexCount); return colors[indices[i]]; }
+        Vector4 & color(uint i) { nvDebugCheck(i < indexCount); return colors[indices[i]]; }
 
+        bool isValidIndex(uint i) const { return i < indexCount && indices[i] >= 0; }
 
-        uint count;
-        uint w, h;
+        uint colorCount;
+        uint indexCount;    // Fixed to 16
+        uint w, h;          // Fixed to 4x4
 
+        // Allocate color set dynamically and add support for sets larger than 4x4.
         Vector4 colors[16];
         float weights[16];
-        int remap[16];
+        int indices[16];
     };
 
 } // nv namespace

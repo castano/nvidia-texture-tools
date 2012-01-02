@@ -18,7 +18,7 @@ namespace nv
     inline const Plane & Plane::operator=(Plane::Arg v) { p = v.p; return *this; }
 
     inline Vector3 Plane::vector() const { return p.xyz(); }
-    inline scalar Plane::offset() const { return p.w; }
+    inline float Plane::offset() const { return p.w; }
 
     inline const Vector4 & Plane::asVector() const { return p; }
     inline Vector4 & Plane::asVector() { return p; }
@@ -38,7 +38,7 @@ namespace nv
         return dot(plane.vector(), point) - plane.offset();
     }
 
-    inline void Plane::operator*=(scalar s)
+    inline void Plane::operator*=(float s)
     {
         scale(p, s);
     }
