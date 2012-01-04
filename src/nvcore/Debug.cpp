@@ -294,19 +294,37 @@ namespace
         nvDebug( "\nDumping stacktrace:\n" );
         for(int i = start; i < size-1; i++ ) {
 #       if NV_CC_GNUC // defined(HAVE_CXXABI_H)
+            // @@ Write a better parser for the possible formats.
             char * begin = strchr(string_array[i], '(');
-            char * end = strchr(string_array[i], '+');
+            char * end = strrchr(string_array[i], '+');
+            char * module = string_array[i];
+
+            if (begin == 0 && end != 0) {
+                *(end - 1) = '\0';
+                begin = strrchr(string_array[i], ' ');
+                module = NULL; // Ignore module.
+            }
+
             if (begin != 0 && begin < end) {
                 int stat;
                 *end = '\0';
                 *begin = '\0';
-                char * module = string_array[i];
                 char * name = abi::__cxa_demangle(begin+1, 0, 0, &stat);
-                if (name == NULL || stat != 0) {
-                    nvDebug( "  In: [%s] '%s'\n", module, begin+1 );
+                if (module == NULL) {
+                    if (name == NULL || stat != 0) {
+                        nvDebug( "  In: '%s'\n", begin+1 );
+                    }
+                    else {
+                        nvDebug( "  In: '%s'\n", name );
+                    }
                 }
                 else {
-                    nvDebug( "  In: [%s] '%s'\n", module, name );
+                    if (name == NULL || stat != 0) {
+                        nvDebug( "  In: [%s] '%s'\n", module, begin+1 );
+                    }
+                    else {
+                        nvDebug( "  In: [%s] '%s'\n", module, name );
+                    }
                 }
                 free(name);
             }
