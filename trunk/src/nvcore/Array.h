@@ -205,7 +205,7 @@ namespace nv
         }
 
         /// Qt like push operator.
-        NV_FORCEINLINE Array<T> & operator<< ( T & t )
+        NV_FORCEINLINE Array<T> & operator<< ( const T & t )
         {
             push_back(t);
             return *this;
