@@ -93,6 +93,11 @@ namespace
         }
         return 0;
     }
+
+    /*static int translateMask(int input) {
+        if (input > 0) return 1 << input;
+        return ~input;
+    }*/
 }
 
 uint nv::countMipmaps(uint w)
@@ -372,19 +377,22 @@ void Surface::histogram(int channel, float rangeMin, float rangeMax, int binCoun
     }
 }
 
-void Surface::range(int channel, float * rangeMin, float * rangeMax)
+void Surface::range(int channel, float * rangeMin, float * rangeMax) const
 {
     Vector2 range(FLT_MAX, -FLT_MAX);
 
     FloatImage * img = m->image;
-    float * c = img->channel(channel);
 
-    const uint count = img->pixelCount();
-    for (uint p = 0; p < count; p++) {
-        float f = c[p];
-        if (f < range.x) range.x = f;
-        if (f > range.y) 
-            range.y = f;
+    if (m->image != NULL)
+    {
+        float * c = img->channel(channel);
+
+        const uint count = img->pixelCount();
+        for (uint p = 0; p < count; p++) {
+            float f = c[p];
+            if (f < range.x) range.x = f;
+            if (f > range.y) range.y = f;
+        }
     }
 
     *rangeMin = range.x;
@@ -1863,9 +1871,9 @@ void Surface::toneMap(ToneMapper tm, float * parameters)
     }
     else if (tm == ToneMapper_Halo) {
         for (uint i = 0; i < count; i++) {
-            r[i] = 1 - expf(-r[i]);
-            g[i] = 1 - expf(-g[i]);
-            b[i] = 1 - expf(-b[i]);
+            r[i] = 1 - exp2f(-r[i]);
+            g[i] = 1 - exp2f(-g[i]);
+            b[i] = 1 - exp2f(-b[i]);
         }
     }
     else if (tm == ToneMapper_Lightmap) {
@@ -1883,6 +1891,39 @@ void Surface::toneMap(ToneMapper tm, float * parameters)
         }
     }
 }
+
+void Surface::toLogScale(int channel, float base) {
+    if (isNull()) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    float * c = img->channel(channel);
+
+    float scale = 1.0f / log2f(base);
+
+    const uint count = img->pixelCount();
+    for (uint i = 0; i < count; i++) {
+        c[i] = log2f(c[i]) * scale;
+    }
+}
+
+void Surface::fromLogScale(int channel, float base) {
+    if (isNull()) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    float * c = img->channel(channel);
+
+    float scale = log2f(base);
+
+    const uint count = img->pixelCount();
+    for (uint i = 0; i < count; i++) {
+        c[i] = exp2f(c[i] * scale);
+    }
+}
+
 
 
 /*

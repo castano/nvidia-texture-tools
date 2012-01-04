@@ -420,6 +420,12 @@ namespace nvtt
         ToneMapper_Lightmap,
     };
 
+    /*enum ChannelMask {
+        R = 0x70000001,
+        G = 0x70000002,
+        B = 0x70000004,
+        A = 0x70000008,
+    };*/
 
     // A surface is one level of a 2D or 3D texture.
     // @@ It would be nice to add support for texture borders for correct resizing of tiled textures and constrained DXT compression.
@@ -450,7 +456,7 @@ namespace nvtt
         NVTT_API float average(int channel, int alpha_channel = -1, float gamma = 2.2f) const;
         NVTT_API const float * data() const;
         NVTT_API void histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const;
-        NVTT_API void range(int channel, float * rangeMin, float * rangeMax);
+        NVTT_API void range(int channel, float * rangeMin, float * rangeMax) const;
 
         // Texture data.
         NVTT_API bool load(const char * fileName, bool * hasAlpha = 0);
@@ -500,6 +506,8 @@ namespace nvtt
         NVTT_API void fromLUVW(float range = 1.0f);
         NVTT_API void abs(int channel);
         NVTT_API void convolve(int channel, int kernelSize, float * kernelData);
+        NVTT_API void toLogScale(int channel, float base);
+        NVTT_API void fromLogScale(int channel, float base);
 
         NVTT_API void toneMap(ToneMapper tm, float * parameters);
 

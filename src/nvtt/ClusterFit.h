@@ -45,7 +45,7 @@ namespace nv {
 
         void setColourSet(const ColorSet * set);
 
-        void setMetric(Vector4::Arg w);
+        void setMetric(const Vector4 & w);
         float bestError() const;
 
         bool compress3(Vector3 * start, Vector3 * end);

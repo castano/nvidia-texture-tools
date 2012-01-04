@@ -31,6 +31,7 @@
 #include "nvcore/Array.h"
 #include "nvcore/StrLib.h"
 
+#include <float.h> // FLT_MAX
 
 using namespace nv;
 using namespace nvtt;

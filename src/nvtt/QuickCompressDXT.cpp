@@ -716,38 +716,39 @@ void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, co
 {
     Vector3 minColor = start * 255;
     Vector3 maxColor = end * 255;
-	uint16 color0 = roundAndExpand(&maxColor);
-	uint16 color1 = roundAndExpand(&minColor);
+    uint16 color0 = roundAndExpand(&maxColor);
+    uint16 color1 = roundAndExpand(&minColor);
 
-	if (color0 < color1)
-	{
-		swap(maxColor, minColor);
-		swap(color0, color1);
-	}
+    if (color0 < color1)
+    {
+            swap(maxColor, minColor);
+            swap(color0, color1);
+    }
 
-	block->col0 = Color16(color0);
-	block->col1 = Color16(color1);
-	block->indices = computeIndices4(set, maxColor / 255, minColor / 255);
+    block->col0 = Color16(color0);
+    block->col1 = Color16(color1);
+    block->indices = computeIndices4(set, maxColor / 255, minColor / 255);
 
-	//optimizeEndPoints4(set, block);
+    //optimizeEndPoints4(set, block);
 }
 
 void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
     Vector3 minColor = start * 255;
     Vector3 maxColor = end * 255;
-	uint16 color0 = roundAndExpand(&minColor);
-	uint16 color1 = roundAndExpand(&maxColor);
+    uint16 color0 = roundAndExpand(&minColor);
+    uint16 color1 = roundAndExpand(&maxColor);
 
-	if (color0 > color1)
-	{
-		swap(maxColor, minColor);
-		swap(color0, color1);
-	}
+    if (color0 > color1)
+    {
+            swap(maxColor, minColor);
+            swap(color0, color1);
+    }
 
-	block->col0 = Color16(color0);
-	block->col1 = Color16(color1);
+    block->col0 = Color16(color0);
+    block->col1 = Color16(color1);
     block->indices = computeIndices3(set, maxColor / 255, minColor / 255);
 
-	//optimizeEndPoints3(set, block);
+    //optimizeEndPoints3(set, block);
 }
+
