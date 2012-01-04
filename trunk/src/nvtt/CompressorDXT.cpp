@@ -24,15 +24,15 @@
 
 #include "CompressorDXT.h"
 #include "OutputOptions.h"
-
-#include "nvtt.h"
 #include "TaskDispatcher.h"
-
-#include "nvcore/Memory.h"
 
 #include "nvimage/Image.h"
 #include "nvimage/ColorBlock.h"
 #include "nvimage/BlockDXT.h"
+
+#include "nvmath/Vector.inl"
+
+#include "nvcore/Memory.h"
 
 #include <new> // placement new
 

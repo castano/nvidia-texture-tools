@@ -25,7 +25,10 @@ TARGET_LINK_LIBRARIES(process_alpha_map nvcore nvmath nvimage nvtt)
 ADD_EXECUTABLE(cubemaptest cubemaptest.cpp)
 TARGET_LINK_LIBRARIES(cubemaptest nvcore nvmath nvimage nvtt)
 
-INSTALL(TARGETS nvtestsuite DESTINATION bin)
+ADD_EXECUTABLE(nvhdrtest hdrtest.cpp)
+TARGET_LINK_LIBRARIES(nvhdrtest nvcore nvmath nvimage nvtt)
+
+INSTALL(TARGETS nvtestsuite nvhdrtest DESTINATION bin)
  
 #include_directories("/usr/include/ffmpeg/")
 #ADD_EXECUTABLE(nvmpegenc tools/mpegenc.cpp tools/cmdline.h)
