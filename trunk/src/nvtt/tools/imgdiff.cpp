@@ -61,7 +61,6 @@ static bool loadImage(nv::Image & image, const char * fileName)
 	return true;
 }
 
-// @@ Compute per-tile errors.
 struct Error
 {
 	Error()
@@ -72,6 +71,7 @@ struct Error
 		mse = 0.0f;
 	}
 
+    // @@ This has poor precision...
 	void addSample(double e)
 	{
 		samples++;
@@ -240,23 +240,17 @@ int main(int argc, char *argv[])
 			error_b.addSample(b);
 			error_a.addSample(a);
 			
-			if (compareNormal)
-			{
+			if (compareNormal) {
 				error_normal.addSample(c0, c1);
 			}
 
-			if (compareAlpha)
-			{
-				error_total.addSample(r * c0.a / 255.0);
-				error_total.addSample(g * c0.a / 255.0);
-				error_total.addSample(b * c0.a / 255.0);
+            double d = sqrt(r*r + g*g + b*b);
+
+			if (compareAlpha) {
+                d *= c0.a / 255.0;
 			}
-			else
-			{
-				error_total.addSample(r);
-				error_total.addSample(g);
-				error_total.addSample(b);
-			}
+
+            error_total.addSample(d);
 		}
 	}
 
