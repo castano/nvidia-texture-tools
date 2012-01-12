@@ -160,6 +160,11 @@ namespace nv
         nvCheck(x >= 0);
         return logf(x) / logf(2.0f);
     }
+
+    inline float exp2f(float x)
+    {
+        return powf(2, x);
+    }
 #endif
 
     inline float lerp(float f0, float f1, float t)
