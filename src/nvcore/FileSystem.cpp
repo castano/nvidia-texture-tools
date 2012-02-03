@@ -42,7 +42,7 @@ bool FileSystem::exists(const char * path)
 bool FileSystem::createDirectory(const char * path)
 {
 #if NV_OS_WIN32 || NV_OS_XBOX
-    return CreateDirectory(path, NULL) != 0;
+    return CreateDirectoryA(path, NULL) != 0;
 #else
     return mkdir(path, 0777) != -1;
 #endif
