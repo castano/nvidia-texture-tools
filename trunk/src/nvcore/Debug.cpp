@@ -89,7 +89,7 @@ namespace
     static bool writeMiniDump(EXCEPTION_POINTERS * pExceptionInfo)
     {
         // create the file
-        HANDLE hFile = CreateFile("crash.dmp", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE hFile = CreateFileA("crash.dmp", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile == INVALID_HANDLE_VALUE) {
             nvDebug("*** Failed to create dump file.\n");
             return false;
@@ -725,7 +725,7 @@ void debug::disableSigHandler()
 bool debug::isDebuggerPresent()
 {
 #if NV_OS_WIN32
-    HINSTANCE kernel32 = GetModuleHandle("kernel32.dll");
+    HINSTANCE kernel32 = GetModuleHandleA("kernel32.dll");
     if (kernel32) {
         FARPROC IsDebuggerPresent = GetProcAddress(kernel32, "IsDebuggerPresent");
         if (IsDebuggerPresent != NULL && IsDebuggerPresent()) {
