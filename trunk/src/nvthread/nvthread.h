@@ -46,6 +46,23 @@
 #define nvCompilerWriteBarrier          nvCompilerReadWriteBarrier
 #define nvCompilerReadBarrier           nvCompilerReadWriteBarrier
 
+#elif NV_CC_CLANG && NV_CPU_ARM
+// thanks to Autor Artur Bac for 
+inline void sync_synchronize() { asm volatile( "dmb;"); }
+
+/* this is not yet supported by LLVM 2.1 but it is planned
+#define nvCompilerReadWriteBarrier()    MemoryFence()
+ */
+
+
+// JBeilin: from what i read this should do the trick for ARM 
+// however this might also be wrong and dumb.
+//#define nvCompilerReadWriteBarrier()    asm volatile( "dmb;");
+#define nvCompilerReadWriteBarrier()    nvCompilerReadWriteBarrier()
+#define nvCompilerWriteBarrier          nvCompilerReadWriteBarrier
+#define nvCompilerReadBarrier           nvCompilerReadWriteBarrier
+
+
 #endif // NV_CC_MSVC
 
 
