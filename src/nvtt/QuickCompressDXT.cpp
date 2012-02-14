@@ -721,8 +721,8 @@ void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, co
 
     if (color0 < color1)
     {
-            swap(maxColor, minColor);
-            swap(color0, color1);
+        swap(maxColor, minColor);
+        swap(color0, color1);
     }
 
     block->col0 = Color16(color0);
@@ -741,8 +741,8 @@ void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, co
 
     if (color0 > color1)
     {
-            swap(maxColor, minColor);
-            swap(color0, color1);
+        swap(maxColor, minColor);
+        swap(color0, color1);
     }
 
     block->col0 = Color16(color0);

@@ -113,7 +113,7 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
 */
 
 
-struct CompressorContext
+struct FixedBlockCompressorContext
 {
     nvtt::AlphaMode alphaMode;
     uint w, h;
@@ -125,10 +125,10 @@ struct CompressorContext
     FixedBlockCompressor * compressor;
 };
 
-// Each task compresses one row.
-void CompressorTask(void * data, int i)
+// Each task compresses one block.
+void FixedBlockCompressorTask(void * data, int i)
 {
-    CompressorContext * d = (CompressorContext *) data;
+    FixedBlockCompressorContext * d = (FixedBlockCompressorContext *) data;
 
     uint x = i % d->bw;
     uint y = i / d->bw;
@@ -147,7 +147,7 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, u
 {
     nvDebugCheck(d == 1);
 
-    CompressorContext context;
+    FixedBlockCompressorContext context;
     context.alphaMode = alphaMode;
     context.w = w;
     context.h = h;
@@ -169,7 +169,7 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, u
     const uint size = context.bs * count;
     context.mem = new uint8[size];
 
-    dispatcher->dispatch(CompressorTask, &context, count);
+    dispatcher->dispatch(FixedBlockCompressorTask, &context, count);
 
     outputOptions.writeData(context.mem, size);
 
@@ -177,35 +177,67 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, u
 }
 
 
+struct ColorSetCompressorContext
+{
+    nvtt::AlphaMode alphaMode;
+    uint w, h;
+    const float * data;
+    const nvtt::CompressionOptions::Private * compressionOptions;
+
+    uint bw, bh, bs;
+    uint8 * mem;
+    ColorSetCompressor * compressor;
+};
+
+
+// Each task compresses one block.
+void ColorSetCompressorTask(void * data, int i)
+{
+    ColorSetCompressorContext * d = (ColorSetCompressorContext *) data;
+
+    uint x = i % d->bw;
+    uint y = i / d->bw;
+
+    //for (uint x = 0; x < d->bw; x++)
+    {
+        ColorSet set;
+        set.setColors(d->data, d->w, d->h, x, y);
+
+        uint8 * ptr = d->mem + (y * d->bw + x) * d->bs;
+        d->compressor->compressBlock(set, d->alphaMode, *d->compressionOptions, ptr);
+    }
+}
 
 
 void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions)
 {
     nvDebugCheck(d == 1);
 
-    const uint bs = blockSize();
-    const uint bw = (w + 3) / 4;
-    const uint bh = (h + 3) / 4;
+    ColorSetCompressorContext context;
+    context.alphaMode = alphaMode;
+    context.w = w;
+    context.h = h;
+    context.data = data;
+    context.compressionOptions = &compressionOptions;
 
-    //bool singleThreaded = true;
-    //if (singleThreaded)
-    {
-        uint8 * mem = malloc<uint8>(bs * bw);
+    context.bs = blockSize();
+    context.bw = (w + 3) / 4;
+    context.bh = (h + 3) / 4;
 
-        ColorSet set;
+    context.compressor = this;
 
-        for (uint y = 0; y < h; y += 4) {
-        	uint8 * ptr = mem;
-            for (uint x = 0; x < w; x += 4, ptr += bs) {
-                set.setColors(data, w, h, x, y);
-                compressBlock(set, alphaMode, compressionOptions, ptr);
-            }
+    SequentialTaskDispatcher sequential;
 
-            if (outputOptions.outputHandler != NULL) {
-                outputOptions.outputHandler->writeData(mem, bs * bw);
-            }
-        }
+    // Use a single thread to compress small textures.
+    if (context.bh < 4) dispatcher = &sequential;
 
-        free(mem);
-    }
+    const uint count = context.bw * context.bh;
+    const uint size = context.bs * count;
+    context.mem = new uint8[size];
+
+    dispatcher->dispatch(ColorSetCompressorTask, &context, count);
+
+    outputOptions.writeData(context.mem, size);
+
+    delete [] context.mem;
 }

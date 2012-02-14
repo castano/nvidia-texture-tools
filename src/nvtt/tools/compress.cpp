@@ -270,6 +270,11 @@ int main(int argc, char *argv[])
                 i++;
             }
         }
+        else if (strcmp("-pause", argv[i]) == 0)
+        {
+            printf("Press ENTER\n"); fflush(stdout);
+            getchar();
+        }
 
         // Output options
         else if (strcmp("-silent", argv[i]) == 0)
@@ -528,6 +533,11 @@ int main(int argc, char *argv[])
     {
         compressionOptions.setColorWeights(1, 1, 0);
     }
+
+    
+    //compressionOptions.setColorWeights(0.2126, 0.7152, 0.0722);
+    //compressionOptions.setColorWeights(0.299, 0.587, 0.114);
+    //compressionOptions.setColorWeights(3, 4, 2);
 
     if (externalCompressor != NULL)
     {
