@@ -9,8 +9,12 @@
 
 using namespace nv;
 
+// @@ nvthread is only fully implemented in win32.
+#if NV_OS_WIN32
 #define ENABLE_PARALLEL_FOR 1
-
+#else
+#define ENABLE_PARALLEL_FOR 0
+#endif
 
 void worker(void * arg) {
     ParallelFor * owner = (ParallelFor *)arg;

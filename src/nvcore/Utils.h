@@ -82,7 +82,7 @@ namespace nv
     template <> inline uint8 toU8<uint16>(uint16 x) { nvDebugCheck(x <= NV_UINT8_MAX); return (uint8)x; }
     template <> inline uint8 toU8<int16>(int16 x) { nvDebugCheck(x >= 0 && x <= NV_UINT8_MAX); return (uint8)x; }
     //template <> inline uint8 toU8<uint8>(uint8 x) { return x; }
-    template <> inline uint8 toU8<int8>(int8 x) { nvDebugCheck(x >= 0 && x <= NV_UINT8_MAX); return (uint8)x; }
+    template <> inline uint8 toU8<int8>(int8 x) { nvDebugCheck(x >= 0); return (uint8)x; }
 
     // int8 casts:
     template <typename T> inline int8 toI8(T x) { return x; }

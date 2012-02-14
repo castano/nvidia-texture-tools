@@ -9,6 +9,7 @@ SET(MATH_SRCS
     Matrix.h
     Plane.h Plane.inl Plane.cpp
     SphericalHarmonic.h SphericalHarmonic.cpp
+    SimdVector.h SimdVector_SSE.h SimdVector_VE.h
     Vector.h Vector.inl)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
