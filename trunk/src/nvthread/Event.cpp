@@ -32,6 +32,28 @@ void Event::wait() {
     WaitForSingleObject(m->handle, INFINITE);
 }
 
+#elif NV_OS_UNIX
+
+// @@ TODO
+#pragma NV_MESSAGE("Implement event using pthreads!")
+
+struct Event::Private {
+};
+
+Event::Event() : m(new Private) {
+}
+
+Event::~Event() {
+}
+
+void Event::post() {
+}
+
+void Event::wait() {
+}
+
+#endif	
+
 
 /*static*/ void Event::post(Event * events, uint count) {
     for (uint i = 0; i < count; i++) {
@@ -40,14 +62,9 @@ void Event::wait() {
 }
 
 /*static*/ void Event::wait(Event * events, uint count) {
-    // @@ Use wait for multiple objects?
+    // @@ Use wait for multiple objects in win32?
 
     for (uint i = 0; i < count; i++) {
         events[i].wait();
     }
 }
-
-#elif NV_OS_UNIX
-// @@ TODO
-#pragma NV_MESSAGE("Implement event using pthreads!")
-#endif	
