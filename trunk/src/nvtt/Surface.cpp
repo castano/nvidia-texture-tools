@@ -432,6 +432,30 @@ bool Surface::save(const char * fileName) const
     return false;
 }
 
+#if 0 //NV_OS_WIN32
+
+#include <windows.h>
+#undef min
+#undef max
+
+static int filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
+   if (code == EXCEPTION_ACCESS_VIOLATION) {
+      return EXCEPTION_EXECUTE_HANDLER;
+   }
+   else {
+      return EXCEPTION_CONTINUE_SEARCH;
+   };
+}
+
+#define TRY __try
+    
+#define CATCH __except (filter(GetExceptionCode(), GetExceptionInformation()))
+#else
+#define TRY
+#define CATCH
+#endif
+
+
 bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void * data)
 {
     detach();
@@ -453,7 +477,7 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
     {
         const Color32 * src = (const Color32 *)data;
 
-        try {
+        TRY {
             for (int i = 0; i < count; i++)
             {
                 rdst[i] = float(src[i].r) / 255.0f;
@@ -462,7 +486,7 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
                 adst[i] = float(src[i].a) / 255.0f;
             }
         }
-        catch(...) {
+        CATCH {
             return false;
         }
     }
@@ -470,7 +494,7 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
     {
         const uint16 * src = (const uint16 *)data;
 
-        try {
+        TRY {
             for (int i = 0; i < count; i++)
             {
                 ((uint32 *)rdst)[i] = half_to_float(src[4*i+0]);
@@ -479,7 +503,7 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
                 ((uint32 *)adst)[i] = half_to_float(src[4*i+3]);
             }
         }
-        catch(...) {
+        CATCH {
             return false;
         }
     }
@@ -487,7 +511,7 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
     {
         const float * src = (const float *)data;
 
-        try {
+        TRY {
             for (int i = 0; i < count; i++)
             {
                 rdst[i] = src[4 * i + 0];
@@ -496,7 +520,7 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
                 adst[i] = src[4 * i + 3];
             }
         }
-        catch(...) {
+        CATCH {
             return false;
         }
     }

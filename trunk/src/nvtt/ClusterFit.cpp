@@ -92,8 +92,8 @@ void ClusterFit::setColourSet(const ColorSet * set)
     {
         int p = order[i];
 #if NVTT_USE_SIMD
-        Vector4 tmp(values[p] * set->weights[p], set->weights[p]);
-        m_weighted[i] = SimdVector(tmp);
+        NV_ALIGN_16 Vector4 tmp(values[p] * set->weights[p], set->weights[p]);
+        m_weighted[i] = SimdVector(tmp.component);
         m_xxsum += m_weighted[i] * m_weighted[i];
         m_xsum += m_weighted[i];
 #else
@@ -110,8 +110,8 @@ void ClusterFit::setColourSet(const ColorSet * set)
 void ClusterFit::setMetric(Vector4::Arg w)
 {
 #if NVTT_USE_SIMD
-    Vector4 tmp(w.xyz(), 1);
-    m_metric = SimdVector(tmp);
+    NV_ALIGN_16 Vector4 tmp(w.xyz(), 1);
+    m_metric = SimdVector(tmp.component);
 #else
     m_metric = w.xyz();
 #endif
@@ -134,13 +134,13 @@ float ClusterFit::bestError() const
 
 bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
 {
-    int const count = m_count;
-    SimdVector const one = SimdVector(1.0f);
-    SimdVector const zero = SimdVector(0.0f);
-    SimdVector const half(0.5f, 0.5f, 0.5f, 0.25f);
-    SimdVector const two = SimdVector(2.0);
-    SimdVector const grid( 31.0f, 63.0f, 31.0f, 0.0f );
-    SimdVector const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
+    const int count = m_count;
+    const SimdVector one = SimdVector(1.0f);
+    const SimdVector zero = SimdVector(0.0f);
+    const SimdVector half(0.5f, 0.5f, 0.5f, 0.25f);
+    const SimdVector two = SimdVector(2.0);
+    const SimdVector grid( 31.0f, 63.0f, 31.0f, 0.0f );
+    const SimdVector gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
 
     // declare variables
     SimdVector beststart = SimdVector( 0.0f );
@@ -158,23 +158,23 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
 
         for( int c1 = 0; c1 <= count-c0; c1++)
         {
-            SimdVector const x2 = m_xsum - x1 - x0;
+            const SimdVector x2 = m_xsum - x1 - x0;
 
-            //Vector3 const alphax_sum = x0 + x1 * 0.5f;
-            //float const alpha2_sum = w0 + w1 * 0.25f;
-            SimdVector const alphax_sum = multiplyAdd(x1, half, x0); // alphax_sum, alpha2_sum
-            SimdVector const alpha2_sum = alphax_sum.splatW();
+            //Vector3 alphax_sum = x0 + x1 * 0.5f;
+            //float alpha2_sum = w0 + w1 * 0.25f;
+            const SimdVector alphax_sum = multiplyAdd(x1, half, x0); // alphax_sum, alpha2_sum
+            const SimdVector alpha2_sum = alphax_sum.splatW();
 
-            //Vector3 const betax_sum = x2 + x1 * 0.5f;
-            //float const beta2_sum = w2 + w1 * 0.25f;
-            SimdVector const betax_sum = multiplyAdd(x1, half, x2); // betax_sum, beta2_sum
-            SimdVector const beta2_sum = betax_sum.splatW();
+            //const Vector3 betax_sum = x2 + x1 * 0.5f;
+            //const float beta2_sum = w2 + w1 * 0.25f;
+            const SimdVector betax_sum = multiplyAdd(x1, half, x2); // betax_sum, beta2_sum
+            const SimdVector beta2_sum = betax_sum.splatW();
 
-            //float const alphabeta_sum = w1 * 0.25f;
-            SimdVector const alphabeta_sum = (x1 * half).splatW(); // alphabeta_sum
+            //const float alphabeta_sum = w1 * 0.25f;
+            const SimdVector alphabeta_sum = (x1 * half).splatW(); // alphabeta_sum
 
-            // float const factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-            SimdVector const factor = reciprocal( negativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum) );
+            // const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+            const SimdVector factor = reciprocal( negativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum) );
 
             SimdVector a = negativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
             SimdVector b = negativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
@@ -229,16 +229,16 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
 
 bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 {
-    int const count = m_count;
-    SimdVector const one = SimdVector(1.0f);
-    SimdVector const zero = SimdVector(0.0f);
-    SimdVector const half = SimdVector(0.5f);
-    SimdVector const two = SimdVector(2.0);
-    SimdVector const onethird( 1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f, 1.0f/9.0f );
-    SimdVector const twothirds( 2.0f/3.0f, 2.0f/3.0f, 2.0f/3.0f, 4.0f/9.0f );
-    SimdVector const twonineths = SimdVector( 2.0f/9.0f );
-    SimdVector const grid( 31.0f, 63.0f, 31.0f, 0.0f );
-    SimdVector const gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
+    const int count = m_count;
+    const SimdVector one = SimdVector(1.0f);
+    const SimdVector zero = SimdVector(0.0f);
+    const SimdVector half = SimdVector(0.5f);
+    const SimdVector two = SimdVector(2.0);
+    const SimdVector onethird( 1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f, 1.0f/9.0f );
+    const SimdVector twothirds( 2.0f/3.0f, 2.0f/3.0f, 2.0f/3.0f, 4.0f/9.0f );
+    const SimdVector twonineths = SimdVector( 2.0f/9.0f );
+    const SimdVector grid( 31.0f, 63.0f, 31.0f, 0.0f );
+    const SimdVector gridrcp( 1.0f/31.0f, 1.0f/63.0f, 1.0f/31.0f, 0.0f );
 
     // declare variables
     SimdVector beststart = SimdVector( 0.0f );
@@ -259,23 +259,23 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 
             for( int c2 = 0; c2 <= count-c0-c1; c2++)
             {
-                SimdVector const x3 = m_xsum - x2 - x1 - x0;
+                const SimdVector x3 = m_xsum - x2 - x1 - x0;
 
-                //Vector3 const alphax_sum = x0 + x1 * (2.0f / 3.0f) + x2 * (1.0f / 3.0f);
-                //float const alpha2_sum = w0 + w1 * (4.0f/9.0f) + w2 * (1.0f/9.0f);
-                SimdVector const alphax_sum = multiplyAdd(x2, onethird, multiplyAdd(x1, twothirds, x0)); // alphax_sum, alpha2_sum
-                SimdVector const alpha2_sum = alphax_sum.splatW();
+                //const Vector3 alphax_sum = x0 + x1 * (2.0f / 3.0f) + x2 * (1.0f / 3.0f);
+                //const float alpha2_sum = w0 + w1 * (4.0f/9.0f) + w2 * (1.0f/9.0f);
+                const SimdVector alphax_sum = multiplyAdd(x2, onethird, multiplyAdd(x1, twothirds, x0)); // alphax_sum, alpha2_sum
+                const SimdVector alpha2_sum = alphax_sum.splatW();
 
-                //Vector3 const betax_sum = x3 + x2 * (2.0f / 3.0f) + x1 * (1.0f / 3.0f);
-                //float const beta2_sum = w3 + w2 * (4.0f/9.0f) + w1 * (1.0f/9.0f);
-                SimdVector const betax_sum = multiplyAdd(x2, twothirds, multiplyAdd(x1, onethird, x3)); // betax_sum, beta2_sum
-                SimdVector const beta2_sum = betax_sum.splatW();
+                //const Vector3 betax_sum = x3 + x2 * (2.0f / 3.0f) + x1 * (1.0f / 3.0f);
+                //const float beta2_sum = w3 + w2 * (4.0f/9.0f) + w1 * (1.0f/9.0f);
+                const SimdVector betax_sum = multiplyAdd(x2, twothirds, multiplyAdd(x1, onethird, x3)); // betax_sum, beta2_sum
+                const SimdVector beta2_sum = betax_sum.splatW();
 
-                //float const alphabeta_sum = (w1 + w2) * (2.0f/9.0f);
-                SimdVector const alphabeta_sum = twonineths*( x1 + x2 ).splatW(); // alphabeta_sum
+                //const float alphabeta_sum = (w1 + w2) * (2.0f/9.0f);
+                const SimdVector alphabeta_sum = twonineths*( x1 + x2 ).splatW(); // alphabeta_sum
 
-                // float const factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-                SimdVector const factor = reciprocal( negativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum) );
+                //const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
+                const SimdVector factor = reciprocal( negativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum) );
 
                 SimdVector a = negativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
                 SimdVector b = negativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
