@@ -483,13 +483,25 @@ const char * Path::extension() const
 
 
 /// Toggles path separators (ie. \\ into /).
-void Path::translatePath(char pathSeparator /*= NV_PATH_SEPARATOR*/)
+void Path::translatePath(char pathSeparator/*=NV_PATH_SEPARATOR*/)
 {
     nvCheck( m_str != NULL );
 
     for (int i = 0; ; i++) {
         if (m_str[i] == '\0') break;
         if (m_str[i] == '\\' || m_str[i] == '/') m_str[i] = pathSeparator;
+    }
+}
+
+void Path::appendSeparator(char pathSeparator/*=NV_PATH_SEPARATOR*/)
+{
+    nvCheck(!isNull());
+
+    const uint l = length();
+    
+    if (m_str[l] != '\\' && m_str[l] != '/') {
+        char separatorString[] = { pathSeparator, '\0' };
+        append(separatorString);
     }
 }
 

@@ -155,6 +155,8 @@ namespace nv
 
         void translatePath(char pathSeparator = NV_PATH_SEPARATOR);
 
+        void appendSeparator(char pathSeparator = NV_PATH_SEPARATOR);
+
         void stripFileName();
         void stripExtension();
 

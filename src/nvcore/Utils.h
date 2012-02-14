@@ -13,6 +13,7 @@
 
 #define NV_INT8_MIN    (-128)
 #define NV_INT8_MAX    127
+#define NV_UINT8_MAX    255
 #define NV_INT16_MIN    (-32767-1)
 #define NV_INT16_MAX    32767
 #define NV_UINT16_MAX   0xffff
@@ -27,16 +28,6 @@ namespace nv
 {
     // Less error prone than casting. From CB:
     // http://cbloomrants.blogspot.com/2011/06/06-17-11-c-casting-is-devil.html
-    inline int8  asSigned(uint8 x)  { return (int8) x; }
-    inline int16 asSigned(uint16 x) { return (int16) x; }
-    inline int32 asSigned(uint32 x) { return (int32) x; }
-    inline int64 asSigned(uint64 x) { return (int64) x; }
-
-    inline uint8  asUnsigned(int8 x)  { return (uint8) x; }
-    inline uint16 asUnsigned(int16 x) { return (uint16) x; }
-    inline uint32 asUnsigned(int32 x) { return (uint32) x; }
-    inline uint64 asUnsigned(int64 x) { return (uint64) x; }
-
 
     // uint32 casts:
     template <typename T> inline uint32 toU32(T x) { return x; }
@@ -60,12 +51,55 @@ namespace nv
     //template <> inline int32 toI32<uint8>(uint8 x) { return x; }
     //template <> inline int32 toI32<int8>(int8 x) { return x; }
 
+    // uint16 casts:
+    template <typename T> inline uint16 toU16(T x) { return x; }
+    template <> inline uint16 toU16<uint64>(uint64 x) { nvDebugCheck(x <= NV_UINT16_MAX); return (uint16)x; }
+    template <> inline uint16 toU16<int64>(int64 x) { nvDebugCheck(x >= 0 && x <= NV_UINT16_MAX); return (uint16)x; }
+    template <> inline uint16 toU16<uint32>(uint32 x) { nvDebugCheck(x <= NV_UINT16_MAX); return (uint16)x; }
+    template <> inline uint16 toU16<int32>(int32 x) { nvDebugCheck(x >= 0 && x <= NV_UINT16_MAX); return (uint16)x; }
+    //template <> inline uint16 toU16<uint16>(uint16 x) { return x; }
+    template <> inline uint16 toU16<int16>(int16 x) { nvDebugCheck(x >= 0); return (uint16)x; }
+    //template <> inline uint16 toU16<uint8>(uint8 x) { return x; }
+    template <> inline uint16 toU16<int8>(int8 x) { nvDebugCheck(x >= 0); return (uint16)x; }
+
+    // int16 casts:
+    template <typename T> inline int16 toI16(T x) { return x; }
+    template <> inline int16 toI16<uint64>(uint64 x) { nvDebugCheck(x <= NV_INT16_MAX); return (int16)x; }
+    template <> inline int16 toI16<int64>(int64 x) { nvDebugCheck(x >= NV_INT16_MIN && x <= NV_UINT16_MAX); return (int16)x; }
+    template <> inline int16 toI16<uint32>(uint32 x) { nvDebugCheck(x <= NV_INT16_MAX); return (int16)x; }
+    template <> inline int16 toI16<int32>(int32 x) { nvDebugCheck(x >= NV_INT16_MIN && x <= NV_UINT16_MAX); return (int16)x; }
+    template <> inline int16 toI16<uint16>(uint16 x) { nvDebugCheck(x <= NV_INT16_MAX); return (int16)x; }
+    //template <> inline int16 toI16<int16>(int16 x) { return x; }
+    //template <> inline int16 toI16<uint8>(uint8 x) { return x; }
+    //template <> inline int16 toI16<int8>(int8 x) { return x; }
+
+    // uint8 casts:
+    template <typename T> inline uint8 toU8(T x) { return x; }
+    template <> inline uint8 toU8<uint64>(uint64 x) { nvDebugCheck(x <= NV_UINT8_MAX); return (uint8)x; }
+    template <> inline uint8 toU8<int64>(int64 x) { nvDebugCheck(x >= 0 && x <= NV_UINT8_MAX); return (uint8)x; }
+    template <> inline uint8 toU8<uint32>(uint32 x) { nvDebugCheck(x <= NV_UINT8_MAX); return (uint8)x; }
+    template <> inline uint8 toU8<int32>(int32 x) { nvDebugCheck(x >= 0 && x <= NV_UINT8_MAX); return (uint8)x; }
+    template <> inline uint8 toU8<uint16>(uint16 x) { nvDebugCheck(x <= NV_UINT8_MAX); return (uint8)x; }
+    template <> inline uint8 toU8<int16>(int16 x) { nvDebugCheck(x >= 0 && x <= NV_UINT8_MAX); return (uint8)x; }
+    //template <> inline uint8 toU8<uint8>(uint8 x) { return x; }
+    template <> inline uint8 toU8<int8>(int8 x) { nvDebugCheck(x >= 0 && x <= NV_UINT8_MAX); return (uint8)x; }
+
+    // int8 casts:
+    template <typename T> inline int8 toI8(T x) { return x; }
+    template <> inline int8 toI8<uint64>(uint64 x) { nvDebugCheck(x <= NV_INT8_MAX); return (int8)x; }
+    template <> inline int8 toI8<int64>(int64 x) { nvDebugCheck(x >= NV_INT8_MIN && x <= NV_UINT8_MAX); return (int8)x; }
+    template <> inline int8 toI8<uint32>(uint32 x) { nvDebugCheck(x <= NV_INT8_MAX); return (int8)x; }
+    template <> inline int8 toI8<int32>(int32 x) { nvDebugCheck(x >= NV_INT8_MIN && x <= NV_UINT8_MAX); return (int8)x; }
+    template <> inline int8 toI8<uint16>(uint16 x) { nvDebugCheck(x <= NV_INT8_MAX); return (int8)x; }
+    template <> inline int8 toI8<int16>(int16 x) { nvDebugCheck(x >= NV_INT8_MIN && x <= NV_UINT8_MAX); return (int8)x; }
+    template <> inline int8 toI8<uint8>(uint8 x) { nvDebugCheck(x <= NV_INT8_MAX); return (int8)x; }
+    //template <> inline int8 toI8<int8>(int8 x) { return x; }
     
     /// Swap two values.
     template <typename T> 
     inline void swap(T & a, T & b)
     {
-        T temp = a; 
+        T temp(a);
         a = b; 
         b = temp;
     }
@@ -190,6 +224,67 @@ namespace nv
         }
     };
 
+
+    // @@ Move this to utils?
+    /// Delete all the elements of a container.
+    template <typename T>
+    void deleteAll(T & container)
+    {
+        for (typename T::PseudoIndex i = container.start(); !container.isDone(i); container.advance(i))
+        {
+            delete container[i];
+        }
+    }
+
+
+
+    // @@ Specialize these methods for numeric, pointer, and pod types.
+
+    template <typename T>
+    void construct_range(T * restrict ptr, uint new_size, uint old_size) {
+        for (uint i = old_size; i < new_size; i++) {
+            new(ptr+i) T; // placement new
+        }
+    }
+
+    template <typename T>
+    void construct_range(T * restrict ptr, uint new_size, uint old_size, const T & elem) {
+        for (uint i = old_size; i < new_size; i++) {
+            new(ptr+i) T(elem); // placement new
+        }
+    }
+
+    template <typename T>
+    void destroy_range(T * restrict ptr, uint new_size, uint old_size) {
+        for (uint i = new_size; i < old_size; i++) {
+            (ptr+i)->~T(); // Explicit call to the destructor
+        }
+    }
+
+    template <typename T>
+    void fill(T * restrict dst, uint count, const T & value) {
+        for (uint i = 0; i < count; i++) {
+            dst[i] = value;
+        }
+    }
+
+    template <typename T>
+    void copy(T * restrict dst, const T * restrict src, uint count) {
+        for (uint i = 0; i < count; i++) {
+            dst[i] = src[i];
+        }
+    }
+
+    template <typename T>
+    bool find(const T & element, const T * restrict ptr, uint begin, uint end, uint * index) {
+        for (uint i = begin; i < end; i++) {
+            if (ptr[i] == element) {
+                if (index != NULL) *index = i;
+                return true;
+            }
+        }
+        return false;
+    }
 
 } // nv namespace
 
