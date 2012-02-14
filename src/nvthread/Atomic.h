@@ -30,6 +30,12 @@ extern "C"
 
 #endif // NV_CC_MSVC
 
+#if NV_CC_CLANG && POSH_CPU_STRONGARM
+// LLVM/Clang do not yet have functioning atomics as of 2.1
+// #include <atomic>
+
+#endif
+
 
 namespace nv {
 
@@ -46,6 +52,16 @@ namespace nv {
         uint32 ret = *ptr;  // on x86, loads are Acquire
         nvCompilerReadBarrier();
         return ret;
+#elif POSH_CPU_STRONGARM 
+        // need more specific cpu type for armv7?
+        // also utilizes a full barrier
+        // currently treating laod like x86 - this could be wrong
+        
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+		uint32 ret = *ptr; // replace with ldrex?
+        nvCompilerReadWriteBarrier();
+        return ret;
 #else
 #error "Not implemented"
 #endif
@@ -60,6 +76,11 @@ namespace nv {
         nvCompilerWriteBarrier();
         *ptr = value;   // on x86, stores are Release
         nvCompilerWriteBarrier();
+#elif POSH_CPU_STRONGARM
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+		*ptr = value; //strex?
+		nvCompilerReadWriteBarrier();
 #else
 #error "Atomics not implemented."
 #endif
@@ -84,6 +105,57 @@ namespace nv {
 
         return (uint32)_InterlockedDecrement((long *)value);
     }
+    
+#elif NV_CC_CLANG && POSH_CPU_STRONGARM
+    NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
+    
+    inline uint32 atomicIncrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        
+        // this should work in LLVM eventually, but not as of 2.1
+        // return (uint32)AtomicIncrement((long *)value);
+        
+        // in the mean time,
+        register uint32 result;
+        asm volatile (
+                      "1:   ldrexb  %0,  [%1]	\n\t"
+                      "add     %0,   %0, #1     \n\t"
+                      "strexb  r1,   %0, [%1]	\n\t"
+                      "cmp     r1,   #0			\n\t"
+                      "bne     1b"
+                      : "=&r" (result)
+                      : "r"(value)
+                      : "r1"
+                      );
+        return result;
+
+    }
+    
+    inline uint32 atomicDecrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        
+        // this should work in LLVM eventually, but not as of 2.1:
+        // return (uint32)sys::AtomicDecrement((long *)value);
+
+        // in the mean time,
+        
+        register uint32 result;
+        asm volatile (
+                      "1:   ldrexb  %0,  [%1]	\n\t"
+                      "sub     %0,   %0, #1     \n\t"
+                      "strexb  r1,   %0, [%1]	\n\t"
+                      "cmp     r1,   #0			\n\t"
+                      "bne     1b"
+                      : "=&r" (result)
+                      : "r"(value)
+                      : "r1"
+                      );
+        return result;
+         
+    }
+
 #elif NV_CC_GNUC
     // Many alternative implementations at:
     // http://www.memoryhole.net/kyle/2007/05/atomic_incrementing.html
@@ -103,6 +175,7 @@ namespace nv {
     }
 #else
 #error "Atomics not implemented."
+
 #endif
 
 
