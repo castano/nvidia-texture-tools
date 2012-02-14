@@ -33,7 +33,14 @@
 #include <emmintrin.h>
 #endif
 
+// See this for ideas:
+// http://molecularmusings.wordpress.com/2011/10/18/simdifying-multi-platform-math/
+
+
 namespace nv {
+
+#define NV_SIMD_NATIVE NV_FORCEINLINE
+#define NV_SIMD_INLINE inline
 
     class SimdVector
     {
@@ -42,45 +49,47 @@ namespace nv {
 
         typedef SimdVector const& Arg;
 
-        NV_FORCEINLINE SimdVector() {}
-        NV_FORCEINLINE explicit SimdVector(float f) : vec(_mm_set1_ps(f)) {}
-        NV_FORCEINLINE explicit SimdVector(__m128 v) : vec(v) {}
-
-        NV_FORCEINLINE explicit SimdVector(NV_ALIGN_16 Vector4 v) {
-            vec = _mm_load_ps( v.component );
+        NV_SIMD_NATIVE SimdVector() {}
+        
+        NV_SIMD_NATIVE explicit SimdVector(__m128 v) : vec(v) {}
+        
+        NV_SIMD_NATIVE explicit SimdVector(float f) {
+            vec = _mm_set1_ps(f);
         }
 
-        NV_FORCEINLINE explicit SimdVector(const float * v) {
+        NV_SIMD_NATIVE explicit SimdVector(const float * v)
+        {
             vec = _mm_load_ps( v );
         }
 
-        NV_FORCEINLINE SimdVector(float x, float y, float z, float w) {
+        NV_SIMD_NATIVE SimdVector(float x, float y, float z, float w)
+        {
             vec = _mm_setr_ps( x, y, z, w );
         }
 
-        NV_FORCEINLINE SimdVector(const SimdVector & arg) : vec(arg.vec) {}
+        NV_SIMD_NATIVE SimdVector(const SimdVector & arg) : vec(arg.vec) {}
 
-        NV_FORCEINLINE SimdVector & operator=(const SimdVector & arg) {
+        NV_SIMD_NATIVE SimdVector & operator=(const SimdVector & arg)
+        {
             vec = arg.vec;
             return *this;
         }
 
-
-        float toFloat() const 
+        NV_SIMD_INLINE float toFloat() const 
         {
             NV_ALIGN_16 float f;
             _mm_store_ss(&f, vec);
             return f;
         }
 
-        Vector3 toVector3() const
+        NV_SIMD_INLINE Vector3 toVector3() const
         {
             NV_ALIGN_16 float c[4];
             _mm_store_ps( c, vec );
             return Vector3( c[0], c[1], c[2] );
         }
 
-        Vector4 toVector4() const
+        NV_SIMD_INLINE Vector4 toVector4() const
         {
             NV_ALIGN_16 float c[4];
             _mm_store_ps( c, vec );
@@ -88,57 +97,60 @@ namespace nv {
         }
 
 #define SSE_SPLAT( a ) ((a) | ((a) << 2) | ((a) << 4) | ((a) << 6))
-        NV_FORCEINLINE SimdVector splatX() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 0 ) ) ); }
-        NV_FORCEINLINE SimdVector splatY() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 1 ) ) ); }
-        NV_FORCEINLINE SimdVector splatZ() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 2 ) ) ); }
-        NV_FORCEINLINE SimdVector splatW() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 3 ) ) ); }
+        NV_SIMD_NATIVE SimdVector splatX() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 0 ) ) ); }
+        NV_SIMD_NATIVE SimdVector splatY() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 1 ) ) ); }
+        NV_SIMD_NATIVE SimdVector splatZ() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 2 ) ) ); }
+        NV_SIMD_NATIVE SimdVector splatW() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 3 ) ) ); }
 #undef SSE_SPLAT
 
-        NV_FORCEINLINE  SimdVector & operator+=( Arg v ) {
+        NV_SIMD_NATIVE SimdVector& operator+=( Arg v )
+        {
             vec = _mm_add_ps( vec, v.vec );
             return *this;
         }
 
-        NV_FORCEINLINE SimdVector & operator-=( Arg v ) {
+        NV_SIMD_NATIVE SimdVector& operator-=( Arg v )
+        {
             vec = _mm_sub_ps( vec, v.vec );
             return *this;
         }
 
-        NV_FORCEINLINE SimdVector & operator*=( Arg v ) {
+        NV_SIMD_NATIVE SimdVector& operator*=( Arg v )
+        {
             vec = _mm_mul_ps( vec, v.vec );
             return *this;
         }
     };
 
 
-    NV_FORCEINLINE SimdVector operator+(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_NATIVE SimdVector operator+( SimdVector::Arg left, SimdVector::Arg right  )
     {
         return SimdVector( _mm_add_ps( left.vec, right.vec ) );
     }
 
-    NV_FORCEINLINE SimdVector operator-(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_NATIVE SimdVector operator-( SimdVector::Arg left, SimdVector::Arg right  )
     {
         return SimdVector( _mm_sub_ps( left.vec, right.vec ) );
     }
 
-    NV_FORCEINLINE SimdVector operator*(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_NATIVE SimdVector operator*( SimdVector::Arg left, SimdVector::Arg right  )
     {
         return SimdVector( _mm_mul_ps( left.vec, right.vec ) );
     }
 
     // Returns a*b + c
-    NV_FORCEINLINE SimdVector multiplyAdd(SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c)
+    NV_SIMD_INLINE SimdVector multiplyAdd( SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c )
     {
         return SimdVector( _mm_add_ps( _mm_mul_ps( a.vec, b.vec ), c.vec ) );
     }
 
-    // Returns -( a*b - c ) = c - a*b
-    NV_FORCEINLINE SimdVector negativeMultiplySubtract(SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c)
+    // Returns -( a*b - c )
+    NV_SIMD_INLINE SimdVector negativeMultiplySubtract( SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c )
     {
         return SimdVector( _mm_sub_ps( c.vec, _mm_mul_ps( a.vec, b.vec ) ) );
     }
 
-    inline SimdVector reciprocal( SimdVector::Arg v )
+    NV_SIMD_INLINE SimdVector reciprocal( SimdVector::Arg v )
     {
         // get the reciprocal estimate
         __m128 estimate = _mm_rcp_ps( v.vec );
@@ -148,17 +160,17 @@ namespace nv {
         return SimdVector( _mm_add_ps( _mm_mul_ps( diff, estimate ), estimate ) );
     }
 
-    NV_FORCEINLINE SimdVector min(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_NATIVE SimdVector min( SimdVector::Arg left, SimdVector::Arg right )
     {
         return SimdVector( _mm_min_ps( left.vec, right.vec ) );
     }
 
-    NV_FORCEINLINE SimdVector max(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_NATIVE SimdVector max( SimdVector::Arg left, SimdVector::Arg right )
     {
         return SimdVector( _mm_max_ps( left.vec, right.vec ) );
     }
 
-    inline SimdVector truncate( SimdVector::Arg v )
+    NV_SIMD_INLINE SimdVector truncate( SimdVector::Arg v )
     {
 #if (NV_USE_SSE == 1)
         // convert to ints
@@ -179,12 +191,12 @@ namespace nv {
 #endif
     }
 
-    NV_FORCEINLINE SimdVector compareEqual(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_NATIVE SimdVector compareEqual( SimdVector::Arg left, SimdVector::Arg right )
     {
         return SimdVector( _mm_cmpeq_ps( left.vec, right.vec ) );
     }
 
-    inline SimdVector select(SimdVector::Arg off, SimdVector::Arg on, SimdVector::Arg bits)
+    NV_SIMD_INLINE SimdVector select( SimdVector::Arg off, SimdVector::Arg on, SimdVector::Arg bits )
     {
         __m128 a = _mm_andnot_ps( bits.vec, off.vec );
         __m128 b = _mm_and_ps( bits.vec, on.vec );
@@ -192,7 +204,7 @@ namespace nv {
         return SimdVector( _mm_or_ps( a, b ) );
     }
 
-    inline bool compareAnyLessThan(SimdVector::Arg left, SimdVector::Arg right)
+    NV_SIMD_INLINE bool compareAnyLessThan( SimdVector::Arg left, SimdVector::Arg right ) 
     {
         __m128 bits = _mm_cmplt_ps( left.vec, right.vec );
         int value = _mm_movemask_ps( bits );

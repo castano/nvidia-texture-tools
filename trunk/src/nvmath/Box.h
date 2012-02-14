@@ -74,6 +74,8 @@ namespace nv
 
         friend Stream & operator<< (Stream & s, Box & box);
 
+        const Vector3 & corner(int i) const { return (&minCorner)[i]; }
+
         Vector3 minCorner;
         Vector3 maxCorner;
     };
@@ -81,6 +83,8 @@ namespace nv
     float distanceSquared(const Box &box, const Vector3 &point);
     bool overlap(const Box &box, const Sphere &sphere);
 
+    // p is ray origin, id is inverse ray direction.
+    bool intersect(const Box & box, const Vector3 & p, const Vector3 & id, float * t);
 
 } // nv namespace
 

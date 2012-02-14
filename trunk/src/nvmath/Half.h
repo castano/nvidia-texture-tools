@@ -11,7 +11,18 @@ namespace nv {
 
     void half_init_tables();
 
-    uint32 fast_half_to_float(uint16 h);
+    extern uint32 mantissa_table[2048];
+    extern uint32 exponent_table[64];
+    extern uint32 offset_table[64];
+
+    // Fast half to float conversion based on:
+    // http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
+    inline uint32 fast_half_to_float(uint16 h)
+    {
+	    uint exp = h >> 10;
+	    return mantissa_table[offset_table[exp] + (h & 0x3ff)] + exponent_table[exp];
+    }
+
 
     inline uint16 to_half(float c) {
         union { float f; uint32 u; } f;

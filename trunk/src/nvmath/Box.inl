@@ -12,51 +12,51 @@
 namespace nv
 {
     // Default ctor.
-    Box::Box() { };
+    inline Box::Box() { };
 
     // Copy ctor.
-    Box::Box(const Box & b) : minCorner(b.minCorner), maxCorner(b.maxCorner) { }
+    inline Box::Box(const Box & b) : minCorner(b.minCorner), maxCorner(b.maxCorner) { }
 
     // Init ctor.
-    Box::Box(const Vector3 & mins, const Vector3 & maxs) : minCorner(mins), maxCorner(maxs) { }
+    inline Box::Box(const Vector3 & mins, const Vector3 & maxs) : minCorner(mins), maxCorner(maxs) { }
 
     // Assignment operator.
-    Box & Box::operator=(const Box & b) { minCorner = b.minCorner; maxCorner = b.maxCorner; return *this; }
+    inline Box & Box::operator=(const Box & b) { minCorner = b.minCorner; maxCorner = b.maxCorner; return *this; }
 
     // Clear the bounds.
-    void Box::clearBounds()
+    inline void Box::clearBounds()
     {
         minCorner.set(FLT_MAX, FLT_MAX, FLT_MAX);
         maxCorner.set(-FLT_MAX, -FLT_MAX, -FLT_MAX);
     }
 
     // Build a cube centered on center and with edge = 2*dist
-    void Box::cube(const Vector3 & center, float dist)
+    inline void Box::cube(const Vector3 & center, float dist)
     {
         setCenterExtents(center, Vector3(dist, dist, dist));
     }
 
     // Build a box, given center and extents.
-    void Box::setCenterExtents(const Vector3 & center, const Vector3 & extents)
+    inline void Box::setCenterExtents(const Vector3 & center, const Vector3 & extents)
     {
         minCorner = center - extents;
         maxCorner = center + extents;
     }
 
     // Get box center.
-    Vector3 Box::center() const
+    inline Vector3 Box::center() const
     {
         return (minCorner + maxCorner) * 0.5f;
     }
 
     // Return extents of the box.
-    Vector3 Box::extents() const
+    inline Vector3 Box::extents() const
     {
         return (maxCorner - minCorner) * 0.5f;
     }
 
     // Return extents of the box.
-    float Box::extents(uint axis) const
+    inline float Box::extents(uint axis) const
     {
         nvDebugCheck(axis < 3);
         if (axis == 0) return (maxCorner.x - minCorner.x) * 0.5f;
@@ -67,55 +67,55 @@ namespace nv
     }
 
     // Add a point to this box.
-    void Box::addPointToBounds(const Vector3 & p)
+    inline void Box::addPointToBounds(const Vector3 & p)
     {
         minCorner = min(minCorner, p);
         maxCorner = max(maxCorner, p);
     }
 
     // Add a box to this box.
-    void Box::addBoxToBounds(const Box & b)
+    inline void Box::addBoxToBounds(const Box & b)
     {
         minCorner = min(minCorner, b.minCorner);
         maxCorner = max(maxCorner, b.maxCorner);
     }
 
     // Translate box.
-    void Box::translate(const Vector3 & v)
+    inline void Box::translate(const Vector3 & v)
     {
         minCorner += v;
         maxCorner += v;
     }
 
     // Scale the box.
-    void Box::scale(float s)
+    inline void Box::scale(float s)
     {
         minCorner *= s;
         maxCorner *= s;
     }
 
     // Expand the box by a fixed amount.
-    void Box::expand(float r) {
+    inline void Box::expand(float r) {
         minCorner -= Vector3(r,r,r);
         maxCorner += Vector3(r,r,r);
     }
 
     // Get the area of the box.
-    float Box::area() const
+    inline float Box::area() const
     {
         const Vector3 d = extents();
         return 8.0f * (d.x*d.y + d.x*d.z + d.y*d.z);
     }	
 
     // Get the volume of the box.
-    float Box::volume() const
+    inline float Box::volume() const
     {
         Vector3 d = extents();
         return 8.0f * (d.x * d.y * d.z);
     }
 
     // Return true if the box contains the given point.
-    bool Box::contains(const Vector3 & p) const
+    inline bool Box::contains(const Vector3 & p) const
     {
         return 
             minCorner.x < p.x && minCorner.y < p.y && minCorner.z < p.z &&
@@ -123,7 +123,7 @@ namespace nv
     }
 
     // Split the given box in 8 octants and assign the ith one to this box.
-    void Box::setOctant(const Box & box, const Vector3 & center, int i)
+    inline void Box::setOctant(const Box & box, const Vector3 & center, int i)
     {
         minCorner = box.minCorner;
         maxCorner = box.maxCorner;
