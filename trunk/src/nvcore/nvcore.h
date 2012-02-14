@@ -90,7 +90,7 @@
 
 #if defined POSH_COMPILER_CLANG
 #   define NV_CC_CLANG  1
-#   define NV_CC_GCC    1    // Clang is compatible with GCC.
+#   define NV_CC_GNUC   1    // Clang is compatible with GCC.
 #   define NV_CC_STRING "clang"
 #elif defined POSH_COMPILER_GCC
 #   define NV_CC_GNUC   1
@@ -168,6 +168,17 @@ typedef uint32      uint;
 #define NV_STRING2(x) #x
 #define NV_STRING(x) NV_STRING2(x)
 
+#if NV_CC_MSVC
+#define NV_MULTI_LINE_MACRO_BEGIN do {  
+#define NV_MULTI_LINE_MACRO_END \
+    __pragma(warning(push)) \
+    __pragma(warning(disable:4127)) \
+    } while(false) \
+    __pragma(warning(pop))  
+#else
+#define NV_MULTI_LINE_MACRO_BEGIN do {
+#define NV_MULTI_LINE_MACRO_END } while(false)
+#endif
 
 #if __cplusplus > 199711L
 #define nvStaticCheck(x) static_assert(x)

@@ -73,6 +73,9 @@ namespace nv
         virtual bool isSaving() const = 0;
 
 
+        void advance(uint offset) { seek(tell() + offset); }
+
+
         // friends	
         friend Stream & operator<<( Stream & s, bool & c ) {
 #if NV_OS_DARWIN

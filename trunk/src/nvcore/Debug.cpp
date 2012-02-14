@@ -756,3 +756,50 @@ bool debug::isDebuggerPresent()
     return getsid(getpid()) != getppid();
 #endif
 }
+
+bool debug::attachToDebugger()
+{
+#if NV_OS_WIN32
+    if (isDebuggerPresent() == FALSE) {
+        Path process(1024);
+        process.copy("\"");
+        GetSystemDirectory(process.str() + 1, 1024 - 1);
+
+        process.appendSeparator();
+
+        process.appendFormat("VSJitDebugger.exe\" -p %lu", ::GetCurrentProcessId());
+
+        STARTUPINFO sSi;
+        memset(&sSi, 0, sizeof(sSi));
+
+        PROCESS_INFORMATION sPi;
+        memset(&sPi, 0, sizeof(sPi));
+        
+        BOOL b = CreateProcess(NULL, process.str(), NULL, NULL, FALSE, 0, NULL, NULL, &sSi, &sPi);
+        if (b != FALSE) {
+            ::WaitForSingleObject(sPi.hProcess, INFINITE);
+            
+            DWORD dwExitCode;
+            ::GetExitCodeProcess(sPi.hProcess, &dwExitCode);
+            if (dwExitCode != 0) //if exit code is zero, a debugger was selected
+                b = FALSE;
+        }
+
+        if (sPi.hThread != NULL) ::CloseHandle(sPi.hThread);
+        if (sPi.hProcess != NULL) ::CloseHandle(sPi.hProcess);
+
+        if (b == FALSE)
+            return false;
+
+        for (int i = 0; i < 5*60; i++) {
+            if (isDebuggerPresent())
+                break;
+            ::Sleep(200);
+        }
+    }
+
+    nvDebugBreak();
+#endif // NV_OS_WIN32
+
+    return true;
+}

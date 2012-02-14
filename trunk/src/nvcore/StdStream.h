@@ -88,7 +88,7 @@ namespace nv
             uint pos = (uint)ftell(m_fp);
             fseek(m_fp, 0, SEEK_END);
             uint end = (uint)ftell(m_fp);
-            fseek(m_fp, pos, SEEK_SET);            
+            fseek(m_fp, pos, SEEK_SET);
 #endif
             return end;
         }
@@ -326,7 +326,7 @@ namespace nv
             return len;
         }
 
-        virtual void seek( uint pos ) { /*Not implemented*/ }
+        virtual void seek( uint /*pos*/ ) { /*Not implemented*/ }
         virtual uint tell() const { return m_buffer.size(); }
         virtual uint size() const { return m_buffer.size(); }
 

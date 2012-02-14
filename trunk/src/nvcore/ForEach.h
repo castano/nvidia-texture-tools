@@ -5,7 +5,7 @@
 #define NV_CORE_FOREACH_H
 
 /*
-The foreach macros that I use are very non-standard and somewhat confusing, but I like them.
+These foreach macros are very non-standard and somewhat confusing, but I like them.
 */
 
 
@@ -32,10 +32,10 @@ struct PseudoIndexWrapper {
     }
     // PseudoIndex cannot have a dtor!
 
-    template <typename T> typename T::PseudoIndex & operator()(const T * container) {
+    template <typename T> typename T::PseudoIndex & operator()(const T * /*container*/) {
         return *reinterpret_cast<typename T::PseudoIndex *>(memory);
     }
-    template <typename T> const typename T::PseudoIndex & operator()(const T * container) const {
+    template <typename T> const typename T::PseudoIndex & operator()(const T * /*container*/) const {
         return *reinterpret_cast<const typename T::PseudoIndex *>(memory);
     }
 

@@ -18,9 +18,9 @@
 #define NV_ABORT_EXIT       3
 
 #define nvNoAssert(exp) \
-    do { \
-        (void)sizeof(exp); \
-    } while(0)
+    NV_MULTI_LINE_MACRO_BEGIN \
+    (void)sizeof(exp); \
+    NV_MULTI_LINE_MACRO_END
 
 #if NV_NO_ASSERT
 
@@ -50,42 +50,43 @@
 #   endif
 
 #define nvDebugBreakOnce() \
-    do { \
-        static bool firstTime = true; \
-        if (firstTime) { firstTime = false; nvDebugBreak(); } \
-    } while(false)
+    NV_MULTI_LINE_MACRO_BEGIN \
+    static bool firstTime = true; \
+    if (firstTime) { firstTime = false; nvDebugBreak(); } \
+    NV_MULTI_LINE_MACRO_END
 
-#   define nvAssertMacro(exp) \
-    do { \
-        if (!(exp)) { \
-            if (nvAbort(#exp, __FILE__, __LINE__, __FUNC__) == NV_ABORT_DEBUG) { \
-                nvDebugBreak(); \
-            } \
+#define nvAssertMacro(exp) \
+    NV_MULTI_LINE_MACRO_BEGIN \
+    if (!(exp)) { \
+        if (nvAbort(#exp, __FILE__, __LINE__, __FUNC__) == NV_ABORT_DEBUG) { \
+            nvDebugBreak(); \
         } \
-    } while(false)
+    } \
+    NV_MULTI_LINE_MACRO_END
 
-#   define nvAssertMacroWithIgnoreAll(exp) \
-    do { \
+#define nvAssertMacroWithIgnoreAll(exp) \
+    NV_MULTI_LINE_MACRO_BEGIN \
         static bool ignoreAll = false; \
         if (!ignoreAll && !(exp)) { \
-            if (nvAbort(#exp, __FILE__, __LINE__, __FUNC__) == NV_ABORT_DEBUG) { \
+            int result = nvAbort(#exp, __FILE__, __LINE__, __FUNC__); \
+            if (result == NV_ABORT_DEBUG) { \
                 nvDebugBreak(); \
-            } else { \
+            } else if (result == NV_ABORT_IGNORE) { \
                 ignoreAll = true; \
             } \
         } \
-    } while(false)
+    NV_MULTI_LINE_MACRO_END
 
-#   define nvAssert(exp)    nvAssertMacro(exp)
-#   define nvCheck(exp)     nvAssertMacro(exp)
+#define nvAssert(exp)    nvAssertMacro(exp)
+#define nvCheck(exp)     nvAssertMacro(exp)
 
-#   if defined(_DEBUG)
-#       define nvDebugAssert(exp)   nvAssertMacro(exp)
-#       define nvDebugCheck(exp)    nvAssertMacro(exp)
-#   else // _DEBUG
-#       define nvDebugAssert(exp)   nvNoAssert(exp)
-#       define nvDebugCheck(exp)    nvNoAssert(exp)
-#   endif // _DEBUG
+#if defined(_DEBUG)
+#   define nvDebugAssert(exp)   nvAssertMacro(exp)
+#   define nvDebugCheck(exp)    nvAssertMacro(exp)
+#else // _DEBUG
+#   define nvDebugAssert(exp)   nvNoAssert(exp)
+#   define nvDebugCheck(exp)    nvNoAssert(exp)
+#endif // _DEBUG
 
 #endif // NV_NO_ASSERT
 
@@ -165,6 +166,7 @@ namespace nv
         NVCORE_API void disableSigHandler();
 
         NVCORE_API bool isDebuggerPresent();
+        NVCORE_API bool attachToDebugger();
     }
 
 } // nv namespace

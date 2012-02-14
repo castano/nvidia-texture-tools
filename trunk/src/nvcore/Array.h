@@ -9,8 +9,8 @@ This array class requires the elements to be relocable; it uses memmove and real
 using swap, but I honestly don't care. The only thing that you should be aware of is that internal pointers
 are not supported.
 
-The foreach macros that I use are very non-standard and somewhat confusing. It would be nice to have
-standard foreach as in Qt.
+Note also that push_back and resize does not support inserting arguments elements that are in the same 
+container. This is forbidden to prevent an extra copy.
 */
 
 
@@ -19,7 +19,7 @@ standard foreach as in Qt.
 #include "Debug.h"
 #include "Stream.h"
 #include "Utils.h" // swap
-#include "ForEach.h" // swap
+#include "ForEach.h" // PseudoIndex
 
 #include <string.h>	// memmove
 #include <new> // for placement new
@@ -27,69 +27,6 @@ standard foreach as in Qt.
 
 namespace nv 
 {
-    // @@ Move this to utils?
-    /// Delete all the elements of a container.
-    template <typename T>
-    void deleteAll(T & container)
-    {
-        for (typename T::PseudoIndex i = container.start(); !container.isDone(i); container.advance(i))
-        {
-            delete container[i];
-        }
-    }
-
-
-    // @@ Move these templates to Utils.h
-    // @@ Specialize these methods for numeric, pointer, and pod types.
-
-    template <typename T>
-    void construct_range(T * restrict ptr, uint new_size, uint old_size) {
-        for (uint i = old_size; i < new_size; i++) {
-            new(ptr+i) T; // placement new
-        }
-    }
-
-    template <typename T>
-    void construct_range(T * restrict ptr, uint new_size, uint old_size, const T & elem) {
-        for (uint i = old_size; i < new_size; i++) {
-            new(ptr+i) T(elem); // placement new
-        }
-    }
-
-    template <typename T>
-    void destroy_range(T * restrict ptr, uint new_size, uint old_size) {
-        for (uint i = new_size; i < old_size; i++) {
-            (ptr+i)->~T(); // Explicit call to the destructor
-        }
-    }
-
-    template <typename T>
-    void fill(T * restrict dst, uint count, const T & value) {
-        for (uint i = 0; i < count; i++) {
-            dst[i] = value;
-        }
-    }
-
-    template <typename T>
-    void copy(T * restrict dst, const T * restrict src, uint count) {
-        for (uint i = 0; i < count; i++) {
-            dst[i] = src[i];
-        }
-    }
-
-    template <typename T>
-    bool find(const T & element, const T * restrict ptr, uint begin, uint end, uint * index) {
-        for (uint i = begin; i < end; i++) {
-            if (ptr[i] == element) {
-                if (index != NULL) *index = i;
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-
     /**
     * Replacement for std::vector that is easier to debug and provides
     * some nice foreach enumerators. 
@@ -107,7 +44,7 @@ namespace nv
         }
 
         // Constructor that initializes the vector with the given elements.
-        NV_FORCEINLINE Array(const T * ptr, int num) : m_buffer(NULL), m_capacity(0), m_size(0) {
+        NV_FORCEINLINE Array(const T * ptr, uint num) : m_buffer(NULL), m_capacity(0), m_size(0) {
             copy(ptr, num);
         }
 
@@ -172,8 +109,12 @@ namespace nv
 #if 1
             nvDebugCheck(&val < m_buffer || &val > m_buffer+m_size);
 
-            setArraySize(m_size+1);
-            new(m_buffer+m_size-1) T(val);
+            uint old_size = m_size;
+            uint new_size = m_size + 1;
+
+            setArraySize(new_size);
+
+            construct_range(m_buffer, new_size, old_size, val);
 #else
             uint new_size = m_size + 1;
 
@@ -205,7 +146,7 @@ namespace nv
         }
 
         /// Qt like push operator.
-        NV_FORCEINLINE Array<T> & operator<< ( const T & t )
+        NV_FORCEINLINE Array<T> & operator<< ( T & t )
         {
             push_back(t);
             return *this;
@@ -360,6 +301,8 @@ namespace nv
         /// new ones with the given value.
         void resize(uint new_size, const T & elem)
         {
+            nvDebugCheck(&elem < m_buffer || &elem > m_buffer+m_size);
+
             uint old_size = m_size;
 
             // Destruct old elements (if we're shrinking).
@@ -397,10 +340,13 @@ namespace nv
         }
 
         /// Copy elements to this array. Resizes it if needed.
-        NV_FORCEINLINE void copy(const T * ptr, uint num)
+        NV_FORCEINLINE void copy(const T * data, uint count)
         {
-            resize( num ); // @@ call copy operator from 0 to min(num,m_size) and copy constructor from min(num,m_size) to num
-            ::nv::copy(m_buffer, ptr, num);
+            destroy_range(m_buffer, count, m_size);
+
+            setArraySize(count);
+
+            ::nv::copy(m_buffer, data, count);
         }
 
         /// Assignment operator.
@@ -456,12 +402,13 @@ namespace nv
 #endif
 
         // Swap the members of this vector and the given vector.
-        friend void swap(Array & a, Array & b)
+        friend void swapMembers(Array & a, Array & b)
         {
-            swap(a.m_buffer, b.m_buffer);
-            swap(a.m_capacity, b.m_capacity);
-            swap(a.m_size, b.m_size);
+            nv::swap(a.m_buffer, b.m_buffer);
+            nv::swap(a.m_capacity, b.m_capacity);
+            nv::swap(a.m_size, b.m_size);
         }
+
 
 protected:
 
@@ -509,6 +456,14 @@ protected:
         uint m_size;
 
     };
+
+    
+    template <typename T>
+    inline void swap(Array<T> & a, Array<T> & b)
+    {
+        swapMembers(a, b);
+    }
+
 
 } // nv namespace
 
