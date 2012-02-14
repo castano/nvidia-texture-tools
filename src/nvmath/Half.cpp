@@ -488,16 +488,20 @@ nv::half_to_float( uint16 h )
 }
 
 
+// @@ This code appears to be wrong.
 // @@ These tables could be smaller.
-static uint32 mantissa_table[2048];
-static uint32 exponent_table[64];
-static uint32 offset_table[64];
+namespace nv {
+    uint32 mantissa_table[2048];
+    uint32 exponent_table[64];
+    uint32 offset_table[64];
+}
 
 void nv::half_init_tables()
 {
     // Init mantissa table.
 	mantissa_table[0] = 0;
 
+    // denormals
 	for (int i = 1; i < 1024; i++) {
 		uint m = i << 13;
 		uint e = 0;
@@ -511,8 +515,9 @@ void nv::half_init_tables()
 		mantissa_table[i] = m | e;
 	}
 
+    // normals
     for (int i = 1024; i < 2048; i++) {
-		mantissa_table[i] = 0x38000000 + ((i - 1024) << 13);
+		mantissa_table[i] = (i - 1024) << 13;
     }
 
 
@@ -520,17 +525,17 @@ void nv::half_init_tables()
 	exponent_table[0] = 0;
 
     for (int i = 1; i < 31; i++) {
-		exponent_table[i] = (i << 23);
+		exponent_table[i] = 0x38000000 + (i << 23);
     }
 
-	exponent_table[31] = 0x47800000;
+	exponent_table[31] = 0x7f800000;
 	exponent_table[32] = 0x80000000;
 
     for (int i = 33; i < 63; i++) {
-		exponent_table[i] = 0x80000000 + ((i - 32) << 23);
+		exponent_table[i] = 0xb8000000 + ((i - 32) << 23);
     }
 
-	exponent_table[63] = 0xC7800000;
+	exponent_table[63] = 0xff800000;
 
 
     // Init offset table.
@@ -545,22 +550,11 @@ void nv::half_init_tables()
     for (int i = 33; i < 64; i++) {
 		offset_table[i] = 1024;
     }
-
-    /*for (int i = 0; i < 64; i++) {
-        offset_table[i] = ((i & 31) != 0) * 1024;
-    }*/
-}
-
-// Fast half to float conversion based on:
-// http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
-uint32 nv::fast_half_to_float(uint16 h)
-{
-	uint exp = h >> 10;
-	return mantissa_table[offset_table[exp] + (h & 0x3ff)] + exponent_table[exp];
 }
 
 
 #if 0
+
 // Inaccurate conversion suggested at the ffmpeg mailing list:
 // http://lists.mplayerhq.hu/pipermail/ffmpeg-devel/2009-July/068949.html
 uint32 nv::fast_half_to_float(uint16 v)
@@ -609,4 +603,94 @@ __asm
 }
 
 
+#endif
+
+#if 0
+// These version computes the tables at compile time:
+// http://gamedev.stackexchange.com/questions/17326/conversion-of-a-number-from-single-precision-floating-point-representation-to-a
+
+/* This method is faster than the OpenEXR implementation (very often
+ * used, eg. in Ogre), with the additional benefit of rounding, inspired
+ * by James Tursa’s half-precision code. */
+static inline uint16_t float_to_half_branch(uint32_t x)
+{
+    uint16_t bits = (x >> 16) & 0x8000; /* Get the sign */
+    uint16_t m = (x >> 12) & 0x07ff; /* Keep one extra bit for rounding */
+    unsigned int e = (x >> 23) & 0xff; /* Using int is faster here */
+
+    /* If zero, or denormal, or exponent underflows too much for a denormal
+     * half, return signed zero. */
+    if (e < 103)
+        return bits;
+
+    /* If NaN, return NaN. If Inf or exponent overflow, return Inf. */
+    if (e > 142)
+    {
+        bits |= 0x7c00u;
+        /* If exponent was 0xff and one mantissa bit was set, it means NaN,
+         * not Inf, so make sure we set one mantissa bit too. */
+        bits |= e == 255 && (x & 0x007fffffu);
+        return bits;
+    }
+
+    /* If exponent underflows but not too much, return a denormal */
+    if (e < 113)
+    {
+        m |= 0x0800u;
+        /* Extra rounding may overflow and set mantissa to 0 and exponent
+         * to 1, which is OK. */
+        bits |= (m >> (114 - e)) + ((m >> (113 - e)) & 1);
+        return bits;
+    }
+
+    bits |= ((e - 112) << 10) | (m >> 1);
+    /* Extra rounding. An overflow will set mantissa to 0 and increment
+     * the exponent, which is OK. */
+    bits += m & 1;
+    return bits;
+}
+
+/* These macros implement a finite iterator useful to build lookup
+ * tables. For instance, S64(0) will call S1(x) for all values of x
+ * between 0 and 63.
+ * Due to the exponential behaviour of the calls, the stress on the
+ * compiler may be important. */
+#define S4(x)    S1((x)),   S1((x)+1),     S1((x)+2),     S1((x)+3)
+#define S16(x)   S4((x)),   S4((x)+4),     S4((x)+8),     S4((x)+12)
+#define S64(x)   S16((x)),  S16((x)+16),   S16((x)+32),   S16((x)+48)
+#define S256(x)  S64((x)),  S64((x)+64),   S64((x)+128),  S64((x)+192)
+#define S1024(x) S256((x)), S256((x)+256), S256((x)+512), S256((x)+768)
+
+/* Lookup table-based algorithm from “Fast Half Float Conversions”
+ * by Jeroen van der Zijp, November 2008. No rounding is performed,
+ * and some NaN values may be incorrectly converted to Inf. */
+static inline uint16_t float_to_half_nobranch(uint32_t x)
+{
+    static uint16_t const basetable[512] =
+    {
+#define S1(i) (((i) < 103) ? 0x0000 : \
+               ((i) < 113) ? 0x0400 >> (113 - (i)) : \
+               ((i) < 143) ? ((i) - 112) << 10 : 0x7c00)
+        S256(0),
+#undef S1
+#define S1(i) (0x8000 | (((i) < 103) ? 0x0000 : \
+                         ((i) < 113) ? 0x0400 >> (113 - (i)) : \
+                         ((i) < 143) ? ((i) - 112) << 10 : 0x7c00))
+        S256(0),
+#undef S1
+    };
+
+    static uint8_t const shifttable[512] =
+    {
+#define S1(i) (((i) < 103) ? 24 : \
+               ((i) < 113) ? 126 - (i) : \
+               ((i) < 143 || (i) == 255) ? 13 : 24)
+        S256(0), S256(0),
+#undef S1
+    };
+
+    uint16_t bits = basetable[(x >> 23) & 0x1ff];
+    bits |= (x & 0x007fffff) >> shifttable[(x >> 23) & 0x1ff];
+    return bits;
+}
 #endif

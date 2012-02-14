@@ -314,6 +314,12 @@ namespace nv
         return scale(v, 1.0f/s);
     }
 
+    inline Vector2 lerp(Vector2::Arg v1, Vector2::Arg v2, float t)
+    {
+        const float s = 1.0f - t;
+        return Vector2(v1.x * s + t * v2.x, v1.y * s + t * v2.y);
+    }
+
     inline float dot(Vector2::Arg a, Vector2::Arg b)
     {
         return a.x * b.x + a.y * b.y;
@@ -381,6 +387,16 @@ namespace nv
         return Vector2(max(a.x, b.x), max(a.y, b.y));
     }
 
+    inline Vector2 clamp(Vector2::Arg v, float min, float max)
+    {
+        return Vector2(clamp(v.x, min, max), clamp(v.y, min, max));
+    }
+
+    inline Vector2 saturate(Vector2::Arg v)
+    {
+        return Vector2(saturate(v.x), saturate(v.y));
+    }
+
     inline bool isFinite(Vector2::Arg v)
     {
         return isFinite(v.x) && isFinite(v.y);
@@ -394,6 +410,7 @@ namespace nv
         return vf;
     }
 
+    // Note, this is the area scaled by 2!
     inline float triangleArea(Vector2::Arg a, Vector2::Arg b, Vector2::Arg c)
     {
 	    Vector2 v0 = a - c;
@@ -500,6 +517,16 @@ namespace nv
         return sqrtf(lengthSquared(v));
     }
 
+    inline float distance(Vector3::Arg a, Vector3::Arg b)
+    {
+        return length(a - b);
+    }
+
+    inline float distanceSquared(Vector3::Arg a, Vector3::Arg b)
+    {
+        return lengthSquared(a - b);
+    }
+
     inline float inverseLength(Vector3::Arg v)
     {
         return 1.0f / sqrtf(lengthSquared(v));
@@ -557,6 +584,11 @@ namespace nv
         return Vector3(clamp(v.x, min, max), clamp(v.y, min, max), clamp(v.z, min, max));
     }
 
+    inline Vector3 saturate(Vector3::Arg v)
+    {
+        return Vector3(saturate(v.x), saturate(v.y), saturate(v.z));
+    }
+
     inline Vector3 floor(Vector3::Arg v)
     {
         return Vector3(floorf(v.x), floorf(v.y), floorf(v.z));
@@ -578,6 +610,11 @@ namespace nv
         Vector3 vf = v;
         nv::floatCleanup(vf.component, 3);
         return vf;
+    }
+
+    inline Vector3 reflect(Vector3::Arg v, Vector3::Arg n)
+    {
+	    return v - (2 * dot(v, n)) * n;
     }
 
 
@@ -627,9 +664,15 @@ namespace nv
         return scale(v, 1.0f/s);
     }
 
-    inline Vector4 add_scaled(Vector4::Arg a, Vector4::Arg b, float s)
+    /*inline Vector4 add_scaled(Vector4::Arg a, Vector4::Arg b, float s)
     {
         return Vector4(a.x + b.x * s, a.y + b.y * s, a.z + b.z * s, a.w + b.w * s);
+    }*/
+
+    inline Vector4 lerp(Vector4::Arg v1, Vector4::Arg v2, float t)
+    {
+        const float s = 1.0f - t;
+        return Vector4(v1.x * s + t * v2.x, v1.y * s + t * v2.y, v1.z * s + t * v2.z, v1.w * s + t * v2.w);
     }
 
     inline float dot(Vector4::Arg a, Vector4::Arg b)
@@ -697,6 +740,16 @@ namespace nv
     inline Vector4 max(Vector4::Arg a, Vector4::Arg b)
     {
         return Vector4(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z), max(a.w, b.w));
+    }
+
+    inline Vector4 clamp(Vector4::Arg v, float min, float max)
+    {
+        return Vector4(clamp(v.x, min, max), clamp(v.y, min, max), clamp(v.z, min, max), clamp(v.w, min, max));
+    }
+
+    inline Vector4 saturate(Vector4::Arg v)
+    {
+        return Vector4(saturate(v.x), saturate(v.y), saturate(v.z), saturate(v.w));
     }
 
     inline bool isFinite(Vector4::Arg v)
