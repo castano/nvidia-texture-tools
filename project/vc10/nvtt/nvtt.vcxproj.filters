@@ -34,7 +34,6 @@
     <ClInclude Include="..\..\..\src\nvtt\CompressorDX9.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressorDXT.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressorRGB.h" />
-    <ClInclude Include="..\..\..\src\nvtt\CompressorRGBE.h" />
     <ClInclude Include="..\..\..\src\nvtt\Context.h" />
     <ClInclude Include="..\..\..\src\nvtt\InputOptions.h" />
     <ClInclude Include="..\..\..\src\nvtt\nvtt.h" />
@@ -43,7 +42,8 @@
     <ClInclude Include="..\..\..\src\nvtt\OutputOptions.h" />
     <ClInclude Include="..\..\..\src\nvtt\QuickCompressDXT.h" />
     <ClInclude Include="..\..\..\src\nvtt\TaskDispatcher.h" />
-    <ClInclude Include="..\..\..\src\nvtt\TexImage.h" />
+    <ClInclude Include="..\..\..\src\nvtt\CubeSurface.h" />
+    <ClInclude Include="..\..\..\src\nvtt\Surface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\nvtt\cuda\CudaCompressorDXT.cpp">
@@ -59,7 +59,6 @@
     <ClCompile Include="..\..\..\src\nvtt\CompressorDX9.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorDXT.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorRGB.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\CompressorRGBE.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\Context.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\InputOptions.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\nvtt.cpp" />
@@ -68,7 +67,8 @@
     <ClCompile Include="..\..\..\src\nvtt\OutputOptions.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\QuickCompressDXT.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\SingleColorLookup.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\TexImage.cpp" />
+    <ClCompile Include="..\..\..\src\nvtt\CubeSurface.cpp" />
+    <ClCompile Include="..\..\..\src\nvtt\Surface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\..\..\src\nvtt\cuda\ConvolveKernel.cu">
