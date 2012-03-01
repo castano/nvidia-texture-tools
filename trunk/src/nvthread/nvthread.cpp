@@ -9,6 +9,7 @@
 #elif NV_OS_UNIX
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 #elif NV_OS_DARWIN
 #import <stdio.h>
 #import <string.h>
