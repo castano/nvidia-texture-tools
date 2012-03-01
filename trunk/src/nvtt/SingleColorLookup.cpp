@@ -86,5 +86,5 @@ void initSingleColorLookup()
 	PrepareOptTable(&OMatch6[0][0], expand6, 64, false);
     PrepareOptTable(&OMatchAlpha5[0][0], expand5, 32, true);
 	PrepareOptTable(&OMatchAlpha6[0][0], expand6, 64, true);
-};
+}
 
