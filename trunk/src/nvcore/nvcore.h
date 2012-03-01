@@ -84,9 +84,7 @@
 // Compiler:
 // NV_CC_GNUC
 // NV_CC_MSVC
-// @@ NV_CC_MSVC6
-// @@ NV_CC_MSVC7
-// @@ NV_CC_MSVC8
+// NV_CC_CLANG
 
 #if defined POSH_COMPILER_CLANG
 #   define NV_CC_CLANG  1
@@ -148,7 +146,7 @@ typedef uint32      uint;
 #define NV_FORBID_COPY(C) \
     private: \
     C( const C & ); \
-    C &operator=( const C & );
+    C &operator=( const C & )
 
 
 // Disable dynamic allocation on the heap. 
@@ -156,7 +154,7 @@ typedef uint32      uint;
 #define NV_FORBID_HEAPALLOC() \
     private: \
     void *operator new(size_t size); \
-    void *operator new[](size_t size);
+    void *operator new[](size_t size)
     //static void *operator new(size_t size); \
     //static void *operator new[](size_t size);
 
@@ -218,7 +216,7 @@ NV_COMPILER_CHECK(sizeof(uint32) == 4);
             NV_STRING_JOIN2(AtStartup_, __LINE__)() { some_code; } \
         } \
         NV_STRING_JOIN3(AtStartup_, __LINE__, Instance); \
-    };
+    }
 
 // Indicate the compiler that the parameter is not used to suppress compier warnings.
 #define NV_UNUSED(a) ((a)=(a))
