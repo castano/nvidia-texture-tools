@@ -6,60 +6,44 @@
 
 #include "nvcore.h"
 
-#if 1
-
-#include <time.h> //clock
-
 namespace nv {
+
+#if NV_CC_MSVC
+    NV_FORCEINLINE uint64 fastCpuClock() { return rdtsc(); }
+#elif NV_CC_GNUC && NV_CPU_X86
+    NV_FORCEINLINE uint64 fastCpuClock() {
+        uint64 val;
+        __asm__ volatile (".byte 0x0f, 0x31" : "=A" (val));
+        return val;
+    }
+#elif NV_CC_GNUC && NV_CPU_X86_64
+    NV_FORCEINLINE uint64 fastCpuClock() {
+        uint hi, lo;
+        __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+        return uint64(lo) | (uint64(hi) << 32);
+    }
+#else
+    NV_FORCEINLINE uint64 fastCpuClock() { return 0; }    
+#endif
+    
+    uint64 systemClockFrequency();
+    uint64 systemClock();
 
     class NVCORE_CLASS Timer
     {
     public:
         Timer() {}
 
-        void start() { m_start = clock(); }
-        void stop() { m_stop = clock(); }
+        void start() { m_start = systemClock(); }
+        void stop() { m_stop = systemClock(); }
 
-        float elapsed() const { return float(m_stop - m_start) / CLOCKS_PER_SEC; }
+        float elapsed() const { return float(m_stop - m_start) / systemClockFrequency(); }
 
     private:
-        clock_t m_start;
-        clock_t m_stop;
+        uint64 m_start;
+        uint64 m_stop;
     };
 
 } // nv namespace
-
-#else
-
-#define WINDOWS_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#define NOMINMAX
-#include <windows.h>
-
-class NVCORE_CLASS Timer
-{
-public:
-    Timer() {
-        // get the tick frequency from the OS
-        QueryPerformanceFrequency((LARGE_INTEGER*) &m_frequency);
-    }
-
-    void start() { QueryPerformanceCounter((LARGE_INTEGER*) &m_start); }
-    void stop() { QueryPerformanceCounter((LARGE_INTEGER*) &m_stop); }
-
-    int elapsed() const {
-        return (int)1000 * ((double)m_stop.QuadPart - (double)m_start.QuadPart) / (double)m_frequency.QuadPart;
-    }
-
-private:
-    LARGE_INTEGER  m_frequency;
-    LARGE_INTEGER  m_start;
-    LARGE_INTEGER  m_stop;
-
-};
-
-#endif // 0
-
-
 
 #endif // NV_CORE_TIMER_H

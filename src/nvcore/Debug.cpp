@@ -763,19 +763,19 @@ bool debug::attachToDebugger()
     if (isDebuggerPresent() == FALSE) {
         Path process(1024);
         process.copy("\"");
-        GetSystemDirectory(process.str() + 1, 1024 - 1);
+        GetSystemDirectoryA(process.str() + 1, 1024 - 1);
 
         process.appendSeparator();
 
         process.appendFormat("VSJitDebugger.exe\" -p %lu", ::GetCurrentProcessId());
 
-        STARTUPINFO sSi;
+        STARTUPINFOA sSi;
         memset(&sSi, 0, sizeof(sSi));
 
         PROCESS_INFORMATION sPi;
         memset(&sPi, 0, sizeof(sPi));
         
-        BOOL b = CreateProcess(NULL, process.str(), NULL, NULL, FALSE, 0, NULL, NULL, &sSi, &sPi);
+        BOOL b = CreateProcessA(NULL, process.str(), NULL, NULL, FALSE, 0, NULL, NULL, &sSi, &sPi);
         if (b != FALSE) {
             ::WaitForSingleObject(sPi.hProcess, INFINITE);
             
