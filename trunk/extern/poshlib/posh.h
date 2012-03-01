@@ -234,14 +234,14 @@ Metrowerks:
 #  define POSH_COMPILER_HPCC 1 
 #endif
 
-#if defined __GNUC__
-#  define POSH_COMPILER_STRING "Gnu GCC"
-#  define POSH_COMPILER_GCC 1
-#endif
-
 #if defined __clang__
 #  define POSH_COMPILER_STRING "Clang"
 #  define POSH_COMPILER_CLANG 1
+
+#elif defined __GNUC__
+
+#  define POSH_COMPILER_STRING "Gnu GCC"
+#  define POSH_COMPILER_GCC 1
 #endif
 
 #if defined __APPLE_CC__
