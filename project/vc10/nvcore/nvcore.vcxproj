@@ -166,6 +166,7 @@
     <ClCompile Include="..\..\..\src\nvcore\Memory.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\StrLib.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\TextWriter.cpp" />
+    <ClCompile Include="..\..\..\src\nvcore\Timer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

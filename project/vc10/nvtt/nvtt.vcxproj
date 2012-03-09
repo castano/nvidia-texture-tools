@@ -75,6 +75,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 4.1.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -165,6 +166,14 @@
       <Message>Copying header files...</Message>
       <Command>xcopy /y /f /i "$(SolutionDir)\..\..\src\nvtt\nvtt*.h" "$(SolutionDir)\$(Configuration).$(Platform)\include\nvtt\"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <HostDebugInfo>true</HostDebugInfo>
+      <GPUDebugInfo>true</GPUDebugInfo>
+      <AdditionalOptions>-D_DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <Runtime>MDd</Runtime>
+      <RuntimeChecks>RTC1</RuntimeChecks>
+      <NvccCompilation>ptx</NvccCompilation>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|x64'">
     <Midl>
@@ -194,6 +203,15 @@
       <ImportLibrary>$(SolutionDir)\$(Configuration).$(Platform)\lib\$(ProjectName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <AdditionalOptions>-D_DEBUG %(AdditionalOptions)</AdditionalOptions>
+      <HostDebugInfo>true</HostDebugInfo>
+      <GPUDebugInfo>true</GPUDebugInfo>
+      <Runtime>MDd</Runtime>
+      <RuntimeChecks>RTC1</RuntimeChecks>
+      <NvccCompilation>ptx</NvccCompilation>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|Win32'">
     <ClCompile>
@@ -232,6 +250,11 @@
       <Message>Copying header files...</Message>
       <Command>xcopy /y /f /i "$(SolutionDir)\..\..\src\nvtt\nvtt*.h" "$(SolutionDir)\$(Configuration).$(Platform)\include\nvtt\"</Command>
     </PostBuildEvent>
+    <CudaCompile>
+      <Optimization>O2</Optimization>
+      <AdditionalOptions>-DNDEBUG %(AdditionalOptions)</AdditionalOptions>
+      <NvccCompilation>ptx</NvccCompilation>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|x64'">
     <Midl>
@@ -265,6 +288,12 @@
       <ImportLibrary>$(SolutionDir)\$(Configuration).$(Platform)\lib\$(ProjectName).lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <Optimization>O2</Optimization>
+      <AdditionalOptions>-DNDEBUG %(AdditionalOptions)</AdditionalOptions>
+      <NvccCompilation>ptx</NvccCompilation>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -415,36 +444,6 @@
     <ClInclude Include="..\..\..\src\nvtt\TaskDispatcher.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\..\src\nvtt\cuda\CompressKernel.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(CUDA_BIN_PATH)\nvcc.exe -ccbin "$(VCInstallDir)bin" -c -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/Od,/Zi,/RTC1,/MDd -I"$(CUDA_INC_PATH)" -I./ -o $(IntDir)%(Filename).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu
-</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CudaMath.h;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|Win32'">"$(CUDA_BIN_PATH)\nvcc.exe" -keep -ccbin "$(VCInstallDir)bin" -c -m 32 -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I"$(CUDA_INC_PATH)" -I./ -o $(IntDir)%(Filename).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu
-</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|Win32'">CudaMath.h;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|x64'">"$(CUDA_BIN_PATH)\nvcc.exe" -keep -ccbin "$(VCInstallDir)bin" -c -m 64 -D_DEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Od,/Zi,/RTC1,/MDd -I"$(CUDA_INC_PATH)" -I./ -o $(IntDir)%(Filename).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu
-</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|x64'">CudaMath.h;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(CUDA_BIN_PATH)\nvcc.exe -ccbin "$(VCInstallDir)bin" -c -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/Wp64,/O2,/Zi,/MD -I"$(CUDA_INC_PATH)" -I./ -o $(IntDir)%(Filename).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu
-</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CudaMath.h;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|Win32'">"$(CUDA_BIN_PATH)\nvcc.exe" -keep -ccbin "$(VCInstallDir)bin" -c -m 32 -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I"$(CUDA_INC_PATH)" -I./ -o $(IntDir)%(Filename).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu
-</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|Win32'">CudaMath.h;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|Win32'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|x64'">"$(CUDA_BIN_PATH)\nvcc.exe" -keep -ccbin "$(VCInstallDir)bin" -c -m 64 -DNDEBUG -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MD -I"$(CUDA_INC_PATH)" -I./ -o $(IntDir)%(Filename).obj ..\\..\\..\\src\\nvtt\\cuda\\CompressKernel.cu
-</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|x64'">CudaMath.h;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
-    </CustomBuild>
     <CustomBuildStep Include="..\..\..\src\nvtt\cuda\ConvolveKernel.cu">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -517,7 +516,20 @@
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\..\src\nvtt\cuda\CompressKernel.cu">
+      <NvccCompilation Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|Win32'">compile</NvccCompilation>
+      <NvccCompilation Condition="'$(Configuration)|$(Platform)'=='Debug-CUDA|x64'">compile</NvccCompilation>
+      <NvccCompilation Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|Win32'">compile</NvccCompilation>
+      <NvccCompilation Condition="'$(Configuration)|$(Platform)'=='Release-CUDA|x64'">compile</NvccCompilation>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 4.1.targets" />
   </ImportGroup>
 </Project>
