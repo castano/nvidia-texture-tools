@@ -77,8 +77,8 @@
     <CustomBuildStep Include="..\..\..\src\nvtt\CompressorDX11.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\..\src\nvtt\cuda\CompressKernel.cu">
+    <CudaCompile Include="..\..\..\src\nvtt\cuda\CompressKernel.cu">
       <Filter>cuda</Filter>
-    </CustomBuild>
+    </CudaCompile>
   </ItemGroup>
 </Project>
