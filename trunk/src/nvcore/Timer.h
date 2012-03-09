@@ -6,10 +6,14 @@
 
 #include "nvcore.h"
 
+#if NV_CC_MSVC
+#include <intrin.h>
+#endif
+
 namespace nv {
 
 #if NV_CC_MSVC
-    NV_FORCEINLINE uint64 fastCpuClock() { return rdtsc(); }
+    NV_FORCEINLINE uint64 fastCpuClock() { return __rdtsc(); }
 #elif NV_CC_GNUC && NV_CPU_X86
     NV_FORCEINLINE uint64 fastCpuClock() {
         uint64 val;
