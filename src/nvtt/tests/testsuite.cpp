@@ -578,7 +578,7 @@ int main(int argc, char *argv[])
 
     nvtt::Surface img;
 
-    printf("Running Test: %s\n", set.name);
+    printf("Running Test: %s with Set: %s\n", test.name, set.name);
 
     graphWriter << "&chd=t:";
 
@@ -621,7 +621,7 @@ int main(int argc, char *argv[])
         FileSystem::createDirectory(outputFilePath.str());
 
 
-        printf("Processing Set: %s\n", set.name);
+        printf("Processing Mode: %s\n", s_modeNames[test.modes[t]]);
         for (int i = 0; i < set.fileCount; i++)
         {
             if (!img.load(set.fileNames[i]))
@@ -724,7 +724,7 @@ int main(int argc, char *argv[])
             context.compress(tmp, 0, 0, compressionOptions, outputOptions);
 
             timer.stop();
-            printf("  Time: \t%.3f sec\n", timer.elapsed());
+            printf("  Time:  \t%.3f sec\n", timer.elapsed());
             totalTime += timer.elapsed();
 
             nvtt::Surface img_out = outputHandler.decompress(mode, format, decoder);
@@ -875,7 +875,7 @@ int main(int argc, char *argv[])
             }
 
             totalError += error;
-            printf("  Error:          \t%.4f\n", error);
+            printf("  Error: \t%.4f\n", error);
 
             graphWriter << error;
             if (i != set.fileCount-1) graphWriter << ",";
