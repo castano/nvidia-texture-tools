@@ -47,6 +47,9 @@ namespace nv
 		void compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block);
 		void compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock);
 		void compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock);
+
+        void compressDXT1_Luma(const ColorBlock & rgba, BlockDXT1 * block);
+
 	}
 } // nv namespace
 

@@ -379,6 +379,108 @@ void OptimalCompress::compressDXT1G(const ColorBlock & rgba, BlockDXT1 * block)
 	block->indices = computeGreenIndices(rgba, palette);
 }
 
+
+/*void OptimalCompress::initLumaTables() {
+
+    // For all possible color pairs:
+    for (int c0 = 0; c0 < 65536; c0++) {
+        for (int c1 = 0; c1 < 65536; c1++) {
+            
+            // Compute 
+
+        }
+    }
+
+
+    for (int r = 0; r < 1<<5; r++) {
+        for (int g = 0; g < 1<<6; g++) {
+            for (int b = 0; b < 1<<5; b++) {
+
+
+            }
+        }
+    }
+}*/
+
+
+// Brute force Luma compressor
+void OptimalCompress::compressDXT1_Luma(const ColorBlock & rgba, BlockDXT1 * block)
+{
+	nvDebugCheck(block != NULL);
+	
+    // F_YR = 19595/65536.0f, F_YG = 38470/65536.0f, F_YB = 7471/65536.0f;
+    // 195841
+    //if (
+
+
+    /*
+	uint8 ming = 63;
+	uint8 maxg = 0;
+	
+	bool isSingleColor = true;
+	uint8 singleColor = rgba.color(0).g;
+
+	// Get min/max green.
+	for (uint i = 0; i < 16; i++)
+	{
+		uint8 green = (rgba.color(i).g + 1) >> 2;
+		ming = min(ming, green);
+		maxg = max(maxg, green);
+
+		if (rgba.color(i).g != singleColor) isSingleColor = false;
+	}
+
+	if (isSingleColor)
+	{
+		compressDXT1G(singleColor, block);
+		return;
+	}
+
+	block->col0.r = 31;
+	block->col1.r = 31;
+	block->col0.g = maxg;
+	block->col1.g = ming;
+	block->col0.b = 0;
+	block->col1.b = 0;
+
+	int bestError = computeGreenError(rgba, block);
+	int bestg0 = maxg;
+	int bestg1 = ming;
+
+	// Expand search space a bit.
+	const int greenExpand = 4;
+	ming = (ming <= greenExpand) ? 0 : ming - greenExpand;
+	maxg = (maxg >= 63-greenExpand) ? 63 : maxg + greenExpand;
+
+	for (int g0 = ming+1; g0 <= maxg; g0++)
+	{
+		for (int g1 = ming; g1 < g0; g1++)
+		{
+			block->col0.g = g0;
+			block->col1.g = g1;
+			int error = computeGreenError(rgba, block, bestError);
+			
+			if (error < bestError)
+			{
+				bestError = error;
+				bestg0 = g0;
+				bestg1 = g1;
+			}
+		}
+	}
+	
+	block->col0.g = bestg0;
+	block->col1.g = bestg1;
+
+	nvDebugCheck(bestg0 == bestg1 || block->isFourColorMode());
+    */
+
+	Color32 palette[4];
+	block->evaluatePalette(palette, false); // @@ Use target decoder.
+	block->indices = computeGreenIndices(rgba, palette);
+}
+
+
 void OptimalCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
 {
 	dxtBlock->alpha0 = quantize4(rgba.color(0).a);

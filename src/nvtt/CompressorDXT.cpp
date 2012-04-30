@@ -201,7 +201,7 @@ void ColorSetCompressorTask(void * data, int i)
     //for (uint x = 0; x < d->bw; x++)
     {
         ColorSet set;
-        set.setColors(d->data, d->w, d->h, x, y);
+        set.setColors(d->data, d->w, d->h, x * 4, y * 4);
 
         uint8 * ptr = d->mem + (y * d->bw + x) * d->bs;
         d->compressor->compressBlock(set, d->alphaMode, *d->compressionOptions, ptr);

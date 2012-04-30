@@ -103,6 +103,8 @@ namespace nvtt
 
         Format_BC6,     // Not supported yet.
         Format_BC7,     // Not supported yet.
+
+        Format_DXT1_Luma,
     };
 
     // Pixel types. These basically indicate how the output should be interpreted, but do not have any influence over the input. They are only relevant in RGBA mode.
@@ -532,6 +534,7 @@ namespace nvtt
         NVTT_API void flipX();
         NVTT_API void flipY();
         NVTT_API void flipZ();
+        NVTT_API Surface subImage(int x0, int x1, int y0, int y1, int z0, int z1) const;
 
         // Copy image data.
         NVTT_API bool copyChannel(const Surface & srcImage, int srcChannel);
