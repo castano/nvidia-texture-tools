@@ -11,9 +11,10 @@
 #include "nvcore/Utils.h" // max
 #include "nvcore/Ptr.h"
 #include "nvcore/Memory.h"
-#include "nvcore/Array.h"
+#include "nvcore/Array.inl"
 
 #include <math.h>
+#include <string.h> // memset, memcpy
 
 
 using namespace nv;
