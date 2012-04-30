@@ -4,7 +4,8 @@
 #ifndef NV_MATH_FITTING_H
 #define NV_MATH_FITTING_H
 
-#include "nvmath.h"
+#include "Vector.h"
+#include "Plane.h"
 
 namespace nv
 {
