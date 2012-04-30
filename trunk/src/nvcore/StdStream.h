@@ -1,8 +1,8 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
-#pragma once
-#ifndef NV_CORE_STDSTREAM_H
-#define NV_CORE_STDSTREAM_H
+//#pragma once
+//#ifndef NV_CORE_STDSTREAM_H
+//#define NV_CORE_STDSTREAM_H
 
 #include "nvcore.h"
 #include "Stream.h"
@@ -10,7 +10,6 @@
 
 #include <stdio.h> // fopen
 #include <string.h> // memcpy
-#include <exception> // std::exception
 
 namespace nv
 {
@@ -378,7 +377,7 @@ namespace nv
             len = m_s->serialize( data, len );
 
             if( m_s->isError() ) {
-                throw std::exception();
+                throw;
             }
 
             return len;
@@ -389,7 +388,7 @@ namespace nv
             m_s->seek( pos );
 
             if( m_s->isError() ) {
-                throw std::exception();
+                throw;
             }
         }
 
@@ -445,4 +444,4 @@ namespace nv
 } // nv namespace
 
 
-#endif // NV_CORE_STDSTREAM_H
+//#endif // NV_CORE_STDSTREAM_H

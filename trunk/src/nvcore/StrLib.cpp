@@ -2,8 +2,12 @@
 
 #include "StrLib.h"
 
+#include "Memory.h"
+#include "Utils.h" // swap
+
 #include <math.h>   // log
 #include <stdio.h>  // vsnprintf
+#include <string.h> // strlen, strcmp, etc.
 
 #if NV_CC_MSVC
 #include <stdarg.h> // vsnprintf
@@ -66,6 +70,12 @@ namespace
 
 }
 
+uint nv::strLen(const char * str)
+{
+    nvDebugCheck(str != NULL);
+    return toU32(strlen(str));
+}
+
 int nv::strCmp(const char * s1, const char * s2)
 {
     nvDebugCheck(s1 != NULL);
@@ -84,7 +94,28 @@ int nv::strCaseCmp(const char * s1, const char * s2)
 #endif
 }
 
-void nv::strCpy(char * dst, int size, const char * src)
+bool nv::strEqual(const char * s1, const char * s2)
+{
+    if (s1 == s2) return true;
+    if (s1 == NULL || s2 == NULL) return false;
+    return strCmp(s1, s2) == 0;
+}
+
+bool nv::strBeginsWith(const char * dst, const char * prefix)
+{
+    //return strstr(dst, prefix) == dst;
+    return strncmp(dst, prefix, strlen(prefix)) == 0;
+}
+
+// @@ Not tested.
+bool nv::strEndsWith(const char * dst, const char * suffix)
+{
+    const size_t len = strlen(suffix);
+    return strncmp(dst + strlen(dst) - len, suffix, len) == 0;
+}
+
+
+void nv::strCpy(char * dst, uint size, const char * src)
 {
     nvDebugCheck(dst != NULL);
     nvDebugCheck(src != NULL);
@@ -96,7 +127,7 @@ void nv::strCpy(char * dst, int size, const char * src)
 #endif
 }
 
-void nv::strCpy(char * dst, int size, const char * src, int len)
+void nv::strCpy(char * dst, uint size, const char * src, uint len)
 {
     nvDebugCheck(dst != NULL);
     nvDebugCheck(src != NULL);
@@ -108,7 +139,7 @@ void nv::strCpy(char * dst, int size, const char * src, int len)
 #endif
 }
 
-void nv::strCat(char * dst, int size, const char * src)
+void nv::strCat(char * dst, uint size, const char * src)
 {
     nvDebugCheck(dst != NULL);
     nvDebugCheck(src != NULL);
@@ -468,6 +499,13 @@ char * StringBuilder::release()
     return str;
 }
 
+// Swap strings.
+void nv::swap(StringBuilder & a, StringBuilder & b) {
+    swap(a.m_size, b.m_size);
+    swap(a.m_str, b.m_str);
+}
+
+
 /// Get the file name from a path.
 const char * Path::fileName() const
 {
@@ -604,7 +642,7 @@ void String::setString(const char * str)
     }
 }
 
-void String::setString(const char * str, int length)
+void String::setString(const char * str, uint length)
 {
     nvDebugCheck(str != NULL);
 
@@ -622,3 +660,44 @@ void String::setString(const StringBuilder & str)
         addRef();
     }
 }	
+
+// Add reference count.
+void String::addRef()
+{
+    if (data != NULL)
+    {
+        setRefCount(getRefCount() + 1);
+    }
+}
+
+// Decrease reference count.
+void String::release()
+{
+    if (data != NULL)
+    {
+        const uint16 count = getRefCount();
+        setRefCount(count - 1);
+        if (count - 1 == 0) {
+            free(data - 2);
+            data = NULL;
+        }
+    }
+}
+
+void String::allocString(const char * str, uint len)
+{
+    const char * ptr = malloc<char>(2 + len + 1);
+
+    setData( ptr );
+    setRefCount( 0 );
+
+    // Copy string.
+    strCpy(const_cast<char *>(data), len+1, str, len);
+
+    // Add terminating character.
+    const_cast<char *>(data)[len] = '\0';
+}
+
+void nv::swap(String & a, String & b) {
+    swap(a.data, b.data);
+}

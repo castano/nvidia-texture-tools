@@ -17,7 +17,7 @@ TextWriter::TextWriter(Stream * s) :
 void TextWriter::writeString(const char * str)
 {
     nvDebugCheck(s != NULL);
-    s->serialize(const_cast<char *>(str), (int)strlen(str));
+    s->serialize(const_cast<char *>(str), strLen(str));
 }
 
 void TextWriter::writeString(const char * str, uint len)

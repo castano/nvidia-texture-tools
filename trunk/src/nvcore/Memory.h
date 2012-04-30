@@ -7,9 +7,9 @@
 #include "nvcore.h"
 
 #include <stdlib.h> // malloc(), realloc() and free()
-#include <stddef.h> // size_t
+//#include <stddef.h> // size_t
 
-#include <new>	// new and delete
+//#include <new>	// new and delete
 
 
 #if NV_CC_GNUC
