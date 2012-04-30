@@ -6,9 +6,8 @@
 
 #include "nvcore.h"
 
-#if defined(HAVE_STDARG_H)
-#   include <stdarg.h> // va_list
-#endif
+#include <stdarg.h> // va_list
+
 
 // Make sure we are using our assert.
 #undef assert

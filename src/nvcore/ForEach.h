@@ -8,9 +8,7 @@
 These foreach macros are very non-standard and somewhat confusing, but I like them.
 */
 
-
 #include "nvcore.h"
-
 
 #if NV_CC_GNUC // If typeof is available:
 
@@ -23,6 +21,8 @@ for(typename typeof(container)::PseudoIndex i((container).start()); !(container)
 */
 
 #else // If typeof not available:
+
+#include <new> // placement new
 
 struct PseudoIndexWrapper {
     template <typename T>

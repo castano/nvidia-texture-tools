@@ -81,3 +81,6 @@ typedef uint32              uint;
 
 #pragma warning(disable : 4675)     // resolved overload was found by argument-dependent lookup
 */
+
+#pragma warning(1 : 4705)     // Report unused local variables.
+#pragma warning(1 : 4555)     // Expression has no effect.
