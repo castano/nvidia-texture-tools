@@ -28,10 +28,8 @@
 
 #include "nvmath/Vector.inl"
 
-#include "nvcore/Array.h"
+#include "nvcore/Array.inl"
 #include "nvcore/StrLib.h"
-
-#include <float.h> // FLT_MAX
 
 using namespace nv;
 using namespace nvtt;
@@ -304,7 +302,7 @@ const Surface & CubeSurface::face(int f) const
 
 bool CubeSurface::load(const char * fileName, int mipmap)
 {
-    if (strcmp(Path::extension(fileName), ".dds") == 0) {
+    if (strEqual(Path::extension(fileName), ".dds")) {
         nv::DirectDrawSurface dds(fileName);
 
         if (!dds.isValid()/* || !dds.isSupported()*/) {
@@ -412,7 +410,7 @@ void CubeSurface::range(int channel, float * minimum_ptr, float * maximum_ptr) c
     const uint edgeLength = m->edgeLength;
     m->allocateTexelTable();
 
-    float minimum = FLT_MAX;
+    float minimum = NV_FLOAT_MAX;
     float maximum = 0.0f;
 
     for (int f = 0; f < 6; f++) {

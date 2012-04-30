@@ -21,16 +21,17 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include <nvcore/StrLib.h>
-#include <nvcore/StdStream.h>
-
-#include <nvmath/Color.h>
-
-#include <nvimage/Image.h>
-#include <nvimage/ImageIO.h>
-#include <nvimage/DirectDrawSurface.h>
-
 #include "cmdline.h"
+
+#include "nvimage/Image.h"
+#include "nvimage/ImageIO.h"
+#include "nvimage/DirectDrawSurface.h"
+
+#include "nvmath/Color.h"
+
+#include "nvcore/Array.inl"
+#include "nvcore/StrLib.h"
+#include "nvcore/StdStream.h"
 
 // @@ Add decent error messages.
 // @@ Add option to resize images.

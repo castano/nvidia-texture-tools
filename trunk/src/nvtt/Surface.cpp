@@ -38,6 +38,7 @@
 #include "nvimage/ErrorMetric.h"
 
 #include <float.h>
+#include <string.h> // memset, memcpy
 
 using namespace nv;
 using namespace nvtt;
@@ -451,8 +452,8 @@ static int filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
     
 #define CATCH __except (filter(GetExceptionCode(), GetExceptionInformation()))
 #else
-#define TRY
-#define CATCH
+#define TRY if (true)
+#define CATCH else
 #endif
 
 
@@ -2419,6 +2420,37 @@ void Surface::flipZ()
     detach();
 
     m->image->flipZ();
+}
+
+Surface Surface::subImage(int x0, int x1, int y0, int y1, int z0, int z1) const
+{
+    Surface s;
+
+    if (isNull()) return s;
+    if (x0 < 0 || x1 > width() || x0 > x1) return s;
+    if (y0 < 0 || y1 > height() || y0 > y1) return s;
+    if (z0 < 0 || z1 > depth() || z0 > z1) return s;
+    if (x1 >= width() || y1 >= height() || z1 >= depth()) return s;
+
+    FloatImage * img = s.m->image = new FloatImage;
+
+    int w = x1 - x0 + 1;
+    int h = y1 - y0 + 1;
+    int d = z1 - z0 + 1;
+
+    img->allocate(4, w, h, d);
+
+    for (int c = 0; c < 4; c++) {
+        for (int z = 0; z < d; z++) {
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    img->pixel(c, x, y, z) = m->image->pixel(c, x0+x, y0+y, z0+z);
+                }
+            }
+        }
+    }
+
+    return s;
 }
 
 bool Surface::copyChannel(const Surface & srcImage, int srcChannel)

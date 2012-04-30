@@ -111,8 +111,8 @@ void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
     QuickCompress::compressDXT5(rgba, block);
 }
 
-#if 0
-void NormalCompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+#if 1
+void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     set.setUniformWeights();
     set.createMinimalSet(false);
@@ -146,7 +146,7 @@ void NormalCompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMo
     }
 }
 #else
-void NormalCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     nvsquish::WeightedClusterFit fit;
     fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
@@ -165,7 +165,7 @@ void NormalCompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 }
 #endif
 
-void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     uint alphaMask = 0;
     for (uint i = 0; i < 16; i++)
@@ -185,18 +185,24 @@ void NormalCompressorDXT1a::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alp
         nvsquish::WeightedClusterFit fit;
         fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
-	int flags = nvsquish::kDxt1;
-	if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
+        int flags = nvsquish::kDxt1;
+        if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
 
-	nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
-	fit.SetColourSet(&colours, nvsquish::kDxt1);
+        nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
+        fit.SetColourSet(&colours, nvsquish::kDxt1);
 
         fit.Compress(output);
     }
 }
 
+void CompressorDXT1_Luma::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+{
+    BlockDXT1 * block = new(output) BlockDXT1;
+    OptimalCompress::compressDXT1_Luma(rgba, block);
+}
 
-void NormalCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+
+void CompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     BlockDXT3 * block = new(output) BlockDXT3;
 
@@ -223,7 +229,7 @@ void NormalCompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
 }
 
 
-void NormalCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     BlockDXT5 * block = new(output) BlockDXT5;
 
@@ -247,17 +253,17 @@ void NormalCompressorDXT5::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alph
         nvsquish::WeightedClusterFit fit;
         fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
 
-	int flags = 0;
-	if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
+        int flags = 0;
+        if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
 
-	nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
-	fit.SetColourSet(&colours, 0);
-	fit.Compress(&block->color);
+        nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
+        fit.SetColourSet(&colours, 0);
+        fit.Compress(&block->color);
     }
 }
 
 
-void NormalCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+void CompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     BlockDXT5 * block = new(output) BlockDXT5;
 

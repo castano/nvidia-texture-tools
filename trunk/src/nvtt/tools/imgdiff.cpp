@@ -92,6 +92,7 @@ struct Error
 	{
 		printf("  Mean absolute error: %f\n", mabse);
 		printf("  Max absolute error: %f\n", maxabse);
+        printf("  Mean squared error: %f\n", mse);
 		printf("  Root mean squared error: %f\n", rmse);
 		printf("  Peak signal to noise ratio in dB: %f\n", psnr);
 	}
@@ -152,6 +153,13 @@ struct NormalError
 	float rmse;
 	float psnr;
 };
+
+static float luma(const nv::Color32 & c) {
+    return 0.299f * float(c.r) + 0.587f * float(c.g) + 0.114f * float(c.b);
+    //return 0.25f * float(c.r) + 0.5f * float(c.g) + 0.25f * float(c.b);
+    //return 0.333f * float(c.r) + 0.334f * float(c.g) + 0.333f * float(c.b);
+    //return 0.1f * float(c.r) + 0.8f * float(c.g) + 0.1f * float(c.g);
+}
 
 
 int main(int argc, char *argv[])
@@ -220,6 +228,7 @@ int main(int argc, char *argv[])
 	Error error_g;
 	Error error_b;
 	Error error_a;
+    Error error_luma;
 	Error error_total;
 	NormalError error_normal;
 
@@ -234,15 +243,16 @@ int main(int argc, char *argv[])
 			double g = float(c0.g - c1.g);
 			double b = float(c0.b - c1.b);
 			double a = float(c0.a - c1.a);
-
+            
 			error_r.addSample(r);
 			error_g.addSample(g);
 			error_b.addSample(b);
 			error_a.addSample(a);
-			
-			if (compareNormal) {
-				error_normal.addSample(c0, c1);
-			}
+
+            double l0 = luma(c0);
+            double l1 = luma(c1);
+
+            error_luma.addSample(l0 - l1);
 
             double d = sqrt(r*r + g*g + b*b);
 
@@ -251,6 +261,10 @@ int main(int argc, char *argv[])
 			}
 
             error_total.addSample(d);
+
+			if (compareNormal) {
+				error_normal.addSample(c0, c1);
+			}
 		}
 	}
 
@@ -258,6 +272,7 @@ int main(int argc, char *argv[])
 	error_g.done();
 	error_b.done();
 	error_a.done();
+    error_luma.done();
 	error_total.done();
 	error_normal.done();
 	
@@ -270,6 +285,9 @@ int main(int argc, char *argv[])
 
 	printf("Color:\n");
 	error_total.print();
+
+	printf("Luma:\n");
+	error_luma.print();
 
 	if (compareNormal)
 	{
