@@ -129,6 +129,10 @@ bool Thread::isRunning () const
 
     DWORD result = WaitForMultipleObjects(count, handles, TRUE, INFINITE);
 
+    for (uint i = 0; i < count; i++) {
+        CloseHandle (threads->p->thread);
+        threads->p->thread = 0;
+    }
 
     delete [] handles;
 #else*/

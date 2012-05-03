@@ -3,6 +3,7 @@
 #include "ThreadPool.h"
 #include "Mutex.h"
 #include "Thread.h"
+#include "Atomic.h"
 
 #include "nvcore/Utils.h"
 
@@ -49,17 +50,19 @@ AutoPtr<ThreadPool> s_pool;
 
 
 /*static*/ void ThreadPool::workerFunc(void * arg) {
-    uint i = toU32((uintptr_t)arg); // This is OK, because workerCount should always be <<< 2^32
+    uint i = toU32((uintptr_t)arg); // This is OK, because workerCount should always be much smaller than 2^32
 
     while(true) 
     {
         s_pool->startEvents[i].wait();
 
-        if (s_pool->func == NULL) {
-            return; // @@ should we post finish event anyway?
+        nv::ThreadFunc * func = loadAcquirePointer(&s_pool->func);
+
+        if (func == NULL) {
+            return;
         }
         
-        s_pool->func(s_pool->arg);
+        func(s_pool->arg);
 
         s_pool->finishEvents[i].post();
     }
@@ -102,10 +105,12 @@ void ThreadPool::start(ThreadFunc * func, void * arg)
     wait();
 
     // Set our desired function.
-    this->func = func;
-    this->arg = arg;
+    storeReleasePointer(&this->func, func);
+    storeReleasePointer(&this->arg, arg);
 
     allIdle = false;
+
+    nvCompilerWriteBarrier();
 
     // Resume threads.
     Event::post(startEvents, workerCount);
