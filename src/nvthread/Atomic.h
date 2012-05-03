@@ -85,25 +85,25 @@ namespace nv {
     }
 
 
-	template <typename T>
-	inline void storeReleasePointer(volatile T * pTo, T from)
-	{
+    template <typename T>
+    inline void storeReleasePointer(volatile T * pTo, T from)
+    {
         NV_COMPILER_CHECK(sizeof(T) == sizeof(intptr_t));
-		nvDebugCheck((((intptr_t)pTo) % sizeof(intptr_t)) == 0);
-		nvDebugCheck((((intptr_t)&from) % sizeof(intptr_t)) == 0);
-		nvCompilerWriteBarrier();
-		*pTo = from;    // on x86, stores are Release
-	}
-	
-	template <typename T>
-	inline T loadAcquirePointer(volatile T * ptr)
-	{
+        nvDebugCheck((((intptr_t)pTo) % sizeof(intptr_t)) == 0);
+        nvDebugCheck((((intptr_t)&from) % sizeof(intptr_t)) == 0);
+        nvCompilerWriteBarrier();
+        *pTo = from;    // on x86, stores are Release
+    }
+
+    template <typename T>
+    inline T loadAcquirePointer(volatile T * ptr)
+    {
         NV_COMPILER_CHECK(sizeof(T) == sizeof(intptr_t));
-		nvDebugCheck((((intptr_t)ptr) % sizeof(intptr_t)) == 0);
-		T ret = *ptr;   // on x86, loads are Acquire
-		nvCompilerReadBarrier();
-		return ret;
-	} 
+        nvDebugCheck((((intptr_t)ptr) % sizeof(intptr_t)) == 0);
+        T ret = *ptr;   // on x86, loads are Acquire
+        nvCompilerReadBarrier();
+        return ret;
+    } 
 
 
     // Atomics. @@ Assuming sequential memory order?
