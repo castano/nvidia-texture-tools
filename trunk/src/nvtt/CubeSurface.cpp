@@ -814,3 +814,52 @@ void CubeSurface::toGamma(float gamma)
     }
 }
 
+
+#if 0
+// @@ Provide solar azimuth.
+#include "ArHoseSkyModel.h"
+void CubeSurface::sky(float turbidity, float albedo[3], float solarElevation) {
+
+    ArHosekSkyModelState * skymodel_state[3];
+
+    for (int i = 0; i < num_channels; i++) {
+        skymodel_state[i] = arhosekskymodelstate_alloc_init(turbidity, albedo[i], solarElevation);
+    }
+
+    // 700 nm (red), 546.1 nm (green) and 435.8 nm (blue).
+    float channel_center[3] = {
+        700,    // Red 620–740,
+        546.1,  // Green 520–570,
+        435.8,  // Blue 450–490,
+    };
+
+    // @@ For each pixel:
+    // What's the channel center for the RGB model?
+    double  skydome_result[3];
+    for (unsigned int i = 0; i < num_channels; i++) {
+        skydome_result[i] = arhosekskymodel_radiance(skymodel_state[i], theta, gamma, channel_center[i]);
+    }
+
+    for (int i = 0; i < num_channels; i++) {
+        arhosek_skymodelstate_free(skymodel_state[i]);
+    }
+
+    /*
+    ArHosekXYZSkyModelState * skymodel_state[3];
+
+    for (int i = 0; i < num_channels; i++) {
+        skymodel_state[i] = arhosek_xyz_skymodelstate_alloc_init(turbidity, albedo[i], solarElevation);
+    }
+
+    // @@ For each pixel.
+    double  skydome_result[3];
+    for (unsigned int i = 0; i < num_channels; i++) {
+        skydome_result[i] = arhosek_xyz_skymodel_radiance(skymodel_state[i], theta, gamma, i);
+    }
+
+    for (int i = 0; i < num_channels; i++) {
+        arhosek_xyz_skymodelstate_free(skymodel_state[i]);
+    }
+    */
+}
+#endif
