@@ -223,7 +223,7 @@ static void write_header(const ComprEndpts endpts[NREGIONS_ONE], const Pattern &
         case FIELD_GZ:
         case FIELD_BY:
         case FIELD_BZ:
-        default: nvAssume(0);
+        default: nvUnreachable();
         }
     }
 }
@@ -278,7 +278,7 @@ static void read_header(Bits &in, ComprEndpts endpts[NREGIONS_ONE], Pattern &p)
         case FIELD_GZ:
         case FIELD_BY:
         case FIELD_BZ:
-        default: nvAssume(0);
+        default: nvUnreachable();
         }
     }
 

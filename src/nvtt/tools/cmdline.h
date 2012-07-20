@@ -51,7 +51,7 @@ struct MyMessageHandler : public nv::MessageHandler {
 struct MyAssertHandler : public nv::AssertHandler {
     MyAssertHandler() {
         nv::debug::setAssertHandler( this );
-        nv::debug::enableSigHandler();
+        nv::debug::enableSigHandler(/*interactive=*/true);
     }
     ~MyAssertHandler() {
         nv::debug::resetAssertHandler();

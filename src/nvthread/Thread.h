@@ -6,7 +6,7 @@
 
 #include "nvthread.h"
 
-#include "nvcore/Ptr.h"
+#include "nvcore/Ptr.h" // AutoPtr
 
 namespace nv
 {
@@ -30,15 +30,8 @@ namespace nv
 
         static void wait(Thread * threads, uint count);
 
-    private:
-
         struct Private;
         AutoPtr<Private> p;
-
-    public: // @@ Why public? Also in private?!
-        ThreadFunc * func;
-        void * arg;
-
     };
 
 } // nv namespace

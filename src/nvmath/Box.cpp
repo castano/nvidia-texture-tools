@@ -8,6 +8,58 @@ using namespace nv;
 
 
 
+
+// Clip the given segment against this box.
+bool Box::clipSegment(const Vector3 & origin, const Vector3 & dir, float * t_near, float * t_far) const {
+
+	// Avoid aliasing.
+	float tnear = *t_near;
+	float tfar = *t_far;
+
+	// clip ray segment to box
+	for (int i = 0; i < 3; i++)
+	{
+		const float pos = origin.component[i] + tfar * dir.component[i];
+		const float dt = tfar - tnear;
+
+		if (dir.component[i] < 0) {
+			
+			// clip end point
+			if (pos < minCorner.component[i]) {
+                tfar = tnear + dt * (origin.component[i] - minCorner.component[i]) / (origin.component[i] - pos);
+			}
+			
+			// clip start point
+			if (origin.component[i] > maxCorner.component[i]) {
+				tnear = tnear + dt * (origin.component[i] - maxCorner.component[i]) / (tfar * dir.component[i]);
+			}
+		}
+		else {
+
+			// clip end point
+			if (pos > maxCorner.component[i]) {
+				tfar = tnear + dt * (maxCorner.component[i] - origin.component[i]) / (pos - origin.component[i]);
+			}
+
+			// clip start point
+			if (origin.component[i] < minCorner.component[i]) {
+				tnear = tnear + dt * (minCorner.component[i] - origin.component[i]) / (tfar * dir.component[i]);
+			}
+		}
+
+		if (tnear > tfar) {
+			// Clipped away.
+			return false;
+		}
+	}
+
+	// Return result.
+	*t_near = tnear;
+	*t_far = tfar;
+	return true;
+}
+
+
 float nv::distanceSquared(const Box &box, const Vector3 &point) {
     Vector3 closest;
 
@@ -64,3 +116,4 @@ bool nv::intersect(const Box & box, const Vector3 & p, const Vector3 & id, float
 
     return true;
 }
+

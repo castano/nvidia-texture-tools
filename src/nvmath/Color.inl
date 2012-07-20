@@ -14,7 +14,7 @@ namespace nv
     // Clamp color components.
     inline Vector3 colorClamp(Vector3::Arg c)
     {
-        return Vector3(clamp(c.x, 0.0f, 1.0f), clamp(c.y, 0.0f, 1.0f), clamp(c.z, 0.0f, 1.0f));
+        return Vector3(saturate(c.x), saturate(c.y), saturate(c.z));
     }
 
     // Clamp without allowing the hue to change.
@@ -63,11 +63,10 @@ namespace nv
     inline Color32 toColor32(Vector4::Arg v)
     {
         Color32 color;
-        color.r = uint8(clamp(v.x, 0.0f, 1.0f) * 255);
-        color.g = uint8(clamp(v.y, 0.0f, 1.0f) * 255);
-        color.b = uint8(clamp(v.z, 0.0f, 1.0f) * 255);
-        color.a = uint8(clamp(v.w, 0.0f, 1.0f) * 255);
-
+        color.r = uint8(saturate(v.x) * 255);
+        color.g = uint8(saturate(v.y) * 255);
+        color.b = uint8(saturate(v.z) * 255);
+        color.a = uint8(saturate(v.w) * 255);
         return color;
     }
 
@@ -86,6 +85,13 @@ namespace nv
         float b = c1.z - c0.z;
         return sqrtf((2 + rmean)*r*r + 4*g*g + (3 - rmean)*b*b);
     }
+
+    
+    inline float hue(float r, float g, float b) {
+        float h = atan2f(sqrtf(3.0f)*(g-b), 2*r-g-b) * (1.0f / (2 * PI)) + 0.5f;
+        return h;
+    }
+
 
 } // nv namespace
 

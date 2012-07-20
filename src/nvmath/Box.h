@@ -19,9 +19,9 @@ namespace nv
     {
     public:
 
-        Box();
-        Box(const Box & b);
-        Box(const Vector3 & mins, const Vector3 & maxs);
+        inline Box() {}
+        inline Box(const Box & b) : minCorner(b.minCorner), maxCorner(b.maxCorner) {}
+        inline Box(const Vector3 & mins, const Vector3 & maxs) : minCorner(mins), maxCorner(maxs) {}
 
         Box & operator=(const Box & b);
 
@@ -29,6 +29,9 @@ namespace nv
 
         // Clear the bounds.
         void clearBounds();
+
+        // min < max
+        bool isValid() const;
 
         // Build a cube centered on center and with edge = 2*dist
         void cube(const Vector3 & center, float dist);
@@ -51,6 +54,9 @@ namespace nv
         // Add a box to this box.
         void addBoxToBounds(const Box & b);
 
+        // Add sphere to this box.
+        void addSphereToBounds(const Vector3 & p, float r);
+
         // Translate box.
         void translate(const Vector3 & v);
 
@@ -71,6 +77,11 @@ namespace nv
 
         // Split the given box in 8 octants and assign the ith one to this box.
         void setOctant(const Box & box, const Vector3 & center, int i);
+
+
+        // Clip the given segment against this box.
+        bool clipSegment(const Vector3 & origin, const Vector3 & dir, float * t_near, float * t_far) const;
+
 
         friend Stream & operator<< (Stream & s, Box & box);
 

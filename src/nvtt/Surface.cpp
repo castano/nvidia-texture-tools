@@ -1582,7 +1582,7 @@ void Surface::toRGBE(int mantissaBits, int exponentBits)
         float B = ::clamp(b[i], 0.0f, maxValue);
 
         // Compute max:
-        float M = max(R, G, B);
+        float M = max3(R, G, B);
 
         // Preliminary exponent:
         int E = max(- exponentBias - 1, floatExponent(M)) + 1 + exponentBias;
@@ -1879,7 +1879,7 @@ void Surface::toneMap(ToneMapper tm, float * parameters)
     if (tm == ToneMapper_Linear) {
         // Clamp preserving the hue.
         for (uint i = 0; i < count; i++) {
-            float m = max(r[i], g[i], b[i]);
+            float m = max3(r[i], g[i], b[i]);
             if (m > 1.0f) {
                 r[i] *= 1.0f / m;
                 g[i] *= 1.0f / m;
@@ -1907,7 +1907,7 @@ void Surface::toneMap(ToneMapper tm, float * parameters)
         // Avoid clamping abrubtly.
         // Minimize color difference along most of the color range. [0, alpha)
         for (uint i = 0; i < count; i++) {
-            float m = max(r[i], g[i], b[i]);
+            float m = max3(r[i], g[i], b[i]);
             if (m > 1.0f) {
                 r[i] *= 1.0f / m;
                 g[i] *= 1.0f / m;

@@ -40,6 +40,16 @@ namespace nv
         m_data[6] = v2.x; m_data[7] = v2.y; m_data[8] = v2.z;
     }
 
+    inline float Matrix3::data(uint idx) const
+    {
+        nvDebugCheck(idx < 9);
+        return m_data[idx];
+    }
+    inline float & Matrix3::data(uint idx)
+    {
+        nvDebugCheck(idx < 9);
+        return m_data[idx];
+    }
     inline float Matrix3::get(uint row, uint col) const
     {
         nvDebugCheck(row < 3 && col < 3);
@@ -150,6 +160,29 @@ namespace nv
         return mul(a, b);
     }
 
+    // Transform the given 3d vector with the given matrix.
+    inline Vector3 transform(const Matrix3 & m, const Vector3 & p)
+    {
+        return Vector3(
+            p.x * m(0,0) + p.y * m(0,1) + p.z * m(0,2),
+            p.x * m(1,0) + p.y * m(1,1) + p.z * m(1,2),
+            p.x * m(2,0) + p.y * m(2,1) + p.z * m(2,2));
+    }
+
+    inline void Matrix3::scale(float s)
+    {
+        for (int i = 0; i < 9; i++) {
+            m_data[i] *= s;
+        }
+    }
+
+    inline void Matrix3::scale(Vector3::Arg s)
+    {
+        m_data[0] *= s.x; m_data[1] *= s.x; m_data[2] *= s.x;
+        m_data[3] *= s.y; m_data[4] *= s.y; m_data[5] *= s.y;
+        m_data[6] *= s.z; m_data[7] *= s.z; m_data[8] *= s.z;
+    }
+
     inline float Matrix3::determinant() const
     {
         return 
@@ -159,6 +192,33 @@ namespace nv
             get(0,2) * get(1,1) * get(2,0) - 
             get(0,1) * get(1,0) * get(2,2) -
             get(0,0) * get(1,2) * get(2,1);
+    }
+
+    // Inverse using Cramer's rule.
+    inline Matrix3 inverse(const Matrix3 & m)
+    {
+        const float det = m.determinant();
+        if (equal(det, 0.0f, 0.0f)) {
+            return Matrix3(0);
+        }
+
+        Matrix3 r;
+
+        r.data(0) =  - m.data(5) * m.data(7) + m.data(4) * m.data(8);
+        r.data(1) =  + m.data(5) * m.data(6) - m.data(3) * m.data(8);
+        r.data(2) =  - m.data(4) * m.data(6) + m.data(3) * m.data(7);
+
+        r.data(3) =  + m.data(2) * m.data(7) - m.data(1) * m.data(8);
+        r.data(4) =  - m.data(2) * m.data(6) + m.data(0) * m.data(8);
+        r.data(5) =  + m.data(1) * m.data(6) - m.data(0) * m.data(7);
+
+        r.data(6) =  - m.data(2) * m.data(4) + m.data(1) * m.data(5);
+        r.data(7) =  + m.data(2) * m.data(3) - m.data(0) * m.data(5);
+        r.data(8) =  - m.data(1) * m.data(3) + m.data(0) * m.data(4);
+
+        r.scale(1.0f / det);
+
+        return r;
     }
 
 
@@ -470,6 +530,7 @@ namespace nv
         return r;
     }
 
+    // Inverse using Cramer's rule.
     inline Matrix inverse(Matrix::Arg m)
     {
         Matrix r;

@@ -281,7 +281,7 @@ static void write_header(const ComprEndpts endpts[NREGIONS_TWO], int shapeindex,
         case FIELD_BX:	out.write(bx >> endbit, len); break;
         case FIELD_BY:	out.write(by >> endbit, len); break;
         case FIELD_BZ:	out.write(bz >> endbit, len); break;
-        default: nvAssume(0);
+        default: nvUnreachable();
         }
     }
 }
@@ -338,7 +338,7 @@ static bool read_header(Bits &in, ComprEndpts endpts[NREGIONS_TWO], int &shapein
         case FIELD_BX:	bx |= in.read(len) << endbit; break;
         case FIELD_BY:	by |= in.read(len) << endbit; break;
         case FIELD_BZ:	bz |= in.read(len) << endbit; break;
-        default: nvAssume(0);
+        default: nvUnreachable();
         }
     }
 

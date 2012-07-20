@@ -27,7 +27,7 @@ struct Thread::Private
 #if NV_OS_WIN32
 
 unsigned long __stdcall threadFunc(void * arg) {
-    Thread * thread = (Thread *)arg;
+    Thread::Private * thread = (Thread::Private *)arg;
     thread->func(thread->arg);
     return 0;
 }
@@ -35,7 +35,7 @@ unsigned long __stdcall threadFunc(void * arg) {
 #elif NV_OS_UNIX
 
 extern "C" void * threadFunc(void * arg) {
-    Thread * thread = (Thread *)arg;
+    Thread::Private * thread = (Thread::Private *)arg;
     thread->func(thread->arg);
     pthread_exit(0);
 }
@@ -55,15 +55,15 @@ Thread::~Thread()
 
 void Thread::start(ThreadFunc * func, void * arg)
 {
-    this->func = func;
-    this->arg = arg;
+    p->func = func;
+    p->arg = arg;
 
 #if NV_OS_WIN32
-    p->thread = CreateThread(NULL, 0, threadFunc, this, 0, NULL);
-    //p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, this, 0, NULL);     // @@ So that we can call CRT functions...
+    p->thread = CreateThread(NULL, 0, threadFunc, p.ptr(), 0, NULL);
+    //p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, p.ptr(), 0, NULL);     // @@ So that we can call CRT functions...
     nvDebugCheck(p->thread != NULL);
 #elif NV_OS_UNIX
-    int result = pthread_create(&p->thread, NULL, threadFunc, this);
+    int result = pthread_create(&p->thread, NULL, threadFunc, p.ptr());
     nvDebugCheck(result == 0);
 #endif
 }

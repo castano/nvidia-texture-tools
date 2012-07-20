@@ -6,10 +6,15 @@
 
 #include "Vector.h"
 
+// - Matrices are stored in memory in *column major* order.
+// - Points are to be though of as column vectors.
+// - Transformation of a point p by a matrix M is: p' = M * p
+
 namespace nv
 {
     enum identity_t { identity };
 
+    // 3x3 matrix.
     class NVMATH_CLASS Matrix3
     {
     public:
@@ -19,6 +24,8 @@ namespace nv
         Matrix3(const Matrix3 & m);
         Matrix3(Vector3::Arg v0, Vector3::Arg v1, Vector3::Arg v2);
 
+        float data(uint idx) const;
+        float & data(uint idx);
         float get(uint row, uint col) const;
         float operator()(uint row, uint col) const;
         float & operator()(uint row, uint col);
@@ -31,17 +38,22 @@ namespace nv
         void operator+=(const Matrix3 & m);
         void operator-=(const Matrix3 & m);
 
+        void scale(float s);
+        void scale(Vector3::Arg s);
         float determinant() const;
 
     private:
         float m_data[9];
     };
 
+    // Solve equation system using LU decomposition and back-substitution.
+    extern bool solveLU(const Matrix3 & m, const Vector3 & b, Vector3 * x);
 
-    // 4x4 transformation matrix.
-    // -# Matrices are stored in memory in column major order.
-    // -# Points are to be though of as column vectors.
-    // -# Transformation of a point p by a matrix M is: p' = M * p
+    // Solve equation system using Cramer's inverse.
+    extern bool solveCramer(const Matrix3 & A, const Vector3 & b, Vector3 * x);
+
+
+    // 4x4 matrix.
     class NVMATH_CLASS Matrix
     {
     public:
@@ -75,6 +87,12 @@ namespace nv
     private:
         float m_data[16];
     };
+
+    // Solve equation system using LU decomposition and back-substitution.
+    extern bool solveLU(const Matrix & m, const Vector4 & b, Vector4 * x);
+
+    // Solve equation system using Cramer's inverse.
+    extern bool solveCramer(const Matrix & A, const Vector4 & b, Vector4 * x);
 
 } // nv namespace
 

@@ -31,25 +31,24 @@ namespace nv
     }
 
 
-    // Some hash functors:
+    template <typename T>
+    inline uint hash(const T & t, uint h = 5381)
+    {
+        return sdbmHash(&t, sizeof(T), h);
+    }
+
+    template <>
+    inline uint hash(const float & f, uint h)
+    {
+        return sdbmFloatHash(&f, 1, h);
+    }
+
+
+    // Functors for hash table:
     template <typename Key> struct Hash 
     {
         uint operator()(const Key & k) const {
-            return sdbmHash(&k, sizeof(Key));
-        }
-    };
-    /*template <> struct Hash<int>
-    {
-        uint operator()(int x) const { return x; }
-    };
-    template <> struct Hash<uint>
-    {
-        uint operator()(uint x) const { return x; }
-    };*/
-    template <> struct Hash<float>
-    {
-        uint operator()(float f) const {
-            return sdbmFloatHash(&f, 1);
+            return hash(k);
         }
     };
 
@@ -59,6 +58,25 @@ namespace nv
             return k0 == k1;
         }
     };
+
+
+    // @@ Move to Utils.h?
+    template <typename T1, typename T2>
+    struct Pair {
+        T1 first;
+        T2 second;
+    };
+
+    template <typename T1, typename T2>
+    bool operator==(const Pair<T1,T2> & p0, const Pair<T1,T2> & p1) {
+        return p0.first == p1.first && p0.second == p1.second;
+    }
+
+    template <typename T1, typename T2>
+    uint hash(const Pair<T1,T2> & p, uint h = 5381) {
+        return hash(p.second, hash(p.first));
+    }
+
 
 } // nv namespace
 
