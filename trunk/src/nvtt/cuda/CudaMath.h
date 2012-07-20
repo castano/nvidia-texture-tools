@@ -193,6 +193,11 @@ inline __device__ __host__ float lengthSquared(float3 a)
     return dot(a, a);
 }
 
+inline __device__ __host__ float lengthSquared(float2 a)
+{
+    return dot(a, a);
+}
+
 
 // Use power method to find the first eigenvector.
 // http://www.miislita.com/information-retrieval-tutorial/matrix-tutorial-3-eigenvalues-eigenvectors.html
@@ -335,8 +340,8 @@ inline __device__ __host__ float2 firstEigenVector2D( float matrix[3] )
 {
     // @@ 8 iterations is probably more than enough.
 
-    const float3 row0 = make_float2(matrix[0], matrix[1]);
-    const float3 row1 = make_float2(matrix[1], matrix[2]);
+    const float2 row0 = make_float2(matrix[0], matrix[1]);
+    const float2 row1 = make_float2(matrix[1], matrix[2]);
 
     float r0 = lengthSquared(row0);
     float r1 = lengthSquared(row1);
