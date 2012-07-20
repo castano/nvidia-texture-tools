@@ -76,6 +76,23 @@
         } \
     NV_MULTI_LINE_MACRO_END
 
+// Interesting assert macro from Insomniac:
+// http://www.gdcvault.com/play/1015319/Developing-Imperfect-Software-How-to
+// Used as follows:
+// if (nvCheck(i < count)) {
+//     normal path
+// } else {
+//     fixup code.
+// }
+// This style of macro could be combined with __builtin_expect to let the compiler know failure is unlikely.
+#define nvCheckMacro(exp) \
+    (\
+        (exp) ? true : ( \
+            (nvAbort(#exp, __FILE__, __LINE__, __FUNC__) == NV_ABORT_DEBUG) ? (nvDebugBreak(), true) : ( false ) \
+        ) \
+    )
+
+
 #define nvAssert(exp)    nvAssertMacro(exp)
 #define nvCheck(exp)     nvAssertMacro(exp)
 
@@ -90,7 +107,7 @@
 #endif // NV_NO_ASSERT
 
 // Use nvAssume for very simple expresions only: nvAssume(0), nvAssume(value == true), etc.
-#if !defined(_DEBUG)
+/*#if !defined(_DEBUG)
 #   if NV_CC_MSVC
 #       define nvAssume(exp)    __assume(exp)
 #   else
@@ -98,6 +115,20 @@
 #   endif
 #else
 #   define nvAssume(exp)    nvCheck(exp)
+#endif*/
+
+#if defined(_DEBUG)
+#  if NV_CC_MSVC
+#   define nvUnreachable() nvAssert(0 && "unreachable"); __assume(0)
+#  else
+#   define nvUnreachable() nvAssert(0 && "unreachable"); __builtin_unreachable()
+#  endif
+#else
+#  if NV_CC_MSVC
+#   define nvUnreachable() __assume(0)
+#  else
+#   define nvUnreachable() __builtin_unreachable()
+#  endif
 #endif
 
 
@@ -138,13 +169,13 @@ namespace nv
         return true;
     }
 
-    /// Message handler interface.
+    // Message handler interface.
     struct MessageHandler {
         virtual void log(const char * str, va_list arg) = 0;
         virtual ~MessageHandler() {}
     };
 
-    /// Assert handler interface.
+    // Assert handler interface.
     struct AssertHandler {
         virtual int assertion(const char *exp, const char *file, int line, const char *func = NULL) = 0;
         virtual ~AssertHandler() {}
@@ -161,7 +192,7 @@ namespace nv
         NVCORE_API void setAssertHandler( AssertHandler * assertHanlder );
         NVCORE_API void resetAssertHandler();
 
-        NVCORE_API void enableSigHandler();
+        NVCORE_API void enableSigHandler(bool interactive);
         NVCORE_API void disableSigHandler();
 
         NVCORE_API bool isDebuggerPresent();

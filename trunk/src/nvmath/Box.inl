@@ -12,13 +12,13 @@
 namespace nv
 {
     // Default ctor.
-    inline Box::Box() { };
+    //inline Box::Box() { };
 
     // Copy ctor.
-    inline Box::Box(const Box & b) : minCorner(b.minCorner), maxCorner(b.maxCorner) { }
+    //inline Box::Box(const Box & b) : minCorner(b.minCorner), maxCorner(b.maxCorner) { }
 
     // Init ctor.
-    inline Box::Box(const Vector3 & mins, const Vector3 & maxs) : minCorner(mins), maxCorner(maxs) { }
+    //inline Box::Box(const Vector3 & mins, const Vector3 & maxs) : minCorner(mins), maxCorner(maxs) { }
 
     // Assignment operator.
     inline Box & Box::operator=(const Box & b) { minCorner = b.minCorner; maxCorner = b.maxCorner; return *this; }
@@ -28,6 +28,12 @@ namespace nv
     {
         minCorner.set(FLT_MAX, FLT_MAX, FLT_MAX);
         maxCorner.set(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    }
+
+    // min < max
+    inline bool Box::isValid() const
+    {
+        return minCorner.x <= maxCorner.x && minCorner.y <= maxCorner.y && minCorner.z <= maxCorner.z;
     }
 
     // Build a cube centered on center and with edge = 2*dist
@@ -62,7 +68,7 @@ namespace nv
         if (axis == 0) return (maxCorner.x - minCorner.x) * 0.5f;
         if (axis == 1) return (maxCorner.y - minCorner.y) * 0.5f;
         if (axis == 2) return (maxCorner.z - minCorner.z) * 0.5f;
-        nvAssume(false);
+        nvUnreachable();
         return 0.0f;
     }
 
@@ -78,6 +84,12 @@ namespace nv
     {
         minCorner = min(minCorner, b.minCorner);
         maxCorner = max(maxCorner, b.maxCorner);
+    }
+
+    // Add sphere to this box.
+    inline void Box::addSphereToBounds(const Vector3 & p, float r) {
+        minCorner = min(minCorner, p - Vector3(r));
+        maxCorner = min(maxCorner, p + Vector3(r));
     }
 
     // Translate box.

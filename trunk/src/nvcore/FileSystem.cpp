@@ -28,7 +28,7 @@ bool FileSystem::exists(const char * path)
 #elif NV_OS_WIN32 || NV_OS_XBOX
     // PathFileExists requires linking to shlwapi.lib
     //return PathFileExists(path) != 0;
-    return GetFileAttributesA(path) != 0xFFFFFFFF;
+    return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
 #else
 	if (FILE * fp = fopen(path, "r"))
 	{

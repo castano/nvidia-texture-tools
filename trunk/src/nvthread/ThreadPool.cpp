@@ -79,6 +79,8 @@ ThreadPool::ThreadPool()
     startEvents = new Event[workerCount];
     finishEvents = new Event[workerCount];
 
+    nvCompilerWriteBarrier(); // @@ Use a memory fence?
+
     for (uint i = 0; i < workerCount; i++) {
         workers[i].start(workerFunc, (void *)i);
     }
@@ -109,8 +111,6 @@ void ThreadPool::start(ThreadFunc * func, void * arg)
     storeReleasePointer(&this->arg, arg);
 
     allIdle = false;
-
-    nvCompilerWriteBarrier();
 
     // Resume threads.
     Event::post(startEvents, workerCount);

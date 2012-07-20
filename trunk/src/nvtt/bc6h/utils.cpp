@@ -53,7 +53,7 @@ Vector3 Utils::lerp(const Vector3& a, const Vector3 &b, int i, int denom)
 	case 3:		denom *= 5; i *= 5;	// fall through to case 15
 	case 15:	weights = denom15_weights_64; break;
 	case 7:		weights = denom7_weights_64; break;
-	default:	nvAssume(0);
+	default:	nvUnreachable();
 	}
 
 	// no need to round these as this is an exact division
@@ -96,7 +96,7 @@ void Utils::clamp(Vector3 &v)
 			break;
 
 		default:
-			nvAssume (0);
+			nvUnreachable();
 		}
 	}
 }

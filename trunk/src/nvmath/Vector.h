@@ -18,6 +18,8 @@ namespace nv
         Vector2(float x, float y);
         Vector2(Vector2::Arg v);
 
+        template <typename T> operator T() const { return T(x, y); }
+
         const Vector2 & operator=(Vector2::Arg v);
 
         const float * ptr() const;
@@ -41,10 +43,6 @@ namespace nv
         };
     };
 
-    // Helpers to convert vector types. Assume T has x,y members and 2 argument constructor.
-    template <typename T> T to(Vector2::Arg v) { return T(v.x, v.y); }
-
-
     class NVMATH_CLASS Vector3
     {
     public:
@@ -55,6 +53,8 @@ namespace nv
         Vector3(float x, float y, float z);
         Vector3(Vector2::Arg v, float z);
         Vector3(Vector3::Arg v);
+
+        template <typename T> operator T() const { return T(x, y, z); }
 
         const Vector3 & operator=(Vector3::Arg v);
 
@@ -82,10 +82,6 @@ namespace nv
         };
     };
 
-    // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
-    template <typename T> T to(Vector3::Arg v) { return T(v.x, v.y, v.z); }
-
-
     class NVMATH_CLASS Vector4
     {
     public:
@@ -99,6 +95,8 @@ namespace nv
         Vector4(Vector3::Arg v, float w);
         Vector4(Vector4::Arg v);
         //	Vector4(const Quaternion & v);
+
+        template <typename T> operator T() const { return T(x, y, z, w); }
 
         const Vector4 & operator=(Vector4::Arg v);
 
@@ -126,10 +124,6 @@ namespace nv
             float component[4];
         };
     };
-
-    // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
-    template <typename T> T to(Vector4::Arg v) { return T(v.x, v.y, v.z, v.w); }
-
 
 } // nv namespace
 

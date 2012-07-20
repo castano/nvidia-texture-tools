@@ -249,10 +249,19 @@ namespace nv
         construct_range(m_buffer, new_size, old_size, elem);
     }
 
+    // Fill array with the given value.
+    template <typename T>
+    void Array<T>::fill(const T & elem)
+    {
+        fill(m_buffer, m_size, elem)
+    }
+
     // Clear the buffer.
     template <typename T> 
     NV_FORCEINLINE void Array<T>::clear()
     {
+        nvDebugCheck(isValidPtr(m_buffer));
+
         // Destruct old elements
         destroy_range(m_buffer, 0, m_size);
 

@@ -1,7 +1,10 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "Debug.h"
+#include "Array.inl"
 #include "StrLib.h" // StringBuilder
+
+#include "StdStream.h" // fileOpen
 
 // Extern
 #if NV_OS_WIN32 //&& NV_CC_MSVC
@@ -58,6 +61,9 @@
 #   endif
 #endif
 
+#define USE_SEPARATE_THREAD 1
+
+
 using namespace nv;
 
 namespace 
@@ -67,6 +73,7 @@ namespace
     static AssertHandler * s_assert_handler = NULL;
 
     static bool s_sig_handler_enabled = false;
+    static bool s_interactive = true;
 
 #if NV_OS_WIN32 && NV_CC_MSVC
 
@@ -86,12 +93,82 @@ namespace
 
 #if NV_OS_WIN32 && NV_CC_MSVC
 
+    // We should try to simplify the top level filter as much as possible.
+    // http://www.nynaeve.net/?p=128
+
+#if USE_SEPARATE_THREAD
+
+    // The critical section enforcing the requirement that only one exception be
+    // handled by a handler at a time.
+    static CRITICAL_SECTION s_handler_critical_section;
+
+    // Semaphores used to move exception handling between the exception thread
+    // and the handler thread.  handler_start_semaphore_ is signalled by the
+    // exception thread to wake up the handler thread when an exception occurs.
+    // handler_finish_semaphore_ is signalled by the handler thread to wake up
+    // the exception thread when handling is complete.
+    static HANDLE s_handler_start_semaphore = NULL;
+    static HANDLE s_handler_finish_semaphore = NULL;
+
+    // The exception handler thread.
+    static HANDLE s_handler_thread = NULL;
+
+    static DWORD s_requesting_thread_id = 0;
+    static EXCEPTION_POINTERS * s_exception_info = NULL;
+
+#endif // USE_SEPARATE_THREAD
+
+
+    struct MinidumpCallbackContext {
+        ULONG64 memory_base;
+        ULONG memory_size;
+        bool finished;
+    };
+
+    // static
+    static BOOL CALLBACK miniDumpWriteDumpCallback(PVOID context, const PMINIDUMP_CALLBACK_INPUT callback_input, PMINIDUMP_CALLBACK_OUTPUT callback_output)
+    {
+        switch (callback_input->CallbackType)
+        {
+        case MemoryCallback: {
+            MinidumpCallbackContext* callback_context = reinterpret_cast<MinidumpCallbackContext*>(context);
+            if (callback_context->finished)
+                return FALSE;
+
+            // Include the specified memory region.
+            callback_output->MemoryBase = callback_context->memory_base;
+            callback_output->MemorySize = callback_context->memory_size;
+            callback_context->finished = true;
+            return TRUE;
+        }
+
+        // Include all modules.
+        case IncludeModuleCallback:
+        case ModuleCallback:
+            return TRUE;
+
+        // Include all threads.
+        case IncludeThreadCallback:
+        case ThreadCallback:
+            return TRUE;
+
+        // Stop receiving cancel callbacks.
+        case CancelCallback:
+            callback_output->CheckCancel = FALSE;
+            callback_output->Cancel = FALSE;
+            return TRUE;
+        }
+
+        // Ignore other callback types.
+        return FALSE;
+    }
+
     static bool writeMiniDump(EXCEPTION_POINTERS * pExceptionInfo)
     {
         // create the file
         HANDLE hFile = CreateFileA("crash.dmp", GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         if (hFile == INVALID_HANDLE_VALUE) {
-            nvDebug("*** Failed to create dump file.\n");
+            //nvDebug("*** Failed to create dump file.\n");
             return false;
         }
 
@@ -100,19 +177,76 @@ namespace
         ExInfo.ExceptionPointers = pExceptionInfo;
         ExInfo.ClientPointers = NULL;
 
+        MINIDUMP_CALLBACK_INFORMATION callback;
+        MINIDUMP_CALLBACK_INFORMATION * callback_pointer = NULL;
+        MinidumpCallbackContext context;
+
+        // Find a memory region of 256 bytes centered on the
+        // faulting instruction pointer.
+        const ULONG64 instruction_pointer = 
+        #if defined(_M_IX86)
+            pExceptionInfo->ContextRecord->Eip;
+        #elif defined(_M_AMD64)
+            pExceptionInfo->ContextRecord->Rip;
+        #else
+            #error Unsupported platform
+        #endif
+
+        MEMORY_BASIC_INFORMATION info;
+        
+        if (VirtualQuery(reinterpret_cast<LPCVOID>(instruction_pointer), &info, sizeof(MEMORY_BASIC_INFORMATION)) != 0 && info.State == MEM_COMMIT)
+        {
+            // Attempt to get 128 bytes before and after the instruction
+            // pointer, but settle for whatever's available up to the
+            // boundaries of the memory region.
+            const ULONG64 kIPMemorySize = 256;
+            context.memory_base = max(reinterpret_cast<ULONG64>(info.BaseAddress), instruction_pointer - (kIPMemorySize / 2));
+            ULONG64 end_of_range = min(instruction_pointer + (kIPMemorySize / 2), reinterpret_cast<ULONG64>(info.BaseAddress) + info.RegionSize);
+            context.memory_size = static_cast<ULONG>(end_of_range - context.memory_base);
+            context.finished = false;
+
+            callback.CallbackRoutine = miniDumpWriteDumpCallback;
+            callback.CallbackParam = reinterpret_cast<void*>(&context);
+            callback_pointer = &callback;
+        }
+
+        MINIDUMP_TYPE miniDumpType = (MINIDUMP_TYPE)(MiniDumpNormal|MiniDumpWithHandleData|MiniDumpWithThreadInfo);
+
         // write the dump
-        BOOL ok = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, NULL, NULL) != 0;
+        BOOL ok = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, miniDumpType, &ExInfo, NULL, callback_pointer) != 0;
         CloseHandle(hFile);
 
         if (ok == FALSE) {
-            nvDebug("*** Failed to save dump file.\n");
+            //nvDebug("*** Failed to save dump file.\n");
             return false;
         }
 
-        nvDebug("\nDump file saved.\n");
+        //nvDebug("\nDump file saved.\n");
 
         return true;
     }
+
+#if USE_SEPARATE_THREAD
+
+    static DWORD WINAPI ExceptionHandlerThreadMain(void* lpParameter) {
+        nvDebugCheck(s_handler_start_semaphore != NULL);
+        nvDebugCheck(s_handler_finish_semaphore != NULL);
+
+        while (true) {
+            if (WaitForSingleObject(s_handler_start_semaphore, INFINITE) == WAIT_OBJECT_0) {
+                writeMiniDump(s_exception_info);
+
+                // Allow the requesting thread to proceed.
+                ReleaseSemaphore(s_handler_finish_semaphore, 1, NULL);
+            }
+        }
+
+        // This statement is not reached when the thread is unconditionally
+        // terminated by the ExceptionHandler destructor.
+        return 0;
+    }
+
+#endif // USE_SEPARATE_THREAD
 
     static bool hasStackTrace() {
         return true;
@@ -195,12 +329,12 @@ namespace
     }
 #pragma warning(pop)
 
-    static NV_NOINLINE void printStackTrace(void * trace[], int size, int start=0)
+    static NV_NOINLINE void writeStackTrace(void * trace[], int size, int start, Array<const char *> & lines)
     {
+        StringBuilder builder(512);
+
         HANDLE hProcess = GetCurrentProcess();
     	
-        nvDebug( "\nDumping stacktrace:\n" );
-
 	    // Resolve PC to function names
 	    for (int i = start; i < size; i++)
 	    {
@@ -243,7 +377,7 @@ namespace
 			    DWORD dwDisplacement;
 			    if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
 			    {
-				    nvDebug("unknown(%08X) : %s\n", (uint32)ip, pFunc);
+                    builder.format("unknown(%08X) : %s\n", (uint32)ip, pFunc);
 			    }
 			    else
 			    {
@@ -256,25 +390,127 @@ namespace
     				
 				    int line = theLine.LineNumber;
     				
-				    nvDebug("%s(%d) : %s\n", pFile, line, pFunc);
+                    builder.format("%s(%d) : %s\n", pFile, line, pFunc);
 			    }
+
+                lines.append(builder.release());
 		    }
 	    }
     }
 
 
     // Write mini dump and print stack trace.
-    static LONG WINAPI topLevelFilter(EXCEPTION_POINTERS * pExceptionInfo)
+    static LONG WINAPI handleException(EXCEPTION_POINTERS * pExceptionInfo)
     {
+#if USE_SEPARATE_THREAD
+        EnterCriticalSection(&s_handler_critical_section);
+
+        s_requesting_thread_id = GetCurrentThreadId();
+        s_exception_info = pExceptionInfo;
+
+        // This causes the handler thread to call writeMiniDump.
+        ReleaseSemaphore(s_handler_start_semaphore, 1, NULL);
+
+        // Wait until WriteMinidumpWithException is done and collect its return value.
+        WaitForSingleObject(s_handler_finish_semaphore, INFINITE);
+        //bool status = s_handler_return_value;
+
+        // Clean up.
+        s_requesting_thread_id = 0;
+        s_exception_info = NULL;
+
+        LeaveCriticalSection(&s_handler_critical_section);
+#else
+        // First of all, write mini dump.
+        writeMiniDump(pExceptionInfo);
+#endif
+
+        nvDebug("\nDump file saved.\n");
+
+        // Try to attach to debugger.
+        if (s_interactive && debug::attachToDebugger()) {
+            nvDebugBreak();
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+
+        // If that fails, then try to pretty print a stack trace and terminate.
         void * trace[64];
         
         int size = backtraceWithSymbols(pExceptionInfo->ContextRecord, trace, 64);
-        printStackTrace(trace, size, 0);
 
-        writeMiniDump(pExceptionInfo);
+        // @@ Use win32's CreateFile?
+        FILE * fp = fileOpen("crash.txt", "wb");
+        if (fp != NULL) {
+            Array<const char *> lines;
+            writeStackTrace(trace, size, 0, lines);
 
-        return EXCEPTION_CONTINUE_SEARCH;
+            for (uint i = 0; i < lines.count(); i++) {
+                fputs(lines[i], fp);
+                delete lines[i];
+            }
+
+            // @@ Add more info to crash.txt?
+
+            fclose(fp);
+        }
+
+        return EXCEPTION_EXECUTE_HANDLER;   // Terminate app.
     }
+
+    /*static void handlePureVirtualCall() {
+        // This is an pure virtual function call, not an exception.  It's safe to
+        // play with sprintf here.
+        AutoExceptionHandler auto_exception_handler;
+        ExceptionHandler* current_handler = auto_exception_handler.get_handler();
+
+        MDRawAssertionInfo assertion;
+        memset(&assertion, 0, sizeof(assertion));
+        assertion.type = MD_ASSERTION_INFO_TYPE_PURE_VIRTUAL_CALL;
+
+        // Make up an exception record for the current thread and CPU context
+        // to make it possible for the crash processor to classify these
+        // as do regular crashes, and to make it humane for developers to
+        // analyze them.
+        EXCEPTION_RECORD exception_record = {};
+        CONTEXT exception_context = {};
+        EXCEPTION_POINTERS exception_ptrs = { &exception_record, &exception_context };
+
+        ::RtlCaptureContext(&exception_context);
+
+        exception_record.ExceptionCode = STATUS_NONCONTINUABLE_EXCEPTION;
+
+        // We store pointers to the the expression and function strings,
+        // and the line as exception parameters to make them easy to
+        // access by the developer on the far side.
+        exception_record.NumberParameters = 3;
+        exception_record.ExceptionInformation[0] = reinterpret_cast<ULONG_PTR>(&assertion.expression);
+        exception_record.ExceptionInformation[1] = reinterpret_cast<ULONG_PTR>(&assertion.file);
+        exception_record.ExceptionInformation[2] = assertion.line;
+
+        bool success = false;
+        // In case of out-of-process dump generation, directly call
+        // WriteMinidumpWithException since there is no separate thread running.
+
+        success = current_handler->WriteMinidumpOnHandlerThread(&exception_ptrs, &assertion);
+
+        if (!success) {
+            if (current_handler->previous_pch_) {
+                // The handler didn't fully handle the exception.  Give it to the
+                // previous purecall handler.
+                current_handler->previous_pch_();
+            else {
+                // If there's no previous handler, return and let _purecall handle it.
+                // This will just put up an assertion dialog.
+                return;
+            }
+        }
+
+        // The handler either took care of the invalid parameter problem itself,
+        // or passed it on to another handler.  "Swallow" it by exiting, paralleling
+        // the behavior of "swallowing" exceptions.
+        exit(0);
+    }*/
+
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) // NV_OS_LINUX || NV_OS_DARWIN
 
@@ -491,29 +727,34 @@ namespace
             }
             nvDebug( error_string.str() );
 
+            // Print stack trace:
+            debug::dumpInfo();
+
             if (debug::isDebuggerPresent()) {
                 return NV_ABORT_DEBUG;
             }
 
-            flushMessageQueue();
-            int action = MessageBoxA(NULL, error_string.str(), "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
-            switch( action ) {
-            case IDRETRY:
-                ret = NV_ABORT_DEBUG;
-                break;
-            case IDIGNORE:
-                ret = NV_ABORT_IGNORE;
-                break;
-            case IDABORT:
-            default:
-                ret = NV_ABORT_EXIT;
-                break;
+            if (s_interactive) {
+                flushMessageQueue();
+                int action = MessageBoxA(NULL, error_string.str(), "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
+                switch( action ) {
+                case IDRETRY:
+                    ret = NV_ABORT_DEBUG;
+                    break;
+                case IDIGNORE:
+                    ret = NV_ABORT_IGNORE;
+                    break;
+                case IDABORT:
+                default:
+                    ret = NV_ABORT_EXIT;
+                    break;
+                }
+                /*if( _CrtDbgReport( _CRT_ASSERT, file, line, module, exp ) == 1 ) {
+                    return NV_ABORT_DEBUG;
+                }*/
             }
-            /*if( _CrtDbgReport( _CRT_ASSERT, file, line, module, exp ) == 1 ) {
-                return NV_ABORT_DEBUG;
-            }*/
 
-            if( ret == NV_ABORT_EXIT ) {
+            if (ret == NV_ABORT_EXIT) {
                  // Exit cleanly.
                 throw "Assertion failed";
             }
@@ -633,7 +874,16 @@ void debug::dumpInfo()
     {
         void * trace[64];
         int size = backtrace(trace, 64);
-        printStackTrace(trace, size, 1);
+
+        nvDebug( "\nDumping stacktrace:\n" );
+
+        Array<const char *> lines;
+        writeStackTrace(trace, size, 1, lines);
+
+        for (uint i = 0; i < lines.count(); i++) {
+            nvDebug(lines[i]);
+            delete lines[i];
+        }
     }
 #endif
 }
@@ -664,15 +914,87 @@ void debug::resetAssertHandler()
 }
 
 
-/// Enable signal handler.
-void debug::enableSigHandler()
+#if USE_SEPARATE_THREAD
+
+static void initHandlerThread()
+{
+    static const int kExceptionHandlerThreadInitialStackSize = 64 * 1024;
+
+    // Set synchronization primitives and the handler thread.  Each
+    // ExceptionHandler object gets its own handler thread because that's the
+    // only way to reliably guarantee sufficient stack space in an exception,
+    // and it allows an easy way to get a snapshot of the requesting thread's
+    // context outside of an exception.
+    InitializeCriticalSection(&s_handler_critical_section);
+    
+    s_handler_start_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+    nvDebugCheck(s_handler_start_semaphore != NULL);
+
+    s_handler_finish_semaphore = CreateSemaphore(NULL, 0, 1, NULL);
+    nvDebugCheck(s_handler_finish_semaphore != NULL);
+
+    // Don't attempt to create the thread if we could not create the semaphores.
+    if (s_handler_finish_semaphore != NULL && s_handler_start_semaphore != NULL) {
+        DWORD thread_id;
+        s_handler_thread = CreateThread(NULL,         // lpThreadAttributes
+                                        kExceptionHandlerThreadInitialStackSize,
+                                        ExceptionHandlerThreadMain,
+                                        NULL,         // lpParameter
+                                        0,            // dwCreationFlags
+                                        &thread_id);
+        nvDebugCheck(s_handler_thread != NULL);
+    }
+
+    /* @@ We should avoid loading modules in the exception handler!
+    dbghelp_module_ = LoadLibrary(L"dbghelp.dll");
+    if (dbghelp_module_) {
+        minidump_write_dump_ = reinterpret_cast<MiniDumpWriteDump_type>(GetProcAddress(dbghelp_module_, "MiniDumpWriteDump"));
+    }
+    */
+}
+
+static void shutHandlerThread() {
+    // @@ Free stuff. Terminate thread.
+}
+
+#endif
+
+
+// Enable signal handler.
+void debug::enableSigHandler(bool interactive)
 {
     nvCheck(s_sig_handler_enabled != true);
     s_sig_handler_enabled = true;
+    s_interactive = interactive;
 
 #if NV_OS_WIN32 && NV_CC_MSVC
+    if (interactive) {
+        // Do not display message boxes on error.
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/ms680621(v=vs.85).aspx
+        SetErrorMode(SEM_FAILCRITICALERRORS|SEM_NOGPFAULTERRORBOX|SEM_NOOPENFILEERRORBOX);
 
-    s_old_exception_filter = ::SetUnhandledExceptionFilter( topLevelFilter );
+        // CRT reports errors to debug output only.
+        // http://msdn.microsoft.com/en-us/library/1y71x448(v=vs.80).aspx
+        _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+        _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+        _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+    }
+
+
+#if USE_SEPARATE_THREAD
+    initHandlerThread();
+#endif
+
+    s_old_exception_filter = ::SetUnhandledExceptionFilter( handleException );
+
+    /*
+#if _MSC_VER >= 1400  // MSVC 2005/8
+    _set_invalid_parameter_handler(handleInvalidParameter);
+#endif  // _MSC_VER >= 1400
+
+    _set_purecall_handler(handlePureVirtualCall);
+    */
+
 
     // SYMOPT_DEFERRED_LOADS make us not take a ton of time unless we actual log traces
     SymSetOptions(SYMOPT_DEFERRED_LOADS|SYMOPT_FAIL_CRITICAL_ERRORS|SYMOPT_LOAD_LINES|SYMOPT_UNDNAME);
@@ -797,8 +1119,6 @@ bool debug::attachToDebugger()
             ::Sleep(200);
         }
     }
-
-    nvDebugBreak();
 #endif // NV_OS_WIN32
 
     return true;

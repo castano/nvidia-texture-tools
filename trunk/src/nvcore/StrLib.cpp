@@ -101,17 +101,18 @@ bool nv::strEqual(const char * s1, const char * s2)
     return strCmp(s1, s2) == 0;
 }
 
-bool nv::strBeginsWith(const char * dst, const char * prefix)
+bool nv::strBeginsWith(const char * str, const char * prefix)
 {
-    //return strstr(dst, prefix) == dst;
-    return strncmp(dst, prefix, strlen(prefix)) == 0;
+    //return strstr(str, prefix) == dst;
+    return strncmp(str, prefix, strlen(prefix)) == 0;
 }
 
-// @@ Not tested.
-bool nv::strEndsWith(const char * dst, const char * suffix)
+bool nv::strEndsWith(const char * str, const char * suffix)
 {
-    const size_t len = strlen(suffix);
-    return strncmp(dst + strlen(dst) - len, suffix, len) == 0;
+    uint ml = strLen(str);
+    uint sl = strLen(suffix);
+    if (ml < sl) return false;
+    return strncmp(str + ml - sl, suffix, sl) == 0;
 }
 
 
@@ -375,6 +376,28 @@ StringBuilder & StringBuilder::appendFormatList( const char * fmt, va_list arg )
     }
 
     va_end(tmp);
+
+    return *this;
+}
+
+// Append n spaces.
+StringBuilder & StringBuilder::appendSpace(uint n)
+{
+    if (m_str == NULL) {
+        m_size = n + 1;
+        m_str = strAlloc(m_size);
+        memset(m_str, ' ', m_size);
+        m_str[n] = '\0';
+    }
+    else {
+        const uint len = strLen(m_str);
+        if (m_size < len + n + 1) {
+            m_size = len + n + 1;
+            m_str = strReAlloc(m_str, m_size);
+        }
+        memset(m_str + len, ' ', n);
+        m_str[len+n] = '\0';
+    }
 
     return *this;
 }

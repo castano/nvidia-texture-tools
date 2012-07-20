@@ -77,6 +77,8 @@ namespace nv
         StringBuilder & appendFormat( const char * format, ... ) __attribute__((format (printf, 2, 3)));
         StringBuilder & appendFormatList( const char * format, va_list arg );
 
+        StringBuilder & appendSpace(uint n);
+
         StringBuilder & number( int i, int base = 10 );
         StringBuilder & number( uint i, int base = 10 );
 

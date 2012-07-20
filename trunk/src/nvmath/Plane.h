@@ -14,31 +14,26 @@ namespace nv
     class NVMATH_CLASS Plane
     {
     public:
-        typedef Plane const & Arg;
-
         Plane();
         Plane(float x, float y, float z, float w);
-        Plane(Vector4::Arg v);
-        Plane(Vector3::Arg v, float d);
-        Plane(Vector3::Arg normal, Vector3::Arg point);
+        Plane(const Vector4 & v);
+        Plane(const Vector3 & v, float d);
+        Plane(const Vector3 & normal, const Vector3 & point);
+        Plane(const Vector3 & v0, const Vector3 & v1, const Vector3 & v2);
 
-        const Plane & operator=(Plane::Arg v);
+        const Plane & operator=(const Plane & v);
 
         Vector3 vector() const;
         float offset() const;
 
-        const Vector4 & asVector() const;
-        Vector4 & asVector();
-
         void operator*=(float s);
 
-    private:
-        Vector4 p;
+        Vector4 v;
     };
 
-    Plane transformPlane(const Matrix&, Plane::Arg);
+    Plane transformPlane(const Matrix &, const Plane &);
 
-    Vector3 planeIntersection(Plane::Arg a, Plane::Arg b, Plane::Arg c);
+    Vector3 planeIntersection(const Plane & a, const Plane & b, const Plane & c);
 
 
 } // nv namespace

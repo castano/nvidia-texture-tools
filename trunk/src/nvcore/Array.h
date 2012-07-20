@@ -30,6 +30,7 @@ namespace nv
     template<typename T>
     class NVCORE_CLASS Array {
     public:
+        typedef uint size_type;
 
         // Default constructor.
         NV_FORCEINLINE Array() : m_buffer(NULL), m_capacity(0), m_size(0) {}
@@ -86,11 +87,17 @@ namespace nv
         /// Get vector size.
         NV_FORCEINLINE uint count() const { return m_size; }
 
+        /// Get vector capacity.
+        NV_FORCEINLINE uint capacity() const { return m_capacity; }
+
         /// Get const vector pointer.
         NV_FORCEINLINE const T * buffer() const { return m_buffer; }
 
         /// Get vector pointer.
         NV_FORCEINLINE T * buffer() { return m_buffer; }
+
+        NV_FORCEINLINE T * begin() { return m_buffer; }
+        NV_FORCEINLINE T * end() { return m_buffer + m_size; }
 
         /// Is vector empty.
         NV_FORCEINLINE bool isEmpty() const { return m_size == 0; }
@@ -120,6 +127,7 @@ namespace nv
         void replaceWithLast(uint index);
         void resize(uint new_size);
         void resize(uint new_size, const T & elem);
+        void fill(const T & elem);
         void clear();
         void shrink();
         void reserve(uint desired_size);

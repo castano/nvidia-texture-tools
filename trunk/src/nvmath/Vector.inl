@@ -6,6 +6,7 @@
 
 #include "Vector.h"
 #include "nvcore/Utils.h" // min, max
+#include "nvcore/Hash.h" // hash
 
 namespace nv
 {
@@ -419,6 +420,13 @@ namespace nv
 	    return (v0.x * v1.y - v0.y * v1.x);
     }
 
+    template <>
+    inline uint hash(const Vector2 & v, uint h)
+    {
+        return sdbmFloatHash(v.component, 2, h);
+    }
+
+
 
     // Vector3
 
@@ -617,6 +625,11 @@ namespace nv
 	    return v - (2 * dot(v, n)) * n;
     }
 
+    template <>
+    inline uint hash(const Vector3 & v, uint h)
+    {
+        return sdbmFloatHash(v.component, 3, h);
+    }
 
 
     // Vector4
@@ -763,6 +776,12 @@ namespace nv
         Vector4 vf = v;
         nv::floatCleanup(vf.component, 4);
         return vf;
+    }
+
+    template <>
+    inline uint hash(const Vector4 & v, uint h)
+    {
+        return sdbmFloatHash(v.component, 4, h);
     }
 
 } // nv namespace

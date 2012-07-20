@@ -119,7 +119,7 @@ namespace nv
 
     /// Return the maximum of the three arguments.
     template <typename T> 
-    inline const T & max(const T & a, const T & b, const T & c)
+    inline const T & max3(const T & a, const T & b, const T & c)
     {
         return max(a, max(b, c));
     }
@@ -133,7 +133,7 @@ namespace nv
 
     /// Return the maximum of the three arguments.
     template <typename T> 
-    inline const T & min(const T & a, const T & b, const T & c)
+    inline const T & min3(const T & a, const T & b, const T & c)
     {
         return min(a, min(b, c));
     }
@@ -210,6 +210,7 @@ namespace nv
     template <typename T>
     void destroy_range(T * restrict ptr, uint new_size, uint old_size) {
         for (uint i = new_size; i < old_size; i++) {
+            nvDebugCheck(ptr != NULL && isValidPtr(ptr));
             (ptr+i)->~T(); // Explicit call to the destructor
         }
     }

@@ -34,25 +34,33 @@ void Event::wait() {
 
 #elif NV_OS_UNIX
 
-// @@ TODO
 #pragma NV_MESSAGE("Implement event using pthreads!")
 
 struct Event::Private {
+    pthread_cond_t pt_cond;
+    pthread_mutex_t pt_mutex;
 };
 
 Event::Event() : m(new Private) {
+    // pthread equivalent of auto-reset event
+    pthread_cond_init(&m->pt_cond, NULL);
+    pthread_mutex_init(&m->pt_mutex, NULL);
 }
 
 Event::~Event() {
+    pthread_cond_destroy(&m->pt_cond);
+    pthread_mutex_destroy(&m->pt_mutex);
 }
 
 void Event::post() {
+    pthread_cond_signal(&m->pt_cond);
 }
 
 void Event::wait() {
+    pthread_cond_wait(&m->pt_cond, &m->pt_mutex);
 }
 
-#endif	
+#endif // NV_OS_UNIX
 
 
 /*static*/ void Event::post(Event * events, uint count) {

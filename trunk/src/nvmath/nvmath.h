@@ -54,7 +54,7 @@
 #define IS_NEGATIVE_FLOAT(x) (IR(x)&SIGN_BITMASK)
 */
 
-inline double sqrt_assert(const double f)
+extern "C" inline double sqrt_assert(const double f)
 {
     nvDebugCheck(f >= 0.0f);
     return sqrt(f);
@@ -66,7 +66,7 @@ inline float sqrtf_assert(const float f)
     return sqrtf(f);
 }
 
-inline double acos_assert(const double f)
+extern "C" inline double acos_assert(const double f) 
 {
     nvDebugCheck(f >= -1.0f && f <= 1.0f);
     return acos(f);
@@ -78,7 +78,7 @@ inline float acosf_assert(const float f)
     return acosf(f);
 }
 
-inline double asin_assert(const double f)
+extern "C" inline double asin_assert(const double f)
 {
     nvDebugCheck(f >= -1.0f && f <= 1.0f);
     return asin(f);
@@ -98,6 +98,17 @@ inline float asinf_assert(const float f)
 #define asin asin_assert
 #define asinf asinf_assert
 
+#if NV_CC_MSVC
+NV_FORCEINLINE float log2f(float x)
+{
+    nvCheck(x >= 0);
+    return logf(x) / logf(2.0f);
+}
+NV_FORCEINLINE float exp2f(float x)
+{
+    return powf(2.0f, x);
+}
+#endif
 
 namespace nv
 {
@@ -109,7 +120,7 @@ namespace nv
     inline bool equal(const float f0, const float f1, const float epsilon = NV_EPSILON)
     {
         //return fabs(f0-f1) <= epsilon;
-        return fabs(f0-f1) <= epsilon * max(1.0f, fabsf(f0), fabsf(f1));
+        return fabs(f0-f1) <= epsilon * max3(1.0f, fabsf(f0), fabsf(f1));
     }
 
     inline bool isZero(const float f, const float epsilon = NV_EPSILON)
@@ -153,18 +164,6 @@ namespace nv
         }
         return value;
     }
-
-#if NV_CC_MSVC
-    NV_FORCEINLINE float log2f(float x)
-    {
-        nvCheck(x >= 0);
-        return logf(x) / logf(2.0f);
-    }
-    NV_FORCEINLINE float exp2f(float x)
-    {
-        return powf(2.0f, x);
-    }
-#endif
 
     inline float lerp(float f0, float f1, float t)
     {
@@ -211,8 +210,8 @@ namespace nv
     // Eliminates negative zeros from a float array.
     inline void floatCleanup(float * fp, int n)
     {
-        nvDebugCheck(isFinite(*fp));
         for (int i = 0; i < n; i++) {
+            //nvDebugCheck(isFinite(fp[i]));
             union { float f; uint32 i; } x = { fp[i] };
             if (x.i == 0x80000000) fp[i] = 0.0f;
         }
