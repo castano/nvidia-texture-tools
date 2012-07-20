@@ -310,7 +310,7 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
     {
         for (uint y = 0; y < h; y++)
         {
-            const float * src = (const float *)data + y * w;
+            const float * src = (const float *)data + (z * h + y) * w;
 
             BitStream stream(dst);
 

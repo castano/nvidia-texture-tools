@@ -1338,7 +1338,7 @@ void FloatImage::flipZ()
 
 
 
-float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel) const
+float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel, float alphaScale/*=1*/) const
 {
     const uint w = m_width;
     const uint h = m_height;
@@ -1347,16 +1347,41 @@ float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel) const
 
     const float * alpha = channel(alphaChannel);
 
+#if 0
     const uint count = m_pixelCount;
     for (uint i = 0; i < count; i++) {
         if (alpha[i] > alphaRef) coverage += 1.0f; // @@ gt or lt?
     }
-
+    
     return coverage / float(w * h);
+#else
+    const uint n = 8;
+
+    // If we want subsampling:
+    for (uint y = 0; y < h-1; y++) {
+        for (uint x = 0; x < w-1; x++) {
+
+            float alpha00 = nv::saturate(pixel(alphaChannel, x+0, y+0, 0) * alphaScale);
+            float alpha10 = nv::saturate(pixel(alphaChannel, x+1, y+0, 0) * alphaScale);
+            float alpha01 = nv::saturate(pixel(alphaChannel, x+0, y+1, 0) * alphaScale);
+            float alpha11 = nv::saturate(pixel(alphaChannel, x+1, y+1, 0) * alphaScale);
+
+            for (float fy = 0.5f/n; fy < 1.0f; fy++) {
+                for (float fx = 0.5f/n; fx < 1.0f; fx++) {
+                    float alpha = alpha00 * (1 - fx) * (1 - fy) + alpha10 * fx * (1 - fy) + alpha01 * (1 - fx) * fy + alpha11 * fx * fy;
+                    if (alpha > alphaRef) coverage += 1.0f;
+                }
+            }
+        }
+    }
+
+    return coverage / float(w * h * n * n);
+#endif
 }
 
 void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int alphaChannel)
 {
+#if 0
     float minAlphaRef = 0.0f;
     float maxAlphaRef = 1.0f;
     float midAlphaRef = 0.5f;
@@ -1383,8 +1408,35 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
     // Scale alpha channel.
     scaleBias(alphaChannel, 1, alphaScale, 0.0f);
     clamp(alphaChannel, 1, 0.0f, 1.0f); 
+#else
+    float minAlphaScale = 0.0f;
+    float maxAlphaScale = 4.0f;
+    float alphaScale = 1.0f;
 
-    //float newCoverage = alphaTestCoverage(alphaRef, alphaChannel);
+    // Determine desired scale using a binary search. Hardcoded to 8 steps max.
+    for (int i = 0; i < 10; i++) {
+        float currentCoverage = alphaTestCoverage(alphaRef, alphaChannel, alphaScale);
+
+        if (currentCoverage < desiredCoverage) {
+            minAlphaScale = alphaScale;
+        }
+        else if (currentCoverage > desiredCoverage) {
+            maxAlphaScale = alphaScale;
+        }
+        else {
+            break;
+        }
+
+        alphaScale = (minAlphaScale + maxAlphaScale) * 0.5f;
+    }
+
+    // Scale alpha channel.
+    scaleBias(alphaChannel, 1, alphaScale, 0.0f);
+    clamp(alphaChannel, 1, 0.0f, 1.0f); 
+#endif
+#if _DEBUG
+    float newCoverage = alphaTestCoverage(alphaRef, alphaChannel);
+#endif
 }
 
 FloatImage* FloatImage::clone() const

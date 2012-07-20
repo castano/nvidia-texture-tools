@@ -16,7 +16,7 @@ using namespace nv;
 #define ENABLE_PARALLEL_FOR 0
 #endif
 
-void worker(void * arg) {
+static void worker(void * arg) {
     ParallelFor * owner = (ParallelFor *)arg;
 
     while(true) {
