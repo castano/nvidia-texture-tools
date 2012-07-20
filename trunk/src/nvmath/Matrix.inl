@@ -250,6 +250,19 @@ namespace nv
         }
     }
 
+    inline Matrix::Matrix(const Matrix3 & m)
+    {
+        for(int i = 0; i < 3; i++) {
+            for(int j = 0; j < 3; j++) {
+                operator()(i, j) = m.get(i, j);
+            }
+        }
+        for(int i = 0; i < 4; i++) {
+            operator()(3, i) = 0;
+            operator()(i, 3) = 0;
+        }
+    }
+
     inline Matrix::Matrix(Vector4::Arg v0, Vector4::Arg v1, Vector4::Arg v2, Vector4::Arg v3)
     {
         m_data[ 0] = v0.x; m_data[ 1] = v0.y; m_data[ 2] = v0.z; m_data[ 3] = v0.w;

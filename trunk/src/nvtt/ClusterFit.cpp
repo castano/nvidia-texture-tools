@@ -92,8 +92,8 @@ void ClusterFit::setColourSet(const ColorSet * set)
     {
         int p = order[i];
 #if NVTT_USE_SIMD
-        NV_ALIGN_16 Vector4 tmp(values[p] * set->weights[p], set->weights[p]);
-        m_weighted[i] = SimdVector(tmp.component);
+        NV_ALIGN_16 Vector4 tmp(values[p], 1);
+        m_weighted[i] = SimdVector(tmp.component) * SimdVector(set->weights[p]);
         m_xxsum += m_weighted[i] * m_weighted[i];
         m_xsum += m_weighted[i];
 #else

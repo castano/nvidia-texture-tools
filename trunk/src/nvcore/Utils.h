@@ -208,6 +208,13 @@ namespace nv
     }
 
     template <typename T>
+    void construct_range(T * restrict ptr, uint new_size, uint old_size, const T * src) {
+        for (uint i = old_size; i < new_size; i++) {
+            new(ptr+i) T(src[i]); // placement new
+        }
+    }
+
+    template <typename T>
     void destroy_range(T * restrict ptr, uint new_size, uint old_size) {
         for (uint i = new_size; i < old_size; i++) {
             nvDebugCheck(ptr != NULL && isValidPtr(ptr));
@@ -223,7 +230,7 @@ namespace nv
     }
 
     template <typename T>
-    void copy(T * restrict dst, const T * restrict src, uint count) {
+    void copy_range(T * restrict dst, const T * restrict src, uint count) {
         for (uint i = 0; i < count; i++) {
             dst[i] = src[i];
         }

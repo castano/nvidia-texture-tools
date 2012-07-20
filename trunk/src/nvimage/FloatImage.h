@@ -103,7 +103,7 @@ namespace nv
         NVIMAGE_API void flipY();
         NVIMAGE_API void flipZ();
 
-        NVIMAGE_API float alphaTestCoverage(float alphaRef, int alphaChannel) const;
+        NVIMAGE_API float alphaTestCoverage(float alphaRef, int alphaChannel, float alphaScale = 1.0f) const;
         NVIMAGE_API void scaleAlphaToCoverage(float coverage, float alphaRef, int alphaChannel);
 
 

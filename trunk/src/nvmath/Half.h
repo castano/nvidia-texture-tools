@@ -9,6 +9,9 @@ namespace nv {
     uint32 half_to_float( uint16 h );
     uint16 half_from_float( uint32 f );
 
+    // vin,vout must be 16 byte aligned. count must be a multiple of 8.
+    void half_to_float_array(const uint16 * vin, float * vout, int count);
+
     void half_init_tables();
 
     extern uint32 mantissa_table[2048];
@@ -19,6 +22,7 @@ namespace nv {
     // http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
     inline uint32 fast_half_to_float(uint16 h)
     {
+        nvDebugCheck(mantissa_table[0] == 0); // Make sure table was initialized.
 	    uint exp = h >> 10;
 	    return mantissa_table[offset_table[exp] + (h & 0x3ff)] + exponent_table[exp];
     }

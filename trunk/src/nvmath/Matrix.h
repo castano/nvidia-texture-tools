@@ -62,6 +62,7 @@ namespace nv
         Matrix();
         explicit Matrix(float f);
         explicit Matrix(identity_t);
+        Matrix(const Matrix3 & m);
         Matrix(const Matrix & m);
         Matrix(Vector4::Arg v0, Vector4::Arg v1, Vector4::Arg v2, Vector4::Arg v3);
         //explicit Matrix(const float m[]);	// m is assumed to contain 16 elements

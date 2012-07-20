@@ -76,6 +76,10 @@
 #include "Half.h"
 #include <stdio.h>
 
+#if NV_CC_GNUC
+#include <xmmintrin.h>
+#endif
+
 // Load immediate
 static inline uint32 _uint32_li( uint32 a )
 {
@@ -488,10 +492,79 @@ nv::half_to_float( uint16 h )
 }
 
 
-// @@ This code appears to be wrong.
+static __m128 half_to_float4_SSE2(__m128i h)
+{
+#define SSE_CONST4(name, val) static const __declspec(align(16)) uint name[4] = { (val), (val), (val), (val) }
+#define CONST(name) *(const __m128i *)&name
+
+    SSE_CONST4(mask_nosign,         0x7fff);
+    SSE_CONST4(mask_justsign,       0x8000);
+    SSE_CONST4(mask_shifted_exp,    0x7c00 << 13);
+    SSE_CONST4(expadjust_normal,    (127 - 15) << 23);
+    SSE_CONST4(expadjust_infnan,    (128 - 16) << 23);
+    SSE_CONST4(expadjust_denorm,    1 << 23);
+    SSE_CONST4(magic_denorm,        113 << 23);
+
+    __m128i mnosign     = CONST(mask_nosign);
+    __m128i expmant     = _mm_and_si128(mnosign, h);
+    __m128i justsign    = _mm_and_si128(h, CONST(mask_justsign));
+    __m128i mshiftexp   = CONST(mask_shifted_exp);
+    __m128i eadjust     = CONST(expadjust_normal);
+    __m128i shifted     = _mm_slli_epi32(expmant, 13);
+    __m128i adjusted    = _mm_add_epi32(eadjust, shifted);
+    __m128i justexp     = _mm_and_si128(shifted, mshiftexp);
+
+    __m128i zero        = _mm_setzero_si128();
+    __m128i b_isinfnan  = _mm_cmpeq_epi32(mshiftexp, justexp);
+    __m128i b_isdenorm  = _mm_cmpeq_epi32(zero, justexp);
+
+    __m128i adj_infnan  = _mm_and_si128(b_isinfnan, CONST(expadjust_infnan));
+    __m128i adjusted2   = _mm_add_epi32(adjusted, adj_infnan);
+
+    __m128i adj_den     = CONST(expadjust_denorm);
+    __m128i den1        = _mm_add_epi32(adj_den, adjusted2);
+    __m128  den2        = _mm_sub_ps(_mm_castsi128_ps(den1), *(const __m128 *)&magic_denorm);
+    __m128  adjusted3   = _mm_and_ps(den2, _mm_castsi128_ps(b_isdenorm));
+    __m128  adjusted4   = _mm_andnot_ps(_mm_castsi128_ps(b_isdenorm), _mm_castsi128_ps(adjusted2));
+    __m128  adjusted5   = _mm_or_ps(adjusted3, adjusted4);
+    __m128i sign        = _mm_slli_epi32(justsign, 16);
+    __m128  final       = _mm_or_ps(adjusted5, _mm_castsi128_ps(sign));
+
+    // ~21 SSE2 ops.
+    return final;
+
+#undef SSE_CONST4
+#undef CONST
+}
+
+
+void nv::half_to_float_array(const uint16 * vin, float * vout, int count) {
+    nvDebugCheck((intptr_t(vin) & 15) == 0);
+    nvDebugCheck((intptr_t(vout) & 15) == 0);
+    nvDebugCheck((count & 7) == 0);
+
+    __m128i zero = _mm_setzero_si128();
+
+    for (int i = 0; i < count; i += 8)
+    {
+        __m128i in = _mm_loadu_si128((const __m128i *)(vin + i));
+        __m128i a = _mm_unpacklo_epi16(in, zero);
+        __m128i b = _mm_unpackhi_epi16(in, zero);
+        
+        __m128 outa = half_to_float4_SSE2(a);
+        _mm_storeu_ps((float *)(vout + i), outa);
+        
+        __m128 outb = half_to_float4_SSE2(b);
+        _mm_storeu_ps((float *)(vout + i + 4), outb);
+    }
+}
+
+
+
+
 // @@ These tables could be smaller.
 namespace nv {
-    uint32 mantissa_table[2048];
+    uint32 mantissa_table[2048] = { 0xDEADBEEF };
     uint32 exponent_table[64];
     uint32 offset_table[64];
 }

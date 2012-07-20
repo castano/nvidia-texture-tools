@@ -197,6 +197,8 @@ namespace nv
 
         NVCORE_API bool isDebuggerPresent();
         NVCORE_API bool attachToDebugger();
+
+        NVCORE_API void terminate(int code);
     }
 
 } // nv namespace

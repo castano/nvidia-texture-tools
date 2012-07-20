@@ -172,48 +172,53 @@ namespace
             return false;
         }
 
-        MINIDUMP_EXCEPTION_INFORMATION ExInfo;
-        ExInfo.ThreadId = ::GetCurrentThreadId();
-        ExInfo.ExceptionPointers = pExceptionInfo;
-        ExInfo.ClientPointers = NULL;
+        MINIDUMP_EXCEPTION_INFORMATION * pExInfo = NULL;
+        MINIDUMP_CALLBACK_INFORMATION * pCallback = NULL;
 
-        MINIDUMP_CALLBACK_INFORMATION callback;
-        MINIDUMP_CALLBACK_INFORMATION * callback_pointer = NULL;
-        MinidumpCallbackContext context;
+        if (pExceptionInfo != NULL) {
+            MINIDUMP_EXCEPTION_INFORMATION ExInfo;
+            ExInfo.ThreadId = ::GetCurrentThreadId();
+            ExInfo.ExceptionPointers = pExceptionInfo;
+            ExInfo.ClientPointers = NULL;
+            pExInfo = &ExInfo;
 
-        // Find a memory region of 256 bytes centered on the
-        // faulting instruction pointer.
-        const ULONG64 instruction_pointer = 
-        #if defined(_M_IX86)
-            pExceptionInfo->ContextRecord->Eip;
-        #elif defined(_M_AMD64)
-            pExceptionInfo->ContextRecord->Rip;
-        #else
-            #error Unsupported platform
-        #endif
+            MINIDUMP_CALLBACK_INFORMATION callback;
+            MinidumpCallbackContext context;
 
-        MEMORY_BASIC_INFORMATION info;
-        
-        if (VirtualQuery(reinterpret_cast<LPCVOID>(instruction_pointer), &info, sizeof(MEMORY_BASIC_INFORMATION)) != 0 && info.State == MEM_COMMIT)
-        {
-            // Attempt to get 128 bytes before and after the instruction
-            // pointer, but settle for whatever's available up to the
-            // boundaries of the memory region.
-            const ULONG64 kIPMemorySize = 256;
-            context.memory_base = max(reinterpret_cast<ULONG64>(info.BaseAddress), instruction_pointer - (kIPMemorySize / 2));
-            ULONG64 end_of_range = min(instruction_pointer + (kIPMemorySize / 2), reinterpret_cast<ULONG64>(info.BaseAddress) + info.RegionSize);
-            context.memory_size = static_cast<ULONG>(end_of_range - context.memory_base);
-            context.finished = false;
+            // Find a memory region of 256 bytes centered on the
+            // faulting instruction pointer.
+            const ULONG64 instruction_pointer = 
+            #if defined(_M_IX86)
+                pExceptionInfo->ContextRecord->Eip;
+            #elif defined(_M_AMD64)
+                pExceptionInfo->ContextRecord->Rip;
+            #else
+                #error Unsupported platform
+            #endif
 
-            callback.CallbackRoutine = miniDumpWriteDumpCallback;
-            callback.CallbackParam = reinterpret_cast<void*>(&context);
-            callback_pointer = &callback;
+            MEMORY_BASIC_INFORMATION info;
+            
+            if (VirtualQuery(reinterpret_cast<LPCVOID>(instruction_pointer), &info, sizeof(MEMORY_BASIC_INFORMATION)) != 0 && info.State == MEM_COMMIT)
+            {
+                // Attempt to get 128 bytes before and after the instruction
+                // pointer, but settle for whatever's available up to the
+                // boundaries of the memory region.
+                const ULONG64 kIPMemorySize = 256;
+                context.memory_base = max(reinterpret_cast<ULONG64>(info.BaseAddress), instruction_pointer - (kIPMemorySize / 2));
+                ULONG64 end_of_range = min(instruction_pointer + (kIPMemorySize / 2), reinterpret_cast<ULONG64>(info.BaseAddress) + info.RegionSize);
+                context.memory_size = static_cast<ULONG>(end_of_range - context.memory_base);
+                context.finished = false;
+
+                callback.CallbackRoutine = miniDumpWriteDumpCallback;
+                callback.CallbackParam = reinterpret_cast<void*>(&context);
+                pCallback = &callback;
+            }
         }
 
         MINIDUMP_TYPE miniDumpType = (MINIDUMP_TYPE)(MiniDumpNormal|MiniDumpWithHandleData|MiniDumpWithThreadInfo);
 
         // write the dump
-        BOOL ok = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, miniDumpType, &ExInfo, NULL, callback_pointer) != 0;
+        BOOL ok = MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, miniDumpType, pExInfo, NULL, pCallback) != 0;
         CloseHandle(hFile);
 
         if (ok == FALSE) {
@@ -402,9 +407,8 @@ namespace
     // Write mini dump and print stack trace.
     static LONG WINAPI handleException(EXCEPTION_POINTERS * pExceptionInfo)
     {
-#if USE_SEPARATE_THREAD
         EnterCriticalSection(&s_handler_critical_section);
-
+#if USE_SEPARATE_THREAD
         s_requesting_thread_id = GetCurrentThreadId();
         s_exception_info = pExceptionInfo;
 
@@ -418,12 +422,11 @@ namespace
         // Clean up.
         s_requesting_thread_id = 0;
         s_exception_info = NULL;
-
-        LeaveCriticalSection(&s_handler_critical_section);
 #else
         // First of all, write mini dump.
         writeMiniDump(pExceptionInfo);
 #endif
+        LeaveCriticalSection(&s_handler_critical_section);
 
         nvDebug("\nDump file saved.\n");
 
@@ -454,62 +457,21 @@ namespace
             fclose(fp);
         }
 
-        return EXCEPTION_EXECUTE_HANDLER;   // Terminate app.
+        // This should terminate the process and set the error exit code.
+        TerminateProcess(GetCurrentProcess(), EXIT_FAILURE + 2);
+
+        return EXCEPTION_EXECUTE_HANDLER;   // Terminate app. In case terminate process did not succeed.
     }
 
-    /*static void handlePureVirtualCall() {
-        // This is an pure virtual function call, not an exception.  It's safe to
-        // play with sprintf here.
-        AutoExceptionHandler auto_exception_handler;
-        ExceptionHandler* current_handler = auto_exception_handler.get_handler();
+    static void handlePureVirtualCall() {
+        nvDebugBreak();
+        TerminateProcess(GetCurrentProcess(), EXIT_FAILURE + 8);
+    }
 
-        MDRawAssertionInfo assertion;
-        memset(&assertion, 0, sizeof(assertion));
-        assertion.type = MD_ASSERTION_INFO_TYPE_PURE_VIRTUAL_CALL;
-
-        // Make up an exception record for the current thread and CPU context
-        // to make it possible for the crash processor to classify these
-        // as do regular crashes, and to make it humane for developers to
-        // analyze them.
-        EXCEPTION_RECORD exception_record = {};
-        CONTEXT exception_context = {};
-        EXCEPTION_POINTERS exception_ptrs = { &exception_record, &exception_context };
-
-        ::RtlCaptureContext(&exception_context);
-
-        exception_record.ExceptionCode = STATUS_NONCONTINUABLE_EXCEPTION;
-
-        // We store pointers to the the expression and function strings,
-        // and the line as exception parameters to make them easy to
-        // access by the developer on the far side.
-        exception_record.NumberParameters = 3;
-        exception_record.ExceptionInformation[0] = reinterpret_cast<ULONG_PTR>(&assertion.expression);
-        exception_record.ExceptionInformation[1] = reinterpret_cast<ULONG_PTR>(&assertion.file);
-        exception_record.ExceptionInformation[2] = assertion.line;
-
-        bool success = false;
-        // In case of out-of-process dump generation, directly call
-        // WriteMinidumpWithException since there is no separate thread running.
-
-        success = current_handler->WriteMinidumpOnHandlerThread(&exception_ptrs, &assertion);
-
-        if (!success) {
-            if (current_handler->previous_pch_) {
-                // The handler didn't fully handle the exception.  Give it to the
-                // previous purecall handler.
-                current_handler->previous_pch_();
-            else {
-                // If there's no previous handler, return and let _purecall handle it.
-                // This will just put up an assertion dialog.
-                return;
-            }
-        }
-
-        // The handler either took care of the invalid parameter problem itself,
-        // or passed it on to another handler.  "Swallow" it by exiting, paralleling
-        // the behavior of "swallowing" exceptions.
-        exit(0);
-    }*/
+    static void handleInvalidParameter(const wchar_t * expresion, const wchar_t * function, const wchar_t * file, unsigned int line, uintptr_t reserved) {
+        nvDebugBreak();
+        TerminateProcess(GetCurrentProcess(), EXIT_FAILURE + 8);
+    }
 
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) // NV_OS_LINUX || NV_OS_DARWIN
@@ -755,8 +717,8 @@ namespace
             }
 
             if (ret == NV_ABORT_EXIT) {
-                 // Exit cleanly.
-                throw "Assertion failed";
+                // Exit cleanly.
+                exit(EXIT_FAILURE + 1);
             }
 
             return ret;
@@ -788,7 +750,7 @@ namespace
 
             if( ret == NV_ABORT_EXIT ) {
                  // Exit cleanly.
-                throw "Assertion failed";
+                exit(EXIT_FAILURE + 1);
             }
 
             return ret;
@@ -825,7 +787,7 @@ namespace
 #endif
 
             // Exit cleanly.
-            throw "Assertion failed";
+            exit(EXIT_FAILURE + 1);
         }
     };
 
@@ -851,6 +813,38 @@ int nvAbort(const char * exp, const char * file, int line, const char * func/*=N
     else {
         return s_default_assert_handler.assertion( exp, file, line, func );
     }
+}
+
+// Abnormal termination. Create mini dump and output call stack.
+void debug::terminate(int code)
+{
+    EnterCriticalSection(&s_handler_critical_section);
+
+    writeMiniDump(NULL);
+
+    const int max_stack_size = 64;
+    void * trace[max_stack_size];
+    int size = backtrace(trace, max_stack_size);
+
+    // @@ Use win32's CreateFile?
+    FILE * fp = fileOpen("crash.txt", "wb");
+    if (fp != NULL) {
+        Array<const char *> lines;
+        writeStackTrace(trace, size, 0, lines);
+
+        for (uint i = 0; i < lines.count(); i++) {
+            fputs(lines[i], fp);
+            delete lines[i];
+        }
+
+        // @@ Add more info to crash.txt?
+
+        fclose(fp);
+    }
+
+    LeaveCriticalSection(&s_handler_critical_section);
+
+    exit(code);
 }
 
 
@@ -987,13 +981,11 @@ void debug::enableSigHandler(bool interactive)
 
     s_old_exception_filter = ::SetUnhandledExceptionFilter( handleException );
 
-    /*
 #if _MSC_VER >= 1400  // MSVC 2005/8
     _set_invalid_parameter_handler(handleInvalidParameter);
 #endif  // _MSC_VER >= 1400
 
     _set_purecall_handler(handlePureVirtualCall);
-    */
 
 
     // SYMOPT_DEFERRED_LOADS make us not take a ton of time unless we actual log traces
