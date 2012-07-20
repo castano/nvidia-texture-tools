@@ -805,7 +805,7 @@ uint DDSHeader::pixelSize() const
         return ::pixelSize((DXGI_FORMAT)header10.dxgiFormat);
     }
     else {
-        if (flags & DDPF_FOURCC) {
+        if (pf.flags & DDPF_FOURCC) {
             return ::pixelSize((D3DFORMAT)pf.fourcc);
         }
         else {
