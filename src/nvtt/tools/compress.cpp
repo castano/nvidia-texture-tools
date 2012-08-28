@@ -497,11 +497,11 @@ int main(int argc, char *argv[])
 
     if (format == nvtt::Format_BC2) {
         // Dither alpha when using BC2.
-        compressionOptions.setQuantization(false, true, false);
+        compressionOptions.setQuantization(/*color dithering*/false, /*alpha dithering*/true, /*binary alpha*/false);
     }
     else if (format == nvtt::Format_BC1a) {
         // Binary alpha when using BC1a.
-        compressionOptions.setQuantization(false, true, true, 127);
+        compressionOptions.setQuantization(/*color dithering*/false, /*alpha dithering*/true, /*binary alpha*/true, 127);
     }
     else if (format == nvtt::Format_RGBA)
     {
