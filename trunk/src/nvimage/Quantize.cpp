@@ -85,8 +85,8 @@ void nv::Quantize::FloydSteinberg_BinaryAlpha( Image * image, int alpha_threshol
 	memset(row0, 0, sizeof(float)*(w+2));
 	memset(row1, 0, sizeof(float)*(w+2));
 	
-	for(uint y = 0; y < h; y++) {
-		for(uint x = 0; x < w; x++) {
+	for (uint y = 0; y < h; y++) {
+		for (uint x = 0; x < w; x++) {
 			
 			Color32 pixel = image->pixel(x, y);
 			
@@ -94,7 +94,7 @@ void nv::Quantize::FloydSteinberg_BinaryAlpha( Image * image, int alpha_threshol
 			int alpha = int(pixel.a) + int(row0[1+x]);
 			
 			// Convert color.
-			if( alpha > alpha_threshold ) pixel.a = 255;
+			if (alpha > alpha_threshold) pixel.a = 255;
 			else pixel.a = 0;
 			
 			// Store color.
