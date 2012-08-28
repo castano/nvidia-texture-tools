@@ -1242,6 +1242,7 @@ void DirectDrawSurface::readLinearImage(Image * img)
 
     const uint w = img->width();
     const uint h = img->height();
+    const uint d = img->depth();
 
     uint rshift, rsize;
     PixelFormat::maskShiftAndSize(header.pf.rmask, &rshift, &rsize);
@@ -1260,20 +1261,23 @@ void DirectDrawSurface::readLinearImage(Image * img)
 #pragma NV_MESSAGE("TODO: Support floating point linear images and other FOURCC codes.")
 
     // Read linear RGB images.
-    for (uint y = 0; y < h; y++)
+    for (uint z = 0; z < d; z++)
     {
-        for (uint x = 0; x < w; x++)
+        for (uint y = 0; y < h; y++)
         {
-            uint c = 0;
-            stream->serialize(&c, byteCount);
+            for (uint x = 0; x < w; x++)
+            {
+                uint c = 0;
+                stream->serialize(&c, byteCount);
 
-            Color32 pixel(0, 0, 0, 0xFF);
-            pixel.r = PixelFormat::convert((c & header.pf.rmask) >> rshift, rsize, 8);
-            pixel.g = PixelFormat::convert((c & header.pf.gmask) >> gshift, gsize, 8);
-            pixel.b = PixelFormat::convert((c & header.pf.bmask) >> bshift, bsize, 8);
-            pixel.a = PixelFormat::convert((c & header.pf.amask) >> ashift, asize, 8);
+                Color32 pixel(0, 0, 0, 0xFF);
+                pixel.r = PixelFormat::convert((c & header.pf.rmask) >> rshift, rsize, 8);
+                pixel.g = PixelFormat::convert((c & header.pf.gmask) >> gshift, gsize, 8);
+                pixel.b = PixelFormat::convert((c & header.pf.bmask) >> bshift, bsize, 8);
+                pixel.a = PixelFormat::convert((c & header.pf.amask) >> ashift, asize, 8);
 
-            img->pixel(x, y) = pixel;
+                img->pixel(x, y, z) = pixel;
+            }
         }
     }
 }
