@@ -48,8 +48,8 @@ namespace nv
         const Color32 & pixel(uint idx) const;
         Color32 & pixel(uint idx);
 
-        const Color32 & pixel(uint x, uint y) const;
-        Color32 & pixel(uint x, uint y);
+        const Color32 & pixel(uint x, uint y, uint z = 0) const;
+        Color32 & pixel(uint x, uint y,  uint z = 0);
 
         Format format() const;
         void setFormat(Format f);
@@ -68,16 +68,16 @@ namespace nv
     };
 
 
-    inline const Color32 & Image::pixel(uint x, uint y) const
+    inline const Color32 & Image::pixel(uint x, uint y, uint z) const
     {
-        nvDebugCheck(x < m_width && y < m_height);
-        return pixel(y * m_width + x);
+        nvDebugCheck(x < m_width && y < m_height && z < m_depth);
+        return pixel((z * m_height + y) * m_width + x);
     }
 
-    inline Color32 & Image::pixel(uint x, uint y)
+    inline Color32 & Image::pixel(uint x, uint y, uint z)
     {
-        nvDebugCheck(x < m_width && y < m_height);
-        return pixel(y * m_width + x);
+        nvDebugCheck(x < m_width && y < m_height && z < m_depth);
+        return pixel((z * m_height + y) * m_width + x);
     }
 
 } // nv namespace

@@ -1443,7 +1443,7 @@ FloatImage* FloatImage::clone() const
 {
     FloatImage* copy = new FloatImage();
 
-    copy->allocate(m_componentCount, m_width, m_height);
+    copy->allocate(m_componentCount, m_width, m_height, m_depth);
     memcpy(copy->m_mem, m_mem, m_floatCount * sizeof(float));
 
     return copy;
