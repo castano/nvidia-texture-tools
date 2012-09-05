@@ -253,7 +253,7 @@ namespace nv
     template <typename T>
     void Array<T>::fill(const T & elem)
     {
-        fill(m_buffer, m_size, elem)
+        fill(m_buffer, m_size, elem);
     }
 
     // Clear the buffer.
