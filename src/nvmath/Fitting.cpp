@@ -411,8 +411,8 @@ int nv::Fit::compute4Means(int n, const Vector3 *__restrict points, const float 
 
     cluster[0] = centroid + mindps * principal;
     cluster[1] = centroid + maxdps * principal;
-    cluster[2] = (2 * cluster[0] + cluster[1]) / 3;
-    cluster[3] = (2 * cluster[1] + cluster[0]) / 3;
+    cluster[2] = (2.0f * cluster[0] + cluster[1]) / 3.0f;
+    cluster[3] = (2.0f * cluster[1] + cluster[0]) / 3.0f;
 
     // Now we have to iteratively refine the clusters.
     while (true)

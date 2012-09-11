@@ -32,21 +32,28 @@
 #else // NV_NO_ASSERT
 
 #   if NV_CC_MSVC
-// @@ Does this work in msvc-6 and earlier?
+        // @@ Does this work in msvc-6 and earlier?
 #       define nvDebugBreak()       __debugbreak()
-//#       define nvDebugBreak()        __asm { int 3 }
-#   elif NV_CC_GNUC && NV_CPU_PPC && NV_OS_DARWIN
-// @@ Use __builtin_trap() on GCC
-#       define nvDebugBreak()       __asm__ volatile ("trap");
-#   elif NV_CC_GNUC && NV_CPU_X86 && NV_OS_DARWIN
-#       define nvDebugBreak()       __asm__ volatile ("int3");
-#   elif NV_CC_GNUC && NV_CPU_X86 
+        //#define nvDebugBreak()        __asm { int 3 }
+#   elif NV_CC_GNUC
+#       define nvDebugBreak()       __builtin_trap()
+#   else
+#       error "No nvDebugBreak()!"
+#   endif
+
+/*
+#   elif NV_CC_GNUC || NV_CPU_PPC && NV_OS_DARWIN
+        // @@ Use __builtin_trap() on GCC
+#       define nvDebugBreak()       __asm__ volatile ("trap")
+#   elif (NV_CC_GNUC || NV_CPU_X86 || NV_CPU_X86_64) && NV_OS_DARWIN
+#       define nvDebugBreak()       __asm__ volatile ("int3")
+#   elif NV_CC_GNUC || NV_CPU_X86 || NV_CPU_X86_64
 #       define nvDebugBreak()       __asm__ ( "int %0" : :"I"(3) )
 #   else
 #       include <signal.h>
-#       define nvDebugBreak()       raise(SIGTRAP); 
-// define nvDebugBreak()        *((int *)(0)) = 0
+#       define nvDebugBreak()       raise(SIGTRAP)
 #   endif
+*/
 
 #define nvDebugBreakOnce() \
     NV_MULTI_LINE_MACRO_BEGIN \

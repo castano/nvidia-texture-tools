@@ -523,6 +523,30 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
         int x0 = 0, x1 = L;
         int y0 = 0, y1 = L;
 
+        if (false) {
+            // New approach?
+
+            // For each face, we are looking for 4 planes that bound the cone.
+
+            // All planes go through the origin.
+            // Plane fully determined by its normal.
+            // We only care about planes aligned to one axis. So, for the XY face, we have 4 planes:
+
+            // Plane goes through origin.
+            // Plane normal is unit length.
+
+            // Plane must be tangent to cone ->
+            //  angle between plane normal and cone axis is 90 - cone angle & 90 + cone angle
+            //  dot(N, D) == cos(90 - cone angle)
+            //  dot(N, D) == cos(90 + cone angle)
+
+            // Plane must contain face UV axis
+
+            // Find the 4 planes and how they intersect the unit face, which gives us (u0,v0, u1,v1).
+
+            // Expand uv coordinates, clamp to
+        }
+
         // @@ Ugh. This is wrong, or only right when filterDir is aligned to one axis.
         if (false) {
             // uv coordinates corresponding to filterDir.
