@@ -21,7 +21,7 @@ SET(NVTT_SRCS
     CompressionOptions.h CompressionOptions.cpp
     InputOptions.h InputOptions.cpp
     OutputOptions.h OutputOptions.cpp
-    TaskDispatcher.h TaskDispatcher.cpp
+    TaskDispatcher.h #TaskDispatcher.cpp
     Surface.h Surface.cpp
     CubeSurface.h CubeSurface.cpp
     cuda/CudaUtils.h cuda/CudaUtils.cpp

@@ -486,10 +486,11 @@ namespace
 #endif
     }
 
-    static void printStackTrace(void * trace[], int size, int start=0) {
+
+    static void writeStackTrace(void * trace[], int size, int start, Array<const char *> & lines) {
+        StringBuilder builder(512);
         char ** string_array = backtrace_symbols(trace, size);
 
-        nvDebug( "\nDumping stacktrace:\n" );
         for(int i = start; i < size-1; i++ ) {
 #       if NV_CC_GNUC // defined(HAVE_CXXABI_H)
             // @@ Write a better parser for the possible formats.
@@ -510,32 +511,46 @@ namespace
                 char * name = abi::__cxa_demangle(begin+1, 0, 0, &stat);
                 if (module == NULL) {
                     if (name == NULL || stat != 0) {
-                        nvDebug( "  In: '%s'\n", begin+1 );
+                        builder.format("  In: '%s'\n", begin+1);
                     }
                     else {
-                        nvDebug( "  In: '%s'\n", name );
+                        builder.format("  In: '%s'\n", name);
                     }
                 }
                 else {
                     if (name == NULL || stat != 0) {
-                        nvDebug( "  In: [%s] '%s'\n", module, begin+1 );
+                        builder.format("  In: [%s] '%s'\n", module, begin+1);
                     }
                     else {
-                        nvDebug( "  In: [%s] '%s'\n", module, name );
+                        builder.format("  In: [%s] '%s'\n", module, name);
                     }
                 }
                 free(name);
             }
             else {
-                nvDebug( "  In: '%s'\n", string_array[i] );
+                builder.format("  In: '%s'\n", string_array[i]);
             }
 #       else
-            nvDebug( "  In: '%s'\n", string_array[i] );
+            builder.format("  In: '%s'\n", string_array[i]);
 #       endif
+            lines.append(builder.release());
         }
-        nvDebug("\n");
 
         free(string_array);
+    }
+
+    static void printStackTrace(void * trace[], int size, int start=0) {
+        nvDebug( "\nDumping stacktrace:\n" );
+
+        Array<const char *> lines;
+        writeStackTrace(trace, size, 1, lines);
+
+        for (uint i = 0; i < lines.count(); i++) {
+            nvDebug(lines[i]);
+            delete lines[i];
+        }
+
+        nvDebug("\n");
     }
 
 #endif // defined(HAVE_EXECINFO_H)
@@ -818,6 +833,7 @@ int nvAbort(const char * exp, const char * file, int line, const char * func/*=N
 // Abnormal termination. Create mini dump and output call stack.
 void debug::terminate(int code)
 {
+#if NV_OS_WIN32
     EnterCriticalSection(&s_handler_critical_section);
 
     writeMiniDump(NULL);
@@ -843,6 +859,7 @@ void debug::terminate(int code)
     }
 
     LeaveCriticalSection(&s_handler_critical_section);
+#endif
 
     exit(code);
 }
@@ -908,6 +925,7 @@ void debug::resetAssertHandler()
 }
 
 
+#if NV_OS_WIN32
 #if USE_SEPARATE_THREAD
 
 static void initHandlerThread()
@@ -951,7 +969,8 @@ static void shutHandlerThread() {
     // @@ Free stuff. Terminate thread.
 }
 
-#endif
+#endif // USE_SEPARATE_THREAD
+#endif // NV_OS_WIN32
 
 
 // Enable signal handler.

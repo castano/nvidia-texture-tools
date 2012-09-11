@@ -33,6 +33,7 @@
 #include <nvcore/TextWriter.h>
 #include <nvcore/FileSystem.h>
 #include <nvcore/Timer.h>
+#include <nvcore/Array.inl>
 
 #include <stdlib.h> // free
 #include <string.h> // memcpy

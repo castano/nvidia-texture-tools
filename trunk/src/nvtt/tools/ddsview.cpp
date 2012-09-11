@@ -105,6 +105,7 @@ GLuint createTexture(nv::DirectDrawSurface & dds)
     else {
         // Add support for cubemaps.
     }
+    return tex;
 }
 
 void drawQuad()

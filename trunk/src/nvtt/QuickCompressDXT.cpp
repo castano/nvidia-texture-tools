@@ -83,7 +83,7 @@ inline static void findMinMaxColorsBox(const Vector3 * block, uint num, Vector3 
 
 inline static void selectDiagonal(const Vector3 * block, uint num, Vector3 * restrict maxColor, Vector3 * restrict minColor)
 {
-	Vector3 center = (*maxColor + *minColor) * 0.5;
+	Vector3 center = (*maxColor + *minColor) * 0.5f;
 
 	Vector2 covariance = Vector2(0.0f);
 	for (uint i = 0; i < num; i++)
@@ -714,8 +714,8 @@ void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, 
 
 void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
-    Vector3 minColor = start * 255;
-    Vector3 maxColor = end * 255;
+    Vector3 minColor = start * 255.0f;
+    Vector3 maxColor = end * 255.0f;
     uint16 color0 = roundAndExpand(&maxColor);
     uint16 color1 = roundAndExpand(&minColor);
 
@@ -727,15 +727,15 @@ void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, co
 
     block->col0 = Color16(color0);
     block->col1 = Color16(color1);
-    block->indices = computeIndices4(set, maxColor / 255, minColor / 255);
+    block->indices = computeIndices4(set, maxColor / 255.0f, minColor / 255.0f);
 
     //optimizeEndPoints4(set, block);
 }
 
 void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
-    Vector3 minColor = start * 255;
-    Vector3 maxColor = end * 255;
+    Vector3 minColor = start * 255.0f;
+    Vector3 maxColor = end * 255.0f;
     uint16 color0 = roundAndExpand(&minColor);
     uint16 color1 = roundAndExpand(&maxColor);
 
@@ -747,7 +747,7 @@ void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, co
 
     block->col0 = Color16(color0);
     block->col1 = Color16(color1);
-    block->indices = computeIndices3(set, maxColor / 255, minColor / 255);
+    block->indices = computeIndices3(set, maxColor / 255.0f, minColor / 255.0f);
 
     //optimizeEndPoints3(set, block);
 }

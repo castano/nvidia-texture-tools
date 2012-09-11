@@ -203,6 +203,9 @@ Metrowerks:
    - __INTEL__ for x86 targets
    - __POWERPC__
 
+LLVM:
+   - __llvm__
+   - __clang__
 */
 
 /*
@@ -237,9 +240,9 @@ Metrowerks:
 #if defined __clang__
 #  define POSH_COMPILER_STRING "Clang"
 #  define POSH_COMPILER_CLANG 1
+#endif
 
-#elif defined __GNUC__
-
+#if defined __GNUC__ && !defined __clang__
 #  define POSH_COMPILER_STRING "Gnu GCC"
 #  define POSH_COMPILER_GCC 1
 #endif

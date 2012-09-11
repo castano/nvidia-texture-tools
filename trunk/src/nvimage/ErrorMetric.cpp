@@ -349,8 +349,8 @@ float nv::averageAngularError(const FloatImage * img0, const FloatImage * img1)
         Vector3 n0 = Vector3(x0[i], y0[i], z0[i]);
         Vector3 n1 = Vector3(x1[i], y1[i], z1[i]);
 
-        n0 = 2 * n0 - Vector3(1);
-        n1 = 2 * n1 - Vector3(1);
+        n0 = 2.0f * n0 - Vector3(1);
+        n1 = 2.0f * n1 - Vector3(1);
 
         n0 = normalizeSafe(n0, Vector3(0), 0.0f);
         n1 = normalizeSafe(n1, Vector3(0), 0.0f);
@@ -387,8 +387,8 @@ float nv::rmsAngularError(const FloatImage * img0, const FloatImage * img1)
         Vector3 n0 = Vector3(x0[i], y0[i], z0[i]);
         Vector3 n1 = Vector3(x1[i], y1[i], z1[i]);
 
-        n0 = 2 * n0 - Vector3(1);
-        n1 = 2 * n1 - Vector3(1);
+        n0 = 2.0f * n0 - Vector3(1);
+        n1 = 2.0f * n1 - Vector3(1);
 
         n0 = normalizeSafe(n0, Vector3(0), 0.0f);
         n1 = normalizeSafe(n1, Vector3(0), 0.0f);

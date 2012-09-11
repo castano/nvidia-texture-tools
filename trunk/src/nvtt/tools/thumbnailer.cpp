@@ -24,6 +24,7 @@
 #include <nvcore/Ptr.h>
 #include <nvcore/StrLib.h>
 #include <nvcore/StdStream.h>
+#include <nvcore/Array.inl>
 
 #include <nvimage/Image.h>
 #include <nvimage/ImageIO.h>

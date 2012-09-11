@@ -343,9 +343,10 @@ namespace
             case DXGI_FORMAT_B8G8R8X8_TYPELESS:
             case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
                 return 8*4;
+            default:
+                return 0;
         }
-
-        return 0;
+        nvUnreachable();
     }
 
 } // namespace
