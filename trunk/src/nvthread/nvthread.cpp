@@ -5,23 +5,11 @@
 #include "Thread.h"
 
 #if NV_OS_WIN32
-#include "Win32.h"
+#  include "Win32.h"
 #elif NV_OS_UNIX
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#elif NV_OS_DARWIN
-#import <stdio.h>
-#import <string.h>
-#import <mach/mach_host.h>
-#import <sys/sysctl.h>
-
-//#include <CoreFoundation/CoreFoundation.h>
-
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syslog.h>
+#  include <sys/types.h>
+#  include <sys/param.h>
+#  include <sys/sysctl.h>
 #endif
 
 using namespace nv;
@@ -39,14 +27,19 @@ uint nv::hardwareThreadCount() {
     return 3; // or 6?
 #elif NV_OS_LINUX // Linux, Solaris, & AIX
     return sysconf(_SC_NPROCESSORS_ONLN);
-#elif NV_OS_DARWIN || NV_OS_FREEBSD
+#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
     int numCPU;
     int mib[4];
     size_t len = sizeof(numCPU); 
 
     // set the mib for hw.ncpu
     mib[0] = CTL_HW;
-    mib[1] = HW_AVAILCPU;  // alternatively, try HW_NCPU;
+
+#if NV_OS_OPENBSD
+    mib[1] = HW_NCPU;
+#else
+    mib[1] = HW_AVAILCPU;
+#endif
 
     // get the number of CPUs from the system
     sysctl(mib, 2, &numCPU, &len, NULL, 0);

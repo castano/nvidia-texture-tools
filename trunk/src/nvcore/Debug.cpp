@@ -6,6 +6,8 @@
 
 #include "StdStream.h" // fileOpen
 
+#include <stdlib.h>
+
 // Extern
 #if NV_OS_WIN32 //&& NV_CC_MSVC
 #   define WIN32_LEAN_AND_MEAN
@@ -38,7 +40,7 @@
 #   include <signal.h>
 #endif
 
-#if NV_OS_LINUX || NV_OS_DARWIN || NV_OS_FREEBSD
+#if NV_OS_UNIX
 #   include <unistd.h> // getpid
 #endif
 
@@ -49,10 +51,13 @@
 #   endif
 #endif
 
-#if NV_OS_DARWIN || NV_OS_FREEBSD
+#if NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
 #   include <sys/types.h>
+#   include <sys/param.h>
 #   include <sys/sysctl.h> // sysctl
-#   include <sys/ucontext.h>
+#   if !defined(NV_OS_OPENBSD)
+#       include <sys/ucontext.h>
+#   endif
 #   if defined(HAVE_EXECINFO_H) // only after OSX 10.5
 #       include <execinfo.h> // backtrace
 #       if NV_CC_GNUC // defined(HAVE_CXXABI_H)
@@ -595,6 +600,16 @@ namespace
 #    else
 #      error "Unknown CPU"
 #    endif
+#elif NV_OS_OPENBSD
+#  if NV_CPU_X86_64
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *)ucp->sc_rip;
+#  elif NV_CPU_X86
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *)ucp->sc_eip;
+#  else
+#       error "Unknown CPU"
+#  endif        
 #else
 #  if NV_CPU_X86_64
         // #define REG_RIP REG_INDEX(rip) // seems to be 16
