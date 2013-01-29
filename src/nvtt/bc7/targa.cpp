@@ -110,7 +110,7 @@ void Targa::fileinfo(const std::string& filename, int& width, int& height, bool&
 		
 		read_file(fp, pixels, width, height, bpp, origin);
 
-		bool const_alpha = true;
+		const_alpha = true;
 
 		for (int y=0; y<height && const_alpha; ++y)
 		for (int x=0; x<width && const_alpha; ++x)
