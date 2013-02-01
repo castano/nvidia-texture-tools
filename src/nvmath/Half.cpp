@@ -74,6 +74,9 @@
 //
 
 #include "Half.h"
+
+#include "nvcore/Memory.h"
+
 #include <stdio.h>
 
 #if NV_CC_GNUC
@@ -494,7 +497,7 @@ nv::half_to_float( uint16 h )
 
 static __m128 half_to_float4_SSE2(__m128i h)
 {
-#define SSE_CONST4(name, val) static const __declspec(align(16)) uint name[4] = { (val), (val), (val), (val) }
+#define SSE_CONST4(name, val) static const NV_ALIGN_16 uint name[4] = { (val), (val), (val), (val) }
 #define CONST(name) *(const __m128i *)&name
 
     SSE_CONST4(mask_nosign,         0x7fff);

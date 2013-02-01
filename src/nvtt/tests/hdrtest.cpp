@@ -224,7 +224,7 @@ Surface process(const Surface & src, int method) {
         dst = src;
 
         // @@ Experiment with log/exp transform!
-        float gamma = 2.2;
+        float gamma = 2.2f;
 
         dst.scaleBias(0, 1.0f / rMax, 0);
         dst.scaleBias(1, 1.0f / gMax, 0);
@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
     Array<float> exposures;
     for (int i = 0; i < 48; i++) {
         //exposures.append(8 * float(i)/63);
-        exposures.append(lerp(0.22, 22, float(i)/47));
+        exposures.append(lerp(0.22f, 22, float(i)/47));
     }
 
     Surface src = loadInput("hdr/34017_03.dds");
@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
     compare(src, process(src, 3), exposures, errors);
     updatePointSet(exposures, errors, chart.pointSetArray[1]);
     chart.pointSetArray[1].legend = "Log + Gamma 2.2";
-    chart.pointSetArray[1].lineColor = Vector3(0.19, 0.45, 0.95);
+    chart.pointSetArray[1].lineColor = Vector3(0.19f, 0.45f, 0.95f);
 
 
     chart.autoScale();
