@@ -59,13 +59,13 @@ int main(int argc, char *argv[])
 			assembleVolume = false;
 			assembleTextureArray = false;
 		}
-		/*if (strcmp("-volume", argv[i]) == 0)
+		if (strcmp("-volume", argv[i]) == 0)
 		{
 			assembleCubeMap = false;
 			assembleVolume = true;
 			assembleTextureArray = false;
 		}
-		if (strcmp("-array", argv[i]) == 0)
+		/*if (strcmp("-array", argv[i]) == 0)
 		{
 			assembleCubeMap = false;
 			assembleVolume = false;

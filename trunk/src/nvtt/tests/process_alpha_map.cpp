@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     const float gamma = 2.2f;
     colorMap.toLinear(gamma);
 
-    const float alphaRef = 0.95;
+    const float alphaRef = 0.95f;
     const float coverage = colorMap.alphaTestCoverage(alphaRef);
 
     // Build and output mipmaps.
