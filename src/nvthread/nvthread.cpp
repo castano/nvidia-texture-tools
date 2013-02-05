@@ -8,8 +8,21 @@
 #  include "Win32.h"
 #elif NV_OS_UNIX
 #  include <sys/types.h>
-#  include <sys/param.h>
 #  include <sys/sysctl.h>
+#  include <unistd.h>
+#elif NV_OS_DARWIN
+#  import <stdio.h>
+#  import <string.h>
+#  import <mach/mach_host.h>
+#  import <sys/sysctl.h>
+
+#  include <CoreFoundation/CoreFoundation.h>
+
+#  include <assert.h>
+#  include <errno.h>
+#  include <stdlib.h>
+#  include <string.h>
+#  include <syslog.h>
 #endif
 
 using namespace nv;
@@ -30,7 +43,7 @@ uint nv::hardwareThreadCount() {
 #elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
     int numCPU;
     int mib[4];
-    size_t len = sizeof(numCPU); 
+    size_t len = sizeof(numCPU);
 
     // set the mib for hw.ncpu
     mib[0] = CTL_HW;
