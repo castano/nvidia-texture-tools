@@ -8,6 +8,7 @@
     * [CompilationInstructions#Visual_Studio_8 Visual Studio 8]
     * [CompilationInstructions#CMake_and_Visual_Studio_7 CMake and Visual Studio 7]
     * [CompilationInstructions#CMake_and_Visual_Studio_8 CMake and Visual Studio 8]
+    * [CompilationInstructions#CMake_and_Visual_Studio_10 CMake and Visual Studio 10]
   * [CompilationInstructions#Linux Linux]
   * [CompilationInstructions#Mac_OSX Mac OSX]
 
