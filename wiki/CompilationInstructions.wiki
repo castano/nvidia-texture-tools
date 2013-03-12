@@ -84,6 +84,25 @@ vc8/NV.sln
 and build all (Ctrl + Shift + B).
 
 
+=== CMake and Visual Studio 10 ===
+
+Run the following commands:
+
+{{{
+$ mkdir vc10
+$ cd vc10
+$ cmake .. -DNVTT_SHARED=1 -G "Visual Studio 10"
+}}}
+
+open the generated solution file:
+
+{{{
+vc10/NV.sln
+}}}
+
+and build all (Ctrl + Shift + B).
+
+
 === CMake + MinGW ===
 
 Note that CUDA does not currently support the MinGW compiler. This target is not supported yet, but may work if CUDA is not enabled.
