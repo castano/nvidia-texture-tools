@@ -132,7 +132,7 @@ namespace nv
     {
 #if NV_OS_WIN32 || NV_OS_XBOX
         return _finite(f) != 0;
-#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
+#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD || NV_OS_ORBIS
         return isfinite(f);
 #elif NV_OS_LINUX
         return finitef(f);
@@ -147,7 +147,7 @@ namespace nv
     {
 #if NV_OS_WIN32 || NV_OS_XBOX
         return _isnan(f) != 0;
-#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
+#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD || NV_OS_ORBIS
         return isnan(f);
 #elif NV_OS_LINUX
         return isnanf(f);
@@ -242,21 +242,18 @@ namespace nv
 
     // I'm always confused about which quantizer to use. I think we should choose a quantizer based on how the values are expanded later and this is generally using the 'exact endpoints' rule.
 
-    // Quantize a [0, 1] full precision float, using exact endpoints.
-    inline float quantizeFloat(float f, uint bits) {
+    // Quantize a float in the [0,1] range, using exact end points or uniform bins.
+    inline float quantizeFloat(float x, uint bits, bool exactEndPoints = true) {
         nvDebugCheck(bits <= 16);
-        float scale = float((1 << bits) - 1);
-        float offset = 0.0f;
-        return floor(saturate(f) * scale + offset) / scale;
-    }
 
-    // Quantize a [0, 1] full precision float, using uniform bins.
-    /*inline float quantizeFloat(float f, uint bits) {
-        nvDebugCheck(bits <= 16);
-        float scale = float(1 << bits);
-        float offset = 0.5f;
-        return floor(saturate(f) * scale + offset) / scale;
-    }*/
+        float range = float(1 << bits);
+        if (exactEndPoints) {
+            return floorf(x * (range-1) + 0.5f) / (range-1);
+        }
+        else {
+            return (floorf(x * range) + 0.5f) / range;
+        }
+    }
 
     union Float754 {
         unsigned int raw;

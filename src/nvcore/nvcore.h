@@ -31,12 +31,16 @@
 // NV_OS_UNIX
 // NV_OS_DARWIN
 // NV_OS_XBOX
+// NV_OS_ORBIS
+// NV_OS_IOS
 
 #define NV_OS_STRING POSH_OS_STRING
 
 #if defined POSH_OS_LINUX
 #   define NV_OS_LINUX 1
 #   define NV_OS_UNIX 1
+#elif defined POSH_OS_ORBIS
+#   define NV_OS_ORBIS 1
 #elif defined POSH_OS_FREEBSD
 #   define NV_OS_FREEBSD 1
 #   define NV_OS_UNIX 1
@@ -51,6 +55,10 @@
 #elif defined POSH_OS_OSX
 #   define NV_OS_DARWIN 1
 #   define NV_OS_UNIX 1
+#elif defined POSH_OS_IOS
+#   define NV_OS_DARWIN 1 //ACS should we keep this on IOS?
+#   define NV_OS_UNIX 1
+#   define NV_OS_IOS 1
 #elif defined POSH_OS_UNIX
 #   define NV_OS_UNIX 1
 #elif defined POSH_OS_WIN32
@@ -62,6 +70,22 @@
 #else
 #   error "Unsupported OS"
 #endif
+
+
+// Threading:
+// some platforms don't implement __thread or similar for thread-local-storage
+#if NV_OS_UNIX || NV_OS_ORBIS || NV_OS_IOS //ACStodoIOS darwin instead of ios?
+#   define NV_OS_USE_PTHREAD 1
+#   if NV_OS_DARWIN || NV_OS_IOS
+#       define NV_OS_HAS_TLS_QUALIFIER 0
+#   else
+#       define NV_OS_HAS_TLS_QUALIFIER 1
+#   endif
+#else
+#   define NV_OS_USE_PTHREAD 0
+#   define NV_OS_HAS_TLS_QUALIFIER 1
+#endif
+
 
 // CPUs:
 // NV_CPU_X86
@@ -182,7 +206,7 @@ typedef uint32      uint;
 #endif
 
 #if __cplusplus > 199711L
-#define nvStaticCheck(x) static_assert(x)
+#define nvStaticCheck(x) static_assert(x, "Static assert "#x" failed")
 #else
 #define nvStaticCheck(x) typedef char NV_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
 #endif

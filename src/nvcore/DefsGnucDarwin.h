@@ -27,6 +27,7 @@
 #define NV_FASTCALL		__attribute__((fastcall))
 #define NV_FORCEINLINE	__attribute__((always_inline)) inline
 #define NV_DEPRECATED   __attribute__((deprecated))
+#define NV_THREAD_LOCAL //ACS: there's no "__thread" or equivalent on iOS/OSX
 
 #if __GNUC__ > 2
 #define NV_PURE     __attribute__((pure))
@@ -37,6 +38,8 @@
 #endif
 
 #define NV_NOINLINE __attribute__((noinline))
+
+
 
 // Define __FUNC__ properly.
 #if __STDC_VERSION__ < 199901L

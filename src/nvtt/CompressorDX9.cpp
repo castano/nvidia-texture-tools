@@ -122,11 +122,7 @@ void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, co
     
     if (set.isSingleColor(/*ignoreAlpha*/true))
     {
-        Color32 c;
-        c.r = uint8(clamp(set.colors[0].x, 0.0f, 1.0f) * 255);
-        c.g = uint8(clamp(set.colors[0].y, 0.0f, 1.0f) * 255);
-        c.b = uint8(clamp(set.colors[0].z, 0.0f, 1.0f) * 255);
-        c.a = 255;
+        Color32 c = toColor32(set.colors[0]);
         OptimalCompress::compressDXT1(c, block);
     }
     else
@@ -201,7 +197,6 @@ void CompressorDXT1_Luma::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
     BlockDXT1 * block = new(output) BlockDXT1;
     OptimalCompress::compressDXT1_Luma(rgba, block);
 }
-
 
 void CompressorDXT3::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {

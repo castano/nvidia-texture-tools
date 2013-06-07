@@ -74,14 +74,8 @@
 //
 
 #include "Half.h"
-
-#include "nvcore/Memory.h"
-
 #include <stdio.h>
 
-#if NV_CC_GNUC
-#include <xmmintrin.h>
-#endif
 
 // Load immediate
 static inline uint32 _uint32_li( uint32 a )
@@ -495,9 +489,20 @@ nv::half_to_float( uint16 h )
 }
 
 
+#if !NV_OS_IOS //ACStodoIOS some better define to choose this?
+
+#if NV_CC_GNUC
+#if defined(__i386__) || defined(__x86_64__)
+#include <xmmintrin.h>
+#endif
+#endif
+
+#include "nvcore/Memory.h" // NV_ALIGN_16
+
 static __m128 half_to_float4_SSE2(__m128i h)
 {
 #define SSE_CONST4(name, val) static const NV_ALIGN_16 uint name[4] = { (val), (val), (val), (val) }
+    
 #define CONST(name) *(const __m128i *)&name
 
     SSE_CONST4(mask_nosign,         0x7fff);
@@ -541,7 +546,7 @@ static __m128 half_to_float4_SSE2(__m128i h)
 }
 
 
-void nv::half_to_float_array(const uint16 * vin, float * vout, int count) {
+void nv::half_to_float_array_SSE2(const uint16 * vin, float * vout, int count) {
     nvDebugCheck((intptr_t(vin) & 15) == 0);
     nvDebugCheck((intptr_t(vout) & 15) == 0);
     nvDebugCheck((count & 7) == 0);
@@ -562,7 +567,7 @@ void nv::half_to_float_array(const uint16 * vin, float * vout, int count) {
     }
 }
 
-
+#endif 
 
 
 // @@ These tables could be smaller.

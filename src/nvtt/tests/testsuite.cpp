@@ -856,7 +856,7 @@ int main(int argc, char *argv[])
             outputFileName.stripExtension();
             if (set.type == ImageType_HDR) outputFileName.append(".dds");
             else outputFileName.append(".tga");
-            if (!img_out.save(outputFileName.str()))
+            if (!img_out.save(outputFileName.str(), set.type == ImageType_RGBA, set.type == ImageType_HDR))
             {
                 printf("Error saving file '%s'.\n", outputFileName.str());
             }

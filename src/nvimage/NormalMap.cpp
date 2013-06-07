@@ -199,10 +199,6 @@ void nv::normalizeNormalMap(FloatImage * img)
 {
     nvDebugCheck(img != NULL);
 
-#pragma NV_MESSAGE("TODO: Pack and expand normals explicitly?")
-
-    img->expandNormals(0);
     img->normalize(0);
-    img->packNormals(0);
 }
 

@@ -10,7 +10,8 @@ namespace nv {
     uint16 half_from_float( uint32 f );
 
     // vin,vout must be 16 byte aligned. count must be a multiple of 8.
-    void half_to_float_array(const uint16 * vin, float * vout, int count);
+    // implement a non-SSE version if we need it. For now, this naming makes it clear this is only available when SSE2 is
+    void half_to_float_array_SSE2(const uint16 * vin, float * vout, int count);
 
     void half_init_tables();
 
@@ -38,6 +39,51 @@ namespace nv {
         union { float f; uint32 u; } f;
         f.u = nv::fast_half_to_float( c );
         return f.f;
+    }
+
+
+    union Half {
+        uint16 raw;
+        struct {
+        #if NV_BIG_ENDIAN
+            uint negative:1;
+            uint biasedexponent:5;
+            uint mantissa:10;
+        #else
+            uint mantissa:10;
+            uint biasedexponent:5;
+            uint negative:1;
+        #endif
+        } field;
+    };
+
+
+    inline float TestHalfPrecisionAwayFromZero(float input)
+    {
+        Half h;
+        h.raw = to_half(input);
+        h.raw += 1;
+
+        float f = to_float(h.raw);
+        
+        // Subtract the initial value to find our precision
+        float delta = f - input;
+
+        return delta;
+    }
+     
+    inline float TestHalfPrecisionTowardsZero(float input)
+    {
+        Half h;
+        h.raw = to_half(input);
+        h.raw -= 1;
+
+        float f = to_float(h.raw);
+
+        // Subtract the initial value to find our precision
+        float delta = f - input;
+
+        return -delta;
     }
 
 } // nv namespace

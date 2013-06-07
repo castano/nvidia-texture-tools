@@ -22,7 +22,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#include "CompressorDXT.h"
+#include "BlockCompressor.h"
 #include "OutputOptions.h"
 #include "TaskDispatcher.h"
 
@@ -46,7 +46,7 @@ using namespace nvtt;
 #include <omp.h>
 #endif
 
-void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void ColorBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, const float * data, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     const uint bs = blockSize();
     const uint bw = (w + 3) / 4;
@@ -113,7 +113,7 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, c
 */
 
 
-struct FixedBlockCompressorContext
+struct ColorBlockCompressorContext
 {
     nvtt::AlphaMode alphaMode;
     uint w, h;
@@ -122,13 +122,13 @@ struct FixedBlockCompressorContext
 
     uint bw, bh, bs;
     uint8 * mem;
-    FixedBlockCompressor * compressor;
+    ColorBlockCompressor * compressor;
 };
 
 // Each task compresses one block.
-void FixedBlockCompressorTask(void * data, int i)
+void ColorBlockCompressorTask(void * data, int i)
 {
-    FixedBlockCompressorContext * d = (FixedBlockCompressorContext *) data;
+    ColorBlockCompressorContext * d = (ColorBlockCompressorContext *) data;
 
     uint x = i % d->bw;
     uint y = i / d->bw;
@@ -143,11 +143,11 @@ void FixedBlockCompressorTask(void * data, int i)
     }
 }
 
-void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
+void ColorBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions)
 {
     nvDebugCheck(d == 1);
 
-    FixedBlockCompressorContext context;
+    ColorBlockCompressorContext context;
     context.alphaMode = alphaMode;
     context.w = w;
     context.h = h;
@@ -169,7 +169,7 @@ void FixedBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, u
     const uint size = context.bs * count;
     context.mem = new uint8[size];
 
-    dispatcher->dispatch(FixedBlockCompressorTask, &context, count);
+    dispatcher->dispatch(ColorBlockCompressorTask, &context, count);
 
     outputOptions.writeData(context.mem, size);
 

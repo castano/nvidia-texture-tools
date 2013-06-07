@@ -349,20 +349,23 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                 }
                 else
                 {
-                    Color32 c;
-                    if (compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm) {
-                        c.r = uint8(clamp(r * 255, 0.0f, 255.0f));
-                        c.g = uint8(clamp(g * 255, 0.0f, 255.0f));
-                        c.b = uint8(clamp(b * 255, 0.0f, 255.0f));
-                        c.a = uint8(clamp(a * 255, 0.0f, 255.0f));
-                    }
+                    // We first convert to 16 bits, then to the target size. @@ If greater than 16 bits, this will truncate and bitexpand.
+                    
                     // @@ Add support for nvtt::PixelType_SignedInt, nvtt::PixelType_SignedNorm, nvtt::PixelType_UnsignedInt
 
+                    int ir, ig, ib, ia;
+                    if (compressionOptions.pixelType == nvtt::PixelType_UnsignedNorm) {
+                        ir = iround(clamp(r * 65535.0f, 0.0f, 65535.0f));
+                        ig = iround(clamp(g * 65535.0f, 0.0f, 65535.0f));
+                        ib = iround(clamp(b * 65535.0f, 0.0f, 65535.0f));
+                        ia = iround(clamp(a * 65535.0f, 0.0f, 65535.0f));
+                    }
+
                     uint p = 0;
-                    p |= PixelFormat::convert(c.r, 8, rsize) << rshift;
-                    p |= PixelFormat::convert(c.g, 8, gsize) << gshift;
-                    p |= PixelFormat::convert(c.b, 8, bsize) << bshift;
-                    p |= PixelFormat::convert(c.a, 8, asize) << ashift;
+                    p |= PixelFormat::convert(ir, 16, rsize) << rshift;
+                    p |= PixelFormat::convert(ig, 16, gsize) << gshift;
+                    p |= PixelFormat::convert(ib, 16, bsize) << bshift;
+                    p |= PixelFormat::convert(ia, 16, asize) << ashift;
 
                     stream.putBits(p, bitCount);
                 }

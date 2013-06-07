@@ -186,8 +186,6 @@ static float f(float t)
 
 static float finv(float t)
 {
-    const float epsilon = powf(6.0f/29.0f, 3);
-
     if (t > 6.0f / 29.0f) {
         return powf(t, 3.0f);
     }

@@ -78,8 +78,10 @@ namespace nvtt
 } // nvtt namespace
 
 namespace nv {
+    bool canMakeNextMipmap(uint w, uint h, uint d, uint min_size);
     uint countMipmaps(uint w);
     uint countMipmaps(uint w, uint h, uint d);
+    uint countMipmapsWithMinSize(uint w, uint h, uint d, uint min_size);
     uint computeImageSize(uint w, uint h, uint d, uint bitCount, uint alignmentInBytes, nvtt::Format format);
     void getTargetExtent(int * w, int * h, int * d, int maxExtent, nvtt::RoundMode roundMode, nvtt::TextureType textureType);
 }

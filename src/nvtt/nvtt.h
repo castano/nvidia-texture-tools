@@ -454,15 +454,18 @@ namespace nvtt
         NVTT_API AlphaMode alphaMode() const;
         NVTT_API bool isNormalMap() const;
         NVTT_API int countMipmaps() const;
+        NVTT_API int countMipmaps(int min_size) const;
         NVTT_API float alphaTestCoverage(float alphaRef = 0.5) const;
         NVTT_API float average(int channel, int alpha_channel = -1, float gamma = 2.2f) const;
         NVTT_API const float * data() const;
+        NVTT_API const float * channel(int i) const;
         NVTT_API void histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const;
-        NVTT_API void range(int channel, float * rangeMin, float * rangeMax) const;
+        NVTT_API void range(int channel, float * rangeMin, float * rangeMax, int alpha_channel = -1, float alpha_ref = 0.f) const;
 
         // Texture data.
         NVTT_API bool load(const char * fileName, bool * hasAlpha = 0);
-        NVTT_API bool save(const char * fileName) const;
+        NVTT_API bool save(const char * fileName, bool hasAlpha = 0, bool hdr = 0) const;
+        NVTT_API bool setImage(int w, int h, int d);
         NVTT_API bool setImage(InputFormat format, int w, int h, int d, const void * data);
         NVTT_API bool setImage(InputFormat format, int w, int h, int d, const void * r, const void * g, const void * b, const void * a);
         NVTT_API bool setImage2D(Format format, Decoder decoder, int w, int h, const void * data);
@@ -472,9 +475,14 @@ namespace nvtt
         NVTT_API void resize(int w, int h, int d, ResizeFilter filter, float filterWidth, const float * params = 0);
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter, float filterWidth, const float * params = 0);
-        NVTT_API bool buildNextMipmap(MipmapFilter filter);
-        NVTT_API bool buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params = 0);
+        NVTT_API void resize_make_square(int maxExtent, RoundMode roundMode, ResizeFilter filter);
+
+        NVTT_API bool buildNextMipmap(MipmapFilter filter, int min_size = 1);
+        NVTT_API bool buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params = 0, int min_size = 1);
+        NVTT_API bool buildNextMipmapSolidColor(const float * const color_components);
         NVTT_API void canvasSize(int w, int h, int d);
+        // associated to resizing:
+        NVTT_API bool canMakeNextMipmap(int min_size = 1);
 
         // Color transforms.
         NVTT_API void toLinear(float gamma);
@@ -488,17 +496,15 @@ namespace nvtt
         NVTT_API void swizzle(int r, int g, int b, int a);
         NVTT_API void scaleBias(int channel, float scale, float bias);
         NVTT_API void clamp(int channel, float low = 0.0f, float high = 1.0f);
-        NVTT_API void packNormal();
-        NVTT_API void expandNormal();
         NVTT_API void blend(float r, float g, float b, float a, float t);
         NVTT_API void premultiplyAlpha();
         NVTT_API void toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale);
         NVTT_API void setBorder(float r, float g, float b, float a);
         NVTT_API void fill(float r, float g, float b, float a);
         NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
-        //NVTT_API bool normalizeRange(float * rangeMin, float * rangeMax);
         NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void fromRGBM(float range = 1.0f);
+        NVTT_API void toLM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void toRGBE(int mantissaBits, int exponentBits);
         NVTT_API void fromRGBE(int mantissaBits, int exponentBits);
         NVTT_API void toYCoCg();
@@ -519,14 +525,14 @@ namespace nvtt
         NVTT_API void binarize(int channel, float threshold, bool dither);
         NVTT_API void quantize(int channel, int bits, bool exactEndPoints, bool dither);
 
-        // Normal map transforms. @@ All these methods assume packed normals.
+        // Normal map transforms.
         NVTT_API void toNormalMap(float sm, float medium, float big, float large);
         NVTT_API void normalizeNormalMap();
         NVTT_API void transformNormals(NormalTransform xform);
         NVTT_API void reconstructNormals(NormalTransform xform);
         NVTT_API void toCleanNormalMap();
-        NVTT_API void packNormals();   // [-1,1] -> [ 0,1]
-        NVTT_API void expandNormals(); // [ 0,1] -> [-1,1]
+        NVTT_API void packNormals(float scale = 0.5f, float bias = 0.5f);       // [-1,1] -> [ 0,1]
+        NVTT_API void expandNormals(float scale = 2.0f, float bias = -1.0f);    // [ 0,1] -> [-1,1]
         NVTT_API Surface createToksvigMap(float power) const;
         NVTT_API Surface createCleanMap() const;
 
@@ -534,13 +540,16 @@ namespace nvtt
         NVTT_API void flipX();
         NVTT_API void flipY();
         NVTT_API void flipZ();
-        NVTT_API Surface subImage(int x0, int x1, int y0, int y1, int z0, int z1) const;
+        NVTT_API Surface createSubImage(int x0, int x1, int y0, int y1, int z0, int z1) const;
 
         // Copy image data.
         NVTT_API bool copyChannel(const Surface & srcImage, int srcChannel);
         NVTT_API bool copyChannel(const Surface & srcImage, int srcChannel, int dstChannel);
 
         NVTT_API bool addChannel(const Surface & img, int srcChannel, int dstChannel, float scale);
+
+        NVTT_API bool copy(const Surface & src, int xsrc, int ysrc, int zsrc, int xsize, int ysize, int zsize, int xdst, int ydst, int zdst);
+
 
     //private:
         void detach();
@@ -599,11 +608,14 @@ namespace nvtt
 
         NVTT_API float average(int channel) const;
         NVTT_API void range(int channel, float * minimum_ptr, float * maximum_ptr) const;
+        NVTT_API void clamp(int channel, float low = 0.0f, float high = 1.0f);
 
 
         // Filtering.
         NVTT_API CubeSurface irradianceFilter(int size, EdgeFixup fixupMethod) const;
         NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod) const;
+
+        NVTT_API CubeSurface fastResample(int size, EdgeFixup fixupMethod) const;
 
 
         /*

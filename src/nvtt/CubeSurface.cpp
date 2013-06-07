@@ -429,6 +429,12 @@ void CubeSurface::range(int channel, float * minimum_ptr, float * maximum_ptr) c
     *maximum_ptr = maximum;
 }
 
+void CubeSurface::clamp(int channel, float low/*= 0.0f*/, float high/*= 1.0f*/) {
+    for (int f = 0; f < 6; f++) {
+        m->face[f].clamp(channel, low, high);
+    }
+}
+
 
 
 #include "nvmath/SphericalHarmonic.h"
@@ -470,13 +476,114 @@ CubeSurface CubeSurface::irradianceFilter(int size, EdgeFixup fixupMethod) const
 }
 
 
-// Warp uv coordinate from [-1, 1] to
-/*float warp(float u, int size) {
-
-}*/
 
 
+// Convolve filter against this cube.
+Vector3 CubeSurface::Private::applyAngularFilter(const Vector3 & filterDir, float coneAngle, float * filterTable, int tableSize)
+{
+    const float cosineConeAngle = cos(coneAngle);
+    nvDebugCheck(cosineConeAngle >= 0);
 
+    Vector3 color(0);
+    float sum = 0;
+
+    // Things I have tried to speed this up:
+    // - Compute accurate bounds assuming cone axis aligned to plane, result was too small elsewhere.
+    // - Compute ellipse that results in the cone/plane intersection and compute its bounds. Sometimes intersection is a parabolla, hard to handle that case.
+    // - Compute the 6 axis aligned planes that bound the cone, clip faces against planes. Resulting plane equations are way too complex.
+
+    // What AMD CubeMapGen does:
+    // - Compute conservative bounds on the primary face, wrap around the adjacent faces.
+
+
+    // For each texel of the input cube.
+    for (uint f = 0; f < 6; f++) {
+
+        // Test face cone agains filter cone.
+        float cosineFaceAngle = dot(filterDir, faceNormals[f]);
+        float faceAngle = acosf(cosineFaceAngle);
+
+        if (faceAngle > coneAngle + atanf(sqrtf(2))) {
+            // Skip face.
+            continue;
+        }
+
+        const int L = toI32(edgeLength-1);
+        int x0 = 0, x1 = L;
+        int y0 = 0, y1 = L;
+
+#if 0
+        float u0 = -1;
+        float u1 = 1;
+        float v0 = -1;
+        float v1 = 1;
+
+        // @@ Compute uvs.
+
+        // Expand uv coordinates from [-1,1] to [0, edgeLength)
+        u0 = (u0 + 1) * edgeLength * 0.5f - 0.5f;
+        v0 = (v0 + 1) * edgeLength * 0.5f - 0.5f;
+        u1 = (u1 + 1) * edgeLength * 0.5f - 0.5f;
+        v1 = (v1 + 1) * edgeLength * 0.5f - 0.5f;
+        nvDebugCheck(u0 >= -0.5f && u0 <= edgeLength - 0.5f);
+        nvDebugCheck(v0 >= -0.5f && v0 <= edgeLength - 0.5f);
+        nvDebugCheck(u1 >= -0.5f && u1 <= edgeLength - 0.5f);
+        nvDebugCheck(v1 >= -0.5f && v1 <= edgeLength - 0.5f);
+
+        x0 = clamp(ifloor(u0), 0, L);
+        y0 = clamp(ifloor(v0), 0, L);
+        x1 = clamp(iceil(u1), 0, L);
+        y1 = clamp(iceil(v1), 0, L);
+#endif
+
+        nvDebugCheck(x1 >= x0);
+        nvDebugCheck(y1 >= y0);
+
+        if (x1 == x0 || y1 == y0) {
+            // Skip this face.
+            continue;
+        }
+
+
+        const Surface & inputFace = face[f];
+        const FloatImage * inputImage = inputFace.m->image;
+
+        for (int y = y0; y <= y1; y++) {
+            bool inside = false;
+            for (int x = x0; x <= x1; x++) {
+
+                Vector3 dir = texelTable->direction(f, x, y);
+                float cosineAngle = dot(dir, filterDir);
+
+                if (cosineAngle > cosineConeAngle) {
+                    float solidAngle = texelTable->solidAngle(f, x, y);
+                    //float scale = powf(saturate(cosineAngle), cosinePower);
+                    
+                    int idx = int(saturate(cosineAngle) * (tableSize - 1));
+                    float scale = filterTable[idx]; // @@ Do bilinear interpolation?
+
+                    float contribution = solidAngle * scale;
+
+                    sum += contribution;
+                    color.x += contribution * inputImage->pixel(0, x, y, 0);
+                    color.y += contribution * inputImage->pixel(1, x, y, 0);
+                    color.z += contribution * inputImage->pixel(2, x, y, 0);
+
+                    inside = true;
+                }
+                else if (inside) {
+                    // Filter scale is monotonic, if we have been inside once and we just exit, then we can skip the rest of the row.
+                    // We could do the same thing for the columns and skip entire rows.
+                    break;
+                }
+            }
+        }
+    }
+
+    color *= (1.0f / sum);
+
+    return color;
+}
 
 // We want to find the alpha such that:
 // cos(alpha)^cosinePower = epsilon
@@ -491,6 +598,7 @@ CubeSurface CubeSurface::irradianceFilter(int size, EdgeFixup fixupMethod) const
 // - parallelize. Done.
 // - use ISPC?
 
+
 // Convolve filter against this cube.
 Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float coneAngle, float cosinePower)
 {
@@ -499,6 +607,15 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
 
     Vector3 color(0);
     float sum = 0;
+
+    // Things I have tried to speed this up:
+    // - Compute accurate bounds assuming cone axis aligned to plane, result was too small elsewhere.
+    // - Compute ellipse that results in the cone/plane intersection and compute its bounds. Sometimes intersection is a parabolla, hard to handle that case.
+    // - Compute the 6 axis aligned planes that bound the cone, clip faces against planes. Resulting plane equations are way too complex.
+
+    // What AMD CubeMapGen does:
+    // - Compute conservative bounds on the primary face, wrap around the adjacent faces.
+
 
     // For each texel of the input cube.
     for (uint f = 0; f < 6; f++) {
@@ -512,163 +629,36 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
             continue;
         }
 
-        // @@ We could do a less conservative test and test the face frustum against the cone...
-        // Or maybe easier: the face quad against the cone.
-
-        // Compute bounding box of cone intersection against face.
-        // The intersection of the cone with the face is an elipse, we want the extents of that elipse.
-        // @@ Hmm... we could even rasterize an elipse! Sounds like FUN!
-
         const int L = toI32(edgeLength-1);
         int x0 = 0, x1 = L;
         int y0 = 0, y1 = L;
 
-        if (false) {
-            // New approach?
+#if 0
+        float u0 = -1;
+        float u1 = 1;
+        float v0 = -1;
+        float v1 = 1;
 
-            // For each face, we are looking for 4 planes that bound the cone.
+        // @@ Compute uvs.
 
-            // All planes go through the origin.
-            // Plane fully determined by its normal.
-            // We only care about planes aligned to one axis. So, for the XY face, we have 4 planes:
+        // Expand uv coordinates from [-1,1] to [0, edgeLength)
+        u0 = (u0 + 1) * edgeLength * 0.5f - 0.5f;
+        v0 = (v0 + 1) * edgeLength * 0.5f - 0.5f;
+        u1 = (u1 + 1) * edgeLength * 0.5f - 0.5f;
+        v1 = (v1 + 1) * edgeLength * 0.5f - 0.5f;
+        nvDebugCheck(u0 >= -0.5f && u0 <= edgeLength - 0.5f);
+        nvDebugCheck(v0 >= -0.5f && v0 <= edgeLength - 0.5f);
+        nvDebugCheck(u1 >= -0.5f && u1 <= edgeLength - 0.5f);
+        nvDebugCheck(v1 >= -0.5f && v1 <= edgeLength - 0.5f);
 
-            // Plane goes through origin.
-            // Plane normal is unit length.
+        x0 = clamp(ifloor(u0), 0, L);
+        y0 = clamp(ifloor(v0), 0, L);
+        x1 = clamp(iceil(u1), 0, L);
+        y1 = clamp(iceil(v1), 0, L);
+#endif
 
-            // Plane must be tangent to cone ->
-            //  angle between plane normal and cone axis is 90 - cone angle & 90 + cone angle
-            //  dot(N, D) == cos(90 - cone angle)
-            //  dot(N, D) == cos(90 + cone angle)
-
-            // Plane must contain face UV axis
-
-            // Find the 4 planes and how they intersect the unit face, which gives us (u0,v0, u1,v1).
-
-            // Expand uv coordinates, clamp to
-        }
-
-        // @@ Ugh. This is wrong, or only right when filterDir is aligned to one axis.
-        if (false) {
-            // uv coordinates corresponding to filterDir.
-            //float u = dot(filterDir, faceU[f]) / cosineFaceAngle;
-            //float v = dot(filterDir, faceV[f]) / cosineFaceAngle;
-
-            // Angular coordinates corresponding to filterDir with respect to faceNormal.
-            float atu = atan2(dot(filterDir, faceU[f]), cosineFaceAngle);
-            float atv = atan2(dot(filterDir, faceV[f]), cosineFaceAngle);
-
-            // Expand angles and project back to the face plane.
-            float u0 = tan(clamp(atu - coneAngle, -PI/4, PI/4));
-            float v0 = tan(clamp(atv - coneAngle, -PI/4, PI/4));
-            float u1 = tan(clamp(atu + coneAngle, -PI/4, PI/4));
-            float v1 = tan(clamp(atv + coneAngle, -PI/4, PI/4));
-            nvDebugCheck(u0 >= -1 && u0 <= 1);
-            nvDebugCheck(v0 >= -1 && v0 <= 1);
-            nvDebugCheck(u1 >= -1 && u1 <= 1);
-            nvDebugCheck(v1 >= -1 && v1 <= 1);
-
-            // Expand uv coordinates from [-1,1] to [0, edgeLength)
-            u0 = (u0 + 1) * edgeLength * 0.5f - 0.5f;
-            v0 = (v0 + 1) * edgeLength * 0.5f - 0.5f;
-            u1 = (u1 + 1) * edgeLength * 0.5f - 0.5f;
-            v1 = (v1 + 1) * edgeLength * 0.5f - 0.5f;
-            nvDebugCheck(u0 >= -0.5f && u0 <= edgeLength - 0.5f);
-            nvDebugCheck(v0 >= -0.5f && v0 <= edgeLength - 0.5f);
-            nvDebugCheck(u1 >= -0.5f && u1 <= edgeLength - 0.5f);
-            nvDebugCheck(v1 >= -0.5f && v1 <= edgeLength - 0.5f);
-
-            x0 = clamp(ifloor(u0), 0, L);
-            y0 = clamp(ifloor(v0), 0, L);
-            x1 = clamp(iceil(u1), 0, L);
-            y1 = clamp(iceil(v1), 0, L);
-
-            nvDebugCheck(x1 >= x0);
-            nvDebugCheck(y1 >= y0);
-        }
-
-        // This is elegant and all that, but the problem is that the projection is not always an ellipse, but often a parabola.
-        // A parabola has infinite bounds, so this approach is not very practical. Ugh.
-        if (false) {
-            //nvCheck(cosineFaceAngle >= 0.0f); @@ Not true for wide angles.
-
-            // Focal point in cartessian coordinates:
-            Vector3 F = Vector3(dot(faceU[f], filterDir), dot(faceV[f], filterDir), cosineFaceAngle);
-
-            // Focal point in polar coordinates:
-            Vector2 Fp = toPolar(F);
-            nvCheck(Fp.y >= 0.0f);  // top
-            //nvCheck(Fp.y <= PI/2);  // horizon
-
-            // If this is an ellipse:
-            if (Fp.y + coneAngle < PI/2) {
-                nvCheck(Fp.y - coneAngle > -PI/2);
-
-                // Major axis endpoints:
-                Vector2 Fa1 = toPlane(Fp.x, Fp.y - cosineFaceAngle);  // near endpoint.
-                Vector2 Fa2 = toPlane(Fp.x, Fp.y + cosineFaceAngle);  // far endpoint.
-                nvCheck(length(Fa1) <= length(Fa2));
-
-                // Ellipse center:
-                Vector2 Fc = (Fa1 + Fa2) * 0.5f;
-
-                // Major radius:
-                float a = 0.5f * length(Fa1 - Fa2);
-
-                // Focal point:
-                Vector2 F1 = toPlane(Fp.x, Fp.y);
-
-                // If we project Fa1, Fa2, Fc, F1 onto the filter direction, then:
-                float da1 = dot(Fa1, F.xy()) / fabs(cosineFaceAngle);
-                float d1 = dot(F1, F.xy()) / fabs(cosineFaceAngle);
-                float dc = dot(Fc, F.xy()) / fabs(cosineFaceAngle);
-                float da2 = dot(Fa2, F.xy()) / fabs(cosineFaceAngle);
-                //nvDebug("%f <= %f <= %f <= %f   (%d: %f %f | %f %f)\n", da1, d1, dc, da2, f, F.x, F.y, Fp.y - coneAngle, Fp.y + coneAngle);
-                //nvCheck(da1 <= d1 && d1 <= dc && dc <= da2);
-
-                // Translate focal point relative to center:
-                F1 -= Fc;
-
-                // Focal distance:
-                //float f = length(F1);  // @@ Overriding f!
-
-                // Minor radius:
-                //float b = sqrtf(a*a - f*f);
-
-                // Second order quadric coefficients:
-                float A = a*a - F1.x * F1.x;
-                nvCheck(A >= 0);
-
-                float B = a*a - F1.y * F1.y;
-                nvCheck(B >= 0);
-
-                // Floating point bounds:
-                float u0 = clamp(Fc.x - sqrtf(B), -1.0f, 1.0f);
-                float u1 = clamp(Fc.x + sqrtf(B), -1.0f, 1.0f);
-                float v0 = clamp(Fc.y - sqrtf(A), -1.0f, 1.0f);
-                float v1 = clamp(Fc.y + sqrtf(A), -1.0f, 1.0f);
-
-                // Expand uv coordinates from [-1,1] to [0, edgeLength)
-                u0 = (u0 + 1) * edgeLength * 0.5f - 0.5f;
-                v0 = (v0 + 1) * edgeLength * 0.5f - 0.5f;
-                u1 = (u1 + 1) * edgeLength * 0.5f - 0.5f;
-                v1 = (v1 + 1) * edgeLength * 0.5f - 0.5f;
-                //nvDebugCheck(u0 >= -0.5f && u0 <= edgeLength - 0.5f);
-                //nvDebugCheck(v0 >= -0.5f && v0 <= edgeLength - 0.5f);
-                //nvDebugCheck(u1 >= -0.5f && u1 <= edgeLength - 0.5f);
-                //nvDebugCheck(v1 >= -0.5f && v1 <= edgeLength - 0.5f);
-
-                x0 = clamp(ifloor(u0), 0, L);
-                y0 = clamp(ifloor(v0), 0, L);
-                x1 = clamp(iceil(u1), 0, L);
-                y1 = clamp(iceil(v1), 0, L);
-
-                nvDebugCheck(x1 >= x0);
-                nvDebugCheck(y1 >= y0);
-            }
-
-            // @@ What to do with parabolas?
-        }
-
+        nvDebugCheck(x1 >= x0);
+        nvDebugCheck(y1 >= y0);
 
         if (x1 == x0 || y1 == y0) {
             // Skip this face.
@@ -714,17 +704,18 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
 
 #include "nvthread/ParallelFor.h"
 
-struct ApplyCosinePowerFilterContext {
+struct ApplyAngularFilterContext {
     CubeSurface::Private * inputCube;
     CubeSurface::Private * filteredCube;
     float coneAngle;
-    float cosinePower;
+    float * filterTable;
+    int tableSize;
     EdgeFixup fixupMethod;
 };
 
-void ApplyCosinePowerFilterTask(void * context, int id)
+void ApplyAngularFilterTask(void * context, int id)
 {
-    ApplyCosinePowerFilterContext * ctx = (ApplyCosinePowerFilterContext *)context;
+    ApplyAngularFilterContext * ctx = (ApplyAngularFilterContext *)context;
 
     int size = ctx->filteredCube->edgeLength;
 
@@ -739,7 +730,7 @@ void ApplyCosinePowerFilterTask(void * context, int id)
     const Vector3 filterDir = texelDirection(f, x, y, size, ctx->fixupMethod);
 
     // Convolve filter against cube.
-    Vector3 color = ctx->inputCube->applyCosinePowerFilter(filterDir, ctx->coneAngle, ctx->cosinePower);
+    Vector3 color = ctx->inputCube->applyAngularFilter(filterDir, ctx->coneAngle, ctx->filterTable, ctx->tableSize);
 
     filteredImage->pixel(0, idx) = color.x;
     filteredImage->pixel(1, idx) = color.y;
@@ -749,8 +740,6 @@ void ApplyCosinePowerFilterTask(void * context, int id)
 
 CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod) const
 {
-    const uint edgeLength = m->edgeLength;
-
     // Allocate output cube.
     CubeSurface filteredCube;
     filteredCube.m->allocate(size);
@@ -782,14 +771,24 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, EdgeFixu
         }
     }*/
 
-    ApplyCosinePowerFilterContext context;
+    ApplyAngularFilterContext context;
     context.inputCube = m;
     context.filteredCube = filteredCube.m;
     context.coneAngle = coneAngle;
-    context.cosinePower = cosinePower;
     context.fixupMethod = fixupMethod;
 
-    nv::ParallelFor parallelFor(ApplyCosinePowerFilterTask, &context);
+    context.tableSize = 512;
+    context.filterTable = new float[context.tableSize];
+
+    // @@ Instead of looking up table between [0 - 1] we should probably use [cos(coneAngle), 1]
+
+    for (int i = 0; i < context.tableSize; i++) {
+        float f = float(i) / (context.tableSize - 1);
+        context.filterTable[i] = powf(f, cosinePower);
+    }
+    
+
+    nv::ParallelFor parallelFor(ApplyAngularFilterTask, &context);
     parallelFor.run(6 * size * size);
 
     // @@ Implement edge averaging.
@@ -813,6 +812,72 @@ CubeSurface CubeSurface::cosinePowerFilter(int size, float cosinePower, EdgeFixu
     }
 
     return filteredCube;
+}
+
+
+// Sample cubemap in the given direction.
+Vector3 CubeSurface::Private::sample(const Vector3 & dir)
+{
+    int f = -1;
+    if (fabs(dir.x) > fabs(dir.y) && fabs(dir.x) > fabs(dir.z)) {
+        if (dir.x > 0) f = 0;
+        else f = 1;
+    }
+    else if (fabs(dir.y) > fabs(dir.z)) {
+        if (dir.y > 0) f = 2;
+        else f = 3;
+    }
+    else {
+        if (dir.z > 0) f = 4;
+        else f = 5;
+    }
+    nvDebugCheck(f != -1);
+
+    // uv coordinates corresponding to filterDir.
+    float u = dot(dir, faceU[f]);
+    float v = dot(dir, faceV[f]);
+
+    FloatImage * img = face[f].m->image;
+
+    Vector3 color;
+    color.x = img->sampleLinearClamp(0, u, v);
+    color.y = img->sampleLinearClamp(1, u, v);
+    color.z = img->sampleLinearClamp(2, u, v);
+
+    return color;
+}
+
+// @@ Not tested!
+CubeSurface CubeSurface::fastResample(int size, EdgeFixup fixupMethod) const
+{
+    // Allocate output cube.
+    CubeSurface resampledCube;
+    resampledCube.m->allocate(size);
+
+    // For each texel of the output cube.
+    for (uint f = 0; f < 6; f++) {
+        nvtt::Surface resampledFace = resampledCube.m->face[f];
+        FloatImage * resampledImage = resampledFace.m->image;
+
+        for (uint y = 0; y < uint(size); y++) {
+            for (uint x = 0; x < uint(size); x++) {
+
+                const Vector3 filterDir = texelDirection(f, x, y, size, fixupMethod);
+
+                Vector3 color = m->sample(filterDir);
+
+                resampledImage->pixel(0, x, y, 0) = color.x;
+                resampledImage->pixel(1, x, y, 0) = color.y;
+                resampledImage->pixel(2, x, y, 0) = color.z;
+            }
+        }
+    }
+
+    // @@ Implement edge averaging. Share this code with cosinePowerFilter
+    if (fixupMethod == EdgeFixup_Average) {
+    }
+
+    return resampledCube;
 }
 
 

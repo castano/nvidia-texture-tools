@@ -101,6 +101,13 @@ bool nv::strEqual(const char * s1, const char * s2)
     return strCmp(s1, s2) == 0;
 }
 
+bool nv::strCaseEqual(const char * s1, const char * s2)
+{
+    if (s1 == s2) return true;
+    if (s1 == NULL || s2 == NULL) return false;
+    return strCaseCmp(s1, s2) == 0;
+}
+
 bool nv::strBeginsWith(const char * str, const char * prefix)
 {
     //return strstr(str, prefix) == dst;
@@ -326,7 +333,7 @@ StringBuilder & StringBuilder::append( const char * s )
     if (m_str == NULL) {
         m_size = slen + 1;
         m_str = strAlloc(m_size);
-        memcpy(m_str, s, m_size + 1);
+        memcpy(m_str, s, m_size);
     }
     else {
         const uint len = uint(strlen( m_str ));

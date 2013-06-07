@@ -179,7 +179,7 @@ bool nv::Fit::isPlanar(int n, const Vector3 * points, float epsilon/*=NV_EPSILON
 {
     // compute the centroid and covariance
     float matrix[6];
-    Vector3 centroid = computeCovariance(n, points, matrix);
+    computeCovariance(n, points, matrix);
 
     float eigenValues[3];
     Vector3 eigenVectors[3];

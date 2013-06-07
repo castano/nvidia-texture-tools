@@ -9,9 +9,6 @@
 
 namespace nv
 {
-    class Vector3;
-    class Plane;
-
     namespace Fit
     {
         Vector3 computeCentroid(int n, const Vector3 * points);
