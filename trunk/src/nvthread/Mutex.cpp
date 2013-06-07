@@ -6,7 +6,7 @@
 
 #include "Win32.h"
 
-#elif NV_OS_UNIX
+#elif NV_OS_USE_PTHREAD
 
 #include <pthread.h>
 #include <errno.h> // EBUSY
@@ -48,7 +48,7 @@ void Mutex::unlock()
     LeaveCriticalSection(&m->mutex);
 }
 
-#elif NV_OS_UNIX
+#elif NV_OS_USE_PTHREAD
 
 struct Mutex::Private {
     pthread_mutex_t mutex;

@@ -33,9 +33,15 @@ extern "C"
 #if NV_CC_CLANG && POSH_CPU_STRONGARM
 // LLVM/Clang do not yet have functioning atomics as of 2.1
 // #include <atomic>
-
 #endif
 
+//ACS: need this if we want to use Apple's atomics.
+/*
+#if NV_OS_IOS || NV_OS_DARWIN
+// for iOS & OSX we use apple's atomics
+#include "libkern/OSAtomic.h"
+#endif
+*/
 
 namespace nv {
 
@@ -72,8 +78,9 @@ namespace nv {
         nvDebugCheck((intptr_t(&value) & 3) == 0);
 
 #if POSH_CPU_X86 || POSH_CPU_X86_64
-        *ptr = value;   // on x86, stores are Release
         nvCompilerWriteBarrier();
+        *ptr = value;   // on x86, stores are Release
+        //nvCompilerWriteBarrier(); // @@ IC: Where does this barrier go? In nvtt it was after, in Witness before. Not sure which one is right.
 #elif POSH_CPU_STRONGARM
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
@@ -114,17 +121,90 @@ namespace nv {
     inline uint32 atomicIncrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-
         return (uint32)_InterlockedIncrement((long *)value);
     }
 
     inline uint32 atomicDecrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-
         return (uint32)_InterlockedDecrement((long *)value);
     }
+
+    // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
+    // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
+    // @@ Is this strong or weak? Does InterlockedCompareExchange have spurious failures?
+    inline bool atomicCompareAndSwap(uint32 * value, uint32 expected, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        long result = _InterlockedCompareExchange((long *)value, (long)desired, (long)expected);
+        return result == (long)expected;
+    }
+
+
+    inline uint32 atomicSwap(uint32 * value, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return (uint32)_InterlockedExchange((long *)value, (long)desired);
+    }
+
+#elif NV_CC_CLANG && (NV_OS_IOS || NV_OS_DARWIN)
+    NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
+
+    //ACS: Use Apple's atomics instead? I don't know if these are better in any way; there are non-barrier versions too. There's no OSAtomicSwap32 tho'
+    /*
+    inline uint32 atomicIncrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return (uint32)OSAtomicIncrement32Barrier((int32_t *)value);
+    }
     
+    inline uint32 atomicDecrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return (uint32)OSAtomicDecrement32Barrier((int32_t *)value);
+    }
+
+    // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
+    // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
+    // @@ Is this strong or weak?
+    inline bool atomicCompareAndSwap(uint32 * value, uint32 expected, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return OSAtomicCompareAndSwap32Barrier((int32_t)expected, (int32_t)desired, (int32_t *)value);
+    }
+    */
+
+    inline uint32 atomicIncrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+
+        return __sync_add_and_fetch(value, 1);
+    }
+
+    inline uint32 atomicDecrement(uint32 * value)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+
+        return __sync_sub_and_fetch(value, 1);
+    }
+    
+    // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
+    // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
+    // @@ Is this strong or weak?
+    inline bool atomicCompareAndSwap(uint32 * value, uint32 expected, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_bool_compare_and_swap(value, expected, desired);
+    }
+    
+    inline uint32 atomicSwap(uint32 * value, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        // this is confusingly named, it doesn't actually do a test but always sets
+        return __sync_lock_test_and_set(value, desired);
+    }
+
+
 #elif NV_CC_CLANG && POSH_CPU_STRONGARM
     NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
     
@@ -183,15 +263,32 @@ namespace nv {
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
 
-        return __sync_fetch_and_add(value, 1);
+        return __sync_add_and_fetch(value, 1);
     }
 
     inline uint32 atomicDecrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
 
-        return __sync_fetch_and_sub(value, 1);
+        return __sync_sub_and_fetch(value, 1);
     }
+    
+    // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
+    // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
+    // @@ Is this strong or weak?
+    inline bool atomicCompareAndSwap(uint32 * value, uint32 expected, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_bool_compare_and_swap(value, expected, desired);
+    }
+    
+    inline uint32 atomicSwap(uint32 * value, uint32 desired)
+    {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        // this is confusingly named, it doesn't actually do a test but always sets
+        return __sync_lock_test_and_set(value, desired);
+    }
+    
 #else
 #error "Atomics not implemented."
 

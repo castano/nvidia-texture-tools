@@ -5,24 +5,24 @@
 #include "Thread.h"
 
 #if NV_OS_WIN32
-#  include "Win32.h"
+#include "Win32.h"
 #elif NV_OS_UNIX
-#  include <sys/types.h>
-#  include <sys/sysctl.h>
-#  include <unistd.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <unistd.h>
 #elif NV_OS_DARWIN
-#  import <stdio.h>
-#  import <string.h>
-#  import <mach/mach_host.h>
-#  import <sys/sysctl.h>
+#import <stdio.h>
+#import <string.h>
+#import <mach/mach_host.h>
+#import <sys/sysctl.h>
 
-#  include <CoreFoundation/CoreFoundation.h>
+//#include <CoreFoundation/CoreFoundation.h>
 
-#  include <assert.h>
-#  include <errno.h>
-#  include <stdlib.h>
-#  include <string.h>
-#  include <syslog.h>
+#include <assert.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
 #endif
 
 using namespace nv;

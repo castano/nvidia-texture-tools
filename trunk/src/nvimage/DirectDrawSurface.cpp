@@ -343,6 +343,7 @@ namespace
             case DXGI_FORMAT_B8G8R8X8_TYPELESS:
             case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
                 return 8*4;
+                
             default:
                 return 0;
         }
@@ -452,8 +453,9 @@ namespace
         { D3DFMT_A2R10G10B10,    32, 0x3FF00000, 0xFFC00,    0x3FF,      0xC0000000 },
         { D3DFMT_A2B10G10R10,    32, 0x3FF,      0xFFC00,    0x3FF00000, 0xC0000000 },
 
-        { D3DFMT_L8,             8,  8,          0,          0,          0 },           // DXGI_FORMAT_R8_UNORM 
-        { D3DFMT_L16,            16, 16,         0,          0,          0 },           // DXGI_FORMAT_R16_UNORM
+        { D3DFMT_L8,             8,  0xFF,       0,          0,          0 },           // DXGI_FORMAT_R8_UNORM 
+        { D3DFMT_L16,            16, 0xFFFF,     0,          0,          0 },           // DXGI_FORMAT_R16_UNORM
+        { D3DFMT_A8L8,           16, 0xFF,       0,          0,     0xFF00 },           // DXGI_FORMAT_R8G8_UNORM?
     };
 
     static const uint s_d3d9FormatCount = NV_ARRAY_SIZE(s_d3d9Formats);

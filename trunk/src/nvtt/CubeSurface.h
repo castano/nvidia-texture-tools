@@ -94,7 +94,10 @@ namespace nvtt
         }
 
         // Filtering helpers:
+        nv::Vector3 applyAngularFilter(const nv::Vector3 & dir, float coneAngle, float * filterTable, int tableSize);
         nv::Vector3 applyCosinePowerFilter(const nv::Vector3 & dir, float coneAngle, float cosinePower);
+
+        nv::Vector3 sample(const nv::Vector3 & dir);
 
         uint edgeLength;
         Surface face[6];

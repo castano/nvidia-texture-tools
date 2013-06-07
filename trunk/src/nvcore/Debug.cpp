@@ -66,7 +66,7 @@
 #   endif
 #endif
 
-#define USE_SEPARATE_THREAD 1
+#define NV_USE_SEPARATE_THREAD 1
 
 
 using namespace nv;
@@ -101,7 +101,7 @@ namespace
     // We should try to simplify the top level filter as much as possible.
     // http://www.nynaeve.net/?p=128
 
-#if USE_SEPARATE_THREAD
+#if NV_USE_SEPARATE_THREAD
 
     // The critical section enforcing the requirement that only one exception be
     // handled by a handler at a time.
@@ -121,7 +121,7 @@ namespace
     static DWORD s_requesting_thread_id = 0;
     static EXCEPTION_POINTERS * s_exception_info = NULL;
 
-#endif // USE_SEPARATE_THREAD
+#endif // NV_USE_SEPARATE_THREAD
 
 
     struct MinidumpCallbackContext {
@@ -236,7 +236,7 @@ namespace
         return true;
     }
 
-#if USE_SEPARATE_THREAD
+#if NV_USE_SEPARATE_THREAD
 
     static DWORD WINAPI ExceptionHandlerThreadMain(void* lpParameter) {
         nvDebugCheck(s_handler_start_semaphore != NULL);
@@ -256,7 +256,7 @@ namespace
         return 0;
     }
 
-#endif // USE_SEPARATE_THREAD
+#endif // NV_USE_SEPARATE_THREAD
 
     static bool hasStackTrace() {
         return true;
@@ -387,7 +387,9 @@ namespace
 			    DWORD dwDisplacement;
 			    if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
 			    {
-                    builder.format("unknown(%08X) : %s\n", (uint32)ip, pFunc);
+                    // Do not print unknown symbols anymore.
+                    break;
+                    //builder.format("unknown(%08X) : %s\n", (uint32)ip, pFunc);
 			    }
 			    else
 			    {
@@ -404,6 +406,10 @@ namespace
 			    }
 
                 lines.append(builder.release());
+
+                if (pFunc != NULL && strcmp(pFunc, "WinMain") == 0) {
+                    break;
+                }
 		    }
 	    }
     }
@@ -413,7 +419,7 @@ namespace
     static LONG WINAPI handleException(EXCEPTION_POINTERS * pExceptionInfo)
     {
         EnterCriticalSection(&s_handler_critical_section);
-#if USE_SEPARATE_THREAD
+#if NV_USE_SEPARATE_THREAD
         s_requesting_thread_id = GetCurrentThreadId();
         s_exception_info = pExceptionInfo;
 
@@ -474,6 +480,36 @@ namespace
     }
 
     static void handleInvalidParameter(const wchar_t * expresion, const wchar_t * function, const wchar_t * file, unsigned int line, uintptr_t reserved) {
+
+        size_t convertedCharCount = 0;
+        StringBuilder tmp;
+
+        if (expresion != NULL) {
+            uint size = toU32(wcslen(expresion) + 1);
+            tmp.reserve(size);
+            wcstombs_s(&convertedCharCount, tmp.str(), size, expresion, _TRUNCATE);
+
+            nvDebug("*** Invalid parameter: %s\n", tmp.str());
+
+            if (file != NULL) {
+                size = toU32(wcslen(file) + 1);
+                tmp.reserve(size);
+                wcstombs_s(&convertedCharCount, tmp.str(), size, file, _TRUNCATE);
+
+                nvDebug("    On file: %s\n", tmp.str());
+
+                if (function != NULL) {
+                    size = toU32(wcslen(function) + 1);
+                    tmp.reserve(size);
+                    wcstombs_s(&convertedCharCount, tmp.str(), size, function, _TRUNCATE);
+
+                    nvDebug("    On function: %s\n", tmp.str());
+                }
+
+                nvDebug("    On line: %u\n", line);
+            }
+        }
+
         nvDebugBreak();
         TerminateProcess(GetCurrentProcess(), EXIT_FAILURE + 8);
     }
@@ -706,16 +742,22 @@ namespace
         }
 
         // Assert handler method.
-        virtual int assertion( const char * exp, const char * file, int line, const char * func/*=NULL*/ )
+        virtual int assertion(const char * exp, const char * file, int line, const char * func, const char * msg, va_list arg)
         {
             int ret = NV_ABORT_EXIT;
 
             StringBuilder error_string;
-            if( func != NULL ) {
-                error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On function: %s\n    On line: %d\n ", exp, file, func, line );
+            error_string.format("*** Assertion failed: %s\n    On file: %s\n    On line: %d\n", exp, file, line );
+            if (func != NULL) {
+                error_string.appendFormat("    On function: %s\n", func);
             }
-            else {
-                error_string.format( "*** Assertion failed: %s\n    On file: %s\n    On line: %d\n ", exp, file, line );
+            if (msg != NULL) {
+                error_string.append("    Message: ");
+                va_list tmp;
+                va_copy(tmp, arg);
+                error_string.appendFormatList(msg, tmp);
+                va_end(tmp);
+                error_string.append("\n");
             }
             nvDebug( error_string.str() );
 
@@ -760,7 +802,7 @@ namespace
     struct Xbox360AssertHandler : public AssertHandler 
     {
         // Assert handler method.
-        virtual int assertion( const char * exp, const char * file, int line, const char * func/*=NULL*/ )
+        virtual int assertion(const char * exp, const char * file, int line, const char * func, const char * msg, va_list arg)
         {
             int ret = NV_ABORT_EXIT;
 
@@ -786,14 +828,47 @@ namespace
             return ret;
         }
     };
+#elif NV_OS_ORBIS
+
+    /** Orbis assert handler. */
+    struct OrbisAssertHandler : public AssertHandler
+    {
+        // Assert handler method.
+        virtual int assertion(const char * exp, const char * file, int line, const char * func, const char * msg, va_list arg)
+        {
+            if( func != NULL ) {
+                nvDebug( "*** Assertion failed: %s\n    On file: %s\n    On function: %s\n    On line: %d\n ", exp, file, func, line );
+            }
+            else {
+                nvDebug( "*** Assertion failed: %s\n    On file: %s\n    On line: %d\n ", exp, file, line );
+            }
+
+            //SBtodoORBIS print stack trace
+            /*if (hasStackTrace())
+            {
+                void * trace[64];
+                int size = backtrace(trace, 64);
+                printStackTrace(trace, size, 2);
+            }*/
+            
+            //SBtodoORBIS check for debugger present
+            //if (debug::isDebuggerPresent())
+                nvDebugBreak();
+
+            return NV_ABORT_DEBUG;
+        }
+    };
+
 #else
 
     /** Unix assert handler. */
     struct UnixAssertHandler : public AssertHandler
     {
         // Assert handler method.
-        virtual int assertion(const char * exp, const char * file, int line, const char * func)
+        virtual int assertion(const char * exp, const char * file, int line, const char * func, const char * msg, va_list arg)
         {
+            int ret = NV_ABORT_EXIT;            
+            
             if( func != NULL ) {
                 nvDebug( "*** Assertion failed: %s\n    On file: %s\n    On function: %s\n    On line: %d\n ", exp, file, func, line );
             }
@@ -816,8 +891,12 @@ namespace
             }
 #endif
 
+            if( ret == NV_ABORT_EXIT ) {
             // Exit cleanly.
             exit(EXIT_FAILURE + 1);
+        }
+            
+            return ret;
         }
     };
 
@@ -827,22 +906,27 @@ namespace
 
 
 /// Handle assertion through the assert handler.
-int nvAbort(const char * exp, const char * file, int line, const char * func/*=NULL*/)
+int nvAbort(const char * exp, const char * file, int line, const char * func/*=NULL*/, const char * msg/*= NULL*/, ...)
 {
 #if NV_OS_WIN32 //&& NV_CC_MSVC
     static Win32AssertHandler s_default_assert_handler;
 #elif NV_OS_XBOX
     static Xbox360AssertHandler s_default_assert_handler;
+#elif NV_OS_ORBIS
+    static OrbisAssertHandler s_default_assert_handler;
 #else
     static UnixAssertHandler s_default_assert_handler;
 #endif
 
-    if (s_assert_handler != NULL) {
-        return s_assert_handler->assertion( exp, file, line, func );
-    }
-    else {
-        return s_default_assert_handler.assertion( exp, file, line, func );
-    }
+    va_list arg;
+    va_start(arg,msg);
+
+    AssertHandler * handler = s_assert_handler != NULL ? s_assert_handler : &s_default_assert_handler;
+    int result = handler->assertion(exp, file, line, func, msg, arg);
+
+    va_end(arg);
+
+    return result;
 }
 
 // Abnormal termination. Create mini dump and output call stack.
@@ -914,6 +998,26 @@ void debug::dumpInfo()
 #endif
 }
 
+/// Dump callstack using the specified handler.
+void debug::dumpCallstack(MessageHandler *messageHandler, int callstackLevelsToSkip /*= 0*/)
+{
+#if (NV_OS_WIN32 && NV_CC_MSVC) || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H))
+    if (hasStackTrace())
+    {
+        void * trace[64];
+        int size = backtrace(trace, 64);
+
+        Array<const char *> lines;
+        writeStackTrace(trace, size, callstackLevelsToSkip + 1, lines);     // + 1 to skip the call to dumpCallstack
+
+        for (uint i = 0; i < lines.count(); i++) {
+            messageHandler->log(lines[i], NULL);
+            delete lines[i];
+        }
+    }
+#endif
+}
+
 
 /// Set the debug message handler.
 void debug::setMessageHandler(MessageHandler * message_handler)
@@ -939,9 +1043,8 @@ void debug::resetAssertHandler()
     s_assert_handler = NULL;
 }
 
-
 #if NV_OS_WIN32
-#if USE_SEPARATE_THREAD
+#if NV_USE_SEPARATE_THREAD
 
 static void initHandlerThread()
 {
@@ -984,7 +1087,7 @@ static void shutHandlerThread() {
     // @@ Free stuff. Terminate thread.
 }
 
-#endif // USE_SEPARATE_THREAD
+#endif // NV_USE_SEPARATE_THREAD
 #endif // NV_OS_WIN32
 
 
@@ -1009,7 +1112,7 @@ void debug::enableSigHandler(bool interactive)
     }
 
 
-#if USE_SEPARATE_THREAD
+#if NV_USE_SEPARATE_THREAD
     initHandlerThread();
 #endif
 

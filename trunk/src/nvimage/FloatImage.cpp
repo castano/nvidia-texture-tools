@@ -344,15 +344,15 @@ float FloatImage::sampleLinear(uint c, float x, float y, float z, WrapMode wm) c
 
 float FloatImage::sampleNearestClamp(uint c, float x, float y) const
 {
-    int ix = ::clamp(iround(x * m_width), 0, m_width-1);
-    int iy = ::clamp(iround(y * m_height), 0, m_height-1);
+    int ix = wrapClamp(iround(x * m_width), m_width);
+    int iy = wrapClamp(iround(y * m_height), m_height);
     return pixel(c, ix, iy, 0);
 }
 
 float FloatImage::sampleNearestRepeat(uint c, float x, float y) const
 {
-    int ix = iround(frac(x) * m_width);
-    int iy = iround(frac(y) * m_height);
+    int ix = wrapRepeat(iround(x * m_width), m_width);
+    int iy = wrapRepeat(iround(y * m_height), m_height);
     return pixel(c, ix, iy, 0);
 }
 
@@ -373,9 +373,9 @@ float FloatImage::sampleNearestClamp(uint c, float x, float y, float z) const
 
 float FloatImage::sampleNearestRepeat(uint c, float x, float y, float z) const
 {
-    int ix = iround(frac(x) * m_width);     // wrapRepeat(iround(x * m_width), m_width)
-    int iy = iround(frac(y) * m_height);    // wrapRepeat(iround(y * m_height), m_height)
-    int iz = iround(frac(z) * m_depth);     // wrapRepeat(iround(z * m_depth), m_depth)
+    int ix = wrapRepeat(iround(x * m_width), m_width);
+    int iy = wrapRepeat(iround(y * m_height), m_height);
+    int iz = wrapRepeat(iround(z * m_depth), m_depth);
     return pixel(c, ix, iy, iz);
 }
 
@@ -1326,7 +1326,7 @@ void FloatImage::flipZ()
     const uint d2 = d / 2;
 
     for (uint c = 0; c < m_componentCount; c++) {
-        for (uint z = 0; z < d/2; z++) {
+        for (uint z = 0; z < d2; z++) {
             float * src = plane(c, z);
             float * dst = plane(c, d - 1 - z);
             for (uint i = 0; i < w*h; i++) {
@@ -1345,9 +1345,9 @@ float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel, float alph
 
     float coverage = 0.0f;
 
+#if 0
     const float * alpha = channel(alphaChannel);
 
-#if 0
     const uint count = m_pixelCount;
     for (uint i = 0; i < count; i++) {
         if (alpha[i] > alphaRef) coverage += 1.0f; // @@ gt or lt?
@@ -1435,7 +1435,7 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
     clamp(alphaChannel, 1, 0.0f, 1.0f); 
 #endif
 #if _DEBUG
-    float newCoverage = alphaTestCoverage(alphaRef, alphaChannel);
+    alphaTestCoverage(alphaRef, alphaChannel);
 #endif
 }
 

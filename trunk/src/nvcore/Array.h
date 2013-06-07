@@ -108,7 +108,7 @@ namespace nv
 
         void push_back( const T & val );
         void pushBack( const T & val );
-        void append( const T & val );
+        Array<T> & append( const T & val );
         Array<T> & operator<< ( T & t );
         void pop_back();
         void popBack();
@@ -160,7 +160,7 @@ namespace nv
         friend void swap(Array<Typ> & a, Array<Typ> & b);
 
 
-protected:
+    protected:
 
         void setArraySize(uint new_size);
         void setArrayCapacity(uint new_capacity);

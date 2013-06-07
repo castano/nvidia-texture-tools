@@ -336,6 +336,11 @@ namespace nv
         return sqrtf(lengthSquared(v));
     }
 
+    inline float distance(Vector2::Arg a, Vector2::Arg b)
+    {
+        return length(a - b);
+    }
+
     inline float inverseLength(Vector2::Arg v)
     {
         return 1.0f / sqrtf(lengthSquared(v));
@@ -783,6 +788,90 @@ namespace nv
     {
         return sdbmFloatHash(v.component, 4, h);
     }
+
+
+#if NV_OS_IOS // LLVM is not happy with implicit conversion of immediate constants to float
+
+    //int:
+
+    inline Vector2 scale(Vector2::Arg v, int s)
+    {
+        return Vector2(v.x * s, v.y * s);
+    }
+
+    inline Vector2 operator*(Vector2::Arg v, int s)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector2 operator*(int s, Vector2::Arg v)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector2 operator/(Vector2::Arg v, int s)
+    {
+        return scale(v, 1.0f/s);
+    }
+
+    inline Vector3 scale(Vector3::Arg v, int s)
+    {
+        return Vector3(v.x * s, v.y * s, v.z * s);
+    }
+
+    inline Vector3 operator*(Vector3::Arg v, int s)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector3 operator*(int s, Vector3::Arg v)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector3 operator/(Vector3::Arg v, int s)
+    {
+        return scale(v, 1.0f/s);
+    }
+
+    inline Vector4 scale(Vector4::Arg v, int s)
+    {
+        return Vector4(v.x * s, v.y * s, v.z * s, v.w * s);
+    }
+
+    inline Vector4 operator*(Vector4::Arg v, int s)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector4 operator*(int s, Vector4::Arg v)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector4 operator/(Vector4::Arg v, int s)
+    {
+        return scale(v, 1.0f/s);
+    }
+
+    //double:
+
+    inline Vector3 operator*(Vector3::Arg v, double s)
+    {
+        return scale(v, (float)s);
+    }
+
+    inline Vector3 operator*(double s, Vector3::Arg v)
+    {
+        return scale(v, (float)s);
+    }
+
+    inline Vector3 operator/(Vector3::Arg v, double s)
+    {
+        return scale(v, 1.f/((float)s));
+    }    
+        
+#endif //NV_OS_IOS
 
 } // nv namespace
 

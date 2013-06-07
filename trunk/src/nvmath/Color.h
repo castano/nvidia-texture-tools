@@ -118,6 +118,32 @@ namespace nv
         };
     };
 
+    /// 16 bit 4444 BGRA color.
+    class NVMATH_CLASS Color16_4444
+    {
+    public:
+        Color16_4444() { }
+        Color16_4444(const Color16_4444 & c) : u(c.u) { }
+        explicit Color16_4444(uint16 U) : u(U) { }
+
+        union {
+            struct {
+#if NV_LITTLE_ENDIAN
+                uint16 b : 4;
+                uint16 g : 4;
+                uint16 r : 4;
+                uint16 a : 4;
+#else
+                uint16 a : 4;
+                uint16 r : 4;
+                uint16 g : 4;
+                uint16 b : 4;
+#endif
+            };
+            uint16 u;
+        };
+    };
+
 } // nv namespace
 
 #endif // NV_MATH_COLOR_H

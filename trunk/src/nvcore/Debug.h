@@ -70,11 +70,12 @@
     } \
     NV_MULTI_LINE_MACRO_END
 
-#define nvAssertMacroWithIgnoreAll(exp) \
+// GCC, LLVM need "##" before the __VA_ARGS__, MSVC doesn't care
+#define nvAssertMacroWithIgnoreAll(exp,...) \
     NV_MULTI_LINE_MACRO_BEGIN \
         static bool ignoreAll = false; \
         if (!ignoreAll && !(exp)) { \
-            int result = nvAbort(#exp, __FILE__, __LINE__, __FUNC__); \
+            int result = nvAbort(#exp, __FILE__, __LINE__, __FUNC__, ##__VA_ARGS__); \
             if (result == NV_ABORT_DEBUG) { \
                 nvDebugBreak(); \
             } else if (result == NV_ABORT_IGNORE) { \
@@ -157,7 +158,7 @@
 #endif
 
 
-NVCORE_API int nvAbort(const char *exp, const char *file, int line, const char * func = NULL);
+NVCORE_API int nvAbort(const char *exp, const char *file, int line, const char * func = NULL, const char * msg = NULL, ...);
 NVCORE_API void NV_CDECL nvDebugPrint( const char *msg, ... ) __attribute__((format (printf, 1, 2)));
 
 namespace nv
@@ -184,7 +185,7 @@ namespace nv
 
     // Assert handler interface.
     struct AssertHandler {
-        virtual int assertion(const char *exp, const char *file, int line, const char *func = NULL) = 0;
+        virtual int assertion(const char *exp, const char *file, int line, const char *func, const char *msg, va_list arg) = 0;
         virtual ~AssertHandler() {}
     };
 
@@ -192,6 +193,7 @@ namespace nv
     namespace debug
     {
         NVCORE_API void dumpInfo();
+        NVCORE_API void dumpCallstack( MessageHandler *messageHandler, int callstackLevelsToSkip = 0 );
 
         NVCORE_API void setMessageHandler( MessageHandler * messageHandler );
         NVCORE_API void resetMessageHandler();

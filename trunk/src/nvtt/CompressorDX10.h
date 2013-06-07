@@ -25,20 +25,20 @@
 #ifndef NVTT_COMPRESSORDX10_H
 #define NVTT_COMPRESSORDX10_H
 
-#include "CompressorDXT.h"
+#include "BlockCompressor.h"
 
 namespace nv
 {
 	struct ColorBlock;
 
 	// Fast CPU compressors.
-	struct FastCompressorBC4 : public FixedBlockCompressor
+	struct FastCompressorBC4 : public ColorBlockCompressor
 	{
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 8; }
 	};
 
-	struct FastCompressorBC5 : public FixedBlockCompressor
+	struct FastCompressorBC5 : public ColorBlockCompressor
 	{
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 16; }
@@ -46,13 +46,13 @@ namespace nv
 
 
 	// Production CPU compressors.
-	struct ProductionCompressorBC4 : public FixedBlockCompressor
+	struct ProductionCompressorBC4 : public ColorBlockCompressor
 	{
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 8; }
 	};
 
-	struct ProductionCompressorBC5 : public FixedBlockCompressor
+	struct ProductionCompressorBC5 : public ColorBlockCompressor
 	{
 		virtual void compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
 		virtual uint blockSize() const { return 16; }

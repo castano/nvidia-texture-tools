@@ -878,6 +878,14 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath="..\..\..\src\nvtt\BlockCompressor.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\BlockCompressor.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvtt\ClusterFit.cpp"
 			>
 		</File>
@@ -1047,14 +1055,6 @@
 		</File>
 		<File
 			RelativePath="..\..\..\src\nvtt\CompressorDX9.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvtt\CompressorDXT.cpp"
-			>
-		</File>
-		<File
-			RelativePath="..\..\..\src\nvtt\CompressorDXT.h"
 			>
 		</File>
 		<File

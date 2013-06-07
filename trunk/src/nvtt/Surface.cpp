@@ -40,6 +40,10 @@
 #include <float.h>
 #include <string.h> // memset, memcpy
 
+#if NV_CC_GNUC
+#include <math.h> // exp2f and log2f
+#endif
+
 using namespace nv;
 using namespace nvtt;
 
@@ -101,6 +105,20 @@ namespace
     }*/
 }
 
+bool nv::canMakeNextMipmap(uint w, uint h, uint d, uint min_size)
+{
+    if (min_size==1u) {  
+        if(w==1u && h==1u && d==1u) {
+            return false;
+        }
+    }
+    else if (((w <= min_size || h <= min_size) && d == 1u)) {
+        return false;
+    }
+
+    return true;
+}
+
 uint nv::countMipmaps(uint w)
 {
     uint mipmap = 0;
@@ -126,6 +144,21 @@ uint nv::countMipmaps(uint w, uint h, uint d)
 
     return mipmap + 1;
 }
+
+uint nv::countMipmapsWithMinSize(uint w, uint h, uint d, uint min_size)
+{
+    uint mipmap = 0;
+
+    while (canMakeNextMipmap(w, h, d, min_size)) {
+        w = max(1U, w / 2);
+        h = max(1U, h / 2);
+        d = max(1U, d / 2);
+        mipmap++;
+    }
+
+   return mipmap + 1;
+}
+
 
 uint nv::computeImageSize(uint w, uint h, uint d, uint bitCount, uint pitchAlignmentInBytes, Format format)
 {
@@ -308,9 +341,17 @@ int Surface::countMipmaps() const
     return ::countMipmaps(m->image->width(), m->image->height(), 1);
 }
 
+int Surface::countMipmaps(int min_size) const
+{
+    if (m->image == NULL) return 0;
+    return ::countMipmapsWithMinSize(m->image->width(), m->image->height(), 1, min_size);
+}
+
 float Surface::alphaTestCoverage(float alphaRef/*= 0.5*/) const
 {
     if (m->image == NULL) return 0.0f;
+
+    alphaRef = nv::clamp(alphaRef, 1.0f/256, 255.0f/256);
 
     return m->image->alphaTestCoverage(alphaRef, 3);
 }
@@ -348,13 +389,20 @@ float Surface::average(int channel, int alpha_channel/*= -1*/, float gamma /*= 2
     // Avoid division by zero.
     if (denom == 0.0f) return 0.0f;
 
-    return sum / denom;
+    return powf(sum / denom, 1.0f/gamma);
 }
 
 const float * Surface::data() const
 {
     return m->image->channel(0);
 }
+
+const float * Surface::channel(int i) const
+{
+    if (i < 0 || i > 3) return NULL;
+    return m->image->channel(i);
+}
+
 
 void Surface::histogram(int channel, float rangeMin, float rangeMax, int binCount, int * binPtr) const
 {
@@ -378,11 +426,13 @@ void Surface::histogram(int channel, float rangeMin, float rangeMax, int binCoun
     }
 }
 
-void Surface::range(int channel, float * rangeMin, float * rangeMax) const
+void Surface::range(int channel, float * rangeMin, float * rangeMax, int alpha_channel/*= -1*/, float alpha_ref/*= 0.f*/) const
 {
     Vector2 range(FLT_MAX, -FLT_MAX);
 
     FloatImage * img = m->image;
+
+    if (alpha_channel == -1) { // no alpha channel; just like the original range function
 
     if (m->image != NULL)
     {
@@ -393,6 +443,25 @@ void Surface::range(int channel, float * rangeMin, float * rangeMax) const
             float f = c[p];
             if (f < range.x) range.x = f;
             if (f > range.y) range.y = f;
+        }
+    }
+    }
+    else { // use alpha test to ignore some pixels
+        //note, it's quite possible to get FLT_MAX,-FLT_MAX back if all pixels fail the test
+
+        if (m->image != NULL)
+        {
+            const float * c = img->channel(channel);
+            const float * a = img->channel(alpha_channel);
+
+            const uint count = img->pixelCount();
+            for (uint p = 0; p < count; p++) {
+                if(a[p]>alpha_ref) {
+                    float f = c[p];
+                    if (f < range.x) range.x = f;
+                    if (f > range.y) range.y = f;
+                }
+            }
         }
     }
 
@@ -423,15 +492,43 @@ bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
     return true;
 }
 
-bool Surface::save(const char * fileName) const
+bool Surface::save(const char * fileName, bool hasAlpha/*=0*/, bool hdr/*=0*/) const
 {
-    if (m->image != NULL)
-    {
-        return ImageIO::saveFloat(fileName, m->image, 0, 4);
+    if (m->image == NULL) {
+        return false;
     }
 
-    return false;
+    if (hdr) {
+        return ImageIO::saveFloat(fileName, m->image, 0, 4);
+    }
+    else {
+        AutoPtr<Image> image(m->image->createImage(0, 4));
+        nvCheck(image != NULL);
+
+        if (hasAlpha) {
+            image->setFormat(Image::Format_ARGB);
+        }
+
+        return ImageIO::save(fileName, image.ptr());
+    }
 }
+
+
+bool Surface::setImage(int w, int h, int d)
+{
+    detach();
+
+    if (m->image == NULL) {
+        m->image = new FloatImage();
+    }
+    m->image->allocate(4, w, h, d);
+    m->type = (d == 1) ? TextureType_2D : TextureType_3D;
+
+    m->image->clear();
+
+    return true;
+}
+
 
 #if 0 //NV_OS_WIN32
 
@@ -449,13 +546,14 @@ static int filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
 }
 
 #define TRY __try
-    
 #define CATCH __except (filter(GetExceptionCode(), GetExceptionInformation()))
-#else
+
+#else // 0
+
 #define TRY if (true)
 #define CATCH else
-#endif
 
+#endif
 
 bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void * data)
 {
@@ -553,13 +651,13 @@ bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, 
         const uint8 * bsrc = (const uint8 *)b;
         const uint8 * asrc = (const uint8 *)a;
 
-        try {
+        TRY {
             for (int i = 0; i < count; i++) rdst[i] = float(rsrc[i]) / 255.0f;
             for (int i = 0; i < count; i++) gdst[i] = float(gsrc[i]) / 255.0f;
             for (int i = 0; i < count; i++) bdst[i] = float(bsrc[i]) / 255.0f;
             for (int i = 0; i < count; i++) adst[i] = float(asrc[i]) / 255.0f;
         }
-        catch(...) {
+        CATCH {
             return false;
         }
     }
@@ -570,13 +668,13 @@ bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, 
         const uint16 * bsrc = (const uint16 *)b;
         const uint16 * asrc = (const uint16 *)a;
 
-        try {
+        TRY {
             for (int i = 0; i < count; i++) ((uint32 *)rdst)[i] = half_to_float(rsrc[i]);
             for (int i = 0; i < count; i++) ((uint32 *)gdst)[i] = half_to_float(gsrc[i]);
             for (int i = 0; i < count; i++) ((uint32 *)bdst)[i] = half_to_float(bsrc[i]);
             for (int i = 0; i < count; i++) ((uint32 *)adst)[i] = half_to_float(asrc[i]);
         }
-        catch(...) {
+        CATCH {
             return false;
         }
     }
@@ -587,13 +685,13 @@ bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, 
         const float * bsrc = (const float *)b;
         const float * asrc = (const float *)a;
 
-        try {
+        TRY {
             memcpy(rdst, rsrc, count * sizeof(float));
             memcpy(gdst, gsrc, count * sizeof(float));
             memcpy(bdst, bsrc, count * sizeof(float));
             memcpy(adst, asrc, count * sizeof(float));
         }
-        catch(...) {
+        CATCH {
             return false;
         }
     }
@@ -624,87 +722,87 @@ bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const voi
 
     const uint8 * ptr = (const uint8 *)data;
 
-    try {
+    TRY {
         for (int y = 0; y < bh; y++)
         {
             for (int x = 0; x < bw; x++)
             {
                 ColorBlock colors;
 
-		if (format == nvtt::Format_BC1)
-		{
-		    const BlockDXT1 * block = (const BlockDXT1 *)ptr;
+                if (format == nvtt::Format_BC1)
+                {
+                    const BlockDXT1 * block = (const BlockDXT1 *)ptr;
 
-		    if (decoder == Decoder_D3D10) {
-			    block->decodeBlock(&colors, false);
-		    }
-		    else if (decoder == Decoder_D3D9) {
-			    block->decodeBlock(&colors, false);
-		    }
-		    else if (decoder == Decoder_NV5x) {
-			    block->decodeBlockNV5x(&colors);
-		    }
-		}
-		else if (format == nvtt::Format_BC2)
-		{
-		    const BlockDXT3 * block = (const BlockDXT3 *)ptr;
+                    if (decoder == Decoder_D3D10) {
+	                    block->decodeBlock(&colors, false);
+                    }
+                    else if (decoder == Decoder_D3D9) {
+	                    block->decodeBlock(&colors, false);
+                    }
+                    else if (decoder == Decoder_NV5x) {
+	                    block->decodeBlockNV5x(&colors);
+                    }
+                }
+                else if (format == nvtt::Format_BC2)
+                {
+                    const BlockDXT3 * block = (const BlockDXT3 *)ptr;
 
-		    if (decoder == Decoder_D3D10) {
-			    block->decodeBlock(&colors, false);
-		    }
-		    else if (decoder == Decoder_D3D9) {
-			    block->decodeBlock(&colors, false);
-		    }
-		    else if (decoder == Decoder_NV5x) {
-			    block->decodeBlockNV5x(&colors);
-		    }
-		}
-		else if (format == nvtt::Format_BC3)
-		{
-		    const BlockDXT5 * block = (const BlockDXT5 *)ptr;
+                    if (decoder == Decoder_D3D10) {
+	                    block->decodeBlock(&colors, false);
+                    }
+                    else if (decoder == Decoder_D3D9) {
+	                    block->decodeBlock(&colors, false);
+                    }
+                    else if (decoder == Decoder_NV5x) {
+	                    block->decodeBlockNV5x(&colors);
+                    }
+                }
+                else if (format == nvtt::Format_BC3)
+                {
+                    const BlockDXT5 * block = (const BlockDXT5 *)ptr;
 
-		    if (decoder == Decoder_D3D10) {
-			    block->decodeBlock(&colors, false);
-		    }
-		    else if (decoder == Decoder_D3D9) {
-			    block->decodeBlock(&colors, false);
-		    }
-		    else if (decoder == Decoder_NV5x) {
-			    block->decodeBlockNV5x(&colors);
-		    }
-		}
-		else if (format == nvtt::Format_BC4)
-		{
-            const BlockATI1 * block = (const BlockATI1 *)ptr;
-            block->decodeBlock(&colors, decoder == Decoder_D3D9);
+                    if (decoder == Decoder_D3D10) {
+	                    block->decodeBlock(&colors, false);
+                    }
+                    else if (decoder == Decoder_D3D9) {
+	                    block->decodeBlock(&colors, false);
+                    }
+                    else if (decoder == Decoder_NV5x) {
+	                    block->decodeBlockNV5x(&colors);
+                    }
+                }
+                else if (format == nvtt::Format_BC4)
+                {
+                    const BlockATI1 * block = (const BlockATI1 *)ptr;
+                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
+                }
+                else if (format == nvtt::Format_BC5)
+                {
+                    const BlockATI2 * block = (const BlockATI2 *)ptr;
+                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
+                }
+
+                for (int yy = 0; yy < 4; yy++)
+                {
+                    for (int xx = 0; xx < 4; xx++)
+                    {
+                        Color32 c = colors.color(xx, yy);
+
+                        if (x * 4 + xx < w && y * 4 + yy < h)
+                        {
+                            m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
+                            m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = float(c.g) * 1.0f/255.0f;
+                            m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = float(c.b) * 1.0f/255.0f;
+                            m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = float(c.a) * 1.0f/255.0f;
+                        }
+                    }
+                }
+
+                ptr += bs;
+            }
         }
-        else if (format == nvtt::Format_BC5)
-        {
-            const BlockATI2 * block = (const BlockATI2 *)ptr;
-            block->decodeBlock(&colors, decoder == Decoder_D3D9);
-        }
-
-		for (int yy = 0; yy < 4; yy++)
-		{
-		    for (int xx = 0; xx < 4; xx++)
-		    {
-			Color32 c = colors.color(xx, yy);
-
-			if (x * 4 + xx < w && y * 4 + yy < h)
-			{
-			    m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
-			    m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = float(c.g) * 1.0f/255.0f;
-			    m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = float(c.b) * 1.0f/255.0f;
-			    m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = float(c.a) * 1.0f/255.0f;
-			}
-		    }
-		}
-
-		ptr += bs;
-	    }
-	}
     }
-    catch(...) {
+    CATCH {
         return false;
     }
 
@@ -812,6 +910,43 @@ void Surface::resize(int w, int h, int d, ResizeFilter filter, float filterWidth
     m->image = img;
 }
 
+void Surface::resize_make_square(int maxExtent, RoundMode roundMode, ResizeFilter filter)
+{
+    if (isNull()) return;
+
+    float filterWidth;
+    float params[2];
+    getDefaultFilterWidthAndParams(filter, &filterWidth, params);
+
+    int w = m->image->width();
+    int h = m->image->height();
+    int d = m->image->depth();
+
+    getTargetExtent(&w, &h, &d, maxExtent, roundMode, m->type);
+
+    if (m->type == TextureType_2D) 
+    {
+        nvDebugCheck(d==1);
+        int md = nv::min(w,h);
+        w = md;
+        h = md;
+    }
+    else if (m->type == TextureType_Cube)
+    {
+        nvDebugCheck(d==1);
+        nvDebugCheck(w==h);
+    }
+    else if (m->type == TextureType_3D)
+    {
+        int md = nv::min(nv::min(w,h),d);
+        w = md;
+        h = md;
+        d = md;
+    }
+
+    resize(w, h, d, filter, filterWidth, params);
+}
+
 void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter)
 {
     float filterWidth;
@@ -834,18 +969,26 @@ void Surface::resize(int maxExtent, RoundMode roundMode, ResizeFilter filter, fl
     resize(w, h, d, filter, filterWidth, params);
 }
 
-bool Surface::buildNextMipmap(MipmapFilter filter)
+bool Surface::canMakeNextMipmap(int min_size /*= 1*/)
+{
+    if (isNull()) return false;
+
+    return nv::canMakeNextMipmap(width(), height(), depth(), min_size);
+}
+
+
+bool Surface::buildNextMipmap(MipmapFilter filter, int min_size /*= 1*/)
 {
     float filterWidth;
     float params[2];
     getDefaultFilterWidthAndParams(filter, &filterWidth, params);
 
-    return buildNextMipmap(filter, filterWidth, params);
+    return buildNextMipmap(filter, filterWidth, params, min_size);
 }
 
-bool Surface::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params)
+bool Surface::buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params, int min_size /*= 1*/)
 {
-    if (isNull() || (width() == 1 && height() == 1 && depth() == 1)) {
+    if (!canMakeNextMipmap(min_size)) {
         return false;
     }
 
@@ -899,6 +1042,30 @@ bool Surface::buildNextMipmap(MipmapFilter filter, float filterWidth, const floa
             if (params != NULL) filter.setParameters(params[0], params[1]);
             img = img->downSample(filter, wrapMode);
         }
+    }
+
+    delete m->image;
+    m->image = img;
+
+    return true;
+}
+
+bool Surface::buildNextMipmapSolidColor(const float * const color_components)
+{
+    if (isNull() || (width() == 1 && height() == 1 && depth() == 1)) {
+        return false;
+    }
+
+    detach();
+
+    FloatImage * img = new FloatImage();
+    const uint w = max(1, m->image->m_width / 2);
+    const uint h = max(1, m->image->m_height / 2);
+    img->allocate(m->image->m_componentCount, w, h);
+
+    for(uint c = 0; c < img->m_componentCount; c++)
+    {
+        img->clear(c, color_components[c]);
     }
 
     delete m->image;
@@ -1083,6 +1250,7 @@ void Surface::transform(const float w0[4], const float w1[4], const float w2[4],
     m->image->transform(0, xform, voffset);
 }
 
+// R, G, B, A, 1, 0, -1
 void Surface::swizzle(int r, int g, int b, int a)
 {
     if (isNull()) return;
@@ -1112,52 +1280,6 @@ void Surface::clamp(int channel, float low, float high)
 
     m->image->clamp(channel, 1, low, high);
 }
-
-void Surface::packNormal()
-{
-    if (isNull()) return;
-
-    detach();
-
-    m->image->scaleBias(0, 3, 0.5f, 0.5f);
-}
-
-void Surface::expandNormal()
-{
-    if (isNull()) return;
-
-    detach();
-
-    m->image->scaleBias(0, 3, 2.0f, -1.0f);
-}
-
-// Create a Toksvig map for this normal map.
-// http://blog.selfshadow.com/2011/07/22/specular-showdown/
-// @@ Assumes this is a normal map expanded in the [-1, 1] range.
-Surface Surface::createToksvigMap(float power) const
-{
-    if (isNull()) return Surface();
-
-    // @@ TODO
-
-    return Surface();
-}
-
-// @@ Should I add support for LEAN maps? That requires 5 terms, which would have to be encoded in two textures.
-// There's nothing stopping us from having 5 channels in a surface, and then, let the user swizzle them as they wish.
-// CLEAN maps are probably more practical, though.
-// http://www.cs.umbc.edu/~olano/papers/lean/
-// http://gaim.umbc.edu/2011/07/24/shiny-and-clean/
-// http://gaim.umbc.edu/2011/07/26/on-error/
-NVTT_API Surface Surface::createCleanMap() const
-{
-    if (isNull()) return Surface();
-
-    // @@ TODO
-
-    return Surface();
-}
-
 
 void Surface::blend(float red, float green, float blue, float alpha, float t)
 {
@@ -1285,13 +1407,10 @@ void Surface::fill(float red, float green, float blue, float alpha)
     float * a = img->channel(3);
 
     const uint count = img->pixelCount();
-    for (uint i = 0; i < count; i++)
-    {
-        r[i] = red;
-        g[i] = green;
-        b[i] = blue;
-        a[i] = alpha;
-    }
+    for (uint i = 0; i < count; i++) r[i] = red;
+    for (uint i = 0; i < count; i++) g[i] = green;
+    for (uint i = 0; i < count; i++) b[i] = blue;
+    for (uint i = 0; i < count; i++) a[i] = alpha;
 }
 
 
@@ -1300,6 +1419,8 @@ void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
     if (isNull()) return;
 
     detach();
+
+    alphaRef = nv::clamp(alphaRef, 1.0f/256, 255.0f/256);
 
     m->image->scaleAlphaToCoverage(coverage, alphaRef, 3);
 }
@@ -1341,7 +1462,6 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
     detach();
 
     threshold = ::clamp(threshold, 1e-6f, 1.0f);
-    float irange = 1.0f / range;
 
     FloatImage * img = m->image;
     float * r = img->channel(0);
@@ -1360,6 +1480,7 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
         r[i] = R / M;
         g[i] = G / M;
         b[i] = B / M;
+
         a[i] = (M - threshold) / (1 - threshold);
 
 #else
@@ -1402,6 +1523,7 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
     }
 }
 
+
 void Surface::fromRGBM(float range/*= 1*/)
 {
     if (isNull()) return;
@@ -1422,6 +1544,37 @@ void Surface::fromRGBM(float range/*= 1*/)
         g[i] *= M;
         b[i] *= M;
         a[i] = 1.0f;
+    }
+}
+
+// This is dumb way to encode luminance only values.
+void Surface::toLM(float range/*= 1*/, float threshold/*= 0.25*/)
+{
+    if (isNull()) return;
+
+    detach();
+
+    threshold = ::clamp(threshold, 1e-6f, 1.0f);
+
+    FloatImage * img = m->image;
+    float * r = img->channel(0);
+    float * g = img->channel(1);
+    float * b = img->channel(2);
+    float * a = img->channel(3);
+
+    const uint count = img->pixelCount();
+    for (uint i = 0; i < count; i++) {
+        float R = nv::clamp(r[i], 0.0f, 1.0f);
+        float G = nv::clamp(g[i], 0.0f, 1.0f);
+        float B = nv::clamp(b[i], 0.0f, 1.0f);
+
+        float M = max(max(R, G), max(B, threshold));
+
+        float L = (R + G + B) / 3;
+        r[i] = L / M;
+        b[i] = L / M;
+        g[i] = L / M;
+        a[i] = (M - threshold) / (1 - threshold);
     }
 }
 
@@ -2147,21 +2300,25 @@ void Surface::quantize(int channel, int bits, bool exactEndPoints, bool dither)
 
     FloatImage * img = m->image;
 
-    float scale, offset;
+    float scale, offset0, offset1;
     if (exactEndPoints) {
+        // floor(x*(range-1) + 0.5) / (range-1)
         scale = float((1 << bits) - 1);
-        offset = 0.0f;
+        offset0 = 0.5f;
+        offset1 = 0.0f;
     }
     else {
+        // (floor(x*range) + 0.5) / range
         scale = float(1 << bits);
-        offset = 0.5f;
+        offset0 = 0.0f;
+        offset1 = 0.5f;
     }
 
     if (!dither) {
         float * c = img->channel(channel);
         const uint count = img->pixelCount();
         for (uint i = 0; i < count; i++) {
-            c[i] = floorf(c[i] * scale + offset) / scale;
+            c[i] = saturate((floorf(c[i] * scale + offset0) + offset1) / scale);
         }
     }
     else {
@@ -2182,7 +2339,7 @@ void Surface::quantize(int channel, int bits, bool exactEndPoints, bool dither)
                     float & f = img->pixel(channel, x, y, 0);
 
                     // Add error and quantize.
-                    float qf = floorf((f + row0[1+x]) * scale + offset) / scale;
+                    float qf = saturate((floorf((f + row0[1+x]) * scale + offset0) + offset1) / scale);
 
                     // Compute new error:
                     float diff = f - qf;
@@ -2221,9 +2378,6 @@ void Surface::toNormalMap(float sm, float medium, float big, float large)
     const FloatImage * img = m->image;
     m->image = nv::createNormalMap(img, (FloatImage::WrapMode)m->wrapMode, filterWeights);
 
-#pragma NV_MESSAGE("TODO: Pack and expand normals explicitly?")
-    m->image->packNormals(0);
-
     delete img;
 
     m->isNormalMap = true;
@@ -2246,7 +2400,6 @@ void Surface::transformNormals(NormalTransform xform)
     detach();
 
     FloatImage * img = m->image;
-    img->expandNormals(0);
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
@@ -2308,8 +2461,6 @@ void Surface::transformNormals(NormalTransform xform)
         y = n.y;
         z = n.z;
     }
-
-    img->packNormals(0);
 }
 
 void Surface::reconstructNormals(NormalTransform xform)
@@ -2319,7 +2470,6 @@ void Surface::reconstructNormals(NormalTransform xform)
     detach();
 
     FloatImage * img = m->image;
-    img->expandNormals(0);
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
@@ -2357,8 +2507,6 @@ void Surface::reconstructNormals(NormalTransform xform)
         y = n.y;
         z = n.z;
     }
-
-    img->packNormals(0);
 }
 
 void Surface::toCleanNormalMap()
@@ -2367,8 +2515,6 @@ void Surface::toCleanNormalMap()
 
     detach();
 
-    m->image->expandNormals(0);
-
     const uint count = m->image->pixelCount();
     for (uint i = 0; i < count; i++) {
         float x = m->image->pixel(0, i);
@@ -2376,22 +2522,48 @@ void Surface::toCleanNormalMap()
 
         m->image->pixel(2, i) = x*x + y*y;
     }
-
-    m->image->packNormals(0);
 }
 
 // [-1,1] -> [ 0,1]
-void Surface::packNormals() {
+void Surface::packNormals(float scale/*= 0.5f*/, float bias/*= 0.5f*/) {
     if (isNull()) return;
     detach();
-    m->image->packNormals(0);
+    m->image->scaleBias(0, 3, scale, bias);
 }
 
 // [ 0,1] -> [-1,1]
-void Surface::expandNormals() {
+void Surface::expandNormals(float scale/*= 2.0f*/, float bias/*= - 2.0f * 127.0f / 255.0f*/) {
     if (isNull()) return;
     detach();
-    m->image->expandNormals(0);
+    m->image->scaleBias(0, 3, scale, bias);
+}
+
+
+// Create a Toksvig map for this normal map.
+// http://blog.selfshadow.com/2011/07/22/specular-showdown/
+// @@ Assumes this is a normal map expanded in the [-1, 1] range.
+Surface Surface::createToksvigMap(float power) const
+{
+    if (isNull()) return Surface();
+
+    // @@ TODO
+
+    return Surface();
+}
+
+// @@ Should I add support for LEAN maps? That requires 5 terms, which would have to be encoded in two textures.
+// There's nothing stopping us from having 5 channels in a surface, and then, let the user swizzle them as they wish.
+// CLEAN maps are probably more practical, though.
+// http://www.cs.umbc.edu/~olano/papers/lean/
+// http://gaim.umbc.edu/2011/07/24/shiny-and-clean/
+// http://gaim.umbc.edu/2011/07/26/on-error/
+NVTT_API Surface Surface::createCleanMap() const
+{
+    if (isNull()) return Surface();
+
+    // @@ TODO
+
+    return Surface();
 }
 
 
@@ -2422,7 +2594,7 @@ void Surface::flipZ()
     m->image->flipZ();
 }
 
-Surface Surface::subImage(int x0, int x1, int y0, int y1, int z0, int z1) const
+Surface Surface::createSubImage(int x0, int x1, int y0, int y1, int z0, int z1) const
 {
     Surface s;
 
@@ -2495,15 +2667,44 @@ bool Surface::addChannel(const Surface & srcImage, int srcChannel, int dstChanne
 
     dst = m->image;
 
-    const uint w = src->width();
-    const uint h = src->height();
-
     float * d = dst->channel(dstChannel);
     const float * s = src->channel(srcChannel);
 
     const uint count = src->pixelCount();
     for (uint i = 0; i < count; i++) {
         d[i] += s[i] * scale;
+    }
+
+    return true;
+}
+
+
+bool Surface::copy(const Surface & srcImage, int xsrc, int ysrc, int zsrc, int xsize, int ysize, int zsize, int xdst, int ydst, int zdst)
+{
+    if (xsrc < 0 || ysrc < 0 || zsrc < 0) return false;
+    if (xdst < 0 || ydst < 0 || zdst < 0) return false;
+
+    FloatImage * dst = m->image;
+    const FloatImage * src = srcImage.m->image;
+
+    if (toU32(xsrc + xsize) > src->width() || toU32(ysrc + ysize) > src->height() || toU32(zsrc + zsize) > src->depth()) return false;
+    if (toU32(xdst + xsize) > dst->width() || toU32(ydst + ysize) > dst->height() || toU32(zdst + zsize) > dst->depth()) return false;
+
+    detach();
+
+    // For each channel.
+    for(int i = 0; i < 4; i++) {
+        float * d = dst->channel(i);
+        const float * s = src->channel(i);
+
+        // Copy region from src to dst.
+        for (int z = 0; z < zsize; z++) {
+            for (int y = 0; y < ysize; y++) {
+                for (int x = 0; x < xsize; x++) {
+                    d[dst->index(xdst + x, ydst + y, zdst + z)] = s[src->index(xsrc + x, ysrc + y, zsrc + z)];
+                }
+            }
+        }
     }
 
     return true;

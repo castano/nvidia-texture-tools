@@ -35,12 +35,12 @@ namespace nv
         uint operator()(const char * str) const { return strHash(str); }
     };
 
-
     NVCORE_API uint strLen(const char * str) NV_PURE;
 
-    NVCORE_API int strCaseCmp(const char * s1, const char * s2) NV_PURE;
     NVCORE_API int strCmp(const char * s1, const char * s2) NV_PURE;
+    NVCORE_API int strCaseCmp(const char * s1, const char * s2) NV_PURE;
     NVCORE_API bool strEqual(const char * s1, const char * s2) NV_PURE; // Accepts NULL strings.
+    NVCORE_API bool strCaseEqual(const char * s1, const char * s2) NV_PURE; // Accepts NULL strings.
 
     template <> struct Equal<const char *> {
         bool operator()(const char * a, const char * b) const { return strEqual(a, b); }

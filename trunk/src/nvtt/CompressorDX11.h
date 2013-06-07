@@ -24,7 +24,7 @@
 #ifndef NVTT_COMPRESSORDX11_H
 #define NVTT_COMPRESSORDX11_H
 
-#include "CompressorDXT.h"
+#include "BlockCompressor.h"
 
 namespace nv
 {

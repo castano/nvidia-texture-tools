@@ -22,7 +22,7 @@ namespace nv
     NV_FORCEINLINE void Array<T>::push_back( const T & val )
     {
 #if 1
-        nvDebugCheck(&val < m_buffer || &val > m_buffer+m_size);
+        nvDebugCheck(&val < m_buffer || &val >= m_buffer+m_size);
 
         uint old_size = m_size;
         uint new_size = m_size + 1;
@@ -57,9 +57,10 @@ namespace nv
         push_back(val);
     }
     template <typename T>
-    NV_FORCEINLINE void Array<T>::append( const T & val )
+    NV_FORCEINLINE Array<T> & Array<T>::append( const T & val )
     {
         push_back(val);
+        return *this;
     }
 
     // Qt like push operator.

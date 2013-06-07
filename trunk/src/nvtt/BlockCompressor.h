@@ -22,8 +22,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef NVTT_COMPRESSORDXT_H
-#define NVTT_COMPRESSORDXT_H
+#ifndef NVTT_BLOCKCOMPRESSOR_H
+#define NVTT_BLOCKCOMPRESSOR_H
 
 #include "Compressor.h"
 
@@ -33,7 +33,7 @@ namespace nv
     struct ColorSet;
     struct ColorBlock;
 
-    struct FixedBlockCompressor : public CompressorInterface
+    struct ColorBlockCompressor : public CompressorInterface
     {
         virtual void compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * rgba, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
@@ -52,4 +52,4 @@ namespace nv
 } // nv namespace
 
 
-#endif // NVTT_COMPRESSORDXT_H
+#endif // NVTT_BLOCKCOMPRESSOR_H
