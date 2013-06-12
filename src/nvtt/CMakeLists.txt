@@ -9,7 +9,7 @@ SET(NVTT_SRCS
     nvtt_wrapper.h nvtt_wrapper.cpp
     ClusterFit.h ClusterFit.cpp
     Compressor.h
-    CompressorDXT.h CompressorDXT.cpp
+    BlockCompressor.h BlockCompressor.cpp
     CompressorDX9.h CompressorDX9.cpp
     CompressorDX10.h CompressorDX10.cpp
 #    CompressorDX11.h CompressorDX11.cpp
