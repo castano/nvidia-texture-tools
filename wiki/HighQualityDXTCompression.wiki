@@ -41,3 +41,10 @@ The basic idea is to compress a texture once, compute the difference between the
 http://research.microsoft.com/research/pubs/view.aspx?tr_id=1198
 
 https://www.cmpevents.com/GD08/a.asp?option=C&V=11&SessID=6221
+
+
+=== RGBV ===
+
+This is a variant of RGBM using two DXT1 blocks in order to get free alpha mask.
+
+http://files.wayforward.com/shane/rgbv/
