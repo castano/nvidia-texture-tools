@@ -138,7 +138,7 @@ void CompressionOptions::setPixelFormat(uint bitCount, uint rmask, uint gmask, u
 
 void CompressionOptions::setPixelFormat(uint8 rsize, uint8 gsize, uint8 bsize, uint8 asize)
 {
-    nvCheck(rsize <= 32 || gsize <= 32 || bsize <= 32 || asize <= 32);
+    nvCheck(rsize <= 32 && gsize <= 32 && bsize <= 32 && asize <= 32);
 
     m.bitcount = 0;
     m.rmask = 0;
