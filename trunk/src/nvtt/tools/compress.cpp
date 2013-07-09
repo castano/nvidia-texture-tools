@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        if (!dds.isSupported() || dds.isTexture3D())
+        if (!dds.isSupported())
         {
             fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
             return EXIT_FAILURE;
@@ -380,6 +380,13 @@ int main(int argc, char *argv[])
         {
             inputOptions.setTextureLayout(nvtt::TextureType_2D, dds.width(), dds.height());
             faceCount = 1;
+        }
+        else if (dds.isTexture3D())
+        {
+            inputOptions.setTextureLayout(nvtt::TextureType_3D, dds.width(), dds.height(), dds.depth());
+            faceCount = 1;
+
+            nvDebugBreak();
         }
         else 
         {
@@ -398,7 +405,7 @@ int main(int argc, char *argv[])
             {
                 dds.mipmap(&mipmap, f, m); // @@ Load as float.
 
-                inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), 1, f, m);
+                inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), mipmap.depth(), f, m);
             }
         }
     }
