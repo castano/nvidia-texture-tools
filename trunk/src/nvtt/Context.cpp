@@ -268,6 +268,9 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         if (!img.isNormalMap()) {
             img.toLinear(inputOptions.inputGamma);
         }
+        else {
+            img.expandNormals();
+        }
 
         // Resize input.
         img.resize(w, h, d, ResizeFilter_Box);
@@ -275,6 +278,9 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         nvtt::Surface tmp = img;
         if (!img.isNormalMap()) {
             tmp.toGamma(inputOptions.outputGamma);
+        }
+        else {
+            tmp.packNormals();
         }
 
         quantize(tmp, compressionOptions);
@@ -304,6 +310,9 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
                 if (!img.isNormalMap()) {
                     img.toLinear(inputOptions.inputGamma);
                 }
+                else {
+                    img.expandNormals();
+                }
             }
             else {
                 if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
@@ -323,6 +332,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
                     img.normalizeNormalMap();
                 }
                 tmp = img;
+                tmp.packNormals();
             }
             else {
                 tmp = img;
