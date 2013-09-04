@@ -10,6 +10,7 @@ namespace nv
     float rmsAlphaError(const FloatImage * img, const FloatImage * ref);
 
     float cieLabError(const FloatImage * img, const FloatImage * ref);
+    float cieLab94Error(const FloatImage * img, const FloatImage * ref);
     float spatialCieLabError(const FloatImage * img, const FloatImage * ref);
 
     float averageColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight);

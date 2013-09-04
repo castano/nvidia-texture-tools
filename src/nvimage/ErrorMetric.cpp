@@ -132,6 +132,9 @@ float nv::averageAlphaError(const FloatImage * img, const FloatImage * ref)
 }
 
 
+// Color space conversions based on:
+// http://www.brucelindbloom.com/
+
 // Assumes input is in *linear* sRGB color space.
 static Vector3 rgbToXyz(Vector3::Arg c)
 {
@@ -176,7 +179,7 @@ static float f(float t)
 {
     const float epsilon = powf(6.0f/29.0f, 3);
 
-    if (t < epsilon) {
+    if (t > epsilon) {
         return powf(t, 1.0f/3.0f);
     }
     else {
@@ -187,13 +190,12 @@ static float f(float t)
 static float finv(float t)
 {
     if (t > 6.0f / 29.0f) {
-        return powf(t, 3.0f);
-    }
-    else {
         return 3.0f * powf(6.0f / 29.0f, 2) * (t - 4.0f / 29.0f);
     }
+    else {
+        return powf(t, 3.0f);
+    }
 }
-
 
 static Vector3 xyzToCieLab(Vector3::Arg c)
 {
@@ -220,6 +222,12 @@ static Vector3 xyzToCieLab(Vector3::Arg c)
 static Vector3 rgbToCieLab(Vector3::Arg c)
 {
     return xyzToCieLab(rgbToXyz(toLinear(c)));
+}
+
+// h is hue-angle in radians
+static Vector3 cieLabToLCh(Vector3::Arg c)
+{
+    return Vector3(c.x, sqrtf(c.y*c.y + c.z*c.z), atan2f(c.y, c.z));
 }
 
 static void rgbToCieLab(const FloatImage * rgbImage, FloatImage * LabImage)
@@ -276,6 +284,58 @@ float nv::cieLabError(const FloatImage * img0, const FloatImage * img1)
         Vector3 delta = lab0 - lab1;
         
         error += length(delta);
+    }
+
+    return float(error / count);
+}
+
+// Assumes input images are in linear sRGB space.
+float nv::cieLab94Error(const FloatImage * img0, const FloatImage * img1)
+{
+    if (!sameLayout(img0, img1)) return FLT_MAX;
+    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
+
+    const float kL = 1;
+    const float kC = 1;
+    const float kH = 1;
+    const float k1 = 0.045f;
+    const float k2 = 0.015f;
+
+    const float sL = 1;
+
+    const float * r0 = img0->channel(0);
+    const float * g0 = img0->channel(1);
+    const float * b0 = img0->channel(2);
+
+    const float * r1 = img1->channel(0);
+    const float * g1 = img1->channel(1);
+    const float * b1 = img1->channel(2);
+
+    double error = 0.0f;
+
+    const uint count = img0->pixelCount();
+    for (uint i = 0; i < count; ++i)
+    {
+        Vector3 lab0 = rgbToCieLab(Vector3(r0[i], g0[i], b0[i]));
+        Vector3 lch0 = cieLabToLCh(lab0);
+        Vector3 lab1 = rgbToCieLab(Vector3(r1[i], g1[i], b1[i]));
+        Vector3 lch1 = cieLabToLCh(lab1);
+
+        const float sC = 1 + k1*lch0.x;
+        const float sH = 1 + k2*lch0.x;
+
+        // @@ Measure Delta E using the 1994 definition
+        Vector3 labDelta = lab0 - lab1;
+        Vector3 lchDelta = lch0 - lch1;
+
+        double deltaLsq = powf(lchDelta.x / (kL*sL), 2);
+        double deltaCsq = powf(lchDelta.y / (kC*sC), 2);
+
+        // avoid possible sqrt of negative value by computing (deltaH/(kH*sH))^2
+        double deltaHsq = powf(labDelta.y, 2) + powf(labDelta.z, 2) - powf(lchDelta.y, 2);
+        deltaHsq /= powf(kH*sH, 2);
+
+        error += sqrt(deltaLsq + deltaCsq + deltaHsq);
     }
 
     return float(error / count);
