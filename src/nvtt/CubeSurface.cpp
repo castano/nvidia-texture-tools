@@ -368,18 +368,104 @@ bool CubeSurface::save(const char * fileName) const
     return false;
 }
 
+struct ivec2 {
+    uint x;
+    uint y;
+};
+//                                                   posx    negx    posy    negy    posz    negz
+static const ivec2 foldOffsetVerticalCross[6]   = { {2, 1}, {0, 1}, {1, 0}, {1, 2}, {1, 1}, {1, 3} };
+static const ivec2 foldOffsetHorizontalCross[6] = { {2, 1}, {0, 1}, {1, 0}, {1, 2}, {1, 1}, {3, 1} };
+static const ivec2 foldOffsetColumn[6]          = { {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4}, {0, 5} };
+static const ivec2 foldOffsetRow[6]             = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0} };
 
 void CubeSurface::fold(const Surface & tex, CubeLayout layout)
 {
-    // @@ TODO
+    ivec2 const* offsets = 0;
+    uint edgeLength;
+
+    switch(layout) {
+        case CubeLayout_LatitudeLongitude:
+        case CubeLayout_VerticalCross:
+            edgeLength = tex.height() / 4;
+            offsets = foldOffsetVerticalCross;
+            break;
+        case CubeLayout_HorizontalCross:
+            edgeLength = tex.width() / 4;
+            offsets = foldOffsetHorizontalCross;
+            break;
+        case CubeLayout_Column:
+            edgeLength = tex.width();
+            offsets = foldOffsetColumn;
+            break;
+        case CubeLayout_Row:
+            edgeLength = tex.height();
+            offsets = foldOffsetRow;
+            break;
+    }
+
+    m->edgeLength = edgeLength;
+    for(uint f = 0; f < 6; f++) {
+        uint x = offsets[f].x * edgeLength;
+        uint y = offsets[f].y * edgeLength;
+        m->face[f] = tex.createSubImage(x, x + edgeLength - 1, y, y + edgeLength - 1, 0, 0);
+    }
+
+    if(layout == CubeLayout_VerticalCross || layout == CubeLayout_LatitudeLongitude) {
+        // Back face needs to be rotated 180 degrees
+        m->face[5].flipX();
+        m->face[5].flipY();
+    }
 }
 
 Surface CubeSurface::unfold(CubeLayout layout) const
 {
-    // @@ TODO
-    return Surface();
-}
+    ivec2 const* offsets = 0;
+    uint edgeLength = m->edgeLength;
+    uint width;
+    uint height;
 
+    switch(layout) {
+        case CubeLayout_LatitudeLongitude:
+        case CubeLayout_VerticalCross:
+            offsets = foldOffsetVerticalCross;
+            width = 3 * edgeLength;
+            height = 4 * edgeLength;
+            // Back face needs to be rotated 180 degrees
+            m->face[5].flipX();
+            m->face[5].flipY();
+            break;
+        case CubeLayout_HorizontalCross:
+            offsets = foldOffsetHorizontalCross;
+            width = 4 * edgeLength;
+            height = 3 * edgeLength;
+            break;
+        case CubeLayout_Column:
+            offsets = foldOffsetColumn;
+            width = edgeLength;
+            height = 6 * edgeLength;
+            break;
+        case CubeLayout_Row:
+            offsets = foldOffsetRow;
+            width = 6 * edgeLength;
+            height = edgeLength;
+            break;
+    }
+
+    Surface surface;
+    surface.setImage(width, height, 1);
+    for(uint f = 0; f < 6; f++) {
+        uint x = offsets[f].x * edgeLength;
+        uint y = offsets[f].y * edgeLength;
+        surface.copy(m->face[f], 0, 0, 0, edgeLength, edgeLength, 1, x, y, 0);
+    }
+
+    if(layout == CubeLayout_VerticalCross || layout == CubeLayout_LatitudeLongitude) {
+        // Undo back face rotation
+        m->face[5].flipY();
+        m->face[5].flipX();
+    }
+    return surface;
+}
 
 float CubeSurface::average(int channel) const
 {
