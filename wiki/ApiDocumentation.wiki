@@ -547,7 +547,7 @@ The output handler is an interface that defines these three methods:
 {{{
 virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel) = 0;
 virtual bool writeData(const void * data, int size) = 0;
-virtual void endImage() = 0;
+virtual void endImage() = 0;                                                                      // NVTT 2.1
 }}}
 
 Applications need to implement this interface in order to receive compressed textures from the compressor. The `writeData` method is first called with the contents of the texture header, and after that, the compressor calls `beginImage` and `endImage` to delimitate the data that corresponds to each image of the texture. You can use these two methods for example to allocate and deallocate temporary memory to hold the data 
