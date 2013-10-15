@@ -14,15 +14,11 @@ http://www.reedbeta.com/blog/2012/02/12/understanding-bcn-texture-compression-fo
 = Compressors =
 
   * NVIDIA Compressors written by Walt Donovan:
-
-https://code.google.com/p/nvidia-texture-tools/downloads/detail?name=bc6h_export.zip
-https://code.google.com/p/nvidia-texture-tools/downloads/detail?name=bc7_export.zip
+    * https://code.google.com/p/nvidia-texture-tools/downloads/detail?name=bc6h_export.zip
+    * https://code.google.com/p/nvidia-texture-tools/downloads/detail?name=bc7_export.zip
 
   * Volition GPU Compressor:
-
-https://github.com/volition-inc/bc7_gpu
+    * https://github.com/volition-inc/bc7_gpu
 
   * http://gamma.cs.unc.edu/FasTC/
-
-
 
