@@ -1920,6 +1920,13 @@ __global__ void compressDXT5n(uint blockNum, uint2 * d_result)
 // Setup kernel
 ////////////////////////////////////////////////////////////////////////////////
 
+extern "C" void setupOMatchTables(const void * OMatch5Src, size_t OMatch5Size, const void * OMatch6Src, size_t OMatch6Size)
+{
+    // Init single color lookup contant tables.
+    cudaMemcpyToSymbol(OMatch5, OMatch5Src, OMatch5Size, 0, cudaMemcpyHostToDevice);
+    cudaMemcpyToSymbol(OMatch6, OMatch6Src, OMatch6Size, 0, cudaMemcpyHostToDevice);
+}
+
 extern "C" void setupCompressKernel(const float weights[3])
 {
     // Set constants.

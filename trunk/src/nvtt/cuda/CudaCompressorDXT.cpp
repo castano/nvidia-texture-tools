@@ -44,6 +44,7 @@
 
 #define MAX_BLOCKS 8192U // 32768, 65535 // @@ Limit number of blocks on slow devices to prevent hitting the watchdog timer.
 
+extern "C" void setupOMatchTables(const void * OMatch5Src, size_t OMatch5Size, const void * OMatch6Src, size_t OMatch6Size);
 extern "C" void setupCompressKernel(const float weights[3]);
 extern "C" void bindTextureToArray(cudaArray * d_data);
 
@@ -88,9 +89,7 @@ CudaContext::CudaContext() :
     cudaMalloc((void**) &result, MAX_BLOCKS * 8U);
 
     // Init single color lookup contant tables.
-    cudaMemcpyToSymbol("OMatch5", OMatch5, sizeof(OMatch5), 0, cudaMemcpyHostToDevice);
-    cudaMemcpyToSymbol("OMatch6", OMatch6, sizeof(OMatch6), 0, cudaMemcpyHostToDevice);
-
+	setupOMatchTables(OMatch5, sizeof(OMatch5), OMatch6, sizeof(OMatch6));
 #endif
 }
 
