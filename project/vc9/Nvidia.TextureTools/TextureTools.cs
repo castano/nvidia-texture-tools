@@ -31,7 +31,15 @@ namespace Nvidia.TextureTools
 		BC3n = DXT5n,
 		BC4,
 		BC5,
-	}
+
+        DXT1n,   // Not supported on CPU yet.
+        CTX1,    // Not supported on CPU yet.
+
+        BC6,
+        BC7,     // Not supported yet.
+
+        DXT1_Luma,
+    }
 	#endregion
 
 	#region public enum Quality

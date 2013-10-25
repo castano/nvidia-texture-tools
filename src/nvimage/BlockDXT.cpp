@@ -26,6 +26,10 @@
 
 #include "nvcore/Stream.h"
 #include "nvcore/Utils.h" // swap
+#include "nvmath/Half.h"
+
+#include "nvtt/bc6h/zoh.h"
+#include "nvtt/bc6h/utils.h"
 
 
 using namespace nv;
@@ -610,6 +614,33 @@ void BlockCTX1::setIndices(int * idx)
 }
 
 
+/// Decode BC6 block.
+void BlockBC6::decodeBlock(ColorSet * set) const
+{
+	Tile tile(4, 4);
+	ZOH::decompress((const char *)data, tile);
+
+	// Convert ZOH's tile struct back to NVTT's, and convert half to float.
+	set->allocate(4, 4);
+	for (uint y = 0; y < 4; ++y)
+	{
+		for (uint x = 0; x < 4; ++x)
+		{
+			uint16 rHalf = Tile::float2half(tile.data[y][x].x);
+			uint16 gHalf = Tile::float2half(tile.data[y][x].y);
+			uint16 bHalf = Tile::float2half(tile.data[y][x].z);
+			set->colors[y * 4 + x].x = to_float(rHalf);
+			set->colors[y * 4 + x].y = to_float(gHalf);
+			set->colors[y * 4 + x].z = to_float(bHalf);
+			set->colors[y * 4 + x].w = 1.0f;
+
+			// Set indices in case someone uses them
+			set->indices[y * 4 + x] = y * 4 + x;
+		}
+	}
+}
+
+
 /// Flip CTX1 block vertically.
 inline void BlockCTX1::flip4()
 {
@@ -671,3 +702,8 @@ Stream & nv::operator<<(Stream & stream, BlockCTX1 & block)
     return stream;
 }
 
+Stream & nv::operator<<(Stream & stream, BlockBC6 & block)
+{
+    stream.serialize(&block, sizeof(block));
+    return stream;
+}

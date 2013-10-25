@@ -29,8 +29,8 @@ void ZOH::compress(const Tile &t, char *block)
 {
 	char oneblock[ZOH::BLOCKSIZE], twoblock[ZOH::BLOCKSIZE];
 
-	double mseone = ZOH::compressone(t, oneblock);
-	double msetwo = ZOH::compresstwo(t, twoblock);
+	float mseone = ZOH::compressone(t, oneblock);
+	float msetwo = ZOH::compresstwo(t, twoblock);
 
 	if (mseone <= msetwo)
 		memcpy(block, oneblock, ZOH::BLOCKSIZE);

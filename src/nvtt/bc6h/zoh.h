@@ -55,16 +55,16 @@ public:
 	static void compress(const Tile &t, char *block);
 	static void decompress(const char *block, Tile &t);
 
-	static double compressone(const Tile &t, char *block);
-	static double compresstwo(const Tile &t, char *block);
+	static float compressone(const Tile &t, char *block);
+	static float compresstwo(const Tile &t, char *block);
 	static void decompressone(const char *block, Tile &t);
 	static void decompresstwo(const char *block, Tile &t);
 
-	static double refinetwo(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_TWO], char *block);
-	static double roughtwo(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_TWO]);
+	static float refinetwo(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_TWO], char *block);
+	static float roughtwo(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_TWO]);
 
-	static double refineone(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_ONE], char *block);
-	static double roughone(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_ONE]);
+	static float refineone(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_ONE], char *block);
+	static float roughone(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_ONE]);
 
 	static bool isone(const char *block);
 };

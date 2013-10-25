@@ -18,8 +18,8 @@ See the License for the specific language governing permissions and limitations 
 
 using namespace nv;
 
-static int denom7_weights_64[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
-static int denom15_weights_64[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64
+static const int denom7_weights_64[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
+static const int denom15_weights_64[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64
 
 /*static*/ Format Utils::FORMAT;
 
@@ -28,7 +28,8 @@ int Utils::lerp(int a, int b, int i, int denom)
 	nvDebugCheck (denom == 3 || denom == 7 || denom == 15);
 	nvDebugCheck (i >= 0 && i <= denom);
 
-	int round = 32, shift = 6, *weights;
+	int round = 32, shift = 6;
+	const int *weights;
 
 	switch(denom)
 	{
@@ -46,7 +47,8 @@ Vector3 Utils::lerp(const Vector3& a, const Vector3 &b, int i, int denom)
 	nvDebugCheck (denom == 3 || denom == 7 || denom == 15);
 	nvDebugCheck (i >= 0 && i <= denom);
 
-	int shift = 6, *weights;
+	int shift = 6;
+	const int *weights;
 
 	switch(denom)
 	{
@@ -57,7 +59,7 @@ Vector3 Utils::lerp(const Vector3& a, const Vector3 &b, int i, int denom)
 	}
 
 	// no need to round these as this is an exact division
-	return (a*weights[denom-i] +b*weights[i]) / float(1 << shift);
+	return (a*float(weights[denom-i]) +b*float(weights[i])) / float(1 << shift);
 }
 
 
@@ -254,117 +256,12 @@ int Utils::unquantize(int q, int prec)
 	return unq;
 }
 
-static int clamp(double r, double low, double high)
-{
-	if (r < low) return low;
-	else if (r > high) return high;
-	else return r;
-}
 
-
-// match the tonemapping function used by exrdisplay
-/*static void tonemap(const Vector3 &in, double exposure, Vector3 &out)
-{
-    double r,g,b;
-    unsigned short h;
-
-	// convert from bit pattern back to half and then to double
-	h = in.x;	r = h;
-	h = in.y;	g = h;
-	h = in.z;	b = h;
-
-    //  1) Compensate for fogging by subtracting defog
-    //     from the raw pixel values.
-    // Response: We work with defog of 0.0, so this is a no-op
-
-    //  2) Multiply the defogged pixel values by
-    //     2^(exposure + 2.47393).
-	double exposure_scale = pow(2.0, exposure + 2.47393);
-    r *= exposure_scale;
-    g *= exposure_scale;
-    b *= exposure_scale;
-
-    //  3) Values, which are now 1.0, are called "middle gray".
-    //     If defog and exposure are both set to 0.0, then
-    //     middle gray corresponds to a raw pixel value of 0.18.
-    //     In step 6, middle gray values will be mapped to an
-    //     intensity 3.5 f-stops below the display's maximum
-    //     intensity.
-    // Response: no apparent content.
-
-    //  4) Apply a knee function.  The knee function has two
-    //     parameters, kneeLow and kneeHigh.  Pixel values
-    //     below 2^kneeLow are not changed by the knee
-    //     function.  Pixel values above kneeLow are lowered
-    //     according to a logarithmic curve, such that the
-    //     value 2^kneeHigh is mapped to 2^3.5 (in step 6,
-    //     this value will be mapped to the the display's
-    //     maximum intensity).
-    // Response: kneeLow = 0.0 (2^0.0 => 1); kneeHigh = 5.0 (2^5 =>32)
-    if (r > 1.0)
-        r = 1.0 + log ((r-1.0) * 0.184874 + 1) / 0.184874;
-    if (g > 1.0)
-        g = 1.0 + log ((g-1.0) * 0.184874 + 1) / 0.184874;
-    if (b > 1.0)
-        b = 1.0 + log ((b-1.0) * 0.184874 + 1) / 0.184874;
-//
-//  5) Gamma-correct the pixel values, assuming that the
-//     screen's gamma is 0.4545 (or 1/2.2).
-    r = pow (r, 0.4545);
-    g = pow (g, 0.4545);
-    b = pow (b, 0.4545);
-
-//  6) Scale the values such that pixels middle gray
-//     pixels are mapped to 84.66 (or 3.5 f-stops below
-//     the display's maximum intensity).
-//
-//  7) Clamp the values to [0, 255].
-    r *= 84.66f;
-    g *= 84.66f;
-    b *= 84.66f;
-
-    out.x = clamp (r, 0, 255);
-    out.y = clamp (g, 0, 255);
-    out.z = clamp (b, 0, 255);
-}*/
-
-static void mpsnrmap(const Vector3 &in, int exposure, Vector3 &out)
-{
-    double r,g,b;
-    uint16 h;
-
-	// convert from bit pattern back to half and then to double
-	h = in.x;	r = h;
-	h = in.y;	g = h;
-	h = in.z;	b = h;
-
-	nvDebugCheck (exposure > -32 && exposure < 32);
-	if (exposure > 0)
-	{
-		r *= 1 << exposure;
-		g *= 1 << exposure;
-		b *= 1 << exposure;
-	}
-	else if (exposure < 0)
-	{
-		exposure = -exposure;
-		r /= 1 << exposure;
-		g /= 1 << exposure;
-		b /= 1 << exposure;
-	}
-    r = 255 * pow (r, 0.4545);
-    g = 255 * pow (g, 0.4545);
-    b = 255 * pow (b, 0.4545);
-
-    out.x = clamp (r, 0, 255);
-    out.y = clamp (g, 0, 255);
-    out.z = clamp (b, 0, 255);
-}
 
 // pick a norm!
 #define	NORM_EUCLIDEAN 1
 
-double Utils::norm(const Vector3 &a, const Vector3 &b)
+float Utils::norm(const Vector3 &a, const Vector3 &b)
 {
 #ifdef	NORM_EUCLIDEAN
 	return lengthSquared(a - b);
@@ -373,45 +270,6 @@ double Utils::norm(const Vector3 &a, const Vector3 &b)
 	Vector3 err = a - b;
 	return fabs(err.x) + fabs(err.y) + fabs(err.z);
 #endif
-#ifdef	NORM_EUCLIDEAN_EXPOSURE_UNWEIGHED
-	double toterr = 0;
-	Vector3 mapa, mapb, err;
-	for (int i=-6; i <= 6; i += 3)			// figure how many exposure samples needed. I'd argue if you take too many it's same as euclidean
-	{
-		tonemap(a, i, mapa);
-		tonemap(b, i, mapb);
-		err = mapa - mapb;
-		toterr += err * err;
-	}
-	return toterr;
-#endif
-#ifdef	NORM_EUCLIDEAN_EXPOSURE_WEIGHED
-	double toterr = 0;
-	Vector3 mapa, mapb, err;
-	double rwt = 0.299;
-	double gwt = 0.587;
-	double bwt = 0.114;
-	for (int i=-6; i <= 6; i += 3)			// figure how many exposure samples needed. I'd argue if you take too many it's same as euclidean
-	{
-		tonemap(a, i, mapa);
-		tonemap(b, i, mapb);
-		mapa.x *= rwt; mapa.y *= gwt; mapa.z *= bwt;
-		mapb.x *= rwt; mapb.y *= gwt; mapb.z *= bwt;
-		err = mapa - mapb;
-		toterr += err * err;
-	}
-	return toterr;
-#endif
-}
-
-double Utils::mpsnr_norm(const Vector3 &a, int exposure, const Vector3 &b)
-{
-	Vector3 mapa, mapb;
-
-	mpsnrmap(a, exposure, mapa);
-	mpsnrmap(b, exposure, mapb);
-
-	return lengthSquared(mapa - mapb);
 }
 
 // parse <name>[<start>{:<end>}]{,}	

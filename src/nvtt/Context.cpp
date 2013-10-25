@@ -485,32 +485,32 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             else
             {
                 if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
-                    header.setDX10Format(70); // DXGI_FORMAT_BC1_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC1_UNORM);
                     if (compressionOptions.format == Format_DXT1a) header.setHasAlphaFlag(true);
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_DXT3) {
-                    header.setDX10Format(73); // DXGI_FORMAT_BC2_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC2_UNORM);
                 }
                 else if (compressionOptions.format == Format_DXT5) {
-                    header.setDX10Format(76); // DXGI_FORMAT_BC3_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC3_UNORM);
                 }
                 else if (compressionOptions.format == Format_DXT5n) {
-                    header.setDX10Format(76); // DXGI_FORMAT_BC3_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC3_UNORM);
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_BC4) {
-                    header.setDX10Format(79); // DXGI_FORMAT_BC4_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC4_UNORM);
                 }
                 else if (compressionOptions.format == Format_BC5) {
-                    header.setDX10Format(82); // DXGI_FORMAT_BC5_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC5_UNORM);
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_BC6) {
-                    header.setDX10Format(94); // DXGI_FORMAT_BC6H_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC6H_UF16);
                 }
                 else if (compressionOptions.format == Format_BC7) {
-                    header.setDX10Format(97); // DXGI_FORMAT_BC7_TYPELESS
+                    header.setDX10Format(DXGI_FORMAT_BC7_UNORM);
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else {
@@ -771,11 +771,12 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     }
     else if (compressionOptions.format == Format_BC6)
     {
-        // Not supported.
+        return new CompressorBC6;
     }
     else if (compressionOptions.format == Format_BC7)
     {
-        // Not supported.
+		// !!!UNDONE
+        //return new CompressorBC7;
     }
 
     return NULL;

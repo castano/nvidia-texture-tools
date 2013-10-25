@@ -17,13 +17,16 @@ namespace nv
         Vector3 computeCovariance(int n, const Vector3 * points, float * covariance);
         Vector3 computeCovariance(int n, const Vector3 * points, const float * weights, const Vector3 & metric, float * covariance);
 
-        Vector3 computePrincipalComponent(int n, const Vector3 * points);
-        Vector3 computePrincipalComponent(int n, const Vector3 * points, const float * weights, const Vector3 & metric);
+        Vector3 computePrincipalComponent_PowerMethod(int n, const Vector3 * points);
+        Vector3 computePrincipalComponent_PowerMethod(int n, const Vector3 * points, const float * weights, const Vector3 & metric);
+
+        Vector3 computePrincipalComponent_EigenSolver(int n, const Vector3 * points);
+        Vector3 computePrincipalComponent_EigenSolver(int n, const Vector3 * points, const float * weights, const Vector3 & metric);
 
         Plane bestPlane(int n, const Vector3 * points);
         bool isPlanar(int n, const Vector3 * points, float epsilon = NV_EPSILON);
 
-        bool eigenSolveSymmetric (float matrix[6], float eigenValues[3], Vector3 eigenVectors[3]);
+        bool eigenSolveSymmetric (const float matrix[6], float eigenValues[3], Vector3 eigenVectors[3]);
 
 
         // Returns number of clusters [1-4].

@@ -24,8 +24,11 @@
 
 #include "CompressorDX11.h"
 
+#include <cstring>
 #include "nvtt.h"
 #include "CompressionOptions.h"
+#include "nvimage/ColorBlock.h"
+#include "nvmath/Half.h"
 
 #include "bc6h/zoh.h"
 #include "bc6h/utils.h"
@@ -52,7 +55,26 @@ void CompressorBC6::compressBlock(ColorSet & tile, AlphaMode alphaMode, const Co
         Utils::FORMAT = SIGNED_F16;
     }
 
-    ZOH::compress(tile, (char *)output);
+	// Convert NVTT's tile struct to ZOH's, and convert float to half.
+	Tile zohTile(tile.w, tile.h);
+	memset(zohTile.data, 0, sizeof(zohTile.data));
+	memset(zohTile.importance_map, 0, sizeof(zohTile.importance_map));
+	for (uint y = 0; y < tile.h; ++y)
+	{
+		for (uint x = 0; x < tile.w; ++x)
+		{
+			Vector3 color = tile.color(x, y).xyz();
+			uint16 rHalf = to_half(color.x);
+			uint16 gHalf = to_half(color.y);
+			uint16 bHalf = to_half(color.z);
+			zohTile.data[y][x].x = Tile::half2float(rHalf);
+			zohTile.data[y][x].y = Tile::half2float(gHalf);
+			zohTile.data[y][x].z = Tile::half2float(bHalf);
+			zohTile.importance_map[y][x] = 1.0f;
+		}
+	}
+
+    ZOH::compress(zohTile, (char *)output);
 }
 
 

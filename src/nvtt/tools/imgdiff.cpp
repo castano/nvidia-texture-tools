@@ -182,11 +182,10 @@ int main(int argc, char *argv[])
 		{
 			compareNormal = true;
 		}
-		if (strcmp("-alpha", argv[i]) == 0)
+		else if (strcmp("-alpha", argv[i]) == 0)
 		{
 			compareAlpha = true;
 		}
-
 		else if (argv[i][0] != '-')
 		{
 			input0 = argv[i];
@@ -196,6 +195,10 @@ int main(int argc, char *argv[])
 			}
 
 			break;
+		}
+		else
+		{
+			printf("Warning: unrecognized option \"%s\"\n", argv[i]);
 		}
 	}
 

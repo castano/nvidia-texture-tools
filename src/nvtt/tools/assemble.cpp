@@ -83,6 +83,10 @@ int main(int argc, char *argv[])
 		{
 			files.append(argv[i]);
 		}
+		else
+		{
+			printf("Warning: unrecognized option \"%s\"\n", argv[i]);
+		}
 	}
 	
 	if (files.count() == 0)
