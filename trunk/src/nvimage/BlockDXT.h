@@ -32,6 +32,7 @@
 namespace nv
 {
     struct ColorBlock;
+	struct ColorSet;
     class Stream;
 
 
@@ -212,6 +213,15 @@ namespace nv
         void flip2();
     };
 
+	/// BC6 block.
+	struct BlockBC6
+	{
+		uint8 data[16];		// Not even going to try to write a union for this thing.
+		void decodeBlock(ColorSet * set) const;
+	};
+
+	/// !!!UNDONE: BC7 block
+
 
     // Serialization functions.
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT1 & block);
@@ -222,6 +232,7 @@ namespace nv
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI1 & block);
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI2 & block);
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockCTX1 & block);
+    NVIMAGE_API Stream & operator<<(Stream & stream, BlockBC6 & block);
 
 } // nv namespace
 

@@ -57,14 +57,14 @@ void ClusterFit::setColourSet(const ColorSet * set)
         values[i] = set->colors[i].xyz();
     }
 
-    Vector3 principle = Fit::computePrincipalComponent(m_count, values, set->weights, metric);
+    Vector3 principal = Fit::computePrincipalComponent_PowerMethod(m_count, values, set->weights, metric);
 
     // build the list of values
     int order[16];
     float dps[16];
     for (uint i = 0; i < m_count; ++i)
     {
-        dps[i] = dot(values[i], principle);
+        dps[i] = dot(values[i], principal);
         order[i] = i;
     }
 

@@ -19,7 +19,7 @@ See the License for the specific language governing permissions and limitations 
 #define NSHAPES 64
 #define SHAPEBITS 6
 
-static int shapes[NSHAPES*16] = 
+static const int shapes[NSHAPES*16] = 
 {
 0, 0, 1, 1,   0, 0, 0, 1,   0, 1, 1, 1,   0, 0, 0, 1,   
 0, 0, 1, 1,   0, 0, 0, 1,   0, 1, 1, 1,   0, 0, 1, 1,   
@@ -105,7 +105,7 @@ static int shapes[NSHAPES*16] =
 
 #define	REGION(x,y,si)	shapes[((si)&3)*4+((si)>>2)*64+(x)+(y)*16]
 
-static int shapeindex_to_compressed_indices[NSHAPES*2] = 
+static const int shapeindex_to_compressed_indices[NSHAPES*2] = 
 {
 	0,15,  0,15,  0,15,  0,15,
 	0,15,  0,15,  0,15,  0,15,

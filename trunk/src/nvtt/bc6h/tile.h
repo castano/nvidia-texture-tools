@@ -23,7 +23,7 @@ See the License for the specific language governing permissions and limitations 
 //#define	USE_IMPORTANCE_MAP	1		// define this if you want to increase importance of some pixels in tile
 class Tile
 {
-private:
+public:
 	// NOTE: this returns the appropriately-clamped BIT PATTERN of the half as an INTEGRAL float value
 	static float half2float(uint16 h)
 	{
@@ -67,7 +67,6 @@ private:
 	}
 #endif
 
-public:
 	Tile() {};
 	~Tile(){};
 	Tile(int xs, int ys) {size_x = xs; size_y = ys;}

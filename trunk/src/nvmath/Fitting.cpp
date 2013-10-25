@@ -13,7 +13,7 @@ using namespace nv;
 // @@ Move to EigenSolver.h
 
 // @@ We should be able to do something cheaper...
-static Vector3 estimatePrincipleComponent(const float * __restrict matrix)
+static Vector3 estimatePrincipalComponent(const float * __restrict matrix)
 {
 	const Vector3 row0(matrix[0], matrix[1], matrix[2]);
 	const Vector3 row1(matrix[1], matrix[3], matrix[4]);
@@ -36,7 +36,7 @@ static inline Vector3 firstEigenVector_PowerMethod(const float *__restrict matri
         return Vector3(0.0f);
     }
 
-    Vector3 v = estimatePrincipleComponent(matrix);
+    Vector3 v = estimatePrincipalComponent(matrix);
 
     const int NUM = 8;
     for (int i = 0; i < NUM; i++)
@@ -136,7 +136,7 @@ Vector3 nv::Fit::computeCovariance(int n, const Vector3 *__restrict points, cons
     return centroid;
 }
 
-Vector3 nv::Fit::computePrincipalComponent(int n, const Vector3 *__restrict points)
+Vector3 nv::Fit::computePrincipalComponent_PowerMethod(int n, const Vector3 *__restrict points)
 {
     float matrix[6];
     computeCovariance(n, points, matrix);
@@ -144,13 +144,49 @@ Vector3 nv::Fit::computePrincipalComponent(int n, const Vector3 *__restrict poin
     return firstEigenVector_PowerMethod(matrix);
 }
 
-Vector3 nv::Fit::computePrincipalComponent(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
+Vector3 nv::Fit::computePrincipalComponent_PowerMethod(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
 {
     float matrix[6];
     computeCovariance(n, points, weights, metric, matrix);
 
     return firstEigenVector_PowerMethod(matrix);
 }
+
+
+
+static inline Vector3 firstEigenVector_EigenSolver(const float *__restrict matrix)
+{
+    if (matrix[0] == 0 && matrix[3] == 0 && matrix[5] == 0)
+    {
+        return Vector3(0.0f);
+    }
+
+    float eigenValues[3];
+    Vector3 eigenVectors[3];
+	if (!nv::Fit::eigenSolveSymmetric(matrix, eigenValues, eigenVectors))
+	{
+		return Vector3(0.0f);
+	}
+
+	return eigenVectors[0];
+}
+
+Vector3 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector3 *__restrict points)
+{
+    float matrix[6];
+    computeCovariance(n, points, matrix);
+
+    return firstEigenVector_EigenSolver(matrix);
+}
+
+Vector3 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
+{
+    float matrix[6];
+    computeCovariance(n, points, weights, metric, matrix);
+
+    return firstEigenVector_EigenSolver(matrix);
+}
+
 
 
 Plane nv::Fit::bestPlane(int n, const Vector3 *__restrict points)
@@ -199,7 +235,7 @@ bool nv::Fit::isPlanar(int n, const Vector3 * points, float epsilon/*=NV_EPSILON
 static void EigenSolver_Tridiagonal(double mat[3][3],double * diag,double * subd);
 static bool EigenSolver_QLAlgorithm(double mat[3][3],double * diag,double * subd);
 
-bool nv::Fit::eigenSolveSymmetric(float matrix[6], float eigenValues[3], Vector3 eigenVectors[3])
+bool nv::Fit::eigenSolveSymmetric(const float matrix[6], float eigenValues[3], Vector3 eigenVectors[3])
 {
     nvDebugCheck(matrix != NULL && eigenValues != NULL && eigenVectors != NULL);
 

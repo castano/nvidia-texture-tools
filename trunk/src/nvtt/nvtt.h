@@ -101,7 +101,7 @@ namespace nvtt
         Format_DXT1n,   // Not supported on CPU yet.
         Format_CTX1,    // Not supported on CPU yet.
 
-        Format_BC6,     // Not supported yet.
+        Format_BC6,
         Format_BC7,     // Not supported yet.
 
         Format_DXT1_Luma,
@@ -503,7 +503,7 @@ namespace nvtt
         NVTT_API void fill(float r, float g, float b, float a);
         NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
         NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
-        NVTT_API void fromRGBM(float range = 1.0f);
+        NVTT_API void fromRGBM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void toLM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void toRGBE(int mantissaBits, int exponentBits);
         NVTT_API void fromRGBE(int mantissaBits, int exponentBits);

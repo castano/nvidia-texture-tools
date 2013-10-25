@@ -33,7 +33,7 @@ using namespace nv;
 
 #define	NSHAPES	1
 
-static int shapes[NSHAPES] =
+static const int shapes[NSHAPES] =
 {
     0x0000
 };	// only 1 shape
@@ -64,7 +64,7 @@ struct Pattern
 
 #define	NPATTERNS 4
 
-static Pattern patterns[NPATTERNS] =
+static const Pattern patterns[NPATTERNS] =
 {
     16,4,  16,4,  16,4,   1, 0x0f, 5, "bw[10],bw[11],bw[12],bw[13],bw[14],bw[15],bx[3:0],gw[10],gw[11],gw[12],gw[13],gw[14],gw[15],gx[3:0],rw[10],rw[11],rw[12],rw[13],rw[14],rw[15],rx[3:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
     12,8,  12,8,  12,8,   1, 0x0b, 5, "bw[10],bw[11],bx[7:0],gw[10],gw[11],gx[7:0],rw[10],rw[11],rx[7:0],bw[9:0],gw[9:0],rw[9:0],m[4:0]",
@@ -73,7 +73,7 @@ static Pattern patterns[NPATTERNS] =
 };
 
 // mapping of mode to the corresponding index in pattern
-static int mode_to_pat[MAXMODES] = {
+static const int mode_to_pat[MAXMODES] = {
     -1,-1,-1,
     3,	// 0x03
     -1,-1,-1,
@@ -199,12 +199,13 @@ static void write_header(const ComprEndpts endpts[NREGIONS_ONE], const Pattern &
     int rw = endpts[0].A[0], rx = endpts[0].B[0];
     int gw = endpts[0].A[1], gx = endpts[0].B[1];
     int bw = endpts[0].A[2], bx = endpts[0].B[2];
-    int ptr = strlen(p.encoding);
+    int ptr = int(strlen(p.encoding));
     while (ptr)
     {
         Field field;
         int endbit, len;
 
+		// !!!UNDONE: get rid of string parsing!!!
         Utils::parse(p.encoding, ptr, field, endbit, len);
         switch(field)
         {
@@ -252,13 +253,14 @@ static void read_header(Bits &in, ComprEndpts endpts[NREGIONS_ONE], Pattern &p)
     gw = gx = 0;
     bw = bx = 0;
 
-    int ptr = strlen(p.encoding);
+    int ptr = int(strlen(p.encoding));
 
     while (ptr)
     {
         Field field;
         int endbit, len;
 
+		// !!!UNDONE: get rid of string parsing!!!
         Utils::parse(p.encoding, ptr, field, endbit, len);
 
         switch(field)
@@ -322,21 +324,21 @@ static void generate_palette_quantized(const IntEndpts &endpts, int prec, Vector
 
     // interpolate
     for (int i = 0; i < NINDICES; ++i)
-        palette[i].x = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
+        palette[i].x = float(Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec));
 
     a = Utils::unquantize(endpts.A[1], prec);
     b = Utils::unquantize(endpts.B[1], prec);
 
     // interpolate
     for (int i = 0; i < NINDICES; ++i)
-        palette[i].y = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
+        palette[i].y = float(Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec));
 
     a = Utils::unquantize(endpts.A[2], prec);
     b = Utils::unquantize(endpts.B[2], prec);
 
     // interpolate
     for (int i = 0; i < NINDICES; ++i)
-        palette[i].z = Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec);
+        palette[i].z = float(Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec));
 }
 
 // position 0 was compressed
@@ -382,17 +384,17 @@ void ZOH::decompressone(const char *block, Tile &t)
 }
 
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
-static double map_colors(const Vector3 colors[], const float importance[], int np, const IntEndpts &endpts, int prec)
+static float map_colors(const Vector3 colors[], const float importance[], int np, const IntEndpts &endpts, int prec)
 {
     Vector3 palette[NINDICES];
-    double toterr = 0;
+    float toterr = 0;
     Vector3 err;
 
     generate_palette_quantized(endpts, prec, palette);
 
     for (int i = 0; i < np; ++i)
     {
-        double err, besterr;
+        float err, besterr;
 
         besterr = Utils::norm(colors[i], palette[0]) * importance[i];
 
@@ -412,7 +414,7 @@ static double map_colors(const Vector3 colors[], const float importance[], int n
 
 // assign indices given a tile, shape, and quantized endpoints, return toterr for each region
 static void assign_indices(const Tile &tile, int shapeindex, IntEndpts endpts[NREGIONS_ONE], int prec, 
-                           int indices[Tile::TILE_H][Tile::TILE_W], double toterr[NREGIONS_ONE])
+                           int indices[Tile::TILE_H][Tile::TILE_W], float toterr[NREGIONS_ONE])
 {
     // build list of possibles
     Vector3 palette[NREGIONS_ONE][NINDICES];
@@ -429,7 +431,7 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndpts endpts[NR
 	for (int x = 0; x < tile.size_x; x++)
 	{
         int region = REGION(x,y,shapeindex);
-        double err, besterr;
+        float err, besterr;
 
         besterr = Utils::norm(tile.data[y][x], palette[region][0]);
         indices[y][x] = 0;
@@ -450,8 +452,8 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndpts endpts[NR
     }
 }
 
-static double perturb_one(const Vector3 colors[], const float importance[], int np, int ch, int prec, const IntEndpts &old_endpts, IntEndpts &new_endpts,
-                          double old_err, int do_b)
+static float perturb_one(const Vector3 colors[], const float importance[], int np, int ch, int prec, const IntEndpts &old_endpts, IntEndpts &new_endpts,
+                          float old_err, int do_b)
 {
     // we have the old endpoints: old_endpts
     // we have the perturbed endpoints: new_endpts
@@ -504,9 +506,9 @@ static double perturb_one(const Vector3 colors[], const float importance[], int 
     return min_err;
 }
 
-static void optimize_one(const Vector3 colors[], const float importance[], int np, double orig_err, const IntEndpts &orig_endpts, int prec, IntEndpts &opt_endpts)
+static void optimize_one(const Vector3 colors[], const float importance[], int np, float orig_err, const IntEndpts &orig_endpts, int prec, IntEndpts &opt_endpts)
 {
-    double opt_err = orig_err;
+    float opt_err = orig_err;
     for (int ch = 0; ch < NCHANNELS; ++ch)
     {
         opt_endpts.A[ch] = orig_endpts.A[ch];
@@ -576,12 +578,12 @@ static void optimize_one(const Vector3 colors[], const float importance[], int n
     }
 }
 
-static void optimize_endpts(const Tile &tile, int shapeindex, const double orig_err[NREGIONS_ONE], 
+static void optimize_endpts(const Tile &tile, int shapeindex, const float orig_err[NREGIONS_ONE], 
                             const IntEndpts orig_endpts[NREGIONS_ONE], int prec, IntEndpts opt_endpts[NREGIONS_ONE])
 {
     Vector3 pixels[Tile::TILE_TOTAL];
     float importance[Tile::TILE_TOTAL];
-    double err = 0;
+    float err = 0;
 
     for (int region=0; region<NREGIONS_ONE; ++region)
     {
@@ -618,9 +620,9 @@ static void optimize_endpts(const Tile &tile, int shapeindex, const double orig_
                 emit compressed block with original data // to try to preserve maximum endpoint precision
 */
 
-double ZOH::refineone(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_ONE], char *block)
+float ZOH::refineone(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_ONE], char *block)
 {
-    double orig_err[NREGIONS_ONE], opt_err[NREGIONS_ONE], orig_toterr, opt_toterr;
+    float orig_err[NREGIONS_ONE], opt_err[NREGIONS_ONE], orig_toterr, opt_toterr;
     IntEndpts orig_endpts[NREGIONS_ONE], opt_endpts[NREGIONS_ONE];
     ComprEndpts compr_orig[NREGIONS_ONE], compr_opt[NREGIONS_ONE];
     int orig_indices[Tile::TILE_H][Tile::TILE_W], opt_indices[Tile::TILE_H][Tile::TILE_W];
@@ -668,21 +670,21 @@ static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_ONE], V
 }
 
 // generate a palette from unquantized endpoints, then pick best palette color for all pixels in each region, return toterr for all regions combined
-static double map_colors(const Tile &tile, int shapeindex, const FltEndpts endpts[NREGIONS_ONE])
+static float map_colors(const Tile &tile, int shapeindex, const FltEndpts endpts[NREGIONS_ONE])
 {
     // build list of possibles
     Vector3 palette[NREGIONS_ONE][NINDICES];
 
     generate_palette_unquantized(endpts, palette);
 
-    double toterr = 0;
+    float toterr = 0;
     Vector3 err;
 
     for (int y = 0; y < tile.size_y; y++)
 	for (int x = 0; x < tile.size_x; x++)
 	{
         int region = REGION(x,y,shapeindex);
-        double err, besterr;
+        float err, besterr;
 
         besterr = Utils::norm(tile.data[y][x], palette[region][0]) * tile.importance_map[y][x];
 
@@ -700,7 +702,7 @@ static double map_colors(const Tile &tile, int shapeindex, const FltEndpts endpt
     return toterr;
 }
 
-double ZOH::roughone(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS_ONE])
+float ZOH::roughone(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS_ONE])
 {
     for (int region=0; region<NREGIONS_ONE; ++region)
     {
@@ -742,7 +744,7 @@ double ZOH::roughone(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS
 
         mean /= float(np);
 
-        Vector3 direction = Fit::computePrincipalComponent(np, colors);
+        Vector3 direction = Fit::computePrincipalComponent_EigenSolver(np, colors);
 
         // project each pixel value along the principal direction
         float minp = FLT_MAX, maxp = -FLT_MAX;
@@ -767,11 +769,11 @@ double ZOH::roughone(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS
     return map_colors(tile, shapeindex, endpts);
 }
 
-double ZOH::compressone(const Tile &t, char *block)
+float ZOH::compressone(const Tile &t, char *block)
 {
     int shapeindex_best = 0;
     FltEndpts endptsbest[NREGIONS_ONE], tempendpts[NREGIONS_ONE];
-    double msebest = DBL_MAX;
+    float msebest = FLT_MAX;
 
     /*
 		collect the mse values that are within 5% of the best values
@@ -780,7 +782,7 @@ double ZOH::compressone(const Tile &t, char *block)
     // hack for now -- just use the best value WORK
     for (int i=0; i<NSHAPES && msebest>0.0; ++i)
     {
-        double mse = roughone(t, i, tempendpts);
+        float mse = roughone(t, i, tempendpts);
         if (mse < msebest)
         {
             msebest = mse;

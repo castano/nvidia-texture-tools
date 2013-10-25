@@ -131,6 +131,10 @@ int main(int argc, char *argv[])
 
 			break;
 		}
+		else
+		{
+			printf("Warning: unrecognized option \"%s\"\n", argv[i]);
+		}
 	}
 
 	if (input.isNull() || output.isNull())

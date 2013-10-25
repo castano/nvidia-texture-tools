@@ -23,7 +23,9 @@ namespace nv {
     // http://www.fox-toolkit.org/ftp/fasthalffloatconversion.pdf
     inline uint32 fast_half_to_float(uint16 h)
     {
-        nvDebugCheck(mantissa_table[0] == 0); // Make sure table was initialized.
+		// Initialize table if necessary.
+		if (mantissa_table[0] != 0)
+			half_init_tables();
 	    uint exp = h >> 10;
 	    return mantissa_table[offset_table[exp] + (h & 0x3ff)] + exponent_table[exp];
     }

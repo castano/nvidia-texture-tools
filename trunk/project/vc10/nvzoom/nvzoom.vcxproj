@@ -197,6 +197,9 @@
     <ResourceCompile Include="nvzoom.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\bc6h\bc6h.vcxproj">
+      <Project>{c33787e3-5564-4834-9fe3-a9020455a669}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\nvcore\nvcore.vcxproj">
       <Project>{f143d180-d4c4-4037-b3de-be89a21c8d1d}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

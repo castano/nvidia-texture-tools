@@ -950,7 +950,8 @@ bool DirectDrawSurface::isSupported() const
             header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
             header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM ||
             header.header10.dxgiFormat == DXGI_FORMAT_BC4_UNORM ||
-            header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM)
+            header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM ||
+			header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16)
         {
             return true;
         }
@@ -1340,12 +1341,11 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
     if (header.hasDX10Header())
     {
         if (header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM) fourcc = FOURCC_DXT1;
-        if (header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM) fourcc = FOURCC_DXT3;
-        if (header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM) fourcc = FOURCC_DXT5;
-        if (header.header10.dxgiFormat == DXGI_FORMAT_BC4_UNORM) fourcc = FOURCC_ATI1;
-        if (header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM) fourcc = FOURCC_ATI2;
+        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM) fourcc = FOURCC_DXT3;
+        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM) fourcc = FOURCC_DXT5;
+        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC4_UNORM) fourcc = FOURCC_ATI1;
+        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM) fourcc = FOURCC_ATI2;
     }
-
 
     if (fourcc == FOURCC_DXT1)
     {
@@ -1389,6 +1389,31 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
         *stream << block;
         block.decodeBlock(rgba);
     }
+	else if (header.hasDX10Header() && header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16)
+	{
+		BlockBC6 block;
+		*stream << block;
+		ColorSet set;
+		block.decodeBlock(&set);
+
+		// Clamp to [0, 1] and round to 8-bit
+		for (int y = 0; y < 4; ++y)
+		{
+			for (int x = 0; x < 4; ++x)
+			{
+				Vector4 px = set.colors[y*4 + x];
+				rgba->color(x, y).setRGBA(
+									uint8(clamp(px.x, 0.0f, 1.0f) * 255.0f + 0.5f),
+									uint8(clamp(px.y, 0.0f, 1.0f) * 255.0f + 0.5f),
+									uint8(clamp(px.z, 0.0f, 1.0f) * 255.0f + 0.5f),
+									uint8(clamp(px.w, 0.0f, 1.0f) * 255.0f + 0.5f));
+			}
+		}
+	}
+	else
+	{
+		nvDebugCheck(false);
+	}
 
     // If normal flag set, convert to normal.
     if (header.pf.flags & DDPF_NORMAL)

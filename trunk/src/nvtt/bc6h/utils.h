@@ -47,8 +47,8 @@ public:
     static ::Format FORMAT;     // this is a global -- we're either handling unsigned or unsigned half values
 
     // error metrics
-    static double norm(const nv::Vector3 &a, const nv::Vector3 &b);
-    static double mpsnr_norm(const nv::Vector3 &a, int exposure, const nv::Vector3 &b);
+    static float norm(const nv::Vector3 &a, const nv::Vector3 &b);
+    static float mpsnr_norm(const nv::Vector3 &a, int exposure, const nv::Vector3 &b);
 
     // conversion & clamp
     static int ushort_to_format(unsigned short input);

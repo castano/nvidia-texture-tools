@@ -702,7 +702,12 @@ bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, 
 // @@ Add support for compressed 3D textures.
 bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const void * data)
 {
-    if (format != nvtt::Format_BC1 && format != nvtt::Format_BC2 && format != nvtt::Format_BC3 && format != nvtt::Format_BC4 && format != nvtt::Format_BC5)
+    if (format != nvtt::Format_BC1 &&
+		format != nvtt::Format_BC2 &&
+		format != nvtt::Format_BC3 &&
+		format != nvtt::Format_BC4 &&
+		format != nvtt::Format_BC5 &&
+		format != nvtt::Format_BC6)
     {
         return false;
     }
@@ -723,84 +728,125 @@ bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const voi
     const uint8 * ptr = (const uint8 *)data;
 
     TRY {
-        for (int y = 0; y < bh; y++)
-        {
-            for (int x = 0; x < bw; x++)
-            {
-                ColorBlock colors;
+		if (format == nvtt::Format_BC6)
+		{
+			// BC6 format - decode directly to float
 
-                if (format == nvtt::Format_BC1)
-                {
-                    const BlockDXT1 * block = (const BlockDXT1 *)ptr;
+			for (int y = 0; y < bh; y++)
+			{
+				for (int x = 0; x < bw; x++)
+				{
+					ColorSet colors;
+					const BlockBC6 * block = (const BlockBC6 *)ptr;
+					block->decodeBlock(&colors);
 
-                    if (decoder == Decoder_D3D10) {
-	                    block->decodeBlock(&colors, false);
-                    }
-                    else if (decoder == Decoder_D3D9) {
-	                    block->decodeBlock(&colors, false);
-                    }
-                    else if (decoder == Decoder_NV5x) {
-	                    block->decodeBlockNV5x(&colors);
-                    }
-                }
-                else if (format == nvtt::Format_BC2)
-                {
-                    const BlockDXT3 * block = (const BlockDXT3 *)ptr;
+					for (int yy = 0; yy < 4; yy++)
+					{
+						for (int xx = 0; xx < 4; xx++)
+						{
+							Vector4 rgba = colors.colors[yy*4 + xx];
 
-                    if (decoder == Decoder_D3D10) {
-	                    block->decodeBlock(&colors, false);
-                    }
-                    else if (decoder == Decoder_D3D9) {
-	                    block->decodeBlock(&colors, false);
-                    }
-                    else if (decoder == Decoder_NV5x) {
-	                    block->decodeBlockNV5x(&colors);
-                    }
-                }
-                else if (format == nvtt::Format_BC3)
-                {
-                    const BlockDXT5 * block = (const BlockDXT5 *)ptr;
+							if (x * 4 + xx < w && y * 4 + yy < h)
+							{
+								m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = rgba.x;
+								m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = rgba.y;
+								m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = rgba.z;
+								m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = rgba.w;
+							}
+						}
+					}
 
-                    if (decoder == Decoder_D3D10) {
-	                    block->decodeBlock(&colors, false);
-                    }
-                    else if (decoder == Decoder_D3D9) {
-	                    block->decodeBlock(&colors, false);
-                    }
-                    else if (decoder == Decoder_NV5x) {
-	                    block->decodeBlockNV5x(&colors);
-                    }
-                }
-                else if (format == nvtt::Format_BC4)
-                {
-                    const BlockATI1 * block = (const BlockATI1 *)ptr;
-                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
-                }
-                else if (format == nvtt::Format_BC5)
-                {
-                    const BlockATI2 * block = (const BlockATI2 *)ptr;
-                    block->decodeBlock(&colors, decoder == Decoder_D3D9);
-                }
+					ptr += bs;
+				}
+			}
+		}
+		else
+		{
+			// Non-BC6 - decode to 8-bit, then convert to float
 
-                for (int yy = 0; yy < 4; yy++)
-                {
-                    for (int xx = 0; xx < 4; xx++)
-                    {
-                        Color32 c = colors.color(xx, yy);
+			for (int y = 0; y < bh; y++)
+			{
+				for (int x = 0; x < bw; x++)
+				{
+					ColorBlock colors;
 
-                        if (x * 4 + xx < w && y * 4 + yy < h)
-                        {
-                            m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
-                            m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = float(c.g) * 1.0f/255.0f;
-                            m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = float(c.b) * 1.0f/255.0f;
-                            m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = float(c.a) * 1.0f/255.0f;
-                        }
-                    }
-                }
+					if (format == nvtt::Format_BC1)
+					{
+						const BlockDXT1 * block = (const BlockDXT1 *)ptr;
 
-                ptr += bs;
-            }
-        }
+						if (decoder == Decoder_D3D10) {
+							block->decodeBlock(&colors, false);
+						}
+						else if (decoder == Decoder_D3D9) {
+							block->decodeBlock(&colors, false);
+						}
+						else if (decoder == Decoder_NV5x) {
+							block->decodeBlockNV5x(&colors);
+						}
+					}
+					else if (format == nvtt::Format_BC2)
+					{
+						const BlockDXT3 * block = (const BlockDXT3 *)ptr;
+
+						if (decoder == Decoder_D3D10) {
+							block->decodeBlock(&colors, false);
+						}
+						else if (decoder == Decoder_D3D9) {
+							block->decodeBlock(&colors, false);
+						}
+						else if (decoder == Decoder_NV5x) {
+							block->decodeBlockNV5x(&colors);
+						}
+					}
+					else if (format == nvtt::Format_BC3)
+					{
+						const BlockDXT5 * block = (const BlockDXT5 *)ptr;
+
+						if (decoder == Decoder_D3D10) {
+							block->decodeBlock(&colors, false);
+						}
+						else if (decoder == Decoder_D3D9) {
+							block->decodeBlock(&colors, false);
+						}
+						else if (decoder == Decoder_NV5x) {
+							block->decodeBlockNV5x(&colors);
+						}
+					}
+					else if (format == nvtt::Format_BC4)
+					{
+						const BlockATI1 * block = (const BlockATI1 *)ptr;
+						block->decodeBlock(&colors, decoder == Decoder_D3D9);
+					}
+					else if (format == nvtt::Format_BC5)
+					{
+						const BlockATI2 * block = (const BlockATI2 *)ptr;
+						block->decodeBlock(&colors, decoder == Decoder_D3D9);
+					}
+					else
+					{
+						nvDebugCheck(false);
+					}
+
+					for (int yy = 0; yy < 4; yy++)
+					{
+						for (int xx = 0; xx < 4; xx++)
+						{
+							Color32 c = colors.color(xx, yy);
+
+							if (x * 4 + xx < w && y * 4 + yy < h)
+							{
+								m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = float(c.r) * 1.0f/255.0f;
+								m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = float(c.g) * 1.0f/255.0f;
+								m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = float(c.b) * 1.0f/255.0f;
+								m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = float(c.a) * 1.0f/255.0f;
+							}
+						}
+					}
+
+					ptr += bs;
+				}
+			}
+		}
     }
     CATCH {
         return false;
@@ -1455,7 +1501,7 @@ void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 
 // Ideally you should compress/quantize the RGB and M portions independently.
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.
-void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
+void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.0f*/)
 {
     if (isNull()) return;
 
@@ -1471,17 +1517,17 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
-        float R = nv::clamp(r[i], 0.0f, 1.0f);
-        float G = nv::clamp(g[i], 0.0f, 1.0f);
-        float B = nv::clamp(b[i], 0.0f, 1.0f);
+        float R = r[i];
+        float G = g[i];
+        float B = b[i];
 #if 1
-        float M = max(max(R, G), max(B, threshold));
+        float M = nv::clamp(max(max(R, G), max(B, threshold)), 0.0f, range);
 
-        r[i] = R / M;
-        g[i] = G / M;
-        b[i] = B / M;
+        r[i] = nv::clamp(R / M, 0.0f, 1.0f);
+        g[i] = nv::clamp(G / M, 0.0f, 1.0f);
+        b[i] = nv::clamp(B / M, 0.0f, 1.0f);
 
-        a[i] = (M - threshold) / (1 - threshold);
+        a[i] = (M - threshold) / (range - threshold);
 
 #else
 
@@ -1524,13 +1570,15 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 }
 
 
-void Surface::fromRGBM(float range/*= 1*/)
+void Surface::fromRGBM(float range/*= 1*/, float threshold/*= 0.0*/)
 {
     if (isNull()) return;
 
     detach();
 
-    FloatImage * img = m->image;
+    threshold = ::clamp(threshold, 1e-6f, 1.0f);
+
+	FloatImage * img = m->image;
     float * r = img->channel(0);
     float * g = img->channel(1);
     float * b = img->channel(2);
@@ -1538,7 +1586,7 @@ void Surface::fromRGBM(float range/*= 1*/)
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
-        float M = a[i] * range;
+        float M = a[i] * (range - threshold) + threshold;
 
         r[i] *= M;
         g[i] *= M;
