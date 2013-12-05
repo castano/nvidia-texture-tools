@@ -23,6 +23,8 @@ namespace nv
         Vector3 computePrincipalComponent_EigenSolver(int n, const Vector3 * points);
         Vector3 computePrincipalComponent_EigenSolver(int n, const Vector3 * points, const float * weights, const Vector3 & metric);
 
+        Vector3 computePrincipalComponent_SVD(int n, const Vector3 * points);
+
         Plane bestPlane(int n, const Vector3 * points);
         bool isPlanar(int n, const Vector3 * points, float epsilon = NV_EPSILON);
 
