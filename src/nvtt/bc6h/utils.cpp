@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and limitations 
 #include <math.h>
 
 using namespace nv;
+using namespace ZOH;
 
 static const int denom7_weights_64[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
 static const int denom15_weights_64[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64

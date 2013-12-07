@@ -102,7 +102,7 @@ namespace nvtt
         Format_CTX1,    // Not supported on CPU yet.
 
         Format_BC6,
-        Format_BC7,     // Not supported yet.
+        Format_BC7,
 
         Format_DXT1_Luma,
     };

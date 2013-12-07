@@ -12,41 +12,40 @@ See the License for the specific language governing permissions and limitations 
 
 // the avpcl compressor and decompressor
 
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <assert.h>
-#include <time.h>
-
-#include "ImfArray.h"
-#include "RGBA.h"
 #include "tile.h"
 #include "avpcl.h"
-#include "targa.h"
+#include "nvcore/Debug.h"
+#include "nvmath/Vector.inl"
+#include <cstring>
 
-#ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
+using namespace nv;
+using namespace AVPCL;
 
-using namespace std;
+// global flags
+bool AVPCL::flag_premult = false;
+bool AVPCL::flag_nonuniform = false;
+bool AVPCL::flag_nonuniform_ati = false;
 
-void AVPCL::compress(const Tile &t, char *block, FILE *errfile)
+// global mode
+bool AVPCL::mode_rgb = false;		// true if image had constant alpha = 255
+
+void AVPCL::compress(const Tile &t, char *block)
 {
 	char tempblock[AVPCL::BLOCKSIZE];
-	double msebest = DBL_MAX;
+	float msebest = FLT_MAX;
 
-	double mse_mode0 = AVPCL::compress_mode0(t, tempblock);		if(mse_mode0 < msebest) { msebest = mse_mode0; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode1 = AVPCL::compress_mode1(t, tempblock);		if(mse_mode1 < msebest) { msebest = mse_mode1; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode2 = AVPCL::compress_mode2(t, tempblock);		if(mse_mode2 < msebest) { msebest = mse_mode2; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode3 = AVPCL::compress_mode3(t, tempblock);		if(mse_mode3 < msebest) { msebest = mse_mode3; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode4 = AVPCL::compress_mode4(t, tempblock);		if(mse_mode4 < msebest) { msebest = mse_mode4; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode5 = AVPCL::compress_mode5(t, tempblock);		if(mse_mode5 < msebest) { msebest = mse_mode5; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode6 = AVPCL::compress_mode6(t, tempblock);		if(mse_mode6 < msebest) { msebest = mse_mode6; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
-	double mse_mode7 = AVPCL::compress_mode7(t, tempblock);		if(mse_mode7 < msebest) { msebest = mse_mode7; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode0 = AVPCL::compress_mode0(t, tempblock);		if(mse_mode0 < msebest) { msebest = mse_mode0; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode1 = AVPCL::compress_mode1(t, tempblock);		if(mse_mode1 < msebest) { msebest = mse_mode1; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode2 = AVPCL::compress_mode2(t, tempblock);		if(mse_mode2 < msebest) { msebest = mse_mode2; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode3 = AVPCL::compress_mode3(t, tempblock);		if(mse_mode3 < msebest) { msebest = mse_mode3; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode4 = AVPCL::compress_mode4(t, tempblock);		if(mse_mode4 < msebest) { msebest = mse_mode4; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode5 = AVPCL::compress_mode5(t, tempblock);		if(mse_mode5 < msebest) { msebest = mse_mode5; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode6 = AVPCL::compress_mode6(t, tempblock);		if(mse_mode6 < msebest) { msebest = mse_mode6; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
+	float mse_mode7 = AVPCL::compress_mode7(t, tempblock);		if(mse_mode7 < msebest) { msebest = mse_mode7; memcpy(block, tempblock, AVPCL::BLOCKSIZE); }
 		
-	if (errfile)
+	/*if (errfile)
 	{
-		double errs[21];
+		float errs[21];
 		int nerrs = 8;
 		errs[0] = mse_mode0; 
 		errs[1] = mse_mode1; 
@@ -56,11 +55,12 @@ void AVPCL::compress(const Tile &t, char *block, FILE *errfile)
 		errs[5] = mse_mode5; 
 		errs[6] = mse_mode6; 
 		errs[7] = mse_mode7;
-		if (fwrite(errs, sizeof(double), nerrs, errfile) != nerrs)
+		if (fwrite(errs, sizeof(float), nerrs, errfile) != nerrs)
 			throw "Write error on error file";
-	}
+	}*/
 }
 
+/*
 static int getbit(char *b, int start)
 {
 	if (start < 0 || start >= 128) return 0; // out of range
@@ -94,14 +94,12 @@ static void setbits(char *b, int start, int len, int bits)
 	for (int i=0; i<len; ++i)
 		setbit(b, start+i, bits >> i);
 }
+*/
 
 void AVPCL::decompress(const char *cblock, Tile &t)
 {
-	Vec4 zero(0);
-
-	char block[16];
-
-	for (int i=0; i<16; ++i) block[i] = cblock[i];
+	char block[AVPCL::BLOCKSIZE];
+	memcpy(block, cblock, AVPCL::BLOCKSIZE);
 
 	switch(getmode(block))
 	{
@@ -116,12 +114,13 @@ void AVPCL::decompress(const char *cblock, Tile &t)
 	case 8: // return a black tile if you get a reserved mode
 		for (int y=0; y<Tile::TILE_H; ++y)
 			for (int x=0; x<Tile::TILE_W; ++x)
-				t.data[y][x] = zero;
+				t.data[y][x].set(0, 0, 0, 0);
 		break;
-	default: assert(0);
+	default: nvUnreachable();
 	}
 }
 
+/*
 void AVPCL::compress(string inf, string avpclf, string errf)
 {
 	Array2D<RGBA> pixels;
@@ -158,12 +157,12 @@ void AVPCL::compress(string inf, string avpclf, string errf)
 	// convert to tiles and compress each tile
 	for (int y=0; y<h; y+=Tile::TILE_H)
 	{
-		int ysize = MIN(Tile::TILE_H, h-y);
+		int ysize = min(Tile::TILE_H, h-y);
 		for (int x=0; x<w; x+=Tile::TILE_W)
 		{
-			if ((tilecnt%100) == 0) { cur = clock(); printf("Progress %d of %d, %5.2f seconds per 100 tiles\r", tilecnt, ntiles, double(cur-prev)/CLOCKS_PER_SEC); fflush(stdout); prev = cur; }
+			if ((tilecnt%100) == 0) { cur = clock(); printf("Progress %d of %d, %5.2f seconds per 100 tiles\r", tilecnt, ntiles, float(cur-prev)/CLOCKS_PER_SEC); fflush(stdout); prev = cur; }
 
-			int xsize = MIN(Tile::TILE_W, w-x);
+			int xsize = min(Tile::TILE_W, w-x);
 			Tile t(xsize, ysize);
 
 			t.insert(pixels, x, y);
@@ -178,7 +177,7 @@ void AVPCL::compress(string inf, string avpclf, string errf)
 	}
 
 	cur = clock();
-	printf("\nTotal time to compress: %.2f seconds\n\n", double(cur-start)/CLOCKS_PER_SEC);		// advance to next line finally
+	printf("\nTotal time to compress: %.2f seconds\n\n", float(cur-start)/CLOCKS_PER_SEC);		// advance to next line finally
 
 	if (fclose(avpclfile)) throw "Close failed on .avpcl file";
 	if (errfile && fclose(errfile)) throw "Close failed on error file";
@@ -239,10 +238,10 @@ void AVPCL::decompress(string avpclf, string outf)
 	// convert to tiles and decompress each tile
 	for (int y=0; y<h; y+=Tile::TILE_H)
 	{
-		int ysize = MIN(Tile::TILE_H, h-y);
+		int ysize = min(Tile::TILE_H, h-y);
 		for (int x=0; x<w; x+=Tile::TILE_W)
 		{
-			int xsize = MIN(Tile::TILE_W, w-x);
+			int xsize = min(Tile::TILE_W, w-x);
 			Tile t(xsize, ysize);
 
 			if (fread(block, sizeof(char), AVPCL::BLOCKSIZE, avpclfile) != AVPCL::BLOCKSIZE)
@@ -261,3 +260,4 @@ void AVPCL::decompress(string avpclf, string outf)
 
 	printstats();	// print statistics
 }
+*/

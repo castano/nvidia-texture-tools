@@ -1410,6 +1410,12 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
 			}
 		}
 	}
+    else if (header.hasDX10Header() && header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM)
+    {
+        BlockBC7 block;
+        *stream << block;
+        block.decodeBlock(rgba);
+    }
 	else
 	{
 		nvDebugCheck(false);

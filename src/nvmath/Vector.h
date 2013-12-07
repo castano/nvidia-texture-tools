@@ -73,6 +73,7 @@ namespace nv
         void operator*=(float s);
         void operator/=(float s);
         void operator*=(Vector3::Arg v);
+        void operator/=(Vector3::Arg v);
 
         friend bool operator==(Vector3::Arg a, Vector3::Arg b);
         friend bool operator!=(Vector3::Arg a, Vector3::Arg b);
@@ -116,7 +117,9 @@ namespace nv
         void operator+=(Vector4::Arg v);
         void operator-=(Vector4::Arg v);
         void operator*=(float s);
+        void operator/=(float s);
         void operator*=(Vector4::Arg v);
+        void operator/=(Vector4::Arg v);
 
         friend bool operator==(Vector4::Arg a, Vector4::Arg b);
         friend bool operator!=(Vector4::Arg a, Vector4::Arg b);

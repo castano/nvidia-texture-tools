@@ -49,6 +49,7 @@ See the License for the specific language governing permissions and limitations 
 #include <float.h> // FLT_MAX
 
 using namespace nv;
+using namespace ZOH;
 
 #define NINDICES	8
 #define	INDEXBITS	3
@@ -396,21 +397,21 @@ static void generate_palette_quantized(const IntEndpts &endpts, int prec, Vector
 
     // interpolate
     for (int i = 0; i < NINDICES; ++i)
-        palette[i].x = float(Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec));
+        palette[i].x = float(Utils::finish_unquantize(Utils::lerp(a, b, i, DENOM), prec));
 
     a = Utils::unquantize(endpts.A[1], prec);
     b = Utils::unquantize(endpts.B[1], prec);
 
     // interpolate
     for (int i = 0; i < NINDICES; ++i)
-        palette[i].y = float(Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec));
+        palette[i].y = float(Utils::finish_unquantize(Utils::lerp(a, b, i, DENOM), prec));
 
     a = Utils::unquantize(endpts.A[2], prec);
     b = Utils::unquantize(endpts.B[2], prec);
 
     // interpolate
     for (int i = 0; i < NINDICES; ++i)
-        palette[i].z = float(Utils::finish_unquantize(PALETTE_LERP(a, b, i, DENOM), prec));
+        palette[i].z = float(Utils::finish_unquantize(Utils::lerp(a, b, i, DENOM), prec));
 }
 
 static void read_indices(Bits &in, int shapeindex, int indices[Tile::TILE_H][Tile::TILE_W])
@@ -753,7 +754,7 @@ static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_TWO], V
 {
     for (int region = 0; region < NREGIONS_TWO; ++region)
 	for (int i = 0; i < NINDICES; ++i)
-            palette[region][i] = PALETTE_LERP(endpts[region].A, endpts[region].B, i, DENOM);
+            palette[region][i] = Utils::lerp(endpts[region].A, endpts[region].B, i, DENOM);
 }
 
 // generate a palette from unquantized endpoints, then pick best palette color for all pixels in each region, return toterr for all regions combined

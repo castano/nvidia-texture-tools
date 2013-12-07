@@ -15,17 +15,13 @@ See the License for the specific language governing permissions and limitations 
 
 #include "tile.h"
 
+namespace ZOH {
+
 // UNUSED ZOH MODES are 0x13, 0x17, 0x1b, 0x1f
 
-#define	EXTERNAL_RELEASE	1	// define this if we're releasing this code externally
-
-#define	NREGIONS_TWO	2
-#define	NREGIONS_ONE	1
-#define	NCHANNELS	3
-
-// Note: this code only reads OpenEXR files, which are only in F16 format.
-// if unsigned is selected, the input is clamped to >= 0.
-// if f16 is selected, the range is clamped to 0..0x7bff.
+static const int NREGIONS_TWO	= 2;
+static const int NREGIONS_ONE	= 1;
+static const int NCHANNELS		= 3;
 
 struct FltEndpts
 {
@@ -45,28 +41,25 @@ struct ComprEndpts
 	uint B[NCHANNELS];
 };
 
-class ZOH
-{
-public:
-	static const int BLOCKSIZE=16;
-	static const int BITSIZE=128;
-	static Format FORMAT;
+static const int BLOCKSIZE=16;
+static const int BITSIZE=128;
 
-	static void compress(const Tile &t, char *block);
-	static void decompress(const char *block, Tile &t);
+void compress(const Tile &t, char *block);
+void decompress(const char *block, Tile &t);
 
-	static float compressone(const Tile &t, char *block);
-	static float compresstwo(const Tile &t, char *block);
-	static void decompressone(const char *block, Tile &t);
-	static void decompresstwo(const char *block, Tile &t);
+float compressone(const Tile &t, char *block);
+float compresstwo(const Tile &t, char *block);
+void decompressone(const char *block, Tile &t);
+void decompresstwo(const char *block, Tile &t);
 
-	static float refinetwo(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_TWO], char *block);
-	static float roughtwo(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_TWO]);
+float refinetwo(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_TWO], char *block);
+float roughtwo(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_TWO]);
 
-	static float refineone(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_ONE], char *block);
-	static float roughone(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_ONE]);
+float refineone(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS_ONE], char *block);
+float roughone(const Tile &tile, int shape, FltEndpts endpts[NREGIONS_ONE]);
 
-	static bool isone(const char *block);
-};
+bool isone(const char *block);
+
+}
 
 #endif // _ZOH_H

@@ -10,15 +10,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 */
 #pragma once
-#ifndef _TILE_H
-#define _TILE_H
+#ifndef _ZOH_TILE_H
+#define _ZOH_TILE_H
 
 #include "utils.h"
-
 #include "nvmath/Vector.h"
-
 #include <math.h>
 
+namespace ZOH {
 
 //#define	USE_IMPORTANCE_MAP	1		// define this if you want to increase importance of some pixels in tile
 class Tile
@@ -79,4 +78,6 @@ public:
 	int	size_x, size_y;			// actual size of tile
 };
 
-#endif // _TILE_H
+}
+
+#endif // _ZOH_TILE_H

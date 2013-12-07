@@ -11,49 +11,39 @@ See the License for the specific language governing permissions and limitations 
 */
 
 // utility class holding common routines
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef _AVPCL_UTILS_H
+#define _AVPCL_UTILS_H
 
-#include "arvo/Vec4.h"
+#include "nvmath/Vector.h"
 
-using namespace ArvoMath;
+namespace AVPCL {
 
-#ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
+inline int SIGN_EXTEND(int x, int nb) { return ((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x)); }
 
-#ifndef MAX
-#define MAX(x,y) ((x)>(y)?(x):(y))
-#endif
+static const int INDEXMODE_BITS				= 1;		// 2 different index modes
+static const int NINDEXMODES				= (1<<(INDEXMODE_BITS));
+static const int INDEXMODE_ALPHA_IS_3BITS	= 0;
+static const int INDEXMODE_ALPHA_IS_2BITS	= 1;
 
-#define	PALETTE_LERP(a, b, i, bias, denom)	Utils::lerp(a, b, i, bias, denom)
-
-#define	SIGN_EXTEND(x,nb)	((((x)&(1<<((nb)-1)))?((~0)<<(nb)):0)|(x))
-
-#define	INDEXMODE_BITS 1		// 2 different index modes
-#define	NINDEXMODES	(1<<(INDEXMODE_BITS))
-#define	INDEXMODE_ALPHA_IS_3BITS 0
-#define	INDEXMODE_ALPHA_IS_2BITS 1
-
-#define	ROTATEMODE_BITS	2		// 4 different rotate modes
-#define	NROTATEMODES	(1<<(ROTATEMODE_BITS))
-#define	ROTATEMODE_RGBA_RGBA	0
-#define	ROTATEMODE_RGBA_AGBR	1
-#define	ROTATEMODE_RGBA_RABG	2
-#define	ROTATEMODE_RGBA_RGAB	3
+static const int ROTATEMODE_BITS		= 2;		// 4 different rotate modes
+static const int NROTATEMODES			= (1<<(ROTATEMODE_BITS));
+static const int ROTATEMODE_RGBA_RGBA	= 0;
+static const int ROTATEMODE_RGBA_AGBR	= 1;
+static const int ROTATEMODE_RGBA_RABG	= 2;
+static const int ROTATEMODE_RGBA_RGAB	= 3;
 
 class Utils
 {
 public:
 	// error metrics
-	static double metric4(const Vec4& a, const Vec4& b);
-	static double metric3(const Vec3& a, const Vec3& b, int rotatemode);
-	static double metric1(float a, float b, int rotatemode);
+	static float metric4(nv::Vector4::Arg a, nv::Vector4::Arg b);
+	static float metric3(nv::Vector3::Arg a, nv::Vector3::Arg b, int rotatemode);
+	static float metric1(float a, float b, int rotatemode);
 
-	static double metric4premult(const Vec4& rgba0, const Vec4& rgba1);
-	static double metric3premult_alphaout(const Vec3& rgb0, float a0, const Vec3& rgb1, float a1);
-	static double metric3premult_alphain(const Vec3& rgb0, const Vec3& rgb1, int rotatemode);
-	static double metric1premult(float rgb0, float a0, float rgb1, float a1, int rotatemode);
+	static float metric4premult(nv::Vector4::Arg rgba0, nv::Vector4::Arg rgba1);
+	static float metric3premult_alphaout(nv::Vector3::Arg rgb0, float a0, nv::Vector3::Arg rgb1, float a1);
+	static float metric3premult_alphain(nv::Vector3::Arg rgb0, nv::Vector3::Arg rgb1, int rotatemode);
+	static float metric1premult(float rgb0, float a0, float rgb1, float a1, int rotatemode);
 
 	static float  Utils::premult(float r, float a);
 
@@ -63,7 +53,9 @@ public:
 
 	// lerping
 	static int lerp(int a, int b, int i, int bias, int denom);
-	static Vec4 lerp(const Vec4& a, const Vec4 &b, int i, int bias, int denom);
+	static nv::Vector4 lerp(nv::Vector4::Arg a, nv::Vector4::Arg b, int i, int bias, int denom);
 };
+
+}
 
 #endif

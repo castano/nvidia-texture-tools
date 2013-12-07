@@ -265,11 +265,10 @@ int main(int argc, char *argv[])
         {
             format = nvtt::Format_BC6;
         }
-		// !!!UNDONE: add BC7 support
-        /*else if (strcmp("-bc7", argv[i]) == 0)
+        else if (strcmp("-bc7", argv[i]) == 0)
         {
             format = nvtt::Format_BC7;
-        }*/
+        }
 
         // Undocumented option. Mainly used for testing.
         else if (strcmp("-ext", argv[i]) == 0)
@@ -355,7 +354,7 @@ int main(int argc, char *argv[])
         printf("  -bc4     \tBC4 format (ATI1)\n");
         printf("  -bc5     \tBC5 format (3Dc/ATI2)\n");
         printf("  -bc6     \tBC6 format\n");
-        //printf("  -bc7     \tBC7 format\n\n");
+        printf("  -bc7     \tBC7 format\n\n");
 
         printf("Output options:\n");
         printf("  -silent  \tDo not output progress messages\n");

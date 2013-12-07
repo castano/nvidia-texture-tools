@@ -12,15 +12,14 @@ See the License for the specific language governing permissions and limitations 
 
 // utility class holding common routines
 #pragma once
-#ifndef _UTILS_H
-#define _UTILS_H
+#ifndef _ZOH_UTILS_H
+#define _ZOH_UTILS_H
 
 #include "nvmath/Vector.h"
 
+namespace ZOH {
 
-#define	PALETTE_LERP(a, b, i, denom)	Utils::lerp(a, b, i, denom)
-
-#define	SIGN_EXTEND(x,nb)	((((signed(x))&(1<<((nb)-1)))?((~0)<<(nb)):0)|(signed(x)))
+inline int SIGN_EXTEND(int x, int nb) { return ((((signed(x))&(1<<((nb)-1)))?((~0)<<(nb)):0)|(signed(x))); }
 
 enum Field {
     FIELD_M = 1,	// mode
@@ -31,20 +30,20 @@ enum Field {
 };
 
 // some constants
-#define	F16S_MASK	0x8000		// f16 sign mask
-#define	F16EM_MASK	0x7fff		// f16 exp & mantissa mask
-#define	U16MAX		0xffff
-#define	S16MIN		(-0x8000)
-#define	S16MAX		0x7fff
-#define	INT16_MASK	0xffff
-#define	F16MAX	(0x7bff)		// MAXFLT bit pattern for halfs
+static const int F16S_MASK	=  0x8000;		// f16 sign mask
+static const int F16EM_MASK	=  0x7fff;		// f16 exp & mantissa mask
+static const int U16MAX		=  0xffff;
+static const int S16MIN		= -0x8000;
+static const int S16MAX		=  0x7fff;
+static const int INT16_MASK	=  0xffff;
+static const int F16MAX		=  0x7bff;		// MAXFLT bit pattern for halfs
 
 enum Format { UNSIGNED_F16, SIGNED_F16 };
 
 class Utils
 {
 public:
-    static ::Format FORMAT;     // this is a global -- we're either handling unsigned or unsigned half values
+    static Format FORMAT;     // this is a global -- we're either handling unsigned or unsigned half values
 
     // error metrics
     static float norm(const nv::Vector3 &a, const nv::Vector3 &b);
@@ -69,4 +68,6 @@ public:
     static nv::Vector3 lerp(const nv::Vector3 & a, const nv::Vector3 & b, int i, int denom);
 };
 
-#endif // _UTILS_H
+}
+
+#endif // _ZOH_UTILS_H

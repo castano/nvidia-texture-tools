@@ -10,36 +10,38 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 */
 
-#ifndef _BITS_H
-#define _BITS_H
+#ifndef _AVPCL_BITS_H
+#define _AVPCL_BITS_H
 
 // read/write a bitstream
 
-#include <assert.h>
+#include "nvcore/Debug.h"
+
+namespace AVPCL {
 
 class Bits
 {
 public:
 
-	Bits(char *data, int maxdatabits) { assert (data && maxdatabits > 0); bptr = bend = 0; bits = data; maxbits = maxdatabits; readonly = 0;}
-	Bits(const char *data, int availdatabits) { assert (data && availdatabits > 0); bptr = 0; bend = availdatabits; cbits = data; maxbits = availdatabits; readonly = 1;}
+	Bits(char *data, int maxdatabits) { nvAssert (data && maxdatabits > 0); bptr = bend = 0; bits = data; maxbits = maxdatabits; readonly = 0;}
+	Bits(const char *data, int availdatabits) { nvAssert (data && availdatabits > 0); bptr = 0; bend = availdatabits; cbits = data; maxbits = availdatabits; readonly = 1;}
 
 	void write(int value, int nbits) {
-		assert (nbits >= 0 && nbits < 32);
-		assert (sizeof(int)>= 4);
+		nvAssert (nbits >= 0 && nbits < 32);
+		nvAssert (sizeof(int)>= 4);
 		for (int i=0; i<nbits; ++i)
 			writeone(value>>i);
 	}
 	int read(int nbits) { 
-		assert (nbits >= 0 && nbits < 32);
-		assert (sizeof(int)>= 4);
+		nvAssert (nbits >= 0 && nbits < 32);
+		nvAssert (sizeof(int)>= 4);
 		int out = 0;
 		for (int i=0; i<nbits; ++i)
 			out |= readone() << i;
 		return out;
 	}
 	int getptr() { return bptr; }
-	void setptr(int ptr) { assert (ptr >= 0 && ptr < maxbits); bptr = ptr; }
+	void setptr(int ptr) { nvAssert (ptr >= 0 && ptr < maxbits); bptr = ptr; }
 	int getsize() { return bend; }
 
 private:
@@ -51,7 +53,7 @@ private:
 	char readonly;	// 1 if this is a read-only stream
 
 	int readone() {
-		assert (bptr < bend);
+		nvAssert (bptr < bend);
 		if (bptr >= bend) return 0;
 		int bit = (readonly ? cbits[bptr>>3] : bits[bptr>>3]) & (1 << (bptr & 7));
 		++bptr;
@@ -60,7 +62,7 @@ private:
 	void writeone(int bit) {
 		if (readonly)
 			throw "Writing a read-only bit stream";
-		assert (bptr < maxbits);
+		nvAssert (bptr < maxbits);
 		if (bptr >= maxbits) return;
 		if (bit&1)
 			bits[bptr>>3] |= 1 << (bptr & 7);
@@ -69,5 +71,7 @@ private:
 		if (bptr++ >= bend) bend = bptr;
 	}
 };
+
+}
 
 #endif
