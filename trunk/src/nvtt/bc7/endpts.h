@@ -10,26 +10,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 */
 
-#ifndef _ENDPTS_H
-#define _ENDPTS_H
+#ifndef _AVPCL_ENDPTS_H
+#define _AVPCL_ENDPTS_H
 
 // endpoint definitions and routines to search through endpoint space
 
-#include "arvo/Vec4.h"
+#include "nvmath/Vector.h"
 
-using namespace ArvoMath;
+namespace AVPCL {
 
-#define	NCHANNELS_RGB	3
-#define	NCHANNELS_RGBA	4
-#define	CHANNEL_R	0
-#define	CHANNEL_G	1
-#define	CHANNEL_B	2
-#define	CHANNEL_A	3
+static const int NCHANNELS_RGB	= 3;
+static const int NCHANNELS_RGBA	= 4;
+static const int CHANNEL_R		= 0;
+static const int CHANNEL_G		= 1;
+static const int CHANNEL_B		= 2;
+static const int CHANNEL_A		= 3;
 
 struct FltEndpts
 {
-	Vec4	A;
-	Vec4	B;
+	nv::Vector4	A;
+	nv::Vector4	B;
 };
 
 struct IntEndptsRGB
@@ -76,5 +76,6 @@ struct IntEndptsRGBA_2a
 	int		b_lsb;				// lsb for RGB channels of A
 };
 
-#endif
+}
 
+#endif

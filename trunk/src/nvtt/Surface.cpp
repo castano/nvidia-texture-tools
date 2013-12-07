@@ -707,7 +707,8 @@ bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const voi
 		format != nvtt::Format_BC3 &&
 		format != nvtt::Format_BC4 &&
 		format != nvtt::Format_BC5 &&
-		format != nvtt::Format_BC6)
+		format != nvtt::Format_BC6 &&
+		format != nvtt::Format_BC7)
     {
         return false;
     }
@@ -821,6 +822,11 @@ bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const voi
 					{
 						const BlockATI2 * block = (const BlockATI2 *)ptr;
 						block->decodeBlock(&colors, decoder == Decoder_D3D9);
+					}
+					else if (format == nvtt::Format_BC7)
+					{
+						const BlockBC7 * block = (const BlockBC7 *)ptr;
+						block->decodeBlock(&colors);
 					}
 					else
 					{

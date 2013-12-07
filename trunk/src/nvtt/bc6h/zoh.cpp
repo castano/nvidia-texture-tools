@@ -17,6 +17,8 @@ See the License for the specific language governing permissions and limitations 
 
 #include <string.h> // memcpy
 
+using namespace ZOH;
+
 
 bool ZOH::isone(const char *block)
 {
@@ -130,7 +132,7 @@ static void stats(char block[ZOH::BLOCKSIZE])
 {
 	char mode = block[0] & 0x1F; if ((mode & 0x3) == 0) mode = 0; if ((mode & 0x3) == 1) mode = 1; modehist[mode]++;
 	int prec = mode_to_prec[mode];
-	assert (prec != -1);
+	nvAssert (prec != -1);
 	if (!ZOH::isone(block))
 	{
 		tworegions++;

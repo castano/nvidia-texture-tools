@@ -10,8 +10,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and limitations under the License.
 */
 
-#ifndef _SHAPES_TWO_H
-#define _SHAPES_TWO_H
+#ifndef _AVPCL_SHAPES_TWO_H
+#define _AVPCL_SHAPES_TWO_H
 
 // shapes for two regions
 

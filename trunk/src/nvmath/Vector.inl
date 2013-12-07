@@ -158,6 +158,13 @@ namespace nv
         z *= v.z;
     }
 
+    inline void Vector3::operator/=(Vector3::Arg v)
+    {
+        x /= v.x;
+        y /= v.y;
+        z /= v.z;
+    }
+
     inline bool operator==(Vector3::Arg a, Vector3::Arg b)
     {
         return a.x == b.x && a.y == b.y && a.z == b.z; 
@@ -243,12 +250,28 @@ namespace nv
         w *= s;
     }
 
+    inline void Vector4::operator/=(float s)
+    {
+        x /= s;
+        y /= s;
+        z /= s;
+        w /= s;
+    }
+
     inline void Vector4::operator*=(Vector4::Arg v)
     {
         x *= v.x;
         y *= v.y;
         z *= v.z;
         w *= v.w;
+    }
+
+    inline void Vector4::operator/=(Vector4::Arg v)
+    {
+        x /= v.x;
+        y /= v.y;
+        z /= v.z;
+        w /= v.w;
     }
 
     inline bool operator==(Vector4::Arg a, Vector4::Arg b)
@@ -673,6 +696,11 @@ namespace nv
     }
 
     inline Vector4 operator*(float s, Vector4::Arg v)
+    {
+        return scale(v, s);
+    }
+
+    inline Vector4 operator*(Vector4::Arg v, Vector4::Arg s)
     {
         return scale(v, s);
     }

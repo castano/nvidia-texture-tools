@@ -188,6 +188,7 @@ enum Mode {
     Mode_BC5_Normal_Quartic,
     //Mode_BC5_Normal_DualParaboloid,
 	Mode_BC6,
+	Mode_BC7,
     Mode_Count
 };
 static const char * s_modeNames[] = {
@@ -207,6 +208,7 @@ static const char * s_modeNames[] = {
     "BC5-Normal-Quartic",           // Mode_BC5_Normal_Quartic,
     //"BC5-Normal-DualParaboloid",    // Mode_BC5_Normal_DualParaboloid,
 	"BC6",			// Mode_BC6,
+	"BC7",			// Mode_BC7,
 };
 nvStaticCheck(NV_ARRAY_SIZE(s_modeNames) == Mode_Count);
 
@@ -216,14 +218,14 @@ struct Test {
     Mode modes[6];
 };
 static Test s_imageTests[] = {
-    {"Color", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC6, /*Mode_BC3_LUVW*/}},
+    {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, /*Mode_BC3_LUVW*/}},
     {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
     //{"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
     {"Normal", 4, {Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid, Mode_BC5_Normal_Quartic}},
     {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
 	{"HDR", 2, {Mode_BC3_RGBM, Mode_BC6}},
-	//{"BC6", 1, {Mode_BC6}},	// temporary mode for testing
-	//{"BC7", 1, {Mode_BC7}},	// temporary mode for testing
+	{"BC6", 1, {Mode_BC6}},
+	{"BC7", 1, {Mode_BC7}},
 };
 const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
 
@@ -615,6 +617,10 @@ int main(int argc, char *argv[])
 		else if (mode == Mode_BC6)
 		{
 			format = nvtt::Format_BC6;
+		}
+		else if (mode == Mode_BC7)
+		{
+			format = nvtt::Format_BC7;
 		}
 		else
 		{

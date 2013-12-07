@@ -83,6 +83,35 @@ Vector3 nv::Fit::computeCentroid(int n, const Vector3 *__restrict points, const 
     return centroid;
 }
 
+Vector4 nv::Fit::computeCentroid(int n, const Vector4 *__restrict points)
+{
+    Vector4 centroid(0.0f);
+
+    for (int i = 0; i < n; i++)
+    {
+        centroid += points[i];
+    }
+    centroid /= float(n);
+
+    return centroid;
+}
+
+Vector4 nv::Fit::computeCentroid(int n, const Vector4 *__restrict points, const float *__restrict weights, Vector4::Arg metric)
+{
+    Vector4 centroid(0.0f);
+    float total = 0.0f;
+
+    for (int i = 0; i < n; i++)
+    {
+        total += weights[i];
+        centroid += weights[i]*points[i];
+    }
+    centroid /= total;
+
+    return centroid;
+}
+
+
 
 Vector3 nv::Fit::computeCovariance(int n, const Vector3 *__restrict points, float *__restrict covariance)
 {
@@ -137,6 +166,75 @@ Vector3 nv::Fit::computeCovariance(int n, const Vector3 *__restrict points, cons
     return centroid;
 }
 
+Vector4 nv::Fit::computeCovariance(int n, const Vector4 *__restrict points, float *__restrict covariance)
+{
+    // compute the centroid
+    Vector4 centroid = computeCentroid(n, points);
+
+    // compute covariance matrix
+    for (int i = 0; i < 10; i++)
+    {
+        covariance[i] = 0.0f;
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        Vector4 v = points[i] - centroid;
+
+        covariance[0] += v.x * v.x;
+        covariance[1] += v.x * v.y;
+        covariance[2] += v.x * v.z;
+        covariance[3] += v.x * v.w;
+
+		covariance[4] += v.y * v.y;
+        covariance[5] += v.y * v.z;
+        covariance[6] += v.y * v.w;
+
+		covariance[7] += v.z * v.z;
+		covariance[8] += v.z * v.w;
+
+		covariance[9] += v.w * v.w;
+	}
+
+    return centroid;
+}
+
+Vector4 nv::Fit::computeCovariance(int n, const Vector4 *__restrict points, const float *__restrict weights, Vector4::Arg metric, float *__restrict covariance)
+{
+    // compute the centroid
+    Vector4 centroid = computeCentroid(n, points, weights, metric);
+
+    // compute covariance matrix
+    for (int i = 0; i < 10; i++)
+    {
+        covariance[i] = 0.0f;
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        Vector4 a = (points[i] - centroid) * metric;
+        Vector4 b = weights[i]*a;
+
+        covariance[0] += a.x * b.x;
+        covariance[1] += a.x * b.y;
+        covariance[2] += a.x * b.z;
+        covariance[3] += a.x * b.w;
+
+		covariance[4] += a.y * b.y;
+        covariance[5] += a.y * b.z;
+        covariance[6] += a.y * b.w;
+
+		covariance[7] += a.z * b.z;
+		covariance[8] += a.z * b.w;
+
+		covariance[9] += a.w * b.w;
+    }
+
+    return centroid;
+}
+
+
+
 Vector3 nv::Fit::computePrincipalComponent_PowerMethod(int n, const Vector3 *__restrict points)
 {
     float matrix[6];
@@ -155,7 +253,7 @@ Vector3 nv::Fit::computePrincipalComponent_PowerMethod(int n, const Vector3 *__r
 
 
 
-static inline Vector3 firstEigenVector_EigenSolver(const float *__restrict matrix)
+static inline Vector3 firstEigenVector_EigenSolver3(const float *__restrict matrix)
 {
     if (matrix[0] == 0 && matrix[3] == 0 && matrix[5] == 0)
     {
@@ -164,7 +262,7 @@ static inline Vector3 firstEigenVector_EigenSolver(const float *__restrict matri
 
     float eigenValues[3];
     Vector3 eigenVectors[3];
-	if (!nv::Fit::eigenSolveSymmetric(matrix, eigenValues, eigenVectors))
+	if (!nv::Fit::eigenSolveSymmetric3(matrix, eigenValues, eigenVectors))
 	{
 		return Vector3(0.0f);
 	}
@@ -177,7 +275,7 @@ Vector3 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector3 *__r
     float matrix[6];
     computeCovariance(n, points, matrix);
 
-    return firstEigenVector_EigenSolver(matrix);
+    return firstEigenVector_EigenSolver3(matrix);
 }
 
 Vector3 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
@@ -185,8 +283,45 @@ Vector3 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector3 *__r
     float matrix[6];
     computeCovariance(n, points, weights, metric, matrix);
 
-    return firstEigenVector_EigenSolver(matrix);
+    return firstEigenVector_EigenSolver3(matrix);
 }
+
+
+
+static inline Vector4 firstEigenVector_EigenSolver4(const float *__restrict matrix)
+{
+    if (matrix[0] == 0 && matrix[4] == 0 && matrix[7] == 0&& matrix[9] == 0)
+    {
+        return Vector4(0.0f);
+    }
+
+    float eigenValues[4];
+    Vector4 eigenVectors[4];
+	if (!nv::Fit::eigenSolveSymmetric4(matrix, eigenValues, eigenVectors))
+	{
+		return Vector4(0.0f);
+	}
+
+	return eigenVectors[0];
+}
+
+Vector4 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector4 *__restrict points)
+{
+    float matrix[10];
+    computeCovariance(n, points, matrix);
+
+    return firstEigenVector_EigenSolver4(matrix);
+}
+
+Vector4 nv::Fit::computePrincipalComponent_EigenSolver(int n, const Vector4 *__restrict points, const float *__restrict weights, Vector4::Arg metric)
+{
+    float matrix[10];
+    computeCovariance(n, points, weights, metric, matrix);
+
+    return firstEigenVector_EigenSolver4(matrix);
+}
+
+
 
 void ArvoSVD(int rows, int cols, float * Q, float * diag, float * R);
 
@@ -211,6 +346,28 @@ Vector3 nv::Fit::computePrincipalComponent_SVD(int n, const Vector3 *__restrict 
 	return Vector3(R[0], R[1], R[2]);
 }
 
+Vector4 nv::Fit::computePrincipalComponent_SVD(int n, const Vector4 *__restrict points)
+{
+	// Store the points in an n x n matrix
+	std::vector<float> Q(n*n, 0.0f);
+	for (int i = 0; i < n; ++i)
+	{
+		Q[i*n+0] = points[i].x;
+		Q[i*n+1] = points[i].y;
+		Q[i*n+2] = points[i].z;
+		Q[i*n+3] = points[i].w;
+	}
+
+	// Alloc space for the SVD outputs
+	std::vector<float> diag(n, 0.0f);
+	std::vector<float> R(n*n, 0.0f);
+
+	ArvoSVD(n, n, &Q[0], &diag[0], &R[0]);
+
+	// Get the principal component
+	return Vector4(R[0], R[1], R[2], R[3]);
+}
+
 
 
 Plane nv::Fit::bestPlane(int n, const Vector3 *__restrict points)
@@ -227,7 +384,7 @@ Plane nv::Fit::bestPlane(int n, const Vector3 *__restrict points)
 
     float eigenValues[3];
     Vector3 eigenVectors[3];
-    if (!eigenSolveSymmetric(matrix, eigenValues, eigenVectors)) {
+    if (!eigenSolveSymmetric3(matrix, eigenValues, eigenVectors)) {
         // If no plane defined, then return a horizontal plane.
         return Plane(Vector3(0, 0, 1), centroid);
     }
@@ -243,7 +400,7 @@ bool nv::Fit::isPlanar(int n, const Vector3 * points, float epsilon/*=NV_EPSILON
 
     float eigenValues[3];
     Vector3 eigenVectors[3];
-    if (!eigenSolveSymmetric(matrix, eigenValues, eigenVectors)) {
+    if (!eigenSolveSymmetric3(matrix, eigenValues, eigenVectors)) {
         return false;
     }
 
@@ -256,10 +413,10 @@ bool nv::Fit::isPlanar(int n, const Vector3 * points, float epsilon/*=NV_EPSILON
 // Householder transforms followed by QL decomposition. 
 // Seems to be based on the code from Numerical Recipes in C.
 
-static void EigenSolver_Tridiagonal(float mat[3][3],float * diag,float * subd);
-static bool EigenSolver_QLAlgorithm(float mat[3][3],float * diag,float * subd);
+static void EigenSolver3_Tridiagonal(float mat[3][3], float * diag, float * subd);
+static bool EigenSolver3_QLAlgorithm(float mat[3][3], float * diag, float * subd);
 
-bool nv::Fit::eigenSolveSymmetric(const float matrix[6], float eigenValues[3], Vector3 eigenVectors[3])
+bool nv::Fit::eigenSolveSymmetric3(const float matrix[6], float eigenValues[3], Vector3 eigenVectors[3])
 {
     nvDebugCheck(matrix != NULL && eigenValues != NULL && eigenVectors != NULL);
 
@@ -274,8 +431,8 @@ bool nv::Fit::eigenSolveSymmetric(const float matrix[6], float eigenValues[3], V
     work[1][2] = work[2][1] = matrix[4];
     work[2][2] = matrix[5];
 
-    EigenSolver_Tridiagonal(work, diag, subd);
-    if (!EigenSolver_QLAlgorithm(work, diag, subd))
+    EigenSolver3_Tridiagonal(work, diag, subd);
+    if (!EigenSolver3_QLAlgorithm(work, diag, subd))
     {
         for (int i = 0; i < 3; i++) {
             eigenValues[i] = 0;
@@ -321,7 +478,7 @@ bool nv::Fit::eigenSolveSymmetric(const float matrix[6], float eigenValues[3], V
     return true;
 }
 
-static void EigenSolver_Tridiagonal(float mat[3][3],float * diag,float * subd)
+static void EigenSolver3_Tridiagonal(float mat[3][3], float * diag, float * subd)
 {
     // Householder reduction T = Q^t M Q
     //   Input:   
@@ -367,7 +524,7 @@ static void EigenSolver_Tridiagonal(float mat[3][3],float * diag,float * subd)
     }
 }
 
-static bool EigenSolver_QLAlgorithm(float mat[3][3],float * diag,float * subd)
+static bool EigenSolver3_QLAlgorithm(float mat[3][3], float * diag, float * subd)
 {
     // QL iteration with implicit shifting to reduce matrix from tridiagonal
     // to diagonal
@@ -438,6 +595,225 @@ static bool EigenSolver_QLAlgorithm(float mat[3][3],float * diag,float * subd)
     return true;
 }
 
+
+
+// Tridiagonal solver for 4x4 symmetric matrices.
+
+static void EigenSolver4_Tridiagonal(float mat[4][4], float * diag, float * subd);
+static bool EigenSolver4_QLAlgorithm(float mat[4][4], float * diag, float * subd);
+
+bool nv::Fit::eigenSolveSymmetric4(const float matrix[10], float eigenValues[4], Vector4 eigenVectors[4])
+{
+    nvDebugCheck(matrix != NULL && eigenValues != NULL && eigenVectors != NULL);
+
+    float subd[4];
+    float diag[4];
+    float work[4][4];
+
+    work[0][0] = matrix[0];
+    work[0][1] = work[1][0] = matrix[1];
+    work[0][2] = work[2][0] = matrix[2];
+    work[0][3] = work[3][0] = matrix[3];
+    work[1][1] = matrix[4];
+    work[1][2] = work[2][1] = matrix[5];
+    work[1][3] = work[3][1] = matrix[6];
+    work[2][2] = matrix[7];
+    work[2][3] = work[3][2] = matrix[8];
+    work[3][3] = matrix[9];
+
+    EigenSolver4_Tridiagonal(work, diag, subd);
+    if (!EigenSolver4_QLAlgorithm(work, diag, subd))
+    {
+        for (int i = 0; i < 4; i++) {
+            eigenValues[i] = 0;
+            eigenVectors[i] = Vector4(0);
+        }
+        return false;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        eigenValues[i] = (float)diag[i];
+    }
+
+    // eigenvectors are the columns; make them the rows
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            eigenVectors[j].component[i] = (float) work[i][j];
+        }
+    }
+
+    // sort by singular value
+
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = i+1; j < 4; ++j)
+		{
+			if (eigenValues[j] > eigenValues[i])
+			{
+				swap(eigenValues[i], eigenValues[j]);
+				swap(eigenVectors[i], eigenVectors[j]);
+			}
+		}
+	}
+
+    nvDebugCheck(eigenValues[0] >= eigenValues[1] && eigenValues[0] >= eigenValues[2] && eigenValues[0] >= eigenValues[3]);
+    nvDebugCheck(eigenValues[1] >= eigenValues[2] && eigenValues[1] >= eigenValues[3]);
+    nvDebugCheck(eigenValues[2] >= eigenValues[2]);
+
+    return true;
+}
+
+#include "nvmath/Matrix.inl"
+
+inline float signNonzero(float x)
+{
+	return (x >= 0.0f) ? 1.0f : -1.0f;
+}
+
+static void EigenSolver4_Tridiagonal(float mat[4][4], float * diag, float * subd)
+{
+    // Householder reduction T = Q^t M Q
+    //   Input:   
+    //     mat, symmetric 3x3 matrix M
+    //   Output:  
+    //     mat, orthogonal matrix Q
+    //     diag, diagonal entries of T
+    //     subd, subdiagonal entries of T (T is symmetric)
+
+	static const int n = 4;
+
+	// Set epsilon relative to size of elements in matrix
+	static const float relEpsilon = 1e-6f;
+	float maxElement = FLT_MAX;
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j)
+			maxElement = max(maxElement, fabs(mat[i][j]));
+	float epsilon = relEpsilon * maxElement;
+
+	// Iterative algorithm, works for any size of matrix but might be slower than
+	// a closed-form solution for symmetric 4x4 matrices.  Based on this article:
+	// http://en.wikipedia.org/wiki/Householder_transformation#Tridiagonalization
+
+	Matrix A, Q(identity);
+	memcpy(&A, mat, sizeof(float)*n*n);
+
+	// We proceed from left to right, making the off-tridiagonal entries zero in
+	// one column of the matrix at a time.
+	for (int k = 0; k < n - 2; ++k)
+	{
+		float sum = 0.0f;
+		for (int j = k+1; j < n; ++j)
+			sum += A(j,k)*A(j,k);
+		float alpha = -signNonzero(A(k+1,k)) * sqrtf(sum);
+		float r = sqrtf(0.5f * (alpha*alpha - A(k+1,k)*alpha));
+
+		// If r is zero, skip this column - already in tridiagonal form
+		if (fabs(r) < epsilon)
+			continue;
+
+		float v[n] = {};
+		v[k+1] = 0.5f * (A(k+1,k) - alpha) / r;
+		for (int j = k+2; j < n; ++j)
+			v[j] = 0.5f * A(j,k) / r;
+
+		Matrix P(identity);
+		for (int i = 0; i < n; ++i)
+			for (int j = 0; j < n; ++j)
+				P(i,j) -= 2.0f * v[i] * v[j];
+
+		A = mul(mul(P, A), P);
+		Q = mul(Q, P);
+	}
+
+	nvDebugCheck(fabs(A(2,0)) < epsilon);
+	nvDebugCheck(fabs(A(0,2)) < epsilon);
+	nvDebugCheck(fabs(A(3,0)) < epsilon);
+	nvDebugCheck(fabs(A(0,3)) < epsilon);
+	nvDebugCheck(fabs(A(3,1)) < epsilon);
+	nvDebugCheck(fabs(A(1,3)) < epsilon);
+
+	for (int i = 0; i < n; ++i)
+		diag[i] = A(i,i);
+	for (int i = 0; i < n - 1; ++i)
+		subd[i] = A(i+1,i);
+	subd[n-1] = 0.0f;
+
+	memcpy(mat, &Q, sizeof(float)*n*n);
+}
+
+static bool EigenSolver4_QLAlgorithm(float mat[4][4], float * diag, float * subd)
+{
+    // QL iteration with implicit shifting to reduce matrix from tridiagonal
+    // to diagonal
+    const int maxiter = 32;
+
+    for (int ell = 0; ell < 4; ell++)
+    {
+        int iter;
+        for (iter = 0; iter < maxiter; iter++)
+        {
+            int m;
+            for (m = ell; m < 3; m++)
+            {
+                float dd = fabs(diag[m]) + fabs(diag[m+1]);
+                if ( fabs(subd[m]) + dd == dd )
+                    break;
+            }
+            if ( m == ell )
+                break;
+
+            float g = (diag[ell+1]-diag[ell])/(2*subd[ell]);
+            float r = sqrtf(g*g+1);
+            if ( g < 0 )
+                g = diag[m]-diag[ell]+subd[ell]/(g-r);
+            else
+                g = diag[m]-diag[ell]+subd[ell]/(g+r);
+            float s = 1, c = 1, p = 0;
+            for (int i = m-1; i >= ell; i--)
+            {
+                float f = s*subd[i], b = c*subd[i];
+                if ( fabs(f) >= fabs(g) )
+                {
+                    c = g/f;
+                    r = sqrtf(c*c+1);
+                    subd[i+1] = f*r;
+                    c *= (s = 1/r);
+                }
+                else
+                {
+                    s = f/g;
+                    r = sqrtf(s*s+1);
+                    subd[i+1] = g*r;
+                    s *= (c = 1/r);
+                }
+                g = diag[i+1]-p;
+                r = (diag[i]-g)*s+2*b*c;
+                p = s*r;
+                diag[i+1] = g+p;
+                g = c*r-b;
+
+                for (int k = 0; k < 4; k++)
+                {
+                    f = mat[k][i+1];
+                    mat[k][i+1] = s*mat[k][i]+c*f;
+                    mat[k][i] = c*mat[k][i]-s*f;
+                }
+            }
+            diag[ell] -= p;
+            subd[ell] = g;
+            subd[m] = 0;
+        }
+
+        if ( iter == maxiter )
+            // should not get here under normal circumstances
+            return false;
+    }
+
+    return true;
+}
 
 
 

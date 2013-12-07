@@ -775,8 +775,7 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     }
     else if (compressionOptions.format == Format_BC7)
     {
-		// !!!UNDONE
-        //return new CompressorBC7;
+        return new CompressorBC7;
     }
 
     return NULL;

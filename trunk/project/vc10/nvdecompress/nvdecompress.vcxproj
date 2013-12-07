@@ -207,6 +207,9 @@
     <ProjectReference Include="..\bc6h\bc6h.vcxproj">
       <Project>{c33787e3-5564-4834-9fe3-a9020455a669}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\bc7\bc7.vcxproj">
+      <Project>{f974f34b-af02-4c88-8e1e-85475094ea78}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\nvcore\nvcore.vcxproj">
       <Project>{f143d180-d4c4-4037-b3de-be89a21c8d1d}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

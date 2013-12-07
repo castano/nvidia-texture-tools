@@ -220,7 +220,13 @@ namespace nv
 		void decodeBlock(ColorSet * set) const;
 	};
 
-	/// !!!UNDONE: BC7 block
+	/// BC7 block.
+	struct BlockBC7
+	{
+		uint8 data[16];		// Not even going to try to write a union for this thing.
+		void decodeBlock(ColorBlock * block) const;
+	};
+
 
 
     // Serialization functions.
@@ -233,6 +239,7 @@ namespace nv
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI2 & block);
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockCTX1 & block);
     NVIMAGE_API Stream & operator<<(Stream & stream, BlockBC6 & block);
+    NVIMAGE_API Stream & operator<<(Stream & stream, BlockBC7 & block);
 
 } // nv namespace
 

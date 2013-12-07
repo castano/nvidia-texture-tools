@@ -14,22 +14,23 @@ See the License for the specific language governing permissions and limitations 
 
 #include "utils.h"
 #include "avpcl.h"
+#include "nvcore/Debug.h"
+#include "nvmath/Vector.inl"
 #include <math.h>
-#include <assert.h>
-#include "rgba.h"
-#include "arvo/Vec3.h"
-#include "arvo/Vec4.h"
 
-static int denom7_weights[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
-static int denom15_weights[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64
+using namespace nv;
+using namespace AVPCL;
+
+static const int denom7_weights[] = {0, 9, 18, 27, 37, 46, 55, 64};										// divided by 64
+static const int denom15_weights[] = {0, 4, 9, 13, 17, 21, 26, 30, 34, 38, 43, 47, 51, 55, 60, 64};		// divided by 64
 
 int Utils::lerp(int a, int b, int i, int bias, int denom)
 {
 #ifdef	USE_ZOH_INTERP
-	assert (denom == 3 || denom == 7 || denom == 15);
-	assert (i >= 0 && i <= denom);
-	assert (bias >= 0 && bias <= denom/2);
-	assert (a >= 0 && b >= 0);
+	nvAssert (denom == 3 || denom == 7 || denom == 15);
+	nvAssert (i >= 0 && i <= denom);
+	nvAssert (bias >= 0 && bias <= denom/2);
+	nvAssert (a >= 0 && b >= 0);
 
 	int round = 0;
 #ifdef	USE_ZOH_INTERP_ROUNDED
@@ -41,29 +42,29 @@ int Utils::lerp(int a, int b, int i, int bias, int denom)
 	case 3:	denom *= 5; i *= 5;	// fall through to case 15
 	case 15:return (a*denom15_weights[denom-i] + b*denom15_weights[i] + round) >> 6;
 	case 7:	return (a*denom7_weights[denom-i] + b*denom7_weights[i] + round) >> 6;
-	default: assert(0); return 0;
+	default: nvUnreachable(); return 0;
 	}
 #else
 	return (((a)*((denom)-i)+(b)*(i)+(bias))/(denom));		// simple exact interpolation
 #endif
 }
 
-Vec4 Utils::lerp(const Vec4& a, const Vec4 &b, int i, int bias, int denom)
+Vector4 Utils::lerp(Vector4::Arg a, Vector4::Arg b, int i, int bias, int denom)
 {
 #ifdef	USE_ZOH_INTERP
-	assert (denom == 3 || denom == 7 || denom == 15);
-	assert (i >= 0 && i <= denom);
-	assert (bias >= 0 && bias <= denom/2);
-//	assert (a >= 0 && b >= 0);
+	nvAssert (denom == 3 || denom == 7 || denom == 15);
+	nvAssert (i >= 0 && i <= denom);
+	nvAssert (bias >= 0 && bias <= denom/2);
+//	nvAssert (a >= 0 && b >= 0);
 
 	// no need to bias these as this is an exact division
 
 	switch (denom)
 	{
 	case 3:	denom *= 5; i *= 5;	// fall through to case 15
-	case 15:return (a*denom15_weights[denom-i] + b*denom15_weights[i]) / 64.0;
-	case 7:	return (a*denom7_weights[denom-i] + b*denom7_weights[i]) / 64.0;
-	default: assert(0); return 0;
+	case 15:return (a*float(denom15_weights[denom-i]) + b*float(denom15_weights[i])) / 64.0f;
+	case 7:	return (a*float(denom7_weights[denom-i]) + b*float(denom7_weights[i])) / 64.0f;
+	default: nvUnreachable(); return Vector4(0);
 	}
 #else
 	return (((a)*((denom)-i)+(b)*(i)+(bias))/(denom));		// simple exact interpolation
@@ -75,8 +76,7 @@ int Utils::unquantize(int q, int prec)
 {
 	int unq;
 
-	assert (prec > 3);	// we only want to do one replicate
-	assert (RGBA_MIN == 0);
+	nvAssert (prec > 3);	// we only want to do one replicate
 
 #ifdef USE_ZOH_QUANT
 	if (prec >= 8)
@@ -84,9 +84,9 @@ int Utils::unquantize(int q, int prec)
 	else if (q == 0) 
 		unq = 0;
 	else if (q == ((1<<prec)-1)) 
-		unq = RGBA_MAX;
+		unq = 255;
 	else
-		unq = (q * (RGBA_MAX+1) + (RGBA_MAX+1)/2) >> prec;
+		unq = (q * 256 + 128) >> prec;
 #else
 	// avpcl unquantizer -- bit replicate
 	unq = (q << (8-prec)) | (q >> (2*prec-8));
@@ -100,112 +100,111 @@ int Utils::quantize(float value, int prec)
 {
 	int q, unq;
 
-	assert (prec > 3);	// we only want to do one replicate
-	assert (RGBA_MIN == 0);
+	nvAssert (prec > 3);	// we only want to do one replicate
 
-	unq = (int)floor(value + 0.5);
-	assert (unq >= RGBA_MIN && unq <= RGBA_MAX);
+	unq = (int)floor(value + 0.5f);
+	nvAssert (unq <= 255);
 
 #ifdef USE_ZOH_QUANT
-	q = (prec >= 8) ? unq : (unq << prec) / (RGBA_MAX+1);
+	q = (prec >= 8) ? unq : (unq << prec) / 256;
 #else
 	// avpcl quantizer -- scale properly for best possible bit-replicated result
-	q = (unq * ((1<<prec)-1) + RGBA_MAX/2)/RGBA_MAX;
+	q = (unq * ((1<<prec)-1) + 127)/255;
 #endif
 
-	assert (q >= 0 && q < (1 << prec));
+	nvAssert (q >= 0 && q < (1 << prec));
 
 	return q;
 }
 
-double Utils::metric4(const Vec4& a, const Vec4& b)
+float Utils::metric4(Vector4::Arg a, Vector4::Arg b)
 {
-	Vec4 err = a - b;
+	Vector4 err = a - b;
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt;
+		float rwt, gwt, bwt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// weigh the components
-		err.X() *= rwt;
-		err.Y() *= gwt;
-		err.Z() *= bwt;
+		err.x *= rwt;
+		err.y *= gwt;
+		err.z *= bwt;
 	}
 
-	return err * err;
+	return lengthSquared(err);
 }
 
 // WORK -- implement rotatemode for the below -- that changes where the rwt, gwt, and bwt's go.
-double Utils::metric3(const Vec3& a, const Vec3& b, int rotatemode)
+float Utils::metric3(Vector3::Arg a, Vector3::Arg b, int rotatemode)
 {
-	Vec3 err = a - b;
+	Vector3 err = a - b;
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt;
+		float rwt, gwt, bwt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// adjust weights based on rotatemode
 		switch(rotatemode)
 		{
 		case ROTATEMODE_RGBA_RGBA: break;
-		case ROTATEMODE_RGBA_AGBR: rwt = 1.0; break;
-		case ROTATEMODE_RGBA_RABG: gwt = 1.0; break;
-		case ROTATEMODE_RGBA_RGAB: bwt = 1.0; break;
-		default: assert(0);
+		case ROTATEMODE_RGBA_AGBR: rwt = 1.0f; break;
+		case ROTATEMODE_RGBA_RABG: gwt = 1.0f; break;
+		case ROTATEMODE_RGBA_RGAB: bwt = 1.0f; break;
+		default: nvUnreachable();
 		}
 
 		// weigh the components
-		err.X() *= rwt;
-		err.Y() *= gwt;
-		err.Z() *= bwt;
+		err.x *= rwt;
+		err.y *= gwt;
+		err.z *= bwt;
 	}
 
-	return err * err;
+	return lengthSquared(err);
 }
 
-double Utils::metric1(const float a, const float b, int rotatemode)
+float Utils::metric1(const float a, const float b, int rotatemode)
 {
 	float err = a - b;
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt, awt;
+		float rwt, gwt, bwt, awt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// adjust weights based on rotatemode
 		switch(rotatemode)
 		{
-		case ROTATEMODE_RGBA_RGBA: awt = 1.0; break;
+		case ROTATEMODE_RGBA_RGBA: awt = 1.0f; break;
 		case ROTATEMODE_RGBA_AGBR: awt = rwt; break;
 		case ROTATEMODE_RGBA_RABG: awt = gwt; break;
 		case ROTATEMODE_RGBA_RGAB: awt = bwt; break;
-		default: assert(0);
+		default: nvUnreachable();
 		}
 
 		// weigh the components
@@ -218,169 +217,169 @@ double Utils::metric1(const float a, const float b, int rotatemode)
 float Utils::premult(float r, float a)
 {
 	// note that the args are really integers stored in floats
-	int R = r, A = a;
+	int R = int(r), A = int(a);
 
-	assert ((R==r) && (A==a));
+	nvAssert ((R==r) && (A==a));
 
-	return float((R*A + RGBA_MAX/2)/RGBA_MAX);
+	return float((R*A + 127)/255);
 }
 
-static void premult4(Vec4& rgba)
+static void premult4(Vector4& rgba)
 {
-	rgba.X() = Utils::premult(rgba.X(), rgba.W());
-	rgba.Y() = Utils::premult(rgba.Y(), rgba.W());
-	rgba.Z() = Utils::premult(rgba.Z(), rgba.W());
+	rgba.x = Utils::premult(rgba.x, rgba.w);
+	rgba.y = Utils::premult(rgba.y, rgba.w);
+	rgba.z = Utils::premult(rgba.z, rgba.w);
 }
 
-static void premult3(Vec3& rgb, float a)
+static void premult3(Vector3& rgb, float a)
 {
-	rgb.X() = Utils::premult(rgb.X(), a);
-	rgb.Y() = Utils::premult(rgb.Y(), a);
-	rgb.Z() = Utils::premult(rgb.Z(), a);
+	rgb.x = Utils::premult(rgb.x, a);
+	rgb.y = Utils::premult(rgb.y, a);
+	rgb.z = Utils::premult(rgb.z, a);
 }
 
-double Utils::metric4premult(const Vec4& a, const Vec4& b)
+float Utils::metric4premult(Vector4::Arg a, Vector4::Arg b)
 {
-	Vec4 pma = a, pmb = b;
+	Vector4 pma = a, pmb = b;
 
 	premult4(pma);
 	premult4(pmb);
 
-	Vec4 err = pma - pmb;
+	Vector4 err = pma - pmb;
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt;
+		float rwt, gwt, bwt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// weigh the components
-		err.X() *= rwt;
-		err.Y() *= gwt;
-		err.Z() *= bwt;
+		err.x *= rwt;
+		err.y *= gwt;
+		err.z *= bwt;
 	}
 
-	return err * err;
+	return lengthSquared(err);
 }
 
-double Utils::metric3premult_alphaout(const Vec3& rgb0, float a0, const Vec3& rgb1, float a1)
+float Utils::metric3premult_alphaout(Vector3::Arg rgb0, float a0, Vector3::Arg rgb1, float a1)
 {
-	Vec3 pma = rgb0, pmb = rgb1;
+	Vector3 pma = rgb0, pmb = rgb1;
 
 	premult3(pma, a0);
 	premult3(pmb, a1);
 
-	Vec3 err = pma - pmb;
+	Vector3 err = pma - pmb;
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt;
+		float rwt, gwt, bwt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// weigh the components
-		err.X() *= rwt;
-		err.Y() *= gwt;
-		err.Z() *= bwt;
+		err.x *= rwt;
+		err.y *= gwt;
+		err.z *= bwt;
 	}
 
-	return err * err;
+	return lengthSquared(err);
 }
 
-double Utils::metric3premult_alphain(const Vec3& rgb0, const Vec3& rgb1, int rotatemode)
+float Utils::metric3premult_alphain(Vector3::Arg rgb0, Vector3::Arg rgb1, int rotatemode)
 {
-	Vec3 pma = rgb0, pmb = rgb1;
+	Vector3 pma = rgb0, pmb = rgb1;
 
 	switch(rotatemode)
 	{
 	case ROTATEMODE_RGBA_RGBA:
 		// this function isn't supposed to be called for this rotatemode
-		assert(0);
+		nvUnreachable();
 		break;
 	case ROTATEMODE_RGBA_AGBR:
-		pma.Y() = premult(pma.Y(), pma.X());
-		pma.Z() = premult(pma.Z(), pma.X());
-		pmb.Y() = premult(pmb.Y(), pmb.X());
-		pmb.Z() = premult(pmb.Z(), pmb.X());
+		pma.y = premult(pma.y, pma.x);
+		pma.z = premult(pma.z, pma.x);
+		pmb.y = premult(pmb.y, pmb.x);
+		pmb.z = premult(pmb.z, pmb.x);
 		break;
 	case ROTATEMODE_RGBA_RABG:
-		pma.X() = premult(pma.X(), pma.Y());
-		pma.Z() = premult(pma.Z(), pma.Y());
-		pmb.X() = premult(pmb.X(), pmb.Y());
-		pmb.Z() = premult(pmb.Z(), pmb.Y());
+		pma.x = premult(pma.x, pma.y);
+		pma.z = premult(pma.z, pma.y);
+		pmb.x = premult(pmb.x, pmb.y);
+		pmb.z = premult(pmb.z, pmb.y);
 		break;
 	case ROTATEMODE_RGBA_RGAB:
-		pma.X() = premult(pma.X(), pma.Z());
-		pma.Y() = premult(pma.Y(), pma.Z());
-		pmb.X() = premult(pmb.X(), pmb.Z());
-		pmb.Y() = premult(pmb.Y(), pmb.Z());
+		pma.x = premult(pma.x, pma.z);
+		pma.y = premult(pma.y, pma.z);
+		pmb.x = premult(pmb.x, pmb.z);
+		pmb.y = premult(pmb.y, pmb.z);
 		break;
-	default: assert(0);
+	default: nvUnreachable();
 	}
 
-	Vec3 err = pma - pmb;
+	Vector3 err = pma - pmb;
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt;
+		float rwt, gwt, bwt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// weigh the components
-		err.X() *= rwt;
-		err.Y() *= gwt;
-		err.Z() *= bwt;
+		err.x *= rwt;
+		err.y *= gwt;
+		err.z *= bwt;
 	}
 
-	return err * err;
+	return lengthSquared(err);
 }
 
-double Utils::metric1premult(float rgb0, float a0, float rgb1, float a1, int rotatemode)
+float Utils::metric1premult(float rgb0, float a0, float rgb1, float a1, int rotatemode)
 {
 	float err = premult(rgb0, a0) - premult(rgb1, a1);
 
 	// if nonuniform, select weights and weigh away
 	if (AVPCL::flag_nonuniform || AVPCL::flag_nonuniform_ati)
 	{
-		double rwt, gwt, bwt, awt;
+		float rwt, gwt, bwt, awt;
 		if (AVPCL::flag_nonuniform)
 		{
-			rwt = 0.299; gwt = 0.587; bwt = 0.114;
+			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
 		else if (AVPCL::flag_nonuniform_ati)
 		{
-			rwt = 0.3086; gwt = 0.6094; bwt = 0.0820;
+			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
 
 		// adjust weights based on rotatemode
 		switch(rotatemode)
 		{
-		case ROTATEMODE_RGBA_RGBA: awt = 1.0; break;
+		case ROTATEMODE_RGBA_RGBA: awt = 1.0f; break;
 		case ROTATEMODE_RGBA_AGBR: awt = rwt; break;
 		case ROTATEMODE_RGBA_RABG: awt = gwt; break;
 		case ROTATEMODE_RGBA_RGAB: awt = bwt; break;
-		default: assert(0);
+		default: nvUnreachable();
 		}
 
 		// weigh the components
