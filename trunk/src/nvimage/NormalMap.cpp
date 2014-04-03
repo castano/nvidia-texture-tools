@@ -31,6 +31,8 @@
 
 #include "nvcore/Ptr.h"
 
+#include <string.h> // memcpy
+
 
 using namespace nv;
 
@@ -66,9 +68,9 @@ static FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, 
 
             Vector3 n = normalize(Vector3(du, dv, heightScale));
 
-            fimage->pixel(x, y, 0, 0) = 0.5f * n.x + 0.5f;
-            fimage->pixel(x, y, 0, 1) = 0.5f * n.y + 0.5f;
-            fimage->pixel(x, y, 0, 2) = 0.5f * n.z + 0.5f;
+            fimage->pixel(0, x, y, 0) = 0.5f * n.x + 0.5f;
+            fimage->pixel(1, x, y, 0) = 0.5f * n.y + 0.5f;
+            fimage->pixel(2, x, y, 0) = 0.5f * n.z + 0.5f;
         }
     }
 
@@ -101,20 +103,22 @@ static FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode
 
             Vector3 n = normalize(Vector3(du, dv, heightScale));
 
-	    img_out->pixel(x, y, 0, 0) = n.x;
-	    img_out->pixel(x, y, 0, 1) = n.y;
-	    img_out->pixel(x, y, 0, 2) = n.z;
-	}
+            img_out->pixel(0, x, y, 0) = n.x;
+            img_out->pixel(1, x, y, 0) = n.y;
+            img_out->pixel(2, x, y, 0) = n.z;
+        }
     }
 
     // Copy alpha channel.
-    for (uint y = 0; y < h; y++)
+    /*for (uint y = 0; y < h; y++)
     {
         for (uint x = 0; x < w; x++)
         {
-            img_out->pixel(x, y, 0, 3) = img->pixel(x, y, 0, 3);
+            
+            img_out->pixel(3, x, y, 0) = img->pixel(3, x, y, 0);
         }
-    }
+    }*/
+    memcpy(img_out->channel(3), img->channel(3), w * h * sizeof(float));
 
     return img_out.release();
 }
