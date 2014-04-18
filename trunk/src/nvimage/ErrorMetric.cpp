@@ -262,7 +262,7 @@ static void rgbToCieLab(const FloatImage * rgbImage, FloatImage * LabImage)
 float nv::cieLabError(const FloatImage * img0, const FloatImage * img1)
 {
     if (!sameLayout(img0, img1)) return FLT_MAX;
-    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img1->componentCount() == 4);
 
     const float * r0 = img0->channel(0);
     const float * g0 = img0->channel(1);
@@ -293,7 +293,7 @@ float nv::cieLabError(const FloatImage * img0, const FloatImage * img1)
 float nv::cieLab94Error(const FloatImage * img0, const FloatImage * img1)
 {
     if (!sameLayout(img0, img1)) return FLT_MAX;
-    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img1->componentCount() == 4);
 
     const float kL = 1;
     const float kC = 1;
@@ -346,7 +346,7 @@ float nv::spatialCieLabError(const FloatImage * img0, const FloatImage * img1)
     if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img1->componentCount() == 4);
 
     uint w = img0->width();
     uint h = img0->height();
@@ -386,7 +386,7 @@ float nv::averageAngularError(const FloatImage * img0, const FloatImage * img1)
     if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img1->componentCount() == 4);
 
     uint w = img0->width();
     uint h = img0->height();
@@ -424,7 +424,7 @@ float nv::rmsAngularError(const FloatImage * img0, const FloatImage * img1)
     if (img0 == NULL || img1 == NULL || img0->width() != img1->width() || img0->height() != img1->height()) {
         return FLT_MAX;
     }
-    nvDebugCheck(img0->componentCount() == 4 && img0->componentCount() == 4);
+    nvDebugCheck(img0->componentCount() == 4 && img1->componentCount() == 4);
 
     uint w = img0->width();
     uint h = img0->height();
