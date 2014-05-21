@@ -162,9 +162,9 @@ namespace nv
         void stripExtension();
 
         // statics
-        NVCORE_API static char separator();
-        NVCORE_API static const char * fileName(const char *);
-        NVCORE_API static const char * extension(const char *);
+        static char separator();
+        static const char * fileName(const char *);
+        static const char * extension(const char *);
     };
 
 
