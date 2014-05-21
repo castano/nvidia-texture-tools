@@ -45,7 +45,7 @@ public:
 	static float metric3premult_alphain(nv::Vector3::Arg rgb0, nv::Vector3::Arg rgb1, int rotatemode);
 	static float metric1premult(float rgb0, float a0, float rgb1, float a1, int rotatemode);
 
-	static float  Utils::premult(float r, float a);
+	static float premult(float r, float a);
 
 	// quantization and unquantization
 	static int unquantize(int q, int prec);

@@ -1,6 +1,6 @@
 
 ADD_EXECUTABLE(filtertest filtertest.cpp ../tools/cmdline.h)
-TARGET_LINK_LIBRARIES(filtertest nvcore nvmath nvimage)
+TARGET_LINK_LIBRARIES(filtertest nvcore nvmath nvimage nvtt)
 
 ADD_EXECUTABLE(nvtestsuite testsuite.cpp)
 TARGET_LINK_LIBRARIES(nvtestsuite nvcore nvmath nvimage nvtt)
@@ -13,7 +13,7 @@ ADD_TEST(NVTT.TestSuite.Epic.nocuda nvtestsuite -path ${NV_SOURCE_DIR}/data/test
 
 IF (CUDA_FOUND)
     ADD_EXECUTABLE(driverapitest driverapi.cpp)
-    TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage)
+    TARGET_LINK_LIBRARIES(driverapitest nvcore nvmath nvimage nvtt)
 ENDIF (CUDA_FOUND)
 
 ADD_EXECUTABLE(imperativeapi imperativeapi.cpp)

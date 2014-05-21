@@ -24,6 +24,7 @@ See the License for the specific language governing permissions and limitations 
 #include "utils.h"
 #include "endpts.h"
 #include <cstring>
+#include <float.h>
 
 #include "shapes_two.h"
 

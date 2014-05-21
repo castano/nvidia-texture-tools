@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and limitations 
 #include "nvcore/Debug.h"
 #include "nvmath/Vector.inl"
 #include <cstring>
+#include <float.h>
 
 using namespace nv;
 using namespace AVPCL;
