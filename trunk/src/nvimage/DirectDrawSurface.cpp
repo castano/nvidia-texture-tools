@@ -30,6 +30,7 @@
 #include "nvcore/Debug.h"
 #include "nvcore/Utils.h" // max
 #include "nvcore/StdStream.h"
+#include "nvmath/Vector.inl"
 
 #include <string.h> // memset
 

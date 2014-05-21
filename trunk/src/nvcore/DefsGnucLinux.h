@@ -3,12 +3,12 @@
 #endif
 
 #include <stdint.h> // uint8_t, int8_t, ... uintptr_t
-#include <cstddef> // operator new, size_t, NULL
+#include <stddef.h> // operator new, size_t, NULL
 
 // Function linkage
 #define DLL_IMPORT
 #if __GNUC__ >= 4
-#	define DLL_EXPORT   __attribute__((visibility("default")))
+#	define DLL_EXPORT __attribute__((visibility("default")))
 #	define DLL_EXPORT_CLASS DLL_EXPORT
 #else
 #	define DLL_EXPORT
@@ -25,10 +25,9 @@
 #endif
 
 #define NV_FASTCALL     __attribute__((fastcall))
-#define NV_FORCEINLINE  __attribute__((always_inline))
+#define NV_FORCEINLINE  __attribute__((always_inline)) inline
 #define NV_DEPRECATED   __attribute__((deprecated))
 #define NV_THREAD_LOCAL __thread 
-
 
 #if __GNUC__ > 2
 #define NV_PURE     __attribute__((pure))
@@ -52,22 +51,3 @@
 #endif
 
 #define restrict    __restrict__
-
-/*
-// Type definitions
-typedef unsigned char       uint8;
-typedef signed char         int8;
-
-typedef unsigned short      uint16;
-typedef signed short        int16;
-
-typedef unsigned int        uint32;
-typedef signed int          int32;
-
-typedef unsigned long long  uint64;
-typedef signed long long    int64;
-
-// Aliases
-typedef uint32              uint;
-*/
-
