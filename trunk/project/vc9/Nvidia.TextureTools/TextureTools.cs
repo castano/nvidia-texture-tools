@@ -421,9 +421,19 @@ namespace Nvidia.TextureTools
 	public class OutputOptions
 	{
 		#region Delegates
-		public delegate void ErrorHandler(Error error);
-		private delegate void WriteDataDelegate(IntPtr data, int size);
-		private delegate void ImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
+        public delegate void ErrorHandler(Error error);
+
+        //[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        //public delegate void InternalErrorHandlerDelegate(Error error);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void BeginImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate bool WriteDataDelegate(IntPtr data, int size);
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate void EndImageDelegate();
 		#endregion
 
 		#region Bindings
@@ -447,8 +457,8 @@ namespace Nvidia.TextureTools
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsOutputHeader(IntPtr outputOptions, bool b);
 
-		//[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		//private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, WriteDataDelegate writeData, ImageDelegate image);
+        [DllImport("nvtt", CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, IntPtr beginImage, IntPtr writeData, IntPtr endImage);
 
 		#endregion
 
@@ -476,7 +486,21 @@ namespace Nvidia.TextureTools
 			nvttSetOutputOptionsOutputHeader(options, b);
 		}
 
-		// @@ Add OutputHandler interface.
+        public void SetOutputHandler(BeginImageDelegate beginImage, WriteDataDelegate writeImage, EndImageDelegate endImage)
+        {
+            IntPtr ptrBeginImage = IntPtr.Zero;
+            IntPtr ptrWriteData = IntPtr.Zero;
+            IntPtr ptrEndImage = IntPtr.Zero;
+            
+            if (beginImage != null || writeImage != null || endImage != null)
+            {
+                ptrBeginImage = Marshal.GetFunctionPointerForDelegate(beginImage);
+                ptrWriteData = Marshal.GetFunctionPointerForDelegate(writeImage);
+                ptrEndImage = Marshal.GetFunctionPointerForDelegate(endImage);
+            }
+
+            nvttSetOutputOptionsOutputHandler(options, ptrBeginImage, ptrWriteData, ptrEndImage);
+        }
 	}
 	#endregion
 

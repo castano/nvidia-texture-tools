@@ -166,8 +166,9 @@ extern "C" {
 
 // Callbacks
 //typedef void (* nvttErrorHandler)(NvttError e);
-//typedef void (* nvttOutputHandler)(const void * data, int size);
-//typedef void (* nvttImageHandler)(int size, int width, int height, int depth, int face, int miplevel);
+typedef void (* nvttBeginImageHandler)(int size, int width, int height, int depth, int face, int miplevel);
+typedef bool (* nvttOutputHandler)(const void * data, int size);
+typedef void (* nvttEndImageHandler)();
 
 
 // InputOptions class.
@@ -211,7 +212,7 @@ NVTT_API void nvttDestroyOutputOptions(NvttOutputOptions * outputOptions);
 NVTT_API void nvttSetOutputOptionsFileName(NvttOutputOptions * outputOptions, const char * fileName);
 NVTT_API void nvttSetOutputOptionsOutputHeader(NvttOutputOptions * outputOptions, NvttBoolean b);
 //NVTT_API void nvttSetOutputOptionsErrorHandler(NvttOutputOptions * outputOptions, nvttErrorHandler errorHandler);
-//NVTT_API void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttOutputHandler outputHandler, nvttImageHandler imageHandler);
+NVTT_API void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttBeginImageHandler beginImageHandler, nvttOutputHandler outputHandler, nvttEndImageHandler endImageHandler);
 
 
 // Compressor class.
