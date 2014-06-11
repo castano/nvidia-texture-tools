@@ -77,6 +77,8 @@ namespace nvtt
         int version;
         bool srgb;
         bool deleteOutputHandler;
+
+        void * wrapperProxy;    // For the C/C# wrapper.
 		
 		bool hasValidOutputHandler() const;
 
