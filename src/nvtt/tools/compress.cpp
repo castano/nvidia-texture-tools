@@ -322,7 +322,10 @@ int main(int argc, char *argv[])
     const uint rev = version % 100;
 
 
-    printf("NVIDIA Texture Tools %u.%u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor, rev);
+    if (!silent)
+    {
+        printf("NVIDIA Texture Tools %u.%u.%u - Copyright NVIDIA Corporation 2007\n\n", major, minor, rev);
+    }
 
     if (input.isNull())
     {
@@ -577,14 +580,17 @@ int main(int argc, char *argv[])
     nvtt::Context context;
     context.enableCudaAcceleration(!nocuda);
 
-    printf("CUDA acceleration ");
-    if (context.isCudaAccelerationEnabled())
+    if (!silent) 
     {
-        printf("ENABLED\n\n");
-    }
-    else
-    {
-        printf("DISABLED\n\n");
+        printf("CUDA acceleration ");
+        if (context.isCudaAccelerationEnabled())
+        {
+            printf("ENABLED\n\n");
+        }
+        else
+        {
+            printf("DISABLED\n\n");
+        }
     }
 
     outputHandler.setTotal(context.estimateSize(inputOptions, compressionOptions));
@@ -619,7 +625,9 @@ int main(int argc, char *argv[])
     }
     timer.stop();
 
-    printf("\rtime taken: %.3f seconds\n", timer.elapsed());
+    if (!silent) {
+        printf("\rtime taken: %.3f seconds\n", timer.elapsed());
+    }
 
     return EXIT_SUCCESS;
 }
