@@ -66,14 +66,15 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib cudart.lib"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_PATH)\lib\Win32&quot;"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)32.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -148,14 +149,15 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="cudart.lib"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)\lib\x64&quot;"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)64.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -234,15 +236,17 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib cudart.lib"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir); &quot;$(CUDA_PATH)\lib\Win32&quot;"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)32.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -323,15 +327,17 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="cudart.lib"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(CUDA_PATH)\lib\x64&quot;"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)64.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -403,14 +409,15 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
 				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)32.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -481,15 +488,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)64.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -567,15 +574,17 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libpng.lib jpeg.lib tiff.lib FreeImage.lib"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(GnuWinDir)\lib; $(FreeImageDir)"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)32.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)32.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -649,18 +658,18 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName).dll"
+				OutputFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)\$(TargetName).pdb"
+				ProgramDatabaseFile="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\bin\$(ProjectName)64.pdb"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				LinkTimeCodeGeneration="1"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName).lib"
+				ImportLibrary="$(SolutionDir)\$(ConfigurationName).$(PlatformName)\lib\$(ProjectName)64.lib"
 				TargetMachine="17"
 			/>
 			<Tool
