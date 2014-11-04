@@ -32,7 +32,8 @@
 namespace nv
 {
     struct ColorBlock;
-	struct ColorSet;
+    struct ColorSet;
+    struct AlphaBlock4x4;
     class Stream;
 
 
@@ -152,6 +153,7 @@ namespace nv
         void setIndex(uint index, uint value);
 
         void decodeBlock(ColorBlock * block, bool d3d9 = false) const;
+        void decodeBlock(AlphaBlock4x4 * block, bool d3d9 = false) const;
 
         void flip4();
         void flip2();

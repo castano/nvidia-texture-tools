@@ -320,7 +320,7 @@ bool CubeSurface::load(const char * fileName, int mipmap)
         if (mipmap < 0) {
             mipmap = dds.mipmapCount() - 1 - mipmap;
         }
-        if (mipmap < 0 || mipmap > toI32(dds.mipmapCount())) return false;
+        if (mipmap < 0 || mipmap > I32(dds.mipmapCount())) return false;
         
 
         nvtt::InputFormat inputFormat = nvtt::InputFormat_RGBA_16F;
@@ -328,12 +328,14 @@ bool CubeSurface::load(const char * fileName, int mipmap)
         if (dds.header.hasDX10Header()) {
             if (dds.header.header10.dxgiFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) inputFormat = nvtt::InputFormat_RGBA_16F;
             else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_R32G32B32A32_FLOAT) inputFormat = nvtt::InputFormat_RGBA_32F;
+            else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_R32_FLOAT) inputFormat = nvtt::InputFormat_R_32F;
             else return false;
         }
         else {
             if ((dds.header.pf.flags & DDPF_FOURCC) != 0) {
                 if (dds.header.pf.fourcc == D3DFMT_A16B16G16R16F) inputFormat = nvtt::InputFormat_RGBA_16F;
                 else if (dds.header.pf.fourcc == D3DFMT_A32B32G32R32F) inputFormat = nvtt::InputFormat_RGBA_32F;
+                else if (dds.header.pf.fourcc == D3DFMT_R32F) inputFormat = nvtt::InputFormat_R_32F;
                 else return false;
             }
             else {
@@ -594,7 +596,7 @@ Vector3 CubeSurface::Private::applyAngularFilter(const Vector3 & filterDir, floa
             continue;
         }
 
-        const int L = toI32(edgeLength-1);
+        const int L = I32(edgeLength-1);
         int x0 = 0, x1 = L;
         int y0 = 0, y1 = L;
 
@@ -715,7 +717,7 @@ Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, 
             continue;
         }
 
-        const int L = toI32(edgeLength-1);
+        const int L = I32(edgeLength-1);
         int x0 = 0, x1 = L;
         int y0 = 0, y1 = L;
 

@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
                 setIndex = atoi(argv[i+1]);
 
                 for (int j = 0; j < s_imageSetCount; j++) {
-                    if (strCaseCmp(s_imageSets[j].name, argv[i+1]) == 0) {
+                    if (strCaseDiff(s_imageSets[j].name, argv[i+1]) == 0) {
                         setIndex = j;
                         break;
                     }

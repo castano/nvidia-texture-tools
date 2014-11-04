@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and limitations 
 
 #include "nvmath/Vector.h"
 #include <math.h>
-#include "utils.h"
+#include "avpcl_utils.h"
 
 namespace AVPCL {
 
@@ -28,6 +28,7 @@ public:
 	static const int TILE_W = 4;
 	static const int TILE_TOTAL = TILE_H * TILE_W;
 	nv::Vector4 data[TILE_H][TILE_W];
+    float importance_map[TILE_H][TILE_W];
 	int	size_x, size_y;			// actual size of tile
 
 	Tile() {};

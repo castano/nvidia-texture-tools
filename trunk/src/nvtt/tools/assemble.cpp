@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	
-	if (nv::strCaseCmp(output.extension(), ".dds") != 0)
+	if (nv::strCaseDiff(output.extension(), ".dds") != 0)
 	{
 		//output.stripExtension();
 		output.append(".dds");

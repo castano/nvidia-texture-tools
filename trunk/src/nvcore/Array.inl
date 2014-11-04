@@ -16,6 +16,18 @@
 
 namespace nv 
 {
+    template <typename T>
+    NV_FORCEINLINE T & Array<T>::append()
+    {
+        uint old_size = m_size;
+        uint new_size = m_size + 1;
+
+        setArraySize(new_size);
+
+        construct_range(m_buffer, new_size, old_size);
+
+        return m_buffer[old_size]; // Return reference to last element.
+    }
 
     // Push an element at the end of the vector.
     template <typename T>
@@ -211,7 +223,7 @@ namespace nv
     void Array<T>::replaceWithLast(uint index)
     {
         nvDebugCheck( index < m_size );
-        nv::swap(m_buffer[index], back());
+        nv::swap(m_buffer[index], back());      // @@ Is this OK when index == size-1?
         (m_buffer+m_size-1)->~T();
         m_size--;
     }

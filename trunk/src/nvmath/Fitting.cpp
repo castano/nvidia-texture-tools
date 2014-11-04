@@ -4,10 +4,11 @@
 #include "Vector.inl"
 #include "Plane.inl"
 
+#include "nvcore/Array.inl"
 #include "nvcore/Utils.h" // max, swap
 
 #include <float.h> // FLT_MAX
-#include <vector>
+//#include <vector>
 #include <string.h>
 
 using namespace nv;
@@ -329,7 +330,7 @@ void ArvoSVD(int rows, int cols, float * Q, float * diag, float * R);
 Vector3 nv::Fit::computePrincipalComponent_SVD(int n, const Vector3 *__restrict points)
 {
 	// Store the points in an n x n matrix
-	std::vector<float> Q(n*n, 0.0f);
+    Array<float> Q; Q.resize(n*n, 0.0f);
 	for (int i = 0; i < n; ++i)
 	{
 		Q[i*n+0] = points[i].x;
@@ -338,8 +339,8 @@ Vector3 nv::Fit::computePrincipalComponent_SVD(int n, const Vector3 *__restrict 
 	}
 
 	// Alloc space for the SVD outputs
-	std::vector<float> diag(n, 0.0f);
-	std::vector<float> R(n*n, 0.0f);
+    Array<float> diag; diag.resize(n, 0.0f);
+    Array<float> R; R.resize(n*n, 0.0f);
 
 	ArvoSVD(n, n, &Q[0], &diag[0], &R[0]);
 
@@ -350,7 +351,7 @@ Vector3 nv::Fit::computePrincipalComponent_SVD(int n, const Vector3 *__restrict 
 Vector4 nv::Fit::computePrincipalComponent_SVD(int n, const Vector4 *__restrict points)
 {
 	// Store the points in an n x n matrix
-	std::vector<float> Q(n*n, 0.0f);
+    Array<float> Q; Q.resize(n*n, 0.0f);
 	for (int i = 0; i < n; ++i)
 	{
 		Q[i*n+0] = points[i].x;
@@ -360,8 +361,8 @@ Vector4 nv::Fit::computePrincipalComponent_SVD(int n, const Vector4 *__restrict 
 	}
 
 	// Alloc space for the SVD outputs
-	std::vector<float> diag(n, 0.0f);
-	std::vector<float> R(n*n, 0.0f);
+    Array<float> diag; diag.resize(n, 0.0f);
+    Array<float> R; R.resize(n*n, 0.0f);
 
 	ArvoSVD(n, n, &Q[0], &diag[0], &R[0]);
 
@@ -940,7 +941,7 @@ void ArvoSVD(int rows, int cols, float * Q, float * diag, float * R)
 	float  g     = 0.0f;
 	float  scale = 0.0f;
 
-	std::vector<float> temp(cols, 0.0f);
+    Array<float> temp; temp.resize(cols, 0.0f);
 
 	for( i = 0; i < cols; i++ ) 
 	{

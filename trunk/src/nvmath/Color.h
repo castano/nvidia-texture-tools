@@ -89,6 +89,7 @@ namespace nv
                 uint8 b: 8;
 #endif
             };
+            uint8 component[4];
             uint32 u;
         };
     };

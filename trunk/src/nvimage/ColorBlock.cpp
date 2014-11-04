@@ -6,6 +6,8 @@
 
 #include "nvmath/Box.h"
 #include "nvmath/Vector.inl"
+#include "nvmath/ftoi.h"
+
 #include "nvcore/Utils.h" // swap
 
 #include <string.h> // memcpy
@@ -519,11 +521,24 @@ void ColorSet::setColors(const float * data, uint img_w, uint img_h, uint img_x,
     }
 }
 
+void ColorSet::setColors(const Vector3 colors[16], const float weights[16])
+{
+
+}
+
+void ColorSet::setColors(const Vector4 colors[16], const float weights[16])
+{
+
+}
+
+
+
 void ColorSet::setAlphaWeights()
 {
     for (uint i = 0; i < colorCount; i++)
     {
-        weights[i] = max(colors[i].w, 0.001f); // Avoid division by zero.
+        //weights[i] = max(colors[i].w, 0.001f); // Avoid division by zero.
+        weights[i] = max(colors[i].w, 0.0f);
     }
 }
 
@@ -539,6 +554,7 @@ void ColorSet::setUniformWeights()
 // @@ Handle complex blocks (not 4x4).
 void ColorSet::createMinimalSet(bool ignoreTransparent)
 {
+    nvDebugCheck(indexCount == 16);
     nvDebugCheck(colorCount <= 16);
 
     Vector4 C[16];
@@ -556,7 +572,7 @@ void ColorSet::createMinimalSet(bool ignoreTransparent)
         Vector4 ci = C[indices[i]];
         float wi = W[indices[i]];
 
-        if (ignoreTransparent && ci.w == 0) {
+        if (ignoreTransparent && wi == 0) {
             indices[i] = -1;
             continue;
         }
@@ -582,9 +598,10 @@ void ColorSet::createMinimalSet(bool ignoreTransparent)
             n++;
         }
     }
-    nvDebugCheck(n != 0);
+    //nvDebugCheck(n != 0); // Fully transparent blocks are OK.
 
     for (uint i = n; i < colorCount; i++) {
+        colors[i] = Vector4(0);
         weights[i] = 0;
     }
 
@@ -594,6 +611,8 @@ void ColorSet::createMinimalSet(bool ignoreTransparent)
     if (colorCount == 0) {
         colorCount = 1;
         indices[0] = 0;
+        //colors[0] = Vector4(0);
+        weights[0] = 1;
     }
 }
 
@@ -661,3 +680,59 @@ bool ColorSet::hasAlpha() const
     }
     return false;
 }
+
+
+void AlphaBlock4x4::init(uint8 a)
+{
+    for (int i = 0; i < 16; i++) {
+        alpha[i] = a;
+        weights[i] = 1.0f;
+    }
+}
+
+void AlphaBlock4x4::init(const ColorBlock & src, uint channel)
+{
+    nvCheck(channel >= 0 && channel < 4);
+
+    // Colors are in BGRA format.
+    if (channel == 0) channel = 2;
+    else if (channel == 2) channel = 0;
+
+    for (int i = 0; i < 16; i++) {
+        alpha[i] = src.color(i).component[channel];
+        weights[i] = 1.0f;
+    }
+}
+
+
+
+
+void AlphaBlock4x4::init(const ColorSet & src, uint channel)
+{
+    nvCheck(channel >= 0 && channel < 4);
+
+    for (int i = 0; i < 16; i++) {
+        float f = src.color(i).component[channel];
+        alpha[i] = unitFloatToFixed8(f);
+        weights[i] = 1.0f;
+    }
+}
+
+void AlphaBlock4x4::initMaxRGB(const ColorSet & src, float threshold)
+{
+    for (int i = 0; i < 16; i++) {
+        float x = src.color(i).x;
+        float y = src.color(i).y;
+        float z = src.color(i).z;
+        alpha[i] = unitFloatToFixed8(max(max(x, y), max(z, threshold)));
+        weights[i] = 1.0f;
+    }
+}
+
+void AlphaBlock4x4::initWeights(const ColorSet & src)
+{
+    for (int i = 0; i < 16; i++) {
+        weights[i] = src.weight(i);
+    }
+}
+

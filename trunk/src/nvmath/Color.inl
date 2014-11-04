@@ -6,6 +6,7 @@
 
 #include "Color.h"
 #include "Vector.inl"
+#include "ftoi.h"
 
 
 namespace nv
@@ -123,30 +124,30 @@ namespace nv
     inline Color32 toColor32(const Vector4 & v)
     {
         Color32 color;
-        color.r = toU8(nv::iround(saturate(v.x) * 255));
-        color.g = toU8(nv::iround(saturate(v.y) * 255));
-        color.b = toU8(nv::iround(saturate(v.z) * 255));
-        color.a = toU8(nv::iround(saturate(v.w) * 255));
+        color.r = U8(ftoi_round(saturate(v.x) * 255));
+        color.g = U8(ftoi_round(saturate(v.y) * 255));
+        color.b = U8(ftoi_round(saturate(v.z) * 255));
+        color.a = U8(ftoi_round(saturate(v.w) * 255));
         return color;
     }
 
     inline Color32 toColor32_from_bgra(const Vector4 & v)
     {
         Color32 color;
-        color.b = toU8(nv::iround(saturate(v.x) * 255));
-        color.g = toU8(nv::iround(saturate(v.y) * 255));
-        color.r = toU8(nv::iround(saturate(v.z) * 255));
-        color.a = toU8(nv::iround(saturate(v.w) * 255));
+        color.b = U8(ftoi_round(saturate(v.x) * 255));
+        color.g = U8(ftoi_round(saturate(v.y) * 255));
+        color.r = U8(ftoi_round(saturate(v.z) * 255));
+        color.a = U8(ftoi_round(saturate(v.w) * 255));
         return color;
     }
 
     inline Color32 toColor32_from_argb(const Vector4 & v)
     {
         Color32 color;
-        color.a = toU8(nv::iround(saturate(v.x) * 255));
-        color.r = toU8(nv::iround(saturate(v.y) * 255));
-        color.g = toU8(nv::iround(saturate(v.z) * 255));
-        color.b = toU8(nv::iround(saturate(v.w) * 255));
+        color.a = U8(ftoi_round(saturate(v.x) * 255));
+        color.r = U8(ftoi_round(saturate(v.y) * 255));
+        color.g = U8(ftoi_round(saturate(v.z) * 255));
+        color.b = U8(ftoi_round(saturate(v.w) * 255));
         return color;
     }
 

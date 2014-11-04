@@ -55,6 +55,10 @@ namespace nv {
         ::free((void *)ptr);
     }
 
+    template <typename T> NV_FORCEINLINE void zero(T & data) {
+        memset(&data, 0, sizeof(T));
+    }
+
 } // nv namespace
 
 #endif // NV_CORE_MEMORY_H

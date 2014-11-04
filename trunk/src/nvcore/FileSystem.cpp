@@ -9,6 +9,8 @@
 #include <direct.h> // _mkdir
 #elif NV_OS_XBOX
 #include <Xtl.h>
+#elif NV_OS_ORBIS
+#include <fios2.h>
 #else
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -29,6 +31,11 @@ bool FileSystem::exists(const char * path)
     // PathFileExists requires linking to shlwapi.lib
     //return PathFileExists(path) != 0;
     return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
+#elif NV_OS_ORBIS
+    const int BUFFER_SIZE = 2048;
+    char file_fullpath[BUFFER_SIZE];
+    snprintf(file_fullpath, BUFFER_SIZE, "/app0/%s", path);
+    return sceFiosExistsSync(NULL, file_fullpath);
 #else
 	if (FILE * fp = fopen(path, "r"))
 	{
@@ -43,6 +50,9 @@ bool FileSystem::createDirectory(const char * path)
 {
 #if NV_OS_WIN32 || NV_OS_XBOX
     return CreateDirectoryA(path, NULL) != 0;
+#elif NV_OS_ORBIS
+    // not implemented
+	return false;
 #else
     return mkdir(path, 0777) != -1;
 #endif
@@ -54,6 +64,9 @@ bool FileSystem::changeDirectory(const char * path)
     return _chdir(path) != -1;
 #elif NV_OS_XBOX
 	// Xbox doesn't support Current Working Directory!
+	return false;
+#elif NV_OS_ORBIS
+    // Orbis doesn't support Current Working Directory!
 	return false;
 #else
     return chdir(path) != -1;

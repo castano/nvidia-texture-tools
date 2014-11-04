@@ -268,9 +268,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         if (!img.isNormalMap()) {
             img.toLinear(inputOptions.inputGamma);
         }
-        else {
-            img.expandNormals();
-        }
 
         // Resize input.
         img.resize(w, h, d, ResizeFilter_Box);
@@ -278,9 +275,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         nvtt::Surface tmp = img;
         if (!img.isNormalMap()) {
             tmp.toGamma(inputOptions.outputGamma);
-        }
-        else {
-            tmp.packNormals();
         }
 
         quantize(tmp, compressionOptions);
@@ -310,9 +304,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
                 if (!img.isNormalMap()) {
                     img.toLinear(inputOptions.inputGamma);
                 }
-                else {
-                    img.expandNormals();
-                }
             }
             else {
                 if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
@@ -332,7 +323,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
                     img.normalizeNormalMap();
                 }
                 tmp = img;
-                tmp.packNormals();
             }
             else {
                 tmp = img;
@@ -485,33 +475,37 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             else
             {
                 if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1a || compressionOptions.format == Format_DXT1n) {
-                    header.setDX10Format(DXGI_FORMAT_BC1_UNORM);
+                    header.setDX10Format(outputOptions.srgb ? DXGI_FORMAT_BC1_UNORM_SRGB : DXGI_FORMAT_BC1_UNORM);
                     if (compressionOptions.format == Format_DXT1a) header.setHasAlphaFlag(true);
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_DXT3) {
-                    header.setDX10Format(DXGI_FORMAT_BC2_UNORM);
+                    header.setDX10Format(outputOptions.srgb ? DXGI_FORMAT_BC2_UNORM_SRGB : DXGI_FORMAT_BC2_UNORM);
                 }
-                else if (compressionOptions.format == Format_DXT5) {
-                    header.setDX10Format(DXGI_FORMAT_BC3_UNORM);
+                else if (compressionOptions.format == Format_DXT5 || compressionOptions.format == Format_BC3_RGBM) {
+                    header.setDX10Format(outputOptions.srgb ? DXGI_FORMAT_BC3_UNORM_SRGB : DXGI_FORMAT_BC3_UNORM);
                 }
                 else if (compressionOptions.format == Format_DXT5n) {
                     header.setDX10Format(DXGI_FORMAT_BC3_UNORM);
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_BC4) {
-                    header.setDX10Format(DXGI_FORMAT_BC4_UNORM);
+                    header.setDX10Format(DXGI_FORMAT_BC4_UNORM); // DXGI_FORMAT_BC4_SNORM ?
                 }
-                else if (compressionOptions.format == Format_BC5) {
-                    header.setDX10Format(DXGI_FORMAT_BC5_UNORM);
+                else if (compressionOptions.format == Format_BC5 || compressionOptions.format == Format_BC5_Luma) {
+                    header.setDX10Format(DXGI_FORMAT_BC5_UNORM); // DXGI_FORMAT_BC5_SNORM ?
                     if (isNormalMap) header.setNormalFlag(true);
                 }
                 else if (compressionOptions.format == Format_BC6) {
-                    header.setDX10Format(DXGI_FORMAT_BC6H_UF16);
+                    if (compressionOptions.pixelType == PixelType_Float) header.setDX10Format(DXGI_FORMAT_BC6H_SF16);
+                    /*if (compressionOptions.pixelType == PixelType_UnsignedFloat)*/ header.setDX10Format(DXGI_FORMAT_BC6H_UF16); // By default we assume unsigned.
                 }
                 else if (compressionOptions.format == Format_BC7) {
-                    header.setDX10Format(DXGI_FORMAT_BC7_UNORM);
+                    header.setDX10Format(outputOptions.srgb ? DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT_BC7_UNORM);
                     if (isNormalMap) header.setNormalFlag(true);
+                }
+                else if (compressionOptions.format == Format_CTX1) {
+                    supported = false;
                 }
                 else {
                     supported = false;
@@ -597,7 +591,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                 else if (compressionOptions.format == Format_DXT3) {
                     header.setFourCC('D', 'X', 'T', '3');
                 }
-                else if (compressionOptions.format == Format_DXT5) {
+                else if (compressionOptions.format == Format_DXT5 || compressionOptions.format == Format_BC3_RGBM) {
                     header.setFourCC('D', 'X', 'T', '5');
                 }
                 else if (compressionOptions.format == Format_DXT5n) {
@@ -611,19 +605,21 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                 else if (compressionOptions.format == Format_BC4) {
                     header.setFourCC('A', 'T', 'I', '1');
                 }
-                else if (compressionOptions.format == Format_BC5) {
+                else if (compressionOptions.format == Format_BC5 || compressionOptions.format == Format_BC5_Luma) {
                     header.setFourCC('A', 'T', 'I', '2');
                     if (isNormalMap) {
                         header.setNormalFlag(true);
                         header.setSwizzleCode('A', '2', 'X', 'Y');
                     }
                 }
-                else if (compressionOptions.format == Format_BC6) { // @@ This is not supported by D3DX. Always use DX10 header with BC6-7 formats.
-                    header.setFourCC('Z', 'O', 'H', ' ');
+                else if (compressionOptions.format == Format_BC6) {
+                    header.setFourCC('Z', 'O', 'H', ' ');               // This is not supported by D3DX. Always use DX10 header with BC6-7 formats.
+                    supported = false;
                 }
                 else if (compressionOptions.format == Format_BC7) {
-                    header.setFourCC('Z', 'O', 'L', 'A');
+                    header.setFourCC('Z', 'O', 'L', 'A');               // This is not supported by D3DX. Always use DX10 header with BC6-7 formats.
                     if (isNormalMap) header.setNormalFlag(true);
+                    supported = false;
                 }
                 else if (compressionOptions.format == Format_CTX1) {
                     header.setFourCC('C', 'T', 'X', '1');
@@ -776,6 +772,14 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     else if (compressionOptions.format == Format_BC7)
     {
         return new CompressorBC7;
+    }
+    else if (compressionOptions.format == Format_BC5_Luma)
+    {
+        return new ProductionCompressorBC5_Luma;
+    }
+    else if (compressionOptions.format == Format_BC3_RGBM)
+    {
+        return new CompressorBC3_RGBM;
     }
 
     return NULL;

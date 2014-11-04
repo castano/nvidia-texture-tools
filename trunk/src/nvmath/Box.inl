@@ -39,7 +39,7 @@ namespace nv
     // Build a cube centered on center and with edge = 2*dist
     inline void Box::cube(const Vector3 & center, float dist)
     {
-        setCenterExtents(center, Vector3(dist, dist, dist));
+        setCenterExtents(center, Vector3(dist));
     }
 
     // Build a box, given center and extents.

@@ -37,7 +37,7 @@
 
 static bool loadImage(nv::Image & image, const char * fileName)
 {
-	if (nv::strCaseCmp(nv::Path::extension(fileName), ".dds") == 0)
+	if (nv::strCaseDiff(nv::Path::extension(fileName), ".dds") == 0)
 	{
 		nv::DirectDrawSurface dds(fileName);
 		if (!dds.isValid())
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 			double g = float(c0.g - c1.g);
 			double b = float(c0.b - c1.b);
 			double a = float(c0.a - c1.a);
-            
+
 			error_r.addSample(r);
 			error_g.addSample(g);
 			error_b.addSample(b);

@@ -50,7 +50,7 @@ AutoPtr<ThreadPool> s_pool;
 
 
 /*static*/ void ThreadPool::workerFunc(void * arg) {
-    uint i = toU32((uintptr_t)arg); // This is OK, because workerCount should always be much smaller than 2^32
+    uint i = U32((uintptr_t)arg); // This is OK, because workerCount should always be much smaller than 2^32
 
     while(true) 
     {

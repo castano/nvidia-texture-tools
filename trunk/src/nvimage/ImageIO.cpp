@@ -319,9 +319,9 @@ static bool savePPM(Stream & s, const Image * img)
     uint h = img->height();
 
     TextWriter writer(&s);
-    writer.write("P6\n");
-    writer.write("%d %d\n", w, h);
-    writer.write("255\n");
+    writer.format("P6\n");
+    writer.format("%d %d\n", w, h);
+    writer.writeString("255\n");
     for (uint i = 0; i < w * h; i++) {
         Color32 c = img->pixel(i);
         s << c.r << c.g << c.b;
@@ -501,14 +501,16 @@ static FloatImage * loadFloatDDS(Stream & s)
     DDSHeader header;
     s << header;
 
-    static const uint D3DFMT_A16B16G16R16F = 113;
+    // @@ We only support a few formats for now.
 
-    // @@ We only support RGBA16F for now.
     if (header.pf.fourcc == D3DFMT_A16B16G16R16F) {
         const int size = header.width * header.height;
         uint16 * const data = new uint16[size * 4];
 
-        s.serialize(data, size * 4 * sizeof(uint16));
+        //s.serialize(data, size * 4 * sizeof(uint16));
+        for (int i = 0; i < 4* size; i++) {
+            s << data[i];
+        }
 
         FloatImage * img = new FloatImage;
         img->allocate(4, header.width, header.height);
@@ -530,7 +532,84 @@ static FloatImage * loadFloatDDS(Stream & s)
 
         return img;
     }
+    else if (header.pf.fourcc == D3DFMT_R32F) {
+        const int size = header.width * header.height;
+        float * const data = new float[size];
 
+        for (int i = 0; i < size; i++) {
+            s << data[i];
+        }
+
+        FloatImage * img = new FloatImage;
+        img->allocate(4, header.width, header.height);
+
+        float * r = img->channel(0);
+
+        float * ptr = data;
+        for (int i = 0; i < size; i++) {
+            *r++ = *ptr++;
+        }
+
+        delete [] data;
+
+        img->clear(1, 0.0f);
+        img->clear(2, 0.0f);
+        img->clear(3, 1.0f);
+
+        return img;
+    }
+    else if (header.pf.fourcc == D3DFMT_L16 || (header.pf.bitcount == 16 && header.pf.rmask == 0xFFFF && header.pf.gmask == 0 && header.pf.bmask == 0 && header.pf.amask == 0))
+    {
+        const int size = header.width * header.height;
+        uint16 * const data = new uint16[size];
+
+        for (int i = 0; i < size; i++) {
+            s << data[i];
+        }
+
+        FloatImage * img = new FloatImage;
+        img->allocate(4, header.width, header.height);
+
+        float * r = img->channel(0);
+
+        uint16 * ptr = data;
+        for (int i = 0; i < size; i++) {
+            *r++ = float(*ptr++) / 65535.0f;
+        }
+
+        delete [] data;
+
+        img->clear(1, 0.0f);
+        img->clear(2, 0.0f);
+        img->clear(3, 1.0f);
+
+        return img;
+    }
+    else if (header.pf.fourcc == D3DFMT_L8 || (header.pf.bitcount == 8 && header.pf.rmask == 0xFF && header.pf.gmask == 0 && header.pf.bmask == 0 && header.pf.amask == 0))
+    {
+        const int size = header.width * header.height;
+        uint8 * const data = new uint8[size];
+
+        s.serialize(data, size);
+
+        FloatImage * img = new FloatImage;
+        img->allocate(4, header.width, header.height);
+
+        float * r = img->channel(0);
+
+        uint8 * ptr = data;
+        for (int i = 0; i < size; i++) {
+            *r++ = float(*ptr++) / 255.0f;
+        }
+
+        delete [] data;
+
+        img->clear(1, 0.0f);
+        img->clear(2, 0.0f);
+        img->clear(3, 1.0f);
+
+        return img;
+    }
     return NULL;
 }
 
@@ -1713,26 +1792,26 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 
     const char * extension = Path::extension(fileName);
 
-    if (strCaseCmp(extension, ".tga") == 0) {
+    if (strCaseDiff(extension, ".tga") == 0) {
         return loadTGA(s);
     }
 
-    if (strCaseCmp(extension, ".psd") == 0) {
+    if (strCaseDiff(extension, ".psd") == 0) {
         return loadPSD(s);
     }
 
-    /*if (strCaseCmp(extension, ".ppm") == 0) {
+    /*if (strCaseDiff(extension, ".ppm") == 0) {
         return loadPPM(s);
     }*/
 
 #if defined(HAVE_JPEG)
-    if (strCaseCmp(extension, ".jpg") == 0 || strCaseCmp(extension, ".jpeg") == 0) {
+    if (strCaseDiff(extension, ".jpg") == 0 || strCaseDiff(extension, ".jpeg") == 0) {
         return loadJPG(s);
     }
 #endif
 
 #if defined(HAVE_PNG)
-    if (strCaseCmp(extension, ".png") == 0) {
+    if (strCaseDiff(extension, ".png") == 0) {
         return loadPNG(s);
     }
 #endif
@@ -1759,16 +1838,16 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, con
 
     const char * extension = Path::extension(fileName);
 
-    if (strCaseCmp(extension, ".tga") == 0) {
+    if (strCaseDiff(extension, ".tga") == 0) {
         return saveTGA(s, img);
     }
 
-    if (strCaseCmp(extension, ".ppm") == 0) {
+    if (strCaseDiff(extension, ".ppm") == 0) {
         return savePPM(s, img);
     }
 
 #if defined(HAVE_PNG)
-    if (strCaseCmp(extension, ".png") == 0) {
+    if (strCaseDiff(extension, ".png") == 0) {
         return savePNG(s, img, tags);
     }
 #endif
@@ -1816,20 +1895,20 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
 
     const char * extension = Path::extension(fileName);
 
-    /*if (strCaseCmp(extension, ".pfm") == 0) {
+    /*if (strCaseDiff(extension, ".pfm") == 0) {
         return loadFloatPFM(s);
     }*/
 
 #if defined(HAVE_TIFF)
     #pragma NV_MESSAGE("TODO: Load TIFF from stream.")
-    if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
+    if (strCaseDiff(extension, ".tif") == 0 || strCaseDiff(extension, ".tiff") == 0) {
         return loadFloatTIFF(fileName, s);
     }
 #endif
 
 #if defined(HAVE_OPENEXR)
     #pragma NV_MESSAGE("TODO: Load EXR from stream.")
-    if (strCaseCmp(extension, ".exr") == 0) {
+    if (strCaseDiff(extension, ".exr") == 0) {
         return loadFloatEXR(fileName, s);
     }
 #endif
@@ -1841,7 +1920,7 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
     }
 #endif
 
-    if (strCaseCmp(extension, ".dds") == 0) {
+    if (strCaseDiff(extension, ".dds") == 0) {
         const uint spos = s.tell(); // Save stream position.
         FloatImage * floatImage = loadFloatDDS(s);
         if (floatImage != NULL) return floatImage;
@@ -1868,11 +1947,11 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 
     const char * extension = Path::extension(fileName);
 
-    if (strCaseCmp(extension, ".dds") == 0) {
+    if (strCaseDiff(extension, ".dds") == 0) {
         return saveFloatDDS(s, fimage, baseComponent, componentCount);
     }
 
-    /*if (strCaseCmp(extension, ".pfm") == 0) {
+    /*if (strCaseDiff(extension, ".pfm") == 0) {
         return saveFloatPFM(s, fimage, baseComponent, componentCount);
     }*/
 
@@ -1922,13 +2001,13 @@ bool nv::ImageIO::saveFloat(const char * fileName, const FloatImage * fimage, ui
     const char * extension = Path::extension(fileName);
 
 #if defined(HAVE_OPENEXR)
-    if (strCaseCmp(extension, ".exr") == 0) {
+    if (strCaseDiff(extension, ".exr") == 0) {
         return saveFloatEXR(fileName, fimage, baseComponent, componentCount);
     }
 #endif
 
 #if defined(HAVE_TIFF)
-    if (strCaseCmp(extension, ".tif") == 0 || strCaseCmp(extension, ".tiff") == 0) {
+    if (strCaseDiff(extension, ".tif") == 0 || strCaseDiff(extension, ".tiff") == 0) {
         return saveFloatTIFF(fileName, fimage, baseComponent, componentCount);
     }
 #endif

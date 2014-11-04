@@ -246,10 +246,13 @@ unsigned int CompressionOptions::d3d9Format() const
             FOURCC_ATI2,    // Format_BC5
             FOURCC_DXT1,    // Format_DXT1n
 		    0,              // Format_CTX1
-            0,              // Format_BC6
-            0,              // Format_BC7
-            0,              // Format_RGBE
+            MAKEFOURCC('B', 'C', '6', 'H'),     // Format_BC6
+            MAKEFOURCC('B', 'C', '7', 'L'),     // Format_BC7
+            FOURCC_ATI2,    // Format_BC5_Luma
+            FOURCC_DXT5,    // Format_BC3_RGBM
         };
+
+        NV_COMPILER_CHECK(NV_ARRAY_SIZE(d3d9_formats) == Format_Count);
 
         return d3d9_formats[m.format];
     }

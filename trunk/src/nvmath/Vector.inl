@@ -440,13 +440,16 @@ namespace nv
     }
 
     // Note, this is the area scaled by 2!
+    inline float triangleArea(Vector2::Arg v0, Vector2::Arg v1)
+    {
+	    return (v0.x * v1.y - v0.y * v1.x); // * 0.5f;
+    }
     inline float triangleArea(Vector2::Arg a, Vector2::Arg b, Vector2::Arg c)
     {
-	    Vector2 v0 = a - c;
-	    Vector2 v1 = b - c;
-
-	    return (v0.x * v1.y - v0.y * v1.x);
+        return (c.x * a.y + a.x * b.y + b.x * c.y - b.x * a.y - c.x * b.y - a.x * c.y); // * 0.5f;
+        //return triangleArea(a-c, b-c);
     }
+
 
     template <>
     inline uint hash(const Vector2 & v, uint h)

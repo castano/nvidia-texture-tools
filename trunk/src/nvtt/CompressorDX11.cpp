@@ -24,7 +24,6 @@
 
 #include "CompressorDX11.h"
 
-#include <cstring>
 #include "nvtt.h"
 #include "CompressionOptions.h"
 #include "nvimage/ColorBlock.h"
@@ -34,16 +33,16 @@
 #include "bc6h/zoh.h"
 #include "bc7/avpcl.h"
 
+#include <string.h> // memset
+
 using namespace nv;
 using namespace nvtt;
 
 
 void CompressorBC6::compressBlock(ColorSet & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
 {
-	// !!!UNDONE: support channel weights
-	// !!!UNDONE: set flags once, not per block (this is especially sketchy since block compression is multithreaded...)
-
-	NV_UNUSED(alphaMode); // ZOH does not support alpha.
+    // !!!UNDONE: support channel weights
+    // !!!UNDONE: set flags once, not per block (this is especially sketchy since block compression is multithreaded...)
 
     if (compressionOptions.pixelType == PixelType_UnsignedFloat ||
         compressionOptions.pixelType == PixelType_UnsignedNorm ||
@@ -56,44 +55,60 @@ void CompressorBC6::compressBlock(ColorSet & tile, AlphaMode alphaMode, const Co
         ZOH::Utils::FORMAT = ZOH::SIGNED_F16;
     }
 
-	// Convert NVTT's tile struct to ZOH's, and convert float to half.
-	ZOH::Tile zohTile(tile.w, tile.h);
-	memset(zohTile.data, 0, sizeof(zohTile.data));
-	memset(zohTile.importance_map, 0, sizeof(zohTile.importance_map));
-	for (uint y = 0; y < tile.h; ++y)
-	{
-		for (uint x = 0; x < tile.w; ++x)
-		{
-			Vector3 color = tile.color(x, y).xyz();
-			uint16 rHalf = to_half(color.x);
-			uint16 gHalf = to_half(color.y);
-			uint16 bHalf = to_half(color.z);
-			zohTile.data[y][x].x = ZOH::Tile::half2float(rHalf);
-			zohTile.data[y][x].y = ZOH::Tile::half2float(gHalf);
-			zohTile.data[y][x].z = ZOH::Tile::half2float(bHalf);
-			zohTile.importance_map[y][x] = 1.0f;
-		}
-	}
+    // Convert NVTT's tile struct to ZOH's, and convert float to half.
+    ZOH::Tile zohTile(tile.w, tile.h);
+    memset(zohTile.data, 0, sizeof(zohTile.data));
+    memset(zohTile.importance_map, 0, sizeof(zohTile.importance_map));
+    for (uint y = 0; y < tile.h; ++y)
+    {
+        for (uint x = 0; x < tile.w; ++x)
+        {
+            Vector4 color = tile.color(x, y);
+            uint16 rHalf = to_half(color.x);
+            uint16 gHalf = to_half(color.y);
+            uint16 bHalf = to_half(color.z);
+            zohTile.data[y][x].x = ZOH::Tile::half2float(rHalf);
+            zohTile.data[y][x].y = ZOH::Tile::half2float(gHalf);
+            zohTile.data[y][x].z = ZOH::Tile::half2float(bHalf);
+
+            if (alphaMode == AlphaMode_Transparency) {
+                zohTile.importance_map[y][x] = color.w;
+            }
+            else {
+                zohTile.importance_map[y][x] = 1.0f;
+            }
+        }
+    }
 
     ZOH::compress(zohTile, (char *)output);
 }
 
 void CompressorBC7::compressBlock(ColorSet & tile, AlphaMode alphaMode, const CompressionOptions::Private & compressionOptions, void * output)
 {
-	// !!!UNDONE: support channel weights
-	// !!!UNDONE: set flags once, not per block (this is especially sketchy since block compression is multithreaded...)
+    // !!!UNDONE: support channel weights
+    // !!!UNDONE: set flags once, not per block (this is especially sketchy since block compression is multithreaded...)
 
-	AVPCL::mode_rgb = false;
-	AVPCL::flag_premult = (alphaMode == AlphaMode_Premultiplied);
-	AVPCL::flag_nonuniform = false;
-	AVPCL::flag_nonuniform_ati = false;
+    AVPCL::mode_rgb = false;
+    AVPCL::flag_premult = (alphaMode == AlphaMode_Premultiplied);
+    AVPCL::flag_nonuniform = false;
+    AVPCL::flag_nonuniform_ati = false;
+    
+    // Convert NVTT's tile struct to AVPCL's.
+    AVPCL::Tile avpclTile(tile.w, tile.h);
+    memset(avpclTile.data, 0, sizeof(avpclTile.data));
+    for (uint y = 0; y < tile.h; ++y) {
+        for (uint x = 0; x < tile.w; ++x) {
+            Vector4 color = tile.color(x, y);
+            avpclTile.data[y][x] = color * 255.0f;
+            
+            /*if (alphaMode == AlphaMode_Transparency) {
+                avpclTile.importance_map[y][x] = color.w;
+            }
+            else*/ {
+                avpclTile.importance_map[y][x] = 1.0f;
+            }
+        }
+    }
 
-	// Convert NVTT's tile struct to AVPCL's.
-	AVPCL::Tile avpclTile(tile.w, tile.h);
-	memset(avpclTile.data, 0, sizeof(avpclTile.data));
-	for (uint y = 0; y < tile.h; ++y)
-		for (uint x = 0; x < tile.w; ++x)
-			avpclTile.data[y][x] = tile.color(x, y) * 255.0f;
-
-	AVPCL::compress(avpclTile, (char *)output);
+    AVPCL::compress(avpclTile, (char *)output);
 }

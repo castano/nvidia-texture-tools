@@ -41,7 +41,7 @@ public:
 		return out;
 	}
 	int getptr() { return bptr; }
-	int setptr(int ptr) { nvAssert (ptr >= 0 && ptr < maxbits); bptr = ptr; }
+	void setptr(int ptr) { nvAssert (ptr >= 0 && ptr < maxbits); bptr = ptr; }
 	int getsize() { return bend; }
 
 private:
@@ -60,8 +60,7 @@ private:
 		return bit != 0;
 	}
 	void writeone(int bit) {
-		if (readonly)
-			throw "Writing a read-only bit stream";
+		nvAssert (!readonly); // "Writing a read-only bit stream"
 		nvAssert (bptr < maxbits);
 		if (bptr >= maxbits) return;
 		if (bit&1)

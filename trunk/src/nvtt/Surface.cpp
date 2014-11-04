@@ -28,6 +28,7 @@
 #include "nvmath/Matrix.inl"
 #include "nvmath/Color.h"
 #include "nvmath/Half.h"
+#include "nvmath/ftoi.h"
 
 #include "nvimage/Filter.h"
 #include "nvimage/ImageIO.h"
@@ -78,13 +79,13 @@ namespace
         else if (format == Format_DXT3) {
             return 16;
         }
-        else if (format == Format_DXT5 || format == Format_DXT5n) {
+        else if (format == Format_DXT5 || format == Format_DXT5n || format == Format_BC3_RGBM) {
             return 16;
         }
         else if (format == Format_BC4) {
             return 8;
         }
-        else if (format == Format_BC5) {
+        else if (format == Format_BC5 || format == Format_BC5_Luma) {
             return 16;
         }
         else if (format == Format_CTX1) {
@@ -347,13 +348,13 @@ int Surface::countMipmaps(int min_size) const
     return ::countMipmapsWithMinSize(m->image->width(), m->image->height(), 1, min_size);
 }
 
-float Surface::alphaTestCoverage(float alphaRef/*= 0.5*/) const
+float Surface::alphaTestCoverage(float alphaRef/*= 0.5*/, int alpha_channel/*=3*/) const
 {
     if (m->image == NULL) return 0.0f;
 
     alphaRef = nv::clamp(alphaRef, 1.0f/256, 255.0f/256);
 
-    return m->image->alphaTestCoverage(alphaRef, 3);
+    return m->image->alphaTestCoverage(alphaRef, alpha_channel);
 }
 
 float Surface::average(int channel, int alpha_channel/*= -1*/, float gamma /*= 2.2f*/) const
@@ -419,7 +420,7 @@ void Surface::histogram(int channel, float rangeMin, float rangeMax, int binCoun
     const uint count = m->image->pixelCount();
     for (uint i = 0; i < count; i++) {
         float f = c[i] * scale + bias;
-        int idx = ifloor(f);
+        int idx = ftoi_floor(f);
         if (idx < 0) idx = 0;
         if (idx > binCount-1) idx = binCount-1;
         binPtr[idx]++;
@@ -434,17 +435,16 @@ void Surface::range(int channel, float * rangeMin, float * rangeMax, int alpha_c
 
     if (alpha_channel == -1) { // no alpha channel; just like the original range function
 
-    if (m->image != NULL)
-    {
-        float * c = img->channel(channel);
+        if (m->image != NULL) {
+            float * c = img->channel(channel);
 
-        const uint count = img->pixelCount();
-        for (uint p = 0; p < count; p++) {
-            float f = c[p];
-            if (f < range.x) range.x = f;
-            if (f > range.y) range.y = f;
+            const uint count = img->pixelCount();
+            for (uint p = 0; p < count; p++) {
+                float f = c[p];
+                if (f < range.x) range.x = f;
+                if (f > range.y) range.y = f;
+            }
         }
-    }
     }
     else { // use alpha test to ignore some pixels
         //note, it's quite possible to get FLT_MAX,-FLT_MAX back if all pixels fail the test
@@ -623,6 +623,23 @@ bool Surface::setImage(nvtt::InputFormat format, int w, int h, int d, const void
             return false;
         }
     }
+    else if (format == InputFormat_R_32F)
+    {
+        const float * src = (const float *)data;
+
+        TRY {
+            for (int i = 0; i < count; i++)
+            {
+                rdst[i] = src[i];
+                gdst[i] = 0;
+                bdst[i] = 0;
+                adst[i] = 0;
+            }
+        }
+        CATCH {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -695,6 +712,20 @@ bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, 
             return false;
         }
     }
+    else if (format == InputFormat_R_32F)
+    {
+        const float * rsrc = (const float *)r;
+
+        TRY {
+            memcpy(rdst, rsrc, count * sizeof(float));
+            memset(gdst, 0, count * sizeof(float));
+            memset(bdst, 0, count * sizeof(float));
+            memset(adst, 0, count * sizeof(float));
+        }
+        CATCH {
+            return false;
+        }
+    }
 
     return true;
 }
@@ -703,12 +734,12 @@ bool Surface::setImage(InputFormat format, int w, int h, int d, const void * r, 
 bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const void * data)
 {
     if (format != nvtt::Format_BC1 &&
-		format != nvtt::Format_BC2 &&
-		format != nvtt::Format_BC3 &&
-		format != nvtt::Format_BC4 &&
-		format != nvtt::Format_BC5 &&
-		format != nvtt::Format_BC6 &&
-		format != nvtt::Format_BC7)
+        format != nvtt::Format_BC2 &&
+        format != nvtt::Format_BC3 &&
+        format != nvtt::Format_BC4 &&
+        format != nvtt::Format_BC5 &&
+        format != nvtt::Format_BC6 &&
+        format != nvtt::Format_BC7)
     {
         return false;
     }
@@ -1466,7 +1497,7 @@ void Surface::fill(float red, float green, float blue, float alpha)
 }
 
 
-void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
+void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/, int alpha_channel/*= 3*/)
 {
     if (isNull()) return;
 
@@ -1474,7 +1505,7 @@ void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 
     alphaRef = nv::clamp(alphaRef, 1.0f/256, 255.0f/256);
 
-    m->image->scaleAlphaToCoverage(coverage, alphaRef, 3);
+    m->image->scaleAlphaToCoverage(coverage, alphaRef, alpha_channel);
 }
 
 /*bool Surface::normalizeRange(float * rangeMin, float * rangeMax)
@@ -1507,7 +1538,7 @@ void Surface::scaleAlphaToCoverage(float coverage, float alphaRef/*= 0.5f*/)
 
 // Ideally you should compress/quantize the RGB and M portions independently.
 // Once you have M quantized, you would compute the corresponding RGB and quantize that.
-void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.0f*/)
+void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 {
     if (isNull()) return;
 
@@ -1523,60 +1554,71 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.0f*/)
 
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
-        float R = r[i];
-        float G = g[i];
-        float B = b[i];
-#if 1
-        float M = nv::clamp(max(max(R, G), max(B, threshold)), 0.0f, range);
+        float R = nv::clamp(r[i], 0.0f, 1.0f);
+        float G = nv::clamp(g[i], 0.0f, 1.0f);
+        float B = nv::clamp(b[i], 0.0f, 1.0f);
 
-        r[i] = nv::clamp(R / M, 0.0f, 1.0f);
-        g[i] = nv::clamp(G / M, 0.0f, 1.0f);
-        b[i] = nv::clamp(B / M, 0.0f, 1.0f);
+#if 0
+        // Baseline, no compression:
+        r[i] = R;
+        g[i] = G;
+        b[i] = B;
+        a[i] = 1;
 
-        a[i] = (M - threshold) / (range - threshold);
+#elif 0
+        float M = max(max(R, G), max(B, threshold));
+
+        r[i] = R / M;
+        g[i] = G / M;
+        b[i] = B / M;
+
+        a[i] = (M - threshold) / (1 - threshold);
 
 #else
-
-        // The optimal compressor theoretically produces the best results, but unfortunately introduces
-        // severe interpolation errors!
+        // The optimal compressor produces the best results, but can introduce interpolation errors!
         float bestM;
         float bestError = FLT_MAX;
 
-        int minM = iround(min(R, G, B) * 255.0f);
+        float M = max(max(R, G), max(B, threshold));
+        int iM = ftoi_ceil((M - threshold) / (1 - threshold) * 255.0f);
 
-        for (int m = minM; m < 256; m++) {
+        //for (int m = 0; m < 256; m++) {                           // If we use the entire search space, interpolation errors are very likely to occur.
+        for (int m = max(iM-16, 0); m < min(iM+16, 256); m++) {     // If we constrain the search space, these errors disappear.
             float fm = float(m) / 255.0f;
 
+            // Decode M
+            float M = fm * (1 - threshold) + threshold;
+
             // Encode.
-            int ir = iround(255.0f * nv::clamp(R / fm, 0.0f, 1.0f));
-            int ig = iround(255.0f * nv::clamp(G / fm, 0.0f, 1.0f));
-            int ib = iround(255.0f * nv::clamp(B / fm, 0.0f, 1.0f));
+            int ir = ftoi_round(255.0f * nv::saturate(R / M));
+            int ig = ftoi_round(255.0f * nv::saturate(G / M));
+            int ib = ftoi_round(255.0f * nv::saturate(B / M));
 
             // Decode.
-            float fr = (float(ir) / 255.0f) * fm;
-            float fg = (float(ig) / 255.0f) * fm;
-            float fb = (float(ib) / 255.0f) * fm;
+            float fr = (float(ir) / 255.0f) * M;
+            float fg = (float(ig) / 255.0f) * M;
+            float fb = (float(ib) / 255.0f) * M;
 
             // Measure error.
             float error = square(R-fr) + square(G-fg) + square(B-fb);
 
             if (error < bestError) {
                 bestError = error;
-                bestM = fm;
+                bestM = M;
             }
         }
 
         M = bestM;
-        r[i] = nv::clamp(R / M, 0.0f, 1.0f);
-        g[i] = nv::clamp(G / M, 0.0f, 1.0f);
-        b[i] = nv::clamp(B / M, 0.0f, 1.0f);
-        a[i] = M;
+        r[i] = nv::saturate(R / M);
+        g[i] = nv::saturate(G / M);
+        b[i] = nv::saturate(B / M);
+        a[i] = (M - threshold) / (1 - threshold);
 #endif
     }
 }
 
-
-void Surface::fromRGBM(float range/*= 1*/, float threshold/*= 0.0*/)
+// @@ IC: Dubious merge. Review!
+void Surface::fromRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
 {
     if (isNull()) return;
 
@@ -1798,7 +1840,7 @@ void Surface::toRGBE(int mantissaBits, int exponentBits)
         double denom = pow(2.0, double(E - exponentBias - mantissaBits));
 
         // Refine exponent:
-        int m = iround(float(M / denom));
+        int m = ftoi_round(float(M / denom));
         nvDebugCheck(m <= (1 << mantissaBits));
 
         if (m == (1 << mantissaBits)) {
@@ -1866,10 +1908,10 @@ void Surface::fromRGBE(int mantissaBits, int exponentBits)
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++) {
         // Expand normalized float to to 9995
-        int R = iround(r[i] * ((1 << mantissaBits) - 1));
-        int G = iround(g[i] * ((1 << mantissaBits) - 1));
-        int B = iround(b[i] * ((1 << mantissaBits) - 1));
-        int E = iround(a[i] * ((1 << exponentBits) - 1));
+        int R = ftoi_round(r[i] * ((1 << mantissaBits) - 1));
+        int G = ftoi_round(g[i] * ((1 << mantissaBits) - 1));
+        int B = ftoi_round(b[i] * ((1 << mantissaBits) - 1));
+        int E = ftoi_round(a[i] * ((1 << exponentBits) - 1));
 
         //float scale = ldexpf(1.0f, E - exponentBias - mantissaBits);
         float scale = powf(2, float(E - exponentBias - mantissaBits));
@@ -2741,8 +2783,8 @@ bool Surface::copy(const Surface & srcImage, int xsrc, int ysrc, int zsrc, int x
     FloatImage * dst = m->image;
     const FloatImage * src = srcImage.m->image;
 
-    if (toU32(xsrc + xsize) > src->width() || toU32(ysrc + ysize) > src->height() || toU32(zsrc + zsize) > src->depth()) return false;
-    if (toU32(xdst + xsize) > dst->width() || toU32(ydst + ysize) > dst->height() || toU32(zdst + zsize) > dst->depth()) return false;
+    if (U32(xsrc + xsize) > src->width() || U32(ysrc + ysize) > src->height() || U32(zsrc + zsize) > src->depth()) return false;
+    if (U32(xdst + xsize) > dst->width() || U32(ydst + ysize) > dst->height() || U32(zdst + zsize) > dst->depth()) return false;
 
     detach();
 
@@ -2762,6 +2804,65 @@ bool Surface::copy(const Surface & srcImage, int xsrc, int ysrc, int zsrc, int x
     }
 
     return true;
+}
+
+
+// Draw colored border around atlas elements.
+void Surface::setAtlasBorder(int aw, int ah, float r, float g, float b, float a)
+{
+    if (isNull()) return;
+    if (aw <= 0) return;
+    if (ah <= 0) return;
+
+    detach();
+
+    FloatImage * img = m->image;
+    const uint w = img->width();
+    const uint h = img->height();
+    const uint d = img->depth();
+
+    // @@ Ideally the reminder of these divisions should be 0.
+    uint tile_height = h / ah;
+    uint tile_width = w / aw;
+
+    // Note that this renders two consecutive lines between tiles. In theory we could just have one, but this way I think we have better rotation invariance.
+
+    for (uint z = 0; z < d; z++)
+    {
+        // Horizontal lines:
+        for (uint i = 0, y = 0; i < uint(ah); i++, y += tile_height)
+        {
+            for (uint x = 0; x < w; x++)
+            {
+                img->pixel(0, x, y, z) = r;
+                img->pixel(1, x, y, z) = g;
+                img->pixel(2, x, y, z) = b;
+                img->pixel(3, x, y, z) = a;
+
+                img->pixel(0, x, y + tile_height - 1, z) = r;
+                img->pixel(1, x, y + tile_height - 1, z) = g;
+                img->pixel(2, x, y + tile_height - 1, z) = b;
+                img->pixel(3, x, y + tile_height - 1, z) = a;
+            }
+        }
+
+        // Vertical lines:
+        for (uint i = 0, x = 0; i < uint(ah); i++, x += tile_width)
+        {
+            for (uint y = 0; y < h; y++)
+            {
+                img->pixel(0, x, y, z) = r;
+                img->pixel(1, x, y, z) = g;
+                img->pixel(2, x, y, z) = b;
+                img->pixel(3, x, y, z) = a;
+
+                img->pixel(0, x + tile_width - 1, y, z) = r;
+                img->pixel(1, x + tile_width - 1, y, z) = g;
+                img->pixel(2, x + tile_width - 1, y, z) = b;
+                img->pixel(3, x + tile_width - 1, y, z) = a;
+            }
+        }
+    }
 }
 
 
@@ -2839,5 +2940,24 @@ Surface nvtt::diff(const Surface & reference, const Surface & image, float scale
     return diffImage;
 }
 
+float nvtt::rmsToneMappedError(const Surface & reference, const Surface & img, float exposure)
+{
+    // @@ We could do this in the rms function without having to create image copies.
+    Surface r = reference;
+    Surface i = img;
 
+    // @@ Ideally we should use our Reindhart operator. Add Reindhart_L & Reindhart_M ?
+
+    float scale = 1.0f / exposure;
+
+    r.scaleBias(0, scale, 0); r.scaleBias(1, scale, 0); r.scaleBias(2, scale, 0);
+    r.toneMap(ToneMapper_Reindhart, NULL);
+    r.toSrgb();
+
+    i.scaleBias(0, scale, 0); i.scaleBias(1, scale, 0); i.scaleBias(2, scale, 0);
+    i.toneMap(ToneMapper_Reindhart, NULL);
+    i.toSrgb();
+
+    return nv::rmsColorError(r.m->image, i.m->image, reference.alphaMode() == nvtt::AlphaMode_Transparency);
+}
 

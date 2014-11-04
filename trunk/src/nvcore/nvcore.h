@@ -127,6 +127,12 @@
 #   error "Unsupported compiler"
 #endif
 
+#if NV_CC_MSVC
+#define NV_CC_CPP11 (__cplusplus > 199711L)
+#else
+// @@ IC: This works in CLANG, about GCC?
+#define NV_CC_CPP11 (__has_feature(cxx_deleted_functions) && __has_feature(cxx_rvalue_references) && __has_feature(cxx_static_assert))
+#endif
 
 // Endiannes:
 #define NV_LITTLE_ENDIAN    POSH_LITTLE_ENDIAN
@@ -170,11 +176,16 @@ typedef uint32      uint;
 
 
 // Disable copy constructor and assignment operator. 
+#if NV_CC_CPP11
+#define NV_FORBID_COPY(C) \
+    C( const C & ) = delete; \
+    C &operator=( const C & ) = delete
+#else
 #define NV_FORBID_COPY(C) \
     private: \
     C( const C & ); \
     C &operator=( const C & )
-
+#endif
 
 // Disable dynamic allocation on the heap. 
 // See Prohibiting Heap-Based Objects in More Effective C++.
@@ -205,8 +216,8 @@ typedef uint32      uint;
 #define NV_MULTI_LINE_MACRO_END } while(false)
 #endif
 
-#if __cplusplus > 199711L
-#define nvStaticCheck(x) static_assert(x, "Static assert "#x" failed")
+#if NV_CC_CPP11
+#define nvStaticCheck(x) static_assert((x), "Static assert "#x" failed")
 #else
 #define nvStaticCheck(x) typedef char NV_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
 #endif

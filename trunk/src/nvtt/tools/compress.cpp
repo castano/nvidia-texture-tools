@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
     // Set input options.
     nvtt::InputOptions inputOptions;
 
-    if (nv::strCaseCmp(input.extension(), ".dds") == 0)
+    if (nv::strCaseDiff(input.extension(), ".dds") == 0)
     {
         // Load surface.
         nv::DirectDrawSurface dds(input.str());
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        if (nv::strCaseCmp(input.extension(), ".exr") == 0 || nv::strCaseCmp(input.extension(), ".hdr") == 0)
+        if (nv::strCaseDiff(input.extension(), ".exr") == 0 || nv::strCaseDiff(input.extension(), ".hdr") == 0)
         {
             loadAsFloat = true;
         }
@@ -519,6 +519,8 @@ int main(int argc, char *argv[])
     nvtt::CompressionOptions compressionOptions;
     compressionOptions.setFormat(format);
 
+    //compressionOptions.setQuantization(/*color dithering*/true, /*alpha dithering*/false, /*binary alpha*/false);
+
     if (format == nvtt::Format_BC2) {
         // Dither alpha when using BC2.
         compressionOptions.setQuantization(/*color dithering*/false, /*alpha dithering*/true, /*binary alpha*/false);
@@ -539,6 +541,10 @@ int main(int argc, char *argv[])
             // compressionOptions.setPixelFormat(16, 16, 16, 16);
             // compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
             // compressionOptions.setPixelFormat(16, 0, 0, 0);
+
+            //compressionOptions.setQuantization(/*color dithering*/true, /*alpha dithering*/false, /*binary alpha*/false);
+            //compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
+            //compressionOptions.setPixelFormat(5, 6, 5, 0);
         }
     }
 

@@ -12,13 +12,13 @@
 #   if NV_CPU_X86 || NV_CPU_X86_64
 #       define NV_USE_SSE 2
 #   endif
-//#   if defined(__SSE2__)
-//#       define NV_USE_SSE 2
-//#   elif defined(__SSE__)
-//#       define NV_USE_SSE 1
-//#   else
-//#       define NV_USE_SSE 0
-//#   endif
+#   if defined(__SSE2__)
+#       define NV_USE_SSE 2
+#   elif defined(__SSE__)
+#       define NV_USE_SSE 1
+#   else
+#       define NV_USE_SSE 0
+#   endif
 #endif
 
 // Internally set NV_USE_SIMD when either altivec or sse is available.

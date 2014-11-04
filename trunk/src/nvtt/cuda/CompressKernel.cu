@@ -1285,9 +1285,9 @@ __device__ void saveBlockDXT1_Parallel(uint endpoints, float3 colors[16], int xr
         ushort endpoint0 = endpoints & 0xFFFF;
         ushort endpoint1 = endpoints >> 16;
 
-	int3 palette[4];
-	palette[0] = color16ToInt3(endpoint0);
-	palette[1] = color16ToInt3(endpoint1);
+        int3 palette[4];
+        palette[0] = color16ToInt3(endpoint0);
+        palette[1] = color16ToInt3(endpoint1);
 
         int d0 = colorDistance(palette[0], color);
         int d1 = colorDistance(palette[1], color);

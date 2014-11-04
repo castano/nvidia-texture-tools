@@ -26,7 +26,7 @@ void TextWriter::writeString(const char * str, uint len)
     s->serialize(const_cast<char *>(str), len);
 }
 
-void TextWriter::write(const char * format, ...)
+void TextWriter::format(const char * format, ...)
 {
     va_list arg;
     va_start(arg,format);
@@ -35,7 +35,7 @@ void TextWriter::write(const char * format, ...)
     va_end(arg);
 }
 
-void TextWriter::write(const char * format, va_list arg)
+void TextWriter::formatList(const char * format, va_list arg)
 {
     va_list tmp;
     va_copy(tmp, arg);

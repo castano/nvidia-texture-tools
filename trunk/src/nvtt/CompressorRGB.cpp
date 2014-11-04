@@ -32,6 +32,7 @@
 
 #include "nvmath/Color.h"
 #include "nvmath/Half.h"
+#include "nvmath/ftoi.h"
 
 #include "nvcore/Debug.h"
 
@@ -360,7 +361,19 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                         ib = iround(clamp(b * 65535.0f, 0.0f, 65535.0f));
                         ia = iround(clamp(a * 65535.0f, 0.0f, 65535.0f));
                     }
-
+                    else if (compressionOptions.pixelType == nvtt::PixelType_SignedNorm) {
+                        // @@
+                    }
+                    else if (compressionOptions.pixelType == nvtt::PixelType_UnsignedInt) {
+                        ir = iround(clamp(r, 0.0f, 65535.0f));
+                        ig = iround(clamp(g, 0.0f, 65535.0f));
+                        ib = iround(clamp(b, 0.0f, 65535.0f));
+                        ia = iround(clamp(a, 0.0f, 65535.0f));
+                    }
+                    else if (compressionOptions.pixelType == nvtt::PixelType_SignedInt) {
+                        // @@
+                    }
+                    
                     uint p = 0;
                     p |= PixelFormat::convert(ir, 16, rsize) << rshift;
                     p |= PixelFormat::convert(ig, 16, gsize) << gshift;

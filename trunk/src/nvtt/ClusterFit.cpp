@@ -27,6 +27,7 @@
 #include "ClusterFit.h"
 #include "nvmath/Fitting.h"
 #include "nvmath/Vector.inl"
+#include "nvmath/ftoi.h"
 #include "nvimage/ColorBlock.h"
 
 #include <float.h> // FLT_MAX
@@ -37,7 +38,8 @@ ClusterFit::ClusterFit()
 {
 }
 
-void ClusterFit::setColourSet(const ColorSet * set)
+// @@ Deprecate. Do not use color set directly.
+void ClusterFit::setColorSet(const ColorSet * set) 
 {
     // initialise the best error
 #if NVTT_USE_SIMD
@@ -58,6 +60,7 @@ void ClusterFit::setColourSet(const ColorSet * set)
     }
 
     Vector3 principal = Fit::computePrincipalComponent_PowerMethod(m_count, values, set->weights, metric);
+    //Vector3 principal = Fit::computePrincipalComponent_EigenSolver(m_count, values, set->weights, metric);
 
     // build the list of values
     int order[16];
@@ -107,7 +110,72 @@ void ClusterFit::setColourSet(const ColorSet * set)
 }
 
 
-void ClusterFit::setMetric(Vector4::Arg w)
+void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count)
+{
+    // initialise the best error
+#if NVTT_USE_SIMD
+    m_besterror = SimdVector( FLT_MAX );
+    Vector3 metric = m_metric.toVector3();
+#else
+    m_besterror = FLT_MAX;
+    Vector3 metric = m_metric;
+#endif
+
+    m_count = count;
+
+    Vector3 principal = Fit::computePrincipalComponent_PowerMethod(count, colors, weights, metric);
+    //Vector3 principal = Fit::computePrincipalComponent_EigenSolver(count, colors, weights, metric);
+
+    // build the list of values
+    int order[16];
+    float dps[16];
+    for (uint i = 0; i < m_count; ++i)
+    {
+        dps[i] = dot(colors[i], principal);
+        order[i] = i;
+    }
+
+    // stable sort
+    for (uint i = 0; i < m_count; ++i)
+    {
+        for (uint j = i; j > 0 && dps[j] < dps[j - 1]; --j)
+        {
+            swap(dps[j], dps[j - 1]);
+            swap(order[j], order[j - 1]);
+        }
+    }
+
+    // weight all the points
+#if NVTT_USE_SIMD
+    m_xxsum = SimdVector( 0.0f );
+    m_xsum = SimdVector( 0.0f );
+#else
+    m_xxsum = Vector3(0.0f);
+    m_xsum = Vector3(0.0f);
+    m_wsum = 0.0f;
+#endif
+	
+    for (uint i = 0; i < m_count; ++i)
+    {
+        int p = order[i];
+#if NVTT_USE_SIMD
+        NV_ALIGN_16 Vector4 tmp(colors[p], 1);
+        m_weighted[i] = SimdVector(tmp.component) * SimdVector(weights[p]);
+        m_xxsum += m_weighted[i] * m_weighted[i];
+        m_xsum += m_weighted[i];
+#else
+        m_weighted[i] = colors[p] * weights[p];
+        m_xxsum += m_weighted[i] * m_weighted[i];
+        m_xsum += m_weighted[i];
+        m_weights[i] = weights[p];
+        m_wsum += m_weights[i];
+#endif
+    }
+}
+
+
+
+void ClusterFit::setColorWeights(Vector4::Arg w)
 {
 #if NVTT_USE_SIMD
     NV_ALIGN_16 Vector4 tmp(w.xyz(), 1);
@@ -292,12 +360,21 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
                 SimdVector e3 = negativeMultiplySubtract( b, betax_sum, e2 );
                 SimdVector e4 = multiplyAdd( two, e3, e1 );
 
+#if 1
                 // apply the metric to the error term
                 SimdVector e5 = e4 * m_metricSqr;
                 SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
+#else
+                // @@ Is there a horizontal max SIMD instruction?
+                SimdVector error = e4.splatX() + e4.splatY() + e4.splatZ();
+                error *= two;
+                error += max(max(e4.splatX(), e4.splatY()), e4.splatZ());
+                error -= min(min(e4.splatX(), e4.splatY()), e4.splatZ());
+
+#endif
 
                 // keep the solution if it wins
-                if( compareAnyLessThan( error, besterror ) )
+                if (compareAnyLessThan(error, besterror))
                 {
                     besterror = error;
                     beststart = a;
@@ -317,7 +394,7 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
     }
 
     // save the block if necessary
-    if( compareAnyLessThan( besterror, m_besterror ) )
+    if (compareAnyLessThan(besterror, m_besterror))
     {
         *start = beststart.toVector3();
         *end = bestend.toVector3();
@@ -332,6 +409,29 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 }
 
 #else
+
+inline Vector3 round565(const Vector3 & v) {
+	uint r = ftoi_floor(v.x * 31.0f);
+    float r0 = float(((r+0) << 3) | ((r+0) >> 2));
+    float r1 = float(((r+1) << 3) | ((r+1) >> 2));
+    if (fabs(v.x - r1) < fabs(v.x - r0)) r = min(r+1, 31U);
+	r = (r << 3) | (r >> 2);
+
+	uint g = ftoi_floor(v.y * 63.0f);
+    float g0 = float(((g+0) << 2) | ((g+0) >> 4));
+    float g1 = float(((g+1) << 2) | ((g+1) >> 4));
+    if (fabs(v.y - g1) < fabs(v.y - g0)) g = min(g+1, 63U);
+    g = (g << 2) | (g >> 4);
+
+    uint b = ftoi_floor(v.z * 31.0f);
+    float b0 = float(((b+0) << 3) | ((b+0) >> 2));
+    float b1 = float(((b+1) << 3) | ((b+1) >> 2));
+    if (fabs(v.z - b1) < fabs(v.z - b0)) b = min(b+1, 31U);
+	
+	b = (b << 3) | (b >> 2);
+
+    return Vector3(float(r)/255, float(g)/255, float(b)/255);
+}
 
 bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 {
@@ -374,8 +474,29 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
             // clamp to the grid
             a = clamp(a, 0, 1);
             b = clamp(b, 0, 1);
-            a = floor(grid * a + 0.5f) * gridrcp;
-            b = floor(grid * b + 0.5f) * gridrcp;
+            //a = floor(grid * a + 0.5f) * gridrcp;
+            //b = floor(grid * b + 0.5f) * gridrcp;
+
+            //int ar = ftoi_round(31 * a.x); ar = (ar << 3) | (ar >> 2); a.x = float(ar) / 255.0f;
+            //int ag = ftoi_round(63 * a.y); ar = (ag << 2) | (ag >> 4); a.y = float(ag) / 255.0f;
+            //int ab = ftoi_round(31 * a.z); ar = (ab << 3) | (ab >> 2); a.z = float(ab) / 255.0f;
+            //int br = ftoi_round(31 * b.x); br = (br << 3) | (br >> 2); b.x = float(br) / 255.0f;
+            //int bg = ftoi_round(63 * b.y); br = (bg << 2) | (bg >> 4); b.y = float(bg) / 255.0f;
+            //int bb = ftoi_round(31 * b.z); br = (bb << 3) | (bb >> 2); b.z = float(bb) / 255.0f;
+
+            /*a = floor(a * grid + 0.5f);
+            a.x = (a.x * 8 + floorf(a.x / 4)) / 255.0f;
+            a.y = (a.y * 4 + floorf(a.y / 16)) / 255.0f;
+            a.z = (a.z * 8 + floorf(a.z / 4)) / 255.0f;
+
+            b = floor(b * grid + 0.5f);
+            b.x = (b.x * 8 + floorf(b.x / 4)) / 255.0f;
+            b.y = (b.y * 4 + floorf(b.y / 16)) / 255.0f;
+            b.z = (b.z * 8 + floorf(b.z / 4)) / 255.0f;*/
+
+            a = round565(a);
+            b = round565(b);
+
 
             // compute the error
             Vector3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
@@ -461,8 +582,30 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
                 // clamp to the grid
                 a = clamp(a, 0, 1);
                 b = clamp(b, 0, 1);
-                a = floor(a * grid + 0.5f) * gridrcp;
-                b = floor(b * grid + 0.5f) * gridrcp;
+                //a = floor(a * grid + 0.5f) * gridrcp;
+                //b = floor(b * grid + 0.5f) * gridrcp;
+
+                //int ar = ftoi_round(31 * a.x); ar = (ar << 3) | (ar >> 2); a.x = float(ar) / 255.0f;
+                //int ag = ftoi_round(63 * a.y); ar = (ag << 2) | (ag >> 4); a.y = float(ag) / 255.0f;
+                //int ab = ftoi_round(31 * a.z); ar = (ab << 3) | (ab >> 2); a.z = float(ab) / 255.0f;
+                //int br = ftoi_round(31 * b.x); br = (br << 3) | (br >> 2); b.x = float(br) / 255.0f;
+                //int bg = ftoi_round(63 * b.y); br = (bg << 2) | (bg >> 4); b.y = float(bg) / 255.0f;
+                //int bb = ftoi_round(31 * b.z); br = (bb << 3) | (bb >> 2); b.z = float(bb) / 255.0f;
+
+                /*
+                a = floor(a * grid + 0.5f);
+                a.x = (a.x * 8 + floorf(a.x / 4)) / 255.0f;
+                a.y = (a.y * 4 + floorf(a.y / 16)) / 255.0f;
+                a.z = (a.z * 8 + floorf(a.z / 4)) / 255.0f;
+
+                b = floor(b * grid + 0.5f);
+                b.x = (b.x * 8 + floorf(b.x / 4)) / 255.0f;
+                b.y = (b.y * 4 + floorf(b.y / 16)) / 255.0f;
+                b.z = (b.z * 8 + floorf(b.z / 4)) / 255.0f;
+                */
+
+                a = round565(a);
+                b = round565(b);
 
                 // compute the error
                 Vector3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
