@@ -112,7 +112,8 @@ void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
     QuickCompress::compressDXT5(rgba, block);
 }
 
-#if 0
+
+#if 1
 void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     set.setUniformWeights();
@@ -125,11 +126,14 @@ void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, co
         Color32 c = toColor32(set.colors[0]);
         OptimalCompress::compressDXT1(c, block);
     }
+    /*else if (set.colorCount == 2) {
+        QuickCompress::compressDXT1(..., block);
+    }*/
     else
     {
         ClusterFit fit;
-        fit.setMetric(compressionOptions.colorWeight);
-        fit.setColourSet(&set);
+        fit.setColorWeights(compressionOptions.colorWeight);
+        fit.setColorSet(&set);
 
         Vector3 start, end;
         fit.compress4(&start, &end);
@@ -141,6 +145,37 @@ void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, co
             QuickCompress::outputBlock4(set, start, end, block);        
         }
     }
+}
+#elif 1
+
+
+extern void compress_dxt1_bounding_box_exhaustive(const ColorBlock & input, BlockDXT1 * output);
+
+
+void CompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+{
+    BlockDXT1 * block = new(output) BlockDXT1;
+
+    if (rgba.isSingleColor())
+    {
+        OptimalCompress::compressDXT1(rgba.color(0), block);
+        //compress_dxt1_single_color_optimal(rgba.color(0), block);
+    }
+    else
+    {
+        // Do an exhaustive search inside the bounding box.
+        compress_dxt1_bounding_box_exhaustive(rgba, block);
+    }
+
+    /*else
+    {
+        nvsquish::WeightedClusterFit fit;
+        fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
+
+        nvsquish::ColourSet colours((uint8 *)rgba.colors(), 0);
+        fit.SetColourSet(&colours, nvsquish::kDxt1);
+        fit.Compress(output);
+    }*/
 }
 #else
 void CompressorDXT1::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
@@ -302,6 +337,309 @@ void CompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alphaMode
         QuickCompress::compressDXT5A(rgba, &block->alpha);
     }
 }
+
+
+
+
+
+void CompressorBC3_RGBM::compressBlock(ColorSet & src, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
+{
+    BlockDXT5 * block = new(output)BlockDXT5;
+
+    if (alphaMode == AlphaMode_Transparency) {
+        src.setAlphaWeights();
+    }
+    else {
+        src.setUniformWeights();
+    }
+
+    // Decompress the color block and find the M values that reproduce the input most closely. This should compensate for some of the DXT errors.
+
+    // Compress the resulting M values optimally.
+
+    // Repeat this several times until compression error does not improve?
+
+    //Vector3 rgb_block[16];
+    //float m_block[16];
+
+    
+    // Init RGB/M block.
+    const float threshold = 0.15f; // @@ Use compression options.
+#if 0
+    nvsquish::WeightedClusterFit fit;
+
+    ColorBlock rgba;
+    for (int i = 0; i < 16; i++) {
+        const Vector4 & c = src.color(i);
+        float R = saturate(c.x);
+        float G = saturate(c.y);
+        float B = saturate(c.z);
+
+        float M = max(max(R, G), max(B, threshold));
+        float r = R / M;
+        float g = G / M;
+        float b = B / M;
+        float a = c.w;
+
+        rgba.color(i) = toColor32(Vector4(r, g, b, a));
+    }
+
+    if (rgba.isSingleColor())
+    {
+        OptimalCompress::compressDXT1(rgba.color(0), &block->color);
+    }
+    else
+    {
+        nvsquish::WeightedClusterFit fit;
+        fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
+
+        int flags = 0;
+        if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
+
+        nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
+        fit.SetColourSet(&colours, 0);
+        fit.Compress(&block->color);
+    }
+#endif
+#if 1
+    ColorSet rgb;
+    rgb.allocate(src.w, src.h);     // @@ Handle smaller blocks.
+
+    if (src.colorCount != 16) {
+        nvDebugBreak();
+    }
+
+    for (uint i = 0; i < src.colorCount; i++) {
+        const Vector4 & c = src.color(i);
+
+        float R = saturate(c.x);
+        float G = saturate(c.y);
+        float B = saturate(c.z);
+
+        float M = max(max(R, G), max(B, threshold));
+        float r = R / M;
+        float g = G / M;
+        float b = B / M;
+        float a = c.w;
+
+        rgb.colors[i] = Vector4(r, g, b, a);
+        rgb.indices[i] = i;
+        rgb.weights[i] = max(c.w, 0.001f);// src.weights[i];   // IC: For some reason 0 weights are causing problems, even if we eliminate the corresponding colors from the set.
+    }
+
+    rgb.createMinimalSet(/*ignoreTransparent=*/true);
+
+    if (rgb.isSingleColor(/*ignoreAlpha=*/true)) {
+        OptimalCompress::compressDXT1(toColor32(rgb.color(0)), &block->color);
+    }
+    else {
+        ClusterFit fit;
+        fit.setColorWeights(compressionOptions.colorWeight);
+        fit.setColorSet(&rgb);
+
+        Vector3 start, end;
+        fit.compress4(&start, &end);
+
+        QuickCompress::outputBlock4(rgb, start, end, &block->color);
+    }
+#endif
+
+    // Decompress RGB/M block.
+    nv::ColorBlock RGB;
+    block->color.decodeBlock(&RGB);
+    
+#if 1
+    AlphaBlock4x4 M;
+    for (int i = 0; i < 16; i++) {
+        const Vector4 & c = src.color(i);
+        float R = saturate(c.x);
+        float G = saturate(c.y);
+        float B = saturate(c.z);
+
+        float r = RGB.color(i).r / 255.0f;
+        float g = RGB.color(i).g / 255.0f;
+        float b = RGB.color(i).b / 255.0f;
+
+        float m = (R / r + G / g + B / b) / 3.0f;
+        //float m = max((R / r + G / g + B / b) / 3.0f, threshold);
+        //float m = max(max(R / r, G / g), max(B / b, threshold));
+        //float m = max(max(R, G), max(B, threshold));
+
+        m = (m - threshold) / (1 - threshold);
+
+        M.alpha[i] = U8(ftoi_round(saturate(m) * 255.0f));
+        M.weights[i] = src.weights[i];
+    }
+
+    // Compress M.
+    if (compressionOptions.quality == Quality_Fastest) {
+        QuickCompress::compressDXT5A(M, &block->alpha);
+    }
+    else {
+        OptimalCompress::compressDXT5A(M, &block->alpha);
+    }
+#else
+    OptimalCompress::compressDXT5A_RGBM(src, RGB, &block->alpha);
+#endif
+
+#if 0
+    // Decompress M.
+    block->alpha.decodeBlock(&M);
+
+    rgb.allocate(src.w, src.h);     // @@ Handle smaller blocks.
+
+    for (uint i = 0; i < src.colorCount; i++) {
+        const Vector4 & c = src.color(i);
+
+        float R = saturate(c.x);
+        float G = saturate(c.y);
+        float B = saturate(c.z);
+
+        //float m = max(max(R, G), max(B, threshold));
+        float m = float(M.alpha[i]) / 255.0f * (1 - threshold) + threshold;
+        float r = R / m;
+        float g = G / m;
+        float b = B / m;
+        float a = c.w;
+
+        rgb.colors[i] = Vector4(r, g, b, a);
+        rgb.indices[i] = i;
+        rgb.weights[i] = max(c.w, 0.001f);// src.weights[i];   // IC: For some reason 0 weights are causing problems, even if we eliminate the corresponding colors from the set.
+    }
+
+    rgb.createMinimalSet(/*ignoreTransparent=*/true);
+
+    if (rgb.isSingleColor(/*ignoreAlpha=*/true)) {
+        OptimalCompress::compressDXT1(toColor32(rgb.color(0)), &block->color);
+    }
+    else {
+        ClusterFit fit;
+        fit.setMetric(compressionOptions.colorWeight);
+        fit.setColourSet(&rgb);
+
+        Vector3 start, end;
+        fit.compress4(&start, &end);
+
+        QuickCompress::outputBlock4(rgb, start, end, &block->color);
+    }
+#endif
+
+#if 0
+    block->color.decodeBlock(&RGB);
+
+    //AlphaBlock4x4 M;
+    //M.initWeights(src);
+    
+    for (int i = 0; i < 16; i++) {
+        const Vector4 & c = src.color(i);
+        float R = saturate(c.x);
+        float G = saturate(c.y);
+        float B = saturate(c.z);
+
+        float r = RGB.color(i).r / 255.0f;
+        float g = RGB.color(i).g / 255.0f;
+        float b = RGB.color(i).b / 255.0f;
+
+        float m = (R / r + G / g + B / b) / 3.0f;
+        //float m = max((R / r + G / g + B / b) / 3.0f, threshold);
+        //float m = max(max(R / r, G / g), max(B / b, threshold));
+        //float m = max(max(R, G), max(B, threshold));
+
+        m = (m - threshold) / (1 - threshold);
+
+        M.alpha[i] = U8(ftoi_round(saturate(m) * 255.0f));
+        M.weights[i] = src.weights[i];
+    }
+
+    // Compress M.
+    if (compressionOptions.quality == Quality_Fastest) {
+        QuickCompress::compressDXT5A(M, &block->alpha);
+    }
+    else {
+        OptimalCompress::compressDXT5A(M, &block->alpha);
+    }
+#endif
+
+
+
+#if 0
+    src.fromRGBM(M, threshold);
+
+    src.createMinimalSet(/*ignoreTransparent=*/true);
+
+    if (src.isSingleColor(/*ignoreAlpha=*/true)) {
+        OptimalCompress::compressDXT1(src.color(0), &block->color);
+    }
+    else {
+        // @@ Use our improved compressor.
+        ClusterFit fit;
+        fit.setMetric(compressionOptions.colorWeight);
+        fit.setColourSet(&src);
+
+        Vector3 start, end;
+        fit.compress4(&start, &end);
+
+        if (fit.compress3(&start, &end)) {
+            QuickCompress::outputBlock3(src, start, end, block->color);
+        }
+        else {
+            QuickCompress::outputBlock4(src, start, end, block->color);
+        }
+    }
+#endif // 0
+
+    // @@ Decompress color and compute M that best approximates src with these colors? Then compress M again?
+
+
+
+    // RGBM encoding.
+    // Maximize precision.
+    // - Number of possible grey levels:
+    //   - Naive:  2^3 = 8
+    //   - Better: 2^3 + 2^2 = 12
+    //   - How to choose threshold? 
+    //     - Ideal = Adaptive per block, don't know where to store.
+    //     - Adaptive per lightmap. How to compute optimal?
+    //     - Fixed: 0.25 in our case. Lightmaps scaled to a fixed [0, 1] range.
+
+    // - Optimal compressor: Interpolation artifacts.
+
+    // - Color transform. 
+    //    - Measure error in post-tone-mapping color space. 
+    //    - Assume a simple tone mapping operator. We know minimum and maximum exposure, but don't know exact exposure in game.
+    //    - Guess based on average lighmap color? Use fixed exposure, in scaled lightmap space.
+
+    // - Enhanced DXT compressor.
+    //    - Typical RGBM encoding as follows:
+    //      rgb -> M = max(rgb), RGB=rgb/M -> RGBM
+    //    - If we add a compression step (M' = M) and M' < M, then rgb may be greater than 1.
+    //      - We could ensure that M' >= M during compression.
+    //      - We could clamp RGB anyway.
+    //      - We could add a fixed scale value to take into account compression errors and avoid clamping.
+
+
+    
+
+
+    // Compress color.
+    /*if (rgba.isSingleColor())
+    {
+        OptimalCompress::compressDXT1(rgba.color(0), &block->color);
+    }
+    else
+    {
+        nvsquish::WeightedClusterFit fit;
+        fit.SetMetric(compressionOptions.colorWeight.x, compressionOptions.colorWeight.y, compressionOptions.colorWeight.z);
+
+        int flags = 0;
+        if (alphaMode == nvtt::AlphaMode_Transparency) flags |= nvsquish::kWeightColourByAlpha;
+
+        nvsquish::ColourSet colours((uint8 *)rgba.colors(), flags);
+        fit.SetColourSet(&colours, 0);
+        fit.Compress(&block->color);
+    }*/
+}
+
 
 
 #if defined(HAVE_ATITC)

@@ -83,6 +83,9 @@ namespace nv
         void rotate(float theta, float v0, float v1, float v2);
         float determinant() const;
 
+        void operator+=(const Matrix & m);
+        void operator-=(const Matrix & m);
+
         void apply(Matrix::Arg m);
 
     private:
@@ -90,10 +93,17 @@ namespace nv
     };
 
     // Solve equation system using LU decomposition and back-substitution.
-    extern bool solveLU(const Matrix & m, const Vector4 & b, Vector4 * x);
+    extern bool solveLU(const Matrix & A, const Vector4 & b, Vector4 * x);
 
     // Solve equation system using Cramer's inverse.
     extern bool solveCramer(const Matrix & A, const Vector4 & b, Vector4 * x);
+
+    // Compute inverse using LU decomposition.
+    extern Matrix inverseLU(const Matrix & m);
+
+    // Compute inverse using Gaussian elimination and partial pivoting.
+    extern Matrix inverse(const Matrix & m);
+    extern Matrix3 inverse(const Matrix3 & m);
 
 } // nv namespace
 

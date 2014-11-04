@@ -96,8 +96,11 @@ namespace nv
         /// Get vector pointer.
         NV_FORCEINLINE T * buffer() { return m_buffer; }
 
+        /// Provide begin/end pointers for C++11 range-based for loops.
         NV_FORCEINLINE T * begin() { return m_buffer; }
         NV_FORCEINLINE T * end() { return m_buffer + m_size; }
+        NV_FORCEINLINE const T * begin() const { return m_buffer; }
+        NV_FORCEINLINE const T * end() const { return m_buffer + m_size; }
 
         /// Is vector empty.
         NV_FORCEINLINE bool isEmpty() const { return m_size == 0; }
@@ -106,6 +109,7 @@ namespace nv
         NV_FORCEINLINE bool isNull() const { return m_buffer == NULL; }
 
 
+        T & append();
         void push_back( const T & val );
         void pushBack( const T & val );
         Array<T> & append( const T & val );

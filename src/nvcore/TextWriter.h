@@ -20,8 +20,8 @@ namespace nv
 
         void writeString(const char * str);
         void writeString(const char * str, uint len);
-        void write(const char * format, ...) __attribute__((format (printf, 2, 3)));
-        void write(const char * format, va_list arg);
+        void format(const char * format, ...) __attribute__((format (printf, 2, 3)));
+        void formatList(const char * format, va_list arg);
 
     private:
 
@@ -35,19 +35,19 @@ namespace nv
 
     inline TextWriter & operator<<( TextWriter & tw, int i)
     {
-        tw.write("%d", i);
+        tw.format("%d", i);
         return tw;
     }
 
     inline TextWriter & operator<<( TextWriter & tw, uint i)
     {
-        tw.write("%u", i);
+        tw.format("%u", i);
         return tw;
     }
 
     inline TextWriter & operator<<( TextWriter & tw, float f)
     {
-        tw.write("%f", f);
+        tw.format("%f", f);
         return tw;
     }
 

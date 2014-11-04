@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and limitations 
 #include "nvmath/Vector.inl"
 #include "nvmath/Matrix.inl"
 #include "nvmath/Fitting.h"
-#include "utils.h"
+#include "avpcl_utils.h"
 #include "endpts.h"
 #include <cstring>
 #include <float.h>
@@ -354,9 +354,9 @@ static void sign_extend(Pattern &p, IntEndptsRGBA endpts[NREGIONS])
 		if (p.transform_mode)
 		{
 			// endpts[0].A[i] = SIGN_EXTEND(endpts[0].B[i], p.chan[i].nbitsizes[0]);	// always positive here
-			endpts[0].B[i] = SIGN_EXTEND(endpts[0].B[i], p.chan[i].nbitsizes[1]);
-			endpts[1].A[i] = SIGN_EXTEND(endpts[1].A[i], p.chan[i].nbitsizes[2]);
-			endpts[1].B[i] = SIGN_EXTEND(endpts[1].B[i], p.chan[i].nbitsizes[3]);
+			endpts[0].B[i] = SIGN_EXTEND(endpts[0].B[i], p.chan[i].nbitsizes[0]);
+			endpts[1].A[i] = SIGN_EXTEND(endpts[1].A[i], p.chan[i].nbitsizes[1]);
+			endpts[1].B[i] = SIGN_EXTEND(endpts[1].B[i], p.chan[i].nbitsizes[1]);
 		}
 	}
 }
@@ -423,7 +423,7 @@ void AVPCL::decompress_mode5(const char *block, Tile &t)
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
 // we already have a candidate mapping when we call this function, thus an error. take an early exit if the accumulated error so far
 // exceeds what we already have
-static float map_colors(const Vector4 colors[], int np, int rotatemode, int indexmode, const IntEndptsRGBA &endpts, const RegionPrec &region_prec, float current_besterr, int indices[NINDEXARRAYS][Tile::TILE_TOTAL])
+static float map_colors(const Vector4 colors[], const float importance[], int np, int rotatemode, int indexmode, const IntEndptsRGBA &endpts, const RegionPrec &region_prec, float current_besterr, int indices[NINDEXARRAYS][Tile::TILE_TOTAL])
 {
 	Vector3 palette_rgb[NINDICES3];	// could be nindices2
 	float palette_a[NINDICES3];	// could be nindices2
@@ -520,7 +520,7 @@ static float map_colors(const Vector4 colors[], int np, int rotatemode, int inde
 			}
 			palette_alpha = (rotatemode == ROTATEMODE_RGBA_AGBR) ? (palette_rgb[bestindex]).x :
 							(rotatemode == ROTATEMODE_RGBA_RABG) ? (palette_rgb[bestindex]).y :
-							(rotatemode == ROTATEMODE_RGBA_RGAB) ? (palette_rgb[bestindex]).z : (nvCheckMacro(0),0);
+							(rotatemode == ROTATEMODE_RGBA_RGAB) ? (palette_rgb[bestindex]).z : nvCheckMacro(0);
 			toterr += besterr;
 
 			// do A index
@@ -648,7 +648,7 @@ static void assign_indices(const Tile &tile, int shapeindex, int rotatemode, int
 			}
 			palette_alpha = (rotatemode == ROTATEMODE_RGBA_AGBR) ? (palette_rgb[region][bestindex]).x :
 							(rotatemode == ROTATEMODE_RGBA_RABG) ? (palette_rgb[region][bestindex]).y :
-							(rotatemode == ROTATEMODE_RGBA_RGAB) ? (palette_rgb[region][bestindex]).z : (nvCheckMacro(0),0);
+							(rotatemode == ROTATEMODE_RGBA_RGAB) ? (palette_rgb[region][bestindex]).z : nvCheckMacro(0);
 			toterr[region] += besterr;
 
 			// do A index
@@ -673,7 +673,7 @@ static void assign_indices(const Tile &tile, int shapeindex, int rotatemode, int
 
 // note: indices are valid only if the value returned is less than old_err; otherwise they contain -1's
 // this function returns either old_err or a value smaller (if it was successful in improving the error)
-static float perturb_one(const Vector4 colors[], int np, int rotatemode, int indexmode, int ch, const RegionPrec &region_prec, const IntEndptsRGBA &old_endpts, IntEndptsRGBA &new_endpts, 
+static float perturb_one(const Vector4 colors[], const float importance[], int np, int rotatemode, int indexmode, int ch, const RegionPrec &region_prec, const IntEndptsRGBA &old_endpts, IntEndptsRGBA &new_endpts,
 						  float old_err, int do_b, int indices[NINDEXARRAYS][Tile::TILE_TOTAL])
 {
 	// we have the old endpoints: old_endpts
@@ -713,7 +713,7 @@ static float perturb_one(const Vector4 colors[], int np, int rotatemode, int ind
 					continue;
 			}
 
-			float err = map_colors(colors, np, rotatemode, indexmode, temp_endpts, region_prec, min_err, temp_indices);
+            float err = map_colors(colors, importance, np, rotatemode, indexmode, temp_endpts, region_prec, min_err, temp_indices);
 
 			if (err < min_err)
 			{
@@ -745,7 +745,7 @@ static float perturb_one(const Vector4 colors[], int np, int rotatemode, int ind
 // if err > 40  6.25%
 // for np = 16 -- adjust error thresholds as a function of np
 // always ensure endpoint ordering is preserved (no need to overlap the scan)
-static float exhaustive(const Vector4 colors[], int np, int rotatemode, int indexmode, int ch, const RegionPrec &region_prec, float orig_err, IntEndptsRGBA &opt_endpts, int indices[NINDEXARRAYS][Tile::TILE_TOTAL])
+static float exhaustive(const Vector4 colors[], const float importance[], int np, int rotatemode, int indexmode, int ch, const RegionPrec &region_prec, float orig_err, IntEndptsRGBA &opt_endpts, int indices[NINDEXARRAYS][Tile::TILE_TOTAL])
 {
 	IntEndptsRGBA temp_endpts;
 	float best_err = orig_err;
@@ -796,7 +796,7 @@ static float exhaustive(const Vector4 colors[], int np, int rotatemode, int inde
 			temp_endpts.A[ch] = a;
 			temp_endpts.B[ch] = b;
 		
-			float err = map_colors(colors, np, rotatemode, indexmode, temp_endpts, region_prec, best_err, temp_indices);
+            float err = map_colors(colors, importance, np, rotatemode, indexmode, temp_endpts, region_prec, best_err, temp_indices);
 			if (err < best_err) 
 			{ 
 				amin = a; 
@@ -817,7 +817,7 @@ static float exhaustive(const Vector4 colors[], int np, int rotatemode, int inde
 			temp_endpts.A[ch] = a;
 			temp_endpts.B[ch] = b;
 		
-			float err = map_colors(colors, np, rotatemode, indexmode, temp_endpts, region_prec, best_err, temp_indices);
+            float err = map_colors(colors, importance, np, rotatemode, indexmode, temp_endpts, region_prec, best_err, temp_indices);
 			if (err < best_err) 
 			{ 
 				amin = a; 
@@ -842,7 +842,7 @@ static float exhaustive(const Vector4 colors[], int np, int rotatemode, int inde
 	return best_err;
 }
 
-static float optimize_one(const Vector4 colors[], int np, int rotatemode, int indexmode, float orig_err, const IntEndptsRGBA &orig_endpts, const RegionPrec &region_prec, IntEndptsRGBA &opt_endpts)
+static float optimize_one(const Vector4 colors[], const float importance[], int np, int rotatemode, int indexmode, float orig_err, const IntEndptsRGBA &orig_endpts, const RegionPrec &region_prec, IntEndptsRGBA &opt_endpts)
 {
 	float opt_err = orig_err;
 
@@ -879,8 +879,8 @@ static float optimize_one(const Vector4 colors[], int np, int rotatemode, int in
 	{
 		// figure out which endpoint when perturbed gives the most improvement and start there
 		// if we just alternate, we can easily end up in a local minima
-		float err0 = perturb_one(colors, np, rotatemode, indexmode, ch, region_prec, opt_endpts, new_a, opt_err, 0, temp_indices0);	// perturb endpt A
-		float err1 = perturb_one(colors, np, rotatemode, indexmode, ch, region_prec, opt_endpts, new_b, opt_err, 1, temp_indices1);	// perturb endpt B
+        float err0 = perturb_one(colors, importance, np, rotatemode, indexmode, ch, region_prec, opt_endpts, new_a, opt_err, 0, temp_indices0);	// perturb endpt A
+        float err1 = perturb_one(colors, importance, np, rotatemode, indexmode, ch, region_prec, opt_endpts, new_b, opt_err, 1, temp_indices1);	// perturb endpt B
 
 		if (err0 < err1)
 		{
@@ -918,7 +918,7 @@ static float optimize_one(const Vector4 colors[], int np, int rotatemode, int in
 		// now alternate endpoints and keep trying until there is no improvement
 		for (;;)
 		{
-			float err = perturb_one(colors, np, rotatemode, indexmode, ch, region_prec, opt_endpts, new_endpt, opt_err, do_b, temp_indices0);
+            float err = perturb_one(colors, importance, np, rotatemode, indexmode, ch, region_prec, opt_endpts, new_endpt, opt_err, do_b, temp_indices0);
 			if (err >= opt_err)
 				break;
 
@@ -951,7 +951,7 @@ static float optimize_one(const Vector4 colors[], int np, int rotatemode, int in
 	bool first = true;
 	for (int ch = 0; ch < NCHANNELS_RGBA; ++ch)
 	{
-		float new_err = exhaustive(colors, np, rotatemode, indexmode, ch, region_prec, opt_err, opt_endpts, temp_indices0);
+        float new_err = exhaustive(colors, importance, np, rotatemode, indexmode, ch, region_prec, opt_err, opt_endpts, temp_indices0);
 
 		if (new_err < opt_err)
 		{
@@ -991,6 +991,7 @@ static void optimize_endpts(const Tile &tile, int shapeindex, int rotatemode, in
 							const IntEndptsRGBA orig_endpts[NREGIONS], const PatternPrec &pattern_prec, float opt_err[NREGIONS], IntEndptsRGBA opt_endpts[NREGIONS])
 {
 	Vector4 pixels[Tile::TILE_TOTAL];
+    float importance[Tile::TILE_TOTAL];
 	IntEndptsRGBA temp_in, temp_out;
 
 	for (int region=0; region<NREGIONS; ++region)
@@ -998,10 +999,15 @@ static void optimize_endpts(const Tile &tile, int shapeindex, int rotatemode, in
 		// collect the pixels in the region
 		int np = 0;
 
-		for (int y = 0; y < tile.size_y; y++)
-		for (int x = 0; x < tile.size_x; x++)
-			if (REGION(x,y,shapeindex) == region)
-				pixels[np++] = tile.data[y][x];
+        for (int y = 0; y < tile.size_y; y++) {
+            for (int x = 0; x < tile.size_x; x++) {
+                if (REGION(x, y, shapeindex) == region) {
+                    pixels[np] = tile.data[y][x];
+                    importance[np] = tile.importance_map[y][x];
+                    np++;
+                }
+            }
+        }
 
 		opt_endpts[region] = temp_in = orig_endpts[region];
 		opt_err[region] = orig_err[region];
@@ -1013,7 +1019,7 @@ static void optimize_endpts(const Tile &tile, int shapeindex, int rotatemode, in
 		float temp_in_err = orig_err[region];
 
 		// now try to optimize these endpoints
-		float temp_out_err = optimize_one(pixels, np, rotatemode, indexmode, temp_in_err, temp_in, pattern_prec.region_precs[region], temp_out);
+        float temp_out_err = optimize_one(pixels, importance, np, rotatemode, indexmode, temp_in_err, temp_in, pattern_prec.region_precs[region], temp_out);
 
 		// if we find an improvement, update the best so far and correct the output endpoints and errors
 		if (temp_out_err < best_err)
@@ -1094,7 +1100,8 @@ static float refine(const Tile &tile, int shapeindex_best, int rotatemode, int i
 			}
 		}
 	}
-	throw "No candidate found, should never happen (avpcl mode 5).";
+	nvAssert(false); //throw "No candidate found, should never happen (mode avpcl 5).";
+	return FLT_MAX;
 }
 
 static void clamp(Vector4 &v)

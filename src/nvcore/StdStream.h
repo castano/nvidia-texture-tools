@@ -37,7 +37,7 @@ namespace nv
     public:
 
         /// Ctor.
-        StdStream( FILE * fp, bool autoclose=true ) : m_fp(fp), m_autoclose(autoclose) { }
+        StdStream( FILE * fp, bool autoclose ) : m_fp(fp), m_autoclose(autoclose) { }
 
         /// Dtor. 
         virtual ~StdStream()
@@ -108,7 +108,8 @@ namespace nv
         // implementation uses use ftell and fseek to determine our location within the file.
         virtual bool isAtEnd() const
         {
-            nvDebugCheck(m_fp != NULL);
+            if (m_fp == NULL) return true;
+            //nvDebugCheck(m_fp != NULL);
             //return feof( m_fp ) != 0;
 #if NV_OS_WIN32
             uint pos = _ftell_nolock(m_fp);
@@ -143,10 +144,10 @@ namespace nv
     public:
 
         /// Construct stream by file name.
-        StdOutputStream( const char * name ) : StdStream(fileOpen(name, "wb")) { }
+        StdOutputStream( const char * name ) : StdStream(fileOpen(name, "wb"), /*autoclose=*/true) { }
 
         /// Construct stream by file handle.
-        StdOutputStream( FILE * fp, bool autoclose=true ) : StdStream(fp, autoclose)
+        StdOutputStream( FILE * fp, bool autoclose ) : StdStream(fp, autoclose)
         {
         }
 
@@ -193,7 +194,7 @@ namespace nv
     public:
 
         /// Construct stream by file name.
-        StdInputStream( const char * name ) : StdStream(fileOpen(name, "rb")) { }
+        StdInputStream( const char * name ) : StdStream(fileOpen(name, "rb"), /*autoclose=*/true) { }
 
         /// Construct stream by file handle.
         StdInputStream( FILE * fp, bool autoclose=true ) : StdStream(fp, autoclose)

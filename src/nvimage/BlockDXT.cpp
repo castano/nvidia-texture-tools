@@ -138,9 +138,9 @@ uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
         color_array[2].a = 0xFF;
 
         // Set all components to 0 to match DXT specs.
-        color_array[3].r = 0x00; // color_array[2].r;
-        color_array[3].g = 0x00; // color_array[2].g;
-        color_array[3].b = 0x00; // color_array[2].b;
+        color_array[3].r = 0x00;
+        color_array[3].g = 0x00;
+        color_array[3].b = 0x00;
         color_array[3].a = 0x00;
 
         return 3;
@@ -167,9 +167,9 @@ void BlockDXT1::evaluatePalette3(Color32 color_array[4], bool d3d9) const
     color_array[2].a = 0xFF;
 
     // Set all components to 0 to match DXT specs.
-    color_array[3].r = 0x00; // color_array[2].r;
-    color_array[3].g = 0x00; // color_array[2].g;
-    color_array[3].b = 0x00; // color_array[2].b;
+    color_array[3].r = 0x00;
+    color_array[3].g = 0x00;
+    color_array[3].b = 0x00;
     color_array[3].a = 0x00;
 }
 
@@ -432,6 +432,22 @@ void AlphaBlockDXT5::decodeBlock(ColorBlock * block, bool d3d9/*= false*/) const
         block->color(i).a = alpha_array[index_array[i]];
     }
 }
+
+void AlphaBlockDXT5::decodeBlock(AlphaBlock4x4 * block, bool d3d9/*= false*/) const
+{
+    nvDebugCheck(block != NULL);
+
+    uint8 alpha_array[8];
+    evaluatePalette(alpha_array, d3d9);
+
+    uint8 index_array[16];
+    indices(index_array);
+
+    for(uint i = 0; i < 16; i++) {
+        block->alpha[i] = alpha_array[index_array[i]];
+    }
+}
+
 
 void AlphaBlockDXT5::flip4()
 {

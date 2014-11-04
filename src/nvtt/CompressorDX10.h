@@ -58,6 +58,13 @@ namespace nv
 		virtual uint blockSize() const { return 16; }
 	};
 
+    struct ProductionCompressorBC5_Luma : public ColorSetCompressor
+	{
+		virtual void compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+		virtual uint blockSize() const { return 16; }
+	};
+
+
 } // nv namespace
 
 

@@ -66,6 +66,10 @@
 #   endif
 #endif
 
+#if NV_OS_ORBIS
+#include <libdbg.h>
+#endif
+
 #define NV_USE_SEPARATE_THREAD 1
 
 
@@ -263,7 +267,7 @@ namespace
     }
 
     /*static NV_NOINLINE int backtrace(void * trace[], int maxcount) {
-	
+
         // In Windows XP and Windows Server 2003, the sum of the FramesToSkip and FramesToCapture parameters must be less than 63.
         int xp_maxcount = min(63-1, maxcount);
 
@@ -274,7 +278,7 @@ namespace
     }*/
 
     static NV_NOINLINE int backtraceWithSymbols(CONTEXT * ctx, void * trace[], int maxcount, int skip = 0) {
-		
+        
         // Init the stack frame for this function
         STACKFRAME64 stackFrame = { 0 };
 
@@ -344,74 +348,74 @@ namespace
         StringBuilder builder(512);
 
         HANDLE hProcess = GetCurrentProcess();
-    	
-	    // Resolve PC to function names
-	    for (int i = start; i < size; i++)
-	    {
-		    // Check for end of stack walk
-		    DWORD64 ip = (DWORD64)trace[i];
-		    if (ip == NULL)
-			    break;
+        
+        // Resolve PC to function names
+        for (int i = start; i < size; i++)
+        {
+            // Check for end of stack walk
+            DWORD64 ip = (DWORD64)trace[i];
+            if (ip == NULL)
+                break;
 
-		    // Get function name
-		    #define MAX_STRING_LEN	(512)
-		    unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
-		    IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
-		    pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
-		    pSymbol->MaxNameLength = MAX_STRING_LEN;
+            // Get function name
+            #define MAX_STRING_LEN  (512)
+            unsigned char byBuffer[sizeof(IMAGEHLP_SYMBOL64) + MAX_STRING_LEN] = { 0 };
+            IMAGEHLP_SYMBOL64 * pSymbol = (IMAGEHLP_SYMBOL64*)byBuffer;
+            pSymbol->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+            pSymbol->MaxNameLength = MAX_STRING_LEN;
 
-		    DWORD64 dwDisplacement;
-    		
-		    if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
-		    {
-			    pSymbol->Name[MAX_STRING_LEN-1] = 0;
-    			
-			    /*
-			    // Make the symbol readable for humans
-			    UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE, 
-				    UNDNAME_COMPLETE | 
-				    UNDNAME_NO_THISTYPE |
-				    UNDNAME_NO_SPECIAL_SYMS |
-				    UNDNAME_NO_MEMBER_TYPE |
-				    UNDNAME_NO_MS_KEYWORDS |
-				    UNDNAME_NO_ACCESS_SPECIFIERS );
-			    */
-    			
-			    // pSymbol->Name
-			    const char * pFunc = pSymbol->Name;
-    			
-			    // Get file/line number
-			    IMAGEHLP_LINE64 theLine = { 0 };
-			    theLine.SizeOfStruct = sizeof(theLine);
+            DWORD64 dwDisplacement;
+            
+            if (SymGetSymFromAddr64(hProcess, ip, &dwDisplacement, pSymbol))
+            {
+                pSymbol->Name[MAX_STRING_LEN-1] = 0;
+                
+                /*
+                // Make the symbol readable for humans
+                UnDecorateSymbolName( pSym->Name, lpszNonUnicodeUnDSymbol, BUFFERSIZE, 
+                    UNDNAME_COMPLETE | 
+                    UNDNAME_NO_THISTYPE |
+                    UNDNAME_NO_SPECIAL_SYMS |
+                    UNDNAME_NO_MEMBER_TYPE |
+                    UNDNAME_NO_MS_KEYWORDS |
+                    UNDNAME_NO_ACCESS_SPECIFIERS );
+                */
+                
+                // pSymbol->Name
+                const char * pFunc = pSymbol->Name;
 
-			    DWORD dwDisplacement;
-			    if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
-			    {
+                // Get file/line number
+                IMAGEHLP_LINE64 theLine = { 0 };
+                theLine.SizeOfStruct = sizeof(theLine);
+
+                DWORD dwDisplacement;
+                if (!SymGetLineFromAddr64(hProcess, ip, &dwDisplacement, &theLine))
+                {
                     // Do not print unknown symbols anymore.
                     break;
                     //builder.format("unknown(%08X) : %s\n", (uint32)ip, pFunc);
-			    }
-			    else
-			    {
-				    /*
-				    const char* pFile = strrchr(theLine.FileName, '\\');
-				    if ( pFile == NULL ) pFile = theLine.FileName;
-				    else pFile++;
-				    */
-				    const char * pFile = theLine.FileName;
-    				
-				    int line = theLine.LineNumber;
-    				
+                }
+                else
+                {
+                    /*
+                    const char* pFile = strrchr(theLine.FileName, '\\');
+                    if ( pFile == NULL ) pFile = theLine.FileName;
+                    else pFile++;
+                    */
+                    const char * pFile = theLine.FileName;
+                    
+                    int line = theLine.LineNumber;
+                    
                     builder.format("%s(%d) : %s\n", pFile, line, pFunc);
-			    }
+                }
 
                 lines.append(builder.release());
 
                 if (pFunc != NULL && strcmp(pFunc, "WinMain") == 0) {
                     break;
                 }
-		    }
-	    }
+            }
+        }
     }
 
 
@@ -479,41 +483,36 @@ namespace
         TerminateProcess(GetCurrentProcess(), EXIT_FAILURE + 8);
     }
 
-    static void handleInvalidParameter(const wchar_t * expresion, const wchar_t * function, const wchar_t * file, unsigned int line, uintptr_t reserved) {
+    static void handleInvalidParameter(const wchar_t * wexpresion, const wchar_t * wfunction, const wchar_t * wfile, unsigned int line, uintptr_t reserved) {
 
         size_t convertedCharCount = 0;
-        StringBuilder tmp;
-
-        if (expresion != NULL) {
-            uint size = toU32(wcslen(expresion) + 1);
-            tmp.reserve(size);
-            wcstombs_s(&convertedCharCount, tmp.str(), size, expresion, _TRUNCATE);
-
-            nvDebug("*** Invalid parameter: %s\n", tmp.str());
-
-            if (file != NULL) {
-                size = toU32(wcslen(file) + 1);
-                tmp.reserve(size);
-                wcstombs_s(&convertedCharCount, tmp.str(), size, file, _TRUNCATE);
-
-                nvDebug("    On file: %s\n", tmp.str());
-
-                if (function != NULL) {
-                    size = toU32(wcslen(function) + 1);
-                    tmp.reserve(size);
-                    wcstombs_s(&convertedCharCount, tmp.str(), size, function, _TRUNCATE);
-
-                    nvDebug("    On function: %s\n", tmp.str());
-                }
-
-                nvDebug("    On line: %u\n", line);
-            }
+        
+        StringBuilder expresion;
+        if (wexpresion != NULL) {
+            uint size = U32(wcslen(wexpresion) + 1);
+            expresion.reserve(size);
+            wcstombs_s(&convertedCharCount, expresion.str(), size, wexpresion, _TRUNCATE);
         }
 
-        nvDebugBreak();
-        TerminateProcess(GetCurrentProcess(), EXIT_FAILURE + 8);
-    }
+        StringBuilder file;
+        if (wfile != NULL) {
+            uint size = U32(wcslen(wfile) + 1);
+            file.reserve(size);
+            wcstombs_s(&convertedCharCount, file.str(), size, wfile, _TRUNCATE);
+        }
 
+        StringBuilder function;
+        if (wfunction != NULL) {
+            uint size = U32(wcslen(wfunction) + 1);
+            function.reserve(size);
+            wcstombs_s(&convertedCharCount, function.str(), size, wfunction, _TRUNCATE);
+        }
+        
+        int result = nvAbort(expresion.str(), file.str(), line, function.str());
+        if (result == NV_ABORT_DEBUG) {
+            nvDebugBreak();
+        } 
+    }
 
 #elif !NV_OS_WIN32 && defined(HAVE_SIGNAL_H) // NV_OS_LINUX || NV_OS_DARWIN
 
@@ -770,7 +769,7 @@ namespace
 
             if (s_interactive) {
                 flushMessageQueue();
-                int action = MessageBoxA(NULL, error_string.str(), "Assertion failed", MB_ABORTRETRYIGNORE|MB_ICONERROR);
+                int action = MessageBoxA(NULL, error_string.str(), "Assertion failed", MB_ABORTRETRYIGNORE | MB_ICONERROR | MB_TOPMOST);
                 switch( action ) {
                 case IDRETRY:
                     ret = NV_ABORT_DEBUG;
@@ -851,11 +850,10 @@ namespace
                 printStackTrace(trace, size, 2);
             }*/
             
-            //SBtodoORBIS check for debugger present
-            //if (debug::isDebuggerPresent())
-                nvDebugBreak();
+            if (debug::isDebuggerPresent())
+                return NV_ABORT_DEBUG;
 
-            return NV_ABORT_DEBUG;
+            return NV_ABORT_IGNORE;
         }
     };
 
@@ -892,9 +890,9 @@ namespace
 #endif
 
             if( ret == NV_ABORT_EXIT ) {
-            // Exit cleanly.
-            exit(EXIT_FAILURE + 1);
-        }
+                // Exit cleanly.
+                exit(EXIT_FAILURE + 1);
+            }
             
             return ret;
         }
@@ -1190,6 +1188,12 @@ bool debug::isDebuggerPresent()
 #else
     return false;
 #endif
+#elif NV_OS_ORBIS
+  #if PS4_FINAL_REQUIREMENTS
+    return false; 
+  #else
+    return sceDbgIsDebuggerAttached() == 1;
+  #endif
 #elif NV_OS_DARWIN
     int mib[4];
     struct kinfo_proc info;

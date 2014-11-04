@@ -16,7 +16,7 @@ See the License for the specific language governing permissions and limitations 
 #include "bits.h"
 #include "tile.h"
 #include "zoh.h"
-#include "utils.h"
+#include "zoh_utils.h"
 
 #include "nvmath/Vector.inl"
 #include "nvmath/Fitting.h"
@@ -591,13 +591,14 @@ static void optimize_endpts(const Tile &tile, int shapeindex, const float orig_e
         // collect the pixels in the region
         int np = 0;
 
-        for (int y = 0; y < tile.size_y; y++)
-            for (int x = 0; x < tile.size_x; x++)
-                if (REGION(x,y,shapeindex) == region)
-                {
-            pixels[np] = tile.data[y][x];
-            importance[np] = tile.importance_map[y][x];
-            ++np;
+        for (int y = 0; y < tile.size_y; y++) {
+            for (int x = 0; x < tile.size_x; x++) {
+                if (REGION(x, y, shapeindex) == region) {
+                    pixels[np] = tile.data[y][x];
+                    importance[np] = tile.importance_map[y][x];
+                    ++np;
+                }
+            }
         }
 
         optimize_one(pixels, importance, np, orig_err[region], orig_endpts[region], prec, opt_endpts[region]);
@@ -660,7 +661,9 @@ float ZOH::refineone(const Tile &tile, int shapeindex_best, const FltEndpts endp
             }
         }
     }
-    throw "No candidate found, should never happen (refineone.)";
+
+	nvAssert (false); // "No candidate found, should never happen (refineone.)";
+	return FLT_MAX;
 }
 
 static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_ONE], Vector3 palette[NREGIONS_ONE][NINDICES])

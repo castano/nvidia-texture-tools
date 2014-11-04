@@ -165,6 +165,10 @@ void ColorBlockCompressor::compress(nvtt::AlphaMode alphaMode, uint w, uint h, u
     // Use a single thread to compress small textures.
     if (context.bh < 4) dispatcher = &sequential;
 
+#if _DEBUG
+    dispatcher = &sequential;
+#endif
+
     const uint count = context.bw * context.bh;
     const uint size = context.bs * count;
     context.mem = new uint8[size];
@@ -230,6 +234,10 @@ void ColorSetCompressor::compress(AlphaMode alphaMode, uint w, uint h, uint d, c
 
     // Use a single thread to compress small textures.
     if (context.bh < 4) dispatcher = &sequential;
+
+#if _DEBUG
+    dispatcher = &sequential;
+#endif
 
     const uint count = context.bw * context.bh;
     const uint size = context.bs * count;

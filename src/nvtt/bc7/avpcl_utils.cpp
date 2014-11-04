@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and limitations 
 
 // Utility and common routines
 
-#include "utils.h"
+#include "avpcl_utils.h"
 #include "avpcl.h"
 #include "nvcore/Debug.h"
 #include "nvmath/Vector.inl"
@@ -129,7 +129,7 @@ float Utils::metric4(Vector4::Arg a, Vector4::Arg b)
 		{
 			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
-		else if (AVPCL::flag_nonuniform_ati)
+		else /*if (AVPCL::flag_nonuniform_ati)*/
 		{
 			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
@@ -255,7 +255,7 @@ float Utils::metric4premult(Vector4::Arg a, Vector4::Arg b)
 		{
 			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
-		else if (AVPCL::flag_nonuniform_ati)
+		else /*if (AVPCL::flag_nonuniform_ati)*/
 		{
 			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
@@ -286,7 +286,7 @@ float Utils::metric3premult_alphaout(Vector3::Arg rgb0, float a0, Vector3::Arg r
 		{
 			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
-		else if (AVPCL::flag_nonuniform_ati)
+		else /*if (AVPCL::flag_nonuniform_ati)*/
 		{
 			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}
@@ -341,7 +341,7 @@ float Utils::metric3premult_alphain(Vector3::Arg rgb0, Vector3::Arg rgb1, int ro
 		{
 			rwt = 0.299f; gwt = 0.587f; bwt = 0.114f;
 		}
-		else if (AVPCL::flag_nonuniform_ati)
+		else /*if (AVPCL::flag_nonuniform_ati)*/
 		{
 			rwt = 0.3086f; gwt = 0.6094f; bwt = 0.0820f;
 		}

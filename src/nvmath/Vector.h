@@ -144,6 +144,6 @@ namespace nv
 // Instead we simply have explicit casts:
 template <typename T> T to(const nv::Vector2 & v) { NV_COMPILER_CHECK(sizeof(T) == sizeof(nv::Vector2)); return T(v.x, v.y); }
 template <typename T> T to(const nv::Vector3 & v) { NV_COMPILER_CHECK(sizeof(T) == sizeof(nv::Vector3)); return T(v.x, v.y, v.z); }
-template <typename T> T to(const nv::Vector4 & v) { NV_COMPILER_CHECK(sizeof(T) == sizeof(nv::Vector4)); return T(v.x, v.y, v.z, v.z); }
+template <typename T> T to(const nv::Vector4 & v) { NV_COMPILER_CHECK(sizeof(T) == sizeof(nv::Vector4)); return T(v.x, v.y, v.z, v.w); }
 
 #endif // NV_MATH_VECTOR_H

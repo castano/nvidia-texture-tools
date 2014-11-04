@@ -32,7 +32,8 @@
 
 #include <nvcore/Utils.h> // swap
 
-#include <limits.h>
+#include <limits.h>     // INT_MAX
+#include <float.h>      // FLT_MAX
 
 using namespace nv;
 using namespace OptimalCompress;
@@ -185,16 +186,16 @@ namespace
 		return totalError;
 	}*/
 
-	static uint computeAlphaError(const ColorBlock & rgba, const AlphaBlockDXT5 * block, int bestError = INT_MAX)
+	static float computeAlphaError(const AlphaBlock4x4 & src, const AlphaBlockDXT5 * dst, float bestError = FLT_MAX)
 	{
 		uint8 alphas[8];
-		block->evaluatePalette(alphas, false); // @@ Use target decoder.
+		dst->evaluatePalette(alphas, false); // @@ Use target decoder.
 
-		int totalError = 0;
+		float totalError = 0;
 
 		for (uint i = 0; i < 16; i++)
 		{
-			uint8 alpha = rgba.color(i).a;
+			uint8 alpha = src.alpha[i];
 
 			int minDist = INT_MAX;
 			for (uint p = 0; p < 8; p++)
@@ -203,7 +204,7 @@ namespace
 				minDist = min(dist, minDist);
 			}
 
-			totalError += minDist;
+			totalError += minDist * src.weights[i];
 
 			if (totalError > bestError)
 			{
@@ -215,14 +216,14 @@ namespace
 		return totalError;
 	}
 	
-	static void computeAlphaIndices(const ColorBlock & rgba, AlphaBlockDXT5 * block)
+	static void computeAlphaIndices(const AlphaBlock4x4 & src, AlphaBlockDXT5 * dst)
 	{
 		uint8 alphas[8];
-		block->evaluatePalette(alphas, false); // @@ Use target decoder.
+		dst->evaluatePalette(alphas, /*d3d9=*/false); // @@ Use target decoder.
 
 		for (uint i = 0; i < 16; i++)
 		{
-			uint8 alpha = rgba.color(i).a;
+			uint8 alpha = src.alpha[i];
 
 			int minDist = INT_MAX;
 			int bestIndex = 8;
@@ -238,7 +239,7 @@ namespace
 			}
 			nvDebugCheck(bestIndex < 8);
 
-			block->setIndex(i, bestIndex);
+			dst->setIndex(i, bestIndex);
 		}
 	}
 
@@ -252,19 +253,19 @@ namespace
 // https://mollyrocket.com/forums/viewtopic.php?t=392
 void OptimalCompress::compressDXT1(Color32 c, BlockDXT1 * dxtBlock)
 {
-	dxtBlock->col0.r = OMatch5[c.r][0];
-	dxtBlock->col0.g = OMatch6[c.g][0];
-	dxtBlock->col0.b = OMatch5[c.b][0];
-	dxtBlock->col1.r = OMatch5[c.r][1];
-	dxtBlock->col1.g = OMatch6[c.g][1];
-	dxtBlock->col1.b = OMatch5[c.b][1];
-	dxtBlock->indices = 0xaaaaaaaa;
-
-	if (dxtBlock->col0.u < dxtBlock->col1.u)
-	{
-		swap(dxtBlock->col0.u, dxtBlock->col1.u);
-		dxtBlock->indices ^= 0x55555555;
-	}
+    dxtBlock->col0.r = OMatch5[c.r][0];
+    dxtBlock->col0.g = OMatch6[c.g][0];
+    dxtBlock->col0.b = OMatch5[c.b][0];
+    dxtBlock->col1.r = OMatch5[c.r][1];
+    dxtBlock->col1.g = OMatch6[c.g][1];
+    dxtBlock->col1.b = OMatch5[c.b][1];
+    dxtBlock->indices = 0xaaaaaaaa;
+    
+    if (dxtBlock->col0.u < dxtBlock->col1.u)
+    {
+        swap(dxtBlock->col0.u, dxtBlock->col1.u);
+        dxtBlock->indices ^= 0x55555555;
+    }
 }
 
 void OptimalCompress::compressDXT1a(Color32 c, uint alphaMask, BlockDXT1 * dxtBlock)
@@ -481,46 +482,68 @@ void OptimalCompress::compressDXT1_Luma(const ColorBlock & rgba, BlockDXT1 * blo
 }
 
 
-void OptimalCompress::compressDXT3A(const ColorBlock & rgba, AlphaBlockDXT3 * dxtBlock)
+void OptimalCompress::compressDXT3A(const AlphaBlock4x4 & src, AlphaBlockDXT3 * dst)
 {
-	dxtBlock->alpha0 = quantize4(rgba.color(0).a);
-	dxtBlock->alpha1 = quantize4(rgba.color(1).a);
-	dxtBlock->alpha2 = quantize4(rgba.color(2).a);
-	dxtBlock->alpha3 = quantize4(rgba.color(3).a);
-	dxtBlock->alpha4 = quantize4(rgba.color(4).a);
-	dxtBlock->alpha5 = quantize4(rgba.color(5).a);
-	dxtBlock->alpha6 = quantize4(rgba.color(6).a);
-	dxtBlock->alpha7 = quantize4(rgba.color(7).a);
-	dxtBlock->alpha8 = quantize4(rgba.color(8).a);
-	dxtBlock->alpha9 = quantize4(rgba.color(9).a);
-	dxtBlock->alphaA = quantize4(rgba.color(10).a);
-	dxtBlock->alphaB = quantize4(rgba.color(11).a);
-	dxtBlock->alphaC = quantize4(rgba.color(12).a);
-	dxtBlock->alphaD = quantize4(rgba.color(13).a);
-	dxtBlock->alphaE = quantize4(rgba.color(14).a);
-	dxtBlock->alphaF = quantize4(rgba.color(15).a);
+	dst->alpha0 = quantize4(src.alpha[0]);
+	dst->alpha1 = quantize4(src.alpha[1]);
+	dst->alpha2 = quantize4(src.alpha[2]);
+	dst->alpha3 = quantize4(src.alpha[3]);
+	dst->alpha4 = quantize4(src.alpha[4]);
+	dst->alpha5 = quantize4(src.alpha[5]);
+	dst->alpha6 = quantize4(src.alpha[6]);
+	dst->alpha7 = quantize4(src.alpha[7]);
+	dst->alpha8 = quantize4(src.alpha[8]);
+	dst->alpha9 = quantize4(src.alpha[9]);
+	dst->alphaA = quantize4(src.alpha[10]);
+	dst->alphaB = quantize4(src.alpha[11]);
+	dst->alphaC = quantize4(src.alpha[12]);
+	dst->alphaD = quantize4(src.alpha[13]);
+	dst->alphaE = quantize4(src.alpha[14]);
+	dst->alphaF = quantize4(src.alpha[15]);
 }
 
+void OptimalCompress::compressDXT3A(const ColorBlock & src, AlphaBlockDXT3 * dst)
+{
+    AlphaBlock4x4 tmp;
+    tmp.init(src, 3);
+    compressDXT3A(tmp, dst);
+}
 
-void OptimalCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dxtBlock)
+void OptimalCompress::compressDXT5A(const AlphaBlock4x4 & src, AlphaBlockDXT5 * dst)
 {
 	uint8 mina = 255;
 	uint8 maxa = 0;
 
+	uint8 mina_no01 = 255;
+	uint8 maxa_no01 = 0;
+
 	// Get min/max alpha.
 	for (uint i = 0; i < 16; i++)
 	{
-		uint8 alpha = rgba.color(i).a;
+		uint8 alpha = src.alpha[i];
 		mina = min(mina, alpha);
 		maxa = max(maxa, alpha);
+
+        if (alpha != 0 && alpha != 255) {
+    	    mina_no01 = min(mina_no01, alpha);
+	        maxa_no01 = max(maxa_no01, alpha);
+        }
 	}
 
-	dxtBlock->alpha0 = maxa;
-	dxtBlock->alpha1 = mina;
+    if (maxa - mina < 8) {
+	    dst->alpha0 = maxa;
+	    dst->alpha1 = mina;
 
-	if (maxa - mina > 8)
-	{
-		int besterror = computeAlphaError(rgba, dxtBlock);
+        nvDebugCheck(computeAlphaError(src, dst) == 0);
+    }
+    else if (maxa_no01 - mina_no01 < 6) {
+	    dst->alpha0 = mina_no01;
+	    dst->alpha1 = maxa_no01;
+
+        nvDebugCheck(computeAlphaError(src, dst) == 0);
+    }
+    else {
+		float besterror = computeAlphaError(src, dst);
 		int besta0 = maxa;
 		int besta1 = mina;
 
@@ -535,9 +558,9 @@ void OptimalCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dx
 			{
 				nvDebugCheck(a0 - a1 > 8);
 
-				dxtBlock->alpha0 = a0;
-				dxtBlock->alpha1 = a1;
-				int error = computeAlphaError(rgba, dxtBlock, besterror);
+				dst->alpha0 = a0;
+				dst->alpha1 = a1;
+				float error = computeAlphaError(src, dst, besterror);
 
 				if (error < besterror)
 				{
@@ -548,10 +571,241 @@ void OptimalCompress::compressDXT5A(const ColorBlock & rgba, AlphaBlockDXT5 * dx
 			}
 		}
 
-		dxtBlock->alpha0 = besta0;
-		dxtBlock->alpha1 = besta1;
+        // Try using the 6 step encoding.
+        /*if (mina == 0 || maxa == 255)*/ {
+
+		    // Expand search space a bit.
+		    const int alphaExpand = 6;
+            mina_no01 = (mina_no01 <= alphaExpand) ? 0 : mina_no01 - alphaExpand;
+            maxa_no01 = (maxa_no01 >= 255 - alphaExpand) ? 255 : maxa_no01 + alphaExpand;
+
+            for (int a0 = mina_no01 + 9; a0 < maxa_no01; a0++)
+		    {
+                for (int a1 = mina_no01; a1 < a0 - 8; a1++)
+			    {
+				    nvDebugCheck(a0 - a1 > 8);
+
+				    dst->alpha0 = a1;
+				    dst->alpha1 = a0;
+				    float error = computeAlphaError(src, dst, besterror);
+
+				    if (error < besterror)
+				    {
+					    besterror = error;
+					    besta0 = a1;
+					    besta1 = a0;
+				    }
+			    }
+		    }
+        }
+
+		dst->alpha0 = besta0;
+		dst->alpha1 = besta1;
 	}
 
-	computeAlphaIndices(rgba, dxtBlock);
+    computeAlphaIndices(src, dst);
 }
 
+
+void OptimalCompress::compressDXT5A(const ColorBlock & src, AlphaBlockDXT5 * dst)
+{
+    AlphaBlock4x4 tmp;
+    tmp.init(src, 3);
+    compressDXT5A(tmp, dst);
+}
+
+
+#include "nvmath/Vector.inl"
+#include "nvmath/ftoi.h"
+const float threshold = 0.15f;
+
+static float computeAlphaError_RGBM(const ColorSet & src, const ColorBlock & RGB, const AlphaBlockDXT5 * dst, float bestError = FLT_MAX)
+{
+    uint8 alphas[8];
+    dst->evaluatePalette(alphas, /*d3d9=*/false); // @@ Use target decoder.
+
+    float totalError = 0;
+
+    for (uint i = 0; i < 16; i++)
+    {
+        float R = src.color(i).x;
+        float G = src.color(i).y;
+        float B = src.color(i).z;
+        
+        float r = float(RGB.color(i).r) / 255.0f;
+        float g = float(RGB.color(i).g) / 255.0f;
+        float b = float(RGB.color(i).b) / 255.0f;
+
+        float minDist = FLT_MAX;
+        for (uint p = 0; p < 8; p++)
+        {
+            // Compute M.
+            float M = float(alphas[p]) / 255.0f * (1 - threshold) + threshold;
+
+            // Decode color.
+            float fr = r * M;
+            float fg = g * M;
+            float fb = b * M;
+
+            // Measure error.
+            float error = square(R - fr) + square(G - fg) + square(B - fb);
+
+            minDist = min(error, minDist);
+        }
+
+        totalError += minDist * src.weights[i];
+
+        if (totalError > bestError)
+        {
+            // early out
+            return totalError;
+        }
+    }
+
+    return totalError;
+}
+
+static void computeAlphaIndices_RGBM(const ColorSet & src, const ColorBlock & RGB, AlphaBlockDXT5 * dst)
+{
+    uint8 alphas[8];
+    dst->evaluatePalette(alphas, /*d3d9=*/false); // @@ Use target decoder.
+
+    for (uint i = 0; i < 16; i++)
+    {
+        float R = src.color(i).x;
+        float G = src.color(i).y;
+        float B = src.color(i).z;
+
+        float r = float(RGB.color(i).r) / 255.0f;
+        float g = float(RGB.color(i).g) / 255.0f;
+        float b = float(RGB.color(i).b) / 255.0f;
+
+        float minDist = FLT_MAX;
+        int bestIndex = 8;
+        for (uint p = 0; p < 8; p++)
+        {
+            // Compute M.
+            float M = float(alphas[p]) / 255.0f * (1 - threshold) + threshold;
+
+            // Decode color.
+            float fr = r * M;
+            float fg = g * M;
+            float fb = b * M;
+
+            // Measure error.
+            float error = square(R - fr) + square(G - fg) + square(B - fb);
+
+            if (error < minDist)
+            {
+                minDist = error;
+                bestIndex = p;
+            }
+        }
+        nvDebugCheck(bestIndex < 8);
+
+        dst->setIndex(i, bestIndex);
+    }
+}
+
+
+void OptimalCompress::compressDXT5A_RGBM(const ColorSet & src, const ColorBlock & RGB, AlphaBlockDXT5 * dst)
+{
+    uint8 mina = 255;
+    uint8 maxa = 0;
+
+    uint8 mina_no01 = 255;
+    uint8 maxa_no01 = 0;
+
+    // Get min/max alpha.
+    /*for (uint i = 0; i < 16; i++)
+    {
+        uint8 alpha = src.alpha[i];
+        mina = min(mina, alpha);
+        maxa = max(maxa, alpha);
+
+        if (alpha != 0 && alpha != 255) {
+            mina_no01 = min(mina_no01, alpha);
+            maxa_no01 = max(maxa_no01, alpha);
+        }
+    }*/
+    mina = 0;
+    maxa = 255;
+    mina_no01 = 0;
+    maxa_no01 = 255;
+
+    /*if (maxa - mina < 8) {
+        dst->alpha0 = maxa;
+        dst->alpha1 = mina;
+
+        nvDebugCheck(computeAlphaError(src, dst) == 0);
+    }
+    else if (maxa_no01 - mina_no01 < 6) {
+        dst->alpha0 = mina_no01;
+        dst->alpha1 = maxa_no01;
+
+        nvDebugCheck(computeAlphaError(src, dst) == 0);
+    }
+    else*/
+    {
+        float besterror = computeAlphaError_RGBM(src, RGB, dst);
+        int besta0 = maxa;
+        int besta1 = mina;
+
+        // Expand search space a bit.
+        const int alphaExpand = 8;
+        mina = (mina <= alphaExpand) ? 0 : mina - alphaExpand;
+        maxa = (maxa >= 255 - alphaExpand) ? 255 : maxa + alphaExpand;
+
+        for (int a0 = mina + 9; a0 < maxa; a0++)
+        {
+            for (int a1 = mina; a1 < a0 - 8; a1++)
+            {
+                nvDebugCheck(a0 - a1 > 8);
+
+                dst->alpha0 = a0;
+                dst->alpha1 = a1;
+                float error = computeAlphaError_RGBM(src, RGB, dst, besterror);
+
+                if (error < besterror)
+                {
+                    besterror = error;
+                    besta0 = a0;
+                    besta1 = a1;
+                }
+            }
+        }
+
+        // Try using the 6 step encoding.
+        /*if (mina == 0 || maxa == 255)*/ {
+
+            // Expand search space a bit.
+            const int alphaExpand = 6;
+            mina_no01 = (mina_no01 <= alphaExpand) ? 0 : mina_no01 - alphaExpand;
+            maxa_no01 = (maxa_no01 >= 255 - alphaExpand) ? 255 : maxa_no01 + alphaExpand;
+
+            for (int a0 = mina_no01 + 9; a0 < maxa_no01; a0++)
+            {
+                for (int a1 = mina_no01; a1 < a0 - 8; a1++)
+                {
+                    nvDebugCheck(a0 - a1 > 8);
+
+                    dst->alpha0 = a1;
+                    dst->alpha1 = a0;
+                    float error = computeAlphaError_RGBM(src, RGB, dst, besterror);
+
+                    if (error < besterror)
+                    {
+                        besterror = error;
+                        besta0 = a1;
+                        besta1 = a0;
+                    }
+                }
+            }
+        }
+
+        dst->alpha0 = besta0;
+        dst->alpha1 = besta1;
+    }
+
+    computeAlphaIndices_RGBM(src, RGB, dst);
+}

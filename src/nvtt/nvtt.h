@@ -102,8 +102,13 @@ namespace nvtt
         Format_DXT1n,   // Not supported.
         Format_CTX1,    // Not supported.
 
-        Format_BC6,
-        Format_BC7,
+        Format_BC6,     // Not supported yet.
+        Format_BC7,     // Not supported yet.
+
+        Format_BC5_Luma,    // Two DXT alpha blocks encoding a single float.
+        Format_BC3_RGBM,    // 
+
+        Format_Count
     };
 
     // Pixel types. These basically indicate how the output should be interpreted, but do not have any influence over the input. They are only relevant in RGBA mode.
@@ -132,6 +137,7 @@ namespace nvtt
         Decoder_D3D10,
         Decoder_D3D9,
         Decoder_NV5x,
+        //Decoder_RSX, // To take advantage of DXT5 bug.
     };
 
 
@@ -160,8 +166,9 @@ namespace nvtt
 
         NVTT_API void setPitchAlignment(int pitchAlignment);
 
-        // @@ I wish this wasn't part of the compression options. Quantization is applied before compression. We don't have compressors with error diffusion.
-        NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127); // (Deprecated in NVTT 2.1)
+        // @@ I wish this wasn't part of the compression options. Quantization is applied before compression. We don't have compressors with error diffusion. 
+        // @@ These options are only taken into account when using the InputOptions API.
+        NVTT_API void setQuantization(bool colorDithering, bool alphaDithering, bool binaryAlpha, int alphaThreshold = 127);
 
         NVTT_API void setTargetDecoder(Decoder decoder);
 
@@ -205,6 +212,7 @@ namespace nvtt
         InputFormat_BGRA_8UB,   // Normalized [0, 1] 8 bit fixed point.
         InputFormat_RGBA_16F,   // 16 bit floating point.
         InputFormat_RGBA_32F,   // 32 bit floating point.
+        InputFormat_R_32F,      // Single channel 32 bit floating point.
     };
 
     // Mipmap downsampling filters.
@@ -426,6 +434,7 @@ namespace nvtt
 
 
     // A surface is one level of a 2D or 3D texture. (New in NVTT 2.1)
+    // @@ It would be nice to add support for texture borders for correct resizing of tiled textures and constrained DXT compression.
     struct Surface
     {
         NVTT_API Surface();
@@ -450,7 +459,7 @@ namespace nvtt
         NVTT_API bool isNormalMap() const;
         NVTT_API int countMipmaps() const;
         NVTT_API int countMipmaps(int min_size) const;
-        NVTT_API float alphaTestCoverage(float alphaRef = 0.5) const;
+        NVTT_API float alphaTestCoverage(float alphaRef = 0.5, int alpha_channel = 3) const;
         NVTT_API float average(int channel, int alpha_channel = -1, float gamma = 2.2f) const;
         NVTT_API const float * data() const;
         NVTT_API const float * channel(int i) const;
@@ -496,9 +505,9 @@ namespace nvtt
         NVTT_API void toGreyScale(float redScale, float greenScale, float blueScale, float alphaScale);
         NVTT_API void setBorder(float r, float g, float b, float a);
         NVTT_API void fill(float r, float g, float b, float a);
-        NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f);
-        NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.0f);
-        NVTT_API void fromRGBM(float range = 1.0f, float threshold = 0.0f);
+        NVTT_API void scaleAlphaToCoverage(float coverage, float alphaRef = 0.5f, int alpha_channel = 3);
+        NVTT_API void toRGBM(float range = 1.0f, float threshold = 0.25f);
+        NVTT_API void fromRGBM(float range = 1.0f, float threshold = 0.25f);
         NVTT_API void toLM(float range = 1.0f, float threshold = 0.0f);
         NVTT_API void toRGBE(int mantissaBits, int exponentBits);
         NVTT_API void fromRGBE(int mantissaBits, int exponentBits);
@@ -511,6 +520,7 @@ namespace nvtt
         NVTT_API void convolve(int channel, int kernelSize, float * kernelData);
         NVTT_API void toLogScale(int channel, float base);
         NVTT_API void fromLogScale(int channel, float base);
+        NVTT_API void setAtlasBorder(int w, int h, float r, float g, float b, float a);
 
         NVTT_API void toneMap(ToneMapper tm, float * parameters);
 
@@ -648,6 +658,7 @@ namespace nvtt
     NVTT_API float angularError(const Surface & reference, const Surface & img);
     NVTT_API Surface diff(const Surface & reference, const Surface & img, float scale);
 
+    NVTT_API float rmsToneMappedError(const Surface & reference, const Surface & img, float exposure);
 
 } // nvtt namespace
 

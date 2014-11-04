@@ -50,6 +50,7 @@ struct PseudoIndexWrapper {
 // Declare foreach keyword.
 #if !defined NV_NO_USE_KEYWORDS
 #   define foreach NV_FOREACH
+#   define foreach_index NV_FOREACH
 #endif
 
 

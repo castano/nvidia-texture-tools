@@ -73,17 +73,17 @@ namespace
 uint nv::strLen(const char * str)
 {
     nvDebugCheck(str != NULL);
-    return toU32(strlen(str));
+    return U32(strlen(str));
 }
 
-int nv::strCmp(const char * s1, const char * s2)
+int nv::strDiff(const char * s1, const char * s2)
 {
     nvDebugCheck(s1 != NULL);
     nvDebugCheck(s2 != NULL);
     return strcmp(s1, s2);
 }
 
-int nv::strCaseCmp(const char * s1, const char * s2)
+int nv::strCaseDiff(const char * s1, const char * s2)
 {
     nvDebugCheck(s1 != NULL);
     nvDebugCheck(s1 != NULL);
@@ -98,14 +98,14 @@ bool nv::strEqual(const char * s1, const char * s2)
 {
     if (s1 == s2) return true;
     if (s1 == NULL || s2 == NULL) return false;
-    return strCmp(s1, s2) == 0;
+    return strcmp(s1, s2) == 0;
 }
 
 bool nv::strCaseEqual(const char * s1, const char * s2)
 {
     if (s1 == s2) return true;
     if (s1 == NULL || s2 == NULL) return false;
-    return strCaseCmp(s1, s2) == 0;
+    return strCaseDiff(s1, s2) == 0;
 }
 
 bool nv::strBeginsWith(const char * str, const char * prefix)
@@ -122,7 +122,7 @@ bool nv::strEndsWith(const char * str, const char * suffix)
     return strncmp(str + ml - sl, suffix, sl) == 0;
 }
 
-
+// @@ Add asserts to detect overlap between dst and src?
 void nv::strCpy(char * dst, uint size, const char * src)
 {
     nvDebugCheck(dst != NULL);
@@ -142,8 +142,9 @@ void nv::strCpy(char * dst, uint size, const char * src, uint len)
 #if NV_CC_MSVC && _MSC_VER >= 1400
     strncpy_s(dst, size, src, len);
 #else
-    NV_UNUSED(size);
-    strncpy(dst, src, len);
+    int n = min(len+1, size);
+    strncpy(dst, src, n);
+    dst[n-1] = '\0';
 #endif
 }
 
@@ -220,6 +221,13 @@ match:
     }
 }
 
+bool nv::isNumber(const char * str) {
+    while(*str != '\0') {
+        if (!isDigit(*str)) return false;
+        str++;
+    }
+    return true;
+}
 
 
 /** Empty string. */
@@ -326,24 +334,19 @@ StringBuilder & StringBuilder::formatList( const char * fmt, va_list arg )
 /** Append a string. */
 StringBuilder & StringBuilder::append( const char * s )
 {
+	return append(s, U32(strlen( s )));
+}
+
+
+/** Append a string. */
+StringBuilder & StringBuilder::append(const char * s, uint len)
+{
     nvDebugCheck(s != NULL);
 
-    const uint slen = uint(strlen( s ));
-
-    if (m_str == NULL) {
-        m_size = slen + 1;
-        m_str = strAlloc(m_size);
-        memcpy(m_str, s, m_size);
-    }
-    else {
-        const uint len = uint(strlen( m_str ));
-        if (m_size < len + slen + 1) {
-            m_size = len + slen + 1;
-            m_str = strReAlloc(m_str, m_size);
-        }
-
-        memcpy(m_str + len, s, slen + 1);
-    }
+	uint offset = length();
+	const uint size = offset + len + 1;
+	reserve(size);
+	strCpy(m_str + offset, len + 1, s, len);
 
     return *this;
 }

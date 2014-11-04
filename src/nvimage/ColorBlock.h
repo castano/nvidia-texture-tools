@@ -12,6 +12,7 @@ namespace nv
     class Image;
     class FloatImage;
 
+
     /// Uncompressed 4x4 color block.
     struct ColorBlock
     {
@@ -89,6 +90,8 @@ namespace nv
         void allocate(uint w, uint h);
 
         void setColors(const float * data, uint img_w, uint img_h, uint img_x, uint img_y);
+        void setColors(const Vector3 colors[16], const float weights[16]);
+        void setColors(const Vector4 colors[16], const float weights[16]);
 
         void setAlphaWeights();
         void setUniformWeights();
@@ -108,6 +111,8 @@ namespace nv
         Vector4 color(uint i) const { nvDebugCheck(i < indexCount); return colors[indices[i]]; }
         Vector4 & color(uint i) { nvDebugCheck(i < indexCount); return colors[indices[i]]; }
 
+        float weight(uint i) const { nvDebugCheck(i < indexCount); return weights[indices[i]]; }
+
         bool isValidIndex(uint i) const { return i < indexCount && indices[i] >= 0; }
 
         uint colorCount;
@@ -116,9 +121,39 @@ namespace nv
 
         // Allocate color set dynamically and add support for sets larger than 4x4.
         Vector4 colors[16];
-        float weights[16];
+        float weights[16];  // @@ Add mask to indicate what color components are weighted?
         int indices[16];
     };
+
+
+    /// Uncompressed 4x4 alpha block.
+    struct AlphaBlock4x4
+    {
+        void init(uint8 value);
+        void init(const ColorBlock & src, uint channel);
+        void init(const ColorSet & src, uint channel);
+
+        void initMaxRGB(const ColorSet & src, float threshold);
+        void initWeights(const ColorSet & src);
+
+        uint8 alpha[4*4];
+        float weights[16];
+    };
+
+
+    struct FloatAlphaBlock4x4
+    {
+        float alphas[4 * 4];
+        float weights[4 * 4];
+    };
+
+    struct FloatColorBlock4x4
+    {
+        Vector4 colors[4 * 4];
+        float weights[4 * 4];
+    };
+
+
 
 } // nv namespace
 

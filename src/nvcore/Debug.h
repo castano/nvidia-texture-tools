@@ -34,7 +34,9 @@
 #   if NV_CC_MSVC
         // @@ Does this work in msvc-6 and earlier?
 #       define nvDebugBreak()       __debugbreak()
-        //#define nvDebugBreak()        __asm { int 3 }
+//#       define nvDebugBreak()        __asm { int 3 }
+#   elif NV_OS_ORBIS
+#       define nvDebugBreak()       __debugbreak()
 #   elif NV_CC_GNUC
 #       define nvDebugBreak()       __builtin_trap()
 #   else
@@ -158,7 +160,7 @@
 #endif
 
 
-NVCORE_API int nvAbort(const char *exp, const char *file, int line, const char * func = NULL, const char * msg = NULL, ...);
+NVCORE_API int nvAbort(const char *exp, const char *file, int line, const char * func = NULL, const char * msg = NULL, ...) __attribute__((format (printf, 5, 6)));
 NVCORE_API void NV_CDECL nvDebugPrint( const char *msg, ... ) __attribute__((format (printf, 1, 2)));
 
 namespace nv

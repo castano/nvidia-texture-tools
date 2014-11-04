@@ -7,6 +7,10 @@
 
 #include <float.h>
 
+#if !NV_CC_MSVC && !NV_OS_ORBIS
+#include <alloca.h>
+#endif
+
 using namespace nv;
 
 
@@ -20,8 +24,7 @@ static bool ludcmp(float **a, int n, int *indx, float *d)
 {
     const float TINY = 1.0e-20f;
 
-    Array<float> vv;    // vv stores the implicit scaling of each row.
-    vv.resize(n);
+    float * vv = (float*)alloca(sizeof(float) * n);    // vv stores the implicit scaling of each row.
 
     *d = 1.0; // No row interchanges yet.
     for (int i = 0; i < n; i++) { // Loop over rows to get the implicit scaling information.
@@ -149,6 +152,21 @@ bool nv::solveLU(const Matrix & A, const Vector4 & b, Vector4 * x)
     return true;
 }
 
+// @@ Not tested.
+Matrix nv::inverseLU(const Matrix & A)
+{
+    Vector4 Ai[4];
+
+    solveLU(A, Vector4(1, 0, 0, 0), &Ai[0]);
+    solveLU(A, Vector4(0, 1, 0, 0), &Ai[1]);
+    solveLU(A, Vector4(0, 0, 1, 0), &Ai[2]);
+    solveLU(A, Vector4(0, 0, 0, 1), &Ai[3]);
+
+    return Matrix(Ai[0], Ai[1], Ai[2], Ai[3]);
+}
+
+
+
 bool nv::solveLU(const Matrix3 & A, const Vector3 & b, Vector3 * x)
 {
     nvDebugCheck(x != NULL);
@@ -184,7 +202,7 @@ bool nv::solveCramer(const Matrix & A, const Vector4 & b, Vector4 * x)
 {
     nvDebugCheck(x != NULL);
 
-    *x = transform(inverse(A), b);
+    *x = transform(inverseCramer(A), b);
     
     return true; // @@ Return false if determinant(A) == 0 !
 }
@@ -198,12 +216,125 @@ bool nv::solveCramer(const Matrix3 & A, const Vector3 & b, Vector3 * x)
         return false;
     }
 
-    Matrix3 Ai = inverse(A);
+    Matrix3 Ai = inverseCramer(A);
 
     *x = transform(Ai, b);
     
     return true;
 }
+
+
+
+// Inverse using gaussian elimination. From Jon's code.
+Matrix nv::inverse(const Matrix & m) {
+
+    Matrix A = m;
+    Matrix B(identity);
+
+    int i, j, k;
+    float max, t, det, pivot;
+
+    det = 1.0;
+    for (i=0; i<4; i++) {               /* eliminate in column i, below diag */
+        max = -1.;
+        for (k=i; k<4; k++)             /* find pivot for column i */
+            if (fabs(A(k, i)) > max) {
+                max = fabs(A(k, i));
+                j = k;
+            }
+        if (max<=0.) return B;         /* if no nonzero pivot, PUNT */
+        if (j!=i) {                     /* swap rows i and j */
+            for (k=i; k<4; k++)
+                swap(A(i, k), A(j, k));
+            for (k=0; k<4; k++)
+                swap(B(i, k), B(j, k));
+            det = -det;
+        }
+        pivot = A(i, i);
+        det *= pivot;
+        for (k=i+1; k<4; k++)           /* only do elems to right of pivot */
+            A(i, k) /= pivot;
+        for (k=0; k<4; k++)
+            B(i, k) /= pivot;
+        /* we know that A(i, i) will be set to 1, so don't bother to do it */
+
+        for (j=i+1; j<4; j++) {         /* eliminate in rows below i */
+            t = A(j, i);                /* we're gonna zero this guy */
+            for (k=i+1; k<4; k++)       /* subtract scaled row i from row j */
+                A(j, k) -= A(i, k)*t;   /* (ignore k<=i, we know they're 0) */
+            for (k=0; k<4; k++)
+                B(j, k) -= B(i, k)*t;
+        }
+    }
+
+    /*---------- backward elimination ----------*/
+
+    for (i=4-1; i>0; i--) {             /* eliminate in column i, above diag */
+        for (j=0; j<i; j++) {           /* eliminate in rows above i */
+            t = A(j, i);                /* we're gonna zero this guy */
+            for (k=0; k<4; k++)         /* subtract scaled row i from row j */
+                B(j, k) -= B(i, k)*t;
+        }
+    }
+
+    return B;
+}
+
+
+Matrix3 nv::inverse(const Matrix3 & m) {
+
+    Matrix3 A = m;
+    Matrix3 B(identity);
+
+    int i, j, k;
+    float max, t, det, pivot;
+
+    det = 1.0;
+    for (i=0; i<3; i++) {               /* eliminate in column i, below diag */
+        max = -1.;
+        for (k=i; k<3; k++)             /* find pivot for column i */
+            if (fabs(A(k, i)) > max) {
+                max = fabs(A(k, i));
+                j = k;
+            }
+        if (max<=0.) return B;         /* if no nonzero pivot, PUNT */
+        if (j!=i) {                     /* swap rows i and j */
+            for (k=i; k<3; k++)
+                swap(A(i, k), A(j, k));
+            for (k=0; k<3; k++)
+                swap(B(i, k), B(j, k));
+            det = -det;
+        }
+        pivot = A(i, i);
+        det *= pivot;
+        for (k=i+1; k<3; k++)           /* only do elems to right of pivot */
+            A(i, k) /= pivot;
+        for (k=0; k<3; k++)
+            B(i, k) /= pivot;
+        /* we know that A(i, i) will be set to 1, so don't bother to do it */
+
+        for (j=i+1; j<3; j++) {         /* eliminate in rows below i */
+            t = A(j, i);                /* we're gonna zero this guy */
+            for (k=i+1; k<3; k++)       /* subtract scaled row i from row j */
+                A(j, k) -= A(i, k)*t;   /* (ignore k<=i, we know they're 0) */
+            for (k=0; k<3; k++)
+                B(j, k) -= B(i, k)*t;
+        }
+    }
+
+    /*---------- backward elimination ----------*/
+
+    for (i=3-1; i>0; i--) {             /* eliminate in column i, above diag */
+        for (j=0; j<i; j++) {           /* eliminate in rows above i */
+            t = A(j, i);                /* we're gonna zero this guy */
+            for (k=0; k<3; k++)         /* subtract scaled row i from row j */
+                B(j, k) -= B(i, k)*t;
+        }
+    }
+
+    return B;
+}
+
 
 
 

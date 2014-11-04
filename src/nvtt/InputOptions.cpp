@@ -202,18 +202,22 @@ bool InputOptions::setMipmapData(const void * data, int width, int height, int d
         return false;
     }
 
-    int imageSize = width * height * depth * 4;
+    int imageSize = width * height * depth;
     if (m.inputFormat == InputFormat_BGRA_8UB)
     {
-        imageSize *= sizeof(uint8);
+        imageSize *= 4 * sizeof(uint8);
     }
     else if (m.inputFormat == InputFormat_RGBA_16F)
     {
-        imageSize *= sizeof(uint16);
+        imageSize *= 4 * sizeof(uint16);
     }
     else if (m.inputFormat == InputFormat_RGBA_32F)
     {
-        imageSize *= sizeof(float);
+        imageSize *= 4 * sizeof(float);
+    }
+    else if (m.inputFormat == InputFormat_R_32F)
+    {
+        imageSize *= 1 * sizeof(float);
     }
     else
     {

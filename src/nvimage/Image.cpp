@@ -40,13 +40,52 @@ const Image & Image::operator=(const Image & img)
 }
 
 
-void Image::allocate(uint w, uint h, uint d)
+void Image::allocate(uint w, uint h, uint d/*= 1*/)
 {
     free();
     m_width = w;
     m_height = h;
 	m_depth = d;
     m_data = realloc<Color32>(m_data, w * h * d);
+}
+
+void Image::resize(uint w, uint h, uint d/*= 1*/) {
+
+    Image img;
+    img.allocate(w, h, d);
+
+    Color32 background(0,0,0,0);
+
+    // Copy image.
+    uint x, y, z;
+    for(z = 0; z < min(d, m_depth); z++) {
+        for(y = 0; y < min(h, m_height); y++) {
+            for(x = 0; x < min(w, m_width); x++) {
+                img.pixel(x, y, z) = pixel(x, y, z);
+            }
+            for(; x < w; x++) {
+                img.pixel(x, y, z) = background;
+            }
+        }
+        for(; y < h; y++) {
+            for(x = 0; x < w; x++) {
+                img.pixel(x, y, z) = background;
+            }
+        }
+    }
+    for(; z < d; z++) {
+        for(y = 0; y < h; y++) {
+            for(x = 0; x < w; x++) {
+                img.pixel(x, y, z) = background;
+            }
+        }
+    }
+
+    swap(m_width, img.m_width);
+    swap(m_height, img.m_height);
+	swap(m_depth, img.m_depth);
+    swap(m_format, img.m_format);
+    swap(m_data, img.m_data);
 }
 
 bool Image::load(const char * name)

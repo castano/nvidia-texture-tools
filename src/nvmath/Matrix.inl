@@ -195,7 +195,7 @@ namespace nv
     }
 
     // Inverse using Cramer's rule.
-    inline Matrix3 inverse(const Matrix3 & m)
+    inline Matrix3 inverseCramer(const Matrix3 & m)
     {
         const float det = m.determinant();
         if (equal(det, 0.0f, 0.0f)) {
@@ -477,6 +477,25 @@ namespace nv
         return m;
     }
 
+    // Get inverse frustum matrix.
+    inline Matrix frustumInverse(float xmin, float xmax, float ymin, float ymax, float zNear, float zFar)
+    {
+        Matrix m(0.0f);
+
+        float one_doubleznear = 1.0f / (2.0f * zNear);
+        float one_doubleznearzfar = 1.0f / (2.0f * zNear * zFar);
+
+        m(0,0) = (xmax - xmin) * one_doubleznear;
+        m(0,3) = (xmax + xmin) * one_doubleznear;
+        m(1,1) = (ymax - ymin) * one_doubleznear;
+        m(1,3) = (ymax + ymin) * one_doubleznear;
+        m(2,3) = -1;
+        m(3,2) = -(zFar - zNear) * one_doubleznearzfar;
+        m(3,3) = (zFar + zNear) * one_doubleznearzfar;
+
+        return m;
+    }
+
     // Get infinite frustum matrix.
     inline Matrix frustum(float xmin, float xmax, float ymin, float ymax, float zNear)
     {
@@ -508,6 +527,18 @@ namespace nv
         float ymin = -ymax;
 
         return frustum(xmin, xmax, ymin, ymax, zNear, zFar);	
+    }
+
+    // Get inverse perspective matrix.
+    inline Matrix perspectiveInverse(float fovy, float aspect, float zNear, float zFar)
+    {
+        float xmax = zNear * tan(fovy / 2);
+        float xmin = -xmax;
+
+        float ymax = xmax / aspect;
+        float ymin = -ymax;
+
+        return frustumInverse(xmin, xmax, ymin, ymax, zNear, zFar);	
     }
 
     // Get infinite perspective matrix.
@@ -544,7 +575,7 @@ namespace nv
     }
 
     // Inverse using Cramer's rule.
-    inline Matrix inverse(Matrix::Arg m)
+    inline Matrix inverseCramer(Matrix::Arg m)
     {
         Matrix r;
         r.data( 0) = m.data(6)*m.data(11)*m.data(13) - m.data(7)*m.data(10)*m.data(13) + m.data(7)*m.data(9)*m.data(14) - m.data(5)*m.data(11)*m.data(14) - m.data(6)*m.data(9)*m.data(15) + m.data(5)*m.data(10)*m.data(15);
@@ -621,6 +652,35 @@ namespace nv
         m.apply(b);
         return m;
     }
+
+    inline void Matrix::operator+=(const Matrix & m)
+    {
+        for(int i = 0; i < 16; i++) {
+            m_data[i] += m.m_data[i];
+        }
+    }
+
+    inline void Matrix::operator-=(const Matrix & m)
+    {
+        for(int i = 0; i < 16; i++) {
+            m_data[i] -= m.m_data[i];
+        }
+    }
+
+    inline Matrix operator+(const Matrix & a, const Matrix & b)
+    {
+        Matrix m = a;
+        m += b;
+        return m;
+    }
+
+    inline Matrix operator-(const Matrix & a, const Matrix & b)
+    {
+        Matrix m = a;
+        m -= b;
+        return m;
+    }
+
 
 } // nv namespace
 

@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and limitations 
 #ifndef _ZOH_TILE_H
 #define _ZOH_TILE_H
 
-#include "utils.h"
+#include "zoh_utils.h"
 #include "nvmath/Vector.h"
 #include <math.h>
 

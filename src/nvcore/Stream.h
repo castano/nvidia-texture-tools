@@ -78,7 +78,7 @@ namespace nv
 
         // friends	
         friend Stream & operator<<( Stream & s, bool & c ) {
-#if NV_OS_DARWIN
+#if NV_OS_DARWIN && !NV_CC_CPP11
             nvStaticCheck(sizeof(bool) == 4);
             uint8 b = c ? 1 : 0;
             s.serialize( &b, 1 );

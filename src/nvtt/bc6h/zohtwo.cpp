@@ -40,7 +40,7 @@ See the License for the specific language governing permissions and limitations 
 #include "bits.h"
 #include "tile.h"
 #include "zoh.h"
-#include "utils.h"
+#include "zoh_utils.h"
 
 #include "nvmath/Fitting.h"
 #include "nvmath/Vector.inl"
@@ -747,7 +747,8 @@ float ZOH::refinetwo(const Tile &tile, int shapeindex_best, const FltEndpts endp
             }
         }
     }
-    throw "No candidate found, should never happen (refinetwo.)";
+    nvAssert(false); //throw "No candidate found, should never happen (refinetwo.)";
+	return FLT_MAX;
 }
 
 static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS_TWO], Vector3 palette[NREGIONS_TWO][NINDICES])

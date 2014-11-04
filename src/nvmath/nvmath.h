@@ -14,6 +14,13 @@
 #include <float.h>  // finite, isnan
 #endif
 
+#if NV_CPU_X86 || NV_CPU_X86_64
+    //#include <intrin.h>
+    #include <xmmintrin.h>
+#endif
+
+
+
 // Function linkage
 #if NVMATH_SHARED
 #ifdef NVMATH_EXPORTS
@@ -27,6 +34,37 @@
 #define NVMATH_API
 #define NVMATH_CLASS
 #endif // NVMATH_SHARED
+
+// Set some reasonable defaults.
+#ifndef NV_USE_ALTIVEC
+#   define NV_USE_ALTIVEC NV_CPU_PPC
+//#   define NV_USE_ALTIVEC defined(__VEC__)
+#endif
+
+#ifndef NV_USE_SSE
+#   if NV_CPU_X86_64
+        // x64 always supports at least SSE2
+#       define NV_USE_SSE 2
+#   elif NV_CC_MSVC && defined(_M_IX86_FP)
+        // Also on x86 with the /arch:SSE flag in MSVC.
+#       define NV_USE_SSE _M_IX86_FP       // 1=SSE, 2=SS2
+#   elif defined(__SSE__)
+#       define NV_USE_SSE 1
+#   elif defined(__SSE2__)
+#       define NV_USE_SSE 2
+#   else
+        // Otherwise we assume no SSE.
+#       define NV_USE_SSE 0
+#   endif
+#endif
+
+
+// Internally set NV_USE_SIMD when either altivec or sse is available.
+#if NV_USE_ALTIVEC && NV_USE_SSE
+#	error "Cannot enable both altivec and sse!"
+#endif
+
+
 
 #ifndef PI
 #define PI                  float(3.1415926535897932384626433833)
@@ -179,26 +217,6 @@ namespace nv
     inline float cube(float f) { return f * f * f; }
     inline int cube(int i) { return i * i * i; }
 
-    // @@ Float to int conversions to be optimized at some point. See:
-    // http://cbloomrants.blogspot.com/2009/01/01-17-09-float-to-int.html
-    // http://www.stereopsis.com/sree/fpu2006.html
-    // http://assemblyrequired.crashworks.org/2009/01/12/why-you-should-never-cast-floats-to-ints/
-    // http://chrishecker.com/Miscellaneous_Technical_Articles#Floating_Point
-    inline int iround(float f)
-    {
-        return int(floorf(f + 0.5f));
-    }
-
-    inline int ifloor(float f)
-    {
-        return int(floorf(f));
-    }
-
-    inline int iceil(float f)
-    {
-        return int(ceilf(f));
-    }
-
     inline float frac(float f)
     {
         return f - floor(f);
@@ -240,21 +258,6 @@ namespace nv
         if (a > 0.0f) return 1;
         if (a < 0.0f) return -1;
         return 0;
-    }
-
-    // I'm always confused about which quantizer to use. I think we should choose a quantizer based on how the values are expanded later and this is generally using the 'exact endpoints' rule.
-
-    // Quantize a float in the [0,1] range, using exact end points or uniform bins.
-    inline float quantizeFloat(float x, uint bits, bool exactEndPoints = true) {
-        nvDebugCheck(bits <= 16);
-
-        float range = float(1 << bits);
-        if (exactEndPoints) {
-            return floorf(x * (range-1) + 0.5f) / (range-1);
-        }
-        else {
-            return (floorf(x * range) + 0.5f) / range;
-        }
     }
 
     union Float754 {

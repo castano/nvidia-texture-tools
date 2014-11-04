@@ -580,56 +580,56 @@ namespace nv {
 void nv::half_init_tables()
 {
     // Init mantissa table.
-	mantissa_table[0] = 0;
+    mantissa_table[0] = 0;
 
     // denormals
-	for (int i = 1; i < 1024; i++) {
-		uint m = i << 13;
-		uint e = 0;
+    for (int i = 1; i < 1024; i++) {
+        uint m = i << 13;
+        uint e = 0;
 
-		while ((m & 0x00800000) == 0) {
-			e -= 0x00800000;
-			m <<= 1;
-		}
-		m &= ~0x00800000;
-		e += 0x38800000;
-		mantissa_table[i] = m | e;
-	}
+        while ((m & 0x00800000) == 0) {
+            e -= 0x00800000;
+            m <<= 1;
+        }
+        m &= ~0x00800000;
+        e += 0x38800000;
+        mantissa_table[i] = m | e;
+    }
 
     // normals
     for (int i = 1024; i < 2048; i++) {
-		mantissa_table[i] = (i - 1024) << 13;
+        mantissa_table[i] = (i - 1024) << 13;
     }
 
 
     // Init exponent table.
-	exponent_table[0] = 0;
+    exponent_table[0] = 0;
 
     for (int i = 1; i < 31; i++) {
-		exponent_table[i] = 0x38000000 + (i << 23);
+        exponent_table[i] = 0x38000000 + (i << 23);
     }
 
-	exponent_table[31] = 0x7f800000;
-	exponent_table[32] = 0x80000000;
+    exponent_table[31] = 0x7f800000;
+    exponent_table[32] = 0x80000000;
 
     for (int i = 33; i < 63; i++) {
-		exponent_table[i] = 0xb8000000 + ((i - 32) << 23);
+        exponent_table[i] = 0xb8000000 + ((i - 32) << 23);
     }
 
-	exponent_table[63] = 0xff800000;
+    exponent_table[63] = 0xff800000;
 
 
     // Init offset table.
-	offset_table[0] = 0;
+    offset_table[0] = 0;
 
     for (int i = 1; i < 32; i++) {
-		offset_table[i] = 1024;
+        offset_table[i] = 1024;
     }
 
-	offset_table[32] = 0;
+    offset_table[32] = 0;
 
     for (int i = 33; i < 64; i++) {
-		offset_table[i] = 1024;
+        offset_table[i] = 1024;
     }
 }
 
@@ -660,27 +660,27 @@ uint32 nv::fast_half_to_float(uint16 v)
 // Mike Acton's code should be fairly easy to vectorize and that would handle all cases too, the table method might still be faster, though.
 
 
-static __declspec(align(16)) unsigned half_sign[4]	  = {0x00008000, 0x00008000, 0x00008000, 0x00008000};
-static __declspec(align(16)) unsigned half_exponent[4]	  = {0x00007C00, 0x00007C00, 0x00007C00, 0x00007C00};
-static __declspec(align(16)) unsigned half_mantissa[4]	  = {0x000003FF, 0x000003FF, 0x000003FF, 0x000003FF};
+static __declspec(align(16)) unsigned half_sign[4]    = {0x00008000, 0x00008000, 0x00008000, 0x00008000};
+static __declspec(align(16)) unsigned half_exponent[4]    = {0x00007C00, 0x00007C00, 0x00007C00, 0x00007C00};
+static __declspec(align(16)) unsigned half_mantissa[4]    = {0x000003FF, 0x000003FF, 0x000003FF, 0x000003FF};
 static __declspec(align(16)) unsigned half_bias_offset[4] = {0x0001C000, 0x0001C000, 0x0001C000, 0x0001C000};
 
 __asm
 {
-	movaps	xmm1, xmm0  // Input in xmm0
-	movaps	xmm2, xmm0
+    movaps  xmm1, xmm0  // Input in xmm0
+    movaps  xmm2, xmm0
 
-	andps	xmm0, half_sign
-	andps	xmm1, half_exponent
-	andps	xmm2, half_mantissa
-	paddd	xmm1, half_bias_offset
+    andps   xmm0, half_sign
+    andps   xmm1, half_exponent
+    andps   xmm2, half_mantissa
+    paddd   xmm1, half_bias_offset
 
-	pslld	xmm0, 16
-	pslld	xmm1, 13
-	pslld	xmm2, 13
+    pslld   xmm0, 16
+    pslld   xmm1, 13
+    pslld   xmm2, 13
 
-	orps	xmm1, xmm2
-	orps	xmm0, xmm1  // Result in xmm0
+    orps    xmm1, xmm2
+    orps    xmm0, xmm1  // Result in xmm0
 }
 
 

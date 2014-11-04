@@ -60,8 +60,7 @@ private:
 		return bit != 0;
 	}
 	void writeone(int bit) {
-		if (readonly)
-			throw "Writing a read-only bit stream";
+		nvAssert (!readonly); // "Writing a read-only bit stream"
 		nvAssert (bptr < maxbits);
 		if (bptr >= maxbits) return;
 		if (bit&1)
