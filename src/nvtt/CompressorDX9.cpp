@@ -113,9 +113,40 @@ void FastCompressorDXT5n::compressBlock(ColorBlock & rgba, nvtt::AlphaMode alpha
 }
 
 
+namespace nv {
+    float compress_dxt1(const Vector3 input_colors[16], const float input_weights[16], const Vector3 & color_weights, BlockDXT1 * output);
+}
+
 #if 1
 void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
+#if 1
+    // @@ This setup is the same for all compressors.
+    Vector3 input_colors[16];
+    float input_weights[16];
+
+    uint x, y;
+    for (y = 0; y < set.h; y++) {
+        for (x = 0; x < set.w; x++) {
+            input_colors[4*y+x] = set.color(x, y).xyz();
+            input_weights[4*y+x] = 1.0f;
+            if (alphaMode == nvtt::AlphaMode_Transparency) input_weights[4*y+x] = set.color(x, y).z;
+        }
+        for (; x < 4; x++) {
+            input_colors[4*y+x] = Vector3(0);
+            input_weights[4*y+x] = 0.0f;
+        }
+    }
+    for (; y < 4; y++) {
+        for (x = 0; x < 4; x++) {
+            input_colors[4*y+x] = Vector3(0);
+            input_weights[4*y+x] = 0.0f;
+        }
+    }
+
+    compress_dxt1(input_colors, input_weights, compressionOptions.colorWeight.xyz(), (BlockDXT1 *)output);
+
+#else
     set.setUniformWeights();
     set.createMinimalSet(/*ignoreTransparent*/false);
 
@@ -145,8 +176,9 @@ void CompressorDXT1::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, co
             QuickCompress::outputBlock4(set, start, end, block);        
         }
     }
+#endif
 }
-#elif 1
+#elif 0
 
 
 extern void compress_dxt1_bounding_box_exhaustive(const ColorBlock & input, BlockDXT1 * output);

@@ -31,8 +31,8 @@
 #include "nvmath/Vector.h"
 
 // Use SIMD version if altivec or SSE are available.
-//#define NVTT_USE_SIMD (NV_USE_ALTIVEC || NV_USE_SSE)
-#define NVTT_USE_SIMD 0
+#define NVTT_USE_SIMD (NV_USE_ALTIVEC || NV_USE_SSE)
+//#define NVTT_USE_SIMD 0
 
 namespace nv {
 

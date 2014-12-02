@@ -411,19 +411,19 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 #else
 
 inline Vector3 round565(const Vector3 & v) {
-	uint r = ftoi_floor(v.x * 31.0f);
+	uint r = ftoi_trunc(v.x * 31.0f);
     float r0 = float(((r+0) << 3) | ((r+0) >> 2));
     float r1 = float(((r+1) << 3) | ((r+1) >> 2));
     if (fabs(v.x - r1) < fabs(v.x - r0)) r = min(r+1, 31U);
 	r = (r << 3) | (r >> 2);
 
-	uint g = ftoi_floor(v.y * 63.0f);
+	uint g = ftoi_trunc(v.y * 63.0f);
     float g0 = float(((g+0) << 2) | ((g+0) >> 4));
     float g1 = float(((g+1) << 2) | ((g+1) >> 4));
     if (fabs(v.y - g1) < fabs(v.y - g0)) g = min(g+1, 63U);
     g = (g << 2) | (g >> 4);
 
-    uint b = ftoi_floor(v.z * 31.0f);
+    uint b = ftoi_trunc(v.z * 31.0f);
     float b0 = float(((b+0) << 3) | ((b+0) >> 2));
     float b1 = float(((b+1) << 3) | ((b+1) >> 2));
     if (fabs(v.z - b1) < fabs(v.z - b0)) b = min(b+1, 31U);
@@ -474,8 +474,10 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
             // clamp to the grid
             a = clamp(a, 0, 1);
             b = clamp(b, 0, 1);
-            //a = floor(grid * a + 0.5f) * gridrcp;
-            //b = floor(grid * b + 0.5f) * gridrcp;
+#if 1
+            a = floor(grid * a + 0.5f) * gridrcp;
+            b = floor(grid * b + 0.5f) * gridrcp;
+#else
 
             //int ar = ftoi_round(31 * a.x); ar = (ar << 3) | (ar >> 2); a.x = float(ar) / 255.0f;
             //int ag = ftoi_round(63 * a.y); ar = (ag << 2) | (ag >> 4); a.y = float(ag) / 255.0f;
@@ -496,7 +498,7 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
 
             a = round565(a);
             b = round565(b);
-
+#endif
 
             // compute the error
             Vector3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
@@ -582,9 +584,10 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
                 // clamp to the grid
                 a = clamp(a, 0, 1);
                 b = clamp(b, 0, 1);
-                //a = floor(a * grid + 0.5f) * gridrcp;
-                //b = floor(b * grid + 0.5f) * gridrcp;
-
+#if 0
+                a = floor(a * grid + 0.5f) * gridrcp;
+                b = floor(b * grid + 0.5f) * gridrcp;
+#else
                 //int ar = ftoi_round(31 * a.x); ar = (ar << 3) | (ar >> 2); a.x = float(ar) / 255.0f;
                 //int ag = ftoi_round(63 * a.y); ar = (ag << 2) | (ag >> 4); a.y = float(ag) / 255.0f;
                 //int ab = ftoi_round(31 * a.z); ar = (ab << 3) | (ab >> 2); a.z = float(ab) / 255.0f;
@@ -606,6 +609,8 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
 
                 a = round565(a);
                 b = round565(b);
+#endif
+                // @@ It would be much more accurate to evaluate the error exactly. 
 
                 // compute the error
                 Vector3 e1 = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
