@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and limitations 
 
 // Thanks to Jacob Munkberg (jacob@cs.lth.se) for the shortcut of using SVD to do the equivalent of principal components analysis
 
-// x1000 777.1x4 64p 2bi (30b)
+// x1000000 7777.1x2 4bi
 
 #include "bits.h"
 #include "tile.h"
@@ -26,25 +26,27 @@ See the License for the specific language governing permissions and limitations 
 #include <cstring>
 #include <float.h>
 
-#include "shapes_two.h"
-
 using namespace nv;
 using namespace AVPCL;
 
 #define	NLSBMODES	4		// number of different lsb modes per region. since we have two .1 per region, that can have 4 values
 
-#define NINDICES	4
-#define	INDEXBITS	2
+#define NINDICES	16
+#define	INDEXBITS	4
 #define	HIGH_INDEXBIT	(1<<(INDEXBITS-1))
 #define	DENOM		(NINDICES-1)
 #define	BIAS		(DENOM/2)
 
-// WORK: determine optimal traversal pattern to search for best shape -- what does the error curve look like?
-// i.e. can we search shapes in a particular order so we can see the global error minima easily and
-// stop without having to touch all shapes?
+#define	NSHAPES	1
 
-#define	POS_TO_X(pos)	((pos)&3)
-#define	POS_TO_Y(pos)	(((pos)>>2)&3)
+static int shapes[NSHAPES] =
+{
+	0x0000,
+};
+
+#define	REGION(x,y,shapeindex)	((shapes[shapeindex]&(1<<(15-(x)-4*(y))))!=0)
+
+#define	NREGIONS	1
 
 #define	NBITSIZES	(NREGIONS*2)
 #define	ABITINDEX(region)	(2*(region)+0)
@@ -57,26 +59,24 @@ struct ChanBits
 
 struct Pattern
 {
-	ChanBits chan[NCHANNELS_RGB];//  bit patterns used per channel
-	int transformed;		// if 0, deltas are unsigned and no transform; otherwise, signed and transformed
+	ChanBits chan[NCHANNELS_RGBA];//  bit patterns used per channel
 	int mode;				// associated mode value
 	int modebits;			// number of mode bits
-	char *encoding;			// verilog description of encoding for this mode
+	const char *encoding;			// verilog description of encoding for this mode
 };
 
 #define	NPATTERNS 1
-#define	NREGIONS  2
 
 static Pattern patterns[NPATTERNS] =
 {
-	// red		green		blue		xfm	mode  mb
-	7,7,7,7,	7,7,7,7,	7,7,7,7,	0,	0x8, 4, "",
+	// red	green	blue	alpha	mode  mb verilog
+	7,7,	7,7,	7,7,	7,7,	0x40, 7, "",
 };
 
 struct RegionPrec
 {
-	int	endpt_a_prec[NCHANNELS_RGB];
-	int endpt_b_prec[NCHANNELS_RGB];
+	int	endpt_a_prec[NCHANNELS_RGBA];
+	int endpt_b_prec[NCHANNELS_RGBA];
 };
 
 struct PatternPrec
@@ -84,12 +84,11 @@ struct PatternPrec
 	RegionPrec region_precs[NREGIONS];
 };
 
-
 // this is the precision for each channel and region
 // NOTE: this MUST match the corresponding data in "patterns" above -- WARNING: there is NO nvAssert to check this!
 static PatternPrec pattern_precs[NPATTERNS] =
 {
-	7,7,7, 7,7,7, 7,7,7, 7,7,7,
+	7,7,7,7,	7,7,7,7,
 };
 
 // return # of bits needed to store n. handle signed or unsigned cases properly
@@ -111,93 +110,116 @@ static int nbits(int n, bool issigned)
 	}
 }
 
-static void transform_forward(IntEndptsRGB_2 ep[NREGIONS])
-{
-	nvUnreachable();
-}
+/*
+we're using this table to assign lsbs
+abgr	>=2	correct
+0000	0	0
+0001	0	0
+0010	0	0
+0011	1	x1
+0100	0	0
+0101	1	x1
+0110	1	x1
+0111	1	1
+1000	0	0
+1001	1	x0
+1010	1	x0
+1011	1	1
+1100	1	x0
+1101	1	1
+1110	1	1
+1111	1	1
 
-static void transform_inverse(IntEndptsRGB_2 ep[NREGIONS])
-{
-	nvUnreachable();
-}
+we need 8 0's and 8 1's. the x's can be either 0 or 1 as long as you get 8/8.
+I choose to assign the lsbs so that the rgb channels are as good as possible.
+*/
 
-// endpoints are 888,888; reduce to 777,777 and put the lsb bit majority in compr_bits
-static void compress_one(const IntEndptsRGB& endpts, IntEndptsRGB_2& compr_endpts)
+// 8888 ->7777.1, use the "correct" column above to assign the lsb
+static void compress_one(const IntEndptsRGBA& endpts, IntEndptsRGBA_2& compr_endpts)
 {
 	int onescnt;
 
 	onescnt = 0;
-	for (int j=0; j<NCHANNELS_RGB; ++j)
+	for (int j=0; j<NCHANNELS_RGBA; ++j)
 	{
-		onescnt += endpts.A[j] & 1;
+		// ignore the alpha channel in the count
+		onescnt += (j==CHANNEL_A) ? 0 : (endpts.A[j] & 1);
 		compr_endpts.A[j] = endpts.A[j] >> 1;
 		nvAssert (compr_endpts.A[j] < 128);
 	}
 	compr_endpts.a_lsb = onescnt >= 2;
 
 	onescnt = 0;
-	for (int j=0; j<NCHANNELS_RGB; ++j)
+	for (int j=0; j<NCHANNELS_RGBA; ++j)
 	{
-		onescnt += endpts.B[j] & 1;
+		onescnt += (j==CHANNEL_A) ? 0 : (endpts.B[j] & 1);
 		compr_endpts.B[j] = endpts.B[j] >> 1;
 		nvAssert (compr_endpts.B[j] < 128);
 	}
 	compr_endpts.b_lsb = onescnt >= 2;
 }
 
-static void uncompress_one(const IntEndptsRGB_2& compr_endpts, IntEndptsRGB& endpts)
+static void uncompress_one(const IntEndptsRGBA_2& compr_endpts, IntEndptsRGBA& endpts)
 {
-	for (int j=0; j<NCHANNELS_RGB; ++j)
+	for (int j=0; j<NCHANNELS_RGBA; ++j)
 	{
 		endpts.A[j] = (compr_endpts.A[j] << 1) | compr_endpts.a_lsb;
 		endpts.B[j] = (compr_endpts.B[j] << 1) | compr_endpts.b_lsb;
 	}
 }
 
-static void uncompress_endpoints(const IntEndptsRGB_2 compr_endpts[NREGIONS], IntEndptsRGB endpts[NREGIONS])
+static void uncompress_endpoints(const IntEndptsRGBA_2 compr_endpts[NREGIONS], IntEndptsRGBA endpts[NREGIONS])
 {
 	for (int i=0; i<NREGIONS; ++i)
 		uncompress_one(compr_endpts[i], endpts[i]);
 }
 
-static void compress_endpoints(const IntEndptsRGB endpts[NREGIONS], IntEndptsRGB_2 compr_endpts[NREGIONS])
+static void compress_endpoints(const IntEndptsRGBA endpts[NREGIONS], IntEndptsRGBA_2 compr_endpts[NREGIONS])
 {
 	for (int i=0; i<NREGIONS; ++i)
 		compress_one(endpts[i], compr_endpts[i]);
 }
 
 
-static void quantize_endpts(const FltEndpts endpts[NREGIONS], const PatternPrec &pattern_prec, IntEndptsRGB_2 q_endpts[NREGIONS])
+
+static void quantize_endpts(const FltEndpts endpts[NREGIONS], const PatternPrec &pattern_prec, IntEndptsRGBA_2 q_endpts[NREGIONS])
 {
-	IntEndptsRGB full_endpts[NREGIONS];
+	IntEndptsRGBA full_endpts[NREGIONS];
 
 	for (int region = 0; region < NREGIONS; ++region)
 	{
 		full_endpts[region].A[0] = Utils::quantize(endpts[region].A.x, pattern_prec.region_precs[region].endpt_a_prec[0]+1);	// +1 since we are in uncompressed space
 		full_endpts[region].A[1] = Utils::quantize(endpts[region].A.y, pattern_prec.region_precs[region].endpt_a_prec[1]+1);
 		full_endpts[region].A[2] = Utils::quantize(endpts[region].A.z, pattern_prec.region_precs[region].endpt_a_prec[2]+1);
+		full_endpts[region].A[3] = Utils::quantize(endpts[region].A.w, pattern_prec.region_precs[region].endpt_a_prec[3]+1);
+
 		full_endpts[region].B[0] = Utils::quantize(endpts[region].B.x, pattern_prec.region_precs[region].endpt_b_prec[0]+1);
 		full_endpts[region].B[1] = Utils::quantize(endpts[region].B.y, pattern_prec.region_precs[region].endpt_b_prec[1]+1);
 		full_endpts[region].B[2] = Utils::quantize(endpts[region].B.z, pattern_prec.region_precs[region].endpt_b_prec[2]+1);
+		full_endpts[region].B[3] = Utils::quantize(endpts[region].B.w, pattern_prec.region_precs[region].endpt_b_prec[3]+1);
+
 		compress_one(full_endpts[region], q_endpts[region]);
 	}
 }
 
-// swap endpoints as needed to ensure that the indices at index_positions have a 0 high-order bit
-static void swap_indices(IntEndptsRGB_2 endpts[NREGIONS], int indices[Tile::TILE_H][Tile::TILE_W], int shapeindex)
+// swap endpoints as needed to ensure that the indices at index_one and index_two have a 0 high-order bit
+// index_two is 0 at x=0 y=0 and 15 at x=3 y=3 so y = (index >> 2) & 3 and x = index & 3
+static void swap_indices(IntEndptsRGBA_2 endpts[NREGIONS], int indices[Tile::TILE_H][Tile::TILE_W], int shapeindex)
 {
+	int index_positions[NREGIONS];
+
+	index_positions[0] = 0;			// since WLOG we have the high bit of the shapes at 0
+
 	for (int region = 0; region < NREGIONS; ++region)
 	{
-		int position = SHAPEINDEX_TO_COMPRESSED_INDICES(shapeindex,region);
-
-		int x = POS_TO_X(position);
-		int y = POS_TO_Y(position);
+		int x = index_positions[region] & 3;
+		int y = (index_positions[region] >> 2) & 3;
 		nvAssert(REGION(x,y,shapeindex) == region);		// double check the table
 		if (indices[y][x] & HIGH_INDEXBIT)
 		{
 			// high bit is set, swap the endpts and indices for this region
 			int t;
-			for (int i=0; i<NCHANNELS_RGB; ++i) 
+			for (int i=0; i<NCHANNELS_RGBA; ++i) 
 			{
 				t = endpts[region].A[i]; endpts[region].A[i] = endpts[region].B[i]; endpts[region].B[i] = t;
 			}
@@ -211,17 +233,16 @@ static void swap_indices(IntEndptsRGB_2 endpts[NREGIONS], int indices[Tile::TILE
 	}
 }
 
-static bool endpts_fit(IntEndptsRGB_2 endpts[NREGIONS], const Pattern &p)
+static bool endpts_fit(IntEndptsRGBA_2 endpts[NREGIONS], const Pattern &p)
 {
 	return true;
 }
 
-static void write_header(const IntEndptsRGB_2 endpts[NREGIONS], int shapeindex, const Pattern &p, Bits &out)
+static void write_header(const IntEndptsRGBA_2 endpts[NREGIONS], int shapeindex, const Pattern &p, Bits &out)
 {
 	out.write(p.mode, p.modebits);
-	out.write(shapeindex, SHAPEBITS);
 
-	for (int j=0; j<NCHANNELS_RGB; ++j)
+	for (int j=0; j<NCHANNELS_RGBA; ++j)
 		for (int i=0; i<NREGIONS; ++i)
 		{
 			out.write(endpts[i].A[j], p.chan[j].nbitsizes[ABITINDEX(i)]);
@@ -234,21 +255,23 @@ static void write_header(const IntEndptsRGB_2 endpts[NREGIONS], int shapeindex, 
 		out.write(endpts[i].b_lsb, 1);
 	}
 
-	nvAssert (out.getptr() == 98);
+	nvAssert (out.getptr() == 65);
 }
 
-static void read_header(Bits &in, IntEndptsRGB_2 endpts[NREGIONS], int &shapeindex, Pattern &p, int &pat_index)
+static void read_header(Bits &in, IntEndptsRGBA_2 endpts[NREGIONS], int &shapeindex, Pattern &p, int &pat_index)
 {
 	int mode = AVPCL::getmode(in);
 
 	pat_index = 0;
+
 	nvAssert (pat_index >= 0 && pat_index < NPATTERNS);
 	nvAssert (in.getptr() == patterns[pat_index].modebits);
 
-	shapeindex = in.read(SHAPEBITS);
 	p = patterns[pat_index];
 
-	for (int j=0; j<NCHANNELS_RGB; ++j)
+	shapeindex = 0;		// we don't have any
+
+	for (int j=0; j<NCHANNELS_RGBA; ++j)
 		for (int i=0; i<NREGIONS; ++i)
 		{
 			endpts[i].A[j] = in.read(p.chan[j].nbitsizes[ABITINDEX(i)]);
@@ -261,52 +284,37 @@ static void read_header(Bits &in, IntEndptsRGB_2 endpts[NREGIONS], int &shapeind
 		endpts[i].b_lsb  = in.read(1);
 	}
 
-	nvAssert (in.getptr() == 98);
+	nvAssert (in.getptr() == 65);
 }
 
 static void write_indices(const int indices[Tile::TILE_H][Tile::TILE_W], int shapeindex, Bits &out)
 {
-	int positions[NREGIONS];
+	nvAssert ((indices[0][0] & HIGH_INDEXBIT) == 0);
 
-	for (int r = 0; r < NREGIONS; ++r)
-		positions[r] = SHAPEINDEX_TO_COMPRESSED_INDICES(shapeindex,r);
-
-	for (int pos = 0; pos < Tile::TILE_TOTAL; ++pos)
+	// the index we shorten is always index 0
+	for (int i = 0; i < Tile::TILE_TOTAL; ++i)
 	{
-		int x = POS_TO_X(pos);
-		int y = POS_TO_Y(pos);
-
-		bool match = false;
-
-		for (int r = 0; r < NREGIONS; ++r)
-			if (positions[r] == pos) { match = true; break; }
-
-		out.write(indices[y][x], INDEXBITS - (match ? 1 : 0));
+		if (i==0)
+			out.write(indices[i>>2][i&3], INDEXBITS-1);	// write i..[2:0]
+		else
+			out.write(indices[i>>2][i&3], INDEXBITS);	// write i..[3:0]
 	}
+
 }
 
 static void read_indices(Bits &in, int shapeindex, int indices[Tile::TILE_H][Tile::TILE_W])
 {
-	int positions[NREGIONS];
-
-	for (int r = 0; r < NREGIONS; ++r)
-		positions[r] = SHAPEINDEX_TO_COMPRESSED_INDICES(shapeindex,r);
-
-	for (int pos = 0; pos < Tile::TILE_TOTAL; ++pos)
+	// the index we shorten is always index 0
+	for (int i = 0; i < Tile::TILE_TOTAL; ++i)
 	{
-		int x = POS_TO_X(pos);
-		int y = POS_TO_Y(pos);
-
-		bool match = false;
-
-		for (int r = 0; r < NREGIONS; ++r)
-			if (positions[r] == pos) { match = true; break; }
-
-		indices[y][x]= in.read(INDEXBITS - (match ? 1 : 0));
+		if (i==0)
+			indices[i>>2][i&3] = in.read(INDEXBITS-1);	// read i..[1:0]
+		else
+			indices[i>>2][i&3] = in.read(INDEXBITS);	// read i..[2:0]
 	}
 }
 
-static void emit_block(const IntEndptsRGB_2 endpts[NREGIONS], int shapeindex, const Pattern &p, const int indices[Tile::TILE_H][Tile::TILE_W], char *block)
+static void emit_block(const IntEndptsRGBA_2 endpts[NREGIONS], int shapeindex, const Pattern &p, const int indices[Tile::TILE_H][Tile::TILE_W], char *block)
 {
 	Bits out(block, AVPCL::BITSIZE);
 
@@ -317,16 +325,16 @@ static void emit_block(const IntEndptsRGB_2 endpts[NREGIONS], int shapeindex, co
 	nvAssert(out.getptr() == AVPCL::BITSIZE);
 }
 
-static void generate_palette_quantized(const IntEndptsRGB_2 &endpts_2, const RegionPrec &region_prec, Vector4 palette[NINDICES])
+static void generate_palette_quantized(const IntEndptsRGBA_2 &endpts_2, const RegionPrec &region_prec, Vector4 palette[NINDICES])
 {
-	IntEndptsRGB endpts;
+	IntEndptsRGBA endpts;
 
 	uncompress_one(endpts_2, endpts);
 
 	// scale endpoints
 	int a, b;			// really need a IntVec4...
 
-	a = Utils::unquantize(endpts.A[0], region_prec.endpt_a_prec[0]+1);	// +1 since we are in uncompressed space
+	a = Utils::unquantize(endpts.A[0], region_prec.endpt_a_prec[0]+1);	// +1 since we are in uncompressed space 
 	b = Utils::unquantize(endpts.B[0], region_prec.endpt_b_prec[0]+1);
 
 	// interpolate
@@ -347,32 +355,24 @@ static void generate_palette_quantized(const IntEndptsRGB_2 &endpts_2, const Reg
 	for (int i = 0; i < NINDICES; ++i)
 		palette[i].z = float(Utils::lerp(a, b, i, BIAS, DENOM));
 
-	// constant alpha
+	a = Utils::unquantize(endpts.A[3], region_prec.endpt_a_prec[3]+1); 
+	b = Utils::unquantize(endpts.B[3], region_prec.endpt_b_prec[3]+1);
+
+	// interpolate
 	for (int i = 0; i < NINDICES; ++i)
-		palette[i].w = 255.0f;
+		palette[i].w = float(Utils::lerp(a, b, i, BIAS, DENOM));
 }
 
-static void sign_extend(Pattern &p, IntEndptsRGB_2 endpts[NREGIONS])
-{
-	nvUnreachable();
-}
-
-void AVPCL::decompress_mode3(const char *block, Tile &t)
+void AVPCL::decompress_mode6(const char *block, Tile &t)
 {
 	Bits in(block, AVPCL::BITSIZE);
 
 	Pattern p;
-	IntEndptsRGB_2 endpts[NREGIONS];
+	IntEndptsRGBA_2 endpts[NREGIONS];
 	int shapeindex, pat_index;
 
 	read_header(in, endpts, shapeindex, p, pat_index);
 	
-	if (p.transformed)
-	{
-		sign_extend(p, endpts);
-		transform_inverse(endpts);
-	}
-
 	Vector4 palette[NREGIONS][NINDICES];
 	for (int r = 0; r < NREGIONS; ++r)
 		generate_palette_quantized(endpts[r], pattern_precs[pat_index].region_precs[r], &palette[r][0]);
@@ -390,7 +390,7 @@ void AVPCL::decompress_mode3(const char *block, Tile &t)
 }
 
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
-static float map_colors(const Vector4 colors[], const float importance[], int np, const IntEndptsRGB_2 &endpts, const RegionPrec &region_prec, float current_err, int indices[Tile::TILE_TOTAL])
+static float map_colors(const Vector4 colors[], const float importance[], int np, const IntEndptsRGBA_2 &endpts, const RegionPrec &region_prec, float current_err, int indices[Tile::TILE_TOTAL])
 {
 	Vector4 palette[NINDICES];
 	float toterr = 0;
@@ -400,11 +400,12 @@ static float map_colors(const Vector4 colors[], const float importance[], int np
 
 	for (int i = 0; i < np; ++i)
 	{
-		float besterr = FLT_MAX;
+		float err, besterr = FLT_MAX;
 
 		for (int j = 0; j < NINDICES && besterr > 0; ++j)
 		{
-            float err = Utils::metric4(colors[i], palette[j]) * importance[i];
+			err = !AVPCL::flag_premult ? Utils::metric4(colors[i], palette[j]) :
+									     Utils::metric4premult(colors[i], palette[j]) ;
 
 			if (err > besterr)	// error increased, so we're done searching
 				break;
@@ -429,7 +430,8 @@ static float map_colors(const Vector4 colors[], const float importance[], int np
 	return toterr;
 }
 
-static void assign_indices(const Tile &tile, int shapeindex, IntEndptsRGB_2 endpts[NREGIONS], const PatternPrec &pattern_prec, 
+// assign indices given a tile, shape, and quantized endpoints, return toterr for each region
+static void assign_indices(const Tile &tile, int shapeindex, IntEndptsRGBA_2 endpts[NREGIONS], const PatternPrec &pattern_prec, 
 						   int indices[Tile::TILE_H][Tile::TILE_W], float toterr[NREGIONS])
 {
 	// build list of possibles
@@ -451,7 +453,8 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndptsRGB_2 endp
 
 		for (int i = 0; i < NINDICES && besterr > 0; ++i)
 		{
-			err = Utils::metric4(tile.data[y][x], palette[region][i]);
+			err = !AVPCL::flag_premult ? Utils::metric4(tile.data[y][x], palette[region][i]) :
+										 Utils::metric4premult(tile.data[y][x], palette[region][i]) ;
 
 			if (err > besterr)	// error increased, so we're done searching
 				break;
@@ -467,14 +470,14 @@ static void assign_indices(const Tile &tile, int shapeindex, IntEndptsRGB_2 endp
 
 // note: indices are valid only if the value returned is less than old_err; otherwise they contain -1's
 // this function returns either old_err or a value smaller (if it was successful in improving the error)
-static float perturb_one(const Vector4 colors[], const float importance[], int np, int ch, const RegionPrec &region_prec, const IntEndptsRGB_2 &old_endpts, IntEndptsRGB_2 &new_endpts, 
+static float perturb_one(const Vector4 colors[], const float importance[], int np, int ch, const RegionPrec &region_prec, const IntEndptsRGBA_2 &old_endpts, IntEndptsRGBA_2 &new_endpts,
 						  float old_err, int do_b, int indices[Tile::TILE_TOTAL])
 {
 	// we have the old endpoints: old_endpts
 	// we have the perturbed endpoints: new_endpts
 	// we have the temporary endpoints: temp_endpts
 
-	IntEndptsRGB_2 temp_endpts;
+	IntEndptsRGBA_2 temp_endpts;
 	float min_err = old_err;		// start with the best current error
 	int beststep;
 	int temp_indices[Tile::TILE_TOTAL];
@@ -538,9 +541,9 @@ static float perturb_one(const Vector4 colors[], const float importance[], int n
 // for np = 16 -- adjust error thresholds as a function of np
 // always ensure endpoint ordering is preserved (no need to overlap the scan)
 // if orig_err returned from this is less than its input value, then indices[] will contain valid indices
-static float exhaustive(const Vector4 colors[], const float importance[], int np, int ch, const RegionPrec &region_prec, float &orig_err, IntEndptsRGB_2 &opt_endpts, int indices[Tile::TILE_TOTAL])
+static float exhaustive(const Vector4 colors[], const float importance[], int np, int ch, const RegionPrec &region_prec, float orig_err, IntEndptsRGBA_2 &opt_endpts, int indices[Tile::TILE_TOTAL])
 {
-	IntEndptsRGB_2 temp_endpts;
+	IntEndptsRGBA_2 temp_endpts;
 	float best_err = orig_err;
 	int aprec = region_prec.endpt_a_prec[ch];
 	int bprec = region_prec.endpt_b_prec[ch];
@@ -631,7 +634,7 @@ static float exhaustive(const Vector4 colors[], const float importance[], int np
 	return best_err;
 }
 
-static float optimize_one(const Vector4 colors[], const float importance[], int np, float orig_err, const IntEndptsRGB_2 &orig_endpts, const RegionPrec &region_prec, IntEndptsRGB_2 &opt_endpts)
+static float optimize_one(const Vector4 colors[], const float importance[], int np, float orig_err, const IntEndptsRGBA_2 &orig_endpts, const RegionPrec &region_prec, IntEndptsRGBA_2 &opt_endpts)
 {
 	float opt_err = orig_err;
 
@@ -655,8 +658,8 @@ static float optimize_one(const Vector4 colors[], const float importance[], int 
 			next? rgb1 : rgb0 += delta
 			initial_err = err
 	*/
-	IntEndptsRGB_2 new_a, new_b;
-	IntEndptsRGB_2 new_endpt;
+	IntEndptsRGBA_2 new_a, new_b;
+	IntEndptsRGBA_2 new_endpt;
 	int do_b;
 	int orig_indices[Tile::TILE_TOTAL];
 	int new_indices[Tile::TILE_TOTAL];
@@ -666,11 +669,11 @@ static float optimize_one(const Vector4 colors[], const float importance[], int 
 	// now optimize each channel separately
 	// for the first error improvement, we save the indices. then, for any later improvement, we compare the indices
 	// if they differ, we restart the loop (which then falls back to looking for a first improvement.)
-	for (int ch = 0; ch < NCHANNELS_RGB; ++ch)
+	for (int ch = 0; ch < NCHANNELS_RGBA; ++ch)
 	{
 		// figure out which endpoint when perturbed gives the most improvement and start there
 		// if we just alternate, we can easily end up in a local minima
-		float err0 = perturb_one(colors, importance, np, ch, region_prec, opt_endpts, new_a, opt_err, 0, temp_indices0);	// perturb endpt A
+        float err0 = perturb_one(colors, importance, np, ch, region_prec, opt_endpts, new_a, opt_err, 0, temp_indices0);	// perturb endpt A
         float err1 = perturb_one(colors, importance, np, ch, region_prec, opt_endpts, new_b, opt_err, 1, temp_indices1);	// perturb endpt B
 
 		if (err0 < err1)
@@ -739,7 +742,7 @@ static float optimize_one(const Vector4 colors[], const float importance[], int 
 	// note this is independent of the above search, so we don't care about the indices from the above
 	// we don't care about the above because if they differ, so what? we've already started at ch=0
 	bool first = true;
-	for (int ch = 0; ch < NCHANNELS_RGB; ++ch)
+	for (int ch = 0; ch < NCHANNELS_RGBA; ++ch)
 	{
         float new_err = exhaustive(colors, importance, np, ch, region_prec, opt_err, opt_endpts, temp_indices0);
 
@@ -776,13 +779,12 @@ static float optimize_one(const Vector4 colors[], const float importance[], int 
 	return opt_err;
 }
 
-// this will return a valid set of endpoints in opt_endpts regardless of whether it improve orig_endpts or not
 static void optimize_endpts(const Tile &tile, int shapeindex, const float orig_err[NREGIONS], 
-							const IntEndptsRGB_2 orig_endpts[NREGIONS], const PatternPrec &pattern_prec, float opt_err[NREGIONS], IntEndptsRGB_2 opt_endpts[NREGIONS])
+							IntEndptsRGBA_2 orig_endpts[NREGIONS], const PatternPrec &pattern_prec, float opt_err[NREGIONS], IntEndptsRGBA_2 opt_endpts[NREGIONS])
 {
 	Vector4 pixels[Tile::TILE_TOTAL];
     float importance[Tile::TILE_TOTAL];
-	IntEndptsRGB_2 temp_in, temp_out;
+	IntEndptsRGBA_2 temp_in, temp_out;
 	int temp_indices[Tile::TILE_TOTAL];
 
 	for (int region=0; region<NREGIONS; ++region)
@@ -805,6 +807,7 @@ static void optimize_endpts(const Tile &tile, int shapeindex, const float orig_e
 
 		float best_err = orig_err[region];
 
+		// try all lsb modes as we search for better endpoints
 		for (int lsbmode=0; lsbmode<NLSBMODES; ++lsbmode)
 		{
 			temp_in.a_lsb = lsbmode & 1;
@@ -844,12 +847,14 @@ static void optimize_endpts(const Tile &tile, int shapeindex, const float orig_e
 				emit compressed block with new data
 			else
 				emit compressed block with original data // to try to preserve maximum endpoint precision
+
+     simplify the above given that there is no transform now and that endpoints will always fit
 */
 
 static float refine(const Tile &tile, int shapeindex_best, const FltEndpts endpts[NREGIONS], char *block)
 {
 	float orig_err[NREGIONS], opt_err[NREGIONS], orig_toterr, opt_toterr, expected_opt_err[NREGIONS];
-	IntEndptsRGB_2 orig_endpts[NREGIONS], opt_endpts[NREGIONS];
+	IntEndptsRGBA_2 orig_endpts[NREGIONS], opt_endpts[NREGIONS];
 	int orig_indices[Tile::TILE_H][Tile::TILE_W], opt_indices[Tile::TILE_H][Tile::TILE_W];
 
 	for (int sp = 0; sp < NPATTERNS; ++sp)
@@ -857,41 +862,31 @@ static float refine(const Tile &tile, int shapeindex_best, const FltEndpts endpt
 		quantize_endpts(endpts, pattern_precs[sp], orig_endpts);
 		assign_indices(tile, shapeindex_best, orig_endpts, pattern_precs[sp], orig_indices, orig_err);
 		swap_indices(orig_endpts, orig_indices, shapeindex_best);
-		if (patterns[sp].transformed)
-			transform_forward(orig_endpts);
-		// apply a heuristic here -- we check if the endpoints fit before we try to optimize them.
-		// the assumption made is that if they don't fit now, they won't fit after optimizing.
-		if (endpts_fit(orig_endpts, patterns[sp]))
+
+		optimize_endpts(tile, shapeindex_best, orig_err, orig_endpts, pattern_precs[sp], expected_opt_err, opt_endpts);
+
+		assign_indices(tile, shapeindex_best, opt_endpts, pattern_precs[sp], opt_indices, opt_err);
+		// (nreed) Commented out asserts because they go off all the time...not sure why
+		//for (int i=0; i<NREGIONS; ++i)
+		//	nvAssert(expected_opt_err[i] == opt_err[i]);
+		swap_indices(opt_endpts, opt_indices, shapeindex_best);
+
+		orig_toterr = opt_toterr = 0;
+		for (int i=0; i < NREGIONS; ++i) { orig_toterr += orig_err[i]; opt_toterr += opt_err[i]; }
+		//nvAssert(opt_toterr <= orig_toterr);
+
+		if (opt_toterr < orig_toterr)
 		{
-			if (patterns[sp].transformed)
-				transform_inverse(orig_endpts);
-			optimize_endpts(tile, shapeindex_best, orig_err, orig_endpts, pattern_precs[sp], expected_opt_err, opt_endpts);
-			assign_indices(tile, shapeindex_best, opt_endpts, pattern_precs[sp], opt_indices, opt_err);
-			// (nreed) Commented out asserts because they go off all the time...not sure why
-			//for (int i=0; i<NREGIONS; ++i)
-			//	nvAssert(expected_opt_err[i] == opt_err[i]);
-			swap_indices(opt_endpts, opt_indices, shapeindex_best);
-			if (patterns[sp].transformed)
-				transform_forward(opt_endpts);
-			orig_toterr = opt_toterr = 0;
-			for (int i=0; i < NREGIONS; ++i) { orig_toterr += orig_err[i]; opt_toterr += opt_err[i]; }
-			if (endpts_fit(opt_endpts, patterns[sp]) && opt_toterr < orig_toterr)
-			{
-				emit_block(opt_endpts, shapeindex_best, patterns[sp], opt_indices, block);
-				return opt_toterr;
-			}
-			else
-			{
-				// either it stopped fitting when we optimized it, or there was no improvement
-				// so go back to the unoptimized endpoints which we know will fit
-				if (patterns[sp].transformed)
-					transform_forward(orig_endpts);
-				emit_block(orig_endpts, shapeindex_best, patterns[sp], orig_indices, block);
-				return orig_toterr;
-			}
+			emit_block(opt_endpts, shapeindex_best, patterns[sp], opt_indices, block);
+			return opt_toterr;
+		}
+		else
+		{
+			emit_block(orig_endpts, shapeindex_best, patterns[sp], orig_indices, block);
+			return orig_toterr;
 		}
 	}
-	nvAssert(false); //throw "No candidate found, should never happen (mode avpcl 3).";
+	nvAssert(false); //throw "No candidate found, should never happen (mode avpcl 6).";
 	return FLT_MAX;
 }
 
@@ -903,7 +898,8 @@ static void clamp(Vector4 &v)
 	if (v.y > 255.0f) v.y = 255.0f;
 	if (v.z < 0.0f) v.z = 0.0f;
 	if (v.z > 255.0f) v.z = 255.0f;
-	v.w = 255.0f;
+	if (v.w < 0.0f) v.w = 0.0f;
+	if (v.w > 255.0f) v.w = 255.0f;
 }
 
 static void generate_palette_unquantized(const FltEndpts endpts[NREGIONS], Vector4 palette[NREGIONS][NINDICES])
@@ -928,9 +924,11 @@ static float map_colors(const Tile &tile, int shapeindex, const FltEndpts endpts
 	for (int x = 0; x < tile.size_x; x++)
 	{
 		int region = REGION(x,y,shapeindex);
-		float err, besterr = FLT_MAX;
+		float err, besterr;
 
-		for (int i = 0; i < NINDICES && besterr > 0; ++i)
+		besterr = Utils::metric4(tile.data[y][x], palette[region][0]);
+
+		for (int i = 1; i < NINDICES && besterr > 0; ++i)
 		{
 			err = Utils::metric4(tile.data[y][x], palette[region][i]);
 
@@ -949,16 +947,14 @@ static float rough(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS])
 	for (int region=0; region<NREGIONS; ++region)
 	{
 		int np = 0;
-		Vector3 colors[Tile::TILE_TOTAL];
-		float alphas[2];
+		Vector4 colors[Tile::TILE_TOTAL];
 		Vector4 mean(0,0,0,0);
 
 		for (int y = 0; y < tile.size_y; y++)
 		for (int x = 0; x < tile.size_x; x++)
 			if (REGION(x,y,shapeindex) == region)
 			{
-				colors[np] = tile.data[y][x].xyz();
-				if (np < 2) alphas[np] = tile.data[y][x].w;
+				colors[np] = tile.data[y][x];
 				mean += tile.data[y][x];
 				++np;
 			}
@@ -973,33 +969,33 @@ static float rough(const Tile &tile, int shapeindex, FltEndpts endpts[NREGIONS])
 		}
 		else if (np == 1)
 		{
-			endpts[region].A = Vector4(colors[0], alphas[0]);
-			endpts[region].B = Vector4(colors[0], alphas[0]);
+			endpts[region].A = colors[0];
+			endpts[region].B = colors[0];
 			continue;
 		}
 		else if (np == 2)
 		{
-			endpts[region].A = Vector4(colors[0], alphas[0]);
-			endpts[region].B = Vector4(colors[1], alphas[1]);
+			endpts[region].A = colors[0];
+			endpts[region].B = colors[1];
 			continue;
 		}
 
 		mean /= float(np);
 
-		Vector3 direction = Fit::computePrincipalComponent_EigenSolver(np, colors);
+		Vector4 direction = Fit::computePrincipalComponent_EigenSolver(np, colors);
 
 		// project each pixel value along the principal direction
 		float minp = FLT_MAX, maxp = -FLT_MAX;
 		for (int i = 0; i < np; i++) 
 		{
-			float dp = dot(colors[i]-mean.xyz(), direction);
+			float dp = dot(colors[i]-mean, direction);
 			if (dp < minp) minp = dp;
 			if (dp > maxp) maxp = dp;
 		}
 
 		// choose as endpoints 2 points along the principal direction that span the projections of all of the pixel values
-		endpts[region].A = mean + minp*Vector4(direction, 0);
-		endpts[region].B = mean + maxp*Vector4(direction, 0);
+		endpts[region].A = mean + minp*direction;
+		endpts[region].B = mean + maxp*direction;
 
 		// clamp endpoints
 		// the argument for clamping is that the actual endpoints need to be clamped and thus we need to choose the best
@@ -1017,11 +1013,11 @@ static void swap(float *list1, int *list2, int i, int j)
 	int t1 = list2[i]; list2[i] = list2[j]; list2[j] = t1;
 }
 
-float AVPCL::compress_mode3(const Tile &t, char *block)
+float AVPCL::compress_mode6(const Tile &t, char *block)
 {
 	// number of rough cases to look at. reasonable values of this are 1, NSHAPES/4, and NSHAPES
 	// NSHAPES/4 gets nearly all the cases; you can increase that a bit (say by 3 or 4) if you really want to squeeze the last bit out
-	const int NITEMS=NSHAPES/4;
+	const int NITEMS=1;
 
 	// pick the best NITEMS shapes and refine these.
 	struct {

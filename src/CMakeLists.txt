@@ -8,6 +8,8 @@ SUBDIRS(nvmath)
 SUBDIRS(nvimage)
 SUBDIRS(nvthread)
 SUBDIRS(nvtt)
+SUBDIRS(bc6h)
+SUBDIRS(bc7)
 
 # OpenGL
 INCLUDE(FindOpenGL)

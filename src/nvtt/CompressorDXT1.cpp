@@ -15,6 +15,7 @@
 #include "nvcore/Utils.h" // swap
 
 #include <string.h> // memset
+#include <float.h> // FLT_MAX
 
 
 using namespace nv;
@@ -80,14 +81,14 @@ static Color32 bitexpand_color16_to_color32(Color16 c16) {
     return c32;
 }
 
-static Color32 bitexpand_color16_to_color32(int r, int g, int b) {
+/*static Color32 bitexpand_color16_to_color32(int r, int g, int b) {
     Color32 c32;
     c32.b = (b << 3) | (b >> 2);
     c32.g = (g << 2) | (g >> 4);
     c32.r = (r << 3) | (r >> 2);
     c32.a = 0xFF;
     return c32;
-}
+}*/
 
 static Color16 truncate_color32_to_color16(Color32 c32) {
     Color16 c16;
@@ -97,14 +98,14 @@ static Color16 truncate_color32_to_color16(Color32 c32) {
     return c16;
 }
 
-inline Vector3 r5g6b5_to_vector3(int r, int g, int b)
+/*inline Vector3 r5g6b5_to_vector3(int r, int g, int b)
 {
     Vector3 c;
     c.x = float((r << 3) | (r >> 2));
     c.y = float((g << 2) | (g >> 4));
     c.z = float((b << 3) | (b >> 2));
     return c;
-}
+}*/
 
 inline Vector3 color_to_vector3(Color32 c)
 {
@@ -711,3 +712,92 @@ float nv::compress_dxt1(const Vector3 input_colors[16], const float input_weight
 
     return error;
 }
+
+
+// Once we have an index assignment we have colors grouped in 1-4 clusters.
+// If 1 clusters -> Use optimal compressor.
+// If 2 clusters -> Try: (0, 1), (1, 2), (0, 2), (0, 3) - [0, 1]
+// If 3 clusters -> Try: (0, 1, 2), (0, 1, 3), (0, 2, 3) - [0, 1, 2]
+// If 4 clusters -> Try: (0, 1, 2, 3)
+
+// @@ How do we do the initial index/cluster assignment? Use standard cluster fit.
+
+
+// Least squares fitting of color end points for the given indices. @@ Take weights into account.
+static bool optimize_end_points4(uint indices, const Vector3 * colors, const Vector3 * weights, int count, Vector3 * a, Vector3 * b)
+{
+    float alpha2_sum = 0.0f;
+    float beta2_sum = 0.0f;
+    float alphabeta_sum = 0.0f;
+    Vector3 alphax_sum(0.0f);
+    Vector3 betax_sum(0.0f);
+
+    for (int i = 0; i < count; i++)
+    {
+        const uint bits = indices >> (2 * i);
+
+        float beta = float(bits & 1);
+        if (bits & 2) beta = (1 + beta) / 3.0f;
+        float alpha = 1.0f - beta;
+
+        alpha2_sum += alpha * alpha;
+        beta2_sum += beta * beta;
+        alphabeta_sum += alpha * beta;
+        alphax_sum += alpha * colors[i];
+        betax_sum += beta * colors[i];
+    }
+
+    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
+    if (equal(denom, 0.0f)) return false;
+
+    float factor = 1.0f / denom;
+
+    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
+    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
+
+    return true;
+}
+
+
+// Least squares fitting of color end points for the given indices. @@ This does not support black/transparent index. @@ Take weights into account.
+static bool optimize_end_points3(uint indices, const Vector3 * colors, const Vector3 * weights, int count, Vector3 * a, Vector3 * b)
+{
+    float alpha2_sum = 0.0f;
+    float beta2_sum = 0.0f;
+    float alphabeta_sum = 0.0f;
+    Vector3 alphax_sum(0.0f);
+    Vector3 betax_sum(0.0f);
+
+    for (int i = 0; i < count; i++)
+    {
+        const uint bits = indices >> (2 * i);
+
+        float beta = float(bits & 1);
+        if (bits & 2) beta = 0.5f;
+        float alpha = 1.0f - beta;
+
+        alpha2_sum += alpha * alpha;
+        beta2_sum += beta * beta;
+        alphabeta_sum += alpha * beta;
+        alphax_sum += alpha * colors[i];
+        betax_sum += beta * colors[i];
+    }
+
+    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
+    if (equal(denom, 0.0f)) return false;
+
+    float factor = 1.0f / denom;
+
+    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
+    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
+
+    return true;
+}
+
+// @@ After optimization we need to round end points. Round in all possible directions, and pick best.
+
+
+
+
+
+

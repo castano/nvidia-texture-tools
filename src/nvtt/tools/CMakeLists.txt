@@ -66,8 +66,8 @@ IF(QT4_FOUND)
         QT4_WRAP_CPP(MOCS compressdialog.h)
 	#QT4_ADD_RESOURCES(RCCS ui/configdialog.rc)
 
-    ADD_EXECUTABLE(nvtt-diag MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
-    TARGET_LINK_LIBRARIES(nvtt-diag ${LIBS})
+	#ADD_EXECUTABLE(nvtt-diag MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
+	#TARGET_LINK_LIBRARIES(nvtt-diag ${LIBS})
 
 ENDIF(QT4_FOUND)
 

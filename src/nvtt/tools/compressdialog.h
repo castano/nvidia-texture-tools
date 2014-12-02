@@ -16,15 +16,6 @@ public:
 protected slots:
 
     void openClicked();
-    void generateMipmapsChanged(int state);
-    void mipmapFilterChanged(QString name);
-    void formatChanged(QString format);
-
-    void colorWeightChanged();
-    void uniformWeightToggled(bool checked);
-    void luminanceWeightToggled(bool checked);
-
-    void normalMapModeChanged(bool checked);
 
 
 private:

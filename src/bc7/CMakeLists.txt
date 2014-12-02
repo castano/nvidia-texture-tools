@@ -18,8 +18,8 @@ SET(BC7_SRCS
 	shapes_three.h
 	shapes_two.h
 	tile.h
-	utils.cpp
-	utils.h)
+	avpcl_utils.cpp
+	avpcl_utils.h)
 
 ADD_LIBRARY(bc7 STATIC ${BC7_SRCS})
 

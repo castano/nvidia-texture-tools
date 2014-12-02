@@ -29,8 +29,8 @@
 #include "nvmath/Half.h"
 #include "nvmath/Vector.inl"
 
-#include "nvtt/bc6h/zoh.h"
-#include "nvtt/bc7/avpcl.h"
+#include "bc6h/zoh.h"
+#include "bc7/avpcl.h"
 
 
 using namespace nv;
