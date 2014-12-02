@@ -87,7 +87,7 @@ struct Pattern
 	int transform_mode;		// x0 means alpha channel not transformed, x1 otherwise. 0x rgb not transformed, 1x otherwise.
 	int mode;				// associated mode value
 	int modebits;			// number of mode bits
-	char *encoding;			// verilog description of encoding for this mode
+	const char *encoding;			// verilog description of encoding for this mode
 };
 
 #define	TRANSFORM_MODE_ALPHA	1

@@ -35,6 +35,7 @@
 #include "nvcore/Utils.h" // swap
 
 #include <string.h> // memset
+#include <float.h> // FLT_MAX 
 
 using namespace nv;
 using namespace QuickCompress;
@@ -285,7 +286,7 @@ inline static uint computeIndices4(const ColorSet & set, Vector3::Arg maxColor, 
         }
 
 		swap(row0, row1);
-		memset(row1, 0, sizeof(row1));
+		memset(row1, 0, sizeof(Vector3) * (4+2));
 	}
 
 	return indices;
@@ -866,108 +867,3 @@ void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, co
     //optimizeEndPoints3(set, block);
 }
 
-
-
-
-
-inline Vector3 toVectorColor(int r, int g, int b) {
-    Vector3 c;
-    c.x = float((r << 3) | (r >> 2));
-    c.y = float((g << 2) | (g >> 4));
-    c.z = float((b << 3) | (b >> 2));
-    return c;
-}
-
-// Do an exhaustive search inside the bounding box.
-void compress_dxt1_bounding_box_exhaustive(const ColorBlock & input, BlockDXT1 * output)
-{
-    int min_r = 255, min_g = 255, min_b = 255;
-    int max_r = 0,  max_g = 0,  max_b = 0;
-
-    for (int i = 0; i < 16; i++) {
-        Color32 c = input.color(i);
-        min_r = min(min_r, int(c.r));
-        max_r = max(max_r, int(c.r));
-        min_g = min(min_g, int(c.g));
-        max_g = max(max_g, int(c.g));
-        min_b = min(min_b, int(c.b));
-        max_b = max(max_b, int(c.b));
-    }
-
-    // Convert to 5:6:5
-    min_r >>= 3; min_g >>= 2; min_b >>= 3; 
-    max_r >>= 3; max_g >>= 2; max_b >>= 3; 
-
-    // Expand the box.
-    int range_r = max_r - min_r;
-    int range_g = max_g - min_g;
-    int range_b = max_b - min_b;
-
-    min_r = max(0, min_r - (range_r + 1) / 1 - 1);
-    min_g = max(0, min_g - (range_g + 1) / 1 - 1);
-    min_b = max(0, min_b - (range_b + 1) / 1 - 1);
-
-    max_r = min(31, max_r + (range_r + 1) / 2 + 1);
-    max_g = min(63, max_g + (range_g + 1) / 2 + 1);
-    max_b = min(31, max_b + (range_b + 1) / 2 + 1);
-
-    int count = (max_r-min_r) + (max_g-min_g) + (max_b-min_b);
-
-	Vector3 colors[16];
-	extractColorBlockRGB(input, colors);
-
-
-    // @@ Use a single loop and remap index to box location?
-    float bestError = FLT_MAX;
-    Vector3 best0, best1;
-    bool threeColorMode;
-
-    for(int r0 = min_r; r0 <= max_r; r0++)
-    for(int r1 = max_r; r1 >= r0; r1--)
-    for(int g0 = min_g; g0 <= max_g; g0++)
-    for(int g1 = max_g; g1 >= g0; g1--)
-    for(int b0 = min_b; b0 <= max_b; b0++)
-    for(int b1 = max_b; b1 >= b0; b1--)
-    {
-        Vector3 c0 = toVectorColor(r0, g0, b0);
-        Vector3 c1 = toVectorColor(r1, g1, b1);
-
-        // Compute palette and evaluate error for these endpoints.
-        float error = evaluatePaletteError4(colors, c1, c0);
-
-        if (error < bestError) {
-            bestError = error;
-            best0 = c1; // c0 > c1
-            best1 = c0;
-            threeColorMode = false;
-        }
-
-#if 0
-        error = evaluatePaletteError3(colors, /*maxColor=*/c1, /*minColor=*/c0);
-
-        if (error < bestError) {
-            bestError = error;
-            best0 = c0;
-            best1 = c1;
-            threeColorMode = true;
-        }
-#endif
-    }
-
-    uint16 color0 = roundAndExpand(&best0);
-    uint16 color1 = roundAndExpand(&best1);
-
-    if (threeColorMode) {
-        nvCheck(color0 <= color1);
-        output->col0 = Color16(color1);
-        output->col1 = Color16(color0);
-        output->indices = computeIndices3(colors, best0, best1);
-    }
-    else {
-        nvCheck(color0 >= color1);
-        output->col0 = Color16(color0);
-        output->col1 = Color16(color1);
-        output->indices = computeIndices4(colors, best0, best1);
-    }
-
-}

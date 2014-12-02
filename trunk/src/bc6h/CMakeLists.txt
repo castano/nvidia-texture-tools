@@ -6,8 +6,8 @@ SET(BC6H_SRCS
 	bits.h
 	shapes_two.h
 	tile.h
-	utils.cpp
-	utils.h
+	zoh_utils.cpp
+	zoh_utils.h
 	zoh.cpp
 	zoh.h
 	zohone.cpp

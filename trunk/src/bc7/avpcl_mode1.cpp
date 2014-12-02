@@ -61,7 +61,7 @@ struct Pattern
 	int transformed;		// if 0, deltas are unsigned and no transform; otherwise, signed and transformed
 	int mode;				// associated mode value
 	int modebits;			// number of mode bits
-	char *encoding;			// verilog description of encoding for this mode
+	const char *encoding;			// verilog description of encoding for this mode
 };
 
 #define	NPATTERNS 1
