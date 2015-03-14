@@ -1,0 +1,10 @@
+[Simon Brown](http://www.sjbrown.co.uk/) describes a [single color compressor](http://www.sjbrown.co.uk/?article=dxt) as implemented in the [squish library](http://www.sjbrown.co.uk/?code=squish).
+
+[ryg](http://www.farbrausch.de/~fg/)'s [fast, decent-quality DXT compressor](https://mollyrocket.com/forums/viewtopic.php?t=392) also uses a similar algorithm, but more optimized:
+
+[ryg wrote](https://mollyrocket.com/forums/viewtopic.php?p=1995#1995):
+> ...the code also uses an optimization similar to Simon's optimal single color fit, but with far smaller tables and no searching at all. It's based on two relatively simple observations: first, there's no point in trying out the indices representing the extreme values; even if they turn out to be optimal, you can get the exact same results by setting min=max for that component and using one of the "inbetween" indices. And second, the other two cases are symmetric; you get the same results by swapping min and max and using the opposite index. So if your block contains only one color, you don't need to search at all - just use index 2 (or 3) everywhere and use one table lookup in a 256-entry table to determine the optimal min/max color values to use. (Ok, actually, you need two tables, because R and B use 5 bits and G uses 6; but they're still quite small).
+
+
+[ryg wrote](https://mollyrocket.com/forums/viewtopic.php?p=2000#2000):
+> I originally didn't have it either, but later added it because it turned out to be very useful for textures that contain "vector graphics" where you have lots of single-colored areas with antialiased edges; the blocks with edges in them are tricky to get right, of course, but the solid color areas are easy. However, in the dithering variants, "not quite hitting" the right color is annoying because it generates very visible regular dithering patterns all over the solid areas (without dithering, it just gives you a uniform color that is somewhat off, which is obviously not nearly as bad). Anyway, the point was that I had to detect that case no matter what (to at least turn off dithering if nothing else), so why not do it properly :).
