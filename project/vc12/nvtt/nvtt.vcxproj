@@ -416,6 +416,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\nvtt\BlockCompressor.h" />
+    <ClInclude Include="..\..\..\src\nvtt\CompressorDXT1.h" />
+    <ClInclude Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.h" />
     <ClInclude Include="..\..\..\src\nvtt\CubeSurface.h" />
     <ClInclude Include="..\..\..\src\nvtt\SingleColorLookup.h" />
     <ClInclude Include="..\..\..\src\nvtt\Surface.h" />
@@ -454,6 +456,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\nvtt\BlockCompressor.cpp" />
+    <ClCompile Include="..\..\..\src\nvtt\CompressorDXT1.cpp" />
+    <ClCompile Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CubeSurface.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\cuda\CudaCompressorDXT.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\cuda\CudaUtils.cpp" />
