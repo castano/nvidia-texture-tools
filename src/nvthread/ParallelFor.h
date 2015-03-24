@@ -18,7 +18,7 @@ namespace nv
         ParallelFor(ForTask * task, void * context);
         ~ParallelFor();
 
-        void run(uint count);
+        void run(uint count, bool calling_thread_process_work = false);
 
         // Invariant:
         ForTask * task;

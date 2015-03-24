@@ -283,6 +283,49 @@ namespace nv
         f.value = x;
         return (f.field.biasedexponent - 127);
     }
+
+
+    // FloatRGB9E5
+    union Float3SE {
+        uint32 v;
+        struct {
+        #if NV_BIG_ENDIAN
+            uint32 e : 5;
+            uint32 zm : 9;
+            uint32 ym : 9;
+            uint32 xm : 9;
+        #else
+            uint32 xm : 9;
+            uint32 ym : 9;
+            uint32 zm : 9;
+            uint32 e : 5;
+        #endif
+        };
+    };
+
+    // FloatR11G11B10
+    union Float3PK {
+        uint32 v;
+        struct {
+        #if NV_BIG_ENDIAN
+            uint32 ze : 5;
+            uint32 zm : 5;
+            uint32 ye : 5;
+            uint32 ym : 6;
+            uint32 xe : 5;
+            uint32 xm : 6;
+        #else
+            uint32 xm : 6;
+            uint32 xe : 5;
+            uint32 ym : 6;
+            uint32 ye : 5;
+            uint32 zm : 5;
+            uint32 ze : 5;
+        #endif
+        };
+    };
+
+
 } // nv
 
 #endif // NV_MATH_H

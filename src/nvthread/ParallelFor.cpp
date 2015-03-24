@@ -38,7 +38,7 @@ ParallelFor::~ParallelFor() {
 #endif
 }
 
-void ParallelFor::run(uint count) {
+void ParallelFor::run(uint count, bool calling_thread_process_work /*=false*/) {
 #if ENABLE_PARALLEL_FOR
     storeRelease(&this->count, count);
 
@@ -47,6 +47,10 @@ void ParallelFor::run(uint count) {
 
     // Start threads.
     pool->start(worker, this);
+
+    if (calling_thread_process_work) {
+        worker(this);
+    }
 
     // Wait for all threads to complete.
     pool->wait();

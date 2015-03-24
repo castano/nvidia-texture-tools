@@ -15,7 +15,7 @@ namespace nv
     {
         NV_FORBID_COPY(Mutex);
     public:
-        Mutex ();
+        Mutex (const char * name);
         ~Mutex ();
 
         void lock();

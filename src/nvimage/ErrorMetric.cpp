@@ -10,7 +10,7 @@
 
 using namespace nv;
 
-float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight)
+float nv::rmsColorError(const FloatImage * ref, const FloatImage * img, bool alphaWeight)
 {
     if (!sameLayout(img, ref)) {
         return FLT_MAX;
@@ -23,31 +23,31 @@ float nv::rmsColorError(const FloatImage * img, const FloatImage * ref, bool alp
     const uint count = img->pixelCount();
     for (uint i = 0; i < count; i++)
     {
-        float r0 = img->pixel(i + count * 0);
-        float g0 = img->pixel(i + count * 1);
-        float b0 = img->pixel(i + count * 2);
-        //float a0 = img->pixel(i + count * 3);
-        float r1 = ref->pixel(i + count * 0);
-        float g1 = ref->pixel(i + count * 1);
-        float b1 = ref->pixel(i + count * 2);
-        float a1 = ref->pixel(i + count * 3);
+        float r0 = ref->pixel(i + count * 0);
+        float g0 = ref->pixel(i + count * 1);
+        float b0 = ref->pixel(i + count * 2);
+        float a0 = ref->pixel(i + count * 3);
+        float r1 = img->pixel(i + count * 0);
+        float g1 = img->pixel(i + count * 1);
+        float b1 = img->pixel(i + count * 2);
+        //float a1 = img->pixel(i + count * 3);
 
         float r = r0 - r1;
         float g = g0 - g1;
         float b = b0 - b1;
 
         float a = 1;
-        if (alphaWeight) a = a1;
+        if (alphaWeight) a = a0 * a0; // @@ a0*a1 or a0*a0 ?
 
-        mse += r * r * a;
-        mse += g * g * a;
-        mse += b * b * a;
+        mse += (r * r) * a;
+        mse += (g * g) * a;
+        mse += (b * b) * a;
     }
 
     return float(sqrt(mse / count));
 }
 
-float nv::rmsAlphaError(const FloatImage * img, const FloatImage * ref)
+float nv::rmsAlphaError(const FloatImage * ref, const FloatImage * img)
 {
     if (!sameLayout(img, ref)) {
         return FLT_MAX;
@@ -71,7 +71,7 @@ float nv::rmsAlphaError(const FloatImage * img, const FloatImage * ref)
 }
 
 
-float nv::averageColorError(const FloatImage * img, const FloatImage * ref, bool alphaWeight)
+float nv::averageColorError(const FloatImage * ref, const FloatImage * img, bool alphaWeight)
 {
     if (!sameLayout(img, ref)) {
         return FLT_MAX;
@@ -108,7 +108,7 @@ float nv::averageColorError(const FloatImage * img, const FloatImage * ref, bool
     return float(mae / count);
 }
 
-float nv::averageAlphaError(const FloatImage * img, const FloatImage * ref)
+float nv::averageAlphaError(const FloatImage * ref, const FloatImage * img)
 {
     if (img == NULL || ref == NULL || img->width() != ref->width() || img->height() != ref->height()) {
         return FLT_MAX;

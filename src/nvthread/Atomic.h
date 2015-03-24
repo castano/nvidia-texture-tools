@@ -14,6 +14,7 @@
 
 #pragma intrinsic(_InterlockedIncrement, _InterlockedDecrement)
 #pragma intrinsic(_InterlockedCompareExchange, _InterlockedExchange)
+//#pragma intrinsic(_InterlockedExchangeAdd64)
 
 /*
 extern "C"
@@ -147,6 +148,11 @@ namespace nv {
         return (uint32)_InterlockedExchange((long *)value, (long)desired);
     }
 
+    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return (uint32)_InterlockedExchangeAdd((long*)value, (long)value_to_add);
+    }
+
 #elif NV_CC_CLANG && (NV_OS_IOS || NV_OS_DARWIN)
     NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
 
@@ -177,14 +183,14 @@ namespace nv {
     inline uint32 atomicIncrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-
+        
         return __sync_add_and_fetch(value, 1);
     }
-
+    
     inline uint32 atomicDecrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-
+        
         return __sync_sub_and_fetch(value, 1);
     }
     
@@ -203,6 +209,12 @@ namespace nv {
         // this is confusingly named, it doesn't actually do a test but always sets
         return __sync_lock_test_and_set(value, desired);
     }
+
+    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_add_and_fetch(value, value_to_add);
+    }
+
 
 
 #elif NV_CC_CLANG && POSH_CPU_STRONGARM
@@ -288,6 +300,12 @@ namespace nv {
         // this is confusingly named, it doesn't actually do a test but always sets
         return __sync_lock_test_and_set(value, desired);
     }
+
+    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_add_and_fetch(value, value_to_add);
+    }
+
     
 #else
 #error "Atomics not implemented."

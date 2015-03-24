@@ -38,7 +38,7 @@ ClusterFit::ClusterFit()
 {
 }
 
-// @@ Deprecate. Do not use color set directly.
+#if 0 // @@ Deprecate. Do not use color set directly.
 void ClusterFit::setColorSet(const ColorSet * set) 
 {
     // initialise the best error
@@ -108,6 +108,7 @@ void ClusterFit::setColorSet(const ColorSet * set)
 #endif
     }
 }
+#endif // 0
 
 
 void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count)

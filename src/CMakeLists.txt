@@ -44,15 +44,16 @@ ELSE(GLEW_FOUND)
 ENDIF(GLEW_FOUND)
 
 # Cg
-INCLUDE(${NV_CMAKE_DIR}/FindCg.cmake)
-IF(CG_FOUND)
-	MESSAGE(STATUS "Looking for Cg - found")
-ELSE(CG_FOUND)
-	MESSAGE(STATUS "Looking for Cg - not found")
-ENDIF(CG_FOUND)
+#INCLUDE(${NV_CMAKE_DIR}/FindCg.cmake)
+#IF(CG_FOUND)
+#	MESSAGE(STATUS "Looking for Cg - found")
+#ELSE(CG_FOUND)
+#	MESSAGE(STATUS "Looking for Cg - not found")
+#ENDIF(CG_FOUND)
 
 # CUDA
-#FIND_PACKAGE(CUDA)
+#INCLUDE(${NV_CMAKE_DIR}/FindCUDA.cmake)
+INCLUDE(CUDA)
 IF(CUDA_FOUND)
     IF(MINGW)
         MESSAGE(STATUS "Looking for CUDA - not supported on MinGW")
@@ -67,13 +68,13 @@ ELSE(CUDA_FOUND)
 ENDIF(CUDA_FOUND)
 
 # Maya
-INCLUDE(${NV_CMAKE_DIR}/FindMaya.cmake)
-IF(MAYA_FOUND)
-	SET(HAVE_MAYA ${MAYA_FOUND} CACHE BOOL "Set to TRUE if Maya is found, FALSE otherwise")
-	MESSAGE(STATUS "Looking for Maya - found")
-ELSE(MAYA_FOUND)
-	MESSAGE(STATUS "Looking for Maya - not found")
-ENDIF(MAYA_FOUND)
+#INCLUDE(${NV_CMAKE_DIR}/FindMaya.cmake)
+#IF(MAYA_FOUND)
+#	SET(HAVE_MAYA ${MAYA_FOUND} CACHE BOOL "Set to TRUE if Maya is found, FALSE otherwise")
+#	MESSAGE(STATUS "Looking for Maya - found")
+#ELSE(MAYA_FOUND)
+#	MESSAGE(STATUS "Looking for Maya - not found")
+#ENDIF(MAYA_FOUND)
 
 # FreeImage
 #INCLUDE(${NV_CMAKE_DIR}/FindFreeImage.cmake)
@@ -151,4 +152,6 @@ CHECK_INCLUDE_FILES("malloc.h" HAVE_MALLOC_H)
 CHECK_INCLUDE_FILES("dispatch/dispatch.h" HAVE_DISPATCH_H)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/nvconfig.h.in ${CMAKE_CURRENT_BINARY_DIR}/nvconfig.h)
+
+#INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/nvconfig.h DESTINATION include)
 

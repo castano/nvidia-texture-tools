@@ -335,6 +335,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvmath\PackedFloat.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\PackedFloat.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvmath\Plane.cpp"
 			>
 		</File>

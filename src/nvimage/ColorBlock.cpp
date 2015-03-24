@@ -462,7 +462,7 @@ float ColorBlock::volume() const
     return bounds.volume();
 }*/
 
-
+#if 0
 void ColorSet::allocate(uint w, uint h)
 {
     nvDebugCheck(w <= 4 && h <= 4);
@@ -680,6 +680,7 @@ bool ColorSet::hasAlpha() const
     }
     return false;
 }
+#endif // 0
 
 
 void AlphaBlock4x4::init(uint8 a)
@@ -707,7 +708,7 @@ void AlphaBlock4x4::init(const ColorBlock & src, uint channel)
 
 
 
-void AlphaBlock4x4::init(const ColorSet & src, uint channel)
+/*void AlphaBlock4x4::init(const ColorSet & src, uint channel)
 {
     nvCheck(channel >= 0 && channel < 4);
 
@@ -727,12 +728,12 @@ void AlphaBlock4x4::initMaxRGB(const ColorSet & src, float threshold)
         alpha[i] = unitFloatToFixed8(max(max(x, y), max(z, threshold)));
         weights[i] = 1.0f;
     }
-}
+}*/
 
-void AlphaBlock4x4::initWeights(const ColorSet & src)
+/*void AlphaBlock4x4::initWeights(const ColorSet & src)
 {
     for (int i = 0; i < 16; i++) {
         weights[i] = src.weight(i);
     }
-}
+}*/
 

@@ -248,7 +248,7 @@ unsigned int CompressionOptions::d3d9Format() const
 		    0,              // Format_CTX1
             MAKEFOURCC('B', 'C', '6', 'H'),     // Format_BC6
             MAKEFOURCC('B', 'C', '7', 'L'),     // Format_BC7
-            FOURCC_ATI2,    // Format_BC5_Luma
+            //FOURCC_ATI2,    // Format_BC5_Luma
             FOURCC_DXT5,    // Format_BC3_RGBM
         };
 

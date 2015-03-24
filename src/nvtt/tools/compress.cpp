@@ -152,6 +152,8 @@ int main(int argc, char *argv[])
     bool premultiplyAlpha = false;
     nvtt::MipmapFilter mipmapFilter = nvtt::MipmapFilter_Box;
     bool loadAsFloat = false;
+    bool rgbm = false;
+    bool rangescale = false;
 
     const char * externalCompressor = NULL;
 
@@ -209,6 +211,15 @@ int main(int argc, char *argv[])
         {
             loadAsFloat = true;
         }
+        else if (strcmp("-rgbm", argv[i]) == 0)
+        {
+            rgbm = true;
+        }
+        else if (strcmp("-rangescale", argv[i]) == 0)
+        {
+            rangescale = true;
+        }
+
 
         // Compression options.
         else if (strcmp("-fast", argv[i]) == 0)
@@ -268,6 +279,11 @@ int main(int argc, char *argv[])
         else if (strcmp("-bc7", argv[i]) == 0)
         {
             format = nvtt::Format_BC7;
+        }
+        else if (strcmp("-bc3_rgbm", argv[i]) == 0)
+        {
+            format = nvtt::Format_BC3_RGBM;
+            rgbm = true;
         }
 
         // Undocumented option. Mainly used for testing.
@@ -332,32 +348,35 @@ int main(int argc, char *argv[])
         printf("usage: nvcompress [options] infile [outfile.dds]\n\n");
 
         printf("Input options:\n");
-        printf("  -color     \tThe input image is a color map (default).\n");
-        printf("  -alpha     \tThe input image has an alpha channel used for transparency.\n");
-        printf("  -normal    \tThe input image is a normal map.\n");
-        printf("  -tonormal  \tConvert input to normal map.\n");
-        printf("  -clamp     \tClamp wrapping mode (default).\n");
-        printf("  -repeat    \tRepeat wrapping mode.\n");
-        printf("  -nomips    \tDisable mipmap generation.\n");
-        printf("  -premula   \tPremultiply alpha into color channel.\n");
-        printf("  -mipfilter \tMipmap filter. One of the following: box, triangle, kaiser.\n");
-        printf("  -float     \tLoad as floating point image.\n\n");
+        printf("  -color        The input image is a color map (default).\n");
+        printf("  -alpha        The input image has an alpha channel used for transparency.\n");
+        printf("  -normal       The input image is a normal map.\n");
+        printf("  -tonormal     Convert input to normal map.\n");
+        printf("  -clamp        Clamp wrapping mode (default).\n");
+        printf("  -repeat       Repeat wrapping mode.\n");
+        printf("  -nomips       Disable mipmap generation.\n");
+        printf("  -premula      Premultiply alpha into color channel.\n");
+        printf("  -mipfilter    Mipmap filter. One of the following: box, triangle, kaiser.\n");
+        printf("  -float        Load as floating point image.\n\n");
+        printf("  -rgbm         Transform input to RGBM.\n\n");
+        printf("  -rangescale   Scale image to use entire color range.\n\n");
 
         printf("Compression options:\n");
-        printf("  -fast    \tFast compression.\n");
-        printf("  -nocuda  \tDo not use cuda compressor.\n");
-        printf("  -rgb     \tRGBA format\n");
-        printf("  -lumi    \tLUMINANCE format\n");
-        printf("  -bc1     \tBC1 format (DXT1)\n");
-        printf("  -bc1n    \tBC1 normal map format (DXT1nm)\n");
-        printf("  -bc1a    \tBC1 format with binary alpha (DXT1a)\n");
-        printf("  -bc2     \tBC2 format (DXT3)\n");
-        printf("  -bc3     \tBC3 format (DXT5)\n");
-        printf("  -bc3n    \tBC3 normal map format (DXT5nm)\n");
-        printf("  -bc4     \tBC4 format (ATI1)\n");
-        printf("  -bc5     \tBC5 format (3Dc/ATI2)\n");
-        printf("  -bc6     \tBC6 format\n");
-        printf("  -bc7     \tBC7 format\n\n");
+        printf("  -fast         Fast compression.\n");
+        printf("  -nocuda       Do not use cuda compressor.\n");
+        printf("  -rgb          RGBA format\n");
+        printf("  -lumi         LUMINANCE format\n");
+        printf("  -bc1          BC1 format (DXT1)\n");
+        printf("  -bc1n         BC1 normal map format (DXT1nm)\n");
+        printf("  -bc1a         BC1 format with binary alpha (DXT1a)\n");
+        printf("  -bc2          BC2 format (DXT3)\n");
+        printf("  -bc3          BC3 format (DXT5)\n");
+        printf("  -bc3n         BC3 normal map format (DXT5nm)\n");
+        printf("  -bc4          BC4 format (ATI1)\n");
+        printf("  -bc5          BC5 format (3Dc/ATI2)\n");
+        printf("  -bc6          BC6 format\n");
+        printf("  -bc7          BC7 format\n\n");
+        printf("  -bc3_rgbm     BC3-rgbm format\n\n");
 
         printf("Output options:\n");
         printf("  -silent  \tDo not output progress messages\n");
@@ -376,145 +395,211 @@ int main(int argc, char *argv[])
     // Set input options.
     nvtt::InputOptions inputOptions;
 
-    if (nv::strCaseDiff(input.extension(), ".dds") == 0)
-    {
-        // Load surface.
-        nv::DirectDrawSurface dds(input.str());
-        if (!dds.isValid())
-        {
-            fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
+    bool useSurface = false;    // @@ use Surface API in all cases!
+    nvtt::Surface image;
+
+    if (true || format == nvtt::Format_BC3_RGBM || rgbm) {
+        useSurface = true;
+
+        if (!image.load(input.str())) {
+            fprintf(stderr, "Error opening input file '%s'.\n", input.str());
             return EXIT_FAILURE;
         }
 
-        if (!dds.isSupported())
-        {
-            fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
-            return EXIT_FAILURE;
-        }
+        if (rangescale) {
+            // get color range
+            float min_color[3], max_color[3];
+            image.range(0, &min_color[0], &max_color[0]);
+            image.range(1, &min_color[1], &max_color[1]);
+            image.range(2, &min_color[2], &max_color[2]);
 
-        uint faceCount;
-        if (dds.isTexture2D())
-        {
-            inputOptions.setTextureLayout(nvtt::TextureType_2D, dds.width(), dds.height());
-            faceCount = 1;
-        }
-        else if (dds.isTexture3D())
-        {
-            inputOptions.setTextureLayout(nvtt::TextureType_3D, dds.width(), dds.height(), dds.depth());
-            faceCount = 1;
+            //printf("Color range = %.2f %.2f %.2f\n", max_color[0], max_color[1], max_color[2]);
 
-            nvDebugBreak();
-        }
-        else 
-        {
-            nvDebugCheck(dds.isTextureCube());
-            inputOptions.setTextureLayout(nvtt::TextureType_Cube, dds.width(), dds.height());
-            faceCount = 6;
-        }
+            float color_range = nv::max3(max_color[0], max_color[1], max_color[2]);
+            const float max_color_range = 16.0f;
 
-        uint mipmapCount = dds.mipmapCount();
-
-        nv::Image mipmap;
-
-        for (uint f = 0; f < faceCount; f++)
-        {
-            for (uint m = 0; m < mipmapCount; m++)
-            {
-                dds.mipmap(&mipmap, f, m); // @@ Load as float.
-
-                inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), mipmap.depth(), f, m);
+            if (color_range > max_color_range) {
+                //Log::print("Clamping color range %f to %f\n", color_range, max_color_range);
+                color_range = max_color_range;
             }
+            //color_range = max_color_range;  // Use a fixed color range for now.
+
+            for (int i = 0; i < 3; i++) {
+                image.scaleBias(i, 1.0f / color_range, 0.0f);
+            }
+            image.toneMap(nvtt::ToneMapper_Linear, /*parameters=*/NULL); // Clamp without changing the hue.
+
+            // Clamp alpha.
+            image.clamp(3);
+        }
+
+        if (alpha) {
+            image.setAlphaMode(nvtt::AlphaMode_Transparency);
+        }
+
+        // To gamma.
+        image.toGamma(2);
+
+        if (format != nvtt::Format_BC3_RGBM) {
+            image.setAlphaMode(nvtt::AlphaMode_None);
+            image.toRGBM(1, 0.15f);
         }
     }
-    else
-    {
-        if (nv::strCaseDiff(input.extension(), ".exr") == 0 || nv::strCaseDiff(input.extension(), ".hdr") == 0)
-        {
-            loadAsFloat = true;
+    else if (format == nvtt::Format_BC6) {
+        //format = nvtt::Format_BC1;
+        //fprintf(stderr, "BLABLABLA.\n");
+        useSurface = true;
+
+        if (!image.load(input.str())) {
+            fprintf(stderr, "Error opening input file '%s'.\n", input.str());
+            return EXIT_FAILURE;
         }
 
-        if (loadAsFloat)
+        image.setAlphaMode(nvtt::AlphaMode_Transparency);
+    }
+    else {
+        if (nv::strCaseDiff(input.extension(), ".dds") == 0)
         {
-            nv::AutoPtr<nv::FloatImage> image(nv::ImageIO::loadFloat(input.str()));
-
-            if (image == NULL)
+            // Load surface.
+            nv::DirectDrawSurface dds(input.str());
+            if (!dds.isValid())
             {
-                fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
+                fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
                 return EXIT_FAILURE;
             }
 
-            inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
-            inputOptions.setTextureLayout(nvtt::TextureType_2D, image->width(), image->height());
-
-            /*for (uint i = 0; i < image->componentNum(); i++)
+            if (!dds.isSupported())
             {
-                inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
-            }*/
+                fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
+                return EXIT_FAILURE;
+            }
+
+            uint faceCount;
+            if (dds.isTexture2D())
+            {
+                inputOptions.setTextureLayout(nvtt::TextureType_2D, dds.width(), dds.height());
+                faceCount = 1;
+            }
+            else if (dds.isTexture3D())
+            {
+                inputOptions.setTextureLayout(nvtt::TextureType_3D, dds.width(), dds.height(), dds.depth());
+                faceCount = 1;
+
+                nvDebugBreak();
+            }
+            else 
+            {
+                nvDebugCheck(dds.isTextureCube());
+                inputOptions.setTextureLayout(nvtt::TextureType_Cube, dds.width(), dds.height());
+                faceCount = 6;
+            }
+
+            uint mipmapCount = dds.mipmapCount();
+
+            nv::Image mipmap;
+
+            for (uint f = 0; f < faceCount; f++)
+            {
+                for (uint m = 0; m < mipmapCount; m++)
+                {
+                    dds.mipmap(&mipmap, f, m); // @@ Load as float.
+
+                    inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), mipmap.depth(), f, m);
+                }
+            }
         }
         else
         {
-            // Regular image.
-            nv::Image image;
-            if (!image.load(input.str()))
+            if (nv::strCaseDiff(input.extension(), ".exr") == 0 || nv::strCaseDiff(input.extension(), ".hdr") == 0)
             {
-                fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
-                return 1;
+                loadAsFloat = true;
             }
 
-            inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
-            inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
+            if (loadAsFloat)
+            {
+                nv::AutoPtr<nv::FloatImage> image(nv::ImageIO::loadFloat(input.str()));
+
+                if (image == NULL)
+                {
+                    fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
+                    return EXIT_FAILURE;
+                }
+
+                inputOptions.setFormat(nvtt::InputFormat_RGBA_32F);
+                inputOptions.setTextureLayout(nvtt::TextureType_2D, image->width(), image->height());
+
+                /*for (uint i = 0; i < image->componentNum(); i++)
+                {
+                    inputOptions.setMipmapChannelData(image->channel(i), i, image->width(), image->height());
+                }*/
+            }
+            else
+            {
+                // Regular image.
+                nv::Image image;
+                if (!image.load(input.str()))
+                {
+                    fprintf(stderr, "The file '%s' is not a supported image type.\n", input.str());
+                    return 1;
+                }
+
+                inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
+                inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
+            }
         }
+
+        if (wrapRepeat)
+        {
+            inputOptions.setWrapMode(nvtt::WrapMode_Repeat);
+        }
+        else
+        {
+            inputOptions.setWrapMode(nvtt::WrapMode_Clamp);
+        }
+
+        if (alpha)
+        {
+            inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
+        }
+        else
+        {
+            inputOptions.setAlphaMode(nvtt::AlphaMode_None);
+        }
+
+        // Block compressed textures with mipmaps must be powers of two.
+        if (!noMipmaps && format != nvtt::Format_RGB)
+        {
+            inputOptions.setRoundMode(nvtt::RoundMode_ToPreviousPowerOfTwo);
+        }
+
+        if (normal)
+        {
+            setNormalMap(inputOptions);
+        }
+        else if (color2normal)
+        {
+            setColorToNormalMap(inputOptions);
+        }
+        else
+        {
+            setColorMap(inputOptions);
+        }
+
+        if (noMipmaps)
+        {
+            inputOptions.setMipmapGeneration(false);
+        }
+
+        /*if (premultiplyAlpha)
+        {
+            inputOptions.setPremultiplyAlpha(true);
+            inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
+        }*/
+
+        inputOptions.setMipmapFilter(mipmapFilter);
     }
 
-    if (wrapRepeat)
-    {
-        inputOptions.setWrapMode(nvtt::WrapMode_Repeat);
-    }
-    else
-    {
-        inputOptions.setWrapMode(nvtt::WrapMode_Clamp);
-    }
 
-    if (alpha)
-    {
-        inputOptions.setAlphaMode(nvtt::AlphaMode_Transparency);
-    }
-    else
-    {
-        inputOptions.setAlphaMode(nvtt::AlphaMode_None);
-    }
-
-    // Block compressed textures with mipmaps must be powers of two.
-    if (!noMipmaps && format != nvtt::Format_RGB)
-    {
-        inputOptions.setRoundMode(nvtt::RoundMode_ToPreviousPowerOfTwo);
-    }
-
-    if (normal)
-    {
-        setNormalMap(inputOptions);
-    }
-    else if (color2normal)
-    {
-        setColorToNormalMap(inputOptions);
-    }
-    else
-    {
-        setColorMap(inputOptions);
-    }
-
-    if (noMipmaps)
-    {
-        inputOptions.setMipmapGeneration(false);
-    }
-
-    /*if (premultiplyAlpha)
-    {
-        inputOptions.setPremultiplyAlpha(true);
-        inputOptions.setAlphaMode(nvtt::AlphaMode_Premultiplied);
-    }*/
-
-    inputOptions.setMipmapFilter(mipmapFilter);
 
     nvtt::CompressionOptions compressionOptions;
     compressionOptions.setFormat(format);
@@ -545,7 +630,24 @@ int main(int argc, char *argv[])
             //compressionOptions.setQuantization(/*color dithering*/true, /*alpha dithering*/false, /*binary alpha*/false);
             //compressionOptions.setPixelType(nvtt::PixelType_UnsignedNorm);
             //compressionOptions.setPixelFormat(5, 6, 5, 0);
+            //compressionOptions.setPixelFormat(8, 8, 8, 8);
+
+            // A4R4G4B4
+            //compressionOptions.setPixelFormat(16, 0xF00, 0xF0, 0xF, 0xF000);
+
+            //compressionOptions.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, 0xFF000000);
+
+            // R10B20G10A2
+            //compressionOptions.setPixelFormat(10, 10, 10, 2);
+
+            // DXGI_FORMAT_R11G11B10_FLOAT
+            compressionOptions.setPixelType(nvtt::PixelType_Float);
+            compressionOptions.setPixelFormat(11, 11, 10, 0);
         }
+    }
+    else if (format == nvtt::Format_BC6)
+    {
+        compressionOptions.setPixelType(nvtt::PixelType_UnsignedFloat);
     }
 
     if (fast)
@@ -599,7 +701,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    outputHandler.setTotal(context.estimateSize(inputOptions, compressionOptions));
+    int outputSize = 0;
+    if (useSurface) {
+        outputSize = context.estimateSize(image, 1, compressionOptions);
+    }
+    else {
+        outputSize = context.estimateSize(inputOptions, compressionOptions);
+    }
+
+    outputHandler.setTotal(outputSize);
     outputHandler.setDisplayProgress(!silent);
 
     nvtt::OutputOptions outputOptions;
@@ -625,10 +735,22 @@ int main(int argc, char *argv[])
     nv::Timer timer;
     timer.start();
 
-    if (!context.process(inputOptions, compressionOptions, outputOptions))
-    {
-        return EXIT_FAILURE;
+    if (useSurface) {
+        if (!context.outputHeader(image, 1, compressionOptions, outputOptions)) {
+            fprintf(stderr, "Error writing file header.\n");
+            return EXIT_FAILURE;
+        }
+        if (!context.compress(image, 0, 0, compressionOptions, outputOptions)) {
+            fprintf(stderr, "Error compressing file.\n");
+            return EXIT_FAILURE;
+        } 
     }
+    else {
+        if (!context.process(inputOptions, compressionOptions, outputOptions)) {
+            return EXIT_FAILURE;
+        }
+    }
+
     timer.stop();
 
     if (!silent) {

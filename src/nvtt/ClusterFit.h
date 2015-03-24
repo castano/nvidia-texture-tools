@@ -43,7 +43,7 @@ namespace nv {
     public:
         ClusterFit();
 
-        void setColorSet(const ColorSet * set);
+        //void setColorSet(const ColorSet * set);
         void setColorSet(const Vector3 * colors, const float * weights, int count);
 
         void setColorWeights(const Vector4 & w);

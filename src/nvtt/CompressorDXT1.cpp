@@ -2,7 +2,6 @@
 #include "CompressorDXT1.h"
 #include "SingleColorLookup.h"
 #include "ClusterFit.h"
-#include "QuickCompressDXT.h"  // Deprecate.
 
 #include "nvimage/ColorBlock.h"
 #include "nvimage/BlockDXT.h"
@@ -162,12 +161,12 @@ static bool is_single_color_rgb(const Vector3 * colors, const float * weights, i
 }
 
 // Find similar colors and combine them together.
-static int reduce_colors(const Vector3 * input_colors, const float * input_weights, Vector3 * colors, float * weights)
+static int reduce_colors(const Vector4 * input_colors, const float * input_weights, Vector3 * colors, float * weights)
 {
     int n = 0;
     for (int i = 0; i < 16; i++)
     {
-        Vector3 ci = input_colors[i];
+        Vector3 ci = input_colors[i].xyz();
         float wi = input_weights[i];
 
         if (wi > 0) {
@@ -276,7 +275,7 @@ static float evaluate_mse(const BlockDXT1 * output, const Vector3 colors[16]) {
 }
 #endif
 
-static float evaluate_mse(const Vector3 colors[16], const float weights[16], const Vector3 & color_weights, const BlockDXT1 * output) {
+static float evaluate_mse(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, const BlockDXT1 * output) {
     Color32 palette[4];
     output->evaluatePalette(palette, /*d3d9=*/false);
 
@@ -290,7 +289,7 @@ static float evaluate_mse(const Vector3 colors[16], const float weights[16], con
     float error = 0.0f;
     for (int i = 0; i < 16; i++) {
         int index = (output->indices >> (2 * i)) & 3;
-        error += weights[i] * evaluate_mse(vector_palette[index], colors[i], color_weights);
+        error += input_weights[i] * evaluate_mse(vector_palette[index], input_colors[i].xyz(), color_weights);
     }
     return error;
 }
@@ -353,14 +352,14 @@ static void evaluate_palette3(Color16 c0, Color16 c1, Vector3 palette[4]) {
 
 
 
-static uint compute_indices4(const Vector3 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
+static uint compute_indices4(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
     
     uint indices = 0;
 	for (int i = 0; i < 16; i++) {
-		float d0 = evaluate_mse(palette[0], input_colors[i], color_weights);
-		float d1 = evaluate_mse(palette[1], input_colors[i], color_weights);
-		float d2 = evaluate_mse(palette[2], input_colors[i], color_weights);
-		float d3 = evaluate_mse(palette[3], input_colors[i], color_weights);
+		float d0 = evaluate_mse(palette[0], input_colors[i].xyz(), color_weights);
+		float d1 = evaluate_mse(palette[1], input_colors[i].xyz(), color_weights);
+		float d2 = evaluate_mse(palette[2], input_colors[i].xyz(), color_weights);
+		float d3 = evaluate_mse(palette[3], input_colors[i].xyz(), color_weights);
 		
 		uint b0 = d0 > d3;
 		uint b1 = d1 > d2;
@@ -379,14 +378,14 @@ static uint compute_indices4(const Vector3 input_colors[16], const Vector3 & col
 }
 
 
-static uint compute_indices(const Vector3 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
+static uint compute_indices(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
     
     uint indices = 0;
 	for (int i = 0; i < 16; i++) {
-		float d0 = evaluate_mse(palette[0], input_colors[i], color_weights);
-		float d1 = evaluate_mse(palette[1], input_colors[i], color_weights);
-		float d2 = evaluate_mse(palette[2], input_colors[i], color_weights);
-		float d3 = evaluate_mse(palette[3], input_colors[i], color_weights);
+		float d0 = evaluate_mse(palette[0], input_colors[i].xyz(), color_weights);
+		float d1 = evaluate_mse(palette[1], input_colors[i].xyz(), color_weights);
+		float d2 = evaluate_mse(palette[2], input_colors[i].xyz(), color_weights);
+		float d3 = evaluate_mse(palette[3], input_colors[i].xyz(), color_weights);
 		
         uint index;
         if (d0 < d1 && d0 < d2 && d0 < d3) index = 0;
@@ -401,7 +400,7 @@ static uint compute_indices(const Vector3 input_colors[16], const Vector3 & colo
 }
 
 
-static void output_block3(const Vector3 input_colors[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
+static void output_block3(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
 {
     Color16 color0 = vector3_to_color16(v0);
     Color16 color1 = vector3_to_color16(v1);
@@ -418,7 +417,7 @@ static void output_block3(const Vector3 input_colors[16], const Vector3 & color_
     block->indices = compute_indices(input_colors, color_weights, palette);
 }
 
-static void output_block4(const Vector3 input_colors[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
+static void output_block4(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
 {
     Color16 color0 = vector3_to_color16(v0);
     Color16 color1 = vector3_to_color16(v1);
@@ -515,7 +514,7 @@ float nv::compress_dxt1_least_squares_fit(const Vector3 * input_colors, const Ve
 }*/
 
 
-float nv::compress_dxt1_bounding_box_exhaustive(const Vector3 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, int max_volume, BlockDXT1 * output)
+float nv::compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, int max_volume, BlockDXT1 * output)
 {
     // Compute bounding box.
     Vector3 min_color(1.0f);
@@ -586,13 +585,14 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector3 input_colors[16], 
                 evaluate_palette4(palette);
             }
             else {
-    #if 1
-                // Evaluate error in 3 color mode.
-                evaluate_palette3(palette);
-    #else
-                // Skip 3 color mode.
-                continue;
-    #endif
+                if (three_color_mode) {
+                    // Evaluate error in 3 color mode.
+                    evaluate_palette3(palette);
+                }
+                else {
+                    // Skip 3 color mode.
+                    continue;
+                }
             }
 
             float error = evaluate_palette_error(palette, colors32, weights, count);
@@ -608,10 +608,6 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector3 input_colors[16], 
     output->col0 = best0;
     output->col1 = best1;
 
-    if (output->col0.u < output->col1.u) {
-        int k = 1;
-    }
-
     Vector3 vector_palette[4];
     evaluate_palette(output->col0, output->col1, vector_palette);
 
@@ -621,7 +617,7 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector3 input_colors[16], 
 }
 
 
-void nv::compress_dxt1_cluster_fit(const Vector3 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, BlockDXT1 * output)
+void nv::compress_dxt1_cluster_fit(const Vector4 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, BlockDXT1 * output)
 {
     ClusterFit fit;
     fit.setColorWeights(Vector4(color_weights, 1));
@@ -631,7 +627,7 @@ void nv::compress_dxt1_cluster_fit(const Vector3 input_colors[16], const Vector3
     Vector3 start, end;
     fit.compress4(&start, &end);
 
-    if (fit.compress3(&start, &end)) {
+    if (three_color_mode && fit.compress3(&start, &end)) {
         output_block3(input_colors, color_weights, start, end, output);
     }
     else {
@@ -642,7 +638,7 @@ void nv::compress_dxt1_cluster_fit(const Vector3 input_colors[16], const Vector3
 
 
 
-float nv::compress_dxt1(const Vector3 input_colors[16], const float input_weights[16], const Vector3 & color_weights, BlockDXT1 * output)
+float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool three_color_mode, BlockDXT1 * output)
 {
     Vector3 colors[16];
     float weights[16];
@@ -674,7 +670,7 @@ float nv::compress_dxt1(const Vector3 input_colors[16], const float input_weight
     // If high quality:
     if (0) {
         BlockDXT1 exhaustive_output;
-        float exhaustive_error = compress_dxt1_bounding_box_exhaustive(input_colors, colors, weights, count, color_weights, 400, &exhaustive_output);
+        float exhaustive_error = compress_dxt1_bounding_box_exhaustive(input_colors, colors, weights, count, color_weights, three_color_mode, 1400, &exhaustive_output);
 
         if (exhaustive_error != FLT_MAX) {
             float exhaustive_error2 = evaluate_mse(input_colors, input_weights, color_weights, &exhaustive_output);
@@ -700,7 +696,7 @@ float nv::compress_dxt1(const Vector3 input_colors[16], const float input_weight
 
     if (count > 1) {
         BlockDXT1 cluster_fit_output;
-        compress_dxt1_cluster_fit(input_colors, colors, weights, count, color_weights, &cluster_fit_output);
+        compress_dxt1_cluster_fit(input_colors, colors, weights, count, color_weights, three_color_mode, &cluster_fit_output);
 
         float cluster_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &cluster_fit_output);
         

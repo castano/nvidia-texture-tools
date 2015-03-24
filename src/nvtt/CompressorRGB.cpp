@@ -33,6 +33,7 @@
 #include "nvmath/Color.h"
 #include "nvmath/Half.h"
 #include "nvmath/ftoi.h"
+#include "nvmath/Vector.inl"
 
 #include "nvcore/Debug.h"
 
@@ -156,6 +157,164 @@ namespace
         uint M = F.field.mantissa >> (23 - 5);
 
         return (E << 5) | M;
+    }
+
+
+    // IC: Inf/NaN and denormal handling based on DirectXMath.
+    static float fromFloat11(uint u) {
+        // 5 bit exponent
+        // 6 bit mantissa
+        
+        uint E = (u >> 6) & 0x1F;
+        uint M = u & 0x3F;
+
+        Float754 F;
+        F.field.negative = 0;
+
+        if (E == 0x1f) { // INF or NAN.
+            E = 0xFF;
+        }
+        else {
+            if (E != 0) {
+                F.field.biasedexponent = E + 127 - 15;
+                F.field.mantissa = M << (23 - 6);
+            }
+            else if (M != 0) {
+                E = 1;
+                do {
+                    E--;
+                    M <<= 1;
+                } while((M & 0x40) == 0);
+
+                M &= 0x3F;
+            }
+        }
+
+        F.field.biasedexponent = 0xFF;
+        F.field.mantissa = M << (23 - 6);
+        
+
+#if 0
+        // X Channel (6-bit mantissa)
+        Mantissa = pSource->xm;
+
+        if ( pSource->xe == 0x1f ) // INF or NAN
+        {
+            Result[0] = 0x7f800000 | (pSource->xm << 17);
+        }
+        else
+        {
+            if ( pSource->xe != 0 ) // The value is normalized
+            {
+                Exponent = pSource->xe;
+            }
+            else if (Mantissa != 0) // The value is denormalized
+            {
+                // Normalize the value in the resulting float
+                Exponent = 1;
+        
+                do
+                {
+                    Exponent--;
+                    Mantissa <<= 1;
+                } while ((Mantissa & 0x40) == 0);
+        
+                Mantissa &= 0x3F;
+            }
+            else // The value is zero
+            {
+                Exponent = (uint32_t)-112;
+            }
+    
+            Result[0] = ((Exponent + 112) << 23) | (Mantissa << 17);
+        }
+    }
+#endif
+    
+    }
+
+    // https://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt
+    Float3SE toFloat3SE(float r, float g, float b)
+    {
+        const int N = 9;                    // Mantissa bits.
+        const int E = 5;                    // Exponent bits.
+        const int Emax = (1 << E) - 1;      // 31
+        const int B = (1 << (E-1)) - 1;     // 15
+        const float sharedexp_max = float((1 << N) - 1) / (1 << N) * (1 << (Emax-B));   // 65408
+
+        // Clamp color components.
+        r = max(0.0f, min(sharedexp_max, r));
+        g = max(0.0f, min(sharedexp_max, g));
+        b = max(0.0f, min(sharedexp_max, b));
+
+        // Get max component.
+        float max_c = max3(r, g, b);
+
+        // Compute shared exponent.
+        int exp_shared_p = max(-B-1, ftoi_floor(log2f(max_c))) + 1 + B;
+
+        int max_s = ftoi_round(max_c / (1 << (exp_shared_p - B - N)));
+
+        int exp_shared = exp_shared_p;
+        if (max_s == (1 << N)) exp_shared++;
+
+        Float3SE v;
+        v.e = exp_shared;
+
+        // Compute mantissas.
+        v.xm = ftoi_round(r / (1 << (exp_shared - B - N)));
+        v.ym = ftoi_round(g / (1 << (exp_shared - B - N)));
+        v.zm = ftoi_round(b / (1 << (exp_shared - B - N)));
+
+        return v;
+    }
+
+    Vector3 fromFloat3SE(Float3SE v) {
+        Float754 f;
+        f.raw = 0x33800000 + (v.e << 23);
+        float scale = f.value;
+        return scale * Vector3(float(v.xm), float(v.ym), float(v.zm));
+    }
+
+    // These are based on: http://www.graphics.cornell.edu/~bjw/rgbe/rgbe.c
+    uint toRGBE(float r, float g, float b)
+    {
+        float v = max3(r, g, b);
+
+        uint rgbe;
+
+        if (v < 1e-32) {
+            rgbe = 0;
+        }
+        else {
+            int e;
+            float scale = frexpf(v, &e) * 256.0f / v;
+            //Float754 f;
+            //f.value = v;
+            //float scale = f.field.biasedexponent * 256.0f / v;
+            //e = f.field.biasedexponent - 127
+
+            rgbe |= U8(ftoi_round(r * scale)) << 0;
+            rgbe |= U8(ftoi_round(g * scale)) << 8;
+            rgbe |= U8(ftoi_round(b * scale)) << 16;
+            rgbe |= U8(e + 128) << 24;
+        }
+
+        return rgbe;
+    }
+
+    Vector3 fromRGBE(uint rgbe) {
+        uint r = (rgbe >> 0) & 0xFF;
+        uint g = (rgbe >> 8) & 0xFF;
+        uint b = (rgbe >> 16) & 0xFF;
+        uint e = (rgbe >> 24);
+
+        if (e != 0) {
+            float scale = ldexpf(1.0f, e-(int)(128+8));             // +8 to divide by 256. @@ Shouldn't we divide by 255 instead?
+            return scale * Vector3(float(r), float(g), float(b));
+        }
+        
+        return Vector3(0);
     }
 
 
@@ -347,6 +506,20 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                     else if (asize == 11) stream.putFloat11(a);
                     else if (asize == 10) stream.putFloat10(a);
                     else stream.putBits(0, asize);
+                }
+                else if (compressionOptions.pixelType == nvtt::PixelType_SharedExp)
+                {
+                    if (rsize == 9 && gsize == 9 && bsize == 9 && asize == 5) {
+                        Float3SE v = toFloat3SE(r, g, b);
+                        stream.putBits(v.v, 32);
+                    }
+                    else if (rsize == 8 && gsize == 8 && bsize == 8 && asize == 8) {
+                        // @@ 
+                    }
+                    else {
+                        // @@ Not supported. Filling with zeros.
+                        stream.putBits(0, bitCount);
+                    }
                 }
                 else
                 {

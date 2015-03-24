@@ -9,6 +9,12 @@
     #include <unistd.h> // usleep
 #endif
 
+#if NV_USE_TELEMETRY
+#include <telemetry.h>
+extern HTELEMETRY tmContext;
+#endif
+
+
 using namespace nv;
 
 struct Thread::Private
@@ -21,6 +27,7 @@ struct Thread::Private
 
     ThreadFunc * func;
     void * arg;
+    const char * name;
 };
 
 
@@ -31,6 +38,39 @@ unsigned long __stdcall threadFunc(void * arg) {
     thread->func(thread->arg);
     return 0;
 }
+
+// SetThreadName implementation from msdn:
+// http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
+
+const DWORD MS_VC_EXCEPTION=0x406D1388;
+
+#pragma pack(push,8)
+typedef struct tagTHREADNAME_INFO
+{
+    DWORD dwType; // Must be 0x1000.
+    LPCSTR szName; // Pointer to name (in user addr space).
+    DWORD dwThreadID; // Thread ID (-1=caller thread).
+    DWORD dwFlags; // Reserved for future use, must be zero.
+} THREADNAME_INFO;
+#pragma pack(pop)
+
+static void setThreadName(DWORD dwThreadID, const char* threadName)
+{
+    THREADNAME_INFO info;
+    info.dwType = 0x1000;
+    info.szName = threadName;
+    info.dwThreadID = dwThreadID;
+    info.dwFlags = 0;
+
+    __try
+    {
+        RaiseException( MS_VC_EXCEPTION, 0, sizeof(info)/sizeof(ULONG_PTR), (ULONG_PTR*)&info );
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER)
+    {
+    }
+}
+
 
 #elif NV_OS_USE_PTHREAD
 
@@ -46,6 +86,13 @@ extern "C" void * threadFunc(void * arg) {
 Thread::Thread() : p(new Private)
 {
     p->thread = 0;
+    p->name = NULL;
+}
+
+Thread::Thread(const char * const name) : p(new Private)
+{
+    p->thread = 0;
+    p->name = name;
 }
 
 Thread::~Thread()
@@ -59,9 +106,20 @@ void Thread::start(ThreadFunc * func, void * arg)
     p->arg = arg;
 
 #if NV_OS_WIN32
-    p->thread = CreateThread(NULL, 0, threadFunc, p.ptr(), 0, NULL);
+    DWORD threadId;
+    p->thread = CreateThread(NULL, 0, threadFunc, p.ptr(), 0, &threadId);
     //p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, p.ptr(), 0, NULL);     // @@ So that we can call CRT functions...
     nvDebugCheck(p->thread != NULL);
+    setThreadName(threadId, p->name);
+#if NV_USE_TELEMETRY
+    tmThreadName(tmContext, threadId, p->name);
+#endif
+#elif NV_OS_ORBIS
+    int ret = scePthreadCreate(&p->thread, NULL, threadFunc, p.ptr(), p->name ? p->name : "nv::Thread");
+    nvDebugCheck(ret == 0);
+	// use any non-system core
+	scePthreadSetaffinity(p->thread, 0x3F);
+    scePthreadSetprio(p->thread, (SCE_KERNEL_PRIO_FIFO_DEFAULT + SCE_KERNEL_PRIO_FIFO_HIGHEST) / 2);
 #elif NV_OS_USE_PTHREAD
     int result = pthread_create(&p->thread, NULL, threadFunc, p.ptr());
     nvDebugCheck(result == 0);

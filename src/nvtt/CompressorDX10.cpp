@@ -85,6 +85,7 @@ void ProductionCompressorBC5::compressBlock(ColorBlock & src, nvtt::AlphaMode al
 }
 
 
+#if 0
 void ProductionCompressorBC5_Luma::compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output)
 {
     BlockATI2 * block = new(output) BlockATI2;
@@ -118,3 +119,4 @@ void ProductionCompressorBC5_Luma::compressBlock(ColorSet & set, nvtt::AlphaMode
     OptimalCompress::compressDXT5A(tmp, &block->y);
    
 }
+#endif // 0

@@ -31,6 +31,7 @@
 #include "nvcore/Utils.h" // max
 #include "nvcore/StdStream.h"
 #include "nvmath/Vector.inl"
+#include "nvmath/ftoi.h"
 
 #include <string.h> // memset
 
@@ -1395,20 +1396,20 @@ void DirectDrawSurface::readBlock(ColorBlock * rgba)
     {
         BlockBC6 block;
         *stream << block;
-        ColorSet set;
-        block.decodeBlock(&set);
+        Vector3 colors[16];
+        block.decodeBlock(colors);
 
         // Clamp to [0, 1] and round to 8-bit
         for (int y = 0; y < 4; ++y)
         {
             for (int x = 0; x < 4; ++x)
             {
-                Vector4 px = set.colors[y*4 + x];
+                Vector3 px = colors[y*4 + x];
                 rgba->color(x, y).setRGBA(
-                                    uint8(clamp(px.x, 0.0f, 1.0f) * 255.0f + 0.5f),
-                                    uint8(clamp(px.y, 0.0f, 1.0f) * 255.0f + 0.5f),
-                                    uint8(clamp(px.z, 0.0f, 1.0f) * 255.0f + 0.5f),
-                                    uint8(clamp(px.w, 0.0f, 1.0f) * 255.0f + 0.5f));
+                                    ftoi_round(clamp(px.x, 0.0f, 1.0f) * 255.0f),
+                                    ftoi_round(clamp(px.y, 0.0f, 1.0f) * 255.0f),
+                                    ftoi_round(clamp(px.z, 0.0f, 1.0f) * 255.0f),
+                                    0xFF);
             }
         }
     }

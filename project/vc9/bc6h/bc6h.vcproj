@@ -267,39 +267,39 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\bits.h"
+			RelativePath="..\..\..\src\bc6h\bits.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\shapes_two.h"
+			RelativePath="..\..\..\src\bc6h\shapes_two.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\tile.h"
+			RelativePath="..\..\..\src\bc6h\tile.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\utils.cpp"
+			RelativePath="..\..\..\src\bc6h\zoh.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\utils.h"
+			RelativePath="..\..\..\src\bc6h\zoh.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\zoh.cpp"
+			RelativePath="..\..\..\src\bc6h\zoh_utils.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\zoh.h"
+			RelativePath="..\..\..\src\bc6h\zoh_utils.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\zohone.cpp"
+			RelativePath="..\..\..\src\bc6h\zohone.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc6h\zohtwo.cpp"
+			RelativePath="..\..\..\src\bc6h\zohtwo.cpp"
 			>
 		</File>
 	</Files>

@@ -29,6 +29,8 @@
 
 #include <nvimage/ImageIO.h>
 
+#include <nvtt/nvtt.h>
+
 #include "cmdline.h"
 
 #include <time.h> // clock
@@ -42,6 +44,8 @@ int main(int argc, char *argv[])
 	bool mipmaps = false;
 	bool faces = false;
 	bool savePNG = false;
+    bool rgbm = false;
+    bool histogram = true;
 
 	nv::Path input;
 	nv::Path output;
@@ -57,10 +61,18 @@ int main(int argc, char *argv[])
 		{
 			mipmaps = true;
 		}
+		else if (strcmp("-rgbm", argv[i]) == 0)
+		{
+			rgbm = true;
+		}
 		else if (strcmp("-faces", argv[i]) == 0)
 		{
 			faces = true;
 		}
+		else if (strcmp("-histogram", argv[i]) == 0)
+		{
+            histogram = true;
+        }
 		else if (strcmp("-format", argv[i]) == 0)
 		{
 			if (i+1 == argc) break;
@@ -109,90 +121,125 @@ int main(int argc, char *argv[])
 		printf("Note: the .tga or .png extension is forced on outfile\n\n");
 
 		printf("Input options:\n");
-		printf("  -forcenormal    \tThe input image is a normal map.\n");
-		printf("  -mipmaps        \tDecompress all mipmaps.\n");
-		printf("  -faces          \tDecompress all faces.\n");
-		printf("  -format <format>\tOutput format ('tga' or 'png').\n");
+		printf("  -forcenormal      The input image is a normal map.\n");
+		printf("  -mipmaps          Decompress all mipmaps.\n");
+		printf("  -faces            Decompress all faces.\n");
+        printf("  -histogram        Output histogram.\n");
+		printf("  -format <format>  Output format ('tga' or 'png').\n");
 
  		return 1;
  	}
 
-	// Load surface.
-	// !!! DirectDrawSurface API doesn't support float images, so BC6 will be converted to 8-bit on load.
-	// Should use nvtt::Surface instead.
-	nv::DirectDrawSurface dds(input.str());
-	if (!dds.isValid())
-	{
-		fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
-		return 1;
-	}
 
-	if (!dds.isSupported() || dds.isTexture3D())
-	{
-		fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
-		return 1;
-	}
-	
-	uint faceCount;
-	if (dds.isTexture2D())
-	{
-		faceCount = 1;
-	}
-	else
-	{
-		nvCheck(dds.isTextureCube());
-		faceCount = 6;
-	}
-	
-	uint mipmapCount = dds.mipmapCount();
-	
-	clock_t start = clock();
- 
-	// apply arguments
-	if (forcenormal)
-	{
-		dds.setNormalFlag(true);
-	}
-	if (!faces)
-	{
-		faceCount = 1;
-	}
-	if (!mipmaps)
-	{
-		mipmapCount = 1;
-	}
+    if (histogram) {
+        nvtt::Surface img;
+        if (!img.load(input.str())) {
+		    fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
+		    return 1;
+        }
 
-	nv::Image mipmap;	
-	nv::Path name;
+        float exposure = 2.2f;
+        float scale = 1.0f / exposure;
+        img.scaleBias(0, scale, 0);
+        img.scaleBias(1, scale, 0);
+        img.scaleBias(2, scale, 0);
 
-	// strip extension, we force the tga extension
-	output.stripExtension();
+        //img.toneMap(nvtt::ToneMapper_Reindhart, NULL);
+        //img.toSrgb();
+        img.toGamma(2.2f);
 
-	// extract faces and mipmaps
-	for (uint f = 0; f < faceCount; f++)
-	{
-		for (uint m = 0; m < mipmapCount; m++)
-		{
-			dds.mipmap(&mipmap, f, m);
-	
-			// set output filename, if we are doing faces and/or mipmaps
-			name.copy(output);
-			if (faces) name.appendFormat("_face%d", f);
-			if (mipmaps) name.appendFormat("_mipmap%d", m);
-			name.append(savePNG ? ".png" : ".tga");
-			
-			nv::StdOutputStream stream(name.str());
-			if (stream.isError()) {
-				fprintf(stderr, "Error opening '%s' for writting\n", name.str());
-				return 1;
-			}
-			
-			nv::ImageIO::save(name.str(), stream, &mipmap);
-		}
-	}
+        nvtt::Surface hist = nvtt::histogram(img, 3*512, 128);
 
-	clock_t end = clock();
-	printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+        // Resize for pretier histograms.
+        hist.resize(512, 128, 1, nvtt::ResizeFilter_Box);
+
+        nv::Path name;
+        name.copy(output);
+        name.stripExtension();
+        name.append(".histogram");
+        name.append(savePNG ? ".png" : ".tga");
+
+        hist.save(name.str());
+    }
+    else {
+
+	    // Load surface.
+	    // !!! DirectDrawSurface API doesn't support float images, so BC6 will be converted to 8-bit on load.
+	    // Should use nvtt::Surface instead.
+	    nv::DirectDrawSurface dds(input.str());
+	    if (!dds.isValid())
+	    {
+		    fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
+		    return 1;
+	    }
+
+	    if (!dds.isSupported() || dds.isTexture3D())
+	    {
+		    fprintf(stderr, "The file '%s' is not a supported DDS file.\n", input.str());
+		    return 1;
+	    }
+    	
+	    uint faceCount;
+	    if (dds.isTexture2D())
+	    {
+		    faceCount = 1;
+	    }
+	    else
+	    {
+		    nvCheck(dds.isTextureCube());
+		    faceCount = 6;
+	    }
+    	
+	    uint mipmapCount = dds.mipmapCount();
+    	
+	    clock_t start = clock();
+     
+	    // apply arguments
+	    if (forcenormal)
+	    {
+		    dds.setNormalFlag(true);
+	    }
+	    if (!faces)
+	    {
+		    faceCount = 1;
+	    }
+	    if (!mipmaps)
+	    {
+		    mipmapCount = 1;
+	    }
+
+	    nv::Image mipmap;	
+	    nv::Path name;
+
+	    // strip extension, we force the tga extension
+	    output.stripExtension();
+
+	    // extract faces and mipmaps
+	    for (uint f = 0; f < faceCount; f++)
+	    {
+		    for (uint m = 0; m < mipmapCount; m++)
+		    {
+			    dds.mipmap(&mipmap, f, m);
+    	
+			    // set output filename, if we are doing faces and/or mipmaps
+			    name.copy(output);
+			    if (faces) name.appendFormat("_face%d", f);
+			    if (mipmaps) name.appendFormat("_mipmap%d", m);
+			    name.append(savePNG ? ".png" : ".tga");
+    			
+			    nv::StdOutputStream stream(name.str());
+			    if (stream.isError()) {
+				    fprintf(stderr, "Error opening '%s' for writting\n", name.str());
+				    return 1;
+			    }
+    			
+			    nv::ImageIO::save(name.str(), stream, &mipmap);
+		    }
+	    }
+
+	    clock_t end = clock();
+	    printf("\rtime taken: %.3f seconds\n", float(end-start) / CLOCKS_PER_SEC);
+    }
 	
 	return 0;
 }

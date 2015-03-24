@@ -65,9 +65,9 @@ namespace nv
 
     // Normal CPU compressors.
 #if 1
-    struct CompressorDXT1 : public ColorSetCompressor
+    struct CompressorDXT1 : public FloatColorCompressor
     {
-        virtual void compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual void compressBlock(const Vector4 colors[16], const float weights[16], const nvtt::CompressionOptions::Private & compressionOptions, void * output);
         virtual uint blockSize() const { return 8; }
     };
 #else
@@ -108,9 +108,9 @@ namespace nv
         virtual uint blockSize() const { return 16; }
     };
 
-    struct CompressorBC3_RGBM : public ColorSetCompressor
+    struct CompressorBC3_RGBM : public FloatColorCompressor
     {
-        virtual void compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output);
+        virtual void compressBlock(const Vector4 colors[16], const float weights[16], const nvtt::CompressionOptions::Private & compressionOptions, void * output);
         virtual uint blockSize() const { return 16; }
     };
 

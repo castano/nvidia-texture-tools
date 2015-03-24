@@ -90,6 +90,8 @@ namespace nv
     void shutWorkers();
     void setWorkerFunction(void * func);
 
+    uint threadId();
+
 } // nv namespace
 
 

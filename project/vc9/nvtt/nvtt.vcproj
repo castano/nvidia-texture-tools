@@ -939,6 +939,22 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDXT1.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDXT1.h"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDXT5_RGBM.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvtt\CompressorDXT5_RGBM.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvtt\CompressorRGB.cpp"
 			>
 		</File>

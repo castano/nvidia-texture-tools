@@ -23,12 +23,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #include "nvtt.h"
+#include "nvcore/nvcore.h"
 
 using namespace nvtt;
 
-/// Return a string for the given error.
+// Return a string for the given error.
 const char * nvtt::errorString(Error e)
 {
+    NV_COMPILER_CHECK(Error_Count == 7);
     switch(e)
     {
         case Error_Unknown:
@@ -50,11 +52,8 @@ const char * nvtt::errorString(Error e)
     return "Invalid error";
 }
 
-/// Return NVTT version.
+// Return NVTT version.
 unsigned int nvtt::version()
 {
     return NVTT_VERSION;
 }
-
-
-

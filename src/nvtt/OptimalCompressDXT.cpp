@@ -614,7 +614,7 @@ void OptimalCompress::compressDXT5A(const ColorBlock & src, AlphaBlockDXT5 * dst
     compressDXT5A(tmp, dst);
 }
 
-
+#if 0
 #include "nvmath/Vector.inl"
 #include "nvmath/ftoi.h"
 const float threshold = 0.15f;
@@ -809,3 +809,4 @@ void OptimalCompress::compressDXT5A_RGBM(const ColorSet & src, const ColorBlock 
 
     computeAlphaIndices_RGBM(src, RGB, dst);
 }
+#endif // 0

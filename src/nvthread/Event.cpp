@@ -60,7 +60,7 @@ void Event::post() {
     
     //ACS: move this after the unlock?
     if(m->wait_count>0) {
-    pthread_cond_signal(&m->pt_cond);
+        pthread_cond_signal(&m->pt_cond);
     }
     
     pthread_mutex_unlock(&m->pt_mutex);
@@ -71,7 +71,7 @@ void Event::wait() {
     
     while(m->count==0) {
         m->wait_count++;
-    pthread_cond_wait(&m->pt_cond, &m->pt_mutex);
+        pthread_cond_wait(&m->pt_cond, &m->pt_mutex);
         m->wait_count--;
     }
     m->count--;

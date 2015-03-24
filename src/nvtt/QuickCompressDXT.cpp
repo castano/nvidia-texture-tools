@@ -227,6 +227,7 @@ inline static uint computeIndices4(const Vector3 block[16], Vector3::Arg maxColo
 }
 
 // maxColor and minColor are expected to be in the same range as the color set.
+/*
 inline static uint computeIndices4(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
@@ -290,7 +291,7 @@ inline static uint computeIndices4(const ColorSet & set, Vector3::Arg maxColor, 
 	}
 
 	return indices;
-}
+}*/
 
 inline static float evaluatePaletteError4(const Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
 {
@@ -341,7 +342,7 @@ inline static float evaluatePaletteError3(const Vector3 block[16], Vector3::Arg 
 
 
 // maxColor and minColor are expected to be in the same range as the color set.
-inline static uint computeIndices3(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
+/*inline static uint computeIndices3(const ColorSet & set, Vector3::Arg maxColor, Vector3::Arg minColor)
 {
 	Vector3 palette[4];
 	palette[0] = minColor;
@@ -372,7 +373,7 @@ inline static uint computeIndices3(const ColorSet & set, Vector3::Arg maxColor, 
 	}
 
 	return indices;
-}
+}*/
 
 inline static uint computeIndices3(const Vector3 block[16], Vector3::Arg maxColor, Vector3::Arg minColor)
 {
@@ -827,7 +828,7 @@ void QuickCompress::compressDXT5(const ColorBlock & rgba, BlockDXT5 * dxtBlock, 
 
 
 
-void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
+/*void QuickCompress::outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block)
 {
     Vector3 minColor = start * 255.0f;
     Vector3 maxColor = end * 255.0f;
@@ -866,4 +867,4 @@ void QuickCompress::outputBlock3(const ColorSet & set, const Vector3 & start, co
 
     //optimizeEndPoints3(set, block);
 }
-
+*/

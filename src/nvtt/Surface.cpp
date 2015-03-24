@@ -37,6 +37,7 @@
 #include "nvimage/ColorBlock.h"
 #include "nvimage/PixelFormat.h"
 #include "nvimage/ErrorMetric.h"
+#include "nvimage/DirectDrawSurface.h"
 
 #include <float.h>
 #include <string.h> // memset, memcpy
@@ -85,7 +86,7 @@ namespace
         else if (format == Format_BC4) {
             return 8;
         }
-        else if (format == Format_BC5 || format == Format_BC5_Luma) {
+        else if (format == Format_BC5 /*|| format == Format_BC5_Luma*/) {
             return 16;
         }
         else if (format == Format_CTX1) {
@@ -469,11 +470,66 @@ void Surface::range(int channel, float * rangeMin, float * rangeMax, int alpha_c
     *rangeMax = range.y;
 }
 
-
 bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
 {
     AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
     if (img == NULL) {
+        // Try loading as DDS.
+        if (nv::strEqual(nv::Path::extension(fileName), ".dds")) {
+            nv::DirectDrawSurface dds;
+            if (dds.load(fileName)) {
+                if (dds.header.isBlockFormat()) {
+                    int w = dds.surfaceWidth(0);
+                    int h = dds.surfaceHeight(0);
+                    uint size = dds.surfaceSize(0);
+
+                    void * data = malloc(size);
+                    dds.readSurface(0, 0, data, size);
+
+                    // @@ Handle all formats! @@ Get nvtt format from dds.surfaceFormat() ?
+
+                    if (dds.header.hasDX10Header()) {
+                        if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16) {
+                            this->setImage2D(nvtt::Format_BC6, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else {
+                            // @@
+                            nvCheck(false);
+                        }
+                    }
+                    else {
+                        uint fourcc = dds.header.pf.fourcc;
+                        if (fourcc == FOURCC_DXT1) {
+                            this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else if (fourcc == FOURCC_DXT5) {
+                            this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else {
+                            // @@ 
+                            nvCheck(false);
+                        }
+                    }
+
+                    free(data);
+                }
+                else {
+                    Image img;
+                    dds.mipmap(&img, /*face=*/0, /*mipmap=*/0);
+
+                    int w = img.width();
+                    int h = img.height();
+                    int d = img.depth();
+
+                    // @@ Add support for all pixel formats.
+
+                    this->setImage(nvtt::InputFormat_BGRA_8UB, w, h, d, img.pixels());
+                }
+
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -768,22 +824,22 @@ bool Surface::setImage2D(Format format, Decoder decoder, int w, int h, const voi
 			{
 				for (int x = 0; x < bw; x++)
 				{
-					ColorSet colors;
-					const BlockBC6 * block = (const BlockBC6 *)ptr;
-					block->decodeBlock(&colors);
+                    Vector3 colors[16];
+                    const BlockBC6 * block = (const BlockBC6 *)ptr;
+					block->decodeBlock(colors);
 
 					for (int yy = 0; yy < 4; yy++)
 					{
 						for (int xx = 0; xx < 4; xx++)
 						{
-							Vector4 rgba = colors.colors[yy*4 + xx];
+							Vector3 rgb = colors[yy*4 + xx];
 
 							if (x * 4 + xx < w && y * 4 + yy < h)
 							{
-								m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = rgba.x;
-								m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = rgba.y;
-								m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = rgba.z;
-								m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = rgba.w;
+								m->image->pixel(0, x*4 + xx, y*4 + yy, 0) = rgb.x;
+								m->image->pixel(1, x*4 + xx, y*4 + yy, 0) = rgb.y;
+								m->image->pixel(2, x*4 + xx, y*4 + yy, 0) = rgb.z;
+								m->image->pixel(3, x*4 + xx, y*4 + yy, 0) = 1.0f;
 							}
 						}
 					}
@@ -1579,25 +1635,32 @@ void Surface::toRGBM(float range/*= 1*/, float threshold/*= 0.25*/)
         float bestM;
         float bestError = FLT_MAX;
 
+        //float range = 15;  // 4 bit quantization.
+        //int irange = 16;
+        float range = 255;  // 8 bit quantization.
+        int irange = 256;
+
+
         float M = max(max(R, G), max(B, threshold));
-        int iM = ftoi_ceil((M - threshold) / (1 - threshold) * 255.0f);
+        int iM = ftoi_ceil((M - threshold) / (1 - threshold) * range);
 
         //for (int m = 0; m < 256; m++) {                           // If we use the entire search space, interpolation errors are very likely to occur.
-        for (int m = max(iM-16, 0); m < min(iM+16, 256); m++) {     // If we constrain the search space, these errors disappear.
-            float fm = float(m) / 255.0f;
+        for (int m = max(iM-16, 0); m < min(iM+16, irange); m++) {     // If we constrain the search space, these errors disappear.
+        //for (int m = max(iM-4, 0); m < min(iM+4, irange); m++) {     // If we constrain the search space, these errors disappear.
+            float fm = float(m) / range;
 
             // Decode M
             float M = fm * (1 - threshold) + threshold;
 
             // Encode.
-            int ir = ftoi_round(255.0f * nv::saturate(R / M));
-            int ig = ftoi_round(255.0f * nv::saturate(G / M));
-            int ib = ftoi_round(255.0f * nv::saturate(B / M));
+            int ir = ftoi_round(range * nv::saturate(R / M));
+            int ig = ftoi_round(range * nv::saturate(G / M));
+            int ib = ftoi_round(range * nv::saturate(B / M));
 
             // Decode.
-            float fr = (float(ir) / 255.0f) * M;
-            float fg = (float(ig) / 255.0f) * M;
-            float fb = (float(ib) / 255.0f) * M;
+            float fr = (float(ir) / range) * M;
+            float fg = (float(ig) / range) * M;
+            float fb = (float(ib) / range) * M;
 
             // Measure error.
             float error = square(R-fr) + square(G-fg) + square(B-fb);
@@ -2961,3 +3024,189 @@ float nvtt::rmsToneMappedError(const Surface & reference, const Surface & img, f
     return nv::rmsColorError(r.m->image, i.m->image, reference.alphaMode() == nvtt::AlphaMode_Transparency);
 }
 
+
+Surface nvtt::histogram(const Surface & img, int width, int height)
+{
+    float min_color[3], max_color[3];
+    img.range(0, &min_color[0], &max_color[0]);
+    img.range(1, &min_color[1], &max_color[1]);
+    img.range(2, &min_color[2], &max_color[2]);
+
+    float minRange = nv::min3(min_color[0], min_color[1], min_color[2]);
+    float maxRange = nv::max3(max_color[0], max_color[1], max_color[2]);
+
+    if (maxRange > 16) maxRange = 16;
+
+    return histogram(img, /*minRange*/0, maxRange, width, height);
+}
+
+#include "nvcore/Array.inl"
+#include "nvmath/PackedFloat.h"
+#include <stdio.h>
+
+nvtt::Surface nvtt::histogram(const Surface & img, float minRange, float maxRange, int width, int height)
+{
+    nv::Array<Vector3> buckets;
+    buckets.resize(width, Vector3(0));
+
+    int w = img.width();
+    int h = img.height();
+    int d = img.depth();
+
+    const float * r = img.channel(0);
+    const float * g = img.channel(1);
+    const float * b = img.channel(2);
+    const float * a = img.channel(3);
+
+#if 0
+    for (int z = 0; z < d; z++)
+    for (int y = 0; y < h; y++)
+    for (int x = 0; x < w; x++)
+    {
+        int i = x + y * w + z * w * d;
+
+        float fr = (r[i] - minRange) / (maxRange - minRange);
+        float fg = (g[i] - minRange) / (maxRange - minRange);
+        float fb = (b[i] - minRange) / (maxRange - minRange);
+
+        int R = ftoi_round(fr * (width - 1));
+        int G = ftoi_round(fg * (width - 1));
+        int B = ftoi_round(fb * (width - 1));
+
+        R = nv::clamp(R, 0, width-1);
+        G = nv::clamp(G, 0, width-1);
+        B = nv::clamp(B, 0, width-1);
+        
+        // Alpha weighted histogram?
+        float A = nv::saturate(a[i]);
+
+        buckets[R].x += A;
+        buckets[G].y += A;
+        buckets[B].z += A;
+    }
+
+#elif 1
+    
+    float exposure = 0.22f;
+
+    //int E = 8, M = 23;    // float
+    int E = 5, M = 10;    // half
+    //int E = 5, M = 9;     // rgb9e5
+    //int E = 5, M = 6;     // r11g11b10
+
+    for (int e = 0; e < (1 << E); e++)
+    {
+        /*if (e == 0x1f) {    // Skip NaN and inf.
+            continue;
+        }*/
+        if (e == 0) {       // Skip denormals.
+            continue;
+        }
+
+        for (int m = 0; m < (1 << M); m++)
+        {
+            Float754 F;
+            F.field.negative = 0;
+            F.field.biasedexponent = e + 128 - (1 << (E - 1)) - 1;  // E=5 -> 128 - 15
+            F.field.mantissa = m << (23 - M);
+
+            // value = (1 + mantissa) * 2^(e-15)
+
+            // @@ Handle denormals.
+
+            float fc = F.value;
+
+            // Tone mapping:
+            fc /= exposure;
+            //fc /= (fc + 1);             // Reindhart tone mapping.
+            fc = 1 - exp2f(-fc);        // Halo2 tone mapping.
+
+            // Gamma space conversion:
+            //fc = sqrtf(fc);
+            fc = powf(fc, 1.0f/2.2f);
+            //fc = toSrgb(fc);
+
+            //fc = (fc - 0.5f) * 8; // zoom in
+            //if (fc < 0 || fc > 1) continue;
+
+            //printf("%f\n", fc);
+
+            int c = ftoi_round(fc * (width - 1) / 1);
+            c = clamp(c, 0, width - 1);
+
+            buckets[c] += Vector3(1);
+        }
+    }
+
+#else
+
+    float exposure = 0.22f;
+
+    int R = 8, M = 8;
+    //int R = 6, M = 8;
+    //int R = 9, M = 5;
+
+    float threshold = 1.0f / (1 << M);
+    //float threshold = 0.25f;
+
+    for (int r = 0; r < (1 << R); r++)
+    {
+        float fr = float(r) / ((1 << R) - 1);
+
+        for (int m = 0; m < (1 << M); m++)
+        {
+            float fm = float(m) / ((1 << M) - 1);
+            float M = fm * (1 - threshold) + threshold;
+
+            float fc = fr * M;
+
+            fc /= exposure;
+            
+            //fc /= (fc + 1);             // Reindhart tone mapping.
+            fc = 1 - exp2f(-fc);        // Halo2 tone mapping.
+
+            // Gamma space conversion:
+            //fc = sqrtf(fc);
+            fc = powf(fc, 1.0f/2.2f);
+            //fc = toSrgb(fc);
+
+            //fc = (fc - 0.5f) * 8; // zoom in
+            //if (fc < 0 || fc > 1) continue;
+
+            int c = ftoi_round(fc * (width - 1));
+            c = clamp(c, 0, width - 1);
+
+            buckets[c] += Vector3(1);
+        }
+    }
+
+    //buckets[0] = Vector3(1);    // Hack, for prettier histograms.
+
+#endif
+
+
+    // Compute largerst height.
+    float maxh = 0;
+    for (int i = 0; i < width; i++) {
+        maxh = nv::max(maxh, nv::max3(buckets[i].x, buckets[i].y, buckets[i].z));
+    }
+
+    printf("maxh = %f\n", maxh);
+    //maxh = 80;
+    maxh = 256;
+
+    // Draw histogram.
+    nvtt::Surface hist;
+    hist.setImage(width, height, 1);
+    
+    for (int y = 0; y < height; y++) {
+        float fy = 1.0f - float(y) / (height - 1);
+        for (int x = 0; x < width; x++) {
+            hist.m->image->pixel(0, x, y, /*z=*/0) = fy < (buckets[x].x / maxh);
+            hist.m->image->pixel(1, x, y, /*z=*/0) = fy < (buckets[x].y / maxh);
+            hist.m->image->pixel(2, x, y, /*z=*/0) = fy < (buckets[x].z / maxh);
+        }
+    }
+
+    return hist;
+}

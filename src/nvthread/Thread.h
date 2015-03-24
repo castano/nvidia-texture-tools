@@ -17,6 +17,7 @@ namespace nv
         NV_FORBID_COPY(Thread);
     public:
         Thread();
+        Thread(const char * const name);
         ~Thread();
 
         void start(ThreadFunc * func, void * arg);

@@ -72,3 +72,10 @@ uint nv::hardwareThreadCount() {
 #endif
 }
 
+uint nv::threadId() {
+#if NV_OS_WIN32
+    return GetCurrentThreadId();
+#else
+    return 0;   // @@ 
+#endif
+}

@@ -71,7 +71,7 @@ namespace nvtt
     struct CubeSurface;
 
 
-    // Supported compression formats.
+    // Supported block-compression formats.
     // @@ I wish I had distinguished between "formats" and compressors.
     // That is:
     // - 'DXT1' is a format 'DXT1a' and 'DXT1n' are DXT1 compressors.
@@ -79,7 +79,7 @@ namespace nvtt
     // Having multiple enums for the same ids only creates confusion. Clean this up.
     enum Format
     {
-        // No compression.
+        // No block-compression (linear).
         Format_RGB,
         Format_RGBA = Format_RGB,
 
@@ -105,7 +105,7 @@ namespace nvtt
         Format_BC6,     // Not supported yet.
         Format_BC7,     // Not supported yet.
 
-        Format_BC5_Luma,    // Two DXT alpha blocks encoding a single float.
+        //Format_BC5_Luma,    // Two DXT alpha blocks encoding a single float.
         Format_BC3_RGBM,    // 
 
         Format_Count
@@ -120,6 +120,7 @@ namespace nvtt
         PixelType_SignedInt = 3,    // Not supported yet.
         PixelType_Float = 4,
         PixelType_UnsignedFloat = 5,
+        PixelType_SharedExp = 6,    // Shared exponent.
     };
 
     // Quality modes.
@@ -309,7 +310,7 @@ namespace nvtt
         // Output data. Compressed data is output as soon as it's generated to minimize memory allocations.
         virtual bool writeData(const void * data, int size) = 0;
 
-        // Indicate the end of a the compressed image. (New in NVTT 2.1)
+        // Indicate the end of the compressed image. (New in NVTT 2.1)
         virtual void endImage() = 0;
     };
 
@@ -323,6 +324,7 @@ namespace nvtt
         Error_FileOpen,
         Error_FileWrite,
         Error_UnsupportedOutputFormat,
+        Error_Count
     };
 
     // Error handler.
@@ -659,6 +661,10 @@ namespace nvtt
     NVTT_API Surface diff(const Surface & reference, const Surface & img, float scale);
 
     NVTT_API float rmsToneMappedError(const Surface & reference, const Surface & img, float exposure);
+
+
+    NVTT_API Surface histogram(const Surface & img, int width, int height);
+    NVTT_API Surface histogram(const Surface & img, float minRange, float maxRange, int width, int height);
 
 } // nvtt namespace
 

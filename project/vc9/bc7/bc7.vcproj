@@ -267,71 +267,71 @@
 	</References>
 	<Files>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl.h"
+			RelativePath="..\..\..\src\bc7\avpcl.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode0.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode0.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode1.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode1.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode2.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode2.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode3.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode3.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode4.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode4.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode5.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode5.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode6.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode6.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\avpcl_mode7.cpp"
+			RelativePath="..\..\..\src\bc7\avpcl_mode7.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\bits.h"
+			RelativePath="..\..\..\src\bc7\avpcl_utils.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\endpts.h"
+			RelativePath="..\..\..\src\bc7\avpcl_utils.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\shapes_three.h"
+			RelativePath="..\..\..\src\bc7\bits.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\shapes_two.h"
+			RelativePath="..\..\..\src\bc7\endpts.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\tile.h"
+			RelativePath="..\..\..\src\bc7\shapes_three.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\utils.cpp"
+			RelativePath="..\..\..\src\bc7\shapes_two.h"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvtt\bc7\utils.h"
+			RelativePath="..\..\..\src\bc7\tile.h"
 			>
 		</File>
 	</Files>

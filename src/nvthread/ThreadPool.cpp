@@ -14,7 +14,7 @@
 using namespace nv;
 
 #if PROTECT_THREAD_POOL 
-Mutex s_pool_mutex;
+Mutex s_pool_mutex("thread pool");
 #endif
 
 AutoPtr<ThreadPool> s_pool;

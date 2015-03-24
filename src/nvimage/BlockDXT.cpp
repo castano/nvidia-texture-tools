@@ -632,13 +632,12 @@ void BlockCTX1::setIndices(int * idx)
 
 
 /// Decode BC6 block.
-void BlockBC6::decodeBlock(ColorSet * set) const
+void BlockBC6::decodeBlock(Vector3 colors[16]) const
 {
 	ZOH::Tile tile(4, 4);
 	ZOH::decompress((const char *)data, tile);
 
-	// Convert ZOH's tile struct back to NVTT's, and convert half to float.
-	set->allocate(4, 4);
+	// Convert ZOH's tile struct to Vector3, and convert half to float.
 	for (uint y = 0; y < 4; ++y)
 	{
 		for (uint x = 0; x < 4; ++x)
@@ -646,13 +645,9 @@ void BlockBC6::decodeBlock(ColorSet * set) const
 			uint16 rHalf = ZOH::Tile::float2half(tile.data[y][x].x);
 			uint16 gHalf = ZOH::Tile::float2half(tile.data[y][x].y);
 			uint16 bHalf = ZOH::Tile::float2half(tile.data[y][x].z);
-			set->colors[y * 4 + x].x = to_float(rHalf);
-			set->colors[y * 4 + x].y = to_float(gHalf);
-			set->colors[y * 4 + x].z = to_float(bHalf);
-			set->colors[y * 4 + x].w = 1.0f;
-
-			// Set indices in case someone uses them
-			set->indices[y * 4 + x] = y * 4 + x;
+			colors[y * 4 + x].x = to_float(rHalf);
+			colors[y * 4 + x].y = to_float(gHalf);
+			colors[y * 4 + x].z = to_float(bHalf);
 		}
 	}
 }

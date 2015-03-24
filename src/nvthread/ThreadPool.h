@@ -12,7 +12,7 @@
 // The thread pool creates one worker thread for each physical core. 
 // The threads are idle waiting for their start events so that they do not consume any resources while inactive. 
 // The thread pool runs the same function in all worker threads, the idea is to use this as the foundation of a custom task scheduler.
-// When the thread pool starts, the main thread continues running, but the common use case is to inmmediately wait of the termination events of the worker threads.
+// When the thread pool starts, the main thread continues running, but the common use case is to inmmediately wait for the termination events of the worker threads.
 // @@ The start and wait methods could probably be merged.
 
 namespace nv {

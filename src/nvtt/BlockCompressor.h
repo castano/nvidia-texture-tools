@@ -30,8 +30,8 @@
 
 namespace nv
 {
-    struct ColorSet;
     struct ColorBlock;
+    class Vector4;
 
     struct ColorBlockCompressor : public CompressorInterface
     {
@@ -41,11 +41,11 @@ namespace nv
         virtual uint blockSize() const = 0;
     };
 
-    struct ColorSetCompressor : public CompressorInterface
+    struct FloatColorCompressor : public CompressorInterface
     {
         virtual void compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * rgba, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
 
-        virtual void compressBlock(ColorSet & set, nvtt::AlphaMode alphaMode, const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
+        virtual void compressBlock(const Vector4 colors[16], const float weights[16], const nvtt::CompressionOptions::Private & compressionOptions, void * output) = 0;
         virtual uint blockSize() const = 0;
     };
 

@@ -447,29 +447,38 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             {
                 const uint bitcount = compressionOptions.getBitCount();
 
-                if (bitcount == 16)
-                {
-                    if (compressionOptions.rsize == 16)
-                    {
-                        header.setDX10Format(56); // R16_UNORM
+                if (compressionOptions.pixelType == PixelType_Float) {
+                    if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16) {
+                        header.setDX10Format(DXGI_FORMAT_R16G16B16A16_FLOAT);
                     }
-                    else
-                    {
-                        // B5G6R5_UNORM
-                        // B5G5R5A1_UNORM
+                    else if (compressionOptions.rsize == 11 && compressionOptions.gsize == 11 && compressionOptions.bsize == 10 && compressionOptions.asize == 0) {
+                        header.setDX10Format(DXGI_FORMAT_R11G11B10_FLOAT);
+                    }
+                    else {
                         supported = false;
                     }
                 }
-                else if (bitcount == 32)
-                {
-                    // B8G8R8A8_UNORM
-                    // B8G8R8X8_UNORM
-                    // R8G8B8A8_UNORM
-                    // R10G10B10A2_UNORM
-                    supported = false;
-                }
                 else {
-                    supported = false;
+                    if (bitcount == 16) {
+                        if (compressionOptions.rsize == 16) {
+                            header.setDX10Format(DXGI_FORMAT_R16_UNORM);
+                        }
+                        else {
+                            // B5G6R5_UNORM
+                            // B5G5R5A1_UNORM
+                            supported = false;
+                        }
+                    }
+                    else if (bitcount == 32) {
+                        // B8G8R8A8_UNORM
+                        // B8G8R8X8_UNORM
+                        // R8G8B8A8_UNORM
+                        // R10G10B10A2_UNORM
+                        supported = false;
+                    }
+                    else {
+                        supported = false;
+                    }
                 }
             }
             else
@@ -492,7 +501,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                 else if (compressionOptions.format == Format_BC4) {
                     header.setDX10Format(DXGI_FORMAT_BC4_UNORM); // DXGI_FORMAT_BC4_SNORM ?
                 }
-                else if (compressionOptions.format == Format_BC5 || compressionOptions.format == Format_BC5_Luma) {
+                else if (compressionOptions.format == Format_BC5 /*|| compressionOptions.format == Format_BC5_Luma*/) {
                     header.setDX10Format(DXGI_FORMAT_BC5_UNORM); // DXGI_FORMAT_BC5_SNORM ?
                     if (isNormalMap) header.setNormalFlag(true);
                 }
@@ -605,7 +614,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                 else if (compressionOptions.format == Format_BC4) {
                     header.setFourCC('A', 'T', 'I', '1');
                 }
-                else if (compressionOptions.format == Format_BC5 || compressionOptions.format == Format_BC5_Luma) {
+                else if (compressionOptions.format == Format_BC5 /*|| compressionOptions.format == Format_BC5_Luma*/) {
                     header.setFourCC('A', 'T', 'I', '2');
                     if (isNormalMap) {
                         header.setNormalFlag(true);
@@ -773,10 +782,10 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     {
         return new CompressorBC7;
     }
-    else if (compressionOptions.format == Format_BC5_Luma)
+    /*else if (compressionOptions.format == Format_BC5_Luma)
     {
         return new ProductionCompressorBC5_Luma;
-    }
+    }*/
     else if (compressionOptions.format == Format_BC3_RGBM)
     {
         return new CompressorBC3_RGBM;

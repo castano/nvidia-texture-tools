@@ -61,10 +61,11 @@
 #   define NV_OS_IOS 1
 #elif defined POSH_OS_UNIX
 #   define NV_OS_UNIX 1
+#elif defined POSH_OS_WIN64
+#   define NV_OS_WIN32 1
+#   define NV_OS_WIN64 1
 #elif defined POSH_OS_WIN32
 #   define NV_OS_WIN32 1
-#elif defined POSH_OS_WIN64
-#   define NV_OS_WIN64 1
 #elif defined POSH_OS_XBOX
 #   define NV_OS_XBOX 1
 #else
@@ -96,6 +97,7 @@
 #define NV_CPU_STRING   POSH_CPU_STRING
 
 #if defined POSH_CPU_X86_64
+//#   define NV_CPU_X86 1
 #   define NV_CPU_X86_64 1
 #elif defined POSH_CPU_X86
 #   define NV_CPU_X86 1

@@ -81,7 +81,7 @@ namespace nv
         return m_color[y * 4 + x];
     }
 
-
+    /*
     struct ColorSet
     {
         ColorSet() : colorCount(0), indexCount(0), w(0), h(0) {}
@@ -124,6 +124,7 @@ namespace nv
         float weights[16];  // @@ Add mask to indicate what color components are weighted?
         int indices[16];
     };
+    */
 
 
     /// Uncompressed 4x4 alpha block.
@@ -131,10 +132,10 @@ namespace nv
     {
         void init(uint8 value);
         void init(const ColorBlock & src, uint channel);
-        void init(const ColorSet & src, uint channel);
+        //void init(const ColorSet & src, uint channel);
 
-        void initMaxRGB(const ColorSet & src, float threshold);
-        void initWeights(const ColorSet & src);
+        //void initMaxRGB(const ColorSet & src, float threshold);
+        //void initWeights(const ColorSet & src);
 
         uint8 alpha[4*4];
         float weights[16];
