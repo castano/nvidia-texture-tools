@@ -133,7 +133,12 @@
 #define NV_CC_CPP11 (__cplusplus > 199711L)
 #else
 // @@ IC: This works in CLANG, about GCC?
+// @@ ES: Doesn't work in gcc. These 3 features are available in GCC >= 4.4.
+#ifdef __clang__
 #define NV_CC_CPP11 (__has_feature(cxx_deleted_functions) && __has_feature(cxx_rvalue_references) && __has_feature(cxx_static_assert))
+#elif defined __GNUC__ 
+#define NV_CC_CPP11 ( __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 4))
+#endif
 #endif
 
 // Endiannes:
