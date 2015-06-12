@@ -10,10 +10,15 @@ These foreach macros are very non-standard and somewhat confusing, but I like th
 
 #include "nvcore.h"
 
-#if NV_CC_GNUC // If typeof is available:
+#if NV_CC_GNUC || NV_CC_CPP11 // If typeof or decltype is available:
+#if !NV_CC_CPP11
+#   define NV_DECLTYPE typeof // Using a non-standard extension over typeof that behaves as C++11 decltype
+#else
+#   define NV_DECLTYPE decltype
+#endif
 
 #define NV_FOREACH(i, container) \
-    typedef typeof(container) NV_STRING_JOIN2(cont,__LINE__); \
+    typedef NV_DECLTYPE(container) NV_STRING_JOIN2(cont,__LINE__); \
     for(NV_STRING_JOIN2(cont,__LINE__)::PseudoIndex i((container).start()); !(container).isDone(i); (container).advance(i))
 /*
 #define NV_FOREACH(i, container) \
