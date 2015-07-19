@@ -154,7 +154,6 @@
     <ClInclude Include="..\..\..\src\nvcore\Debug.h" />
     <ClInclude Include="..\..\..\src\nvcore\DefsVcWin32.h" />
     <ClInclude Include="..\..\..\src\nvcore\FileSystem.h" />
-    <ClInclude Include="..\..\..\src\nvcore\Library.h" />
     <ClInclude Include="..\..\..\src\nvcore\Memory.h" />
     <ClInclude Include="..\..\..\src\nvcore\nvcore.h" />
     <ClInclude Include="..\..\..\src\nvcore\Ptr.h" />
@@ -166,7 +165,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\nvcore\Debug.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\FileSystem.cpp" />
-    <ClCompile Include="..\..\..\src\nvcore\Library.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\Memory.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\StrLib.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\TextWriter.cpp" />
