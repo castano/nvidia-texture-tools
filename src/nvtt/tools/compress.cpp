@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
     bool useSurface = false;    // @@ use Surface API in all cases!
     nvtt::Surface image;
 
-    if (true || format == nvtt::Format_BC3_RGBM || rgbm) {
+    if (format == nvtt::Format_BC3_RGBM || rgbm) {
         useSurface = true;
 
         if (!image.load(input.str())) {
