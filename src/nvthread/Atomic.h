@@ -58,7 +58,7 @@ namespace nv {
         uint32 ret = *ptr;  // on x86, loads are Acquire
         nvCompilerReadBarrier();
         return ret;
-#elif POSH_CPU_STRONGARM 
+#elif POSH_CPU_STRONGARM || POSH_CPU_AARCH64
         // need more specific cpu type for armv7?
         // also utilizes a full barrier
         // currently treating laod like x86 - this could be wrong
@@ -82,7 +82,7 @@ namespace nv {
         nvCompilerWriteBarrier();
         *ptr = value;   // on x86, stores are Release
         //nvCompilerWriteBarrier(); // @@ IC: Where does this barrier go? In nvtt it was after, in Witness before. Not sure which one is right.
-#elif POSH_CPU_STRONGARM
+#elif POSH_CPU_STRONGARM || POSH_CPU_AARCH64
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
 		*ptr = value; //strex?
