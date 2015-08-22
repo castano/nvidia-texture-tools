@@ -313,7 +313,7 @@ Kernel1::Kernel1(const Filter & f, int iscale, int samples/*= 32*/)
 
 Kernel1::~Kernel1()
 {
-    delete m_data;
+    delete [] m_data;
 }
 
 // Print the kernel for debugging purposes.
@@ -349,7 +349,7 @@ Kernel2::Kernel2(const Kernel2 & k) : m_windowSize(k.m_windowSize)
 
 Kernel2::~Kernel2()
 {
-    delete m_data;
+    delete [] m_data;
 }
 
 // Normalize the filter.
