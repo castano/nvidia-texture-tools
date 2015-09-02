@@ -56,16 +56,18 @@ namespace nv {
 
         uint m_count;
 
+        // IC: Color and weight arrays are larger than necessary to avoid compiler warning.
+
     #if NVTT_USE_SIMD
-        NV_ALIGN_16 SimdVector m_weighted[16];  // color | weight
-        SimdVector m_metric;        // vec3
-        SimdVector m_metricSqr;     // vec3
-        SimdVector m_xxsum;         // color | weight
-        SimdVector m_xsum;          // color | weight (wsum)
-        SimdVector m_besterror;     // scalar
+        NV_ALIGN_16 SimdVector m_weighted[17];  // color | weight
+        SimdVector m_metric;                    // vec3
+        SimdVector m_metricSqr;                 // vec3
+        SimdVector m_xxsum;                     // color | weight
+        SimdVector m_xsum;                      // color | weight (wsum)
+        SimdVector m_besterror;                 // scalar
     #else
-        Vector3 m_weighted[16];
-        float m_weights[16];
+        Vector3 m_weighted[17];
+        float m_weights[17];
         Vector3 m_metric;
         Vector3 m_metricSqr;
         Vector3 m_xxsum;
