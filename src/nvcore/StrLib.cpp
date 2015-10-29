@@ -160,6 +160,20 @@ void nv::strCat(char * dst, uint size, const char * src)
 #endif
 }
 
+NVCORE_API const char * nv::strSkipWhiteSpace(const char * str)
+{
+    nvDebugCheck(str != NULL);
+    while (*str == ' ') str++;
+    return str;
+}
+
+NVCORE_API char * nv::strSkipWhiteSpace(char * str)
+{
+    nvDebugCheck(str != NULL);
+    while (*str == ' ') str++;
+    return str;
+}
+
 
 /** Pattern matching routine. I don't remember where did I get this. */
 bool nv::strMatch(const char * str, const char * pat)
@@ -252,7 +266,9 @@ StringBuilder::StringBuilder( const StringBuilder & s ) : m_size(0), m_str(NULL)
 /** Copy string. */
 StringBuilder::StringBuilder(const char * s) : m_size(0), m_str(NULL)
 {
-    copy(s);
+    if (s != NULL) {
+        copy(s);
+    }
 }
 
 /** Copy string. */
@@ -514,6 +530,21 @@ bool StringBuilder::beginsWith(const char * str) const
     return strncmp(m_str, str, l) == 0;
 }
 
+// Find given char starting from the end.
+char * StringBuilder::reverseFind(char c)
+{
+    int length = (int)strlen(m_str) - 1;
+    while (length >= 0 && m_str[length] != c) {
+        length--;
+    }
+    if (length >= 0) {
+        return m_str + length;
+    }
+    else {
+        return NULL;
+    }
+}
+
 
 /** Reset the string. */
 void StringBuilder::reset()
@@ -553,15 +584,20 @@ const char * Path::extension() const
 }
 
 
+/*static */void Path::translatePath(char * path, char pathSeparator/*= NV_PATH_SEPARATOR*/) {
+    nvCheck(path != NULL);
+
+    for (int i = 0;; i++) {
+        if (path[i] == '\0') break;
+        if (path[i] == '\\' || path[i] == '/') path[i] = pathSeparator;
+    }
+}
+
 /// Toggles path separators (ie. \\ into /).
 void Path::translatePath(char pathSeparator/*=NV_PATH_SEPARATOR*/)
 {
-    nvCheck( m_str != NULL );
-
-    for (int i = 0; ; i++) {
-        if (m_str[i] == '\0') break;
-        if (m_str[i] == '\\' || m_str[i] == '/') m_str[i] = pathSeparator;
-    }
+    nvCheck(!isNull());
+    translatePath(m_str, pathSeparator);
 }
 
 void Path::appendSeparator(char pathSeparator/*=NV_PATH_SEPARATOR*/)

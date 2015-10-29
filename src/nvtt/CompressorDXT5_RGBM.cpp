@@ -17,7 +17,7 @@
 
 using namespace nv;
 
-static uint atomic_counter = 0;
+//static uint atomic_counter = 0;
 
 
 float nv::compress_dxt5_rgbm(const Vector4 input_colors[16], const float input_weights[16], float min_m, BlockDXT5 * output) {
@@ -87,10 +87,15 @@ float nv::compress_dxt5_rgbm(const Vector4 input_colors[16], const float input_w
 
         m = (m - min_m) / (1 - min_m);
 
+#if 0
+        // IC: This does indeed happen. What does that mean? The best choice of m is above the available range. If this happened too often it would make sense to scale m in
+        // the pixel shader to allow for more accurate reconstruction. However, that scaling would reduce the precision over the [0-1] range. I haven't measured how much
+        // error is introduced by the clamping vs. how much the error would change with the increased range.
         if (m > 1.0f) {
             uint counter = atomicIncrement(&atomic_counter);
             printf("It happens %u times!", counter);
         }
+#endif
 
         M.alpha[i] = U8(ftoi_round(saturate(m) * 255.0f));
         M.weights[i] = input_weights[i];

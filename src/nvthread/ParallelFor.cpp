@@ -11,18 +11,20 @@ using namespace nv;
 
 #define ENABLE_PARALLEL_FOR 1
 
-static void worker(void * arg) {
+static void worker(void * arg, int tid) {
     ParallelFor * owner = (ParallelFor *)arg;
 
     while(true) {
-        // Consume one element at a time. @@ Might be more efficient to have custom grain.
-        uint i = atomicIncrement(&owner->idx);
-        if (i > owner->count) {
+        uint new_idx = atomicFetchAndAdd(&owner->idx, owner->step);
+        if (new_idx >= owner->count) {
             break;
         }
 
-        owner->task(owner->context, i - 1);
-    } 
+        const uint count = min(owner->count, new_idx + owner->step);
+        for (uint i = new_idx; i < count; i++) {
+            owner->task(owner->context, /*tid, */i);
+        }
+    }
 }
 
 
@@ -38,22 +40,16 @@ ParallelFor::~ParallelFor() {
 #endif
 }
 
-void ParallelFor::run(uint count, bool calling_thread_process_work /*=false*/) {
+void ParallelFor::run(uint count, uint step/*= 1*/) {
 #if ENABLE_PARALLEL_FOR
     storeRelease(&this->count, count);
+    storeRelease(&this->step, step);
 
     // Init atomic counter to zero.
     storeRelease(&idx, 0);
 
     // Start threads.
-    pool->start(worker, this);
-
-    if (calling_thread_process_work) {
-        worker(this);
-    }
-
-    // Wait for all threads to complete.
-    pool->wait();
+    pool->run(worker, this);
 
     nvDebugCheck(idx >= count);
 #else
@@ -62,5 +58,4 @@ void ParallelFor::run(uint count, bool calling_thread_process_work /*=false*/) {
     }
 #endif
 }
-
 

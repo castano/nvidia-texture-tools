@@ -323,6 +323,22 @@ namespace nv
         return Vector4(get(0, i), get(1, i), get(2, i), get(3, i));
     }
 
+    inline void Matrix::zero()
+    {
+        m_data[0] = 0; m_data[1] = 0; m_data[2] = 0; m_data[3] = 0;
+        m_data[4] = 0; m_data[5] = 0; m_data[6] = 0; m_data[7] = 0;
+        m_data[8] = 0; m_data[9] = 0; m_data[10] = 0; m_data[11] = 0;
+        m_data[12] = 0; m_data[13] = 0; m_data[14] = 0; m_data[15] = 0;
+    }
+
+    inline void Matrix::identity()
+    {
+        m_data[0] = 1; m_data[1] = 0; m_data[2] = 0; m_data[3] = 0;
+        m_data[4] = 0; m_data[5] = 1; m_data[6] = 0; m_data[7] = 0;
+        m_data[8] = 0; m_data[9] = 0; m_data[10] = 1; m_data[11] = 0;
+        m_data[12] = 0; m_data[13] = 0; m_data[14] = 0; m_data[15] = 1;
+    }
+
     // Apply scale.
     inline void Matrix::scale(float s)
     {

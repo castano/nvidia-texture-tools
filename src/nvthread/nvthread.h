@@ -82,13 +82,16 @@ BOOL WINAPI SwitchToThread(void);
 
 namespace nv
 {
-    // Reentrant.
-    uint hardwareThreadCount();
+    //void initThreadingSystemInfo();
 
-    // Not thread-safe. Use from main thread only.
-    void initWorkers();
-    void shutWorkers();
-    void setWorkerFunction(void * func);
+    // Reentrant.
+    uint processorCount();
+    uint logicalProcessorCount();
+    uint physicalProcessorCount();
+
+    // Locks the current thread to the given logical processor index.
+    void lockThreadToProcessor(int idx);
+    void unlockThreadToProcessor();
 
     uint threadId();
 

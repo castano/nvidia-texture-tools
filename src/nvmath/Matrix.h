@@ -77,6 +77,9 @@ namespace nv
         Vector4 row(uint i) const;
         Vector4 column(uint i) const;
 
+        void zero();
+        void identity();
+
         void scale(float s);
         void scale(Vector3::Arg s);
         void translate(Vector3::Arg t);

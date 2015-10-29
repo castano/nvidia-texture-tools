@@ -136,6 +136,14 @@ namespace nv
         return (b < a) ? a : b;
     }
 
+	/// Return the maximum of the four arguments.
+	template <typename T> 
+	//inline const T & max4(const T & a, const T & b, const T & c)
+	inline T max4(const T & a, const T & b, const T & c, const T & d)
+	{
+		return max(max(a, b), max(c, d));
+	}
+
     /// Return the maximum of the three arguments.
     template <typename T> 
     //inline const T & max3(const T & a, const T & b, const T & c)

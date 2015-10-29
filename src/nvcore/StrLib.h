@@ -54,6 +54,9 @@ namespace nv
     NVCORE_API void strCpy(char * dst, uint size, const char * src, uint len);
     NVCORE_API void strCat(char * dst, uint size, const char * src);
 
+    NVCORE_API const char * strSkipWhiteSpace(const char * str);
+    NVCORE_API char * strSkipWhiteSpace(char * str);
+
     NVCORE_API bool strMatch(const char * str, const char * pat) NV_PURE;
 
     NVCORE_API bool isNumber(const char * str) NV_PURE;
@@ -122,6 +125,8 @@ namespace nv
 
         bool endsWith(const char * str) const;
         bool beginsWith(const char * str) const;
+
+        char * reverseFind(char c);
 
         void reset();
         bool isNull() const { return m_size == 0; }
@@ -195,6 +200,8 @@ namespace nv
         NVCORE_API static char separator();
         NVCORE_API static const char * fileName(const char *);
         NVCORE_API static const char * extension(const char *);
+
+        NVCORE_API static void translatePath(char * path, char pathSeparator = NV_PATH_SEPARATOR);
     };
 
 

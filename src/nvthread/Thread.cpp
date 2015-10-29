@@ -89,7 +89,7 @@ Thread::Thread() : p(new Private)
     p->name = NULL;
 }
 
-Thread::Thread(const char * const name) : p(new Private)
+Thread::Thread(const char * name) : p(new Private)
 {
     p->thread = 0;
     p->name = name;
@@ -98,6 +98,12 @@ Thread::Thread(const char * const name) : p(new Private)
 Thread::~Thread()
 {
     nvDebugCheck(p->thread == 0);
+}
+
+void Thread::setName(const char * name)
+{
+    nvCheck(p->name == NULL);
+    p->name = name;
 }
 
 void Thread::start(ThreadFunc * func, void * arg)
@@ -110,10 +116,12 @@ void Thread::start(ThreadFunc * func, void * arg)
     p->thread = CreateThread(NULL, 0, threadFunc, p.ptr(), 0, &threadId);
     //p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, p.ptr(), 0, NULL);     // @@ So that we can call CRT functions...
     nvDebugCheck(p->thread != NULL);
-    setThreadName(threadId, p->name);
-#if NV_USE_TELEMETRY
-    tmThreadName(tmContext, threadId, p->name);
-#endif
+    if (p->name != NULL) {
+        setThreadName(threadId, p->name);
+    #if NV_USE_TELEMETRY
+        tmThreadName(tmContext, threadId, p->name);
+    #endif
+    }
 #elif NV_OS_ORBIS
     int ret = scePthreadCreate(&p->thread, NULL, threadFunc, p.ptr(), p->name ? p->name : "nv::Thread");
     nvDebugCheck(ret == 0);

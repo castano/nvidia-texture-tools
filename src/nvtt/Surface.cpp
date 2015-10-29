@@ -52,12 +52,12 @@ using namespace nvtt;
 namespace
 {
     // 1 -> 1, 2 -> 2, 3 -> 2, 4 -> 4, 5 -> 4, ...
-    static uint previousPowerOfTwo(const uint v)
+    static inline uint previousPowerOfTwo(uint v)
     {
         return nextPowerOfTwo(v + 1) / 2;
     }
 
-    static uint nearestPowerOfTwo(const uint v)
+    static inline uint nearestPowerOfTwo(uint v)
     {
         const uint np2 = nextPowerOfTwo(v);
         const uint pp2 = previousPowerOfTwo(v);
@@ -71,6 +71,31 @@ namespace
             return pp2;
         }
     }
+
+    static inline uint nextMultipleOfFour(uint v)
+    {
+        return (v + 3) & ~3;
+    }
+    static inline uint previousMultipleOfFour(uint v)
+    {
+        return v & ~3;
+    }
+
+    static inline uint nearestMultipleOfFour(uint v)
+    {
+        const uint nm4 = nextMultipleOfFour(v);
+        const uint pm4 = previousMultipleOfFour(v);
+
+        if (nm4 - v <= v - pm4)
+        {
+            return nm4;
+        }
+        else
+        {
+            return pm4;
+        }
+    }
+
 
     static int blockSize(Format format)
     {
@@ -224,6 +249,24 @@ void nv::getTargetExtent(int * width, int * height, int * depth, int maxExtent, 
         w = previousPowerOfTwo(w);
         h = previousPowerOfTwo(h);
         d = previousPowerOfTwo(d);
+    }
+    else if (roundMode == RoundMode_ToNextMultipleOfFour)
+    {
+        w = nextMultipleOfFour(w);
+        h = nextMultipleOfFour(h);
+        d = nextMultipleOfFour(d);
+    }
+    else if (roundMode == RoundMode_ToNextMultipleOfFour)
+    {
+        w = nearestMultipleOfFour(w);
+        h = nearestMultipleOfFour(h);
+        d = nearestMultipleOfFour(d);
+    }
+    else if (roundMode == RoundMode_ToPreviousMultipleOfFour)
+    {
+        w = previousMultipleOfFour(w);
+        h = previousMultipleOfFour(h);
+        d = previousMultipleOfFour(d);
     }
 
     *width = w;

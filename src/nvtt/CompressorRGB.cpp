@@ -193,7 +193,7 @@ namespace
         F.field.biasedexponent = 0xFF;
         F.field.mantissa = M << (23 - 6);
         
-
+		return F.value;
 #if 0
         // X Channel (6-bit mantissa)
         Mantissa = pSource->xm;
@@ -228,9 +228,7 @@ namespace
     
             Result[0] = ((Exponent + 112) << 23) | (Mantissa << 17);
         }
-    }
 #endif
-    
     }
 
     // https://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt

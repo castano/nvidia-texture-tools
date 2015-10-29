@@ -641,8 +641,8 @@ int main(int argc, char *argv[])
             //compressionOptions.setPixelFormat(10, 10, 10, 2);
 
             // DXGI_FORMAT_R11G11B10_FLOAT
-            compressionOptions.setPixelType(nvtt::PixelType_Float);
-            compressionOptions.setPixelFormat(11, 11, 10, 0);
+            //compressionOptions.setPixelType(nvtt::PixelType_Float);
+            //compressionOptions.setPixelFormat(11, 11, 10, 0);
         }
     }
     else if (format == nvtt::Format_BC6)

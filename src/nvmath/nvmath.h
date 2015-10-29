@@ -255,9 +255,10 @@ namespace nv
 
     inline int sign(float a)
     {
-        if (a > 0.0f) return 1;
-        if (a < 0.0f) return -1;
-        return 0;
+        return (a > 0) - (a < 0);
+        //if (a > 0.0f) return 1;
+        //if (a < 0.0f) return -1;
+        //return 0;
     }
 
     union Float754 {

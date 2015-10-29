@@ -240,6 +240,9 @@ namespace nvtt
         RoundMode_ToNextPowerOfTwo,
         RoundMode_ToNearestPowerOfTwo,
         RoundMode_ToPreviousPowerOfTwo,
+        RoundMode_ToNextMultipleOfFour,                     // (New in NVTT 2.1)
+        RoundMode_ToNearestMultipleOfFour,                  // (New in NVTT 2.1)
+        RoundMode_ToPreviousMultipleOfFour,                 // (New in NVTT 2.1)
     };
 
     // Alpha mode.

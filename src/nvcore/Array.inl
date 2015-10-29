@@ -91,10 +91,31 @@ namespace nv
         resize( m_size - 1 );
     }
     template <typename T>
-    NV_FORCEINLINE void Array<T>::popBack()
+    NV_FORCEINLINE void Array<T>::popBack(uint count)
     {
-        pop_back();
+        nvDebugCheck(m_size >= count);
+        resize(m_size - count);
     }
+
+    template <typename T>
+    NV_FORCEINLINE void Array<T>::popFront(uint count)
+    {
+        nvDebugCheck(m_size >= count);
+        //resize(m_size - count);
+
+        if (m_size == count) {
+            clear();
+        }
+        else {
+            destroy_range(m_buffer, 0, count);
+
+            memmove(m_buffer, m_buffer + count, sizeof(T) * (m_size - count));
+
+            m_size -= count;
+        }
+
+    }
+
 
     // Get back element.
     template <typename T>

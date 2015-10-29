@@ -446,8 +446,18 @@ namespace nv
     }
     inline float triangleArea(Vector2::Arg a, Vector2::Arg b, Vector2::Arg c)
     {
-        return (c.x * a.y + a.x * b.y + b.x * c.y - b.x * a.y - c.x * b.y - a.x * c.y); // * 0.5f;
-        //return triangleArea(a-c, b-c);
+        // IC: While it may be appealing to use the following expression:
+        //return (c.x * a.y + a.x * b.y + b.x * c.y - b.x * a.y - c.x * b.y - a.x * c.y); // * 0.5f;
+
+        // That's actually a terrible idea. Small triangles far from the origin can end up producing fairly large floating point 
+        // numbers and the results becomes very unstable and dependent on the order of the factors.
+
+        // Instead, it's preferable to substract the vertices first, and multiply the resulting small values together. The result
+        // in this case is always much more accurate (as long as the triangle is small) and less dependent of the location of 
+        // the triangle.
+
+        //return ((a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x)); // * 0.5f;
+        return triangleArea(a-c, b-c);
     }
 
 

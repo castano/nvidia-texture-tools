@@ -25,6 +25,10 @@
 #if _MSC_VER < 1500
 #   define vsnprintf _vsnprintf
 #endif
+#if _MSC_VER < 1700
+#   define strtoll _strtoi64
+#   define strtoull _strtoui64
+#endif
 #define chdir _chdir
 #define getcwd _getcwd 
 

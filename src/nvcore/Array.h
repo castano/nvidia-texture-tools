@@ -115,7 +115,8 @@ namespace nv
         Array<T> & append( const T & val );
         Array<T> & operator<< ( T & t );
         void pop_back();
-        void popBack();
+        void popBack(uint count = 1);
+        void popFront(uint count = 1);
         const T & back() const;
         T & back();
         const T & front() const;

@@ -119,17 +119,34 @@ namespace nv {
 #if NV_CC_MSVC
     NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
 
+    // Returns incremented value.
     inline uint32 atomicIncrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-        return (uint32)_InterlockedIncrement((long *)value);
+        return uint32(_InterlockedIncrement((long *)value));
     }
 
+    // Returns decremented value.
     inline uint32 atomicDecrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-        return (uint32)_InterlockedDecrement((long *)value);
+        return uint32(_InterlockedDecrement((long *)value));
     }
+
+    // Returns added value.
+    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return uint32(_InterlockedExchangeAdd((long*)value, (long)value_to_add)) + value_to_add;
+    }
+
+    // Returns original value before addition.
+    inline uint32 atomicFetchAndAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return uint32(_InterlockedExchangeAdd((long*)value, (long)value_to_add));
+    }
+
+
+
 
     // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
     // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
@@ -148,10 +165,7 @@ namespace nv {
         return (uint32)_InterlockedExchange((long *)value, (long)desired);
     }
 
-    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
-        nvDebugCheck((intptr_t(value) & 3) == 0);
-        return (uint32)_InterlockedExchangeAdd((long*)value, (long)value_to_add);
-    }
+
 
 #elif NV_CC_CLANG && (NV_OS_IOS || NV_OS_DARWIN)
     NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
@@ -180,20 +194,31 @@ namespace nv {
     }
     */
 
-    inline uint32 atomicIncrement(uint32 * value)
-    {
+    // Returns incremented value.
+    inline uint32 atomicIncrement(uint32 * value) {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-        
         return __sync_add_and_fetch(value, 1);
     }
     
-    inline uint32 atomicDecrement(uint32 * value)
-    {
+    // Returns decremented value.
+    inline uint32 atomicDecrement(uint32 * value) {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-        
         return __sync_sub_and_fetch(value, 1);
     }
-    
+
+    // Returns added value.
+    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_add_and_fetch(value, value_to_add);
+    }
+
+    // Returns original value before addition.
+    inline uint32 atomicFetchAndAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_fetch_and_add(value, value_to_add);
+    }
+
+
     // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
     // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
     // @@ Is this strong or weak?
@@ -210,10 +235,6 @@ namespace nv {
         return __sync_lock_test_and_set(value, desired);
     }
 
-    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
-        nvDebugCheck((intptr_t(value) & 3) == 0);
-        return __sync_add_and_fetch(value, value_to_add);
-    }
 
 
 
@@ -271,20 +292,30 @@ namespace nv {
     // Many alternative implementations at:
     // http://www.memoryhole.net/kyle/2007/05/atomic_incrementing.html
 
-    inline uint32 atomicIncrement(uint32 * value)
-    {
+    // Returns incremented value.
+    inline uint32 atomicIncrement(uint32 * value) {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-
         return __sync_add_and_fetch(value, 1);
     }
 
-    inline uint32 atomicDecrement(uint32 * value)
-    {
+    // Returns decremented value.
+    inline uint32 atomicDecrement(uint32 * value) {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-
         return __sync_sub_and_fetch(value, 1);
     }
-    
+
+    // Returns added value.
+    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_add_and_fetch(value, value_to_add);
+    }
+
+    // Returns original value before addition.
+    inline uint32 atomicFetchAndAdd(uint32 * value, uint32 value_to_add) {
+        nvDebugCheck((intptr_t(value) & 3) == 0);
+        return __sync_fetch_and_add(value, value_to_add);
+    }
+
     // Compare '*value' against 'expected', if equal, then stores 'desired' in '*value'.
     // @@ C++0x style CAS? Unlike the C++0x version, 'expected' is not passed by reference and not mutated.
     // @@ Is this strong or weak?
@@ -300,12 +331,6 @@ namespace nv {
         // this is confusingly named, it doesn't actually do a test but always sets
         return __sync_lock_test_and_set(value, desired);
     }
-
-    inline uint32 atomicAdd(uint32 * value, uint32 value_to_add) {
-        nvDebugCheck((intptr_t(value) & 3) == 0);
-        return __sync_add_and_fetch(value, value_to_add);
-    }
-
     
 #else
 #error "Atomics not implemented."

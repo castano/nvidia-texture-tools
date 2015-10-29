@@ -133,7 +133,7 @@
 #endif
 
 #if NV_CC_MSVC
-#define NV_CC_CPP11 (__cplusplus > 199711L)
+#define NV_CC_CPP11 (__cplusplus > 199711L || _MSC_VER >= 1800) // Visual Studio 2013 has all the features we use, but doesn't advertise full C++11 support yet.
 #else
 // @@ IC: This works in CLANG, about GCC?
 // @@ ES: Doesn't work in gcc. These 3 features are available in GCC >= 4.4.
