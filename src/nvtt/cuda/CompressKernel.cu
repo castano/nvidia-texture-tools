@@ -1464,13 +1464,13 @@ __global__ void compressDXT1(uint firstBlock, uint blockWidth, const uint * perm
     const int minIdx = findMinError(errors);
 
     __shared__ uint s_bestEndPoints;
-    __shared__ uint s_bestPermutation;
+    //__shared__ uint s_bestPermutation;
 
     // Only write the result of the winner thread.
     if (threadIdx.x == minIdx)
     {
         s_bestEndPoints = (bestEnd << 16) | bestStart;
-        s_bestPermutation = (bestStart != bestEnd) ? bestPermutation : 0;
+        //s_bestPermutation = (bestStart != bestEnd) ? bestPermutation : 0;
     }
 
     __syncthreads();
