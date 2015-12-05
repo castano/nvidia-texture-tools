@@ -120,7 +120,10 @@ ThreadPool::ThreadPool(uint workerCount/*=processorCount()*/, bool useThreadAffi
         StringBuilder name;
         name.format("worker %d", i);
         workers[i].setName(name.release());     // @Leak
-        workers[i].start(workerFunc, (void *)i);
+        // This code was just wrong.  Is this what was intended?
+        uint* p = new uint; // @Leak
+        *p = i;
+        workers[i].start(workerFunc, (void *)p);
     }
 
     allIdle = true;
