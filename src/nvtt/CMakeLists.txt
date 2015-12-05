@@ -47,7 +47,7 @@ ELSE(NVTT_SHARED)
     ADD_LIBRARY(nvtt ${NVTT_SRCS})
 ENDIF(NVTT_SHARED)
 
-TARGET_LINK_LIBRARIES(nvtt ${LIBS} nvcore nvmath nvimage nvthread squish bc6h bc7)
+TARGET_LINK_LIBRARIES(nvtt ${LIBS} nvcore nvimage nvthread squish bc6h bc7 nvmath)
 
 INSTALL(TARGETS nvtt 
     RUNTIME DESTINATION bin
