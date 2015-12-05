@@ -47,7 +47,8 @@ IF(GCONFTOOL2)
  	INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${GCONFTOOL2} --makefile-install-rule ${CMAKE_CURRENT_BINARY_DIR}/nvtt-thumbnailer.schema)")
 ENDIF(GCONFTOOL2)
 
-# UI tools
+# UI tools (not functional)
+#FIND_PACKAGE(Qt4)
 IF(QT4_FOUND)
 	SET(QT_USE_QTOPENGL TRUE)
 	INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
@@ -64,10 +65,10 @@ IF(QT4_FOUND)
 
         QT4_WRAP_UI(UICS compressdialog.ui)
         QT4_WRAP_CPP(MOCS compressdialog.h)
-	#QT4_ADD_RESOURCES(RCCS ui/configdialog.rc)
+	QT4_ADD_RESOURCES(RCCS ui/configdialog.rc)
 
-	#ADD_EXECUTABLE(nvtt-diag MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
-	#TARGET_LINK_LIBRARIES(nvtt-diag ${LIBS})
+	ADD_EXECUTABLE(nvtt-diag MACOSX_BUNDLE ${SRCS} ${UICS} ${MOCS})
+	TARGET_LINK_LIBRARIES(nvtt-diag ${LIBS})
 
 ENDIF(QT4_FOUND)
 

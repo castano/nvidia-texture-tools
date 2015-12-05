@@ -136,9 +136,6 @@ ELSE(OPENMP_FOUND)
 	MESSAGE(STATUS "Looking for OpenMP - not found")
 ENDIF(OPENMP_FOUND)
 	
-# Qt
-FIND_PACKAGE(Qt4)
-
 # Threads
 FIND_PACKAGE(Threads REQUIRED)
 MESSAGE(STATUS "Use thread library: ${CMAKE_THREAD_LIBS_INIT}")
