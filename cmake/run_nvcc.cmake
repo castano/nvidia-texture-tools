@@ -88,6 +88,7 @@ endif()
 # and other return variables are present after executing the process.
 macro(cuda_execute_process status command)
   set(_command ${command})
+  cmake_policy(SET CMP0054 OLD)
   if(NOT _command STREQUAL "COMMAND")
     message(FATAL_ERROR "Malformed call to cuda_execute_process.  Missing COMMAND as second argument. (command = ${command})")
   endif()
