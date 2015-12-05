@@ -71,7 +71,7 @@ ELSE(CUDA_FOUND)
 ENDIF(CUDA_FOUND)
 
 # Maya
-#INCLUDE(${NV_CMAKE_DIR}/FindMaya.cmake)
+INCLUDE(${NV_CMAKE_DIR}/FindMaya.cmake)
 #IF(MAYA_FOUND)
 #	SET(HAVE_MAYA ${MAYA_FOUND} CACHE BOOL "Set to TRUE if Maya is found, FALSE otherwise")
 #	MESSAGE(STATUS "Looking for Maya - found")
@@ -80,7 +80,7 @@ ENDIF(CUDA_FOUND)
 #ENDIF(MAYA_FOUND)
 
 # FreeImage
-#INCLUDE(${NV_CMAKE_DIR}/FindFreeImage.cmake)
+INCLUDE(${NV_CMAKE_DIR}/FindFreeImage.cmake)
 IF(FREEIMAGE_FOUND)
 	SET(HAVE_FREEIMAGE ${FREEIMAGE_FOUND} CACHE BOOL "Set to TRUE if FreeImage is found, FALSE otherwise")
 	MESSAGE(STATUS "Looking for FreeImage - found")
@@ -89,7 +89,7 @@ ELSE(FREEIMAGE_FOUND)
 ENDIF(FREEIMAGE_FOUND)
 
 # JPEG
-#INCLUDE(FindJPEG)
+INCLUDE(FindJPEG)
 IF(JPEG_FOUND)
 	SET(HAVE_JPEG ${JPEG_FOUND} CACHE BOOL "Set to TRUE if JPEG is found, FALSE otherwise")
 	MESSAGE(STATUS "Looking for JPEG - found")
@@ -98,7 +98,7 @@ ELSE(JPEG_FOUND)
 ENDIF(JPEG_FOUND)
 
 # PNG
-#INCLUDE(FindPNG)
+INCLUDE(FindPNG)
 IF(PNG_FOUND)
 	SET(HAVE_PNG ${PNG_FOUND} CACHE BOOL "Set to TRUE if PNG is found, FALSE otherwise")
 	MESSAGE(STATUS "Looking for PNG - found")
@@ -117,7 +117,7 @@ ELSE(TIFF_FOUND)
 ENDIF(TIFF_FOUND)
 
 # OpenEXR
-#INCLUDE(${NV_CMAKE_DIR}/FindOpenEXR.cmake)
+INCLUDE(${NV_CMAKE_DIR}/FindOpenEXR.cmake)
 IF(OPENEXR_FOUND)
 	SET(HAVE_OPENEXR ${OPENEXR_FOUND} CACHE BOOL "Set to TRUE if OpenEXR is found, FALSE otherwise")
 	MESSAGE(STATUS "Looking for OpenEXR - found")
