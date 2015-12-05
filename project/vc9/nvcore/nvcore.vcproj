@@ -291,10 +291,6 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvcore\Array.inl"
-			>
-		</File>
-		<File
 			RelativePath="..\..\..\src\nvcore\Debug.cpp"
 			>
 		</File>
@@ -315,11 +311,11 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvcore\ForEach.h"
+			RelativePath="..\..\..\src\nvcore\Library.cpp"
 			>
 		</File>
 		<File
-			RelativePath="..\..\..\src\nvcore\Hash.h"
+			RelativePath="..\..\..\src\nvcore\Library.h"
 			>
 		</File>
 		<File
