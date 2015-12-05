@@ -53,7 +53,7 @@ ELSE(NVIMAGE_SHARED)
     ADD_LIBRARY(nvimage ${IMAGE_SRCS})
 ENDIF(NVIMAGE_SHARED)
 
-TARGET_LINK_LIBRARIES(nvimage ${LIBS} nvcore nvmath posh bc6h bc7)
+TARGET_LINK_LIBRARIES(nvimage ${LIBS} nvcore posh bc6h bc7 nvmath)
 
 INSTALL(TARGETS nvimage
     RUNTIME DESTINATION bin
