@@ -157,6 +157,7 @@
     <ClInclude Include="..\..\..\src\nvcore\Debug.h" />
     <ClInclude Include="..\..\..\src\nvcore\DefsVcWin32.h" />
     <ClInclude Include="..\..\..\src\nvcore\FileSystem.h" />
+    <ClInclude Include="..\..\..\src\nvcore\ForEach.h" />
     <ClInclude Include="..\..\..\src\nvcore\Memory.h" />
     <ClInclude Include="..\..\..\src\nvcore\nvcore.h" />
     <ClInclude Include="..\..\..\src\nvcore\Ptr.h" />

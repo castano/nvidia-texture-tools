@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 	bool faces = false;
 	bool savePNG = false;
     bool rgbm = false;
-    bool histogram = true;
+    bool histogram = false;
 
 	nv::Path input;
 	nv::Path output;
