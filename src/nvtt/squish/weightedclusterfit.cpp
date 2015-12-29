@@ -264,15 +264,15 @@ void WeightedClusterFit::Compress4( void* block )
 	int b0 = 0, b1 = 0, b2 = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= count; c0++)
+	for( int c0 = 0; c0 < count; c0++)
 	{	
 		Vec4 x1 = zero;
 		
-		for( int c1 = 0; c1 <= count-c0; c1++)
+		for( int c1 = 0; c1 < count-c0; c1++)
 		{	
 			Vec4 x2 = zero;
 			
-			for( int c2 = 0; c2 <= count-c0-c1; c2++)
+			for( int c2 = 0; c2 < count-c0-c1; c2++)
 			{
 				Vec4 const x3 = m_xsum - x2 - x1 - x0;
 				
