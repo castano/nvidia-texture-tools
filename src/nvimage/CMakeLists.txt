@@ -55,10 +55,11 @@ ENDIF(NVIMAGE_SHARED)
 
 TARGET_LINK_LIBRARIES(nvimage ${LIBS} nvcore nvmath)
 
-INSTALL(TARGETS nvimage
+INSTALL(TARGETS nvimage EXPORT nvimage-targets
 	RUNTIME DESTINATION bin
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib/static)
+INSTALL(EXPORT nvimage-targets DESTINATION share/cmake)
 
 INSTALL(FILES nvimage.h DirectDrawSurface.h Image.h DESTINATION include/nvimage)
 
