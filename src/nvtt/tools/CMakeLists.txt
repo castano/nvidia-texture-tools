@@ -1,21 +1,21 @@
 
 ADD_EXECUTABLE(nvcompress compress.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nvcompress nvcore nvimage nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvcompress nvcore nvimage nvtt nvmath)
 
 ADD_EXECUTABLE(nvdecompress decompress.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nvdecompress nvcore nvimage nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvdecompress nvcore nvimage nvtt nvmath)
 
 ADD_EXECUTABLE(nvddsinfo ddsinfo.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nvddsinfo nvcore nvimage nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvddsinfo nvcore nvimage nvtt nvmath)
 
 ADD_EXECUTABLE(nvimgdiff imgdiff.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nvimgdiff nvcore nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvimgdiff nvcore nvtt nvmath)
 
 ADD_EXECUTABLE(nvassemble assemble.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nvassemble nvcore nvimage nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvassemble nvcore nvimage nvtt nvmath)
 
 ADD_EXECUTABLE(nvzoom resize.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nvzoom nvcore nvimage nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvzoom nvcore nvimage nvtt nvmath)
 
 SET(TOOLS nvcompress nvdecompress nvddsinfo nvassemble nvzoom)
 
@@ -28,7 +28,7 @@ ENDIF(GLEW_FOUND AND GLUT_FOUND AND OPENGL_FOUND)
 
 
 ADD_EXECUTABLE(nv-gnome-thumbnailer thumbnailer.cpp cmdline.h)
-TARGET_LINK_LIBRARIES(nv-gnome-thumbnailer nvcore nvtt nvimage bc6h nvmath)
+TARGET_LINK_LIBRARIES(nv-gnome-thumbnailer nvcore nvtt nvimage nvmath)
 
 SET(TOOLS ${TOOLS} nv-gnome-thumbnailer)
 

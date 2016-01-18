@@ -26,7 +26,7 @@ ADD_EXECUTABLE(cubemaptest cubemaptest.cpp)
 TARGET_LINK_LIBRARIES(cubemaptest nvcore nvmath nvimage nvtt)
 
 ADD_EXECUTABLE(nvhdrtest hdrtest.cpp)
-TARGET_LINK_LIBRARIES(nvhdrtest nvcore nvimage nvtt bc6h nvmath)
+TARGET_LINK_LIBRARIES(nvhdrtest nvcore nvimage nvtt nvmath)
 
 INSTALL(TARGETS nvtestsuite nvhdrtest DESTINATION bin)
  
