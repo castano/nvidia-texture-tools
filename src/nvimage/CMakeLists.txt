@@ -61,6 +61,3 @@ INSTALL(TARGETS nvimage EXPORT nvimage-targets
 	ARCHIVE DESTINATION lib/static)
 INSTALL(EXPORT nvimage-targets DESTINATION share/cmake)
 
-INSTALL(FILES nvimage.h DirectDrawSurface.h Image.h DESTINATION include/nvimage)
-
-
