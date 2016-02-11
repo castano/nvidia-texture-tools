@@ -586,6 +586,12 @@ void DDSHeader::setTextureCube()
     this->header10.arraySize = 1;
 }
 
+void DDSHeader::setTextureArray(int imageCount)
+{
+    this->header10.resourceDimension = DDS_DIMENSION_TEXTURE2D;
+    this->header10.arraySize = imageCount;
+}
+
 void DDSHeader::setLinearSize(uint size)
 {
     this->flags &= ~DDSD_PITCH;

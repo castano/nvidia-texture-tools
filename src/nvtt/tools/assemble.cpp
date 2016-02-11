@@ -65,12 +65,12 @@ int main(int argc, char *argv[])
 			assembleVolume = true;
 			assembleTextureArray = false;
 		}
-		/*if (strcmp("-array", argv[i]) == 0)
+		if (strcmp("-array", argv[i]) == 0)
 		{
 			assembleCubeMap = false;
 			assembleVolume = false;
 			assembleTextureArray = true;
-		}*/
+		}
 		else if (strcmp("-o", argv[i]) == 0)
 		{
 			i++;
@@ -142,7 +142,6 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	
 	nv::StdOutputStream stream(output.str());
 	if (stream.isError()) {
 		printf("Error opening '%s' for writting\n", output.str());
@@ -165,12 +164,16 @@ int main(int argc, char *argv[])
 	}
 	else if (assembleTextureArray)
 	{
-		//header.setTextureArray(imageCount);
+		header.setTextureArray(imageCount);
 	}
 
 	// @@ It always outputs 32 bpp.
-	header.setPitch(4 * w);
-	header.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, hasAlpha ? 0xFF000000 : 0);
+	if (!assembleTextureArray) {
+		header.setPitch(4 * w);
+		header.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, hasAlpha ? 0xFF000000 : 0);
+	} else {
+		header.setDX10Format(hasAlpha ? nv::DXGI_FORMAT_B8G8R8A8_UNORM : nv::DXGI_FORMAT_B8G8R8X8_UNORM);
+	}
 
 	stream << header;
 
