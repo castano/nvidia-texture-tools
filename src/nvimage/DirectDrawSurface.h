@@ -325,6 +325,7 @@ namespace nv
         void setTexture2D();
         void setTexture3D();
         void setTextureCube();
+        void setTextureArray(int imageCount);
         void setLinearSize(uint size);
         void setPitch(uint pitch);
         void setFourCC(uint8 c0, uint8 c1, uint8 c2, uint8 c3);
