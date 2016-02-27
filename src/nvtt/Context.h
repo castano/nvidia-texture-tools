@@ -51,7 +51,7 @@ namespace nvtt
 
         void quantize(Surface & tex, const CompressionOptions::Private & compressionOptions) const;
 
-        bool outputHeader(nvtt::TextureType textureType, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
+        bool outputHeader(nvtt::TextureType textureType, int w, int h, int d, int faceCount, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const;
 
         nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
         nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;

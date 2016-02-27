@@ -427,60 +427,85 @@ namespace
 {
     struct FormatDescriptor
     {
-        uint format;
-        uint bitcount;
-        uint rmask;
-        uint gmask;
-        uint bmask;
-        uint amask;
+        uint d3d9Format;
+        uint dxgiFormat;
+        RGBAPixelFormat pixelFormat;
     };
 
-    static const FormatDescriptor s_d3d9Formats[] =
+    static const FormatDescriptor s_formats[] =
     {
-        { D3DFMT_R8G8B8,         24, 0xFF0000,   0xFF00,	    0xFF,       0 },
-        { D3DFMT_A8R8G8B8,       32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 },  // DXGI_FORMAT_B8G8R8A8_UNORM
-        { D3DFMT_X8R8G8B8,       32, 0xFF0000,   0xFF00,     0xFF,       0 },           // DXGI_FORMAT_B8G8R8X8_UNORM
-        { D3DFMT_R5G6B5,         16, 0xF800,     0x7E0,      0x1F,       0 },           // DXGI_FORMAT_B5G6R5_UNORM
-        { D3DFMT_X1R5G5B5,       16, 0x7C00,     0x3E0,      0x1F,       0 },
-        { D3DFMT_A1R5G5B5,       16, 0x7C00,     0x3E0,      0x1F,       0x8000 },      // DXGI_FORMAT_B5G5R5A1_UNORM
-        { D3DFMT_A4R4G4B4,       16, 0xF00,      0xF0,       0xF,        0xF000 },
-        { D3DFMT_R3G3B2,         8,  0xE0,       0x1C,       0x3,	    0 },
-        { D3DFMT_A8,             8,  0,          0,          0,		    8 },            // DXGI_FORMAT_A8_UNORM
-        { D3DFMT_A8R3G3B2,       16, 0xE0,       0x1C,       0x3,        0xFF00 },
-        { D3DFMT_X4R4G4B4,       16, 0xF00,      0xF0,       0xF,        0 },
-        { D3DFMT_A2B10G10R10,    32, 0x3FF,      0xFFC00,    0x3FF00000, 0xC0000000 },  // DXGI_FORMAT_R10G10B10A2
-        { D3DFMT_A8B8G8R8,       32, 0xFF,       0xFF00,     0xFF0000,   0xFF000000 },  // DXGI_FORMAT_R8G8B8A8_UNORM
-        { D3DFMT_X8B8G8R8,       32, 0xFF,       0xFF00,     0xFF0000,   0 },
-        { D3DFMT_G16R16,         32, 0xFFFF,     0xFFFF0000, 0,          0 },           // DXGI_FORMAT_R16G16_UNORM
-        { D3DFMT_A2R10G10B10,    32, 0x3FF00000, 0xFFC00,    0x3FF,      0xC0000000 },
-        { D3DFMT_A2B10G10R10,    32, 0x3FF,      0xFFC00,    0x3FF00000, 0xC0000000 },
+        { D3DFMT_R8G8B8,         DXGI_FORMAT_UNKNOWN,           { 24, 0xFF0000,   0xFF00,     0xFF,       0 } },
+        { D3DFMT_A8R8G8B8,       DXGI_FORMAT_B8G8R8A8_UNORM,    { 32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 } },
+        { D3DFMT_X8R8G8B8,       DXGI_FORMAT_B8G8R8X8_UNORM,    { 32, 0xFF0000,   0xFF00,     0xFF,       0 } },
+        { D3DFMT_R5G6B5,         DXGI_FORMAT_B5G6R5_UNORM,      { 16, 0xF800,     0x7E0,      0x1F,       0 } },
+        { D3DFMT_X1R5G5B5,       DXGI_FORMAT_UNKNOWN,           { 16, 0x7C00,     0x3E0,      0x1F,       0 } },
+        { D3DFMT_A1R5G5B5,       DXGI_FORMAT_B5G5R5A1_UNORM,    { 16, 0x7C00,     0x3E0,      0x1F,       0x8000 } },
+        { D3DFMT_A4R4G4B4,       DXGI_FORMAT_UNKNOWN,           { 16, 0xF00,      0xF0,       0xF,        0xF000 } },
+        { D3DFMT_R3G3B2,         DXGI_FORMAT_UNKNOWN,           { 8,  0xE0,       0x1C,       0x3,        0 } },
+        { D3DFMT_A8,             DXGI_FORMAT_A8_UNORM,          { 8,  0,          0,          0,          8 } },
+        { D3DFMT_A8R3G3B2,       DXGI_FORMAT_UNKNOWN,           { 16, 0xE0,       0x1C,       0x3,        0xFF00 } },
+        { D3DFMT_X4R4G4B4,       DXGI_FORMAT_UNKNOWN,           { 16, 0xF00,      0xF0,       0xF,        0 } },
+        { D3DFMT_A2B10G10R10,    DXGI_FORMAT_R10G10B10A2_UNORM, { 32, 0x3FF,      0xFFC00,    0x3FF00000, 0xC0000000 } },
+        { D3DFMT_A8B8G8R8,       DXGI_FORMAT_R8G8B8A8_UNORM,    { 32, 0xFF,       0xFF00,     0xFF0000,   0xFF000000 } },
+        { D3DFMT_X8B8G8R8,       DXGI_FORMAT_UNKNOWN,           { 32, 0xFF,       0xFF00,     0xFF0000,   0 } },
+        { D3DFMT_G16R16,         DXGI_FORMAT_R16G16_UNORM,      { 32, 0xFFFF,     0xFFFF0000, 0,          0 } },
+        { D3DFMT_A2R10G10B10,    DXGI_FORMAT_UNKNOWN,           { 32, 0x3FF00000, 0xFFC00,    0x3FF,      0xC0000000 } },
+        { D3DFMT_A2B10G10R10,    DXGI_FORMAT_UNKNOWN,           { 32, 0x3FF,      0xFFC00,    0x3FF00000, 0xC0000000 } },
 
-        { D3DFMT_L8,             8,  0xFF,       0,          0,          0 },           // DXGI_FORMAT_R8_UNORM 
-        { D3DFMT_L16,            16, 0xFFFF,     0,          0,          0 },           // DXGI_FORMAT_R16_UNORM
-        { D3DFMT_A8L8,           16, 0xFF,       0,          0,     0xFF00 },           // DXGI_FORMAT_R8G8_UNORM?
+        { D3DFMT_L8,             DXGI_FORMAT_R8_UNORM ,         { 8,  0xFF,       0,          0,          0 } },
+        { D3DFMT_L16,            DXGI_FORMAT_R16_UNORM,         { 16, 0xFFFF,     0,          0,          0 } },
+        { D3DFMT_A8L8,           DXGI_FORMAT_R8G8_UNORM,        { 16, 0xFF,       0,          0,     0xFF00 } },
     };
 
-    static const uint s_d3d9FormatCount = NV_ARRAY_SIZE(s_d3d9Formats);
+    static const uint s_formatCount = NV_ARRAY_SIZE(s_formats);
 
 } // namespace
 
 uint nv::findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 {
-    for (int i = 0; i < s_d3d9FormatCount; i++)
+    for (int i = 0; i < s_formatCount; i++)
     {
-        if (s_d3d9Formats[i].bitcount == bitcount &&
-            s_d3d9Formats[i].rmask == rmask &&
-            s_d3d9Formats[i].gmask == gmask &&
-            s_d3d9Formats[i].bmask == bmask &&
-            s_d3d9Formats[i].amask == amask)
+        if (s_formats[i].pixelFormat.bitcount == bitcount &&
+            s_formats[i].pixelFormat.rmask == rmask &&
+            s_formats[i].pixelFormat.gmask == gmask &&
+            s_formats[i].pixelFormat.bmask == bmask &&
+            s_formats[i].pixelFormat.amask == amask)
         {
-            return s_d3d9Formats[i].format;
+            return s_formats[i].d3d9Format;
         }
     }
 
     return 0;
 }
 
+uint nv::findDXGIFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+{
+    for (int i = 0; i < s_formatCount; i++)
+    {
+        if (s_formats[i].pixelFormat.bitcount == bitcount &&
+            s_formats[i].pixelFormat.rmask == rmask &&
+            s_formats[i].pixelFormat.gmask == gmask &&
+            s_formats[i].pixelFormat.bmask == bmask &&
+            s_formats[i].pixelFormat.amask == amask)
+        {
+            return s_formats[i].dxgiFormat;
+        }
+    }
+
+    return DXGI_FORMAT_UNKNOWN;
+}
+
+const RGBAPixelFormat *nv::findDXGIPixelFormat(uint dxgiFormat)
+{
+    for (int i = 0; i < s_formatCount; i++)
+    {
+        if (s_formats[i].dxgiFormat == dxgiFormat) {
+            return &s_formats[i].pixelFormat;
+        }
+    }
+
+    return NULL;
+}
 
 DDSHeader::DDSHeader()
 {
@@ -964,8 +989,9 @@ bool DirectDrawSurface::isSupported() const
         {
             return true;
         }
-
-        return false;
+        else {
+            return findDXGIPixelFormat(header.header10.dxgiFormat) != NULL;
+        }
     }
     else
     {
@@ -1072,6 +1098,13 @@ uint DirectDrawSurface::depth() const
     else return 1;
 }
 
+uint DirectDrawSurface::arraySize() const
+{
+    nvDebugCheck(isValid());
+    if (header.hasDX10Header()) return header.header10.arraySize;
+    else return 1;
+}
+
 bool DirectDrawSurface::isTexture1D() const
 {
     nvDebugCheck(isValid());
@@ -1087,7 +1120,7 @@ bool DirectDrawSurface::isTexture2D() const
     nvDebugCheck(isValid());
     if (header.hasDX10Header())
     {
-        return header.header10.resourceDimension == DDS_DIMENSION_TEXTURE2D;
+        return header.header10.resourceDimension == DDS_DIMENSION_TEXTURE2D && header.header10.arraySize == 1;
     }
     else
     {
@@ -1112,6 +1145,12 @@ bool DirectDrawSurface::isTextureCube() const
 {
     nvDebugCheck(isValid());
     return (header.caps.caps2 & DDSCAPS2_CUBEMAP) != 0;
+}
+
+bool DirectDrawSurface::isTextureArray() const
+{
+    nvDebugCheck(isValid());
+    return header.hasDX10Header() && header.header10.arraySize > 1;
 }
 
 void DirectDrawSurface::setNormalFlag(bool b)
@@ -1163,14 +1202,18 @@ void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
 
     if (header.hasDX10Header())
     {
-        // So far only block formats supported.
-        readBlockImage(img);
+        if (const RGBAPixelFormat *format = findDXGIPixelFormat(header.header10.dxgiFormat)) {
+            readLinearImage(img, format->bitcount, format->rmask, format->gmask, format->bmask, format->amask);
+        }
+        else {
+            readBlockImage(img);
+        }
     }
     else
     {
         if (header.pf.flags & DDPF_RGB) 
         {
-            readLinearImage(img);
+            readLinearImage(img, header.pf.bitcount, header.pf.rmask, header.pf.gmask, header.pf.bmask, header.pf.amask);
         }
         else if (header.pf.flags & DDPF_FOURCC)
         {
@@ -1248,7 +1291,7 @@ bool DirectDrawSurface::readSurface(uint face, uint mipmap, void * data, uint si
 }
 
 
-void DirectDrawSurface::readLinearImage(Image * img)
+void DirectDrawSurface::readLinearImage(Image * img, uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
 {
     nvDebugCheck(stream != NULL);
     nvDebugCheck(img != NULL);
@@ -1258,18 +1301,18 @@ void DirectDrawSurface::readLinearImage(Image * img)
     const uint d = img->depth();
 
     uint rshift, rsize;
-    PixelFormat::maskShiftAndSize(header.pf.rmask, &rshift, &rsize);
+    PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
 
     uint gshift, gsize;
-    PixelFormat::maskShiftAndSize(header.pf.gmask, &gshift, &gsize);
+    PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
 
     uint bshift, bsize;
-    PixelFormat::maskShiftAndSize(header.pf.bmask, &bshift, &bsize);
+    PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
 
     uint ashift, asize;
-    PixelFormat::maskShiftAndSize(header.pf.amask, &ashift, &asize);
+    PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
 
-    uint byteCount = (header.pf.bitcount + 7) / 8;
+    uint byteCount = (bitcount + 7) / 8;
 
 #pragma NV_MESSAGE("TODO: Support floating point linear images and other FOURCC codes.")
 
@@ -1284,10 +1327,10 @@ void DirectDrawSurface::readLinearImage(Image * img)
                 stream->serialize(&c, byteCount);
 
                 Color32 pixel(0, 0, 0, 0xFF);
-                pixel.r = PixelFormat::convert((c & header.pf.rmask) >> rshift, rsize, 8);
-                pixel.g = PixelFormat::convert((c & header.pf.gmask) >> gshift, gsize, 8);
-                pixel.b = PixelFormat::convert((c & header.pf.bmask) >> bshift, bsize, 8);
-                pixel.a = PixelFormat::convert((c & header.pf.amask) >> ashift, asize, 8);
+                pixel.r = PixelFormat::convert((c & rmask) >> rshift, rsize, 8);
+                pixel.g = PixelFormat::convert((c & gmask) >> gshift, gsize, 8);
+                pixel.b = PixelFormat::convert((c & bmask) >> bshift, bsize, 8);
+                pixel.a = PixelFormat::convert((c & amask) >> ashift, asize, 8);
 
                 img->pixel(x, y, z) = pixel;
             }

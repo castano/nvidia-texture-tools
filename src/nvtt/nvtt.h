@@ -205,6 +205,7 @@ namespace nvtt
         TextureType_2D,
         TextureType_Cube,
         TextureType_3D,
+        TextureType_Array,
     };
 
     // Input formats.
@@ -266,7 +267,7 @@ namespace nvtt
         NVTT_API void reset();
 
         // Setup input layout.
-        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1);
+        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1, int arraySize = 1);
         NVTT_API void resetTextureLayout();
 
         // Set mipmap data. Copies the data.
@@ -412,7 +413,7 @@ namespace nvtt
         NVTT_API int estimateSize(const CubeSurface & cube, int mipmapCount, const CompressionOptions & compressionOptions) const;
 
         // Raw API. (New in NVTT 2.1)
-        NVTT_API bool outputHeader(TextureType type, int w, int h, int d, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
+        NVTT_API bool outputHeader(TextureType type, int w, int h, int d, int arraySize, int mipmapCount, bool isNormalMap, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API bool compress(int w, int h, int d, int face, int mipmap, const float * rgba, const CompressionOptions & compressionOptions, const OutputOptions & outputOptions) const;
         NVTT_API int estimateSize(int w, int h, int d, int mipmapCount, const CompressionOptions & compressionOptions) const;
     };

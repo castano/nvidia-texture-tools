@@ -124,17 +124,19 @@ void InputOptions::reset()
 
 
 // Setup the input image.
-void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/)
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/, int arraySize /*= 1*/)
 {
     // Validate arguments.
     nvCheck(width >= 0);
     nvCheck(height >= 0);
     nvCheck(depth >= 0);
+    nvCheck(arraySize >= 0);
 
     // Correct arguments.
     if (width == 0) width = 1;
     if (height == 0) height = 1;
     if (depth == 0) depth = 1;
+    if (arraySize == 0) arraySize = 1;
 
     // Delete previous images.
     resetTextureLayout();
@@ -145,7 +147,16 @@ void InputOptions::setTextureLayout(TextureType type, int width, int height, int
     m.depth = depth;
 
     // Allocate images.
-    m.faceCount = (type == TextureType_Cube) ? 6 : 1;
+    if (type == TextureType_Cube) {
+        nvCheck(arraySize == 1);
+        m.faceCount = 6;
+    }
+    else if (type == TextureType_Array) {
+        m.faceCount = arraySize;
+    } else {
+        nvCheck(arraySize == 1);
+        m.faceCount = 1;
+    }
     m.mipmapCount = countMipmaps(width, height, depth);
     m.imageCount = m.mipmapCount * m.faceCount;
     m.images = new void *[m.imageCount];
