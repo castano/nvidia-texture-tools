@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     float topPower = 64;
 
     // Output header.
-    context.outputHeader(nvtt::TextureType_Cube, topSize >> firstMipmap, topSize >> firstMipmap, 1, mipmapCount-firstMipmap, false, compressionOptions, outputOptions);
+    context.outputHeader(nvtt::TextureType_Cube, topSize >> firstMipmap, topSize >> firstMipmap, 1, 1, mipmapCount-firstMipmap, false, compressionOptions, outputOptions);
 
     nv::Timer timer;
     timer.start();

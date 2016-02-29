@@ -487,11 +487,14 @@ int main(int argc, char *argv[])
 
                 nvDebugBreak();
             }
-            else 
-            {
-                nvDebugCheck(dds.isTextureCube());
+            else if (dds.isTextureCube()) {
                 inputOptions.setTextureLayout(nvtt::TextureType_Cube, dds.width(), dds.height());
                 faceCount = 6;
+            } else {
+                nvDebugCheck(dds.isTextureArray());
+                inputOptions.setTextureLayout(nvtt::TextureType_Array, dds.width(), dds.height(), 1, dds.arraySize());
+                faceCount = dds.arraySize();
+                dds10 = true;
             }
 
             uint mipmapCount = dds.mipmapCount();
