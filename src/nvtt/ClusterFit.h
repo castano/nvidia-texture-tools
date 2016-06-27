@@ -29,6 +29,7 @@
 
 #include "nvmath/SimdVector.h"
 #include "nvmath/Vector.h"
+#include "nvcore/Memory.h"
 
 // Use SIMD version if altivec or SSE are available.
 #define NVTT_USE_SIMD (NV_USE_ALTIVEC || NV_USE_SSE)

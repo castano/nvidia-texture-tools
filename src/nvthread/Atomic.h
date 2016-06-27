@@ -68,6 +68,16 @@ namespace nv {
 		uint32 ret = *ptr; // replace with ldrex?
         nvCompilerReadWriteBarrier();
         return ret;
+#elif POSH_CPU_PPC64
+        // need more specific cpu type for ppc64?
+        // also utilizes a full barrier
+        // currently treating load like x86 - this could be wrong
+
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+		uint32 ret = *ptr; // replace with ldrex?
+        nvCompilerReadWriteBarrier();
+        return ret;
 #else
 #error "Not implemented"
 #endif
@@ -83,6 +93,11 @@ namespace nv {
         *ptr = value;   // on x86, stores are Release
         //nvCompilerWriteBarrier(); // @@ IC: Where does this barrier go? In nvtt it was after, in Witness before. Not sure which one is right.
 #elif POSH_CPU_STRONGARM || POSH_CPU_AARCH64
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+		*ptr = value; //strex?
+		nvCompilerReadWriteBarrier();
+#elif POSH_CPU_PPC64
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
 		*ptr = value; //strex?

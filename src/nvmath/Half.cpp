@@ -489,7 +489,7 @@ nv::half_to_float( uint16 h )
 }
 
 
-#if !NV_OS_IOS //ACStodoIOS some better define to choose this?
+#if !NV_OS_IOS && (defined(__i386__) || defined(__x86_64__))
 
 #if NV_CC_GNUC
 #if defined(__i386__) || defined(__x86_64__)

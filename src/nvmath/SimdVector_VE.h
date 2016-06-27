@@ -1,6 +1,7 @@
 /* -----------------------------------------------------------------------------
 
 	Copyright (c) 2006 Simon Brown                          si@sjbrown.co.uk
+	Copyright (c) 2016 Raptor Engineering, LLC
 
 	Permission is hereby granted, free of charge, to any person obtaining
 	a copy of this software and associated documentation files (the 
@@ -41,7 +42,7 @@ namespace nv {
         typedef SimdVector Arg;
 
         SimdVector() {}
-        explicit SimdVector(float v) : vec((vector float)(v)) {}	
+        explicit SimdVector(float v) : vec(vec_splats(v)) {}	
         explicit SimdVector(vector float v) : vec(v) {}
         SimdVector(const SimdVector & arg) : vec(arg.vec) {}
 
@@ -111,7 +112,7 @@ namespace nv {
 
         SimdVector& operator*=( Arg v )
         {
-            vec = vec_madd( vec, v.vec, ( vector float )( -0.0f ) );
+            vec = vec_madd( vec, v.vec, vec_splats( -0.0f ) );
             return *this;
         }
     };
@@ -128,7 +129,7 @@ namespace nv {
 
     inline SimdVector operator*( SimdVector::Arg left, SimdVector::Arg right  )
     {
-        return SimdVector( vec_madd( left.vec, right.vec, ( vector float )( -0.0f ) ) );
+        return SimdVector( vec_madd( left.vec, right.vec, vec_splats( -0.0f ) ) );
     }
 
     // Returns a*b + c
@@ -149,7 +150,7 @@ namespace nv {
         vector float estimate = vec_re( v.vec );
 
         // one round of Newton-Rhaphson refinement
-        vector float diff = vec_nmsub( estimate, v.vec, ( vector float )( 1.0f ) );
+        vector float diff = vec_nmsub( estimate, v.vec, vec_splats( 1.0f ) );
         return SimdVector( vec_madd( diff, estimate, estimate ) );
     }
 
