@@ -451,6 +451,7 @@ LLVM:
 #  define POSH_CPU_PPC 1
 #  if !defined POSH_CPU_STRING
 #    if defined __powerpc64__
+#       define POSH_CPU_PPC64 1
 #       define POSH_CPU_STRING "PowerPC64"
 #    else
 #       define POSH_CPU_STRING "PowerPC"

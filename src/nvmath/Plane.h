@@ -7,6 +7,10 @@
 #include "nvmath.h"
 #include "Vector.h"
 
+#if NV_USE_ALTIVEC
+#undef vector
+#endif
+
 namespace nv
 {
     class Matrix;
