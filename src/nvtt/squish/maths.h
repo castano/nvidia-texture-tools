@@ -26,9 +26,17 @@
 #ifndef NV_SQUISH_MATHS_H
 #define NV_SQUISH_MATHS_H
 
+#if NV_USE_ALTIVEC
+#undef vector
+#endif
+
 #include <cmath>
 #include <algorithm>
 #include "config.h"
+
+#if NV_USE_ALTIVEC
+#define vector __vector
+#endif
 
 namespace nvsquish {
 
