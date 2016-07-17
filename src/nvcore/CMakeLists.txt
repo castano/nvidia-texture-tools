@@ -10,6 +10,7 @@ SET(CORE_SRCS
     DefsVcWin32.h
     FileSystem.h FileSystem.cpp
     ForEach.h
+    Library.h Library.cpp
     Memory.h Memory.cpp
     Ptr.h
     RefCounted.h
@@ -38,9 +39,9 @@ ENDIF(NVCORE_SHARED)
 
 TARGET_LINK_LIBRARIES(nvcore ${LIBS})
 
-INSTALL(TARGETS nvcore
+INSTALL(TARGETS nvcore EXPORT nvcore-targets
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static)
-
+INSTALL(EXPORT nvcore-targets DESTINATION share/cmake)
 
