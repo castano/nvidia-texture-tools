@@ -38,9 +38,12 @@ ENDIF(NVCORE_SHARED)
 
 TARGET_LINK_LIBRARIES(nvcore ${LIBS})
 
+# On NetBSD backtrace() is provided by libexecinfo, not libc.
+if (CMAKE_SYSTEM_NAME MATCHES "NetBSD")
+     TARGET_LINK_LIBRARIES(nvcore execinfo)
+endif()
+
 INSTALL(TARGETS nvcore
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static)
-
-

@@ -88,7 +88,7 @@ uint nv::processorCount() {
     return 6;
 #elif NV_OS_XBOX
     return 3; // or 6?
-#elif NV_OS_LINUX // Linux, Solaris, & AIX
+#elif NV_OS_LINUX || NV_OS_NETBSD // Linux, Solaris, & AIX
     return sysconf(_SC_NPROCESSORS_ONLN);
 #elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD
     int numCPU;

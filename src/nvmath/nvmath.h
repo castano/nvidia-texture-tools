@@ -172,7 +172,7 @@ namespace nv
     {
 #if NV_OS_WIN32 || NV_OS_XBOX
         return _finite(f) != 0;
-#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD || NV_OS_ORBIS
+#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_NETBSD || NV_OS_OPENBSD || NV_OS_ORBIS
         return isfinite(f);
 #elif NV_OS_LINUX
         return finitef(f);
@@ -187,7 +187,7 @@ namespace nv
     {
 #if NV_OS_WIN32 || NV_OS_XBOX
         return _isnan(f) != 0;
-#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_OPENBSD || NV_OS_ORBIS
+#elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_NETBSD || NV_OS_OPENBSD || NV_OS_ORBIS
         return isnan(f);
 #elif NV_OS_LINUX
         return isnanf(f);
