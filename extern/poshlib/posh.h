@@ -306,6 +306,11 @@ LLVM:
 #  define POSH_OS_STRING "FreeBSD"
 #endif
 
+#if defined __NetBSD__
+#  define POSH_OS_NETBSD 1
+#  define POSH_OS_STRING "NetBSD"
+#endif
+
 #if defined __OpenBSD__
 #  define POSH_OS_OPENBSD 1
 #  define POSH_OS_STRING "OpenBSD"
@@ -1027,5 +1032,3 @@ extern posh_i64_t  POSH_ReadI64FromBig( const void *src );
 #ifdef __cplusplus
 }
 #endif
-
-
