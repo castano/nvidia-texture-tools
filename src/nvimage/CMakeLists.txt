@@ -10,7 +10,7 @@ SET(IMAGE_SRCS
     FloatImage.h FloatImage.cpp
     Image.h Image.cpp
     ImageIO.h ImageIO.cpp
-    #KtxFile.h KtxFile.cpp
+    KtxFile.h KtxFile.cpp
     NormalMap.h NormalMap.cpp
     PixelFormat.h
     PsdFile.h

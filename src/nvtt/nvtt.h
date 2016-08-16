@@ -345,7 +345,7 @@ namespace nvtt
     {
         Container_DDS,
         Container_DDS10,
-        // Container_KTX,   // Khronos Texture: http://www.khronos.org/opengles/sdk/tools/KTX/
+        Container_KTX,   // Khronos Texture: http://www.khronos.org/opengles/sdk/tools/KTX/
         // Container_VTF,   // Valve Texture Format: http://developer.valvesoftware.com/wiki/Valve_Texture_Format
     };
 

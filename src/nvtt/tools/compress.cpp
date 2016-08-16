@@ -154,11 +154,13 @@ int main(int argc, char *argv[])
     bool loadAsFloat = false;
     bool rgbm = false;
     bool rangescale = false;
+    bool srgb = false;
 
     const char * externalCompressor = NULL;
 
     bool silent = false;
     bool dds10 = false;
+    bool ktx = false;
 
     nv::Path input;
     nv::Path output;
@@ -309,7 +311,15 @@ int main(int argc, char *argv[])
         {
             dds10 = true;
         }
-
+        else if (strcmp("-ktx", argv[i]) == 0)
+        {
+            ktx = true;
+        }
+        else if (strcmp("-srgb", argv[i]) == 0)
+        {
+            srgb = true;
+        }
+        
         else if (argv[i][0] != '-')
         {
             input = argv[i];
@@ -321,7 +331,15 @@ int main(int argc, char *argv[])
             {
                 output.copy(input.str());
                 output.stripExtension();
-                output.append(".dds");
+                
+                if (ktx)
+                {
+                    output.append(".ktx");
+                }
+                else
+                {
+                    output.append(".dds");
+                }
             }
 
             break;
@@ -380,7 +398,9 @@ int main(int argc, char *argv[])
 
         printf("Output options:\n");
         printf("  -silent  \tDo not output progress messages\n");
-        printf("  -dds10   \tUse DirectX 10 DDS format (enabled by default for BC6/7)\n\n");
+        printf("  -dds10   \tUse DirectX 10 DDS format (enabled by default for BC6/7, unless ktx is being used)\n");
+        printf("  -ktx     \tUse KTX container format\n");
+        printf("  -srgb    \tIf the requested format allows it, output will be in sRGB color space\n\n");
 
         return EXIT_FAILURE;
     }
@@ -494,7 +514,7 @@ int main(int argc, char *argv[])
                 nvDebugCheck(dds.isTextureArray());
                 inputOptions.setTextureLayout(nvtt::TextureType_Array, dds.width(), dds.height(), 1, dds.arraySize());
                 faceCount = dds.arraySize();
-                dds10 = true;
+                dds10 = ktx ? false : true;
             }
 
             uint mipmapCount = dds.mipmapCount();
@@ -721,7 +741,7 @@ int main(int argc, char *argv[])
     outputOptions.setErrorHandler(&errorHandler);
 
 	// Automatically use dds10 if compressing to BC6 or BC7
-	if (format == nvtt::Format_BC6 || format == nvtt::Format_BC7)
+	if (format == nvtt::Format_BC6 || format == nvtt::Format_BC7 && !ktx)
 	{
 		dds10 = true;
 	}
@@ -729,6 +749,15 @@ int main(int argc, char *argv[])
     if (dds10)
     {
         outputOptions.setContainer(nvtt::Container_DDS10);
+    }
+    
+    if (ktx)
+    {
+        outputOptions.setContainer(nvtt::Container_KTX);
+    }
+    
+    if (srgb) {
+        outputOptions.setSrgbFlag(true);
     }
 
     // printf("Press ENTER.\n");

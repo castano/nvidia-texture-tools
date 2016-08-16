@@ -39,6 +39,7 @@
 #include "cuda/CudaCompressorDXT.h"
 
 #include "nvimage/DirectDrawSurface.h"
+#include "nvimage/KtxFile.h"
 #include "nvimage/ColorBlock.h"
 #include "nvimage/BlockDXT.h"
 #include "nvimage/Image.h"
@@ -51,6 +52,7 @@
 
 #include "nvcore/Memory.h"
 #include "nvcore/Ptr.h"
+#include "nvcore/Array.inl"
 
 using namespace nv;
 using namespace nvtt;
@@ -222,11 +224,6 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         return false;
     }
 
-    nvtt::Surface img;
-    img.setWrapMode(inputOptions.wrapMode);
-    img.setAlphaMode(inputOptions.alphaMode);
-    img.setNormalMap(inputOptions.isNormalMap);
-
     const int faceCount = inputOptions.faceCount;
     int width = inputOptions.width;
     int height = inputOptions.height;
@@ -244,97 +241,246 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         if (inputOptions.maxLevel > 0) mipmapCount = min(mipmapCount, inputOptions.maxLevel);
     }
 
-    if (!outputHeader(inputOptions.textureType, width, height, depth, arraySize, mipmapCount, img.isNormalMap(), compressionOptions, outputOptions)) {
+    if (!outputHeader(inputOptions.textureType, width, height, depth, arraySize, mipmapCount, inputOptions.isNormalMap, compressionOptions, outputOptions)) {
         return false;
     }
 
-
     // Output images.
-    for (int f = 0; f < faceCount; f++)
+    if (outputOptions.container != Container_KTX)
     {
-        int w = width;
-        int h = height;
-        int d = depth;
-        bool canUseSourceImagesForThisFace = canUseSourceImages;
+        nvtt::Surface img;
+        img.setWrapMode(inputOptions.wrapMode);
+        img.setAlphaMode(inputOptions.alphaMode);
+        img.setNormalMap(inputOptions.isNormalMap);
 
-        img.setImage(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.depth, inputOptions.images[f]);
+        for (int f = 0; f < faceCount; f++)
+        {
+            int w = width;
+            int h = height;
+            int d = depth;
+            bool canUseSourceImagesForThisFace = canUseSourceImages;
 
-        // To normal map.
-        if (inputOptions.convertToNormalMap) {
-            img.toGreyScale(inputOptions.heightFactors.x, inputOptions.heightFactors.y, inputOptions.heightFactors.z, inputOptions.heightFactors.w);
-            img.toNormalMap(inputOptions.bumpFrequencyScale.x, inputOptions.bumpFrequencyScale.y, inputOptions.bumpFrequencyScale.z, inputOptions.bumpFrequencyScale.w);
-        }
+            img.setImage(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.depth, inputOptions.images[f]);
 
-        // To linear space.
-        if (!img.isNormalMap()) {
-            img.toLinear(inputOptions.inputGamma);
-        }
-
-        // Resize input.
-        img.resize(w, h, d, ResizeFilter_Box);
-
-        nvtt::Surface tmp = img;
-        if (!img.isNormalMap()) {
-            tmp.toGamma(inputOptions.outputGamma);
-        }
-
-        quantize(tmp, compressionOptions);
-        compress(tmp, f, 0, compressionOptions, outputOptions);
-
-        for (int m = 1; m < mipmapCount; m++) {
-            w = max(1, w/2);
-            h = max(1, h/2);
-            d = max(1, d/2);
-
-            int idx = m * faceCount + f;
-
-            bool useSourceImages = false;
-            if (canUseSourceImagesForThisFace) {
-                if (inputOptions.images[idx] == NULL) { // One face is missing in this mipmap level.
-                    canUseSourceImagesForThisFace = false; // If one level is missing, ignore the following source images.
-                }
-                else {
-                    useSourceImages = true;
-                }
+            // To normal map.
+            if (inputOptions.convertToNormalMap) {
+                img.toGreyScale(inputOptions.heightFactors.x, inputOptions.heightFactors.y, inputOptions.heightFactors.z, inputOptions.heightFactors.w);
+                img.toNormalMap(inputOptions.bumpFrequencyScale.x, inputOptions.bumpFrequencyScale.y, inputOptions.bumpFrequencyScale.z, inputOptions.bumpFrequencyScale.w);
             }
 
-            if (useSourceImages) {
-                img.setImage(inputOptions.inputFormat, w, h, d, inputOptions.images[idx]);
+            // To linear space.
+            if (!img.isNormalMap()) {
+                img.toLinear(inputOptions.inputGamma);
+            }
 
-                // For already generated mipmaps, we need to convert to linear.
-                if (!img.isNormalMap()) {
-                    img.toLinear(inputOptions.inputGamma);
-                }
-            }
-            else {
-                if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
-                    float params[2] = { inputOptions.kaiserStretch, inputOptions.kaiserAlpha };
-                    img.buildNextMipmap(MipmapFilter_Kaiser, inputOptions.kaiserWidth, params);
-                }
-                else {
-                    img.buildNextMipmap(inputOptions.mipmapFilter);
-                }
-            }
-            nvDebugCheck(img.width() == w);
-            nvDebugCheck(img.height() == h);
-            nvDebugCheck(img.depth() == d);
+            // Resize input.
+            img.resize(w, h, d, ResizeFilter_Box);
 
-            if (img.isNormalMap()) {
-                if (inputOptions.normalizeMipmaps) {
-                    img.normalizeNormalMap();
-                }
-                tmp = img;
-            }
-            else {
-                tmp = img;
+            nvtt::Surface tmp = img;
+            if (!img.isNormalMap()) {
                 tmp.toGamma(inputOptions.outputGamma);
             }
 
             quantize(tmp, compressionOptions);
-            compress(tmp, f, m, compressionOptions, outputOptions);
+            compress(tmp, f, 0, compressionOptions, outputOptions);
+
+            for (int m = 1; m < mipmapCount; m++) {
+                w = max(1, w/2);
+                h = max(1, h/2);
+                d = max(1, d/2);
+
+                int idx = m * faceCount + f;
+
+                bool useSourceImages = false;
+                if (canUseSourceImagesForThisFace) {
+                    if (inputOptions.images[idx] == NULL) { // One face is missing in this mipmap level.
+                        canUseSourceImagesForThisFace = false; // If one level is missing, ignore the following source images.
+                    }
+                    else {
+                        useSourceImages = true;
+                    }
+                }
+
+                if (useSourceImages) {
+                    img.setImage(inputOptions.inputFormat, w, h, d, inputOptions.images[idx]);
+
+                    // For already generated mipmaps, we need to convert to linear.
+                    if (!img.isNormalMap()) {
+                        img.toLinear(inputOptions.inputGamma);
+                    }
+                }
+                else {
+                    if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
+                        float params[2] = { inputOptions.kaiserStretch, inputOptions.kaiserAlpha };
+                        img.buildNextMipmap(MipmapFilter_Kaiser, inputOptions.kaiserWidth, params);
+                    }
+                    else {
+                        img.buildNextMipmap(inputOptions.mipmapFilter);
+                    }
+                }
+                nvDebugCheck(img.width() == w);
+                nvDebugCheck(img.height() == h);
+                nvDebugCheck(img.depth() == d);
+
+                if (img.isNormalMap()) {
+                    if (inputOptions.normalizeMipmaps) {
+                        img.normalizeNormalMap();
+                    }
+                    tmp = img;
+                }
+                else {
+                    tmp = img;
+                    tmp.toGamma(inputOptions.outputGamma);
+                }
+
+                quantize(tmp, compressionOptions);
+                compress(tmp, f, m, compressionOptions, outputOptions);
+            }
         }
     }
+    else
+    {
+        Array<nvtt::Surface> images(faceCount);
+        Array<bool> mipChainBroken(faceCount);
+        
+        int w = width;
+        int h = height;
+        int d = depth;
 
+        uint32 imageSize = 0;
+
+        // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/#2.16
+        if (faceCount == 6 && arraySize == 1)
+        {
+            imageSize = estimateSize(w, h, 1, 1, compressionOptions) * faceCount;
+        }
+        else
+        {
+            imageSize = estimateSize(w, h, d, 1, compressionOptions) * faceCount;
+        }
+
+        outputOptions.writeData(&imageSize, sizeof(uint32));
+            
+        for (int f = 0; f < faceCount; f++)
+        {
+            nvtt::Surface s;
+            s.setWrapMode(inputOptions.wrapMode);
+            s.setAlphaMode(inputOptions.alphaMode);
+            s.setNormalMap(inputOptions.isNormalMap);
+            
+            s.setImage(inputOptions.inputFormat, inputOptions.width, inputOptions.height, inputOptions.depth, inputOptions.images[f]);
+
+            // To normal map.
+            if (inputOptions.convertToNormalMap) {
+                s.toGreyScale(inputOptions.heightFactors.x, inputOptions.heightFactors.y, inputOptions.heightFactors.z, inputOptions.heightFactors.w);
+                s.toNormalMap(inputOptions.bumpFrequencyScale.x, inputOptions.bumpFrequencyScale.y, inputOptions.bumpFrequencyScale.z, inputOptions.bumpFrequencyScale.w);
+            }
+
+            // To linear space.
+            if (!s.isNormalMap()) {
+                s.toLinear(inputOptions.inputGamma);
+            }
+
+            // Resize input.
+            s.resize(w, h, d, ResizeFilter_Box);
+            
+            nvtt::Surface tmp = s;
+            if (!s.isNormalMap()) {
+                tmp.toGamma(inputOptions.outputGamma);
+            }
+
+            quantize(tmp, compressionOptions);
+            compress(tmp, f, 0, compressionOptions, outputOptions);
+            
+            images.push_back(s);
+            mipChainBroken.push_back(false);
+        }
+        
+        unsigned char padding[3] = {0, 0, 0};
+        for (int m = 1; m < mipmapCount; m++)
+        {
+            w = max(1, w/2);
+            h = max(1, h/2);
+            d = max(1, d/2);
+
+            // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/#2.16
+            if (faceCount == 6 && arraySize == 1)
+            {
+                imageSize = estimateSize(w, h, 1, 1, compressionOptions) * faceCount;
+            }
+            else
+            {
+                imageSize = estimateSize(w, h, d, 1, compressionOptions) * faceCount;
+            }
+
+            outputOptions.writeData(&imageSize, sizeof(uint32));
+            
+            nvtt::Surface tmp;
+            
+            for (int f = 0; f < faceCount; f++)
+            {
+                nvtt::Surface& img = images[f];
+                int idx = m * faceCount + f;
+
+                bool useSourceImages = false;
+                if (!mipChainBroken[f]) {
+                    if (inputOptions.images[idx] == NULL) { // One face is missing in this mipmap level.
+                        mipChainBroken[f] = false; // If one level is missing, ignore the following source images.
+                    }
+                    else {
+                        useSourceImages = true;
+                    }
+                }
+
+                if (useSourceImages) {
+                    img.setImage(inputOptions.inputFormat, w, h, d, inputOptions.images[idx]);
+
+                    // For already generated mipmaps, we need to convert to linear.
+                    if (!img.isNormalMap()) {
+                        img.toLinear(inputOptions.inputGamma);
+                    }
+                }
+                else {
+                    if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
+                        float params[2] = { inputOptions.kaiserStretch, inputOptions.kaiserAlpha };
+                        img.buildNextMipmap(MipmapFilter_Kaiser, inputOptions.kaiserWidth, params);
+                    }
+                    else {
+                        img.buildNextMipmap(inputOptions.mipmapFilter);
+                    }
+                }
+                nvDebugCheck(img.width() == w);
+                nvDebugCheck(img.height() == h);
+                nvDebugCheck(img.depth() == d);
+
+                if (img.isNormalMap()) {
+                    if (inputOptions.normalizeMipmaps) {
+                        img.normalizeNormalMap();
+                    }
+                    tmp = img;
+                }
+                else {
+                    tmp = img;
+                    tmp.toGamma(inputOptions.outputGamma);
+                }
+
+                quantize(tmp, compressionOptions);
+                compress(tmp, f, m, compressionOptions, outputOptions);
+                
+                //cube padding
+                if (faceCount == 6 && arraySize == 1)
+                {
+                    //TODO calc offset for uncompressed images
+                }
+            }
+            
+            int mipPadding = 3 - ((imageSize + 3) % 4);
+            if (mipPadding != 0) {
+                outputOptions.writeData(&padding, mipPadding);
+            }
+        }
+    }
+    
     return true;
 }
 
@@ -670,6 +816,112 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
 
         return writeSucceed;
     }
+    else if (outputOptions.container == Container_KTX) 
+    {
+        KtxHeader header;
+        // TODO cube arrays
+        if (textureType == TextureType_2D) {
+            nvCheck(arraySize == 1);
+            header.numberOfArrayElements = 0;
+            header.numberOfFaces = 1;
+            header.pixelDepth = 0;
+        }
+        else if (textureType == TextureType_Cube) {
+            nvCheck(arraySize == 1);
+            header.numberOfArrayElements = 0;
+            header.numberOfFaces = 6;
+            header.pixelDepth = 0;
+        }
+        else if (textureType == TextureType_3D) {
+            nvCheck(arraySize == 1);
+            header.numberOfArrayElements = 0;
+            header.numberOfFaces = 1;
+            header.pixelDepth = d;
+        }
+        else if (textureType == TextureType_Array) {
+            header.numberOfArrayElements = arraySize;
+            header.numberOfFaces = 1;
+            header.pixelDepth = 0; // Is it?
+        }
+
+        header.pixelWidth = w;
+        header.pixelHeight = h;
+        header.numberOfMipmapLevels = mipmapCount;
+
+        bool supported = true;
+
+        // TODO non-compressed formats
+        if (compressionOptions.format == Format_RGBA)
+        {
+            //header.glType = ?;
+            //header.glTypeSize = ?;
+            //header.glFormat = ?;
+        }
+        else
+        {
+            header.glType = 0;
+            header.glTypeSize = 1;
+            header.glFormat = 0;
+            
+            if (compressionOptions.format == Format_DXT1) {
+                header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_S3TC_DXT1 : KTX_INTERNAL_COMPRESSED_RGB_S3TC_DXT1;
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGB;
+            }
+            else if (compressionOptions.format == Format_DXT1a) {
+                header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1 : KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT1;
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGBA;
+            }
+            else if (compressionOptions.format == Format_DXT3) {
+                header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3 : KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT3;
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGBA;
+            }
+            else if (compressionOptions.format == Format_DXT5 || compressionOptions.format == Format_BC3_RGBM) {
+                header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5 : KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT5;
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGBA;
+            }
+            else if (compressionOptions.format == Format_BC4) {
+                header.glInternalFormat = KTX_INTERNAL_COMPRESSED_RED_RGTC1; // KTX_INTERNAL_COMPRESSED_SIGNED_RED_RGTC1 ?
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RED;
+            }
+            else if (compressionOptions.format == Format_BC5) {
+                header.glInternalFormat = KTX_INTERNAL_COMPRESSED_RG_RGTC2; // KTX_INTERNAL_COMPRESSED_SIGNED_RG_RGTC2 ?
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RG;
+            }
+            else if (compressionOptions.format == Format_BC6) {
+                if (compressionOptions.pixelType == PixelType_Float) header.glInternalFormat = KTX_INTERNAL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+                /*if (compressionOptions.pixelType == PixelType_UnsignedFloat)*/ header.glInternalFormat = KTX_INTERNAL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT; // By default we assume unsigned.
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGB;
+            }
+            else if (compressionOptions.format == Format_BC7) {
+                header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM : KTX_INTERNAL_COMPRESSED_RGBA_BPTC_UNORM;
+                header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGBA;
+            }
+            else if (compressionOptions.format == Format_CTX1) {
+                supported = false;
+            }
+            else {
+                supported = false;
+            }//TODO compressionOptions.format == Format_DXT1n, Format_DXT5n ? There seems to be no way to indicate a normal map using ktx. Maybe via key value data?
+        }
+        
+        if (!supported)
+        {
+            // This container does not support the requested format.
+            outputOptions.error(Error_UnsupportedOutputFormat);
+            return false;
+        }
+
+        uint headerSize = 64;
+        nvStaticCheck(sizeof(KtxHeader) == 64);
+
+        bool writeSucceed = outputOptions.writeData(&header, headerSize);
+        if (!writeSucceed)
+        {
+            outputOptions.error(Error_FileWrite);
+        }
+
+        return writeSucceed;
+    }
 
     return true;
 }
@@ -856,4 +1108,25 @@ CompressorInterface * Compressor::Private::chooseGpuCompressor(const Compression
 #endif // defined HAVE_CUDA
 
     return NULL;
+}
+
+int Compressor::Private::estimateSize(int w, int h, int d, int mipmapCount, const CompressionOptions::Private & compressionOptions) const
+{
+    const Format format = compressionOptions.format;
+
+    const uint bitCount = compressionOptions.bitcount;
+    const uint pitchAlignment = compressionOptions.pitchAlignment;
+
+    int size = 0;
+    for (int m = 0; m < mipmapCount; m++)
+    {
+        size += computeImageSize(w, h, d, bitCount, pitchAlignment, format);
+
+        // Compute extents of next mipmap:
+        w = max(1, w / 2);
+        h = max(1, h / 2);
+        d = max(1, d / 2);
+    }
+
+    return size;
 }

@@ -6,6 +6,7 @@
 
 #include "nvimage.h"
 #include "nvcore/StrLib.h"
+#include "nvcore/Array.h"
 
 // KTX File format specification:
 // http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/#key
@@ -14,22 +15,78 @@ namespace nv
 {
     class Stream;
 
-    // GL types (Table 3.2)
-    const uint KTX_UNSIGNED_BYTE;
-    const uint KTX_UNSIGNED_SHORT_5_6_5;
-    // ...
+    // GL types
+    const uint KTX_UNSIGNED_BYTE = 0x1401;
+    const uint KTX_BYTE = 0x1400;
+    const uint KTX_UNSIGNED_SHORT = 0x1403;
+    const uint KTX_SHORT = 0x1402;
+    const uint KTX_UNSIGNED_INT = 0x1405;
+    const uint KTX_INT = 0x1404;
+    const uint KTX_FLOAT = 0x1406;
+    const uint KTX_UNSIGNED_BYTE_3_3_2 = 0x8032;
+    const uint KTX_UNSIGNED_BYTE_2_3_3_REV = 0x8362;
+    const uint KTX_UNSIGNED_SHORT_5_6_5 = 0x8363;
+    const uint KTX_UNSIGNED_SHORT_5_6_5_REV = 0x8364;
+    const uint KTX_UNSIGNED_SHORT_4_4_4_4 = 0x8033;
+    const uint KTX_UNSIGNED_SHORT_4_4_4_4_REV = 0x8365;
+    const uint KTX_UNSIGNED_SHORT_5_5_5_1 = 0x8034;
+    const uint KTX_UNSIGNED_SHORT_1_5_5_5_REV = 0x8366;
+    const uint KTX_UNSIGNED_INT_8_8_8_8 = 0x8035;
+    const uint KTX_UNSIGNED_INT_8_8_8_8_REV = 0x8367;
+    const uint KTX_UNSIGNED_INT_10_10_10_2 = 0x8036;
+    const uint KTX_UNSIGNED_INT_2_10_10_10_REV = 0x8368;
 
-    // GL formats (Table 3.3)
-    // ...
+    // GL formats
+    const uint KTX_FORMAT_RED = 0x1903;
+    const uint KTX_FORMAT_RG = 0x8227;
+    const uint KTX_FORMAT_RGB = 0x1907;
+    const uint KTX_FORMAT_BGR = 0x80E0;
+    const uint KTX_FORMAT_RGBA = 0x1908;
+    const uint KTX_FORMAT_BGRA = 0x80E1;
+    const uint KTX_FORMAT_RED_INTEGER = 0x8D94;
+    const uint KTX_FORMAT_RG_INTEGER = 0x8228;
+    const uint KTX_FORMAT_RGB_INTEGER = 0x8D98;
+    const uint KTX_FORMAT_BGR_INTEGER = 0x8D9A;
+    const uint KTX_FORMAT_RGBA_INTEGER = 0x8D99;
+    const uint KTX_FORMAT_BGRA_INTEGER = 0x8D9B;
+    const uint KTX_FORMAT_STENCIL_INDEX = 0x1901;
+    const uint KTX_FORMAT_DEPTH_COMPONENT = 0x1902;
+    const uint KTX_FORMAT_DEPTH_STENCIL = 0x84F9;
 
-    // GL internal formats (Table 3.12, 3.13)
-    // ...
+    // GL internal formats
+    // BC1
+    const uint KTX_INTERNAL_COMPRESSED_RGB_S3TC_DXT1 = 0x83F0;
+    const uint KTX_INTERNAL_COMPRESSED_SRGB_S3TC_DXT1 = 0x8C4C;
+    // BC1a
+    const uint KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT1 = 0x83F1;
+    const uint KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1 = 0x8C4D;
+    // BC2
+    const uint KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT3 = 0x83F2;
+    const uint KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3 = 0x8C4E;
+    // BC3
+    const uint KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT5 = 0x83F3;
+    const uint KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5 = 0x8C4F;
+    // BC4
+    const uint KTX_INTERNAL_COMPRESSED_RED_RGTC1 = 0x8DBB;
+    const uint KTX_INTERNAL_COMPRESSED_SIGNED_RED_RGTC1 = 0x8DBC;
+    // BC5
+    const uint KTX_INTERNAL_COMPRESSED_RG_RGTC2 = 0x8DBD;
+    const uint KTX_INTERNAL_COMPRESSED_SIGNED_RG_RGTC2 = 0x8DBE;
+    // BC6
+    const uint KTX_INTERNAL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT = 0x8E8F;
+    const uint KTX_INTERNAL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT = 0x8E8E;
+    // BC7
+    const uint KTX_INTERNAL_COMPRESSED_RGBA_BPTC_UNORM = 0x8E8C;
+    const uint KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM = 0x8E8D;
 
-    // GL base internal format. (Table 3.11)
-    const uint KTX_RGB;
-    const uint KTX_RGBA;
-    const uint KTX_ALPHA;
-    // ...
+    // GL base internal formats
+    const uint KTX_BASE_INTERNAL_DEPTH_COMPONENT = 0x1902;
+    const uint KTX_BASE_INTERNAL_DEPTH_STENCIL = 0x84F9;
+    const uint KTX_BASE_INTERNAL_RED = 0x1903;
+    const uint KTX_BASE_INTERNAL_RG = 0x8227;
+    const uint KTX_BASE_INTERNAL_RGB = 0x1907;
+    const uint KTX_BASE_INTERNAL_RGBA = 0x1908;
+    const uint KTX_BASE_INTERNAL_STENCIL_INDEX = 0x1901;
 
 
     struct KtxHeader {
@@ -52,10 +109,10 @@ namespace nv
 
     };
 
-    NVIMAGE_API Stream & operator<< (Stream & s, DDSHeader & header);
+    NVIMAGE_API Stream & operator<< (Stream & s, KtxHeader & header);
 
 
-    struct KtxFile {
+/*    struct KtxFile {
         KtxFile();
         ~KtxFile();
 
@@ -66,10 +123,9 @@ namespace nv
 
         Array<String> keyArray;
         Array<String> valueArray;
-
     };
 
-    NVIMAGE_API Stream & operator<< (Stream & s, KtxFile & file);
+    NVIMAGE_API Stream & operator<< (Stream & s, KtxFile & file);*/
 
 
     /*
