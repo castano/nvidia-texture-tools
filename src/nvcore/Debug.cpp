@@ -519,11 +519,7 @@ namespace
 #if defined(HAVE_EXECINFO_H)
 
     static bool hasStackTrace() {
-#if NV_OS_DARWIN
-        return backtrace != NULL;
-#else
         return true;
-#endif
     }
 
 
