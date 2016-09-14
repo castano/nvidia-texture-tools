@@ -46,8 +46,8 @@ ADD_SUBDIRECTORY(src)
 
 # These files should only be installed when creating packages.
 INSTALL(FILES 
-	NVIDIA_Texture_Tools_LICENSE.txt
-	NVIDIA_Texture_Tools_README.txt
+	LICENSE
+	README.md
 	ChangeLog 
 	DESTINATION share/doc/nvtt)
 
@@ -67,8 +67,8 @@ SET(CPACK_PACKAGE_CONTACT "Ignacio Castaño <icastano@nvidia.com>")
 SET(CPACK_PACKAGE_VENDOR "NVIDIA Corporation")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPU-accelerated Texture Tools with support for DirectX 10 texture formats")
 
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${NV_SOURCE_DIR}/NVIDIA_Texture_Tools_README.txt")
-SET(CPACK_RESOURCE_FILE_LICENSE "${NV_SOURCE_DIR}/NVIDIA_Texture_Tools_LICENSE.txt")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${NV_SOURCE_DIR}/README.md")
+SET(CPACK_RESOURCE_FILE_LICENSE "${NV_SOURCE_DIR}/LICENSE")
 
 # NSIS options:
 IF(WIN32)
