@@ -78,6 +78,6 @@ private:
 	int m_order[16];
 };
 
-} // namespace squish
+} // namespace nvsquish
 
 #endif // ndef SQUISH_CLUSTERFIT_H

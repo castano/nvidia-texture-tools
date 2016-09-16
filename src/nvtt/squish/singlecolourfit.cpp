@@ -27,7 +27,7 @@
 #include "colourset.h"
 #include "colourblock.h"
 
-namespace squish {
+namespace nvsquish {
 
 struct SourceBlock
 {
@@ -59,8 +59,9 @@ static int FloatToInt( float a, int limit )
 }
 
 SingleColourFit::SingleColourFit( ColourSet const* colours, int flags )
-  : ColourFit( colours, flags )
 {
+	SetColourSet(colours, flags);
+
 	// grab the single colour
 	Vec3 const* values = m_colours->GetPoints();
 	m_colour[0] = ( u8 )FloatToInt( 255.0f*values->X(), 255 );
@@ -169,4 +170,4 @@ void SingleColourFit::ComputeEndPoints( int count, SingleColourLookup const* con
 	}
 }
 
-} // namespace squish
+} // namespace nvsquish

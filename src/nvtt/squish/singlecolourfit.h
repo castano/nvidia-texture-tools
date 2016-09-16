@@ -29,7 +29,7 @@
 #include <squish.h>
 #include "colourfit.h"
 
-namespace squish {
+namespace nvsquish {
 
 class ColourSet;
 struct SingleColourLookup;
@@ -53,6 +53,6 @@ private:
 	int m_besterror;
 };
 
-} // namespace squish
+} // namespace nvsquish
 
 #endif // ndef SQUISH_SINGLECOLOURFIT_H
