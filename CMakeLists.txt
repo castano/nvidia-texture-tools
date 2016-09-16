@@ -7,6 +7,12 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${NV_CMAKE_DIR}")
 
 OPTION(SQUISH_FULL_LIBRARY "Makes the whole squish library compiled, instead of just what's needed in NVTT. Please be aware that this build path is not officially maintained." OFF)
 MARK_AS_ADVANCED(SQUISH_FULL_LIBRARY)
+OPTION(INSTALL_SQUISH "Install the (internal) squish library alongside NVTT binaries." OFF)
+MARK_AS_ADVANCED(INSTALL_SQUISH)
+OPTION(INSTALL_BC6H "Install the (internal) BC6H library alongside NVTT binaries." OFF)
+MARK_AS_ADVANCED(INSTALL_BC6H)
+OPTION(INSTALL_BC7 "Install the (internal) BC7 library alongside NVTT binaries." OFF)
+MARK_AS_ADVANCED(INSTALL_BC7)
 
 # GCC check (needs -std:c++11 flag)
 if(CMAKE_COMPILER_IS_GNUCC)
