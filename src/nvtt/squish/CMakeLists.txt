@@ -20,6 +20,23 @@ SET(SQUISH_SRCS
 	simd_sse.h
 	simd_ve.h)
 
+# Additionnal squish source files which are not included in NVTT by default
+IF(SQUISH_FULL_LIBRARY)
+	SET(SQUISH_SRCS ${SQUISH_SRCS}
+		alpha.h
+		alpha.cpp
+		clusterfit.h
+		clusterfit.cpp
+		rangefit.h
+		rangefit.cpp
+		singlechannelfit.h
+		singlechannelfit.cpp
+		singlecolourfit.h
+		singlecolourfit.cpp
+		squish.cpp
+	)
+ENDIF(SQUISH_FULL)
+
 ADD_LIBRARY(squish STATIC ${SQUISH_SRCS})
 
 IF(NOT WIN32)

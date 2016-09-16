@@ -5,6 +5,9 @@ ENABLE_TESTING()
 SET(NV_CMAKE_DIR "${NV_SOURCE_DIR}/cmake")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${NV_CMAKE_DIR}")
 
+OPTION(SQUISH_FULL_LIBRARY "Makes the whole squish library compiled, instead of just what's needed in NVTT. Please be aware that this build path is not officially maintained." OFF)
+MARK_AS_ADVANCED(SQUISH_FULL_LIBRARY)
+
 # GCC check (needs -std:c++11 flag)
 if(CMAKE_COMPILER_IS_GNUCC)
 	ADD_DEFINITIONS("-std=c++11")
