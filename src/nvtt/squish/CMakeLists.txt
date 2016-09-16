@@ -35,7 +35,7 @@ IF(SQUISH_FULL_LIBRARY)
 		singlecolourfit.cpp
 		squish.cpp
 	)
-ENDIF(SQUISH_FULL)
+ENDIF(SQUISH_FULL_LIBRARY)
 
 ADD_LIBRARY(squish STATIC ${SQUISH_SRCS})
 
