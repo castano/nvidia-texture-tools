@@ -1704,7 +1704,7 @@ static Image * loadSTB(Stream & s)
     int w, h, n;
     uint8 * data = stbi_load_from_memory(buffer, size, &w, &h, &n, 4);
 
-    delete buffer;
+    delete [] buffer;
 
     if (data != NULL) {
         Image * img = new Image;
@@ -1744,7 +1744,7 @@ static FloatImage * loadFloatSTB(Stream & s)
     int w, h, n;
     float * data = stbi_loadf_from_memory(buffer, size, &w, &h, &n, 0);
 
-    delete buffer;
+    delete [] buffer;
 
     // Copy to image.
     if (data != NULL) {
