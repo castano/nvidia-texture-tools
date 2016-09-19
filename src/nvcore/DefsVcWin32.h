@@ -1,4 +1,4 @@
-// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
+// This code is in the public domain -- Ignacio CastaÃ±o <castano@gmail.com>
 
 #ifndef NV_CORE_H
 #error "Do not include this file directly."
@@ -51,6 +51,8 @@
 #define NV_FORCEINLINE __forceinline
 
 #define NV_THREAD_LOCAL __declspec(thread)
+
+#include <stdint.h>
 
 /*
 // Type definitions
