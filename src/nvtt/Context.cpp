@@ -321,7 +321,9 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
 
             if (img.isNormalMap()) {
                 if (inputOptions.normalizeMipmaps) {
+                    img.expandNormals();
                     img.normalizeNormalMap();
+                    img.packNormals();
                 }
                 tmp = img;
             }

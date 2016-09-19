@@ -102,10 +102,9 @@ namespace nvtt
         Format_DXT1n,   // Not supported.
         Format_CTX1,    // Not supported.
 
-        Format_BC6,     // Not supported yet.
-        Format_BC7,     // Not supported yet.
+        Format_BC6,
+        Format_BC7,
 
-        //Format_BC5_Luma,    // Two DXT alpha blocks encoding a single float.
         Format_BC3_RGBM,    // 
 
         Format_Count
