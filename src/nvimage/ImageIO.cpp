@@ -13,7 +13,7 @@
 
 #include "nvcore/Ptr.h"
 #include "nvcore/Utils.h"
-#include "nvcore/Array.h"
+#include "nvcore/Array.inl"
 #include "nvcore/StrLib.h"
 #include "nvcore/StdStream.h"
 #include "nvcore/TextWriter.h"
