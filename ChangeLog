@@ -1,4 +1,5 @@
 NVIDIA Texture Tools version 2.1.0
+ * Too many changes to list here.
  * CTX1 CUDA compressor.
  * DXT1n CUDA compressor.
  * Support alpha premultiplication by Charles Nicholson. See issue 30.

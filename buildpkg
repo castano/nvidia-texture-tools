@@ -3,5 +3,8 @@
 tar zcvf nvidia-texture-tools-`cat VERSION`.tar.gz \
 	--exclude '.*' --exclude debian --exclude '*~' --exclude buildpkg \
 	--exclude 'build-*' --exclude data --exclude tags --exclude Makefile \
-	--exclude qtcreator-build --exclude 'nvidia-texture-tools-*.tar.gz' \
-	--exclude '*.user' --transform 's,^,nvidia-texture-tools/,' *
+	--exclude 'doc' --exclude 'nvidia-texture-tools-*.tar.gz' \
+	--exclude '*.user' -s ',^,nvidia-texture-tools/,' *
+#   --exclude '*.user' --transform 's,^,nvidia-texture-tools/,' *
+#	--exclude '*.user' *
+
