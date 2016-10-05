@@ -252,7 +252,7 @@ float SincFilter::evaluate(float x) const
 }
 
 
-KaiserFilter::KaiserFilter(float w) : Filter(w) { setParameters(4.0f, 1.0f); }
+KaiserFilter::KaiserFilter(float w) : Filter(w) { setParameters(/*alpha=*/4.0f, /*stretch=*/1.0f); }
 
 float KaiserFilter::evaluate(float x) const
 {

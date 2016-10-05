@@ -308,7 +308,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             }
             else {
                 if (inputOptions.mipmapFilter == MipmapFilter_Kaiser) {
-                    float params[2] = { inputOptions.kaiserStretch, inputOptions.kaiserAlpha };
+                    float params[2] = { inputOptions.kaiserAlpha, inputOptions.kaiserStretch };
                     img.buildNextMipmap(MipmapFilter_Kaiser, inputOptions.kaiserWidth, params);
                 }
                 else {
