@@ -262,8 +262,8 @@ void FloatColorCompressorTask(void * data, int i)
     Vector4 colors[16];
     float weights[16];
 
-    const uint block_w = min(d->w, 4U);
-    const uint block_h = min(d->h, 4U);
+    const uint block_w = min(d->w - block_x * 4U, 4U);
+    const uint block_h = min(d->h - block_y * 4U, 4U);
 
     uint x, y;
     for (y = 0; y < block_h; y++) {
