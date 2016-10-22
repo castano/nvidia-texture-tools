@@ -1,0 +1,25 @@
+# User-specific files
+*.suo
+*.user
+
+# Visual C++ cache files
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+
+# Compilation result files
+project/*/Nvidia.TextureTools/bin/
+project/*/Nvidia.TextureTools/obj/
+project/**/Debug/
+project/**/Debug-CUDA/
+project/**/Release/
+project/**/Release-CUDA/
+project/*/Debug.Win32/
+project/*/Debug.x64/
+project/*/Debug-CUDA.Win32/
+project/*/Debug-CUDA.x64/
+project/*/Release.Win32/
+project/*/Release-CUDA.Win32/
+project/*/Release.x64/
+project/*/Release-CUDA.x64/
