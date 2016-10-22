@@ -18,6 +18,27 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\bc7\avpcl.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode0.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode1.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode2.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode3.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode4.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode5.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode6.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_mode7.cpp" />
+    <ClCompile Include="..\..\..\src\bc7\avpcl_utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\bc7\avpcl.h" />
+    <ClInclude Include="..\..\..\src\bc7\avpcl_utils.h" />
+    <ClInclude Include="..\..\..\src\bc7\bits.h" />
+    <ClInclude Include="..\..\..\src\bc7\endpts.h" />
+    <ClInclude Include="..\..\..\src\bc7\shapes_three.h" />
+    <ClInclude Include="..\..\..\src\bc7\shapes_two.h" />
+    <ClInclude Include="..\..\..\src\bc7\tile.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F974F34B-AF02-4C88-8E1E-85475094EA78}</ProjectGuid>
     <RootNamespace>bc7</RootNamespace>
@@ -75,12 +96,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..\..\src;$(SolutionDir)\..\..\extern\poshlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -89,12 +111,13 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..\..\src;$(SolutionDir)\..\..\extern\poshlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -123,29 +146,9 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..\..\src;$(SolutionDir)\..\..\extern\poshlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\src\nvtt\bc7\avpcl.h" />
-    <ClInclude Include="..\..\..\src\nvtt\bc7\bits.h" />
-    <ClInclude Include="..\..\..\src\nvtt\bc7\endpts.h" />
-    <ClInclude Include="..\..\..\src\nvtt\bc7\shapes_two.h" />
-    <ClInclude Include="..\..\..\src\nvtt\bc7\shapes_three.h" />
-    <ClInclude Include="..\..\..\src\nvtt\bc7\tile.h" />
-    <ClInclude Include="..\..\..\src\nvtt\bc7\utils.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode0.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode1.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode2.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode3.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode4.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode5.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode6.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\avpcl_mode7.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\bc7\utils.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

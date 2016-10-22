@@ -78,13 +78,14 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..\..\src;$(SolutionDir)\..\..\extern\poshlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -95,13 +96,14 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)\..\..\src;$(SolutionDir)\..\..\extern\poshlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;__SSE2__;__SSE__;__MMX__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
+      <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,6 +145,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -150,7 +153,7 @@
     <ClInclude Include="..\..\..\src\nvcore\Debug.h" />
     <ClInclude Include="..\..\..\src\nvcore\DefsVcWin32.h" />
     <ClInclude Include="..\..\..\src\nvcore\FileSystem.h" />
-    <ClInclude Include="..\..\..\src\nvcore\Library.h" />
+    <ClInclude Include="..\..\..\src\nvcore\ForEach.h" />
     <ClInclude Include="..\..\..\src\nvcore\Memory.h" />
     <ClInclude Include="..\..\..\src\nvcore\nvcore.h" />
     <ClInclude Include="..\..\..\src\nvcore\Ptr.h" />
@@ -162,7 +165,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\src\nvcore\Debug.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\FileSystem.cpp" />
-    <ClCompile Include="..\..\..\src\nvcore\Library.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\Memory.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\StrLib.cpp" />
     <ClCompile Include="..\..\..\src\nvcore\TextWriter.cpp" />
