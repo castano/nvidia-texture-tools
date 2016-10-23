@@ -2,11 +2,16 @@
 *.suo
 *.user
 
+# Visual Studio 2015 cache and options directory
+project/vc14/.vs/
+
 # Visual C++ cache files
 *.ncb
 *.opendb
 *.opensdf
 *.sdf
+*.VC.db
+*.VC.VC.opendb
 
 # Compilation result files
 project/*/Nvidia.TextureTools/bin/
