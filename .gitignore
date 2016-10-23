@@ -13,6 +13,10 @@ project/vc14/.vs/
 *.VC.db
 *.VC.VC.opendb
 
+# Visual Studio profiler files
+*.psess
+*.vsp
+
 # Compilation result files
 project/*/Nvidia.TextureTools/bin/
 project/*/Nvidia.TextureTools/obj/
