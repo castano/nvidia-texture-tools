@@ -38,8 +38,8 @@ ENDIF(NVCORE_SHARED)
 
 TARGET_LINK_LIBRARIES(nvcore ${LIBS})
 
-# On NetBSD backtrace() is provided by libexecinfo, not libc.
-if (CMAKE_SYSTEM_NAME MATCHES "NetBSD")
+# On NetBSD and FreeBSD backtrace() is provided by libexecinfo, not libc.
+if (CMAKE_SYSTEM_NAME MATCHES "NetBSD" OR CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
      TARGET_LINK_LIBRARIES(nvcore execinfo)
 endif()
 
