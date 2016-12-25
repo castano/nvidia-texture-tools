@@ -103,9 +103,9 @@ static FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode
 
             Vector3 n = normalize(Vector3(du, dv, heightScale));
 
-            img_out->pixel(0, x, y, 0) = n.x;
-            img_out->pixel(1, x, y, 0) = n.y;
-            img_out->pixel(2, x, y, 0) = n.z;
+            img_out->pixel(0, x, y, 0) = n.x * 0.5f + 0.5f;
+            img_out->pixel(1, x, y, 0) = n.y * 0.5f + 0.5f;
+            img_out->pixel(2, x, y, 0) = n.z * 0.5f + 0.5f;
         }
     }
 
