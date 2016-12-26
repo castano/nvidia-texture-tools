@@ -263,6 +263,7 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
         if (inputOptions.convertToNormalMap) {
             img.toGreyScale(inputOptions.heightFactors.x, inputOptions.heightFactors.y, inputOptions.heightFactors.z, inputOptions.heightFactors.w);
             img.toNormalMap(inputOptions.bumpFrequencyScale.x, inputOptions.bumpFrequencyScale.y, inputOptions.bumpFrequencyScale.z, inputOptions.bumpFrequencyScale.w);
+            img.packNormals();
         }
 
         // To linear space.
