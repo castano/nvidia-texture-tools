@@ -332,7 +332,7 @@ LLVM:
 #  define POSH_OS_STRING "MinGW"
 #endif
 
-#if defined GO32 && defined DJGPP && defined __MSDOS__ 
+#if defined GO32 && defined DJGPP && defined __MSDOS__
 #  define POSH_OS_GO32 1
 #  define POSH_OS_STRING "GO32/MS-DOS"
 #endif
