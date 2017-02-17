@@ -1,0 +1,34 @@
+# User-specific files
+*.suo
+*.user
+
+# Visual Studio 2015 cache and options directory
+project/vc14/.vs/
+
+# Visual C++ cache files
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio profiler files
+*.psess
+*.vsp
+
+# Compilation result files
+project/*/Nvidia.TextureTools/bin/
+project/*/Nvidia.TextureTools/obj/
+project/**/Debug/
+project/**/Debug-CUDA/
+project/**/Release/
+project/**/Release-CUDA/
+project/*/Debug.Win32/
+project/*/Debug.x64/
+project/*/Debug-CUDA.Win32/
+project/*/Debug-CUDA.x64/
+project/*/Release.Win32/
+project/*/Release-CUDA.Win32/
+project/*/Release.x64/
+project/*/Release-CUDA.x64/
