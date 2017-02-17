@@ -256,15 +256,15 @@ void FastClusterFit::Compress4( void* block )
 	int i = 0;
 
 	// check all possible clusters for this total order
-	for( int c0 = 0; c0 <= 16; c0++)
+	for( int c0 = 0; c0 < 16; c0++)
 	{	
 		Vec4 x1 = zero;
 		
-		for( int c1 = 0; c1 <= 16-c0; c1++)
+		for( int c1 = 0; c1 < 16-c0; c1++)
 		{	
 			Vec4 x2 = zero;
 			
-			for( int c2 = 0; c2 <= 16-c0-c1; c2++)
+			for( int c2 = 0; c2 < 16-c0-c1; c2++)
 			{
 				Vec4 const constants = Vec4((const float *)&s_fourElement[i]);
 				Vec4 const alpha2_sum = constants.SplatX();
