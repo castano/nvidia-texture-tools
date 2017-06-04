@@ -5,6 +5,7 @@ SET(MATH_SRCS
     Box.h Box.inl
     Color.h Color.inl
     Fitting.h Fitting.cpp
+    Gamma.h Gamma.cpp
     Half.h Half.cpp
     Matrix.h
     Plane.h Plane.inl Plane.cpp

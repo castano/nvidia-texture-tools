@@ -311,6 +311,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\..\src\nvmath\Gamma.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\..\src\nvmath\Gamma.h"
+			>
+		</File>
+		<File
 			RelativePath="..\..\..\src\nvmath\Half.cpp"
 			>
 		</File>
