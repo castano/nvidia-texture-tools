@@ -156,6 +156,7 @@
     <ClInclude Include="..\..\..\src\nvmath\Box.h" />
     <ClInclude Include="..\..\..\src\nvmath\Color.h" />
     <ClInclude Include="..\..\..\src\nvmath\Fitting.h" />
+    <ClInclude Include="..\..\..\src\nvmath\Gamma.h" />
     <ClInclude Include="..\..\..\src\nvmath\Half.h" />
     <ClInclude Include="..\..\..\src\nvmath\Matrix.h" />
     <ClInclude Include="..\..\..\src\nvmath\nvmath.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="..\..\..\src\nvmath\Box.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Color.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Fitting.cpp" />
+    <ClCompile Include="..\..\..\src\nvmath\Gamma.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Half.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Plane.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\SphericalHarmonic.cpp" />
