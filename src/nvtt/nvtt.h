@@ -380,6 +380,8 @@ namespace nvtt
     // (New in NVTT 2.1)
     struct TaskDispatcher
     {
+        virtual ~TaskDispatcher() {}
+
         virtual void dispatch(Task * task, void * context, int count) = 0;
     };
 
