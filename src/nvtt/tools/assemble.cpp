@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
 	bool assembleCubeMap = true;
 	bool assembleVolume = false;
 	bool assembleTextureArray = false;
+	bool bgra = false;
 	
 	nv::Array<nv::Path> files;
 	nv::Path output = "output.dds";
@@ -78,6 +79,10 @@ int main(int argc, char *argv[])
 			{
 				output = argv[i];
 			}
+		}
+		else if (strcmp("-bgra", argv[i]) == 0)
+		{
+			bgra = true;
 		}
 		else if (argv[i][0] != '-')
 		{
@@ -170,9 +175,19 @@ int main(int argc, char *argv[])
 	// @@ It always outputs 32 bpp.
 	if (!assembleTextureArray) {
 		header.setPitch(4 * w);
-		header.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, hasAlpha ? 0xFF000000 : 0);
+		if (bgra) {
+			header.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, hasAlpha ? 0xFF000000 : 0);
+		}
+		else {
+			header.setPixelFormat(32, 0xFF, 0xFF00, 0xFF0000, hasAlpha ? 0xFF000000 : 0);
+		}
 	} else {
-		header.setDX10Format(hasAlpha ? nv::DXGI_FORMAT_B8G8R8A8_UNORM : nv::DXGI_FORMAT_B8G8R8X8_UNORM);
+		if (bgra) {
+			header.setDX10Format(hasAlpha ? nv::DXGI_FORMAT_B8G8R8A8_UNORM : nv::DXGI_FORMAT_B8G8R8X8_UNORM);
+		}
+		else {
+			header.setDX10Format(hasAlpha ? nv::DXGI_FORMAT_R8G8B8A8_UNORM : nv::DXGI_FORMAT_R8G8B8X8_UNORM);
+		}
 	}
 
 	stream << header;
