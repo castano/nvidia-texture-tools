@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
 	bool assembleVolume = false;
 	bool assembleTextureArray = false;
 	bool bgra = false;
+	bool forceNoAlpha = false;
 	
 	nv::Array<nv::Path> files;
 	nv::Path output = "output.dds";
@@ -84,6 +85,10 @@ int main(int argc, char *argv[])
 		{
 			bgra = true;
 		}
+		else if (strcmp("-noalpha", argv[i]) == 0)
+		{
+			forceNoAlpha = true;
+		}
 		else if (argv[i][0] != '-')
 		{
 			files.append(argv[i]);
@@ -97,7 +102,7 @@ int main(int argc, char *argv[])
 	if (files.count() == 0)
 	{
 		printf("NVIDIA Texture Tools - Copyright NVIDIA Corporation 2007\n\n");
-		printf("usage: nvassemble [-cube|-volume|-array] 'file0' 'file1' ...\n\n");
+		printf("usage: nvassemble [-cube|-volume|-array] [-bgra] [-noalpha] 'file0' 'file1' ...\n\n");
 		return 1;
 	}
 	
@@ -110,6 +115,12 @@ int main(int argc, char *argv[])
 	if (assembleCubeMap && files.count() != 6)
 	{
 		printf("*** error, 6 files expected, but got %d\n", files.count());
+		return 1;
+	}
+
+	if (forceNoAlpha && assembleTextureArray)
+	{
+		printf("*** error, -noalpha is incompatible with texture arrays\n");
 		return 1;
 	}
 	
@@ -172,14 +183,22 @@ int main(int argc, char *argv[])
 		header.setTextureArray(imageCount);
 	}
 
-	// @@ It always outputs 32 bpp.
 	if (!assembleTextureArray) {
-		header.setPitch(4 * w);
+		uint bpp = forceNoAlpha ? 24 : 32;
+
+		uint pitch = w * bpp / 8;
+		if (pitch % 4 != 0) {
+			printf("Warning: bytes per scanline is not divisable by 4\n");
+		}
+		header.setPitch(pitch);
+
+		uint alphaMask = (!hasAlpha || forceNoAlpha) ? 0 : 0xFF000000;
+
 		if (bgra) {
-			header.setPixelFormat(32, 0xFF0000, 0xFF00, 0xFF, hasAlpha ? 0xFF000000 : 0);
+			header.setPixelFormat(bpp, 0xFF0000, 0xFF00, 0xFF, alphaMask);
 		}
 		else {
-			header.setPixelFormat(32, 0xFF, 0xFF00, 0xFF0000, hasAlpha ? 0xFF000000 : 0);
+			header.setPixelFormat(bpp, 0xFF, 0xFF00, 0xFF0000, alphaMask);
 		}
 	} else {
 		if (bgra) {
@@ -203,7 +222,15 @@ int main(int argc, char *argv[])
 			uint8 g = c.g;
 			uint8 b = c.b;
 			uint8 a = c.a;
-			stream << b << g << r << a;
+			if (bgra) {
+				stream << b << g << r;
+			}
+			else {
+				stream << r << g << b; 
+			}
+			if (!forceNoAlpha) {
+				stream << a;
+			}
 		}
 	}
 
