@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
 			header.setDX10Format(hasAlpha ? nv::DXGI_FORMAT_B8G8R8A8_UNORM : nv::DXGI_FORMAT_B8G8R8X8_UNORM);
 		}
 		else {
-			header.setDX10Format(hasAlpha ? nv::DXGI_FORMAT_R8G8B8A8_UNORM : nv::DXGI_FORMAT_R8G8B8X8_UNORM);
+			header.setDX10Format(nv::DXGI_FORMAT_R8G8B8A8_UNORM);
 		}
 	}
 
