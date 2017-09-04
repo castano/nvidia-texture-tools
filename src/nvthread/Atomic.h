@@ -183,7 +183,6 @@ namespace nv {
 
 
 #elif NV_CC_CLANG && (NV_OS_IOS || NV_OS_DARWIN)
-    NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
 
     //ACS: Use Apple's atomics instead? I don't know if these are better in any way; there are non-barrier versions too. There's no OSAtomicSwap32 tho'
     /*
@@ -254,7 +253,6 @@ namespace nv {
 
 
 #elif NV_CC_CLANG && POSH_CPU_STRONGARM
-    NV_COMPILER_CHECK(sizeof(uint32) == sizeof(long));
     
     inline uint32 atomicIncrement(uint32 * value)
     {
