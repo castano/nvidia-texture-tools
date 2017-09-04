@@ -1384,8 +1384,10 @@ float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel, float alph
             float alpha01 = nv::saturate(pixel(alphaChannel, x+0, y+1, 0) * alphaScale);
             float alpha11 = nv::saturate(pixel(alphaChannel, x+1, y+1, 0) * alphaScale);
 
-            for (float fy = 0.5f/n; fy < 1.0f; fy++) {
-                for (float fx = 0.5f/n; fx < 1.0f; fx++) {
+            for (uint sy = 0; sy < n; sy++) {
+                float fy = (sy + 0.5f) / n;
+                for (uint sx = 0; sx < n; sx++) {
+                    float fx = (sx + 0.5f) / n;
                     float alpha = alpha00 * (1 - fx) * (1 - fy) + alpha10 * fx * (1 - fy) + alpha01 * (1 - fx) * fy + alpha11 * fx * fy;
                     if (alpha > alphaRef) coverage += 1.0f;
                 }
