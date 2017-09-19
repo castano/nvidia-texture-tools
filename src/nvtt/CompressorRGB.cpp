@@ -37,6 +37,8 @@
 
 #include "nvcore/Debug.h"
 
+#include <gtc\packing.hpp>
+
 using namespace nv;
 using namespace nvtt;
 
@@ -128,37 +130,14 @@ namespace
     // @@ Is this correct? Not tested!
     // 6 bits of mantissa, 5 bits of exponent.
     static uint toFloat11(float f) {
-        if (f < 0) f = 0;           // Flush to 0 or to epsilon?
-        if (f > 65024) f = 65024;   // Flush to infinity or max?
-
-        Float754 F;
-        F.value = f;
-
-        uint E = F.field.biasedexponent - 127 + 15;
-        nvDebugCheck(E < 32);
-
-        uint M = F.field.mantissa >> (23 - 6);
-
-        return (E << 6) | M;
+		return glm::detail::floatTo11bit(f);
     }
 
     // @@ Is this correct? Not tested!
     // 5 bits of mantissa, 5 bits of exponent.
     static uint toFloat10(float f) {
-        if (f < 0) f = 0;           // Flush to 0 or to epsilon?
-        if (f > 64512) f = 64512;   // Flush to infinity or max?
-
-        Float754 F;
-        F.value = f;
-
-        uint E = F.field.biasedexponent - 127 + 15;
-        nvDebugCheck(E < 32);
-
-        uint M = F.field.mantissa >> (23 - 5);
-
-        return (E << 5) | M;
-    }
-
+		return glm::detail::floatTo10bit(f);
+	}
 
     // IC: Inf/NaN and denormal handling based on DirectXMath.
     static float fromFloat11(uint u) {
@@ -232,39 +211,9 @@ namespace
     }
 
     // https://www.opengl.org/registry/specs/EXT/texture_shared_exponent.txt
-    Float3SE toFloat3SE(float r, float g, float b)
+    uint32 toFloat3SE(float r, float g, float b)
     {
-        const int N = 9;                    // Mantissa bits.
-        const int E = 5;                    // Exponent bits.
-        const int Emax = (1 << E) - 1;      // 31
-        const int B = (1 << (E-1)) - 1;     // 15
-        const float sharedexp_max = float((1 << N) - 1) / (1 << N) * (1 << (Emax-B));   // 65408
-
-        // Clamp color components.
-        r = max(0.0f, min(sharedexp_max, r));
-        g = max(0.0f, min(sharedexp_max, g));
-        b = max(0.0f, min(sharedexp_max, b));
-
-        // Get max component.
-        float max_c = max3(r, g, b);
-
-        // Compute shared exponent.
-        int exp_shared_p = max(-B-1, ftoi_floor(log2f(max_c))) + 1 + B;
-
-        int max_s = ftoi_round(max_c / (1 << (exp_shared_p - B - N)));
-
-        int exp_shared = exp_shared_p;
-        if (max_s == (1 << N)) exp_shared++;
-
-        Float3SE v;
-        v.e = exp_shared;
-
-        // Compute mantissas.
-        v.xm = ftoi_round(r / (1 << (exp_shared - B - N)));
-        v.ym = ftoi_round(g / (1 << (exp_shared - B - N)));
-        v.zm = ftoi_round(b / (1 << (exp_shared - B - N)));
-
-        return v;
+        return glm::packF3x9_E1x5(glm::vec3(r,g,b));
     }
 
     Vector3 fromFloat3SE(Float3SE v) {
@@ -508,8 +457,8 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                 else if (compressionOptions.pixelType == nvtt::PixelType_SharedExp)
                 {
                     if (rsize == 9 && gsize == 9 && bsize == 9 && asize == 5) {
-                        Float3SE v = toFloat3SE(r, g, b);
-                        stream.putBits(v.v, 32);
+                        auto v = toFloat3SE(r, g, b);
+                        stream.putBits(v, 32);
                     }
                     else if (rsize == 8 && gsize == 8 && bsize == 8 && asize == 8) {
                         // @@ 
