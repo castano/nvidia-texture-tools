@@ -14,12 +14,6 @@
 #include <float.h>  // finite, isnan
 #endif
 
-#if NV_CPU_X86 || NV_CPU_X86_64
-    //#include <intrin.h>
-    #include <xmmintrin.h>
-#endif
-
-
 
 // Function linkage
 #if NVMATH_SHARED
@@ -42,22 +36,26 @@
 #endif
 
 #ifndef NV_USE_SSE
+    // 1=SSE, 2=SSE2
 #   if NV_CPU_X86_64
         // x64 always supports at least SSE2
 #       define NV_USE_SSE 2
 #   elif NV_CC_MSVC && defined(_M_IX86_FP)
         // Also on x86 with the /arch:SSE flag in MSVC.
-#       define NV_USE_SSE _M_IX86_FP       // 1=SSE, 2=SS2
-#   elif defined(__SSE__)
-#       define NV_USE_SSE 1
+#       define NV_USE_SSE _M_IX86_FP
 #   elif defined(__SSE2__)
 #       define NV_USE_SSE 2
+#   elif defined(__SSE__)
+#       define NV_USE_SSE 1
 #   else
         // Otherwise we assume no SSE.
 #       define NV_USE_SSE 0
 #   endif
 #endif
 
+#if NV_USE_SSE
+    #include <xmmintrin.h>
+#endif
 
 // Internally set NV_USE_SIMD when either altivec or sse is available.
 #if NV_USE_ALTIVEC && NV_USE_SSE
