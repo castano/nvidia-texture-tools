@@ -1913,6 +1913,12 @@ FloatImage * nv::ImageIO::loadFloat(const char * fileName, Stream & s)
     }
 #endif
 
+#if defined(HAVE_STBIMAGE)
+    if (strCaseDiff(extension, ".hdr") == 0) {
+        return loadFloatSTB(s);
+    }
+#endif
+
 #if defined(HAVE_FREEIMAGE)
     FREE_IMAGE_FORMAT fif = FreeImage_GetFIFFromFilename(fileName);
     if (fif != FIF_UNKNOWN && FreeImage_FIFSupportsReading(fif)) {
