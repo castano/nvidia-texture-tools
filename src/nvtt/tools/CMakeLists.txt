@@ -17,7 +17,7 @@ TARGET_LINK_LIBRARIES(nvassemble nvcore nvimage nvtt bc6h nvmath)
 ADD_EXECUTABLE(nvzoom resize.cpp cmdline.h)
 TARGET_LINK_LIBRARIES(nvzoom nvcore nvimage nvtt bc6h nvmath)
 
-SET(TOOLS nvcompress nvdecompress nvddsinfo nvassemble nvzoom)
+SET(TOOLS nvcompress nvdecompress nvddsinfo nvimgdiff nvassemble nvzoom)
 
 IF(GLEW_FOUND AND GLUT_FOUND AND OPENGL_FOUND)
     INCLUDE_DIRECTORIES(${GLEW_INCLUDE_PATH} ${GLUT_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
