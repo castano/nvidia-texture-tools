@@ -124,7 +124,14 @@ void InputOptions::reset()
 
 
 // Setup the input image.
-void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/, int arraySize /*= 1*/)
+// Overload for ABI compatibility
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/)
+{
+    setTextureLayout(type, width, height, depth, 1);
+}
+
+// Setup the input image.
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth, int arraySize)
 {
     // Validate arguments.
     nvCheck(width >= 0);

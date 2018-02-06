@@ -290,7 +290,9 @@ namespace nvtt
         NVTT_API void reset();
 
         // Setup input layout.
-        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1, int arraySize = 1);
+        // Overload for ABI compatibility
+        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1 /*, arraysize = 1 */);
+        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d, int arraySize);
         NVTT_API void resetTextureLayout();
 
         // Set mipmap data. Copies the data.
