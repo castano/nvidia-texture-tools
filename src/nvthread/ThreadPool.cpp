@@ -8,7 +8,9 @@
 #include "nvcore/Utils.h"
 #include "nvcore/StrLib.h"
 
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+#include <rad_tm.h>
+#elif NV_USE_TELEMETRY
 #include <telemetry.h>
 extern HTELEMETRY tmContext;
 #endif
@@ -84,7 +86,9 @@ AutoPtr<ThreadPool> s_pool;
         }
         
         {
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+            tmZone(0, TMZF_NONE, "worker");
+#elif NV_USE_TELEMETRY
             tmZoneFiltered(tmContext, 20, TMZF_NONE, "worker");
 #endif
             func(s_pool->arg, s_pool->useCallingThread + i);
@@ -116,11 +120,11 @@ ThreadPool::ThreadPool(uint workerCount/*=processorCount()*/, bool useThreadAffi
         lockThreadToProcessor(0);   // Calling thread always locked to processor 0.
     }
 
+    StringBuilder name;
     for (uint i = 0; i < threadCount; i++) {
-        StringBuilder name;
         name.format("worker %d", i);
         workers[i].setName(name.release());     // @Leak
-        workers[i].start(workerFunc, (void *)i);
+        workers[i].start(workerFunc, (void *)(uintptr_t)i);
     }
 
     allIdle = true;
@@ -141,9 +145,6 @@ ThreadPool::~ThreadPool()
 
 void ThreadPool::run(ThreadTask * func, void * arg)
 {
-    // Wait until threads are idle.
-    wait();
-
     start(func, arg);
 
     if (useCallingThread) {

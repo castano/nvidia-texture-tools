@@ -14,7 +14,8 @@ SET(IMAGE_SRCS
     NormalMap.h NormalMap.cpp
     PixelFormat.h
     PsdFile.h
-    TgaFile.h)
+    TgaFile.h
+    KtxFile.h KtxFile.cpp)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 

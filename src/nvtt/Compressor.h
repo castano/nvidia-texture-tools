@@ -30,6 +30,7 @@
 
 namespace nv
 {
+
     struct CompressorInterface
     {
         virtual ~CompressorInterface() {}

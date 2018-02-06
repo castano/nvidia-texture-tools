@@ -36,6 +36,7 @@ namespace nv
     struct AlphaBlock4x4;
     class Stream;
     class Vector3;
+    class Vector4;
 
 
     /// DXT1 block.
@@ -220,7 +221,7 @@ namespace nv
 	struct BlockBC6
 	{
 		uint8 data[16];		// Not even going to try to write a union for this thing.
-		void decodeBlock(Vector3 colors[16]) const;
+        void decodeBlock(Vector4 colors[16]) const;
 	};
 
 	/// BC7 block.

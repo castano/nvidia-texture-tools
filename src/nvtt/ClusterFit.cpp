@@ -38,79 +38,6 @@ ClusterFit::ClusterFit()
 {
 }
 
-#if 0 // @@ Deprecate. Do not use color set directly.
-void ClusterFit::setColorSet(const ColorSet * set) 
-{
-    // initialise the best error
-#if NVTT_USE_SIMD
-    m_besterror = SimdVector( FLT_MAX );
-    Vector3 metric = m_metric.toVector3();
-#else
-    m_besterror = FLT_MAX;
-    Vector3 metric = m_metric;
-#endif
-
-    // cache some values
-    m_count = set->colorCount;
-
-    Vector3 values[16];
-    for (uint i = 0; i < m_count; i++)
-    {
-        values[i] = set->colors[i].xyz();
-    }
-
-    Vector3 principal = Fit::computePrincipalComponent_PowerMethod(m_count, values, set->weights, metric);
-    //Vector3 principal = Fit::computePrincipalComponent_EigenSolver(m_count, values, set->weights, metric);
-
-    // build the list of values
-    int order[16];
-    float dps[16];
-    for (uint i = 0; i < m_count; ++i)
-    {
-        dps[i] = dot(values[i], principal);
-        order[i] = i;
-    }
-
-    // stable sort
-    for (uint i = 0; i < m_count; ++i)
-    {
-        for (uint j = i; j > 0 && dps[j] < dps[j - 1]; --j)
-        {
-            swap(dps[j], dps[j - 1]);
-            swap(order[j], order[j - 1]);
-        }
-    }
-
-    // weight all the points
-#if NVTT_USE_SIMD
-    m_xxsum = SimdVector( 0.0f );
-    m_xsum = SimdVector( 0.0f );
-#else
-    m_xxsum = Vector3(0.0f);
-    m_xsum = Vector3(0.0f);
-    m_wsum = 0.0f;
-#endif
-	
-    for (uint i = 0; i < m_count; ++i)
-    {
-        int p = order[i];
-#if NVTT_USE_SIMD
-        NV_ALIGN_16 Vector4 tmp(values[p], 1);
-        m_weighted[i] = SimdVector(tmp.component) * SimdVector(set->weights[p]);
-        m_xxsum += m_weighted[i] * m_weighted[i];
-        m_xsum += m_weighted[i];
-#else
-        m_weighted[i] = values[p] * set->weights[p];
-        m_xxsum += m_weighted[i] * m_weighted[i];
-        m_xsum += m_weighted[i];
-        m_weights[i] = set->weights[p];
-        m_wsum += m_weights[i];
-#endif
-    }
-}
-#endif // 0
-
-
 void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count)
 {
     // initialise the best error
@@ -412,13 +339,13 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 #else
 
 inline Vector3 round565(const Vector3 & v) {
-	uint r = ftoi_trunc(v.x * 31.0f);
+    uint r = ftoi_trunc(v.x * 31.0f);
     float r0 = float(((r+0) << 3) | ((r+0) >> 2));
     float r1 = float(((r+1) << 3) | ((r+1) >> 2));
     if (fabs(v.x - r1) < fabs(v.x - r0)) r = min(r+1, 31U);
-	r = (r << 3) | (r >> 2);
+    r = (r << 3) | (r >> 2);
 
-	uint g = ftoi_trunc(v.y * 63.0f);
+    uint g = ftoi_trunc(v.y * 63.0f);
     float g0 = float(((g+0) << 2) | ((g+0) >> 4));
     float g1 = float(((g+1) << 2) | ((g+1) >> 4));
     if (fabs(v.y - g1) < fabs(v.y - g0)) g = min(g+1, 63U);
@@ -428,8 +355,8 @@ inline Vector3 round565(const Vector3 & v) {
     float b0 = float(((b+0) << 3) | ((b+0) >> 2));
     float b1 = float(((b+1) << 3) | ((b+1) >> 2));
     if (fabs(v.z - b1) < fabs(v.z - b0)) b = min(b+1, 31U);
-	
-	b = (b << 3) | (b >> 2);
+
+    b = (b << 3) | (b >> 2);
 
     return Vector3(float(r)/255, float(g)/255, float(b)/255);
 }

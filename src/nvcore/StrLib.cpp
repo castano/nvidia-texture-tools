@@ -347,24 +347,34 @@ StringBuilder & StringBuilder::formatList( const char * fmt, va_list arg )
 }
 
 
-/** Append a string. */
-StringBuilder & StringBuilder::append( const char * s )
+// Append a character.
+StringBuilder & StringBuilder::append( char c )
 {
-	return append(s, U32(strlen( s )));
+    return append(&c, 1);
 }
 
+// Append a string.
+StringBuilder & StringBuilder::append( const char * s )
+{
+    return append(s, U32(strlen( s )));
+}
 
-/** Append a string. */
+// Append a string.
 StringBuilder & StringBuilder::append(const char * s, uint len)
 {
     nvDebugCheck(s != NULL);
 
-	uint offset = length();
-	const uint size = offset + len + 1;
-	reserve(size);
-	strCpy(m_str + offset, len + 1, s, len);
+    uint offset = length();
+    const uint size = offset + len + 1;
+    reserve(size);
+    strCpy(m_str + offset, len + 1, s, len);
 
     return *this;
+}
+
+StringBuilder & StringBuilder::append(const StringBuilder & str)
+{
+    return append(str.m_str, str.length());
 }
 
 
@@ -516,6 +526,19 @@ StringBuilder & StringBuilder::copy( const StringBuilder & s )
     return *this;
 }
 
+void StringBuilder::removeChar(char c)
+{
+    char * src = strchr(m_str, c);
+    if (src) {
+        char * dst = src;
+        src++;
+        while (*src) {
+            *dst++ = *src++;
+        }
+        *dst = '\0';
+    }
+}
+
 bool StringBuilder::endsWith(const char * str) const
 {
     uint l = uint(strlen(str));
@@ -530,7 +553,7 @@ bool StringBuilder::beginsWith(const char * str) const
     return strncmp(m_str, str, l) == 0;
 }
 
-// Find given char starting from the end.
+// Find given char starting from the end. Why not use strrchr!?
 char * StringBuilder::reverseFind(char c)
 {
     int length = (int)strlen(m_str) - 1;
@@ -563,6 +586,19 @@ char * StringBuilder::release()
     return str;
 }
 
+// Take ownership of string.
+void StringBuilder::acquire(char * str)
+{
+    if (str) {
+        m_size = strLen(str) + 1;
+        m_str = str;
+    }
+    else {
+        m_size = 0;
+        m_str = NULL;
+    }
+}
+
 // Swap strings.
 void nv::swap(StringBuilder & a, StringBuilder & b) {
     swap(a.m_size, b.m_size);
@@ -585,19 +621,20 @@ const char * Path::extension() const
 
 
 /*static */void Path::translatePath(char * path, char pathSeparator/*= NV_PATH_SEPARATOR*/) {
-    nvCheck(path != NULL);
-
-    for (int i = 0;; i++) {
-        if (path[i] == '\0') break;
-        if (path[i] == '\\' || path[i] == '/') path[i] = pathSeparator;
+    if (path != NULL) {
+        for (int i = 0;; i++) {
+            if (path[i] == '\0') break;
+            if (path[i] == '\\' || path[i] == '/') path[i] = pathSeparator;
+        }
     }
 }
 
 /// Toggles path separators (ie. \\ into /).
 void Path::translatePath(char pathSeparator/*=NV_PATH_SEPARATOR*/)
 {
-    nvCheck(!isNull());
-    translatePath(m_str, pathSeparator);
+    if (!isNull()) {
+        translatePath(m_str, pathSeparator);
+    }
 }
 
 void Path::appendSeparator(char pathSeparator/*=NV_PATH_SEPARATOR*/)

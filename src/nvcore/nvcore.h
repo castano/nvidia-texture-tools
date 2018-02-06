@@ -56,6 +56,7 @@
 #   define NV_OS_MINGW 1
 #   define NV_OS_WIN32 1
 #elif defined POSH_OS_OSX
+#   define NV_OS_OSX 1      // IC: Adding this, because iOS defines NV_OS_DARWIN too.
 #   define NV_OS_DARWIN 1
 #   define NV_OS_UNIX 1
 #elif defined POSH_OS_IOS
@@ -78,9 +79,9 @@
 
 // Threading:
 // some platforms don't implement __thread or similar for thread-local-storage
-#if NV_OS_UNIX || NV_OS_ORBIS || NV_OS_IOS //ACStodoIOS darwin instead of ios?
+#if NV_OS_UNIX || NV_OS_ORBIS || NV_OS_IOS
 #   define NV_OS_USE_PTHREAD 1
-#   if NV_OS_DARWIN || NV_OS_IOS
+#   if 0  //Apple finally added TLS support to iOS!// NV_OS_IOS
 #       define NV_OS_HAS_TLS_QUALIFIER 0
 #   else
 #       define NV_OS_HAS_TLS_QUALIFIER 1
@@ -96,7 +97,7 @@
 // NV_CPU_X86_64
 // NV_CPU_PPC
 // NV_CPU_ARM
-// NV_CPU_AARCH64
+// NV_CPU_ARM_64
 
 #define NV_CPU_STRING   POSH_CPU_STRING
 
@@ -110,7 +111,7 @@
 #elif defined POSH_CPU_STRONGARM
 #   define NV_CPU_ARM 1
 #elif defined POSH_CPU_AARCH64
-#   define NV_CPU_AARCH64 1
+#   define NV_CPU_ARM_64 1
 #else
 #   error "Unsupported CPU"
 #endif
@@ -148,10 +149,16 @@
 #endif
 
 // Endiannes:
-#define NV_LITTLE_ENDIAN    POSH_LITTLE_ENDIAN
-#define NV_BIG_ENDIAN       POSH_BIG_ENDIAN
-#define NV_ENDIAN_STRING    POSH_ENDIAN_STRING
-
+// @@ POSH endian detection is broken for arm64 on iOS. They are bi-endian and iOS sets all their processors to little endian by default.
+#if NV_OS_IOS
+#   define NV_LITTLE_ENDIAN    1
+#   define NV_BIG_ENDIAN       0
+#   define NV_ENDIAN_STRING    "little"
+#else
+#   define NV_LITTLE_ENDIAN    POSH_LITTLE_ENDIAN
+#   define NV_BIG_ENDIAN       POSH_BIG_ENDIAN
+#   define NV_ENDIAN_STRING    POSH_ENDIAN_STRING
+#endif
 
 // Define the right printf prefix for size_t arguments:
 #if POSH_64BIT_POINTER
@@ -164,6 +171,28 @@
 // cmake config
 #include "nvconfig.h"
 
+#if NV_OS_DARWIN
+#include <stdint.h>
+//#include <inttypes.h>
+
+// Type definitions:
+typedef uint8_t     uint8;
+typedef int8_t      int8;
+
+typedef uint16_t    uint16;
+typedef int16_t     int16;
+
+typedef uint32_t    uint32;
+typedef int32_t     int32;
+
+typedef uint64_t    uint64;
+typedef int64_t     int64;
+
+// POSH gets this wrong due to __LP64__
+#undef POSH_I64_PRINTF_PREFIX
+#define POSH_I64_PRINTF_PREFIX "ll"
+
+#else
 
 // Type definitions:
 typedef posh_u8_t   uint8;
@@ -175,8 +204,23 @@ typedef posh_i16_t  int16;
 typedef posh_u32_t  uint32;
 typedef posh_i32_t  int32;
 
+//#if NV_OS_DARWIN
+// OSX-64 is supposed to be LP64 (longs and pointers are 64 bits), thus uint64 is defined as 
+// unsigned long. However, some OSX headers define it as unsigned long long, producing errors,
+// even though both types are 64 bit. Ideally posh should handle that, but it has not been
+// updated in ages, so here I'm just falling back to the standard C99 types defined in inttypes.h
+//#include <inttypes.h>
+//typedef posh_u64_t  uint64_t;
+//typedef posh_i64_t  int64_t;
+//#else
 typedef posh_u64_t  uint64;
 typedef posh_i64_t  int64;
+//#endif
+#if NV_OS_DARWIN
+// To avoid duplicate definitions.
+#define _UINT64
+#endif
+#endif
 
 // Aliases
 typedef uint32      uint;
@@ -246,8 +290,10 @@ NV_COMPILER_CHECK(sizeof(uint32) == 4);
 NV_COMPILER_CHECK(sizeof(int32) == 4);
 NV_COMPILER_CHECK(sizeof(uint32) == 4);
 
-
-#define NV_ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+#include <stddef.h> // for size_t
+template <typename T, size_t N> char (&ArraySizeHelper(T (&array)[N]))[N];
+#define NV_ARRAY_SIZE(x) sizeof(ArraySizeHelper(x))
+//#define NV_ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
 #if 0 // Disabled in The Witness.
 #if NV_CC_MSVC
@@ -269,8 +315,38 @@ NV_COMPILER_CHECK(sizeof(uint32) == 4);
         NV_STRING_JOIN3(AtStartup_, __LINE__, Instance); \
     }
 
+namespace nv {
+    template <typename F>
+    struct ScopeExit {
+        ScopeExit(F f) : f(f) {}
+        ~ScopeExit() { f(); }
+        F f;
+    };
+
+    template <typename F>
+    ScopeExit<F> MakeScopeExit(F f) {
+        return ScopeExit<F>(f);
+    };
+}
+
+#define NV_ON_RETURN(code) \
+    auto NV_STRING_JOIN2(scope_exit_, __LINE__) = nv::MakeScopeExit([=](){code;})
+
+
 // Indicate the compiler that the parameter is not used to suppress compier warnings.
+#if NV_CC_MSVC
 #define NV_UNUSED(a) ((a)=(a))
+#else
+#define NV_UNUSED(a) _Pragma(NV_STRING(unused(a)))
+#endif
+
+#if NV_CC_GNUC || NV_CC_CLANG
+#define NV_LIKELY(x) __builtin_expect(!!(x), 1)
+#define NV_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define NV_LIKELY(x) x
+#define NV_UNLIKELY(x) x
+#endif
 
 // Null index. @@ Move this somewhere else... it's only used by nvmesh.
 //const unsigned int NIL = unsigned int(~0);

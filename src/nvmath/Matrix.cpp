@@ -197,6 +197,36 @@ bool nv::solveLU(const Matrix3 & A, const Vector3 & b, Vector3 * x)
     return true;
 }
 
+bool nv::solveLU(const Matrix2 & A, const Vector2 & b, Vector2 * x)
+{
+    nvDebugCheck(x != NULL);
+    
+    float m[2][2];
+    float *a[2] = {m[0], m[1]};
+    int idx[2];
+    float d;
+    
+    for (int y = 0; y < 2; y++) {
+        for (int x = 0; x < 2; x++) {
+            a[x][y] = A(x, y);
+        }
+    }
+    
+    // Create LU decomposition.
+    if (!ludcmp(a, 2, idx, &d)) {
+        // Singular matrix.
+        return false;
+    }
+    
+    // Init solution.
+    *x = b;
+    
+    // Do back substitution.
+    lubksb(a, 2, idx, x->component);
+    
+    return true;
+}
+
 
 bool nv::solveCramer(const Matrix & A, const Vector4 & b, Vector4 * x)
 {
@@ -218,6 +248,22 @@ bool nv::solveCramer(const Matrix3 & A, const Vector3 & b, Vector3 * x)
 
     Matrix3 Ai = inverseCramer(A);
 
+    *x = transform(Ai, b);
+    
+    return true;
+}
+
+bool nv::solveCramer(const Matrix2 & A, const Vector2 & b, Vector2 * x)
+{
+    nvDebugCheck(x != NULL);
+    
+    const float det = A.determinant();
+    if (equal(det, 0.0f)) {   // @@ Use input epsilon.
+        return false;
+    }
+    
+    Matrix2 Ai = inverseCramer(A);
+    
     *x = transform(Ai, b);
     
     return true;

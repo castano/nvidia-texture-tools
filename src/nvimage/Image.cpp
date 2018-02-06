@@ -42,11 +42,19 @@ const Image & Image::operator=(const Image & img)
 
 void Image::allocate(uint w, uint h, uint d/*= 1*/)
 {
-    free();
     m_width = w;
     m_height = h;
 	m_depth = d;
     m_data = realloc<Color32>(m_data, w * h * d);
+}
+
+void Image::acquire(Color32 * data, uint w, uint h, uint d/*= 1*/)
+{
+    free();
+    m_width = w;
+    m_height = h;
+    m_depth = d;
+    m_data = data;
 }
 
 void Image::resize(uint w, uint h, uint d/*= 1*/) {

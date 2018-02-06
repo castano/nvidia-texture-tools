@@ -250,6 +250,8 @@ namespace
 
         // Compute shared exponent.
         int exp_shared_p = max(-B-1, ftoi_floor(log2f(max_c))) + 1 + B;
+        nvDebugCheck(exp_shared_p <= Emax);
+        nvDebugCheck(exp_shared_p >= 0);
 
         int max_s = ftoi_round(max_c / (1 << (exp_shared_p - B - N)));
 
@@ -279,7 +281,7 @@ namespace
     {
         float v = max3(r, g, b);
 
-        uint rgbe;
+        uint rgbe = 0;
 
         if (v < 1e-32) {
             rgbe = 0;
@@ -534,6 +536,7 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                     }
                     else if (compressionOptions.pixelType == nvtt::PixelType_SignedNorm) {
                         // @@
+                        ir = ig = ib = ia = 0;
                     }
                     else if (compressionOptions.pixelType == nvtt::PixelType_UnsignedInt) {
                         ir = iround(clamp(r, 0.0f, 65535.0f));
@@ -543,6 +546,11 @@ void PixelFormatConverter::compress(nvtt::AlphaMode /*alphaMode*/, uint w, uint 
                     }
                     else if (compressionOptions.pixelType == nvtt::PixelType_SignedInt) {
                         // @@
+                        ir = ig = ib = ia = 0;
+                    }
+                    else {
+                        // @@
+                        ir = ig = ib = ia = 0;
                     }
                     
                     uint p = 0;

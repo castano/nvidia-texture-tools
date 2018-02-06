@@ -4,6 +4,8 @@
 #include "Filter.h"
 #include "Image.h"
 
+#include "nvthread/ParallelFor.h"
+
 #include "nvmath/Color.h"
 #include "nvmath/Vector.inl"
 #include "nvmath/Matrix.inl"
@@ -28,6 +30,13 @@ FloatImage::FloatImage() : m_componentCount(0), m_width(0), m_height(0), m_depth
 {
 }
 
+FloatImage::FloatImage(const FloatImage & img) : m_componentCount(0), m_width(0), m_height(0), m_depth(0),
+    m_pixelCount(0), m_floatCount(0), m_mem(NULL)
+{
+    allocate(img.m_componentCount, img.m_width, img.m_height, img.m_depth);
+    memcpy(m_mem, img.m_mem, m_floatCount * sizeof(float));
+}
+
 /// Ctor. Init from image.
 FloatImage::FloatImage(const Image * img) : m_componentCount(0), m_width(0), m_height(0), m_depth(0),
     m_pixelCount(0), m_floatCount(0), m_mem(NULL)
@@ -41,27 +50,32 @@ FloatImage::~FloatImage()
     free();
 }
 
-
 /// Init the floating point image from a regular image.
 void FloatImage::initFrom(const Image * img)
 {
     nvCheck(img != NULL);
 
-    allocate(4, img->width(), img->height(), img->depth());
+    uint channel_count = 3;
+    if (img->format() == Image::Format_ARGB) channel_count = 4;
+
+    allocate(channel_count, img->width(), img->height(), img->depth());
 
     float * red_channel = channel(0);
     float * green_channel = channel(1);
     float * blue_channel = channel(2);
-    float * alpha_channel = channel(3);
+    float * alpha_channel = (channel_count == 4) ? channel(3) : NULL;
+
+    float scale = 1.0f / 255.0f;
 
     const uint count = m_pixelCount;
     for (uint i = 0; i < count; i++) {
+    //parallel_for(count, 128, [&](int i) {
         Color32 pixel = img->pixel(i);
-        red_channel[i] = float(pixel.r) / 255.0f;
-        green_channel[i] = float(pixel.g) / 255.0f;
-        blue_channel[i] = float(pixel.b) / 255.0f;
-        alpha_channel[i] = float(pixel.a) / 255.0f;
-    }
+        red_channel[i] = float(pixel.r) * scale;
+        green_channel[i] = float(pixel.g) * scale;
+        blue_channel[i] = float(pixel.b) * scale;
+        if (channel_count == 4) alpha_channel[i] = float(pixel.a) * scale;
+    }//);
 }
 
 /// Convert the floating point image to a regular image.
@@ -475,13 +489,17 @@ float FloatImage::sampleLinearClamp(uint c, float x, float y, float z) const
     const float fracY = frac(y);
     const float fracZ = frac(z);
 
+    //x -= fracX;
+    //y -= fracY;
+    //z -= fracZ;
+
     // @@ Using floor in some places, but round in others?
     const int ix0 = ::clamp(ifloor(x), 0, w-1);
     const int iy0 = ::clamp(ifloor(y), 0, h-1);
-    const int iz0 = ::clamp(ifloor(z), 0, h-1);
+    const int iz0 = ::clamp(ifloor(z), 0, d-1);
     const int ix1 = ::clamp(ifloor(x)+1, 0, w-1);
     const int iy1 = ::clamp(ifloor(y)+1, 0, h-1);
-    const int iz1 = ::clamp(ifloor(z)+1, 0, h-1);
+    const int iz1 = ::clamp(ifloor(z)+1, 0, d-1);
 
     return trilerp(c, ix0, iy0, iz0, ix1, iy1, iz1, fracX, fracY, fracZ);
 }
@@ -757,8 +775,8 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
         dst_image->allocate(m_componentCount, w, h);
 
         // @@ We could avoid this allocation, write directly to dst_plane.
-        Array<float> tmp_column(h);
-        tmp_column.resize(h);
+        //Array<float> tmp_column(h);
+        //tmp_column.resize(h);
 
         for (uint c = 0; c < m_componentCount; c++)
         {
@@ -767,19 +785,21 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
                 float * tmp_plane = tmp_image->plane(c, z);
 
                 for (uint y = 0; y < m_height; y++) {
+                //parallel_for(m_height, [&](int y) {
                     this->applyKernelX(xkernel, y, z, c, wm, tmp_plane + y * w);
-                }
+                }//);
 
                 float * dst_plane = dst_image->plane(c, z);
 
                 for (uint x = 0; x < w; x++) {
-                    tmp_image->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer());
+                //parallel_for(w, [&](int x) {
+                    tmp_image->applyKernelY(ykernel, x, z, c, wm, dst_plane + x, w);
 
                     // @@ We could avoid this copy, write directly to dst_plane.
-                    for (uint y = 0; y < h; y++) {
+                    /*for (uint y = 0; y < h; y++) {
                         dst_plane[y * w + x] = tmp_column[y];
-                    }
-                }
+                    }*/
+                }//);
             }
         }
     }
@@ -840,7 +860,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, uint d, W
 
         for (uint z = 0; z < d; z++ ) {
             for (uint x = 0; x < w; x++) {
-                tmp_image2->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer());
+                tmp_image2->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer(), 1);
 
                 for (uint y = 0; y < h; y++) {
                     dst_channel[z * h * w + y * w + x] = tmp_column[y];
@@ -890,7 +910,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, WrapMode 
                 float * dst_plane = dst_image->plane(c, z);
 
                 for (uint x = 0; x < w; x++) {
-                    tmp_image->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer());
+                    tmp_image->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer(), 1);
 
                     // @@ Avoid this copy, write directly to dst_plane.
                     for (uint y = 0; y < h; y++) {
@@ -961,7 +981,7 @@ FloatImage * FloatImage::resize(const Filter & filter, uint w, uint h, uint d, W
 
         for (uint z = 0; z < d; z++ ) {
             for (uint x = 0; x < w; x++) {
-                tmp_image2->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer());
+                tmp_image2->applyKernelY(ykernel, x, z, c, wm, tmp_column.buffer(), 1);
 
                 for (uint y = 0; y < h; y++) {
                     dst_channel[z * h * w + y * w + x] = tmp_column[y];
@@ -1124,7 +1144,7 @@ void FloatImage::applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, W
 }
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * __restrict output) const
+void FloatImage::applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * __restrict output, int output_stride) const
 {
     const uint length = k.length();
     const float scale = float(length) / float(m_height);
@@ -1151,7 +1171,7 @@ void FloatImage::applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, W
             sum += k.valueAt(i, j) * channel[idx];
         }
 
-        output[i] = sum;
+        output[i * output_stride] = sum;
     }
 }
 
@@ -1225,7 +1245,7 @@ void FloatImage::applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, u
 }
 
 /// Apply 1D vertical kernel at the given coordinates and return result.
-void FloatImage::applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * __restrict output) const
+void FloatImage::applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * __restrict output, int output_stride) const
 {
     const uint length = k.length();
     const float scale = float(length) / float(m_height);
@@ -1256,7 +1276,7 @@ void FloatImage::applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, u
             sum += w * channel[idx];
         }
 
-        output[i] = sum / norm;
+        output[i * output_stride] = sum / norm;
     }
 }
 
@@ -1432,10 +1452,18 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
     float minAlphaScale = 0.0f;
     float maxAlphaScale = 4.0f;
     float alphaScale = 1.0f;
+    float bestAlphaScale = 1.0f;
+    float bestError = NV_FLOAT_MAX;
 
-    // Determine desired scale using a binary search. Hardcoded to 8 steps max.
+    // Determine desired scale using a binary search. Hardcoded to 10 steps max.
     for (int i = 0; i < 10; i++) {
         float currentCoverage = alphaTestCoverage(alphaRef, alphaChannel, alphaScale);
+
+        float error = fabsf(currentCoverage - desiredCoverage);
+        if (error < bestError) {
+            bestError = error;
+            bestAlphaScale = alphaScale;
+        }
 
         if (currentCoverage < desiredCoverage) {
             minAlphaScale = alphaScale;
@@ -1451,7 +1479,7 @@ void FloatImage::scaleAlphaToCoverage(float desiredCoverage, float alphaRef, int
     }
 
     // Scale alpha channel.
-    scaleBias(alphaChannel, 1, alphaScale, 0.0f);
+    scaleBias(alphaChannel, 1, bestAlphaScale, 0.0f);
     clamp(alphaChannel, 1, 0.0f, 1.0f); 
 #endif
 #if _DEBUG

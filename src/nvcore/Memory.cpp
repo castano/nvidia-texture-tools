@@ -2,6 +2,7 @@
 
 #include "Memory.h"
 #include "Debug.h"
+#include "Utils.h"
 
 #include <stdlib.h>
 
@@ -55,6 +56,7 @@ void * realloc(void * ptr, size_t size)
     return ::realloc(ptr, size);
 #endif
 }
+
 
 /* No need to override this unless we want line info.
 void * operator new (size_t size) throw()
@@ -116,4 +118,32 @@ void operator delete(void* p, const std::nothrow_t&) throw()
 
 #endif // NV_OVERRIDE_ALLOC
 
+void * nv::aligned_malloc(size_t size, size_t alignment)
+{
+    // alignment must be a power of two, multiple of sizeof(void*)
+    nvDebugCheck(isPowerOfTwo(alignment));
+    nvDebugCheck((alignment & (sizeof(void*) - 1)) == 0);
+
+#if NV_OS_WIN32 || NV_OS_DURANGO
+    return _aligned_malloc(size, alignment);
+#elif NV_OS_DARWIN && !NV_OS_IOS
+    void * ptr = NULL;
+    posix_memalign(&ptr, alignment, size);
+    return ptr;
+#elif NV_OS_LINUX
+    return memalign(alignment, size)
+#else // NV_OS_ORBIS || NV_OS_IOS
+    // @@ IC: iOS appears to be 16 byte aligned, should we check alignment and assert if we request a higher alignment factor?
+    return ::malloc(size);
+#endif
+}
+
+void nv::aligned_free(void * ptr)
+{
+#if NV_OS_WIN32 || NV_OS_DURANGO
+    _aligned_free(ptr);
+#else
+    ::free(ptr);
+#endif
+}
 

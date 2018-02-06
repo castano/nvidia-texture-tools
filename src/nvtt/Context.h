@@ -56,6 +56,7 @@ namespace nvtt
         nv::CompressorInterface * chooseCpuCompressor(const CompressionOptions::Private & compressionOptions) const;
         nv::CompressorInterface * chooseGpuCompressor(const CompressionOptions::Private & compressionOptions) const;
 
+        int estimateSize(int w, int h, int d, int mipmapCount, const CompressionOptions::Private & compressionOptions) const;
 
         bool cudaSupported;
         bool cudaEnabled;

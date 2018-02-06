@@ -39,7 +39,8 @@ namespace nvtt
         Quality quality;
 
         nv::Vector4 colorWeight;
-
+        float rgbmThreshold;
+        
         // Pixel format description.
         uint bitcount;
         uint rmask;

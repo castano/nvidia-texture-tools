@@ -61,6 +61,9 @@ struct MyAssertHandler : public nv::AssertHandler {
     virtual int assertion( const char *exp, const char *file, int line, const char *func, const char *msg, va_list arg ) {
         fprintf(stderr, "Assertion failed: %s\nIn %s:%d\n", exp, file, line);
         nv::debug::dumpInfo();
+        if (nv::debug::isDebuggerPresent()) {
+            return NV_ABORT_DEBUG;
+        }
         exit(1);
     }
 };

@@ -1,6 +1,7 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 
 #include "KtxFile.h"
+#include "nvcore/StdStream.h"
 
 using namespace nv;
 
@@ -10,6 +11,8 @@ static const uint8 fileIdentifier[12] = {
     0x0D, 0x0A, 0x1A, 0x0A
 };
 
+namespace nv
+{
 
 KtxHeader::KtxHeader() {
     memcpy(identifier, fileIdentifier, 12);
@@ -19,8 +22,8 @@ KtxHeader::KtxHeader() {
     glType = 0;
     glTypeSize = 1;
     glFormat = 0;
-    glInternalFormat = KTX_RGBA;
-    glBaseInternalFormat = KTX_RGBA;
+    glInternalFormat = KTX_INTERNAL_COMPRESSED_SRGB_S3TC_DXT1;
+    glBaseInternalFormat = KTX_BASE_INTERNAL_RGB;
     pixelWidth = 0;
     pixelHeight = 0;
     pixelDepth = 0;
@@ -31,9 +34,9 @@ KtxHeader::KtxHeader() {
 }
 
 
-Stream & operator<< (Stream & s, DDSHeader & header) {
+Stream & operator<< (Stream & s, KtxHeader & header) {
     s.serialize(header.identifier, 12);
-    s << header.endiannes << header.glType << header.glTypeSize << header.glFormat << header.glInternalFormat << header.glBaseInternalFormat;
+    s << header.endianness << header.glType << header.glTypeSize << header.glFormat << header.glInternalFormat << header.glBaseInternalFormat;
     s << header.pixelWidth << header.pixelHeight << header.pixelDepth;
     s << header.numberOfArrayElements << header.numberOfFaces << header.numberOfMipmapLevels;
     s << header.bytesOfKeyValueData;
@@ -41,7 +44,7 @@ Stream & operator<< (Stream & s, DDSHeader & header) {
 }
 
 
-KtxFile::KtxFile() {
+/*KtxFile::KtxFile() {
 }
 KtxFile::~KtxFile() {
 }
@@ -49,7 +52,7 @@ KtxFile::~KtxFile() {
 void KtxFile::addKeyValue(const char * key, const char * value) {
     keyArray.append(key);
     valueArray.append(value);
-    bytesOfKeyValueData += strlen(key) + 1 + strlen(value) + 1;
+    header.bytesOfKeyValueData += strlen(key) + 1 + strlen(value) + 1;
 }
 
 
@@ -77,7 +80,8 @@ Stream & operator<< (Stream & s, KtxFile & file) {
     }
 
     return s;
-}
+}*/
 
+} // nv
 
 

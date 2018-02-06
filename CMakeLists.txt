@@ -31,7 +31,7 @@ MESSAGE(STATUS "  Processor: ${NV_SYSTEM_PROCESSOR}")
 MESSAGE(STATUS "  Compiler Flags: ${CMAKE_CXX_FLAGS}")
 
 IF(CMAKE_BUILD_TYPE MATCHES "debug")
-	SET(CMAKE_DEBUG_POSTFIX "_d" CACHE STRING "Postfix for debug build libraries.")
+    SET(CMAKE_DEBUG_POSTFIX "_d" CACHE STRING "Postfix for debug build libraries.")
     ADD_DEFINITIONS(-D_DEBUG=1)
 ENDIF()
 

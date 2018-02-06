@@ -132,6 +132,59 @@ float nv::averageAlphaError(const FloatImage * ref, const FloatImage * img)
 }
 
 
+float nv::rmsBilinearColorError(const FloatImage * ref, const FloatImage * img, FloatImage::WrapMode wm, bool alphaWeight)
+{
+    nvDebugCheck(img->componentCount() == 4);
+    nvDebugCheck(ref->componentCount() == 4);
+
+    double mse = 0;
+
+    const uint w0 = ref->width();
+    const uint h0 = ref->height();
+    const uint d0 = ref->depth();
+
+    const uint w1 = img->width();
+    const uint h1 = img->height();
+    const uint d1 = img->depth();
+
+    for (uint z = 0; z < d0; z++) {
+        for (uint y = 0; y < h0; y++) {
+            for (uint x = 0; x < w0; x++) {
+                float r0 = ref->pixel(0, x, y, z);
+                float g0 = ref->pixel(1, x, y, z);
+                float b0 = ref->pixel(2, x, y, z);
+                float a0 = ref->pixel(3, x, y, z);
+
+                float fx = float(x) / w0;
+                float fy = float(y) / h0;
+                float fz = float(z) / d0;
+
+                float r1 = img->sampleLinear(0, fx, fy, fz, wm);
+                float g1 = img->sampleLinear(1, fx, fy, fz, wm);
+                float b1 = img->sampleLinear(2, fx, fy, fz, wm);
+                float a1 = img->sampleLinear(2, fx, fy, fz, wm);
+
+                float dr = r0 - r1;
+                float dg = g0 - g1;
+                float db = b0 - b1;
+                float da = a0 - a1;
+
+                float w = 1;
+                if (alphaWeight) w = a0 * a0; // @@ a0*a1 or a0*a0 ?
+
+                mse += (dr * dr) * w;
+                mse += (dg * dg) * w;
+                mse += (db * db) * w;
+                mse += (da * da);
+            }
+        }
+    }
+
+    int count = w0 * h0 * d0;
+    return float(sqrt(mse / count));
+}
+
+
 // Color space conversions based on:
 // http://www.brucelindbloom.com/
 

@@ -194,13 +194,18 @@ namespace nv
 #endif
     }
 
-    inline uint log2(uint i)
+    inline uint log2(uint32 i)
     {
-        uint value = 0;
-        while( i >>= 1 ) {
-            value++;
-        }
+        uint32 value = 0;
+        while( i >>= 1 ) value++;
         return value;
+    }
+
+    inline uint log2(uint64 i)
+    {
+        uint64 value = 0;
+        while (i >>= 1) value++;
+        return U32(value);
     }
 
     inline float lerp(float f0, float f1, float t)

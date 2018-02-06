@@ -9,7 +9,11 @@
     #include <unistd.h> // usleep
 #endif
 
-#if NV_USE_TELEMETRY
+#include "nvcore/StrLib.h"
+
+#if NV_USE_TELEMETRY3
+#include <rad_tm.h>
+#elif NV_USE_TELEMETRY
 #include <telemetry.h>
 extern HTELEMETRY tmContext;
 #endif
@@ -118,16 +122,12 @@ void Thread::start(ThreadFunc * func, void * arg)
     nvDebugCheck(p->thread != NULL);
     if (p->name != NULL) {
         setThreadName(threadId, p->name);
-    #if NV_USE_TELEMETRY
+    #if NV_USE_TELEMETRY3
+        tmThreadName(0, threadId, p->name);
+    #elif NV_USE_TELEMETRY
         tmThreadName(tmContext, threadId, p->name);
     #endif
     }
-#elif NV_OS_ORBIS
-    int ret = scePthreadCreate(&p->thread, NULL, threadFunc, p.ptr(), p->name ? p->name : "nv::Thread");
-    nvDebugCheck(ret == 0);
-	// use any non-system core
-	scePthreadSetaffinity(p->thread, 0x3F);
-    scePthreadSetprio(p->thread, (SCE_KERNEL_PRIO_FIFO_DEFAULT + SCE_KERNEL_PRIO_FIFO_HIGHEST) / 2);
 #elif NV_OS_USE_PTHREAD
     int result = pthread_create(&p->thread, NULL, threadFunc, p.ptr());
     nvDebugCheck(result == 0);

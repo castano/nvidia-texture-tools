@@ -13,7 +13,9 @@
 
 #endif // NV_OS
 
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+#include <rad_tm.h>
+#elif NV_USE_TELEMETRY
 #include <telemetry.h>
 extern HTELEMETRY tmContext;
 #endif
@@ -45,14 +47,19 @@ Mutex::~Mutex ()
 
 void Mutex::lock()
 {
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+    tmStartWaitForLock(0, 0, this, m->name);
+#elif NV_USE_TELEMETRY
     TmU64 matcher;
     tmTryLockEx(tmContext, &matcher, 100/*0.1 ms*/, __FILE__, __LINE__, this, "blocked");
 #endif
     
     EnterCriticalSection(&m->mutex);
 
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+    tmEndWaitForLock(0);
+    tmAcquiredLock(0, 0, this, m->name);
+#elif NV_USE_TELEMETRY
     tmEndTryLockEx(tmContext, matcher, __FILE__, __LINE__, this, TMLR_SUCCESS);
     tmSetLockState(tmContext, this, TMLS_LOCKED, "acquired");
 #endif
@@ -60,7 +67,18 @@ void Mutex::lock()
 
 bool Mutex::tryLock()
 {
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+    tmStartWaitForLock(0, 0, this, m->name);
+    if (TryEnterCriticalSection(&m->mutex) != 0) {
+        tmEndWaitForLock(0);
+        tmAcquiredLock(0, 0, this, m->name);
+        return true;
+    }
+    else {
+        tmEndWaitForLock(0);
+        return false;
+    }
+#elif NV_USE_TELEMETRY
     TmU64 matcher;
     tmTryLockEx(tmContext, &matcher, 100/*0.1 ms*/, __FILE__, __LINE__, this, "blocked");
     if (TryEnterCriticalSection(&m->mutex) != 0) {
@@ -79,7 +97,9 @@ bool Mutex::tryLock()
 
 void Mutex::unlock()
 {
-#if NV_USE_TELEMETRY
+#if NV_USE_TELEMETRY3
+    tmReleasedLock(0, this);
+#elif NV_USE_TELEMETRY
     tmSetLockState(tmContext, this, TMLS_RELEASED, "released");
 #endif
 
@@ -90,13 +110,17 @@ void Mutex::unlock()
 
 struct Mutex::Private {
     pthread_mutex_t mutex;
+    pthread_mutexattr_t attr;
     const char * name;
 };
 
 
 Mutex::Mutex (const char * name) : m(new Private)
 {
-    int result = pthread_mutex_init(&m->mutex, NULL);
+    pthread_mutexattr_init(&m->attr);
+    pthread_mutexattr_settype(&m->attr, PTHREAD_MUTEX_RECURSIVE);
+    int result = pthread_mutex_init(&m->mutex, &m->attr);
+    //m->mutex = PTHREAD_MUTEX_INITIALIZER;
     m->name = name;
     nvDebugCheck(result == 0);
 }
@@ -104,6 +128,8 @@ Mutex::Mutex (const char * name) : m(new Private)
 Mutex::~Mutex ()
 {
     int result = pthread_mutex_destroy(&m->mutex);
+    nvDebugCheck(result == 0);
+    result = pthread_mutexattr_destroy(&m->attr);
     nvDebugCheck(result == 0);
 }
 

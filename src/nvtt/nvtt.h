@@ -105,7 +105,21 @@ namespace nvtt
         Format_BC6,
         Format_BC7,
 
-        Format_BC3_RGBM,    // 
+        Format_BC3_RGBM,
+
+        Format_ETC1,
+        Format_ETC2_R,
+        Format_ETC2_RG,
+        Format_ETC2_RGB,
+        Format_ETC2_RGBA,
+        Format_ETC2_RGB_A1,
+
+        Format_ETC2_RGBM,
+
+        Format_PVR_2BPP_RGB,     // Using PVR textools.
+        Format_PVR_4BPP_RGB,
+        Format_PVR_2BPP_RGBA,
+        Format_PVR_4BPP_RGBA,
 
         Format_Count
     };
@@ -155,6 +169,7 @@ namespace nvtt
         NVTT_API void setFormat(Format format);
         NVTT_API void setQuality(Quality quality);
         NVTT_API void setColorWeights(float red, float green, float blue, float alpha = 1.0f);
+        NVTT_API void setRGBMThreshold(float min_m);
 
         NVTT_API void setExternalCompressor(const char * name);
 
@@ -173,9 +188,10 @@ namespace nvtt
         NVTT_API void setTargetDecoder(Decoder decoder);
 
         // Translate to and from D3D formats.
+        NVTT_API Format format() const;
         NVTT_API unsigned int d3d9Format() const;
+        NVTT_API unsigned int dxgiFormat() const;
         //NVTT_API bool setD3D9Format(unsigned int format);
-        //NVTT_API unsigned int dxgiFormat() const;
         //NVTT_API bool setDxgiFormat(unsigned int format);
     };
 
@@ -252,6 +268,14 @@ namespace nvtt
         AlphaMode_Transparency,
         AlphaMode_Premultiplied,
     };
+
+    // Extents shape restrictions
+    enum ShapeRestriction
+    {
+        ShapeRestriction_None,
+        ShapeRestriction_Square,    
+    };
+
 
     // Input options. Specify format and layout of the input texture. (Deprecated in NVTT 2.1)
     struct InputOptions
@@ -344,7 +368,7 @@ namespace nvtt
     {
         Container_DDS,
         Container_DDS10,
-        // Container_KTX,   // Khronos Texture: http://www.khronos.org/opengles/sdk/tools/KTX/
+        Container_KTX,   // Khronos Texture: http://www.khronos.org/opengles/sdk/tools/KTX/
         // Container_VTF,   // Valve Texture Format: http://developer.valvesoftware.com/wiki/Valve_Texture_Format
     };
 
@@ -439,6 +463,9 @@ namespace nvtt
         ToneMapper_Lightmap,
     };
 
+    // Transform the given x,y coordinates.
+    typedef void WarpFunction(float & x, float & y, float & d);
+
 
     // A surface is one level of a 2D or 3D texture. (New in NVTT 2.1)
     // @@ It would be nice to add support for texture borders for correct resizing of tiled textures and constrained DXT compression.
@@ -486,7 +513,8 @@ namespace nvtt
         NVTT_API void resize(int w, int h, int d, ResizeFilter filter, float filterWidth, const float * params = 0);
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter);
         NVTT_API void resize(int maxExtent, RoundMode mode, ResizeFilter filter, float filterWidth, const float * params = 0);
-        NVTT_API void resize_make_square(int maxExtent, RoundMode roundMode, ResizeFilter filter);
+        NVTT_API void resizeMakeSquare(int maxExtent, RoundMode roundMode, ResizeFilter filter);
+        NVTT_API void autoResize(float errorTolerance, RoundMode mode, ResizeFilter filter);
 
         NVTT_API bool buildNextMipmap(MipmapFilter filter, int min_size = 1);
         NVTT_API bool buildNextMipmap(MipmapFilter filter, float filterWidth, const float * params = 0, int min_size = 1);
@@ -553,6 +581,10 @@ namespace nvtt
         NVTT_API void flipY();
         NVTT_API void flipZ();
         NVTT_API Surface createSubImage(int x0, int x1, int y0, int y1, int z0, int z1) const;
+
+        NVTT_API Surface warp(int w, int h, WarpFunction * f) const;
+        NVTT_API Surface warp(int w, int h, int d, WarpFunction * f) const;
+
 
         // Copy image data.
         NVTT_API bool copyChannel(const Surface & srcImage, int srcChannel);

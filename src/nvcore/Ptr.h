@@ -113,7 +113,7 @@ namespace nv
     public:
 
         // BaseClass must implement addRef() and release().
-        typedef SmartPtr<BaseClass>	ThisType;
+        typedef SmartPtr<BaseClass> ThisType;
 
         /// Default ctor.
         SmartPtr() : m_ptr(NULL) 

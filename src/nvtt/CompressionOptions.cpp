@@ -50,7 +50,8 @@ void CompressionOptions::reset()
     m.format = Format_DXT1;
     m.quality = Quality_Normal;
     m.colorWeight.set(1.0f, 1.0f, 1.0f, 1.0f);
-
+    m.rgbmThreshold = 0.15f;
+    
     m.bitcount = 32;
     m.bmask = 0x000000FF;
     m.gmask = 0x0000FF00;
@@ -100,6 +101,11 @@ void CompressionOptions::setColorWeights(float red, float green, float blue, flo
 //    float y = green / total;
 //    m.colorWeight.set(x, y, 1.0f - x - y);
     m.colorWeight.set(red, green, blue, alpha);
+}
+
+void CompressionOptions::setRGBMThreshold(float min_m)
+{
+    m.rgbmThreshold = min_m;
 }
 
 
@@ -162,7 +168,7 @@ void CompressionOptions::setPixelType(PixelType pixelType)
 /// Set pitch alignment in bytes.
 void CompressionOptions::setPitchAlignment(int pitchAlignment)
 {
-    nvDebugCheck(pitchAlignment > 0 && isPowerOfTwo(pitchAlignment));
+    nvDebugCheck(pitchAlignment > 0 && isPowerOfTwo(U32(pitchAlignment)));
     m.pitchAlignment = pitchAlignment;
 }
 
@@ -194,6 +200,10 @@ void CompressionOptions::setTargetDecoder(Decoder decoder)
 }
 
 
+Format CompressionOptions::format() const
+{
+    return m.format;
+}
 
 // Translate to and from D3D formats.
 unsigned int CompressionOptions::d3d9Format() const
@@ -246,10 +256,20 @@ unsigned int CompressionOptions::d3d9Format() const
             FOURCC_ATI2,    // Format_BC5
             FOURCC_DXT1,    // Format_DXT1n
 		    0,              // Format_CTX1
-            MAKEFOURCC('B', 'C', '6', 'H'),     // Format_BC6
-            MAKEFOURCC('B', 'C', '7', 'L'),     // Format_BC7
-            //FOURCC_ATI2,    // Format_BC5_Luma
-            FOURCC_DXT5,    // Format_BC3_RGBM
+            FOURCC_BC6H,     // Format_BC6
+            FOURCC_BC7L,     // Format_BC7
+            FOURCC_DXT5,                        // Format_BC3_RGBM
+            NV_MAKEFOURCC('E', 'T', 'C', '1'),  // Format_ETC1
+            0,                                  // Format_ETC2_R
+            0,                                  // Format_ETC2_RG
+            NV_MAKEFOURCC('E', 'T', 'C', '2'),  // Format_ETC2_RGB
+            0,                                  // Format_ETC2_RGBA
+            0,                                  // Format_ETC2_RGB_A1
+            0,                                  // Format_ETC2_RGBM
+            FOURCC_PVR0,
+            FOURCC_PVR1,
+            FOURCC_PVR2,
+            FOURCC_PVR3,
         };
 
         NV_COMPILER_CHECK(NV_ARRAY_SIZE(d3d9_formats) == Format_Count);
@@ -258,12 +278,80 @@ unsigned int CompressionOptions::d3d9Format() const
     }
 }
 
-/*
-bool CompressionOptions::setDirect3D9Format(unsigned int format)
+unsigned int CompressionOptions::dxgiFormat() const // @@ Add srgb flag.
 {
+    if (m.format == Format_RGB) {
+        if (m.pixelType == PixelType_UnsignedNorm) {
+            
+            uint bitcount = m.bitcount;
+            uint rmask = m.rmask;
+            uint gmask = m.gmask;
+            uint bmask = m.bmask;
+            uint amask = m.amask;
+            
+            if (bitcount == 0) {
+                bitcount = m.rsize + m.gsize + m.bsize + m.asize;
+                rmask = ((1 << m.rsize) - 1) << (m.asize + m.bsize + m.gsize);
+                gmask = ((1 << m.gsize) - 1) << (m.asize + m.bsize);
+                bmask = ((1 << m.bsize) - 1) << m.asize;
+                amask = ((1 << m.asize) - 1) << 0;
+            }
+            
+            if (bitcount <= 32) {
+                return nv::findDXGIFormat(bitcount, rmask, gmask, bmask, amask);
+            }
+            else {
+                if (m.rsize == 16 && m.gsize == 16 && m.bsize == 0 && m.asize == 0) return DXGI_FORMAT_R16G16_UNORM;
+                if (m.rsize == 16 && m.gsize == 16 && m.bsize == 16 && m.asize == 16) return DXGI_FORMAT_R16G16B16A16_UNORM;
+            }
+        }
+        else if (m.pixelType == PixelType_Float) {
+            if (m.rsize == 16 && m.gsize == 0 && m.bsize == 0 && m.asize == 0) return DXGI_FORMAT_R16_FLOAT;
+            if (m.rsize == 32 && m.gsize == 0 && m.bsize == 0 && m.asize == 0) return DXGI_FORMAT_R32_FLOAT;
+            if (m.rsize == 16 && m.gsize == 16 && m.bsize == 0 && m.asize == 0) return DXGI_FORMAT_R16G16_FLOAT;
+            if (m.rsize == 32 && m.gsize == 32 && m.bsize == 0 && m.asize == 0) return DXGI_FORMAT_R32G32_FLOAT;
+            if (m.rsize == 16 && m.gsize == 16 && m.bsize == 16 && m.asize == 16) return DXGI_FORMAT_R16G16B16A16_FLOAT;
+            if (m.rsize == 32 && m.gsize == 32 && m.bsize == 32 && m.asize == 32) return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        }
+        
+        return 0;
+    }
+    else {
+        uint dxgi_formats[] = {
+            0,                          // Format_RGB,
+            DXGI_FORMAT_BC1_UNORM,      // Format_DXT1
+            DXGI_FORMAT_BC1_UNORM,      // Format_DXT1a
+            DXGI_FORMAT_BC2_UNORM,      // Format_DXT3
+            DXGI_FORMAT_BC3_UNORM,      // Format_DXT5
+            DXGI_FORMAT_BC3_UNORM,      // Format_DXT5n
+            DXGI_FORMAT_BC4_UNORM,      // Format_BC4
+            DXGI_FORMAT_BC5_UNORM,      // Format_BC5
+            DXGI_FORMAT_BC1_UNORM,      // Format_DXT1n
+            0,                          // Format_CTX1
+            DXGI_FORMAT_BC6H_UF16,      // Format_BC6
+            DXGI_FORMAT_BC7_UNORM,      // Format_BC7
+            DXGI_FORMAT_BC5_UNORM,      // Format_BC3_RGBM
+            0,                          // Format_ETC1
+            0,                          // Format_ETC2_R
+            0,                          // Format_ETC2_RG
+            0,                          // Format_ETC2_RGB
+            0,                          // Format_ETC2_RGBA
+            0,                          // Format_ETC2_RGB_A1
+            0,                          // Format_ETC2_RGBM
+            0,                          // Format_PVR_2BPP_RGB
+            0,                          // Format_PVR_4BPP_RGB
+            0,                          // Format_PVR_2BPP_RGBA
+            0,                          // Format_PVR_4BPP_RGB
+        };
+        
+        NV_COMPILER_CHECK(NV_ARRAY_SIZE(dxgi_formats) == Format_Count);
+        
+        return dxgi_formats[m.format];
+    }
 }
 
-unsigned int CompressionOptions::dxgiFormat() const
+/*
+bool CompressionOptions::setDirect3D9Format(unsigned int format)
 {
 }
 

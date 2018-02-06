@@ -243,7 +243,7 @@ static void write_header(const IntEndptsRGB_2 endpts[NREGIONS], int shapeindex, 
 
 static void read_header(Bits &in, IntEndptsRGB_2 endpts[NREGIONS], int &shapeindex, Pattern &p, int &pat_index)
 {
-	int mode = AVPCL::getmode(in);
+	//int mode = AVPCL::getmode(in);
 
 	pat_index = 0;
 	nvAssert (pat_index >= 0 && pat_index < NPATTERNS);
@@ -580,7 +580,7 @@ static float exhaustive(const Vector4 colors[], const float importance[], int np
 	int bhigh = min((1<<bprec)-1, opt_endpts.B[ch] + bdelta);
 
 	// now there's no need to swap the ordering of A and B
-	bool a_le_b = opt_endpts.A[ch] <= opt_endpts.B[ch];
+	//bool a_le_b = opt_endpts.A[ch] <= opt_endpts.B[ch];
 
 	int amin, bmin;
 

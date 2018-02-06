@@ -85,7 +85,9 @@ uint nv::processorCount() {
 
     return count;
 #elif NV_OS_ORBIS
-    return 6;
+	return 6;
+#elif NV_OS_DURANGO
+	return 6;
 #elif NV_OS_XBOX
     return 3; // or 6?
 #elif NV_OS_LINUX || NV_OS_NETBSD // Linux, Solaris, & AIX

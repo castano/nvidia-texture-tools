@@ -27,11 +27,9 @@
 
 #include "nvimage.h"
 
-#if !defined(MAKEFOURCC)
-#define MAKEFOURCC(ch0, ch1, ch2, ch3) \
+#define NV_MAKEFOURCC(ch0, ch1, ch2, ch3) \
     (uint(uint8(ch0)) | (uint(uint8(ch1)) << 8) | \
     (uint(uint8(ch2)) << 16) | (uint(uint8(ch3)) << 24 ))
-#endif
 
 namespace nv
 {
@@ -101,19 +99,26 @@ namespace nv
 
     enum FOURCC
     {
-        FOURCC_NVTT = MAKEFOURCC('N', 'V', 'T', 'T'),
-        FOURCC_DDS = MAKEFOURCC('D', 'D', 'S', ' '),
-        FOURCC_DXT1 = MAKEFOURCC('D', 'X', 'T', '1'),
-        FOURCC_DXT2 = MAKEFOURCC('D', 'X', 'T', '2'),
-        FOURCC_DXT3 = MAKEFOURCC('D', 'X', 'T', '3'),
-        FOURCC_DXT4 = MAKEFOURCC('D', 'X', 'T', '4'),
-        FOURCC_DXT5 = MAKEFOURCC('D', 'X', 'T', '5'),
-        FOURCC_RXGB = MAKEFOURCC('R', 'X', 'G', 'B'),
-        FOURCC_ATI1 = MAKEFOURCC('A', 'T', 'I', '1'),
-        FOURCC_ATI2 = MAKEFOURCC('A', 'T', 'I', '2'),
-        FOURCC_A2XY = MAKEFOURCC('A', '2', 'X', 'Y'),
-        FOURCC_DX10 = MAKEFOURCC('D', 'X', '1', '0'),
-        FOURCC_UVER = MAKEFOURCC('U', 'V', 'E', 'R'),
+        FOURCC_NVTT = NV_MAKEFOURCC('N', 'V', 'T', 'T'),
+        FOURCC_DDS = NV_MAKEFOURCC('D', 'D', 'S', ' '),
+        FOURCC_DXT1 = NV_MAKEFOURCC('D', 'X', 'T', '1'),
+        FOURCC_DXT2 = NV_MAKEFOURCC('D', 'X', 'T', '2'),
+        FOURCC_DXT3 = NV_MAKEFOURCC('D', 'X', 'T', '3'),
+        FOURCC_DXT4 = NV_MAKEFOURCC('D', 'X', 'T', '4'),
+        FOURCC_DXT5 = NV_MAKEFOURCC('D', 'X', 'T', '5'),
+        FOURCC_RXGB = NV_MAKEFOURCC('R', 'X', 'G', 'B'),
+        FOURCC_ATI1 = NV_MAKEFOURCC('A', 'T', 'I', '1'),
+        FOURCC_ATI2 = NV_MAKEFOURCC('A', 'T', 'I', '2'),
+        FOURCC_A2XY = NV_MAKEFOURCC('A', '2', 'X', 'Y'),
+        FOURCC_DX10 = NV_MAKEFOURCC('D', 'X', '1', '0'),
+        FOURCC_UVER = NV_MAKEFOURCC('U', 'V', 'E', 'R'),
+        FOURCC_BC6H = NV_MAKEFOURCC('B', 'C', '6', 'H'),
+        FOURCC_BC7L = NV_MAKEFOURCC('B', 'C', '7', 'L'),
+        
+        FOURCC_PVR0 = NV_MAKEFOURCC('P', 'V', 'R', '0'),
+        FOURCC_PVR1 = NV_MAKEFOURCC('P', 'V', 'R', '1'),
+        FOURCC_PVR2 = NV_MAKEFOURCC('P', 'V', 'R', '2'),
+        FOURCC_PVR3 = NV_MAKEFOURCC('P', 'V', 'R', '3'),
     };
 
 

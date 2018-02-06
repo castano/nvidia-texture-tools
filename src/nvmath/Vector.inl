@@ -452,7 +452,7 @@ namespace nv
         // That's actually a terrible idea. Small triangles far from the origin can end up producing fairly large floating point 
         // numbers and the results becomes very unstable and dependent on the order of the factors.
 
-        // Instead, it's preferable to substract the vertices first, and multiply the resulting small values together. The result
+        // Instead, it's preferable to subtract the vertices first, and multiply the resulting small values together. The result
         // in this case is always much more accurate (as long as the triangle is small) and less dependent of the location of 
         // the triangle.
 

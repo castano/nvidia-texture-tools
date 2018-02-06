@@ -34,61 +34,61 @@
 namespace nvtt
 {
 
-	struct DefaultOutputHandler : public nvtt::OutputHandler
-	{
-		DefaultOutputHandler(const char * fileName) : stream(fileName) {}
+    struct DefaultOutputHandler : public nvtt::OutputHandler
+    {
+        DefaultOutputHandler(const char * fileName) : stream(fileName) {}
         DefaultOutputHandler(FILE * fp) : stream(fp, false) {}
-		
-		virtual ~DefaultOutputHandler() {}
-		
-		virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
-		{
-			// ignore.
-		}
-		
-		// Output data.
-		virtual bool writeData(const void * data, int size)
-		{
-			stream.serialize(const_cast<void *>(data), size);
 
-			//return !stream.isError();
-			return true;
-		}
+        virtual ~DefaultOutputHandler() {}
 
-		virtual void endImage()
-		{
-			// ignore.
-		}
+        virtual void beginImage(int size, int width, int height, int depth, int face, int miplevel)
+        {
+            // ignore.
+        }
 
-		nv::StdOutputStream stream;
-	};
+        // Output data.
+        virtual bool writeData(const void * data, int size)
+        {
+            stream.serialize(const_cast<void *>(data), size);
+
+            //return !stream.isError();
+            return true;
+        }
+
+        virtual void endImage()
+        {
+            // ignore.
+        }
+
+        nv::StdOutputStream stream;
+    };
 
 
-	struct OutputOptions::Private
-	{
-		nv::Path fileName;
+    struct OutputOptions::Private
+    {
+        nv::Path fileName;
         FILE * fileHandle;
-		
-		OutputHandler * outputHandler;
-		ErrorHandler * errorHandler;
 
-		bool outputHeader;
-		Container container;
+        OutputHandler * outputHandler;
+        ErrorHandler * errorHandler;
+
+        bool outputHeader;
+        Container container;
         int version;
         bool srgb;
         bool deleteOutputHandler;
 
         void * wrapperProxy;    // For the C/C# wrapper.
-		
-		bool hasValidOutputHandler() const;
 
-		void beginImage(int size, int width, int height, int depth, int face, int miplevel) const;
-		bool writeData(const void * data, int size) const;
+        bool hasValidOutputHandler() const;
+
+        void beginImage(int size, int width, int height, int depth, int face, int miplevel) const;
+        bool writeData(const void * data, int size) const;
         void endImage() const;
-		void error(Error e) const;
-	};
+        void error(Error e) const;
+    };
 
-	
+
 } // nvtt namespace
 
 

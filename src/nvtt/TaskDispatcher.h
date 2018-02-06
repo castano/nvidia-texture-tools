@@ -10,8 +10,8 @@
 // Gran Central Dispatch (GCD/libdispatch)
 // http://developer.apple.com/mac/library/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html
 #if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
-#define HAVE_GCD 1
-#include <dispatch/dispatch.h>
+//#define HAVE_GCD 1
+//#include <dispatch/dispatch.h>
 #endif
 
 // Parallel Patterns Library (PPL) is part of Microsoft's concurrency runtime: 
@@ -64,7 +64,7 @@ namespace nvtt {
 
 #endif
 
-#if NV_OS_DARWIN && defined(HAVE_DISPATCH_H)
+#if HAVE_GCD
 
     // Task dispatcher using Apple's Grand Central Dispatch.
     struct AppleTaskDispatcher : public TaskDispatcher

@@ -146,9 +146,16 @@ static const char * s_witnessImageSet[] = {
 };
 
 static const char * s_witnessLmapImageSet[] = {
-    "specruin.dds",
-    "cottage.dds",
+    "hallway.dds",
+    "windmill.dds",
+    "tunnel.dds",
+    "theater.dds",
     "tower.dds",
+    "hub.dds",
+    "mine.dds",
+    "archway.dds",
+    "hut.dds",
+    "shaft.dds",
 };
 
 static const char * s_normalMapImageSet[] = {
@@ -187,8 +194,14 @@ enum Mode {
     Mode_BC5_Normal_Paraboloid,
     Mode_BC5_Normal_Quartic,
     //Mode_BC5_Normal_DualParaboloid,
-	Mode_BC6,
-	Mode_BC7,
+    Mode_BC6,
+    Mode_BC7,
+    Mode_ETC1_IC,
+    Mode_ETC1_EtcLib,
+    Mode_ETC2_EtcLib,
+    Mode_ETC1_RgEtc,
+    Mode_ETC2_RGBM,
+    Mode_PVR,
     Mode_Count
 };
 static const char * s_modeNames[] = {
@@ -207,8 +220,14 @@ static const char * s_modeNames[] = {
     "BC5-Normal-Paraboloid",        // Mode_BC5_Normal_Paraboloid,
     "BC5-Normal-Quartic",           // Mode_BC5_Normal_Quartic,
     //"BC5-Normal-DualParaboloid",    // Mode_BC5_Normal_DualParaboloid,
-	"BC6",			// Mode_BC6,
-	"BC7",			// Mode_BC7,
+    "BC6",          // Mode_BC6,
+    "BC7",          // Mode_BC7,
+    "ETC1-IC",
+    "ETC1-EtcLib",
+    "ETC2-EtcLib",
+    "ETC1-RgEtc",
+    "ETC2-RGBM",
+    "PVR",
 };
 nvStaticCheck(NV_ARRAY_SIZE(s_modeNames) == Mode_Count);
 
@@ -218,14 +237,16 @@ struct Test {
     Mode modes[6];
 };
 static Test s_imageTests[] = {
-    {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, /*Mode_BC3_LUVW*/}},
-    {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
-    //{"Normal", 3, {Mode_BC1_Normal, Mode_BC3_Normal, Mode_BC5_Normal}},
-    {"Normal", 4, {Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid, Mode_BC5_Normal_Quartic}},
-    {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
-	{"HDR", 2, {Mode_BC3_RGBM, Mode_BC6}},
-	{"BC6", 1, {Mode_BC6}},
-	{"BC7", 1, {Mode_BC7}},
+/*0*/   {"Color", 3, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, /*Mode_BC3_LUVW*/}},
+/*1*/   {"Alpha", 3, {Mode_BC1_Alpha, Mode_BC2_Alpha, Mode_BC3_Alpha}},
+/*2*/   {"Normal", 4, {Mode_BC5_Normal, Mode_BC5_Normal_Stereographic, Mode_BC5_Normal_Paraboloid, Mode_BC5_Normal_Quartic}},
+/*3*/   {"Lightmap", 4, {Mode_BC1, Mode_BC3_YCoCg, Mode_BC3_RGBM, Mode_BC3_RGBS}},
+/*4*/   {"HDR", 3, {Mode_ETC2_RGBM, Mode_BC3_RGBM, Mode_BC6}},
+/*5*/   {"BC6", 1, {Mode_BC6}},
+/*6*/   {"BC7", 1, {Mode_BC7}},
+/*7*/   {"ETC", 3, {Mode_ETC1_IC, Mode_ETC1_RgEtc, Mode_ETC2_EtcLib}},
+/*8*/   {"Color Mobile", 4, {Mode_PVR, Mode_ETC1_IC, Mode_ETC2_EtcLib, Mode_BC1}},
+/*9*/   //{"ETC-Lightmap", 2, {Mode_BC3_RGBM, Mode_ETC_RGBM}},
 };
 const int s_imageTestCount = ARRAY_SIZE(s_imageTests);
 
@@ -404,10 +425,10 @@ int main(int argc, char *argv[])
                 i++;
             }
         }
-		else
-		{
-			printf("Warning: unrecognized option \"%s\"\n", argv[i]);
-		}
+        else
+        {
+            printf("Warning: unrecognized option \"%s\"\n", argv[i]);
+        }
     }
 
     // Validate inputs.
@@ -462,7 +483,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        compressionOptions.setQuality(nvtt::Quality_Production);
+        compressionOptions.setQuality(nvtt::Quality_Normal);
+        //compressionOptions.setQuality(nvtt::Quality_Production);
     }
     //compressionOptions.setExternalCompressor("ati");
     //compressionOptions.setExternalCompressor("squish");
@@ -515,13 +537,13 @@ int main(int argc, char *argv[])
 
     // Labels on the left side.
     if (errorMode == ErrorMode_RMSE) {
-        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01";
+        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.03,0.01";
     }
     else if (errorMode == ErrorMode_CieLab) {
        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,4,22,1";
     }
     else if (errorMode == ErrorMode_AngularRMSE) {
-        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.05,0.01";
+        graphWriter << "&chxr=0,1," << set.fileCount << ",1|1,0,0.2,0.02";      // 0.05,0.01
     }
 
     // Labels at the bottom.
@@ -581,7 +603,6 @@ int main(int argc, char *argv[])
     else if (errorMode == ErrorMode_AngularRMSE) {
         graphWriter << "&chtt=" << set.name << "%20-%20" << test.name << "%20-%20Angular RMSE";
     }
-    
 
 
     Timer timer;
@@ -590,7 +611,7 @@ int main(int argc, char *argv[])
 
     nvtt::Surface img;
 
-    printf("Running Test: %s with Set: %s\n", test.name, set.name);
+    printf("Running test '%s' with set '%s'\n", test.name, set.name);
 
     graphWriter << "&chd=t:";
 
@@ -602,10 +623,11 @@ int main(int argc, char *argv[])
         Mode mode = test.modes[t];
 
         nvtt::Format format;
+        const char * compressor_name = NULL;
         if (mode == Mode_BC1 || mode == Mode_BC1_Alpha || mode == Mode_BC1_Normal || mode == Mode_BC3_RGBS) {
             format = nvtt::Format_BC1;
         }
-        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_RGBM || mode == Mode_BC3_LUVW) {
+        else if (mode == Mode_BC3_Alpha || mode == Mode_BC3_YCoCg || mode == Mode_BC3_LUVW) {
             format = nvtt::Format_BC3;
         }
         else if (mode == Mode_BC3_Normal) {
@@ -614,20 +636,51 @@ int main(int argc, char *argv[])
         else if (mode == Mode_BC5_Normal || mode == Mode_BC5_Normal_Stereographic || mode == Mode_BC5_Normal_Paraboloid || mode == Mode_BC5_Normal_Quartic) {
             format = nvtt::Format_BC5;
         }
-		else if (mode == Mode_BC6)
-		{
-			format = nvtt::Format_BC6;
-		}
-		else if (mode == Mode_BC7)
-		{
-			format = nvtt::Format_BC7;
-		}
-		else
-		{
-			nvDebugCheck(false);
-		}
+        else if (mode == Mode_BC3_RGBM) {
+            format = nvtt::Format_BC3_RGBM;
+        }
+        else if (mode == Mode_BC6)
+        {
+            format = nvtt::Format_BC6;
+        }
+        else if (mode == Mode_BC7)
+        {
+            format = nvtt::Format_BC7;
+        }
+        else if (mode == Mode_ETC1_IC)
+        {
+            format = nvtt::Format_ETC1;
+        }
+        else if (mode == Mode_ETC1_EtcLib)
+        {
+            format = nvtt::Format_ETC1;
+            compressor_name = "etclib";
+        }
+        else if (mode == Mode_ETC2_EtcLib)
+        {
+            format = nvtt::Format_ETC2_RGB;
+            compressor_name = "etclib";
+        }
+        else if (mode == Mode_ETC1_RgEtc)
+        {
+            format = nvtt::Format_ETC1;
+            compressor_name = "rg_etc";
+        }
+        else if (mode == Mode_ETC2_RGBM)
+        {
+            format = nvtt::Format_ETC2_RGBM;
+        }
+        else if (mode == Mode_PVR)
+        {
+            format = nvtt::Format_PVR_4BPP_RGB;
+        }
+        else
+        {
+            nvUnreachable();
+        }
         
         compressionOptions.setFormat(format);
+        if (compressor_name) compressionOptions.setExternalCompressor(compressor_name);
 
         if (set.type == ImageType_RGBA) {
             img.setAlphaMode(nvtt::AlphaMode_Transparency);
@@ -653,6 +706,7 @@ int main(int argc, char *argv[])
                 printf("Input image '%s' not found.\n", set.fileNames[i]);
                 return EXIT_FAILURE;
             }
+            float color_range = 0.0f;
 
             if (img.isNormalMap()) {
                 img.normalizeNormalMap();
@@ -693,16 +747,34 @@ int main(int argc, char *argv[])
                 tmp.clamp(2);
                 tmp.clamp(3);
             }
-            else if (mode == Mode_BC3_RGBM) {
-                tmp.setAlphaMode(nvtt::AlphaMode_None);
-                if (set.type == ImageType_HDR) {
-					// Transform to gamma-2.0 space before applying RGBM - helps a lot with banding in the darks.
-					tmp.toGamma(2.0f);
-                    tmp.toRGBM(3.0f);	// range of 3.0 in gamma-2.0 space == range of 9.0 in linear space
+            else if (mode == Mode_BC3_RGBM || mode == Mode_ETC2_RGBM) {
+                float r, g, b;
+                tmp.range(0, NULL, &r);
+                tmp.range(1, NULL, &g);
+                tmp.range(2, NULL, &b);
+                color_range = max3(r, g, b);
+                printf("color range = %f\n", color_range);
+
+                tmp.setAlphaMode(nvtt::AlphaMode_Transparency);
+
+                const float max_color_range = 16.0f;
+
+                if (color_range > max_color_range) {
+                    color_range = max_color_range;
                 }
-                else {
-                    tmp.toRGBM();
+
+                for (int i = 0; i < 3; i++) {
+                    tmp.scaleBias(i, 1.0f / color_range, 0.0f);
                 }
+                tmp.toneMap(nvtt::ToneMapper_Linear, /*parameters=*/NULL); // Clamp without changing the hue.
+
+                // Clamp alpha.
+                tmp.clamp(3);
+
+                // To gamma.
+                tmp.toGamma(2);
+
+                compressionOptions.setRGBMThreshold(0.2f);
             }
             else if (mode == Mode_BC3_LUVW) {
                 tmp.setAlphaMode(nvtt::AlphaMode_None);
@@ -781,14 +853,25 @@ int main(int argc, char *argv[])
                     }*/
                 }
             }
-            else if (mode == Mode_BC3_RGBM) {
-                if (set.type == ImageType_HDR) {
-                    img_out.fromRGBM(3.0f);
-					img_out.toLinear(2.0f);
+            else if (mode == Mode_BC3_RGBM || mode == Mode_ETC2_RGBM) {
+                /*if (set.type == ImageType_HDR) {
+                    //img_out.fromRGBM(3.0f);
+                    img_out.fromRGBM(range);
+                    img_out.toLinear(2.0f);
                 }
                 else {
                     img_out.fromRGBM();
+                }*/
+
+                img_out.fromRGBM(1.0f, 0.2f);
+                img_out.toLinear(2);
+
+                for (int i = 0; i < 3; i++) {
+                    img_out.scaleBias(i, color_range, 0.0f);
                 }
+
+                img_out.copyChannel(img, 3);          // Copy alpha channel from source.
+                img_out.setAlphaMode(nvtt::AlphaMode_Transparency);
             }
             else if (mode == Mode_BC3_LUVW) {
                 if (set.type == ImageType_HDR) {

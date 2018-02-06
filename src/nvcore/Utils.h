@@ -39,6 +39,28 @@ namespace nv
 
     // These intentionally look like casts.
 
+    // uint64 casts:
+    template <typename T> inline uint64 U64(T x) { return x; }
+    //template <> inline uint64 U64<uint64>(uint64 x) { return x; }
+    template <> inline uint64 U64<int64>(int64 x) { nvDebugCheck(x >= 0); return (uint64)x; }
+    //template <> inline uint64 U32<uint32>(uint32 x) { return x; }
+    template <> inline uint64 U64<int32>(int32 x) { nvDebugCheck(x >= 0); return (uint64)x; }
+    //template <> inline uint64 U64<uint16>(uint16 x) { return x; }
+    template <> inline uint64 U64<int16>(int16 x) { nvDebugCheck(x >= 0); return (uint64)x; }
+    //template <> inline uint64 U64<uint8>(uint8 x) { return x; }
+    template <> inline uint64 U64<int8>(int8 x) { nvDebugCheck(x >= 0); return (uint64)x; }
+
+    // int64 casts:
+    template <typename T> inline int64 I64(T x) { return x; }
+    template <> inline int64 I64<uint64>(uint64 x) { nvDebugCheck(x <= NV_INT64_MAX); return (int64)x; }
+    //template <> inline uint64 U64<int64>(int64 x) { return x; }
+    //template <> inline uint64 U32<uint32>(uint32 x) { return x; }
+    //template <> inline uint64 U64<int32>(int32 x) { return x; }
+    //template <> inline uint64 U64<uint16>(uint16 x) { return x; }
+    //template <> inline uint64 U64<int16>(int16 x) { return x; }
+    //template <> inline uint64 U64<uint8>(uint8 x) { return x; }
+    //template <> inline uint64 U64<int8>(int8 x) { return x; }
+
     // uint32 casts:
     template <typename T> inline uint32 U32(T x) { return x; }
     template <> inline uint32 U32<uint64>(uint64 x) { nvDebugCheck(x <= NV_UINT32_MAX); return (uint32)x; }
@@ -49,6 +71,11 @@ namespace nv
     template <> inline uint32 U32<int16>(int16 x) { nvDebugCheck(x >= 0); return (uint32)x; }
     //template <> inline uint32 U32<uint8>(uint8 x) { return x; }
     template <> inline uint32 U32<int8>(int8 x) { nvDebugCheck(x >= 0); return (uint32)x; }
+
+#if NV_OS_DARWIN
+    template <> inline uint32 U32<unsigned long>(unsigned long x) { nvDebugCheck(x <= NV_UINT32_MAX); return (uint32)x; }
+    template <> inline uint32 U32<long>(long x) { nvDebugCheck(x >= 0 && x <= NV_UINT32_MAX); return (uint32)x; }
+#endif
 
     // int32 casts:
     template <typename T> inline int32 I32(T x) { return x; }
@@ -182,7 +209,7 @@ namespace nv
     * @note isPowerOfTwo(x) == true -> nextPowerOfTwo(x) == x
     * @note nextPowerOfTwo(x) = 2 << log2(x-1)
     */
-    inline uint nextPowerOfTwo( uint x )
+    inline uint32 nextPowerOfTwo(uint32 x)
     {
         nvDebugCheck( x != 0 );
 #if 1	// On modern CPUs this is supposed to be as fast as using the bsr instruction.
@@ -202,8 +229,19 @@ namespace nv
 #endif
     }
 
-    /// Return true if @a n is a power of two.
-    inline bool isPowerOfTwo( uint n )
+    inline uint64 nextPowerOfTwo(uint64 x)
+    {
+        nvDebugCheck(x != 0);
+        uint p = 1;
+        while (x > p) {
+            p += p;
+        }
+        return p;
+    }
+
+    // @@ Should I just use a macro instead?
+    template <typename T>
+    inline bool isPowerOfTwo(T n)
     {
         return (n & (n-1)) == 0;
     }

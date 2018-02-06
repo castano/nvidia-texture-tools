@@ -584,7 +584,7 @@ static void optimize_endpts(const Tile &tile, int shapeindex, const float orig_e
 {
     Vector3 pixels[Tile::TILE_TOTAL];
     float importance[Tile::TILE_TOTAL];
-    float err = 0;
+    //float err = 0;
 
     for (int region=0; region<NREGIONS_ONE; ++region)
     {

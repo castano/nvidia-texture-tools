@@ -35,6 +35,7 @@ namespace nv
         };
 
         NVIMAGE_API FloatImage();
+        NVIMAGE_API FloatImage(const FloatImage & img);
         NVIMAGE_API FloatImage(const Image * img);
         NVIMAGE_API virtual ~FloatImage();
 
@@ -92,10 +93,10 @@ namespace nv
         NVIMAGE_API float applyKernelY(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
         NVIMAGE_API float applyKernelZ(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
         NVIMAGE_API void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * output, int output_stride) const;
         NVIMAGE_API void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, WrapMode wm, float * output) const;
         NVIMAGE_API void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, uint a, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * output) const;
+        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * output, int output_stride) const;
         NVIMAGE_API void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, uint a, WrapMode wm, float * output) const;
 
 

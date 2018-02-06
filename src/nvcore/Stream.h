@@ -76,13 +76,13 @@ namespace nv
         void advance(uint offset) { seek(tell() + offset); }
 
 
-        // friends	
+        // friends
         friend Stream & operator<<( Stream & s, bool & c ) {
 #if NV_OS_DARWIN && !NV_CC_CPP11
             nvStaticCheck(sizeof(bool) == 4);
             uint8 b = c ? 1 : 0;
             s.serialize( &b, 1 );
-            c = (b == 1);
+            c = (b != 0);
 #else
             nvStaticCheck(sizeof(bool) == 1);
             s.serialize( &c, 1 );

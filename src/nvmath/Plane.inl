@@ -24,6 +24,7 @@ namespace nv
 
     inline Vector3 Plane::vector() const { return v.xyz(); }
     inline float Plane::offset() const { return v.w; }
+    inline Vector3 Plane::normal() const { return normalize(vector(), 0.0f); }
 
     // Normalize plane.
     inline Plane normalize(const Plane & plane, float epsilon = NV_EPSILON)

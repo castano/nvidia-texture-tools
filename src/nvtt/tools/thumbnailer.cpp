@@ -99,8 +99,8 @@ int main(int argc, char *argv[])
                 return 1;
             }
 
-	    break;
-	}
+            break;
+        }
     }
 
     if (input.isNull() || output.isNull())
@@ -136,21 +136,21 @@ int main(int argc, char *argv[])
         nv::FloatImage fimage(&image);
         fimage.toLinear(0, 3, gamma);
 
-	uint thumbW, thumbH;
-	if (image.width() > image.height())
-	{
-	    thumbW = size;
-	    thumbH = uint ((float (image.height()) / float (image.width())) * size);
-	}
-	else
-	{
-	    thumbW = uint ((float (image.width()) / float (image.height())) * size);
-	    thumbH = size;
-	}
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(nv::BoxFilter(), thumbW, thumbH, nv::FloatImage::WrapMode_Clamp));
+        uint thumbW, thumbH;
+        if (image.width() > image.height())
+        {
+            thumbW = size;
+            thumbH = uint ((float (image.height()) / float (image.width())) * size);
+        }
+        else
+        {
+            thumbW = uint ((float (image.width()) / float (image.height())) * size);
+            thumbH = size;
+        }
+        nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(nv::BoxFilter(), thumbW, thumbH, nv::FloatImage::WrapMode_Clamp));
 
-	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
-	result->setFormat(nv::Image::Format_ARGB);
+        nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
+        result->setFormat(nv::Image::Format_ARGB);
 
         nv::StdOutputStream stream(output.str());
         nv::ImageIO::save(output.str(), stream, result.ptr(), metaData.buffer());
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
         nv::StdOutputStream stream(output.str());
         nv::ImageIO::save(output.str(), stream, &image, metaData.buffer());
     }
-	
+
     return 0;
 }
 

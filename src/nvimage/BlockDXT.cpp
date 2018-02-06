@@ -632,44 +632,45 @@ void BlockCTX1::setIndices(int * idx)
 
 
 /// Decode BC6 block.
-void BlockBC6::decodeBlock(Vector3 colors[16]) const
+void BlockBC6::decodeBlock(Vector4 colors[16]) const
 {
-	ZOH::Tile tile(4, 4);
-	ZOH::decompress((const char *)data, tile);
+    ZOH::Tile tile(4, 4);
+    ZOH::decompress((const char *)data, tile);
 
-	// Convert ZOH's tile struct to Vector3, and convert half to float.
-	for (uint y = 0; y < 4; ++y)
-	{
-		for (uint x = 0; x < 4; ++x)
-		{
-			uint16 rHalf = ZOH::Tile::float2half(tile.data[y][x].x);
-			uint16 gHalf = ZOH::Tile::float2half(tile.data[y][x].y);
-			uint16 bHalf = ZOH::Tile::float2half(tile.data[y][x].z);
-			colors[y * 4 + x].x = to_float(rHalf);
-			colors[y * 4 + x].y = to_float(gHalf);
-			colors[y * 4 + x].z = to_float(bHalf);
-		}
-	}
+    // Convert ZOH's tile struct to Vector3, and convert half to float.
+    for (uint y = 0; y < 4; ++y)
+    {
+        for (uint x = 0; x < 4; ++x)
+        {
+            uint16 rHalf = ZOH::Tile::float2half(tile.data[y][x].x);
+            uint16 gHalf = ZOH::Tile::float2half(tile.data[y][x].y);
+            uint16 bHalf = ZOH::Tile::float2half(tile.data[y][x].z);
+            colors[y * 4 + x].x = to_float(rHalf);
+            colors[y * 4 + x].y = to_float(gHalf);
+            colors[y * 4 + x].z = to_float(bHalf);
+            colors[y * 4 + x].w = 1.0f;
+        }
+    }
 }
 
 
 /// Decode BC7 block.
 void BlockBC7::decodeBlock(ColorBlock * block) const
 {
-	AVPCL::Tile tile(4, 4);
-	AVPCL::decompress((const char *)data, tile);
+    AVPCL::Tile tile(4, 4);
+    AVPCL::decompress((const char *)data, tile);
 
-	// Convert AVPCL's tile struct back to NVTT's.
-	for (uint y = 0; y < 4; ++y)
-	{
-		for (uint x = 0; x < 4; ++x)
-		{
-			Vector4 rgba = tile.data[y][x];
-			// Note: decoded rgba values are in [0, 255] range and should be an integer,
-			// because BC7 never uses more than 8 bits per channel.  So no need to round.
-			block->color(x, y).setRGBA(uint8(rgba.x), uint8(rgba.y), uint8(rgba.z), uint8(rgba.w));
-		}
-	}
+    // Convert AVPCL's tile struct back to NVTT's.
+    for (uint y = 0; y < 4; ++y)
+    {
+        for (uint x = 0; x < 4; ++x)
+        {
+            Vector4 rgba = tile.data[y][x];
+            // Note: decoded rgba values are in [0, 255] range and should be an integer,
+            // because BC7 never uses more than 8 bits per channel.  So no need to round.
+            block->color(x, y).setRGBA(uint8(rgba.x), uint8(rgba.y), uint8(rgba.z), uint8(rgba.w));
+        }
+    }
 }
 
 

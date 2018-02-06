@@ -6,7 +6,7 @@ manipulation tools, designed to be integrated in game tools and asset
 processing pipelines.
 
 The primary features of the library are mipmap and normal map generation, format 
-conversion and DXT compression.
+conversion, and DXT compression.
 
 
 ### How to build (Windows)
@@ -42,5 +42,5 @@ src/nvtt/tools/compress.cpp
 
 Detailed documentation of the API can be found at:
 
-http://code.google.com/p/nvidia-texture-tools/wiki/ApiDocumentation
+https://github.com/castano/nvidia-texture-tools/wiki/ApiDocumentation
 

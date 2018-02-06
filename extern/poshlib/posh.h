@@ -349,9 +349,18 @@ LLVM:
 #  define POSH_OS_STRING "UNICOS"
 #endif
 
-#if ( defined __MWERKS__ && defined __powerc && !defined macintosh ) || defined __APPLE_CC__ || defined macosx
-#  define POSH_OS_OSX 1
-#  define POSH_OS_STRING "MacOS X"
+//ACS if we're in xcode, look at the target conditionals to figure out if this is ios or osx
+#if defined __APPLE__
+#  include "TargetConditionals.h"
+#endif
+#if TARGET_OS_IPHONE
+#    define POSH_OS_IOS 1
+#    define POSH_OS_STRING "iOS"
+#else
+#  if ( defined __MWERKS__ && defined __powerc && !defined macintosh ) || defined __APPLE_CC__ || defined macosx
+#    define POSH_OS_OSX 1
+#    define POSH_OS_STRING "MacOS X"
+#  endif
 #endif
 
 #if defined __sun__ || defined sun || defined __sun || defined __solaris__

@@ -106,6 +106,11 @@ namespace nv {
 #error "Atomics not implemented."
 #endif
     }
+    
+    inline void storeRelease(volatile float * ptr, float value)
+    {
+        storeRelease((uint32 *)ptr, *(uint32 *)&value);
+    }
 
 
     template <typename T>

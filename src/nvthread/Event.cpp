@@ -17,7 +17,7 @@ struct Event::Private {
 };
 
 Event::Event() : m(new Private) {
-    m->handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+    m->handle = CreateEvent(/*lpEventAttributes=*/NULL, /*bManualReset=*/FALSE, /*bInitialState=*/FALSE, /*lpName=*/NULL);
 }
 
 Event::~Event() {

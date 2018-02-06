@@ -33,6 +33,8 @@ https://gcc.gnu.org/bugzilla/show_bug.cgi?id=6709
 
 #else // If typeof not available:
 
+#define NV_NEED_PSEUDOINDEX_WRAPPER 1
+
 #include <new> // placement new
 
 struct PseudoIndexWrapper {

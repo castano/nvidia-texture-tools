@@ -13,6 +13,7 @@ SET(NVTT_SRCS
     CompressorDX11.h CompressorDX11.cpp
     CompressorDXT1.h CompressorDXT1.cpp
     CompressorDXT5_RGBM.h CompressorDXT5_RGBM.cpp
+    CompressorETC.h CompressorETC.cpp
     CompressorRGB.h CompressorRGB.cpp
     Context.h Context.cpp
     QuickCompressDXT.h QuickCompressDXT.cpp
@@ -38,6 +39,7 @@ IF (CUDA_FOUND)
 ENDIF (CUDA_FOUND)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${NV_SOURCE_DIR}/extern/rg_etc1_v104)
 
 ADD_DEFINITIONS(-DNVTT_EXPORTS)
 
@@ -47,7 +49,7 @@ ELSE(NVTT_SHARED)
     ADD_LIBRARY(nvtt ${NVTT_SRCS})
 ENDIF(NVTT_SHARED)
 
-TARGET_LINK_LIBRARIES(nvtt ${LIBS} nvcore nvimage nvthread squish bc6h bc7 nvmath)
+TARGET_LINK_LIBRARIES(nvtt ${LIBS} nvcore nvimage nvthread squish bc6h bc7 nvmath rg_etc1)
 
 INSTALL(TARGETS nvtt 
     RUNTIME DESTINATION bin

@@ -47,9 +47,9 @@ const char * nvtt::errorString(Error e)
             return "Error writing through output handler";
         case Error_UnsupportedOutputFormat:
             return "The container file does not support the selected output format";
+        default:
+            return "Invalid error";
     }
-
-    return "Invalid error";
 }
 
 // Return NVTT version.

@@ -22,6 +22,7 @@ SET(BC7_SRCS
 	avpcl_utils.h)
 
 ADD_LIBRARY(bc7 STATIC ${BC7_SRCS})
+TARGET_LINK_LIBRARIES(bc7 nvcore nvmath)
 
 TARGET_LINK_LIBRARIES(bc7 nvmath)
 

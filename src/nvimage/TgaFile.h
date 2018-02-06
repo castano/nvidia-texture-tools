@@ -101,6 +101,48 @@ inline Stream & operator<< (Stream & s, TgaFile & tga)
 	return s;
 }
 
+
+
+// @@ Move to BMP file?
+
+const int BITMAPFILEHEADER_SIZE = 14;
+const int BITMAPINFOHEADER_SIZE = 40;
+const int BM_TYPE = ((unsigned int)'M') << 8 | ((unsigned int)'B');
+
+// BMP Header.
+struct BmpFileHeader {
+    uint16 type;
+    uint32 size;
+    uint16 reserved1;
+    uint16 reserved2;
+    uint32 offBits;
+};
+
+struct BmpInfoHeader {
+    uint32 size;
+    uint32 width;
+    uint32 height;
+    uint16 planes;
+    uint16 bitCount;
+    uint32 compression;
+    uint32 sizeImage;
+    uint32 xPelsPerMeter;
+    uint32 yPelsPerMeter;
+    uint32 clrUsed;
+    uint32 clrImportant;
+};
+
+inline Stream & operator<< (Stream & s, BmpFileHeader & bmp) {
+    return s << bmp.type << bmp.size << bmp.reserved1 << bmp.reserved2 << bmp.offBits;
+}
+
+inline Stream & operator<< (Stream & s, BmpInfoHeader & bmp) {
+    s << bmp.size << bmp.width << bmp.height << bmp.planes << bmp.bitCount << bmp.compression << bmp.sizeImage;
+    s << bmp.xPelsPerMeter << bmp.yPelsPerMeter << bmp.clrUsed << bmp.clrImportant;
+    return s;
+}
+
+
 } // nv namespace
 
 #endif // NV_IMAGE_TGAFILE_H

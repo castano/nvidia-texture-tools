@@ -36,4 +36,6 @@ do
 	#./nvcompress -silent -alpha -nomips -bc6 $file.$EXT $file.bc6.dds
 	#./nvimgdiff -alpha $file.$EXT $file.bc6.dds
 
+    # ETC2-EAC
+    ./nvcompress -silent -alpha -nomips -etc_rgbm
 done

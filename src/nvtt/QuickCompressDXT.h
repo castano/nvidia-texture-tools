@@ -39,21 +39,21 @@ namespace nv
 	struct AlphaBlockDXT5;
     class Vector3;
 
-	namespace QuickCompress
-	{
-		void compressDXT1(const ColorBlock & src, BlockDXT1 * dst);
-		void compressDXT1a(const ColorBlock & src, BlockDXT1 * dst);
-		
-		void compressDXT3(const ColorBlock & src, BlockDXT3 * dst);
-		
-		void compressDXT5A(const ColorBlock & src, AlphaBlockDXT5 * dst, int iterationCount=8);
-		void compressDXT5A(const AlphaBlock4x4 & src, AlphaBlockDXT5 * dst, int iterationCount=8);
+    namespace QuickCompress
+    {
+        void compressDXT1(const ColorBlock & src, BlockDXT1 * dst);
+        void compressDXT1a(const ColorBlock & src, BlockDXT1 * dst);
 
-		void compressDXT5(const ColorBlock & src, BlockDXT5 * dst, int iterationCount=8);
+        void compressDXT3(const ColorBlock & src, BlockDXT3 * dst);
+
+        void compressDXT5A(const ColorBlock & src, AlphaBlockDXT5 * dst, int iterationCount=8);
+        void compressDXT5A(const AlphaBlock4x4 & src, AlphaBlockDXT5 * dst, int iterationCount=8);
+
+        void compressDXT5(const ColorBlock & src, BlockDXT5 * dst, int iterationCount=8);
 
         void outputBlock4(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
         void outputBlock3(const ColorSet & set, const Vector3 & start, const Vector3 & end, BlockDXT1 * block);
-	}
+    }
 } // nv namespace
 
 #endif // NV_TT_QUICKCOMPRESSDXT_H

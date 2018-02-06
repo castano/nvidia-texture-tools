@@ -34,6 +34,7 @@ namespace nv
 
 
         void allocate(uint w, uint h, uint d = 1);
+        void acquire(Color32 * data, uint w, uint h, uint d = 1);
         bool load(const char * name);
 
         void resize(uint w, uint h, uint d = 1);

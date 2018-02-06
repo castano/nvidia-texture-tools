@@ -105,8 +105,10 @@ namespace nv
         StringBuilder & format( const char * format, ... ) __attribute__((format (printf, 2, 3)));
         StringBuilder & formatList( const char * format, va_list arg );
 
+        StringBuilder & append(char c);
         StringBuilder & append(const char * str);
-		StringBuilder & append(const char * str, uint len);
+        StringBuilder & append(const char * str, uint len);
+        StringBuilder & append(const StringBuilder & str);
         StringBuilder & appendFormat(const char * format, ...) __attribute__((format (printf, 2, 3)));
         StringBuilder & appendFormatList(const char * format, va_list arg);
 
@@ -122,6 +124,8 @@ namespace nv
 
         StringBuilder & toLower();
         StringBuilder & toUpper();
+        
+        void removeChar(char c);
 
         bool endsWith(const char * str) const;
         bool beginsWith(const char * str) const;
@@ -129,15 +133,16 @@ namespace nv
         char * reverseFind(char c);
 
         void reset();
-        bool isNull() const { return m_size == 0; }
+        NV_FORCEINLINE bool isNull() const { return m_size == 0; }
 
         // const char * accessors
         //operator const char * () const { return m_str; }
         //operator char * () { return m_str; }
-        const char * str() const { return m_str; }
-        char * str() { return m_str; }
+        NV_FORCEINLINE const char * str() const { return m_str; }
+        NV_FORCEINLINE char * str() { return m_str; }
 
-        char * release();
+        char * release();       // Release ownership of string.
+        void acquire(char *);   // Take ownership of string.
 
         /// Implement value semantics.
         StringBuilder & operator=( const StringBuilder & s ) {
@@ -280,25 +285,25 @@ namespace nv
         /// Equal operator.
         bool operator==( const String & str ) const
         {
-            return strMatch(str.data, data);
+            return strEqual(str.data, data);
         }
 
         /// Equal operator.
         bool operator==( const char * str ) const
         {
-            return strMatch(str, data);
+            return strEqual(str, data);
         }
 
         /// Not equal operator.
         bool operator!=( const String & str ) const
         {
-            return !strMatch(str.data, data);
+            return !strEqual(str.data, data);
         }
 
         /// Not equal operator.
         bool operator!=( const char * str ) const
         {
-            return !strMatch(str, data);
+            return !strEqual(str, data);
         }
 
         /// Returns true if this string is the null string.
