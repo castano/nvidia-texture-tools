@@ -131,7 +131,7 @@ void * nv::aligned_malloc(size_t size, size_t alignment)
     posix_memalign(&ptr, alignment, size);
     return ptr;
 #elif NV_OS_LINUX
-    return memalign(alignment, size)
+    return memalign(alignment, size);
 #else // NV_OS_ORBIS || NV_OS_IOS
     // @@ IC: iOS appears to be 16 byte aligned, should we check alignment and assert if we request a higher alignment factor?
     return ::malloc(size);
