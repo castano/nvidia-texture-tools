@@ -337,6 +337,12 @@ void InputOptions::setNormalizeMipmaps(bool normalize)
     m.normalizeMipmaps = normalize;
 }
 
+// Set linear transform for the given channel.
+// Stub for ABI compatibily, never implemented
+void InputOptions::setLinearTransform(int, float, float, float, float)
+{
+}
+
 void InputOptions::setMaxExtents(int e)
 {
     nvDebugCheck(e > 0);

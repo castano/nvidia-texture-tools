@@ -322,6 +322,9 @@ namespace nvtt
         NVTT_API void setNormalFilter(float sm, float medium, float big, float large);
         NVTT_API void setNormalizeMipmaps(bool b);
 
+        // Set color transforms.
+        NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
+
         // Set resizing options.
         NVTT_API void setMaxExtents(int d);
         NVTT_API void setRoundMode(RoundMode mode);
