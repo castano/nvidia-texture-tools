@@ -104,6 +104,8 @@ void InputOptions::reset()
     m.inputGamma = 2.2f;
     m.outputGamma = 2.2f;
 
+    m.colorTransform = ColorTransform_None;
+
     m.generateMipmaps = true;
     m.maxLevel = -1;
     m.mipmapFilter = MipmapFilter_Box;
@@ -335,6 +337,12 @@ void InputOptions::setNormalFilter(float small, float medium, float big, float l
 void InputOptions::setNormalizeMipmaps(bool normalize)
 {
     m.normalizeMipmaps = normalize;
+}
+
+// Set color transform.
+void InputOptions::setColorTransform(ColorTransform t)
+{
+    m.colorTransform = t;
 }
 
 // Set linear transform for the given channel.

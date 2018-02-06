@@ -249,6 +249,17 @@ namespace nvtt
         ResizeFilter_Mitchell,
     };
 
+    // Color transformation.
+    // deprecated since 2.1.0
+    enum ColorTransform
+    {
+        ColorTransform_None,
+        ColorTransform_Linear,
+        ColorTransform_Swizzle,
+        ColorTransform_YCoCg,
+        ColorTransform_ScaledYCoCg,
+    };
+
     // Extents rounding mode.
     enum RoundMode
     {
@@ -323,6 +334,7 @@ namespace nvtt
         NVTT_API void setNormalizeMipmaps(bool b);
 
         // Set color transforms.
+        NVTT_API void setColorTransform(ColorTransform t);
         NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
 
         // Set resizing options.

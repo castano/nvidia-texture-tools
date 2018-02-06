@@ -277,6 +277,11 @@ bool Compressor::Private::compress(const InputOptions::Private & inputOptions, c
             // Resize input.
             img.resize(w, h, d, ResizeFilter_Box);
 
+            // Apply color transform.
+            if (inputOptions.colorTransform == ColorTransform_YCoCg) {
+                img.toYCoCg();
+            }
+
             nvtt::Surface tmp = img;
             if (!img.isNormalMap()) {
                 tmp.toGamma(inputOptions.outputGamma);
