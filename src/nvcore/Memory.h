@@ -10,6 +10,10 @@
 #include <string.h> // memset
 //#include <stddef.h> // size_t
 
+#if NV_OS_LINUX
+#include <malloc.h> // memalign()
+#endif
+
 //#include <new>	// new and delete
 
 #define TRACK_MEMORY_LEAKS 0
