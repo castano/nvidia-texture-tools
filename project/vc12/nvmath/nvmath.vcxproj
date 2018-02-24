@@ -173,6 +173,7 @@
     <ClCompile Include="..\..\..\src\nvmath\Fitting.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Gamma.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Half.cpp" />
+    <ClCompile Include="..\..\..\src\nvmath\Matrix.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\Plane.cpp" />
     <ClCompile Include="..\..\..\src\nvmath\SphericalHarmonic.cpp" />
   </ItemGroup>
