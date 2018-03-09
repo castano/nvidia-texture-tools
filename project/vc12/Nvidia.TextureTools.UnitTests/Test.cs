@@ -28,10 +28,12 @@ namespace Nvidia.TextureTools.UnitTests {
 				inputOptions.SetMipmapData (dataPtr, 128, 128, 1, 0, 0);
 				inputOptions.SetMipmapGeneration (false);
 				inputOptions.SetGamma (1.0f, 1.0f);
+				compressionOptions.SetFormat (Format.RGBA);
 				outputOptions.SetOutputHeader (false);
 				outputOptions.SetOutputOptionsOutputHandler (BeginImage, WriteData, EndImage);
 				var estsize = compressor.EstimateSize (inputOptions, compressionOptions);
 				Assert.True (compressor.Compress (inputOptions, compressionOptions, outputOptions));
+				Assert.AreEqual (estsize, buffer.Length);
 			}finally {
 				a.Free ();
 				b.Free ();
@@ -53,16 +55,12 @@ namespace Nvidia.TextureTools.UnitTests {
 		{
 			Marshal.Copy (data, buffer, offset, length);
 			offset += length;
-			if (offset == buffer.Length)
-			{
-				
-			}
 			return true;
 		}
 
 		void EndImageInternal ()
 		{
-			Console.WriteLine ("EndImageInternal");
+			// add done write the buffer.
 		}
 	}
 }
