@@ -422,8 +422,9 @@ namespace Nvidia.TextureTools
 	{
 		#region Delegates
 		public delegate void ErrorHandler(Error error);
-		private delegate void WriteDataDelegate(IntPtr data, int size);
-		private delegate void ImageDelegate(int size, int width, int height, int depth, int face, int miplevel);
+		public delegate bool OutputHandler(IntPtr data, int size);
+		public delegate void EndImageHandler();
+		public delegate void BeginImageHandler (int size, int width, int height, int depth, int face, int miplevel);
 		#endregion
 
 		#region Bindings
@@ -447,8 +448,8 @@ namespace Nvidia.TextureTools
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttSetOutputOptionsOutputHeader(IntPtr outputOptions, bool b);
 
-		//[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		//private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, WriteDataDelegate writeData, ImageDelegate image);
+		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
+		private extern static void nvttSetOutputOptionsOutputHandler(IntPtr outputOptions, IntPtr beginImageHandler, IntPtr outputHandler, IntPtr endImageHandler);
 
 		#endregion
 
@@ -477,6 +478,18 @@ namespace Nvidia.TextureTools
 		}
 
 		// @@ Add OutputHandler interface.
+		public void SetOutputOptionsOutputHandler (BeginImageHandler beginImageHandler, OutputHandler outputHandler, EndImageHandler endImageHandler)
+		{
+			IntPtr writeData = IntPtr.Zero;
+			IntPtr beginImage = IntPtr.Zero;
+			IntPtr endImage = IntPtr.Zero;
+			if (beginImageHandler != null || outputHandler != null || endImageHandler != null) {
+				writeData = Marshal.GetFunctionPointerForDelegate (outputHandler);
+				beginImage = Marshal.GetFunctionPointerForDelegate (beginImageHandler);
+				endImage = Marshal.GetFunctionPointerForDelegate (endImageHandler);
+			}
+			nvttSetOutputOptionsOutputHandler (this.options, beginImage, writeData, endImage);
+		}
 	}
 	#endregion
 
