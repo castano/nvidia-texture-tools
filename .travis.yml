@@ -1,0 +1,13 @@
+# NOTE: We use TeamCity for official builds.
+
+language: csharp
+os:
+ - osx
+compiler:
+  - clang
+  - gcc
+script:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mkdir build ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cd build ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then cmake -DCMAKE_OSX_ARCHITECTURES="i386;x86_64" -DNVTT_SHARED="TRUE"  .. ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then make ; fi
