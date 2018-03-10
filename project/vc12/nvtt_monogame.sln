@@ -47,6 +47,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nvthread", "nvthread\nvthre
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bc7", "bc7\bc7.vcxproj", "{F974F34B-AF02-4C88-8E1E-85475094EA78}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nvidia.TextureTools.UnitTests", "Nvidia.TextureTools.UnitTests\Nvidia.TextureTools.UnitTests.csproj", "{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -219,6 +221,22 @@ Global
 		{F974F34B-AF02-4C88-8E1E-85475094EA78}.Release-CUDA|Win32.Build.0 = Release|Win32
 		{F974F34B-AF02-4C88-8E1E-85475094EA78}.Release-CUDA|x64.ActiveCfg = Release|x64
 		{F974F34B-AF02-4C88-8E1E-85475094EA78}.Release-CUDA|x64.Build.0 = Release|x64
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug|Win32.Build.0 = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug|x64.Build.0 = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug-CUDA|Win32.ActiveCfg = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug-CUDA|Win32.Build.0 = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug-CUDA|x64.ActiveCfg = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Debug-CUDA|x64.Build.0 = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release|Win32.ActiveCfg = Release|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release|Win32.Build.0 = Release|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release|x64.ActiveCfg = Release|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release|x64.Build.0 = Release|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release-CUDA|Win32.ActiveCfg = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release-CUDA|Win32.Build.0 = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release-CUDA|x64.ActiveCfg = Debug|Any CPU
+		{553ABAEE-C4B8-4196-BC4A-EFF71D47CEAA}.Release-CUDA|x64.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
