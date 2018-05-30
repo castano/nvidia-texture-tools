@@ -10,7 +10,7 @@
 #cmakedefine HAVE_OPENMP
 #cmakedefine HAVE_DISPATCH_H
 
-#define HAVE_STBIMAGE
+#define NV_HAVE_STBIMAGE
 //#cmakedefine HAVE_PNG
 //#cmakedefine HAVE_JPEG
 //#cmakedefine HAVE_TIFF
