@@ -4,6 +4,7 @@
 #ifndef NV_IMAGE_COLORBLOCK_H
 #define NV_IMAGE_COLORBLOCK_H
 
+#include "nvimage/nvimage.h"
 #include "nvmath/Color.h"
 #include "nvmath/Vector.h"
 
@@ -14,7 +15,7 @@ namespace nv
 
 
     /// Uncompressed 4x4 color block.
-    struct ColorBlock
+    struct NVIMAGE_CLASS ColorBlock
     {
         ColorBlock();
         ColorBlock(const uint * linearImage);
@@ -128,7 +129,7 @@ namespace nv
 
 
     /// Uncompressed 4x4 alpha block.
-    struct AlphaBlock4x4
+    struct NVIMAGE_CLASS AlphaBlock4x4
     {
         void init(uint8 value);
         void init(const ColorBlock & src, uint channel);

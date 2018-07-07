@@ -48,10 +48,10 @@ namespace nv
     };
     
     // Solve equation system using LU decomposition and back-substitution.
-    extern bool solveLU(const Matrix2 & m, const Vector2 & b, Vector2 * x);
+    NVMATH_API bool solveLU(const Matrix2 & m, const Vector2 & b, Vector2 * x);
     
     // Solve equation system using Cramer's inverse.
-    extern bool solveCramer(const Matrix2 & A, const Vector2 & b, Vector2 * x);
+    NVMATH_API bool solveCramer(const Matrix2 & A, const Vector2 & b, Vector2 * x);
     
     
     // 3x3 matrix.
@@ -87,12 +87,12 @@ namespace nv
     };
 
     // Solve equation system using LU decomposition and back-substitution.
-    extern bool solveLU(const Matrix3 & m, const Vector3 & b, Vector3 * x);
+    NVMATH_API bool solveLU(const Matrix3 & m, const Vector3 & b, Vector3 * x);
 
     // Solve equation system using Cramer's inverse.
-    extern bool solveCramer(const Matrix3 & A, const Vector3 & b, Vector3 * x);
+    NVMATH_API bool solveCramer(const Matrix3 & A, const Vector3 & b, Vector3 * x);
 
-    extern Matrix3 inverse(const Matrix3 & m);
+    NVMATH_API Matrix3 inverse(const Matrix3 & m);
     
 
     // 4x4 matrix.
@@ -138,16 +138,16 @@ namespace nv
     };
 
     // Solve equation system using LU decomposition and back-substitution.
-    extern bool solveLU(const Matrix & A, const Vector4 & b, Vector4 * x);
+    NVMATH_API bool solveLU(const Matrix & A, const Vector4 & b, Vector4 * x);
 
     // Solve equation system using Cramer's inverse.
-    extern bool solveCramer(const Matrix & A, const Vector4 & b, Vector4 * x);
+    NVMATH_API bool solveCramer(const Matrix & A, const Vector4 & b, Vector4 * x);
 
     // Compute inverse using LU decomposition.
-    extern Matrix inverseLU(const Matrix & m);
+    NVMATH_API Matrix inverseLU(const Matrix & m);
 
     // Compute inverse using Gaussian elimination and partial pivoting.
-    extern Matrix inverse(const Matrix & m);
+    NVMATH_API Matrix inverse(const Matrix & m);
 
 } // nv namespace
 

@@ -44,12 +44,12 @@ namespace nv
 	};
 
 	// @@ These two functions should be deprecated:
-	FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, NormalMapFilter filter = NormalMapFilter_Sobel3x3);
-	FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, Vector4::Arg filterWeights);
+    NVIMAGE_API FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, NormalMapFilter filter = NormalMapFilter_Sobel3x3);
+    NVIMAGE_API FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, Vector4::Arg heightWeights, Vector4::Arg filterWeights);
 
-	FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode wm, Vector4::Arg filterWeights);
+    NVIMAGE_API FloatImage * createNormalMap(const FloatImage * img, FloatImage::WrapMode wm, Vector4::Arg filterWeights);
 
-	void normalizeNormalMap(FloatImage * img);
+    NVIMAGE_API void normalizeNormalMap(FloatImage * img);
 
 	// @@ Add generation of DU/DV maps.
 

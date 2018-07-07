@@ -14,7 +14,7 @@ namespace nv
 
     typedef void ForTask(void * context, /*int tid,*/ int idx); // @@ It would be nice to have the thread index as an argument here.
 
-    struct ParallelFor {
+    struct NVTHREAD_CLASS ParallelFor {
         ParallelFor(ForTask * task, void * context);
         ~ParallelFor();
 

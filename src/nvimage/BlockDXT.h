@@ -40,7 +40,7 @@ namespace nv
 
 
     /// DXT1 block.
-    struct BlockDXT1
+    struct NVIMAGE_CLASS BlockDXT1
     {
         Color16 col0;
         Color16 col1;
@@ -74,7 +74,7 @@ namespace nv
 
 
     /// DXT3 alpha block with explicit alpha.
-    struct AlphaBlockDXT3
+    struct NVIMAGE_CLASS AlphaBlockDXT3
     {
         union {
             struct {
@@ -106,7 +106,7 @@ namespace nv
 
 
     /// DXT3 block.
-    struct BlockDXT3
+    struct NVIMAGE_CLASS BlockDXT3
     {
         AlphaBlockDXT3 alpha;
         BlockDXT1 color;
@@ -120,7 +120,7 @@ namespace nv
 
 
     /// DXT5 alpha block.
-    struct AlphaBlockDXT5
+    struct NVIMAGE_CLASS AlphaBlockDXT5
     {
         union {
             struct {
@@ -163,7 +163,7 @@ namespace nv
 
 
     /// DXT5 block.
-    struct BlockDXT5
+    struct NVIMAGE_CLASS BlockDXT5
     {
         AlphaBlockDXT5 alpha;
         BlockDXT1 color;
@@ -176,7 +176,7 @@ namespace nv
     };
 
     /// ATI1 block.
-    struct BlockATI1
+    struct NVIMAGE_CLASS BlockATI1
     {
         AlphaBlockDXT5 alpha;
 
@@ -187,7 +187,7 @@ namespace nv
     };
 
     /// ATI2 block.
-    struct BlockATI2
+    struct NVIMAGE_CLASS BlockATI2
     {
         AlphaBlockDXT5 x;
         AlphaBlockDXT5 y;
@@ -199,7 +199,7 @@ namespace nv
     };
 
     /// CTX1 block.
-    struct BlockCTX1
+    struct NVIMAGE_CLASS BlockCTX1
     {
         uint8 col0[2];
         uint8 col1[2];
@@ -218,14 +218,14 @@ namespace nv
     };
 
 	/// BC6 block.
-	struct BlockBC6
+	struct NVIMAGE_CLASS BlockBC6
 	{
 		uint8 data[16];		// Not even going to try to write a union for this thing.
         void decodeBlock(Vector4 colors[16]) const;
 	};
 
 	/// BC7 block.
-	struct BlockBC7
+	struct NVIMAGE_CLASS BlockBC7
 	{
 		uint8 data[16];		// Not even going to try to write a union for this thing.
 		void decodeBlock(ColorBlock * block) const;
