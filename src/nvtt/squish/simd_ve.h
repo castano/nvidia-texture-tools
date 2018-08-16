@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------------
 
 	Copyright (c) 2006 Simon Brown                          si@sjbrown.co.uk
-	Copyright (c) 2016 Raptor Engineering, LLC
+	Copyright (c) 2016 - 2018 Raptor Engineering, LLC
 
 	Permission is hereby granted, free of charge, to any person obtaining
 	a copy of this software and associated documentation files (the 
@@ -27,7 +27,7 @@
 #ifndef SQUISH_SIMD_VE_H
 #define SQUISH_SIMD_VE_H
 
-#ifndef __APPLE_ALTIVEC__
+#if !defined(__APPLE_ALTIVEC__) || defined(__PPC64__)
 #include <altivec.h>
 #undef bool
 #endif
