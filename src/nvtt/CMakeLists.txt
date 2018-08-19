@@ -56,7 +56,7 @@ INSTALL(TARGETS nvtt
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib/static)
 
-INSTALL(FILES nvtt.h DESTINATION include/nvtt)
+INSTALL(FILES nvtt.h nvtt_wrapper.h DESTINATION include/nvtt)
 
 
 ADD_SUBDIRECTORY(tools)
