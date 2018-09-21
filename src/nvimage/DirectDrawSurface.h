@@ -268,9 +268,9 @@ namespace nv
         DXGI_FORMAT_BC7_UNORM_SRGB = 99,
     };
 
-    extern uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+    NVIMAGE_API uint findD3D9Format(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 
-    extern uint findDXGIFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
+    NVIMAGE_API uint findDXGIFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask);
 
     struct RGBAPixelFormat
     {

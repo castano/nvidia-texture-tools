@@ -30,8 +30,8 @@
 namespace nv {
 
     // gamma conversion of float array (in-place is allowed)
-    void powf_5_11(const float* src, float* dst, int count);
-    void powf_11_5(const float* src, float* dst, int count);
+    NVMATH_API void powf_5_11(const float* src, float* dst, int count);
+    NVMATH_API void powf_11_5(const float* src, float* dst, int count);
 
 } // nv namespace
 

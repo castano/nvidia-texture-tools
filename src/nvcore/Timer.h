@@ -30,8 +30,8 @@ namespace nv {
     NV_FORCEINLINE uint64 fastCpuClock() { return 0; }    
 #endif
     
-    uint64 systemClockFrequency();
-    uint64 systemClock();
+    NVCORE_API uint64 systemClockFrequency();
+    NVCORE_API uint64 systemClock();
 
     class NVCORE_CLASS Timer
     {

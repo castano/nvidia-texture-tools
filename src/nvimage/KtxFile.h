@@ -110,7 +110,7 @@ namespace nv
     const uint KTX_BASE_INTERNAL_STENCIL_INDEX = 0x1901;
 
 
-    struct KtxHeader {
+    struct NVIMAGE_CLASS KtxHeader {
         uint8 identifier[12];
         uint32 endianness;
         uint32 glType;
