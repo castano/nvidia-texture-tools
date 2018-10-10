@@ -634,7 +634,7 @@ bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
     }
 
     // @@ Have loadFloat allocate the image with the desired number of channels.
-    //img->resizeChannelCount(4);
+    img->resizeChannelCount(4); // Block compressors expect a 4 channel texture.
 
     delete m->image;
     m->image = img.release();
