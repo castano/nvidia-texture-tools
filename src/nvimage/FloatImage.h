@@ -37,7 +37,7 @@ namespace nv
         NVIMAGE_API FloatImage();
         NVIMAGE_API FloatImage(const FloatImage & img);
         NVIMAGE_API FloatImage(const Image * img);
-        NVIMAGE_API virtual ~FloatImage();
+        NVIMAGE_API ~FloatImage();
 
         /** @name Conversion. */
         //@{
