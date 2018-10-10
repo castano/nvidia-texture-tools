@@ -17,7 +17,7 @@
 // Parallel Patterns Library (PPL) is part of Microsoft's concurrency runtime: 
 // http://msdn.microsoft.com/en-us/library/dd504870.aspx
 #if NV_OS_WIN32 && _MSC_VER >= 1600
-#define HAVE_PPL 1
+//#define HAVE_PPL 1
 #include <ppl.h>
 #endif
 
