@@ -1755,7 +1755,7 @@ static Image * loadSTB(Stream & s)
     uint8 * data = stbi_load_from_memory(buffer, size, &w, &h, &n, 4);
 
     // @@ Hack: STB is returning n=4, because we request 4 components, even when input only has 3.
-    n = 3;
+    //n = 3;
 
     delete [] buffer;
 
