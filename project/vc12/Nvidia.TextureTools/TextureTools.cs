@@ -36,9 +36,23 @@ namespace Nvidia.TextureTools
 		CTX1,    // Not supported on CPU yet.
 
 		BC6,
-		BC7,     // Not supported yet.
+		BC7,     
 
-		DXT1_Luma,
+        BC3_RGBM,
+
+        ETC1,
+        ETC2_R,
+        ETC2_RG,
+        ETC2_RGB,
+        ETC2_RGBA,
+        ETC2_RGB_A1,
+
+        ETC2_RGBM,
+
+        PVR_2BPP_RGB,     // Using PVR textools.
+        PVR_4BPP_RGB,
+        PVR_2BPP_RGBA,
+        PVR_4BPP_RGBA
 	}
 	#endregion
 
@@ -75,6 +89,8 @@ namespace Nvidia.TextureTools
 	{
 		Texture2D,
 		TextureCube,
+		Texture3D,
+		Texture2DArray
 	}
 	#endregion
 
@@ -84,8 +100,11 @@ namespace Nvidia.TextureTools
 	/// </summary>
 	public enum InputFormat
 	{
-		BGRA_8UB
-	}
+		BGRA_8UB,      // Normalized [0, 1] 8 bit fixed point.
+        RGBA_16F,      // 16 bit floating point.
+        RGBA_32F,      // 32 bit floating point.
+        R_32F,         // Single channel 32 bit floating point.
+    }
 	#endregion
 
 	#region public enum MipmapFilter
@@ -120,7 +139,10 @@ namespace Nvidia.TextureTools
 		None,
 		ToNextPowerOfTwo,
 		ToNearestPowerOfTwo,
-		ToPreviousPowerOfTwo
+		ToPreviousPowerOfTwo,
+        ToNextMultipleOfFour,                     
+        ToNearestMultipleOfFour,                  
+        ToPreviousMultipleOfFour  
 	}
 	#endregion
 
@@ -168,7 +190,7 @@ namespace Nvidia.TextureTools
 		private extern static void nvttDestroyInputOptions(IntPtr inputOptions);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
-		private extern static void nvttSetInputOptionsTextureLayout(IntPtr inputOptions, TextureType type, int w, int h, int d);
+		private extern static void nvttSetInputOptionsTextureLayout(IntPtr inputOptions, TextureType type, int w, int h, int d, int arraySize);
 
 		[DllImport("nvtt"), SuppressUnmanagedCodeSecurity]
 		private extern static void nvttResetInputOptionsTextureLayout(IntPtr inputOptions);
@@ -236,9 +258,9 @@ namespace Nvidia.TextureTools
 			nvttDestroyInputOptions(options);
 		}
 
-		public void SetTextureLayout(TextureType type, int w, int h, int d)
+		public void SetTextureLayout(TextureType type, int w, int h, int d, int arraySize = 1)
 		{
-			nvttSetInputOptionsTextureLayout(options, type, w, h, d);
+			nvttSetInputOptionsTextureLayout(options, type, w, h, d, arraySize);
 		}
 		public void ResetTextureLayout()
 		{
