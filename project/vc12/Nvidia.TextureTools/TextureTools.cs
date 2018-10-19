@@ -38,21 +38,21 @@ namespace Nvidia.TextureTools
 		BC6,
 		BC7,     
 
-        BC3_RGBM,
+		BC3_RGBM,
 
-        ETC1,
-        ETC2_R,
-        ETC2_RG,
-        ETC2_RGB,
-        ETC2_RGBA,
-        ETC2_RGB_A1,
+		ETC1,
+		ETC2_R,
+		ETC2_RG,
+		ETC2_RGB,
+		ETC2_RGBA,
+		ETC2_RGB_A1,
 
-        ETC2_RGBM,
+		ETC2_RGBM,
 
-        PVR_2BPP_RGB,     // Using PVR textools.
-        PVR_4BPP_RGB,
-        PVR_2BPP_RGBA,
-        PVR_4BPP_RGBA
+		PVR_2BPP_RGB,     // Using PVR textools.
+		PVR_4BPP_RGB,
+		PVR_2BPP_RGBA,
+		PVR_4BPP_RGBA
 	}
 	#endregion
 
@@ -101,10 +101,10 @@ namespace Nvidia.TextureTools
 	public enum InputFormat
 	{
 		BGRA_8UB,      // Normalized [0, 1] 8 bit fixed point.
-        RGBA_16F,      // 16 bit floating point.
-        RGBA_32F,      // 32 bit floating point.
-        R_32F,         // Single channel 32 bit floating point.
-    }
+		RGBA_16F,      // 16 bit floating point.
+		RGBA_32F,      // 32 bit floating point.
+		R_32F,         // Single channel 32 bit floating point.
+	}
 	#endregion
 
 	#region public enum MipmapFilter
@@ -140,9 +140,9 @@ namespace Nvidia.TextureTools
 		ToNextPowerOfTwo,
 		ToNearestPowerOfTwo,
 		ToPreviousPowerOfTwo,
-        ToNextMultipleOfFour,                     
-        ToNearestMultipleOfFour,                  
-        ToPreviousMultipleOfFour  
+		ToNextMultipleOfFour,
+		ToNearestMultipleOfFour,
+		ToPreviousMultipleOfFour  
 	}
 	#endregion
 
