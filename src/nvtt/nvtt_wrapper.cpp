@@ -78,9 +78,9 @@ void nvttDestroyInputOptions(NvttInputOptions * inputOptions)
     delete inputOptions;
 }
 
-void nvttSetInputOptionsTextureLayout(NvttInputOptions * inputOptions, NvttTextureType type, int w, int h, int d)
+void nvttSetInputOptionsTextureLayout(NvttInputOptions * inputOptions, NvttTextureType type, int w, int h, int d, int arraySize)
 {
-    inputOptions->setTextureLayout((nvtt::TextureType)type, w, h, d);
+    inputOptions->setTextureLayout((nvtt::TextureType)type, w, h, d, arraySize);
 }
 
 void nvttResetInputOptionsTextureLayout(NvttInputOptions * inputOptions)

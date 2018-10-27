@@ -71,10 +71,10 @@ typedef enum
 
 	// DX9 formats.
 	NVTT_Format_DXT1,
-	NVTT_Format_DXT1a,
+	NVTT_Format_DXT1a,	// DXT1 with binary alpha.
 	NVTT_Format_DXT3,
 	NVTT_Format_DXT5,
-	NVTT_Format_DXT5n,
+	NVTT_Format_DXT5n,	// Compressed HILO: R=1, G=y, B=0, A=x
 	
 	// DX10 formats.
 	NVTT_Format_BC1 = NVTT_Format_DXT1,
@@ -84,6 +84,28 @@ typedef enum
 	NVTT_Format_BC3n = NVTT_Format_DXT5n,
 	NVTT_Format_BC4,
 	NVTT_Format_BC5,
+	
+	NVTT_Format_DXT1n,   // Not supported.
+	NVTT_Format_CTX1,    // Not supported.
+
+	NVTT_Format_BC6,
+	NVTT_Format_BC7,
+
+	NVTT_Format_BC3_RGBM,
+
+	NVTT_Format_ETC1,
+	NVTT_Format_ETC2_R,
+	NVTT_Format_ETC2_RG,
+	NVTT_Format_ETC2_RGB,
+	NVTT_Format_ETC2_RGBA,
+	NVTT_Format_ETC2_RGB_A1,
+
+	NVTT_Format_ETC2_RGBM,
+
+	NVTT_Format_PVR_2BPP_RGB,     // Using PVR textools.
+	NVTT_Format_PVR_4BPP_RGB,
+	NVTT_Format_PVR_2BPP_RGBA,
+	NVTT_Format_PVR_4BPP_RGBA,
 } NvttFormat;
 
 /// Quality modes.
@@ -108,12 +130,17 @@ typedef enum
 {
 	NVTT_TextureType_2D,
 	NVTT_TextureType_Cube,
+	TextureType_3D,
+	TextureType_Array,
 } NvttTextureType;
 
 /// Input formats.
 typedef enum
 {
-	NVTT_InputFormat_BGRA_8UB,
+	NVTT_InputFormat_BGRA_8UB,      // Normalized [0, 1] 8 bit fixed point.
+	NVTT_InputFormat_RGBA_16F,      // 16 bit floating point.
+	NVTT_InputFormat_RGBA_32F,      // 32 bit floating point.
+	NVTT_InputFormat_R_32F,         // Single channel 32 bit floating point.
 } NvttInputFormat;
 
 /// Mipmap downsampling filters.
@@ -131,6 +158,9 @@ typedef enum
 	NVTT_RoundMode_ToNextPowerOfTwo,
 	NVTT_RoundMode_ToNearestPowerOfTwo,
 	NVTT_RoundMode_ToPreviousPowerOfTwo,
+	NVTT_RoundMode_ToNextMultipleOfFour,                     // (New in NVTT 2.1)
+	NVTT_RoundMode_ToNearestMultipleOfFour,                  // (New in NVTT 2.1)
+	NVTT_RoundMode_ToPreviousMultipleOfFour,                 // (New in NVTT 2.1)
 } NvttRoundMode;
 
 /// Alpha mode.
@@ -175,7 +205,7 @@ typedef void (* nvttEndImageHandler)();
 NVTT_API NvttInputOptions * nvttCreateInputOptions();
 NVTT_API void nvttDestroyInputOptions(NvttInputOptions * inputOptions);
 
-NVTT_API void nvttSetInputOptionsTextureLayout(NvttInputOptions * inputOptions, NvttTextureType type, int w, int h, int d);
+NVTT_API void nvttSetInputOptionsTextureLayout(NvttInputOptions * inputOptions, NvttTextureType type, int w, int h, int d, int arraySize);
 NVTT_API void nvttResetInputOptionsTextureLayout(NvttInputOptions * inputOptions);
 NVTT_API NvttBoolean nvttSetInputOptionsMipmapData(NvttInputOptions * inputOptions, const void * data, int w, int h, int d, int face, int mipmap);
 NVTT_API void nvttSetInputOptionsFormat(NvttInputOptions * inputOptions, NvttInputFormat format);
