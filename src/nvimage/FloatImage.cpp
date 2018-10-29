@@ -1393,7 +1393,7 @@ float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel, float alph
     
     return coverage / float(w * h);
 #else
-    const uint n = 8;
+    const uint n = 4;
 
     // If we want subsampling:
     for (uint y = 0; y < h-1; y++) {
@@ -1404,18 +1404,20 @@ float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel, float alph
             float alpha01 = nv::saturate(pixel(alphaChannel, x+0, y+1, 0) * alphaScale);
             float alpha11 = nv::saturate(pixel(alphaChannel, x+1, y+1, 0) * alphaScale);
 
+            float texel_coverage = 0.0f;
             for (uint sy = 0; sy < n; sy++) {
                 float fy = (sy + 0.5f) / n;
                 for (uint sx = 0; sx < n; sx++) {
                     float fx = (sx + 0.5f) / n;
                     float alpha = alpha00 * (1 - fx) * (1 - fy) + alpha10 * fx * (1 - fy) + alpha01 * (1 - fx) * fy + alpha11 * fx * fy;
-                    if (alpha > alphaRef) coverage += 1.0f;
+                    if (alpha > alphaRef) texel_coverage += 1.0f;
                 }
             }
+            coverage += texel_coverage / (n * n);
         }
     }
 
-    return coverage / float(w * h * n * n);
+    return coverage / float(w * h);
 #endif
 }
 
