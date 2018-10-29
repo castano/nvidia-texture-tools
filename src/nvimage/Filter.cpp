@@ -52,7 +52,7 @@ namespace
             return 1.0f + x*x*(-1.0f/6.0f + x*x*1.0f/120.0f);
         }
         else {
-            return sin(x) / x;
+            return sinf(x) / x;
         }
     }
 
@@ -157,7 +157,7 @@ BoxFilter::BoxFilter(float width) : Filter(width) {}
 
 float BoxFilter::evaluate(float x) const
 {
-    if (fabs(x) <= m_width) return 1.0f;
+    if (fabsf(x) <= m_width) return 1.0f;
     else return 0.0f;
 }
 
@@ -167,7 +167,7 @@ TriangleFilter::TriangleFilter(float width) : Filter(width) {}
 
 float TriangleFilter::evaluate(float x) const
 {
-    x = fabs(x);
+    x = fabsf(x);
     if( x < m_width ) return m_width - x;
     return 0.0f;
 }
@@ -177,7 +177,7 @@ QuadraticFilter::QuadraticFilter() : Filter(1.5f) {}
 
 float QuadraticFilter::evaluate(float x) const
 {
-    x = fabs(x);
+    x = fabsf(x);
     if( x < 0.5f ) return 0.75f - x * x;
     if( x < 1.5f ) { 
         float t = x - 1.5f;
@@ -192,7 +192,7 @@ CubicFilter::CubicFilter() : Filter(1.0f) {}
 float CubicFilter::evaluate(float x) const
 {
     // f(t) = 2|t|^3 - 3|t|^2 + 1, -1 <= t <= 1
-    x = fabs(x);
+    x = fabsf(x);
     if( x < 1.0f ) return((2.0f * x - 3.0f) * x * x + 1.0f);
     return 0.0f;
 }
@@ -202,7 +202,7 @@ BSplineFilter::BSplineFilter() : Filter(2.0f) {}
 
 float BSplineFilter::evaluate(float x) const
 {
-    x = fabs(x);
+    x = fabsf(x);
     if( x < 1.0f ) return (4.0f + x * x * (-6.0f + x * 3.0f)) / 6.0f;
     if( x < 2.0f ) { 
         float t = 2.0f - x;
@@ -216,7 +216,7 @@ MitchellFilter::MitchellFilter() : Filter(2.0f) { setParameters(1.0f/3.0f, 1.0f/
 
 float MitchellFilter::evaluate(float x) const
 {
-    x = fabs(x);
+    x = fabsf(x);
     if( x < 1.0f ) return p0 + x * x * (p2 + x * p3);
     if( x < 2.0f ) return q0 + x * (q1 + x * (q2 + x * q3));
     return 0.0f;
@@ -238,7 +238,7 @@ LanczosFilter::LanczosFilter() : Filter(3.0f) {}
 
 float LanczosFilter::evaluate(float x) const
 {
-    x = fabs(x);
+    x = fabsf(x);
     if( x < 3.0f ) return sincf(PI * x) * sincf(PI * x / 3.0f);
     return 0.0f;
 }
@@ -357,7 +357,7 @@ void Kernel2::normalize()
 {
     float total = 0.0f;
     for(uint i = 0; i < m_windowSize*m_windowSize; i++) {
-        total += fabs(m_data[i]);
+        total += fabsf(m_data[i]);
     }
 
     float inv = 1.0f / total;

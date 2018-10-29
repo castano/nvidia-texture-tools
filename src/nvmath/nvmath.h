@@ -222,7 +222,7 @@ namespace nv
 
     inline float frac(float f)
     {
-        return f - floor(f);
+        return f - floorf(f);
     }
 
     inline float floatRound(float f)

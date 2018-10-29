@@ -57,7 +57,7 @@ static bool ludcmp(float **a, int n, int *indx, float *d)
             }
             a[i][j]=sum;
 
-            float dum = vv[i]*fabs(sum);
+            float dum = vv[i]*fabsf(sum);
             if (dum >= big) {
                 // Is the figure of merit for the pivot better than the best so far?
                 big = dum;
@@ -284,8 +284,8 @@ Matrix nv::inverse(const Matrix & m) {
     for (i=0; i<4; i++) {               /* eliminate in column i, below diag */
         max = -1.;
         for (k=i; k<4; k++)             /* find pivot for column i */
-            if (fabs(A(k, i)) > max) {
-                max = fabs(A(k, i));
+            if (fabsf(A(k, i)) > max) {
+                max = fabsf(A(k, i));
                 j = k;
             }
         if (max<=0.) return B;         /* if no nonzero pivot, PUNT */
@@ -340,7 +340,7 @@ Matrix3 nv::inverse(const Matrix3 & m) {
         max = -1.;
         for (k=i; k<3; k++)             /* find pivot for column i */
             if (fabs(A(k, i)) > max) {
-                max = fabs(A(k, i));
+                max = fabsf(A(k, i));
                 j = k;
             }
         if (max<=0.) return B;         /* if no nonzero pivot, PUNT */

@@ -39,7 +39,7 @@ using namespace nvtt;
 // Solid angle of an axis aligned quad from (0,0,1) to (x,y,1)
 // See: http://www.fizzmoll11.com/thesis/ for a derivation of this formula.
 static float areaElement(float x, float y) {
-    return atan2(x*y, sqrtf(x*x + y*y + 1));
+    return atan2f(x*y, sqrtf(x*x + y*y + 1));
 }
 
 // Solid angle of a hemicube texel.
@@ -206,19 +206,19 @@ static const Vector3 faceV[6] = {
 
 static Vector2 toPolar(Vector3::Arg v) {
     Vector2 p;
-    p.x = atan2(v.x, v.y);  // theta
+    p.x = atan2f(v.x, v.y);  // theta
     p.y = acosf(v.z);       // phi
     return p;
 }
 
 static Vector2 toPlane(float theta, float phi) {
-    float x = sin(phi) * cos(theta);
-    float y = sin(phi) * sin(theta);
-    float z = cos(phi);
+    float x = sinf(phi) * cosf(theta);
+    float y = sinf(phi) * sinf(theta);
+    float z = cosf(phi);
 
     Vector2 p;
-    p.x = x / fabs(z);
-    p.y = y / fabs(z);
+    p.x = x / fabsf(z);
+    p.y = y / fabsf(z);
     //p.x = tan(phi) * cos(theta);
     //p.y = tan(phi) * sin(theta);
 
@@ -227,8 +227,8 @@ static Vector2 toPlane(float theta, float phi) {
 
 static Vector2 toPlane(Vector3::Arg v) {
     Vector2 p;
-    p.x = v.x / fabs(v.z);
-    p.y = v.y / fabs(v.z);
+    p.x = v.x / fabsf(v.z);
+    p.y = v.y / fabsf(v.z);
     return p;
 }
 
@@ -569,7 +569,7 @@ CubeSurface CubeSurface::irradianceFilter(int size, EdgeFixup fixupMethod) const
 // Convolve filter against this cube.
 Vector3 CubeSurface::Private::applyAngularFilter(const Vector3 & filterDir, float coneAngle, float * filterTable, int tableSize)
 {
-    const float cosineConeAngle = cos(coneAngle);
+    const float cosineConeAngle = cosf(coneAngle);
     nvDebugCheck(cosineConeAngle >= 0);
 
     Vector3 color(0);
@@ -690,7 +690,7 @@ Vector3 CubeSurface::Private::applyAngularFilter(const Vector3 & filterDir, floa
 // Convolve filter against this cube.
 Vector3 CubeSurface::Private::applyCosinePowerFilter(const Vector3 & filterDir, float coneAngle, float cosinePower)
 {
-    const float cosineConeAngle = cos(coneAngle);
+    const float cosineConeAngle = cosf(coneAngle);
     nvDebugCheck(cosineConeAngle >= 0);
 
     Vector3 color(0);

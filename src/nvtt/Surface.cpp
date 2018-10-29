@@ -1993,7 +1993,7 @@ static Color32 toRgbe8(float r, float g, float b)
     }
     else {
         int e;
-        v = frexp(v, &e) * 256.0f / v;
+        v = frexpf(v, &e) * 256.0f / v;
         c.r = uint8(clamp(r * v, 0.0f, 255.0f));
         c.g = uint8(clamp(g * v, 0.0f, 255.0f));
         c.b = uint8(clamp(b * v, 0.0f, 255.0f));
@@ -2845,13 +2845,13 @@ void Surface::transformNormals(NormalTransform xform)
             float discriminant = b * b - 4.0f * a * c;
             float t = (-b + sqrtf(discriminant)) / (2.0f * a);
 
-            float d = fabs(n.z * t - (1 - n.x*n.x*t*t) * (1 - n.y*n.y*t*t));
+            float d = fabsf(n.z * t - (1 - n.x*n.x*t*t) * (1 - n.y*n.y*t*t));
 
             while (d > 0.0001) {
                 float ft = 1 - n.z * t - (n.x*n.x + n.y*n.y)*t*t + n.x*n.x*n.y*n.y*t*t*t*t;
                 float fit = - n.z - 2*(n.x*n.x + n.y*n.y)*t + 4*n.x*n.x*n.y*n.y*t*t*t;
                 t -= ft / fit;
-                d = fabs(n.z * t - (1 - n.x*n.x*t*t) * (1 - n.y*n.y*t*t));
+                d = fabsf(n.z * t - (1 - n.x*n.x*t*t) * (1 - n.y*n.y*t*t));
             };
 
             n.x = n.x * t;

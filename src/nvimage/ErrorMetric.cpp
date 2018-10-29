@@ -93,9 +93,9 @@ float nv::averageColorError(const FloatImage * ref, const FloatImage * img, bool
         float b1 = ref->pixel(i + count * 2);
         float a1 = ref->pixel(i + count * 3);
 
-        float r = fabs(r0 - r1);
-        float g = fabs(g0 - g1);
-        float b = fabs(b0 - b1);
+        float r = fabsf(r0 - r1);
+        float g = fabsf(g0 - g1);
+        float b = fabsf(b0 - b1);
 
         float a = 1;
         if (alphaWeight) a = a1;
@@ -125,7 +125,7 @@ float nv::averageAlphaError(const FloatImage * ref, const FloatImage * img)
 
         float a = a0 - a1;
 
-        mae += fabs(a);
+        mae += fabsf(a);
     }
 
     return float(mae / count);
