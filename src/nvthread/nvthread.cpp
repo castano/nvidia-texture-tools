@@ -8,7 +8,9 @@
 #include "Win32.h"
 #elif NV_OS_UNIX
 #include <sys/types.h>
+#if !NV_OS_LINUX
 #include <sys/sysctl.h>
+#endif
 #include <unistd.h>
 #elif NV_OS_DARWIN
 #import <stdio.h>
