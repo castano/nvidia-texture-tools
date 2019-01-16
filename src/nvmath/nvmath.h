@@ -10,7 +10,9 @@
 
 #include <math.h>
 
-#if NV_OS_WIN32 || NV_OS_XBOX
+#if NV_CC_CPP11
+#include <cmath>
+#elif NV_OS_WIN32 || NV_OS_XBOX
 #include <float.h>  // finite, isnan
 #endif
 
@@ -168,7 +170,9 @@ namespace nv
 
     inline bool isFinite(const float f)
     {
-#if NV_OS_WIN32 || NV_OS_XBOX
+#if NV_CC_CPP11
+        return std::isfinite(f);
+#elif NV_OS_WIN32 || NV_OS_XBOX
         return _finite(f) != 0;
 #elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_NETBSD || NV_OS_OPENBSD || NV_OS_ORBIS
         return isfinite(f);
@@ -177,13 +181,13 @@ namespace nv
 #else
 #   error "isFinite not supported"
 #endif
-        //return std::isfinite (f);
-        //return finite (f);
     }
 
     inline bool isNan(const float f)
     {
-#if NV_OS_WIN32 || NV_OS_XBOX
+#if NV_CC_CPP11
+        return std::isnan(f);
+#elif NV_OS_WIN32 || NV_OS_XBOX
         return _isnan(f) != 0;
 #elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_NETBSD || NV_OS_OPENBSD || NV_OS_ORBIS
         return isnan(f);
