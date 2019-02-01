@@ -665,6 +665,10 @@ namespace nvtt
         NVTT_API CubeSurface fastResample(int size, EdgeFixup fixupMethod) const;
 
 
+        // Spherical Harmonics:
+        NVTT_API void computeLuminanceIrradianceSH3(float sh[9]) const;
+        NVTT_API void computeIrradianceSH3(int channel, float sh[9]) const;
+
         /*
         NVTT_API void resize(int w, int h, ResizeFilter filter);
         NVTT_API void resize(int w, int h, ResizeFilter filter, float filterWidth, const float * params = 0);

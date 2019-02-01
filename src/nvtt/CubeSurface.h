@@ -88,6 +88,9 @@ namespace nvtt
 
         void allocateTexelTable()
         {
+            if (edgeLength == 0) {
+                edgeLength = face[0].width();
+            }
             if (texelTable == NULL) {
                 texelTable = new TexelTable(edgeLength);
             }
