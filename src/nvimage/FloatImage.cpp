@@ -1417,7 +1417,7 @@ float FloatImage::alphaTestCoverage(float alphaRef, int alphaChannel, float alph
         }
     }
 
-    return coverage / float(w * h);
+    return coverage / float((w - 1) * (h - 1));
 #endif
 }
 
