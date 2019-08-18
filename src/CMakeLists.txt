@@ -52,7 +52,7 @@ SUBDIRS(bc7)
 #ENDIF(CG_FOUND)
 
 # CUDA
-#FIND_PACKAGE(CUDA)
+FIND_PACKAGE(CUDA)
 IF(CUDA_FOUND)
     IF(MINGW)
         MESSAGE(STATUS "Looking for CUDA - not supported on MinGW")
