@@ -171,17 +171,25 @@ typedef enum
 	NVTT_AlphaMode_Premultiplied,
 } NvttAlphaMode;
 
+// Error codes.
 typedef enum
 {
+    NVTT_Error_Unknown,
 	NVTT_Error_InvalidInput,
-	NVTT_Error_UserInterruption,
 	NVTT_Error_UnsupportedFeature,
 	NVTT_Error_CudaError,
-	NVTT_Error_Unknown,
 	NVTT_Error_FileOpen,
 	NVTT_Error_FileWrite,
     NVTT_Error_UnsupportedOutputFormat,
 } NvttError;
+
+// Output container format types.
+typedef enum
+{
+    NVTT_Container_DDS,
+    NVTT_Container_DDS10,
+    NVTT_Container_KTX,
+} NvttContainer;
 
 typedef enum
 {
@@ -195,7 +203,7 @@ extern "C" {
 #endif
 
 // Callbacks
-//typedef void (* nvttErrorHandler)(NvttError e);
+typedef void (* nvttErrorHandler)(NvttError e);
 typedef void (* nvttBeginImageHandler)(int size, int width, int height, int depth, int face, int miplevel);
 typedef bool (* nvttOutputHandler)(const void * data, int size);
 typedef void (* nvttEndImageHandler)();
@@ -241,7 +249,9 @@ NVTT_API void nvttDestroyOutputOptions(NvttOutputOptions * outputOptions);
 
 NVTT_API void nvttSetOutputOptionsFileName(NvttOutputOptions * outputOptions, const char * fileName);
 NVTT_API void nvttSetOutputOptionsOutputHeader(NvttOutputOptions * outputOptions, NvttBoolean b);
-//NVTT_API void nvttSetOutputOptionsErrorHandler(NvttOutputOptions * outputOptions, nvttErrorHandler errorHandler);
+NVTT_API void nvttSetOutputOptionsContainer(NvttOutputOptions * outputOptions, NvttContainer containerFormat);
+NVTT_API void nvttSetOutputOptionsSrgbFlag(NvttOutputOptions * outputOptions, NvttBoolean b);
+NVTT_API void nvttSetOutputOptionsErrorHandler(NvttOutputOptions * outputOptions, nvttErrorHandler errorHandler);
 NVTT_API void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOptions, nvttBeginImageHandler beginImageHandler, nvttOutputHandler outputHandler, nvttEndImageHandler endImageHandler);
 
 
@@ -249,6 +259,8 @@ NVTT_API void nvttSetOutputOptionsOutputHandler(NvttOutputOptions * outputOption
 NVTT_API NvttCompressor * nvttCreateCompressor();
 NVTT_API void nvttDestroyCompressor(NvttCompressor * compressor);
 
+NVTT_API void nvttEnableCudaAcceleration(NvttCompressor * compressor, NvttBoolean b);
+NVTT_API NvttBoolean nvttIsCudaAccelerationEnabled(const NvttCompressor* compressor);
 NVTT_API NvttBoolean nvttCompress(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions, const NvttOutputOptions * outputOptions);
 NVTT_API int nvttEstimateSize(const NvttCompressor * compressor, const NvttInputOptions * inputOptions, const NvttCompressionOptions * compressionOptions);
 
