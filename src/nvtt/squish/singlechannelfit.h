@@ -31,7 +31,7 @@
 #include "maths.h"
 #include "colourfit.h"
 
-namespace squish {
+namespace nvsquish {
 
 class SingleChannelFit : public ColourFit
 {
@@ -48,6 +48,6 @@ private:
 	int m_g_max;
 };
 
-} // namespace squish
+} // namespace nvsquish
 
 #endif // ndef SQUISH_SINGLECHANNELFIT_H

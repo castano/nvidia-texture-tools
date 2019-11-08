@@ -28,11 +28,12 @@
 #include "colourblock.h"
 #include <cfloat>
 
-namespace squish {
+namespace nvsquish {
 
-RangeFit::RangeFit( ColourSet const* colours, int flags ) 
-  : ColourFit( colours, flags )
+RangeFit::RangeFit( ColourSet const* colours, int flags )
 {
+	SetColourSet(colours, flags);
+
 	// initialise the metric
 	bool perceptual = ( ( m_flags & kColourMetricPerceptual ) != 0 );
 	if( perceptual )
@@ -49,7 +50,7 @@ RangeFit::RangeFit( ColourSet const* colours, int flags )
 	float const* weights = m_colours->GetWeights();
 	
 	// get the covariance matrix
-	Sym3x3 covariance = ComputeWeightedCovariance( count, values, weights );
+	Sym3x3 covariance = ComputeWeightedCovariance( count, values, weights, Vec3(1,1,1) );
 	
 	// compute the principle component
 	Vec3 principle = ComputePrincipleComponent( covariance );
@@ -199,4 +200,4 @@ void RangeFit::Compress4( void* block )
 	}
 }
 
-} // namespace squish
+} // namespace nvsquish

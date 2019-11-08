@@ -19,6 +19,7 @@
 #include "nvcore/StrLib.h"
 #include "nvcore/StdStream.h"
 #include "nvcore/TextWriter.h"
+#include <cstdint>
 
 // Extern
 #if defined(NV_HAVE_FREEIMAGE)

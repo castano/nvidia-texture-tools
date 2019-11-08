@@ -30,7 +30,7 @@
 #include "colourfit.h"
 #include "maths.h"
 
-namespace squish {
+namespace nvsquish {
 
 class ColourSet;
 
@@ -49,6 +49,6 @@ private:
 	float m_besterror;
 };
 
-} // squish
+} // namespace nvsquish
 
 #endif // ndef SQUISH_RANGEFIT_H

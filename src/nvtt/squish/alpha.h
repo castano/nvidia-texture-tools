@@ -28,7 +28,7 @@
 
 #include "squish.h"
 
-namespace squish {
+namespace nvsquish {
 
 void CompressAlphaDxt3( u8 const* rgba, void* block );
 void CompressAlphaDxt5( u8 const* rgba, void* block );
@@ -36,6 +36,6 @@ void CompressAlphaDxt5( u8 const* rgba, void* block );
 void DecompressAlphaDxt3( u8* rgba, void const* block );
 void DecompressAlphaDxt5( u8* rgba, void const* block );
 
-} // namespace squish
+} // namespace nvsquish
 
 #endif // ndef SQUISH_ALPHA_H

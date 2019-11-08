@@ -32,7 +32,7 @@
 #include "alpha.h"
 #include "singlecolourfit.h"
 
-namespace squish {
+namespace nvsquish {
 
 static int FixFlags( int flags )
 {
@@ -85,7 +85,8 @@ void Compress( u8 const* rgba, void* block, int flags )
 	else
 	{
 		// default to a cluster fit
-		ClusterFit fit( &colours, flags );
+		ClusterFit fit;
+		fit.SetColourSet(&colours, flags);
 		fit.Compress( colourBlock );
 	}
 	
@@ -222,4 +223,4 @@ void DecompressImage( u8* rgba, int width, int height, void const* blocks, int f
 	}
 }
 
-} // namespace squish
+} // namespace nvsquish

@@ -26,7 +26,7 @@
 #include "alpha.h"
 #include <algorithm>
 
-namespace squish {
+namespace nvsquish {
 
 static int FloatToInt( float a, int limit )
 {
@@ -323,4 +323,4 @@ void DecompressAlphaDxt5( u8* rgba, void const* block )
 		rgba[4*i + 3] = codes[indices[i]];
 }
 
-} // namespace squish
+} // namespace nvsquish

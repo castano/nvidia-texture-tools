@@ -29,11 +29,12 @@
 #include "colourblock.h"
 #include <cfloat>
 
-namespace squish {
+namespace nvsquish {
 
-SingleChannelFit::SingleChannelFit( ColourSet const* colours, int const flags ) 
-  : ColourFit( colours, flags )
+SingleChannelFit::SingleChannelFit( ColourSet const* colours, int const flags )
 {
+	SetColourSet(colours, flags);
+
 	// cache some values
 	int const count = m_colours->GetCount();
 	Vec3 const* values = m_colours->GetPoints();
@@ -42,7 +43,7 @@ SingleChannelFit::SingleChannelFit( ColourSet const* colours, int const flags )
 	m_g_min = 63;
 	m_g_max = 0;
 	
-	for(uint i = 0; i < count; i++) {
+	for(int i = 0; i < count; i++) {
 		
 		int grey = int(values[i].Y() * 255.0f);	// @@ rounding?
 		grey = std::min(grey, 255);	// clamp to [0, 1)
@@ -141,4 +142,4 @@ void SingleChannelFit::Compress4( void* block )
 }
 
 
-} // namespace squish
+} // namespace nvsquish
