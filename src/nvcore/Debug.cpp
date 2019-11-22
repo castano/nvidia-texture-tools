@@ -30,10 +30,10 @@
 #endif
 
 #if NV_OS_XBOX
-#    include <Xtl.h>
-#    ifdef _DEBUG
-#        include <xbdm.h>
-#    endif //_DEBUG
+#   include <Xtl.h>
+#   ifdef _DEBUG
+#       include <xbdm.h>
+#   endif //_DEBUG
 #endif //NV_OS_XBOX
 
 #if !NV_OS_WIN32 && defined(HAVE_SIGNAL_H)
@@ -594,83 +594,90 @@ namespace
     static void * callerAddress(void * secret)
     {
 #if NV_OS_DARWIN
-#  if defined(_STRUCT_MCONTEXT)
-#    if NV_CPU_PPC
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->__ss.__srr0;
-#    elif NV_CPU_X86_64
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->__ss.__rip;
-#    elif NV_CPU_X86
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->__ss.__eip;
-#    elif NV_CPU_ARM
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->__ss.__pc;
-#    else
-#      error "Unknown CPU"
-#    endif
-#  else
-#    if NV_CPU_PPC
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->ss.srr0;
-#    elif NV_CPU_X86
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->ss.eip;
-#    else
-#      error "Unknown CPU"
-#    endif
-#  endif
+#   if defined(_STRUCT_MCONTEXT)
+#       if NV_CPU_PPC
+           ucontext_t * ucp = (ucontext_t *)secret;
+           return (void *) ucp->uc_mcontext->__ss.__srr0;
+#       elif NV_CPU_X86_64
+           ucontext_t * ucp = (ucontext_t *)secret;
+           return (void *) ucp->uc_mcontext->__ss.__rip;
+#       elif NV_CPU_X86
+           ucontext_t * ucp = (ucontext_t *)secret;
+           return (void *) ucp->uc_mcontext->__ss.__eip;
+#       elif NV_CPU_ARM
+           ucontext_t * ucp = (ucontext_t *)secret;
+           return (void *) ucp->uc_mcontext->__ss.__pc;
+#       else
+#          error "Unknown CPU"
+#       endif
+#   else
+#       if NV_CPU_PPC
+           ucontext_t * ucp = (ucontext_t *)secret;
+           return (void *) ucp->uc_mcontext->ss.srr0;
+#       elif NV_CPU_X86
+           ucontext_t * ucp = (ucontext_t *)secret;
+           return (void *) ucp->uc_mcontext->ss.eip;
+#       else
+#          error "Unknown CPU"
+#       endif
+#   endif
 #elif NV_OS_FREEBSD
-#  if NV_CPU_X86_64
+#   if NV_CPU_X86_64
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->uc_mcontext.mc_rip;
-#  elif NV_CPU_X86
+#   elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->uc_mcontext.mc_eip;
-#    else
-#      error "Unknown CPU"
-#    endif
+#   else
+#       error "Unknown CPU"
+#   endif
 #elif NV_OS_NETBSD
-#  if NV_CPU_X86_64
+#   if NV_CPU_X86_64
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->uc_mcontext.__gregs[_REG_RIP];
-#  elif NV_CPU_X86
+#   elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->uc_mcontext.__gregs[_REG_EIP];
-#  elif NV_CPU_PPC
+#   elif NV_CPU_PPC
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext.__gregs[_REG_PC];
-#  else
-#      error "Unknown CPU"
-#  endif
+#   else
+#       error "Unknown CPU"
+#   endif
 #elif NV_OS_OPENBSD
-#  if NV_CPU_X86_64
+#   if NV_CPU_X86_64
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->sc_rip;
-#  elif NV_CPU_X86
+#   elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->sc_eip;
-#  else
+#   else
 #       error "Unknown CPU"
-#  endif        
+#   endif        
 #else
-#  if NV_CPU_X86_64
+#   if NV_CPU_X86_64
         // #define REG_RIP REG_INDEX(rip) // seems to be 16
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->uc_mcontext.gregs[REG_RIP];
-#  elif NV_CPU_X86
+#   elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *)ucp->uc_mcontext.gregs[14/*REG_EIP*/];
-#  elif NV_CPU_PPC
+#   elif NV_CPU_PPC
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext.regs->nip;
-#    elif NV_CPU_AARCH64
+#   elif NV_CPU_AARCH64
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext.pc;
-#    else
-#      error "Unknown CPU"
-#    endif
+#   elif NV_CPU_E2K /* MCST Elbrus 2000 */
+        // e2k has 3 stacks - Procedure Stack (PS), Procedure Chain Stack (PCS) and User Stack (US)
+        // CR0 and CR1 (Chain Register) are the 128-bit registers of the Procedure Chain Stack (PCS)
+        // CR's divided into _HI and _LO 64-bit parts (as in x86, for example, AX is divided into AH and AL)
+        // CR0_HI stores an Instruction Pointer
+        ucontext_t * ucp = (ucontext_t *)secret;
+        return (void *) ucp->uc_mcontext.cr0_hi;
+#   else
+#       error "Unknown CPU"
+#   endif
 #endif
 
         // How to obtain the instruction pointers in different platforms, from mlton's source code.

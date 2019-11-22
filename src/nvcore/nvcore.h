@@ -56,7 +56,7 @@
 #   define NV_OS_MINGW 1
 #   define NV_OS_WIN32 1
 #elif defined POSH_OS_OSX
-#   define NV_OS_OSX 1      // IC: Adding this, because iOS defines NV_OS_DARWIN too.
+#   define NV_OS_OSX 1 // IC: Adding this, because iOS defines NV_OS_DARWIN too.
 #   define NV_OS_DARWIN 1
 #   define NV_OS_UNIX 1
 #elif defined POSH_OS_IOS
@@ -98,6 +98,7 @@
 // NV_CPU_PPC
 // NV_CPU_ARM
 // NV_CPU_ARM_64
+// NV_CPU_E2K /* MCST Elbrus 2000 */
 
 #define NV_CPU_STRING   POSH_CPU_STRING
 
@@ -112,6 +113,8 @@
 #   define NV_CPU_ARM 1
 #elif defined POSH_CPU_AARCH64
 #   define NV_CPU_ARM_64 1
+#elif defined POSH_CPU_E2K
+#   define NV_CPU_E2K 1
 #else
 #   error "Unsupported CPU"
 #endif
@@ -124,7 +127,7 @@
 
 #if defined POSH_COMPILER_CLANG
 #   define NV_CC_CLANG  1
-#   define NV_CC_GNUC   1    // Clang is compatible with GCC.
+#   define NV_CC_GNUC   1 // Clang is compatible with GCC.
 #   define NV_CC_STRING "clang"
 #elif defined POSH_COMPILER_GCC
 #   define NV_CC_GNUC   1
@@ -232,7 +235,7 @@ typedef uint32      uint;
     NV_ENDIAN_STRING"-endian - " __DATE__ "-" __TIME__
 
 
-// Disable copy constructor and assignment operator. 
+// Disable copy constructor and assignment operator.
 #if NV_CC_CPP11
 #define NV_FORBID_COPY(C) \
     C( const C & ) = delete; \
@@ -244,7 +247,7 @@ typedef uint32      uint;
     C &operator=( const C & )
 #endif
 
-// Disable dynamic allocation on the heap. 
+// Disable dynamic allocation on the heap.
 // See Prohibiting Heap-Based Objects in More Effective C++.
 #define NV_FORBID_HEAPALLOC() \
     private: \
@@ -262,12 +265,12 @@ typedef uint32      uint;
 #define NV_STRING(x) NV_STRING2(x)
 
 #if NV_CC_MSVC
-#define NV_MULTI_LINE_MACRO_BEGIN do {  
+#define NV_MULTI_LINE_MACRO_BEGIN do {
 #define NV_MULTI_LINE_MACRO_END \
     __pragma(warning(push)) \
     __pragma(warning(disable:4127)) \
     } while(false) \
-    __pragma(warning(pop))  
+    __pragma(warning(pop))
 #else
 #define NV_MULTI_LINE_MACRO_BEGIN do {
 #define NV_MULTI_LINE_MACRO_END } while(false)
@@ -278,7 +281,7 @@ typedef uint32      uint;
 #else
 #define nvStaticCheck(x) typedef char NV_STRING_JOIN2(__static_assert_,__LINE__)[(x)]
 #endif
-#define NV_COMPILER_CHECK(x) nvStaticCheck(x)   // I like this name best.
+#define NV_COMPILER_CHECK(x) nvStaticCheck(x) // I like this name best.
 
 // Make sure type definitions are fine.
 NV_COMPILER_CHECK(sizeof(int8) == 1);
@@ -302,7 +305,7 @@ template <typename T, size_t N> char (&ArraySizeHelper(T (&array)[N]))[N];
 #define NV_MESSAGE(x) message(x)
 #endif
 #else
-#define NV_MESSAGE(x) 
+#define NV_MESSAGE(x)
 #endif
 
 

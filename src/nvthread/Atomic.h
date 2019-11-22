@@ -55,17 +55,17 @@ namespace nv {
         nvDebugCheck((intptr_t(ptr) & 3) == 0);
 
 #if POSH_CPU_X86 || POSH_CPU_X86_64
-        uint32 ret = *ptr;  // on x86, loads are Acquire
+        uint32 ret = *ptr; // on x86, loads are Acquire
         nvCompilerReadBarrier();
         return ret;
 #elif POSH_CPU_STRONGARM || POSH_CPU_AARCH64
         // need more specific cpu type for armv7?
         // also utilizes a full barrier
-        // currently treating laod like x86 - this could be wrong
-        
+        // currently treating load like x86 - this could be wrong
+
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
-		uint32 ret = *ptr; // replace with ldrex?
+        uint32 ret = *ptr; // replace with ldrex?
         nvCompilerReadWriteBarrier();
         return ret;
 #elif POSH_CPU_PPC64
@@ -75,7 +75,17 @@ namespace nv {
 
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
-		uint32 ret = *ptr; // replace with ldrex?
+        uint32 ret = *ptr; // replace with ldrex?
+        nvCompilerReadWriteBarrier();
+        return ret;
+#elif POSH_CPU_E2K
+        // need more specific cpu type for e2k?
+        // also utilizes a full barrier
+        // currently treating load like x86 - this could be wrong
+
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+        uint32 ret = *ptr; // replace with ldrex?
         nvCompilerReadWriteBarrier();
         return ret;
 #else
@@ -90,18 +100,23 @@ namespace nv {
 
 #if POSH_CPU_X86 || POSH_CPU_X86_64
         nvCompilerWriteBarrier();
-        *ptr = value;   // on x86, stores are Release
+        *ptr = value; // on x86, stores are Release
         //nvCompilerWriteBarrier(); // @@ IC: Where does this barrier go? In nvtt it was after, in Witness before. Not sure which one is right.
 #elif POSH_CPU_STRONGARM || POSH_CPU_AARCH64
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
-		*ptr = value; //strex?
-		nvCompilerReadWriteBarrier();
+        *ptr = value; //strex?
+        nvCompilerReadWriteBarrier();
 #elif POSH_CPU_PPC64
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
-		*ptr = value; //strex?
-		nvCompilerReadWriteBarrier();
+        *ptr = value; //strex?
+        nvCompilerReadWriteBarrier();
+#elif POSH_CPU_E2K
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+        *ptr = value; //strex?
+        nvCompilerReadWriteBarrier();
 #else
 #error "Atomics not implemented."
 #endif
@@ -120,7 +135,7 @@ namespace nv {
         nvDebugCheck((((intptr_t)pTo) % sizeof(intptr_t)) == 0);
         nvDebugCheck((((intptr_t)&from) % sizeof(intptr_t)) == 0);
         nvCompilerWriteBarrier();
-        *pTo = from;    // on x86, stores are Release
+        *pTo = from; // on x86, stores are Release
     }
 
     template <typename T>
@@ -128,10 +143,10 @@ namespace nv {
     {
         NV_COMPILER_CHECK(sizeof(T) == sizeof(intptr_t));
         nvDebugCheck((((intptr_t)ptr) % sizeof(intptr_t)) == 0);
-        T ret = *ptr;   // on x86, loads are Acquire
+        T ret = *ptr; // on x86, loads are Acquire
         nvCompilerReadBarrier();
         return ret;
-    } 
+    }
 
 
     // Atomics. @@ Assuming sequential memory order?
@@ -196,7 +211,7 @@ namespace nv {
         nvDebugCheck((intptr_t(value) & 3) == 0);
         return (uint32)OSAtomicIncrement32Barrier((int32_t *)value);
     }
-    
+
     inline uint32 atomicDecrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
@@ -218,7 +233,7 @@ namespace nv {
         nvDebugCheck((intptr_t(value) & 3) == 0);
         return __sync_add_and_fetch(value, 1);
     }
-    
+
     // Returns decremented value.
     inline uint32 atomicDecrement(uint32 * value) {
         nvDebugCheck((intptr_t(value) & 3) == 0);
@@ -246,7 +261,7 @@ namespace nv {
         nvDebugCheck((intptr_t(value) & 3) == 0);
         return __sync_bool_compare_and_swap(value, expected, desired);
     }
-    
+
     inline uint32 atomicSwap(uint32 * value, uint32 desired)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
@@ -258,14 +273,14 @@ namespace nv {
 
 
 #elif NV_CC_CLANG && POSH_CPU_STRONGARM
-    
+
     inline uint32 atomicIncrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-        
+
         // this should work in LLVM eventually, but not as of 2.1
         // return (uint32)AtomicIncrement((long *)value);
-        
+
         // in the mean time,
         register uint32 result;
         asm volatile (
@@ -281,16 +296,16 @@ namespace nv {
         return result;
 
     }
-    
+
     inline uint32 atomicDecrement(uint32 * value)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
-        
+
         // this should work in LLVM eventually, but not as of 2.1:
         // return (uint32)sys::AtomicDecrement((long *)value);
 
         // in the mean time,
-        
+
         register uint32 result;
         asm volatile (
                       "1:   ldrexb  %0,  [%1]	\n\t"
@@ -303,7 +318,7 @@ namespace nv {
                       : "r1"
                       );
         return result;
-         
+
     }
 
 #elif NV_CC_GNUC
@@ -342,14 +357,14 @@ namespace nv {
         nvDebugCheck((intptr_t(value) & 3) == 0);
         return __sync_bool_compare_and_swap(value, expected, desired);
     }
-    
+
     inline uint32 atomicSwap(uint32 * value, uint32 desired)
     {
         nvDebugCheck((intptr_t(value) & 3) == 0);
         // this is confusingly named, it doesn't actually do a test but always sets
         return __sync_lock_test_and_set(value, desired);
     }
-    
+
 #else
 #error "Atomics not implemented."
 
@@ -407,7 +422,7 @@ namespace nv {
     };
 #endif
 
-} // nv namespace 
+} // nv namespace
 
 
 #endif // NV_THREADS_ATOMICS_H
