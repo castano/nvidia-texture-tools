@@ -87,6 +87,7 @@ GNU GCC/G++:
    - m68000: 68K
    - m68k: 68K
    - __palmos__: PalmOS
+   - __e2k__: on MCST Elbrus 2000 processor platforms
 
 Intel C/C++ Compiler:
    - __ECC      : compiler version, IA64 only
@@ -121,7 +122,7 @@ DJGPP:
 
 Cray's C compiler:
    - _ADDR64: if 64-bit pointers
-   - _UNICOS: 
+   - _UNICOS:
    - __unix:
 
 SGI's CC compiler predefines the following (and more) with -ansi:
@@ -184,9 +185,9 @@ IBM's AIX compiler:
 
 Watcom:
    - __WATCOMC__
-   - __DOS__ : if targeting DOS
-   - __386__ : if 32-bit support
-   - __WIN32__ : if targetin 32-bit Windows
+   - __DOS__: if targeting DOS
+   - __386__: if 32-bit support
+   - __WIN32__: if targetin 32-bit Windows
 
 HP-UX C/C++ Compiler:
    - __hpux
@@ -206,6 +207,11 @@ Metrowerks:
 LLVM:
    - __llvm__
    - __clang__
+
+LCC predefines the following:
+   - __LCC__:
+   if also defined e2k it is MCST eLbrus C Compiler
+   else                it is Local (or Little) C Compiler
 */
 
 /*
@@ -228,13 +234,13 @@ LLVM:
 #endif
 
 #if ( defined __host_mips || defined __sgi ) && !defined __GNUC__
-#  define POSH_COMPILER_STRING    "MIPSpro C/C++"
-#  define POSH_COMPILER_MIPSPRO 1 
+#  define POSH_COMPILER_STRING "MIPSpro C/C++"
+#  define POSH_COMPILER_MIPSPRO 1
 #endif
 
 #if defined __hpux && !defined __GNUC__
 #  define POSH_COMPILER_STRING "HP-UX CC"
-#  define POSH_COMPILER_HPCC 1 
+#  define POSH_COMPILER_HPCC 1
 #endif
 
 #if defined __clang__
@@ -263,7 +269,7 @@ LLVM:
 #endif
 
 #if defined __SUNPRO_C
-#  define POSH_COMPILER_STRING "Sun Pro" 
+#  define POSH_COMPILER_STRING "Sun Pro"
 #  define POSH_COMPILER_SUN 1
 #endif
 
@@ -273,7 +279,7 @@ LLVM:
 #endif
 
 #if defined __MWERKS__
-#  define POSH_COMPILER_STRING     "MetroWerks CodeWarrior"
+#  define POSH_COMPILER_STRING "MetroWerks CodeWarrior"
 #  define POSH_COMPILER_METROWERKS 1
 #endif
 
@@ -297,12 +303,12 @@ LLVM:
 ** ----------------------------------------------------------------------------
 */
 #if defined linux || defined __linux__
-#  define POSH_OS_LINUX 1 
+#  define POSH_OS_LINUX 1
 #  define POSH_OS_STRING "Linux"
 #endif
 
 #if defined __FreeBSD__
-#  define POSH_OS_FREEBSD 1 
+#  define POSH_OS_FREEBSD 1
 #  define POSH_OS_STRING "FreeBSD"
 #endif
 
@@ -405,7 +411,7 @@ LLVM:
 #endif
 
 #if defined __unix__
-#  define POSH_OS_UNIX 1 
+#  define POSH_OS_UNIX 1
 #  if !defined POSH_OS_STRING
 #     define POSH_OS_STRING "Unix-like(generic)"
 #  endif
@@ -461,7 +467,8 @@ LLVM:
 #  define POSH_CPU_STRING "MC68000"
 #endif
 
-#if defined __PPC__ || defined __POWERPC__  || defined powerpc || defined _POWER || defined __ppc__ || defined __powerpc__ || defined _M_PPC
+#if defined __PPC__ || defined __POWERPC__  || defined powerpc || defined _POWER || \
+    defined __ppc__ || defined __powerpc__ || defined _M_PPC
 #  define POSH_CPU_PPC 1
 #  if !defined POSH_CPU_STRING
 #    if defined __powerpc64__
@@ -495,7 +502,7 @@ LLVM:
 
 #if defined __sparc__ || defined __sparc
 #  if defined __arch64__ || defined __sparcv9 || defined __sparc_v9__
-#     define POSH_CPU_SPARC64 1 
+#     define POSH_CPU_SPARC64 1
 #     define POSH_CPU_STRING "Sparc/64"
 #  else
 #     define POSH_CPU_STRING "Sparc/32"
@@ -514,7 +521,7 @@ LLVM:
 #endif
 
 #if defined mips || defined __mips__ || defined __MIPS__ || defined _MIPS
-#  define POSH_CPU_MIPS 1 
+#  define POSH_CPU_MIPS 1
 #  if defined _R5900
 #    define POSH_CPU_STRING "MIPS R5900 (PS2)"
 #  else
@@ -522,15 +529,16 @@ LLVM:
 #  endif
 #endif
 
-#if defined __ia64 || defined _M_IA64 || defined __ia64__ 
+#if defined __ia64 || defined _M_IA64 || defined __ia64__
 #  define POSH_CPU_IA64 1
 #  define POSH_CPU_STRING "IA64"
 #endif
 
-#if defined __X86__ || defined __i386__ || defined i386 || defined _M_IX86 || defined __386__ || defined __x86_64__ || defined _M_X64
+#if defined __X86__ || defined __i386__ || defined i386 || defined _M_IX86 || \
+    defined __386__ || defined __x86_64__ || defined _M_X64
 #  define POSH_CPU_X86 1
 #  if defined __x86_64__ || defined _M_X64
-#     define POSH_CPU_X86_64 1 
+#     define POSH_CPU_X86_64 1
 #  endif
 #  if defined POSH_CPU_X86_64
 #     define POSH_CPU_STRING "AMD x86-64"
@@ -549,6 +557,11 @@ LLVM:
 #  define POSH_CPU_STRING "PA-RISC"
 #endif
 
+#if defined __e2k__
+#  define POSH_CPU_E2K 1
+#  define POSH_CPU_STRING "MCST Elbrus 2000"
+#endif
+
 #if !defined POSH_CPU_STRING
 #  error POSH cannot determine target CPU
 #  define POSH_CPU_STRING "Unknown" /* this is here for Doxygen's benefit */
@@ -561,7 +574,7 @@ LLVM:
 */
 #if !defined POSH_OS_STRING
 #  if !defined FORCE_DOXYGEN
-#    define POSH_OS_EMBEDDED 1 
+#    define POSH_OS_EMBEDDED 1
 #  endif
 #  if defined _R5900
 #     define POSH_OS_STRING "Sony PS2(embedded)"
@@ -586,9 +599,9 @@ LLVM:
 #     define POSH_FASTCALL __fastcall
 #  endif
 #else
-#  define POSH_CDECL    
-#  define POSH_STDCALL  
-#  define POSH_FASTCALL 
+#  define POSH_CDECL
+#  define POSH_STDCALL
+#  define POSH_FASTCALL
 #endif
 
 /*
@@ -605,49 +618,49 @@ LLVM:
 #endif
 
 #if defined POSH_DLL
-#   if defined POSH_OS_WIN32
-#      if defined _MSC_VER 
-#         if ( _MSC_VER >= 800 )
-#            if defined POSH_BUILDING_LIB
-#               define POSH_IMPORTEXPORT __declspec( dllexport )
-#            else
-#               define POSH_IMPORTEXPORT __declspec( dllimport )
-#            endif
-#         else
-#            if defined POSH_BUILDING_LIB
-#               define POSH_IMPORTEXPORT __export
-#            else
-#               define POSH_IMPORTEXPORT 
-#            endif
-#         endif
-#      endif  /* defined _MSC_VER */
-#      if defined __BORLANDC__
-#         if ( __BORLANDC__ >= 0x500 )
-#            if defined POSH_BUILDING_LIB 
-#               define POSH_IMPORTEXPORT __declspec( dllexport )
-#            else
-#               define POSH_IMPORTEXPORT __declspec( dllimport )
-#            endif
-#         else
-#            if defined POSH_BUILDING_LIB
-#               define POSH_IMPORTEXPORT __export
-#            else
-#               define POSH_IMPORTEXPORT 
-#            endif
-#         endif
-#      endif /* defined __BORLANDC__ */
-       /* for all other compilers, we're just making a blanket assumption */
-#      if defined __GNUC__ || defined __WATCOMC__ || defined __MWERKS__
-#         if defined POSH_BUILDING_LIB
-#            define POSH_IMPORTEXPORT __declspec( dllexport )
-#         else
-#            define POSH_IMPORTEXPORT __declspec( dllimport )
-#         endif
-#      endif /* all other compilers */
-#      if !defined POSH_IMPORTEXPORT
-#         error Building DLLs not supported on this compiler (poshlib@poshlib.org if you know how)
-#      endif
-#   endif /* defined POSH_OS_WIN32 */
+#  if defined POSH_OS_WIN32
+#     if defined _MSC_VER
+#        if ( _MSC_VER >= 800 )
+#           if defined POSH_BUILDING_LIB
+#              define POSH_IMPORTEXPORT __declspec( dllexport )
+#           else
+#              define POSH_IMPORTEXPORT __declspec( dllimport )
+#           endif
+#        else
+#           if defined POSH_BUILDING_LIB
+#              define POSH_IMPORTEXPORT __export
+#           else
+#              define POSH_IMPORTEXPORT
+#           endif
+#        endif
+#     endif  /* defined _MSC_VER */
+#     if defined __BORLANDC__
+#        if ( __BORLANDC__ >= 0x500 )
+#           if defined POSH_BUILDING_LIB
+#              define POSH_IMPORTEXPORT __declspec( dllexport )
+#           else
+#              define POSH_IMPORTEXPORT __declspec( dllimport )
+#           endif
+#        else
+#           if defined POSH_BUILDING_LIB
+#              define POSH_IMPORTEXPORT __export
+#           else
+#              define POSH_IMPORTEXPORT
+#           endif
+#        endif
+#     endif /* defined __BORLANDC__ */
+      /* for all other compilers, we're just making a blanket assumption */
+#     if defined __GNUC__ || defined __WATCOMC__ || defined __MWERKS__
+#        if defined POSH_BUILDING_LIB
+#           define POSH_IMPORTEXPORT __declspec( dllexport )
+#        else
+#           define POSH_IMPORTEXPORT __declspec( dllimport )
+#        endif
+#     endif /* all other compilers */
+#     if !defined POSH_IMPORTEXPORT
+#        error Building DLLs not supported on this compiler (poshlib@poshlib.org if you know how)
+#     endif
+#  endif /* defined POSH_OS_WIN32 */
 #endif
 
 /* On pretty much everything else, we can thankfully just ignore this */
@@ -656,7 +669,7 @@ LLVM:
 #endif
 
 #if defined FORCE_DOXYGEN
-#  define POSH_DLL    
+#  define POSH_DLL
 #  define POSH_BUILDING_LIB
 #  undef POSH_DLL
 #  undef POSH_BUILDING_LIB
@@ -664,7 +677,7 @@ LLVM:
 
 /*
 ** ----------------------------------------------------------------------------
-** (Re)define POSH_PUBLIC_API export signature 
+** (Re)define POSH_PUBLIC_API export signature
 ** ----------------------------------------------------------------------------
 */
 #ifdef POSH_PUBLIC_API
@@ -672,7 +685,7 @@ LLVM:
 #endif
 
 #if ( ( defined _MSC_VER ) && ( _MSC_VER < 800 ) ) || ( defined __BORLANDC__ && ( __BORLANDC__ < 0x500 ) )
-#  define POSH_PUBLIC_API(rtype) extern rtype POSH_IMPORTEXPORT 
+#  define POSH_PUBLIC_API(rtype) extern rtype POSH_IMPORTEXPORT
 #else
 #  define POSH_PUBLIC_API(rtype) extern POSH_IMPORTEXPORT rtype
 #endif
@@ -682,11 +695,13 @@ LLVM:
 ** Try to infer endianess.  Basically we just go through the CPUs we know are
 ** little endian, and assume anything that isn't one of those is big endian.
 ** As a sanity check, we also do this with operating systems we know are
-** little endian, such as Windows.  Some processors are bi-endian, such as 
+** little endian, such as Windows.  Some processors are bi-endian, such as
 ** the MIPS series, so we have to be careful about those.
 ** ----------------------------------------------------------------------------
 */
-#if defined POSH_CPU_X86 || defined POSH_CPU_AXP || defined POSH_CPU_STRONGARM || defined POSH_CPU_AARCH64 || defined POSH_OS_WIN32 || defined POSH_OS_WINCE || defined __MIPSEL__ || defined __ORDER_LITTLE_ENDIAN__
+#if defined POSH_CPU_X86 || defined POSH_CPU_AXP || defined POSH_CPU_STRONGARM || defined POSH_CPU_AARCH64 || \
+    defined POSH_OS_WIN32 || defined POSH_OS_WINCE || defined __MIPSEL__ || defined __ORDER_LITTLE_ENDIAN__ || \
+    defined POSH_CPU_E2K
 #  define POSH_ENDIAN_STRING "little"
 #  define POSH_LITTLE_ENDIAN 1
 #else
@@ -714,9 +729,9 @@ LLVM:
 ** for 64-bit support, we ignore the POSH_USE_LIMITS_H directive.
 ** ----------------------------------------------------------------------------
 */
-#if defined ( __LP64__ ) || defined ( __powerpc64__ ) || defined POSH_CPU_SPARC64
+#if defined ( __LP64__ ) || defined ( __powerpc64__ ) || defined POSH_CPU_SPARC64 || defined POSH_CPU_E2K
 #  define POSH_64BIT_INTEGER 1
-typedef long posh_i64_t; 
+typedef long posh_i64_t;
 typedef unsigned long posh_u64_t;
 #  define POSH_I64( x ) ((posh_i64_t)x)
 #  define POSH_U64( x ) ((posh_u64_t)x)
@@ -728,7 +743,8 @@ typedef unsigned __int64 posh_u64_t;
 #  define POSH_I64( x ) ((posh_i64_t)(x##i64))
 #  define POSH_U64( x ) ((posh_u64_t)(x##ui64))
 #  define POSH_I64_PRINTF_PREFIX "I64"
-#elif defined __GNUC__ || defined __MWERKS__ || defined __SUNPRO_C || defined __SUNPRO_CC || defined __APPLE_CC__ || defined POSH_OS_IRIX || defined _LONG_LONG || defined _CRAYC
+#elif defined __GNUC__ || defined __MWERKS__ || defined __SUNPRO_C || defined __SUNPRO_CC || defined __APPLE_CC__ || \
+      defined POSH_OS_IRIX || defined _LONG_LONG || defined _CRAYC
 #  define POSH_64BIT_INTEGER 1
 typedef long long posh_i64_t;
 typedef unsigned long long posh_u64_t;
@@ -772,8 +788,8 @@ typedef unsigned long posh_u64_t;
 ** serialization.
 ** ----------------------------------------------------------------------------
 */
-#define POSH_FALSE 0 
-#define POSH_TRUE  1 
+#define POSH_FALSE 0
+#define POSH_TRUE  1
 
 typedef int            posh_bool_t;
 typedef unsigned char  posh_byte_t;
@@ -788,7 +804,7 @@ typedef signed char    posh_i8_t;
 #  endif /* CHAR_BITS > 8 */
 
 /* 16-bit */
-#  if ( USHRT_MAX == 65535 ) 
+#  if ( USHRT_MAX == 65535 )
    typedef unsigned short posh_u16_t;
    typedef short          posh_i16_t;
 #  else
@@ -829,7 +845,7 @@ typedef signed char    posh_i8_t;
 /** Minimum value for a byte */
 #define POSH_I16_MIN     ( ( posh_i16_t ) 0x8000 )
 /** Maximum value for a 16-bit signed value */
-#define POSH_I16_MAX     ( ( posh_i16_t ) 0x7FFF ) 
+#define POSH_I16_MAX     ( ( posh_i16_t ) 0x7FFF )
 /** Minimum value for a 16-bit unsigned value */
 #define POSH_U16_MIN     0
 /** Maximum value for a 16-bit unsigned value */
@@ -883,7 +899,8 @@ POSH_COMPILE_TIME_ASSERT(posh_i32_t, sizeof(posh_i32_t) == 4);
 #  define POSH_64BIT_POINTER 1
 #endif
 
-#if defined POSH_CPU_SPARC64 || defined POSH_OS_WIN64 || defined __64BIT__ || defined __LP64 || defined _LP64 || defined __LP64__ || defined _ADDR64 || defined _CRAYC
+#if defined POSH_CPU_SPARC64 || defined POSH_OS_WIN64 || defined __64BIT__ || defined _ADDR64 || \
+    defined __LP64 || defined _LP64 || defined __LP64__ || defined _CRAYC || defined POSH_CPU_E2K
 #   define POSH_64BIT_POINTER 1
 #endif
 
@@ -896,7 +913,7 @@ POSH_COMPILE_TIME_ASSERT(posh_i32_t, sizeof(posh_i32_t) == 4);
    triggering this assertion to make sure you're aware of the situation,
    so feel free to delete it.
 
-   If this assertion is triggered on a known 32 or 64-bit platform, 
+   If this assertion is triggered on a known 32 or 64-bit platform,
    please let us know (poshlib@poshlib.org) */
    POSH_COMPILE_TIME_ASSERT( posh_32bit_pointer, sizeof( void * ) == 4 );
 #endif
