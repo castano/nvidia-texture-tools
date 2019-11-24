@@ -61,7 +61,7 @@ namespace nv {
 #elif POSH_CPU_STRONGARM || POSH_CPU_AARCH64
         // need more specific cpu type for armv7?
         // also utilizes a full barrier
-        // currently treating laod like x86 - this could be wrong
+        // currently treating load like x86 - this could be wrong
         
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
@@ -76,6 +76,16 @@ namespace nv {
         // this is the easiest but slowest way to do this
         nvCompilerReadWriteBarrier();
 		uint32 ret = *ptr; // replace with ldrex?
+        nvCompilerReadWriteBarrier();
+        return ret;
+#elif POSH_CPU_E2K
+        // need more specific cpu type for e2k?
+        // also utilizes a full barrier
+        // currently treating load like x86 - this could be wrong
+
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+        uint32 ret = *ptr; // replace with ldrex?
         nvCompilerReadWriteBarrier();
         return ret;
 #else
@@ -102,6 +112,11 @@ namespace nv {
         nvCompilerReadWriteBarrier();
 		*ptr = value; //strex?
 		nvCompilerReadWriteBarrier();
+#elif POSH_CPU_E2K
+        // this is the easiest but slowest way to do this
+        nvCompilerReadWriteBarrier();
+        *ptr = value; //strex?
+        nvCompilerReadWriteBarrier();
 #else
 #error "Atomics not implemented."
 #endif
