@@ -31,6 +31,10 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 
 	ENDIF(NV_SYSTEM_PROCESSOR STREQUAL "powerpc")
 
+	IF(CMAKE_SYSTEM_PROCESSOR STREQUAL "e2k") # MCST Elbrus 2000
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+	ENDIF(CMAKE_SYSTEM_PROCESSOR STREQUAL "e2k")
+
 #	IF(DARWIN)
 #		SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
 #		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
