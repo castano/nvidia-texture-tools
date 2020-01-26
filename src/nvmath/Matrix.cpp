@@ -8,7 +8,11 @@
 #include <float.h>
 
 #if !NV_CC_MSVC && !NV_OS_ORBIS
-#include <alloca.h>
+    #if defined __MINGW32__ || defined __MINGW64__
+        #include <malloc.h>
+    #else
+        #include <alloca.h>
+    #endif
 #endif
 
 using namespace nv;
@@ -482,6 +486,5 @@ double invert(Mat4& B, const Mat4& m)
 }
 
 #endif // 0
-
 
 
