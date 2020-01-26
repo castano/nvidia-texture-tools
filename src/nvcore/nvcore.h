@@ -1,4 +1,4 @@
-// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
+// This code is in the public domain -- Ignacio CastaÃ±o <castano@gmail.com>
 
 #pragma once
 #ifndef NV_CORE_H
@@ -52,6 +52,10 @@
 #   define NV_OS_UNIX 1
 #elif defined POSH_OS_CYGWIN32
 #   define NV_OS_CYGWIN 1
+#elif defined POSH_OS_MINGW64
+#   define NV_OS_MINGW 1
+#   define NV_OS_WIN32 1
+#   define NV_OS_WIN64 1
 #elif defined POSH_OS_MINGW
 #   define NV_OS_MINGW 1
 #   define NV_OS_WIN32 1
@@ -79,7 +83,7 @@
 
 // Threading:
 // some platforms don't implement __thread or similar for thread-local-storage
-#if NV_OS_UNIX || NV_OS_ORBIS || NV_OS_IOS
+#if NV_OS_UNIX || NV_OS_ORBIS || NV_OS_IOS || __MINGW32__ || __MINGW64__
 #   define NV_OS_USE_PTHREAD 1
 #   if 0  //Apple finally added TLS support to iOS!// NV_OS_IOS
 #       define NV_OS_HAS_TLS_QUALIFIER 0
