@@ -333,11 +333,6 @@ LCC predefines the following:
 #  define POSH_OS_STRING "GameCube"
 #endif
 
-#if defined __MINGW32__
-#  define POSH_OS_MINGW 1
-#  define POSH_OS_STRING "MinGW"
-#endif
-
 #if defined GO32 && defined DJGPP && defined __MSDOS__
 #  define POSH_OS_GO32 1
 #  define POSH_OS_STRING "GO32/MS-DOS"
@@ -427,7 +422,14 @@ LCC predefines the following:
 #  define POSH_OS_STRING "XBOX"
 #endif
 
-#if defined _WIN32 || defined WIN32 || defined __NT__ || defined __WIN32__
+#if defined __MINGW32__ || defined __MINGW64__
+#  define POSH_OS_MINGW 1
+#  if defined _WIN64 || defined __MINGW64__
+#      define POSH_OS_MINGW64
+#      define POSH_OS_WIN64 1
+#  endif
+#  define POSH_OS_STRING "MinGW"
+#elif defined _WIN32 || defined WIN32 || defined __NT__ || defined __WIN32__
 #  define POSH_OS_WIN32 1
 #  if !defined POSH_OS_XBOX
 #     if defined _WIN64

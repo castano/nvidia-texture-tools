@@ -29,7 +29,7 @@
 // Function linkage
 #if NVTT_SHARED
 
-#if defined _WIN32 || defined WIN32 || defined __NT__ || defined __WIN32__ || defined __MINGW32__
+#if defined _WIN32 || defined WIN32 || defined __NT__ || defined __WIN32__ || defined __MINGW32__  || defined __MINGW64__
 #  ifdef NVTT_EXPORTS
 #    define NVTT_API __declspec(dllexport)
 #  else

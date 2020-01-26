@@ -2,14 +2,15 @@
 
 #include "Mutex.h"
 
-#if NV_OS_WIN32
 
-#include "Win32.h"
-
-#elif NV_OS_USE_PTHREAD
+#if NV_OS_USE_PTHREAD
 
 #include <pthread.h>
 #include <errno.h> // EBUSY
+
+#elif NV_OS_WIN32
+
+#include "Win32.h"
 
 #endif // NV_OS
 
@@ -23,7 +24,7 @@ extern HTELEMETRY tmContext;
 using namespace nv;
 
 
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW
 
 struct Mutex::Private {
     CRITICAL_SECTION mutex;
@@ -53,7 +54,7 @@ void Mutex::lock()
     TmU64 matcher;
     tmTryLockEx(tmContext, &matcher, 100/*0.1 ms*/, __FILE__, __LINE__, this, "blocked");
 #endif
-    
+
     EnterCriticalSection(&m->mutex);
 
 #if NV_USE_TELEMETRY3

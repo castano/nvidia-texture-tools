@@ -2,11 +2,11 @@
 
 #include "Thread.h"
 
-#if NV_OS_WIN32
-    #include "Win32.h"
-#elif NV_OS_USE_PTHREAD
+#if NV_OS_USE_PTHREAD
     #include <pthread.h>
     #include <unistd.h> // usleep
+#elif NV_OS_WIN32
+    #include "Win32.h"
 #endif
 
 #include "nvcore/StrLib.h"
@@ -23,10 +23,10 @@ using namespace nv;
 
 struct Thread::Private
 {
-#if NV_OS_WIN32
-    HANDLE thread;
-#elif NV_OS_USE_PTHREAD
+#if NV_OS_USE_PTHREAD
     pthread_t thread;
+#elif NV_OS_WIN32
+    HANDLE thread;
 #endif
 
     ThreadFunc * func;
@@ -35,7 +35,7 @@ struct Thread::Private
 };
 
 
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW 
 
 unsigned long __stdcall threadFunc(void * arg) {
     Thread::Private * thread = (Thread::Private *)arg;
@@ -115,7 +115,7 @@ void Thread::start(ThreadFunc * func, void * arg)
     p->func = func;
     p->arg = arg;
 
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW 
     DWORD threadId;
     p->thread = CreateThread(NULL, 0, threadFunc, p.ptr(), 0, &threadId);
     //p->thread = (HANDLE)_beginthreadex (0, 0, threadFunc, p.ptr(), 0, NULL);     // @@ So that we can call CRT functions...
@@ -136,7 +136,7 @@ void Thread::start(ThreadFunc * func, void * arg)
 
 void Thread::wait()
 {
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW 
     DWORD status = WaitForSingleObject (p->thread, INFINITE);
     nvCheck (status ==  WAIT_OBJECT_0);
     BOOL ok = CloseHandle (p->thread);
@@ -151,7 +151,7 @@ void Thread::wait()
 
 bool Thread::isRunning () const
 {
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW 
     return p->thread != NULL;
 #elif NV_OS_USE_PTHREAD
     return p->thread != 0;
@@ -165,7 +165,7 @@ bool Thread::isRunning () const
 
 /*static*/ void Thread::yield()
 {
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW 
     SwitchToThread();
 #elif NV_OS_USE_PTHREAD
     int result = sched_yield();
@@ -175,7 +175,7 @@ bool Thread::isRunning () const
 
 /*static*/ void Thread::sleep(uint ms)
 {
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW 
     Sleep(ms);
 #elif NV_OS_USE_PTHREAD
     usleep(1000 * ms);
@@ -207,4 +207,3 @@ bool Thread::isRunning () const
     }
 //#endif
 }
-
