@@ -2,15 +2,15 @@
 
 #include "Event.h"
 
-#if NV_OS_WIN32
-#include "Win32.h"
-#elif NV_OS_USE_PTHREAD
+#if NV_OS_USE_PTHREAD
 #include <pthread.h>
+#elif NV_OS_WIN32
+#include "Win32.h"
 #endif
 
 using namespace nv;
 
-#if NV_OS_WIN32
+#if NV_OS_WIN32 && !NV_OS_MINGW
 
 struct Event::Private {
     HANDLE handle;
