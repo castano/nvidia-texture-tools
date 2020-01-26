@@ -25,6 +25,10 @@
 #include <syslog.h>
 #endif
 
+#if defined __MINGW32__ || defined __MINGW64__
+#include <intrin.h>
+#endif
+
 using namespace nv;
 
 #if NV_OS_WIN32
