@@ -603,7 +603,7 @@ void CompressorPVR::compress(AlphaMode alphaMode, uint w, uint h, uint d, const 
 
     //pvrtexture::PixelType src_pixel_type = pvrtexture::PixelType('b','g','r','a',8,8,8,8);
     pvrtexture::PixelType src_pixel_type = pvrtexture::PixelType('r','g','b',0,8,8,8,0);
-    pvrtexture::CPVRTextureHeader header(src_pixel_type.PixelTypeID, w, h, d, 1/*num mips*/, 1/*num array*/, 1/*num faces*/, color_space, ePVRTVarTypeUnsignedByteNorm);
+    pvrtexture::CPVRTextureHeader header(src_pixel_type.PixelTypeID, h, w, d, 1/*num mips*/, 1/*num array*/, 1/*num faces*/, color_space, ePVRTVarTypeUnsignedByteNorm);
 
     /*
     uint count = w * h * d;
