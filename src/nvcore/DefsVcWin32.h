@@ -29,7 +29,9 @@
 #   define strtoll _strtoi64
 #   define strtoull _strtoui64
 #endif
-#define chdir _chdir
+#if _MSC_VER < 1900
+#   define chdir _chdir
+#endif
 #define getcwd _getcwd 
 
 #if _MSC_VER < 1800 // Not sure what version introduced this.

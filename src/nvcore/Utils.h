@@ -232,7 +232,7 @@ namespace nv
     inline uint64 nextPowerOfTwo(uint64 x)
     {
         nvDebugCheck(x != 0);
-        uint p = 1;
+        uint64 p = 1;
         while (x > p) {
             p += p;
         }

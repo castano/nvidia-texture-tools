@@ -6,7 +6,7 @@
 #define _CRT_NONSTDC_NO_WARNINGS // _chdir is defined deprecated, but that's a bug, chdir is deprecated, _chdir is *not*.
 //#include <shlwapi.h> // PathFileExists
 #include <windows.h> // GetFileAttributes
-#include <direct.h> // _mkdir
+#include <direct.h> // _mkdir, _chdir
 #elif NV_OS_XBOX
 #include <Xtl.h>
 #elif NV_OS_ORBIS
