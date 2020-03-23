@@ -38,6 +38,46 @@ ClusterFit::ClusterFit()
 {
 }
 
+/*
+// find minimum and maximum colors based on bounding box in color space
+inline static void fit_colors_bbox(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
+{
+    *c0 = Vector3(0);
+    *c1 = Vector3(1);
+
+    for (int i = 0; i < count; i++) {
+        *c0 = max(*c0, colors[i]);
+        *c1 = min(*c1, colors[i]);
+    }
+}
+
+inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
+{
+    Vector3 center = (*c0 + *c1) * 0.5f;
+
+    Vector2 covariance = Vector2(0);
+    for (int i = 0; i < count; i++) {
+        Vector3 t = colors[i] - center;
+        covariance += t.xy() * t.z;
+    }
+
+    float x0 = c0->x;
+    float y0 = c0->y;
+    float x1 = c1->x;
+    float y1 = c1->y;
+
+    if (covariance.x < 0) {
+        swap(x0, x1);
+    }
+    if (covariance.y < 0) {
+        swap(y0, y1);
+    }
+
+    c0->set(x0, y0, c0->z);
+    c1->set(x1, y1, c1->z);
+}
+*/
+
 void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count)
 {
     // initialise the best error
@@ -53,6 +93,14 @@ void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int 
 
     Vector3 principal = Fit::computePrincipalComponent_PowerMethod(count, colors, weights, metric);
     //Vector3 principal = Fit::computePrincipalComponent_EigenSolver(count, colors, weights, metric);
+
+    /*// This approximation produces slightly lower quality:
+    Vector3 c0, c1;
+    fit_colors_bbox(colors, count, &c0, &c1);
+    select_diagonal(colors, count, &c0, &c1);
+    if (c0 != c1) {
+        principal = normalize(c1 - c0);
+    }*/
 
     // build the list of values
     int order[16];
@@ -145,8 +193,6 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
 
     SimdVector x0 = zero;
 
-    int b0 = 0, b1 = 0;
-
     // check all possible clusters for this total order
     for( int c0 = 0; c0 <= count; c0++)
     {
@@ -197,8 +243,6 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
                 besterror = error;
                 beststart = a;
                 bestend = b;
-                b0 = c0;
-                b1 = c1;
             }
 
             x1 += m_weighted[c0+c1];
@@ -242,7 +286,6 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
     SimdVector besterror = SimdVector( FLT_MAX );
 
     SimdVector x0 = zero;
-    int b0 = 0, b1 = 0, b2 = 0;
 
     // check all possible clusters for this total order
     for( int c0 = 0; c0 <= count; c0++)
@@ -283,23 +326,15 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
                 b = truncate( multiplyAdd( grid, b, half ) ) * gridrcp;
 
                 // compute the error (we skip the constant xxsum)
+                // error = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
                 SimdVector e1 = multiplyAdd( a*a, alpha2_sum, b*b*beta2_sum );
                 SimdVector e2 = negativeMultiplySubtract( a, alphax_sum, a*b*alphabeta_sum );
                 SimdVector e3 = negativeMultiplySubtract( b, betax_sum, e2 );
                 SimdVector e4 = multiplyAdd( two, e3, e1 );
 
-#if 1
                 // apply the metric to the error term
                 SimdVector e5 = e4 * m_metricSqr;
                 SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
-#else
-                // @@ Is there a horizontal max SIMD instruction?
-                SimdVector error = e4.splatX() + e4.splatY() + e4.splatZ();
-                error *= two;
-                error += max(max(e4.splatX(), e4.splatY()), e4.splatZ());
-                error -= min(min(e4.splatX(), e4.splatY()), e4.splatZ());
-
-#endif
 
                 // keep the solution if it wins
                 if (compareAnyLessThan(error, besterror))
@@ -307,9 +342,6 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
                     besterror = error;
                     beststart = a;
                     bestend = b;
-                    b0 = c0;
-                    b1 = c1;
-                    b2 = c2;
                 }
 
                 x2 += m_weighted[c0+c1+c2];
@@ -338,27 +370,29 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
 
 #else
 
+static const float midpoints5[32] = {
+    0.015686f, 0.047059f, 0.078431f, 0.111765f, 0.145098f, 0.176471f, 0.207843f, 0.241176f, 0.274510f, 0.305882f, 0.337255f, 0.370588f, 0.403922f, 0.435294f, 0.466667f, 0.5f,
+    0.533333f, 0.564706f, 0.596078f, 0.629412f, 0.662745f, 0.694118f, 0.725490f, 0.758824f, 0.792157f, 0.823529f, 0.854902f, 0.888235f, 0.921569f, 0.952941f, 0.984314f, 1.0f
+};
+
+static const float midpoints6[64] = {
+    0.007843f, 0.023529f, 0.039216f, 0.054902f, 0.070588f, 0.086275f, 0.101961f, 0.117647f, 0.133333f, 0.149020f, 0.164706f, 0.180392f, 0.196078f, 0.211765f, 0.227451f, 0.245098f,
+    0.262745f, 0.278431f, 0.294118f, 0.309804f, 0.325490f, 0.341176f, 0.356863f, 0.372549f, 0.388235f, 0.403922f, 0.419608f, 0.435294f, 0.450980f, 0.466667f, 0.482353f, 0.500000f,
+    0.517647f, 0.533333f, 0.549020f, 0.564706f, 0.580392f, 0.596078f, 0.611765f, 0.627451f, 0.643137f, 0.658824f, 0.674510f, 0.690196f, 0.705882f, 0.721569f, 0.737255f, 0.754902f,
+    0.772549f, 0.788235f, 0.803922f, 0.819608f, 0.835294f, 0.850980f, 0.866667f, 0.882353f, 0.898039f, 0.913725f, 0.929412f, 0.945098f, 0.960784f, 0.976471f, 0.992157f, 1.0f
+};
+
+// This is the ideal way to round, but it's too expensive to do this in the inner loop.
 inline Vector3 round565(const Vector3 & v) {
-    uint r = ftoi_trunc(v.x * 31.0f);
-    float r0 = float(((r+0) << 3) | ((r+0) >> 2));
-    float r1 = float(((r+1) << 3) | ((r+1) >> 2));
-    if (fabs(v.x - r1) < fabs(v.x - r0)) r = min(r+1, 31U);
-    r = (r << 3) | (r >> 2);
+    const Vector3 grid(31.0f, 63.0f, 31.0f);
+    const Vector3 gridrcp(1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f);
 
-    uint g = ftoi_trunc(v.y * 63.0f);
-    float g0 = float(((g+0) << 2) | ((g+0) >> 4));
-    float g1 = float(((g+1) << 2) | ((g+1) >> 4));
-    if (fabs(v.y - g1) < fabs(v.y - g0)) g = min(g+1, 63U);
-    g = (g << 2) | (g >> 4);
-
-    uint b = ftoi_trunc(v.z * 31.0f);
-    float b0 = float(((b+0) << 3) | ((b+0) >> 2));
-    float b1 = float(((b+1) << 3) | ((b+1) >> 2));
-    if (fabs(v.z - b1) < fabs(v.z - b0)) b = min(b+1, 31U);
-
-    b = (b << 3) | (b >> 2);
-
-    return Vector3(float(r)/255, float(g)/255, float(b)/255);
+    Vector3 q = floor(grid * v);
+    q.x += (v.x > midpoints5[int(q.x)]);
+    q.y += (v.y > midpoints6[int(q.y)]);
+    q.z += (v.z > midpoints5[int(q.z)]);
+    q *= gridrcp;
+    return q;
 }
 
 bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
@@ -406,24 +440,6 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
             a = floor(grid * a + 0.5f) * gridrcp;
             b = floor(grid * b + 0.5f) * gridrcp;
 #else
-
-            //int ar = ftoi_round(31 * a.x); ar = (ar << 3) | (ar >> 2); a.x = float(ar) / 255.0f;
-            //int ag = ftoi_round(63 * a.y); ar = (ag << 2) | (ag >> 4); a.y = float(ag) / 255.0f;
-            //int ab = ftoi_round(31 * a.z); ar = (ab << 3) | (ab >> 2); a.z = float(ab) / 255.0f;
-            //int br = ftoi_round(31 * b.x); br = (br << 3) | (br >> 2); b.x = float(br) / 255.0f;
-            //int bg = ftoi_round(63 * b.y); br = (bg << 2) | (bg >> 4); b.y = float(bg) / 255.0f;
-            //int bb = ftoi_round(31 * b.z); br = (bb << 3) | (bb >> 2); b.z = float(bb) / 255.0f;
-
-            /*a = floor(a * grid + 0.5f);
-            a.x = (a.x * 8 + floorf(a.x / 4)) / 255.0f;
-            a.y = (a.y * 4 + floorf(a.y / 16)) / 255.0f;
-            a.z = (a.z * 8 + floorf(a.z / 4)) / 255.0f;
-
-            b = floor(b * grid + 0.5f);
-            b.x = (b.x * 8 + floorf(b.x / 4)) / 255.0f;
-            b.y = (b.y * 4 + floorf(b.y / 16)) / 255.0f;
-            b.z = (b.z * 8 + floorf(b.z / 4)) / 255.0f;*/
-
             a = round565(a);
             b = round565(b);
 #endif
@@ -512,29 +528,10 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
                 // clamp to the grid
                 a = clamp(a, 0, 1);
                 b = clamp(b, 0, 1);
-#if 0
+#if 1
                 a = floor(a * grid + 0.5f) * gridrcp;
                 b = floor(b * grid + 0.5f) * gridrcp;
 #else
-                //int ar = ftoi_round(31 * a.x); ar = (ar << 3) | (ar >> 2); a.x = float(ar) / 255.0f;
-                //int ag = ftoi_round(63 * a.y); ar = (ag << 2) | (ag >> 4); a.y = float(ag) / 255.0f;
-                //int ab = ftoi_round(31 * a.z); ar = (ab << 3) | (ab >> 2); a.z = float(ab) / 255.0f;
-                //int br = ftoi_round(31 * b.x); br = (br << 3) | (br >> 2); b.x = float(br) / 255.0f;
-                //int bg = ftoi_round(63 * b.y); br = (bg << 2) | (bg >> 4); b.y = float(bg) / 255.0f;
-                //int bb = ftoi_round(31 * b.z); br = (bb << 3) | (bb >> 2); b.z = float(bb) / 255.0f;
-
-                /*
-                a = floor(a * grid + 0.5f);
-                a.x = (a.x * 8 + floorf(a.x / 4)) / 255.0f;
-                a.y = (a.y * 4 + floorf(a.y / 16)) / 255.0f;
-                a.z = (a.z * 8 + floorf(a.z / 4)) / 255.0f;
-
-                b = floor(b * grid + 0.5f);
-                b.x = (b.x * 8 + floorf(b.x / 4)) / 255.0f;
-                b.y = (b.y * 4 + floorf(b.y / 16)) / 255.0f;
-                b.z = (b.z * 8 + floorf(b.z / 4)) / 255.0f;
-                */
-
                 a = round565(a);
                 b = round565(b);
 #endif
