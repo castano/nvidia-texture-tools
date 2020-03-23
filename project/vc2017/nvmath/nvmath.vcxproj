@@ -22,7 +22,7 @@
     <ProjectGuid>{50C465FE-B308-42BC-894D-89484482AF06}</ProjectGuid>
     <RootNamespace>nvmath</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -157,6 +157,7 @@
     <ClInclude Include="..\..\..\src\nvmath\Box.h" />
     <ClInclude Include="..\..\..\src\nvmath\Color.h" />
     <ClInclude Include="..\..\..\src\nvmath\Fitting.h" />
+    <ClInclude Include="..\..\..\src\nvmath\ftoi.h" />
     <ClInclude Include="..\..\..\src\nvmath\Gamma.h" />
     <ClInclude Include="..\..\..\src\nvmath\Half.h" />
     <ClInclude Include="..\..\..\src\nvmath\Matrix.h" />
