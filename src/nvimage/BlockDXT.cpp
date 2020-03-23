@@ -104,9 +104,9 @@ uint BlockDXT1::evaluatePalette(Color32 color_array[4], bool d3d9/*= false*/) co
 uint BlockDXT1::evaluatePaletteNV5x(Color32 color_array[4]) const
 {
     // Does bit expansion before interpolation.
-    color_array[0].b = (3 * col0.b * 22) / 8;
-    color_array[0].g = (col0.g << 2) | (col0.g >> 4);
     color_array[0].r = (3 * col0.r * 22) / 8;
+    color_array[0].g = (col0.g << 2) | (col0.g >> 4);
+    color_array[0].b = (3 * col0.b * 22) / 8;
     color_array[0].a = 0xFF;
 
     color_array[1].r = (3 * col1.r * 22) / 8;
