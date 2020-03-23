@@ -1,4 +1,4 @@
-PROJECT(squish)
+PROJECT(nvsquish)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -20,4 +20,4 @@ SET(SQUISH_SRCS
 	simd_sse.h
 	simd_ve.h)
 
-ADD_LIBRARY(squish STATIC ${SQUISH_SRCS})
+ADD_LIBRARY(nvsquish STATIC ${SQUISH_SRCS})
