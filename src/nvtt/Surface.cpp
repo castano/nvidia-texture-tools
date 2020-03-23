@@ -583,12 +583,24 @@ bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
                     // @@ Handle all formats! @@ Get nvtt format from dds.surfaceFormat() ?
 
                     if (dds.header.hasDX10Header()) {
-                        if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16) {
+                        if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM_SRGB) {
+                            this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM_SRGB) {
+                            this->setImage2D(nvtt::Format_BC2, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM_SRGB) {
+                            this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16) {
                             this->setImage2D(nvtt::Format_BC6, nvtt::Decoder_D3D10, w, h, data);
+                        }
+                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM_SRGB) {
+                            this->setImage2D(nvtt::Format_BC7, nvtt::Decoder_D3D10, w, h, data);
                         }
                         else {
                             // @@
-                            nvCheck(false);
+                            nvCheck(false && "Format not handled with DDS10 header.");
                         }
                     }
                     else {
@@ -596,12 +608,15 @@ bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
                         if (fourcc == FOURCC_DXT1) {
                             this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
                         }
+                        else if (fourcc == FOURCC_DXT3) {
+                            this->setImage2D(nvtt::Format_BC2, nvtt::Decoder_D3D10, w, h, data);
+                        }
                         else if (fourcc == FOURCC_DXT5) {
                             this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
                         }
                         else {
                             // @@ 
-                            nvCheck(false);
+                            nvCheck(false && "Format not handled with DDS9 header.");
                         }
                     }
 
