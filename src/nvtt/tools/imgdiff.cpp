@@ -290,17 +290,18 @@ int main(int argc, char *argv[])
     // key_value = 0.22
     // min_luminance = 0.1 -> exposure = 2.2
     // max_luminance = 1.0 -> exposure = 0.22
-
+    
+    /*
     float rmse0 = nvtt::rmsToneMappedError(image0, image1, 2.2f);
     float rmse1 = nvtt::rmsToneMappedError(image0, image1, 1.0f);
     float rmse2 = nvtt::rmsToneMappedError(image0, image1, 0.22f);
 
     printf("RMSE = %.5f %.5f %.5f -> %.5f | %.5f\n", rmse0, rmse1, rmse2, (rmse0 + rmse1 + rmse2)/3, rmse);
+    */
 
-
-    //printf("MSE = %f\n", rmse * rmse);
-    //printf("RMSE = %f\n", rmse);
-    //printf("PSNR = %f\n", (rmse == 0) ? 999.0 : 20.0 * log10(255.0 / rmse));
+    printf("MSE = %f\n", rmse * rmse);
+    printf("RMSE = %f\n", rmse);
+    printf("PSNR = %f\n", (rmse == 0) ? 999.0 : 20.0 * log10(255.0 / rmse));
 
     if (compareNormal) {
         // @@ Does this assume normal maps are packed or unpacked?
