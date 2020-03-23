@@ -55,8 +55,12 @@ extern "C" {
 #endif
 
 #if defined(NV_HAVE_STBIMAGE)
+#   define STB_IMAGE_IMPLEMENTATION
 #   define STBI_NO_STDIO
+#   pragma warning(push)
+#   pragma warning(disable: 4312)
 #   include <stb_image.h>
+#   pragma warning(pop)
 #endif
 
 
