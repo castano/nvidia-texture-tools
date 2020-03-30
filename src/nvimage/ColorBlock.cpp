@@ -61,7 +61,7 @@ ColorBlock::ColorBlock(const Image * img, uint x, uint y)
 
 void ColorBlock::init(const Image * img, uint x, uint y)
 {
-    init(img->width(), img->height(), (const uint *)img->pixels(), x, y);
+    init(img->width, img->height, (const uint *)img->pixels(), x, y);
 }
 
 void ColorBlock::init(uint w, uint h, const uint * data, uint x, uint y)

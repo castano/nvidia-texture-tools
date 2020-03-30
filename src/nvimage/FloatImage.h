@@ -34,78 +34,78 @@ namespace nv
             WrapMode_Mirror
         };
 
-        NVIMAGE_API FloatImage();
-        NVIMAGE_API FloatImage(const FloatImage & img);
-        NVIMAGE_API FloatImage(const Image * img);
-        NVIMAGE_API ~FloatImage();
+        FloatImage();
+        FloatImage(const FloatImage & img);
+        FloatImage(const Image * img);
+        ~FloatImage();
 
         /** @name Conversion. */
         //@{
-        NVIMAGE_API void initFrom(const Image * img);
-        NVIMAGE_API Image * createImage(uint base_component = 0, uint num = 4) const;
-        NVIMAGE_API Image * createImageGammaCorrect(float gamma = 2.2f) const;
+        void initFrom(const Image * img);
+        Image * createImage(uint base_component = 0, uint num = 4) const;
+        Image * createImageGammaCorrect(float gamma = 2.2f) const;
         //@}
 
         /** @name Allocation. */
         //@{
-        NVIMAGE_API void allocate(uint c, uint w, uint h, uint d = 1);
-        NVIMAGE_API void free(); // Does not clear members.
-        NVIMAGE_API void resizeChannelCount(uint c);
+        void allocate(uint c, uint w, uint h, uint d = 1);
+        void free(); // Does not clear members.
+        void resizeChannelCount(uint c);
         //@}
 
         /** @name Manipulation. */
         //@{
-        NVIMAGE_API void clear(float f = 0.0f);
-        NVIMAGE_API void clear(uint component, float f = 0.0f);
-        NVIMAGE_API void copyChannel(uint src, uint dst);
+        void clear(float f = 0.0f);
+        void clear(uint component, float f = 0.0f);
+        void copyChannel(uint src, uint dst);
 
-        NVIMAGE_API void normalize(uint base_component);
+        void normalize(uint base_component);
 
-        NVIMAGE_API void packNormals(uint base_component);
-        NVIMAGE_API void expandNormals(uint base_component);
-        NVIMAGE_API void scaleBias(uint base_component, uint num, float scale, float add);
+        void packNormals(uint base_component);
+        void expandNormals(uint base_component);
+        void scaleBias(uint base_component, uint num, float scale, float add);
 
-        NVIMAGE_API void clamp(uint base_component, uint num, float low, float high);
+        void clamp(uint base_component, uint num, float low, float high);
 
-        NVIMAGE_API void toLinear(uint base_component, uint num, float gamma = 2.2f);
-        NVIMAGE_API void toGamma(uint base_component, uint num, float gamma = 2.2f);
-        NVIMAGE_API void exponentiate(uint base_component, uint num, float power);
+        void toLinear(uint base_component, uint num, float gamma = 2.2f);
+        void toGamma(uint base_component, uint num, float gamma = 2.2f);
+        void exponentiate(uint base_component, uint num, float power);
 
-        NVIMAGE_API void transform(uint base_component, const Matrix & m, const Vector4 & offset);
-        NVIMAGE_API void swizzle(uint base_component, uint r, uint g, uint b, uint a);
+        void transform(uint base_component, const Matrix & m, const Vector4 & offset);
+        void swizzle(uint base_component, uint r, uint g, uint b, uint a);
 
-        NVIMAGE_API FloatImage * fastDownSample() const;
-        NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm) const;
-        NVIMAGE_API FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;
-        NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
-        NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm) const;
-        NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
-        NVIMAGE_API FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm, uint alpha) const;
+        FloatImage * fastDownSample() const;
+        FloatImage * downSample(const Filter & filter, WrapMode wm) const;
+        FloatImage * downSample(const Filter & filter, WrapMode wm, uint alpha) const;
+        FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm) const;
+        FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm) const;
+        FloatImage * resize(const Filter & filter, uint w, uint h, WrapMode wm, uint alpha) const;
+        FloatImage * resize(const Filter & filter, uint w, uint h, uint d, WrapMode wm, uint alpha) const;
 
-        NVIMAGE_API void convolve(const Kernel2 & k, uint c, WrapMode wm);
+        void convolve(const Kernel2 & k, uint c, WrapMode wm);
 
-        //NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
-        //NVIMAGE_API FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
+        //FloatImage * downSample(const Kernel1 & filter, WrapMode wm) const;
+        //FloatImage * downSample(const Kernel1 & filter, uint w, uint h, WrapMode wm) const;
         //@}
 
-        NVIMAGE_API float applyKernelXY(const Kernel2 * k, int x, int y, int z, uint c, WrapMode wm) const;
-        NVIMAGE_API float applyKernelX(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
-        NVIMAGE_API float applyKernelY(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
-        NVIMAGE_API float applyKernelZ(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
-        NVIMAGE_API void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * output, int output_stride) const;
-        NVIMAGE_API void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, uint a, WrapMode wm, float * output) const;
-        NVIMAGE_API void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * output, int output_stride) const;
-        NVIMAGE_API void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, uint a, WrapMode wm, float * output) const;
+        float applyKernelXY(const Kernel2 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        float applyKernelX(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        float applyKernelY(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        float applyKernelZ(const Kernel1 * k, int x, int y, int z, uint c, WrapMode wm) const;
+        void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, WrapMode wm, float * output) const;
+        void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, WrapMode wm, float * output, int output_stride) const;
+        void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, WrapMode wm, float * output) const;
+        void applyKernelX(const PolyphaseKernel & k, int y, int z, uint c, uint a, WrapMode wm, float * output) const;
+        void applyKernelY(const PolyphaseKernel & k, int x, int z, uint c, uint a, WrapMode wm, float * output, int output_stride) const;
+        void applyKernelZ(const PolyphaseKernel & k, int x, int y, uint c, uint a, WrapMode wm, float * output) const;
 
 
-        NVIMAGE_API void flipX();
-        NVIMAGE_API void flipY();
-        NVIMAGE_API void flipZ();
+        void flipX();
+        void flipY();
+        void flipZ();
 
-        NVIMAGE_API float alphaTestCoverage(float alphaRef, int alphaChannel, float alphaScale = 1.0f) const;
-        NVIMAGE_API void scaleAlphaToCoverage(float coverage, float alphaRef, int alphaChannel);
+        float alphaTestCoverage(float alphaRef, int alphaChannel, float alphaScale = 1.0f) const;
+        void scaleAlphaToCoverage(float coverage, float alphaRef, int alphaChannel);
 
 
         uint width() const { return m_width; }

@@ -1,8 +1,5 @@
 // This code is in the public domain -- castanyo@yahoo.es
-
 #pragma once
-#ifndef NV_IMAGE_FILTER_H
-#define NV_IMAGE_FILTER_H
 
 #include "nvimage.h"
 #include "nvcore/Debug.h"
@@ -12,7 +9,7 @@ namespace nv
     class Vector4;
 
     /// Base filter class.
-    class NVIMAGE_CLASS Filter
+    class Filter
     {
     public:
         Filter(float width);
@@ -30,7 +27,7 @@ namespace nv
     };
 
     // Box filter.
-    class NVIMAGE_CLASS BoxFilter : public Filter
+    class BoxFilter : public Filter
     {
     public:
         BoxFilter();
@@ -39,7 +36,7 @@ namespace nv
     };
 
     // Triangle (bilinear/tent) filter.
-    class NVIMAGE_CLASS TriangleFilter : public Filter
+    class TriangleFilter : public Filter
     {
     public:
         TriangleFilter();
@@ -48,7 +45,7 @@ namespace nv
     };
 
     // Quadratic (bell) filter.
-    class NVIMAGE_CLASS QuadraticFilter : public Filter
+    class QuadraticFilter : public Filter
     {
     public:
         QuadraticFilter();
@@ -56,7 +53,7 @@ namespace nv
     };
 
     // Cubic filter from Thatcher Ulrich.
-    class NVIMAGE_CLASS CubicFilter : public Filter
+    class CubicFilter : public Filter
     {
     public:
         CubicFilter();
@@ -64,7 +61,7 @@ namespace nv
     };
 
     // Cubic b-spline filter from Paul Heckbert.
-    class NVIMAGE_CLASS BSplineFilter : public Filter
+    class BSplineFilter : public Filter
     {
     public:
         BSplineFilter();
@@ -73,7 +70,7 @@ namespace nv
 
     /// Mitchell & Netravali's two-param cubic
     /// @see "Reconstruction Filters in Computer Graphics", SIGGRAPH 88
-    class NVIMAGE_CLASS MitchellFilter : public Filter
+    class MitchellFilter : public Filter
     {
     public:
         MitchellFilter();
@@ -87,7 +84,7 @@ namespace nv
     };
 
     // Lanczos3 filter.
-    class NVIMAGE_CLASS LanczosFilter : public Filter
+    class LanczosFilter : public Filter
     {
     public:
         LanczosFilter();
@@ -95,7 +92,7 @@ namespace nv
     };
 
     // Sinc filter.
-    class NVIMAGE_CLASS SincFilter : public Filter
+    class SincFilter : public Filter
     {
     public:
         SincFilter(float w);
@@ -103,7 +100,7 @@ namespace nv
     };
 
     // Kaiser filter.
-    class NVIMAGE_CLASS KaiserFilter : public Filter
+    class KaiserFilter : public Filter
     {
     public:
         KaiserFilter(float w);
@@ -132,7 +129,7 @@ namespace nv
 
 
     /// A 1D kernel. Used to precompute filter weights.
-    class NVIMAGE_CLASS Kernel1
+    class Kernel1
     {
         NV_FORBID_COPY(Kernel1);
     public:
@@ -162,7 +159,7 @@ namespace nv
 
 
     /// A 2D kernel.
-    class NVIMAGE_CLASS Kernel2 
+    class Kernel2 
     {
     public:
         Kernel2(uint width);
@@ -195,7 +192,7 @@ namespace nv
 
 
     /// A 1D polyphase kernel
-    class NVIMAGE_CLASS PolyphaseKernel
+    class PolyphaseKernel
     {
         NV_FORBID_COPY(PolyphaseKernel);
     public:
@@ -230,5 +227,3 @@ namespace nv
     };
 
 } // nv namespace
-
-#endif // NV_IMAGE_FILTER_H

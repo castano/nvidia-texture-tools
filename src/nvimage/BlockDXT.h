@@ -234,16 +234,16 @@ namespace nv
 
 
     // Serialization functions.
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT1 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, AlphaBlockDXT3 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT3 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, AlphaBlockDXT5 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockDXT5 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI1 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockATI2 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockCTX1 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockBC6 & block);
-    NVIMAGE_API Stream & operator<<(Stream & stream, BlockBC7 & block);
+    Stream & operator<<(Stream & stream, BlockDXT1 & block);
+    Stream & operator<<(Stream & stream, AlphaBlockDXT3 & block);
+    Stream & operator<<(Stream & stream, BlockDXT3 & block);
+    Stream & operator<<(Stream & stream, AlphaBlockDXT5 & block);
+    Stream & operator<<(Stream & stream, BlockDXT5 & block);
+    Stream & operator<<(Stream & stream, BlockATI1 & block);
+    Stream & operator<<(Stream & stream, BlockATI2 & block);
+    Stream & operator<<(Stream & stream, BlockCTX1 & block);
+    Stream & operator<<(Stream & stream, BlockBC6 & block);
+    Stream & operator<<(Stream & stream, BlockBC7 & block);
 
 } // nv namespace
 

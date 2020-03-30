@@ -43,8 +43,8 @@ static FloatImage * createNormalMap(const Image * img, FloatImage::WrapMode wm, 
     nvDebugCheck(kdv != NULL);
     nvDebugCheck(img != NULL);
 
-    const uint w = img->width();
-    const uint h = img->height();
+    const uint w = img->width;
+    const uint h = img->height;
 
     AutoPtr<FloatImage> fimage(new FloatImage());
     fimage->allocate(4, w, h);

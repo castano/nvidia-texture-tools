@@ -130,7 +130,7 @@ namespace nv
 
     };
 
-    NVIMAGE_API Stream & operator<< (Stream & s, KtxHeader & header);
+    Stream & operator<< (Stream & s, KtxHeader & header);
 
 
 /*    struct KtxFile {

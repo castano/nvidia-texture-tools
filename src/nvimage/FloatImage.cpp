@@ -56,9 +56,9 @@ void FloatImage::initFrom(const Image * img)
     nvCheck(img != NULL);
 
     uint channel_count = 3;
-    if (img->format() == Image::Format_ARGB) channel_count = 4;
+    if (img->format == Image::Format_ARGB) channel_count = 4;
 
-    allocate(channel_count, img->width(), img->height(), img->depth());
+    allocate(channel_count, img->width, img->height, img->depth);
 
     float * red_channel = channel(0);
     float * green_channel = channel(1);

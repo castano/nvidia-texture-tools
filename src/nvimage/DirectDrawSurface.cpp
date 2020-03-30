@@ -1,25 +1,4 @@
-// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
-// 
-// Permission is hereby granted, free of charge, to any person
-// obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without
-// restriction, including without limitation the rights to use,
-// copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following
-// conditions:
-// 
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-// OTHER DEALINGS IN THE SOFTWARE.
+// MIT license see full LICENSE text at end of file
 
 #include "DirectDrawSurface.h"
 #include "ColorBlock.h"
@@ -352,6 +331,76 @@ namespace
         nvUnreachable();
     }
 
+    static bool hasAlpha(DXGI_FORMAT format) {
+        switch(format) {
+            case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+            case DXGI_FORMAT_R32G32B32A32_FLOAT:
+            case DXGI_FORMAT_R32G32B32A32_UINT:
+            case DXGI_FORMAT_R32G32B32A32_SINT:
+            case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+            case DXGI_FORMAT_R16G16B16A16_FLOAT:
+            case DXGI_FORMAT_R16G16B16A16_UNORM:
+            case DXGI_FORMAT_R16G16B16A16_UINT:
+            case DXGI_FORMAT_R16G16B16A16_SNORM:
+            case DXGI_FORMAT_R16G16B16A16_SINT:
+            case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+            case DXGI_FORMAT_R10G10B10A2_UNORM:
+            case DXGI_FORMAT_R10G10B10A2_UINT:
+            case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+            case DXGI_FORMAT_R8G8B8A8_UNORM:
+            case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            case DXGI_FORMAT_R8G8B8A8_UINT:
+            case DXGI_FORMAT_R8G8B8A8_SNORM:
+            case DXGI_FORMAT_R8G8B8A8_SINT:
+            case DXGI_FORMAT_A8_UNORM:
+            case DXGI_FORMAT_B5G5R5A1_UNORM:
+            case DXGI_FORMAT_B8G8R8A8_UNORM:
+            //case DXGI_FORMAT_B8G8R8X8_UNORM:
+            case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+            case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+            case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            //case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+            //case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            case DXGI_FORMAT_BC1_UNORM:         // BC1a
+            case DXGI_FORMAT_BC1_UNORM_SRGB:
+            case DXGI_FORMAT_BC2_UNORM:
+            case DXGI_FORMAT_BC2_UNORM_SRGB:
+            case DXGI_FORMAT_BC3_UNORM:
+            case DXGI_FORMAT_BC3_UNORM_SRGB:
+            case DXGI_FORMAT_BC7_UNORM:
+            case DXGI_FORMAT_BC7_UNORM_SRGB:
+                return true;
+        }
+        return false;
+    }
+
+    static bool hasAlpha(D3DFORMAT format) {
+        switch(format) {
+            case D3DFMT_A8R8G8B8:
+            case D3DFMT_A1R5G5B5:
+            case D3DFMT_A4R4G4B4:
+            case D3DFMT_A8:
+            case D3DFMT_A8R3G3B2:
+            case D3DFMT_A2B10G10R10:
+            case D3DFMT_A8B8G8R8:
+            case D3DFMT_A2R10G10B10:
+            case D3DFMT_A16B16G16R16:
+            case D3DFMT_A8P8:
+            case D3DFMT_A8L8:
+            case D3DFMT_A4L4:
+            case D3DFMT_A16B16G16R16F:
+            case D3DFMT_A32B32G32R32F:
+            case FOURCC_DXT1:   // DXT1a
+            case FOURCC_DXT2:
+            case FOURCC_DXT3:
+            case FOURCC_DXT4:
+            case FOURCC_DXT5:
+            case FOURCC_BC7L:
+                return true;
+        }
+        return false;
+    }
+
 } // namespace
 
 namespace nv
@@ -507,6 +556,20 @@ const RGBAPixelFormat *nv::findDXGIPixelFormat(uint dxgiFormat)
 
     return NULL;
 }
+
+const RGBAPixelFormat *nv::findD3D9PixelFormat(uint d3d9Format)
+{
+    for (int i = 0; i < s_formatCount; i++)
+    {
+        if (s_formats[i].d3d9Format == d3d9Format) {
+            return &s_formats[i].pixelFormat;
+        }
+    }
+
+    return NULL;
+}
+
+
 
 DDSHeader::DDSHeader()
 {
@@ -912,16 +975,6 @@ DirectDrawSurface::DirectDrawSurface() : stream(NULL)
 {
 }
 
-DirectDrawSurface::DirectDrawSurface(const char * name) : stream(NULL)
-{
-    load(name);
-}
-
-DirectDrawSurface::DirectDrawSurface(Stream * s) : stream(NULL)
-{
-    load(s);
-}
-
 DirectDrawSurface::~DirectDrawSurface()
 {
     delete stream;
@@ -1020,7 +1073,8 @@ bool DirectDrawSurface::isSupported() const
             return false;
         }
 
-        if (isTextureCube()) {
+        if (isTextureCube()) 
+        {
             if (header.width != header.height) return false;
 
             if ((header.caps.caps2 & DDSCAPS2_CUBEMAP_ALL_FACES) != DDSCAPS2_CUBEMAP_ALL_FACES)
@@ -1036,39 +1090,55 @@ bool DirectDrawSurface::isSupported() const
 
 bool DirectDrawSurface::hasAlpha() const
 {
+    // If the file was generated by us, just use the DDPF_ALPHAPIXELS flag.
+    if (header.reserved[9] == FOURCC_NVTT) {
+        return (header.pf.flags & DDPF_ALPHAPIXELS);
+    }
+
+    // Otherwise make assumptions based on the pixel format.
     if (header.hasDX10Header())
     {
-#pragma NV_MESSAGE("TODO: Update hasAlpha to handle all DX10 formats.")
-        return 
-            header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM ||
-            header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM ||
-            header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM;
+        return ::hasAlpha((DXGI_FORMAT)header.header10.dxgiFormat);
     }
     else
     {
+        //if (header.pf.flags & DDPF_ALPHAPIXELS) return true;
+
         if (header.pf.flags & DDPF_RGB) 
         {
             return header.pf.amask != 0;
         }
         else if (header.pf.flags & DDPF_FOURCC)
         {
-            if (header.pf.fourcc == FOURCC_RXGB ||
-                header.pf.fourcc == FOURCC_ATI1 ||
-                header.pf.fourcc == FOURCC_ATI2 ||
-                header.pf.flags & DDPF_NORMAL)
-            {
-                return false;
-            }
-            else
-            {
-                // @@ Here we could check the ALPHA_PIXELS flag, but nobody sets it. (except us?)
-                return true;
-            }
+            return ::hasAlpha((D3DFORMAT)header.pf.fourcc);
         }
 
         return false;
     }
 }
+
+bool DirectDrawSurface::isColorsRGB() const
+{
+    if (header.hasDX10Header()) {
+        switch (header.header10.dxgiFormat) {
+            case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+            case DXGI_FORMAT_BC1_UNORM_SRGB:
+            case DXGI_FORMAT_BC2_UNORM_SRGB:
+            case DXGI_FORMAT_BC3_UNORM_SRGB:
+            case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+            case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+            case DXGI_FORMAT_BC7_UNORM_SRGB:            
+                return true;
+        }
+    }
+    else {
+        //if (header.reserved[9] == FOURCC_NVTT)
+        if (header.pf.flags & DDPF_SRGB) return true;
+    }
+
+    return false;
+}
+
 
 uint DirectDrawSurface::mipmapCount() const
 {
@@ -1172,331 +1242,6 @@ void DirectDrawSurface::setUserVersion(int version)
     header.setUserVersion(version);
 }
 
-void DirectDrawSurface::mipmap(Image * img, uint face, uint mipmap)
-{
-    nvDebugCheck(isValid());
-
-    stream->seek(offset(face, mipmap));
-
-    uint w = width();
-    uint h = height();
-	uint d = depth();
-
-    // Compute width and height.
-    for (uint m = 0; m < mipmap; m++)
-    {
-        w = max(1U, w / 2);
-        h = max(1U, h / 2);
-		d = max(1U, d / 2);
-    }
-
-    img->allocate(w, h, d);
-
-    if (hasAlpha())
-    {
-        img->setFormat(Image::Format_ARGB);
-    }
-    else
-    {
-        img->setFormat(Image::Format_RGB);
-    }
-
-    if (header.hasDX10Header())
-    {
-        if (const RGBAPixelFormat *format = findDXGIPixelFormat(header.header10.dxgiFormat)) {
-            readLinearImage(img, format->bitcount, format->rmask, format->gmask, format->bmask, format->amask);
-        }
-        else {
-            readBlockImage(img);
-        }
-    }
-    else
-    {
-        if (header.pf.flags & DDPF_RGB) 
-        {
-            readLinearImage(img, header.pf.bitcount, header.pf.rmask, header.pf.gmask, header.pf.bmask, header.pf.amask);
-        }
-        else if (header.pf.flags & DDPF_FOURCC)
-        {
-            readBlockImage(img);
-        }
-    }
-}
-
-/*void * DirectDrawSurface::readData(uint * sizePtr)
-{
-    uint header_size = 128; // sizeof(DDSHeader);
-
-    if (header.hasDX10Header())
-    {
-        header_size += 20; // sizeof(DDSHeader10);
-    }
-
-    stream->seek(header_size);
-
-    int size = stream->size() - header_size;
-    *sizePtr = size;
-
-    void * data = new unsigned char [size];
-    
-    size = stream->serialize(data, size);
-    nvDebugCheck(size == *sizePtr);
-
-    return data;
-}*/
-
-/*uint DirectDrawSurface::surfaceSize(uint mipmap) const
-{
-    uint w = header.width();
-    uint h = header.height();
-    uint d = header.depth();
-    for (int m = 0; m < mipmap; m++) {
-        w = (w + 1) / 2;
-        h = (h + 1) / 2;
-        d = (d + 1) / 2;
-    }
-    
-    bool isBlockFormat;
-    uint blockOrPixelSize;
-
-    if (header.hasDX10Header()) {
-        blockOrPixelSize = blockSize(header10.dxgiFormat);
-        isBlockFormat = (blockOrPixelSize != 0);
-        if (isBlockFormat) {
-            blockOrPixelSize = pixelSize(header10.dxgiFormat);
-        }
-    }
-    else {
-        header.pf.flags 
-    }
-
-    if (isBlockFormat) {
-        w = (w + 3) / 4;
-        h = (h + 3) / 4;
-        d = (d + 3) / 4; // @@ Is it necessary to align the depths?
-    }
-
-    uint blockOrPixelCount = w * h * d;
-
-    return blockCount = blockOrPixelSize;
-}*/
-
-bool DirectDrawSurface::readSurface(uint face, uint mipmap, void * data, uint size)
-{
-    if (size != surfaceSize(mipmap)) return false;
-
-    stream->seek(offset(face, mipmap));
-    if (stream->isError()) return false;
-
-    return stream->serialize(data, size) == size;
-}
-
-
-void DirectDrawSurface::readLinearImage(Image * img, uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
-{
-    nvDebugCheck(stream != NULL);
-    nvDebugCheck(img != NULL);
-
-    const uint w = img->width();
-    const uint h = img->height();
-    const uint d = img->depth();
-
-    uint rshift, rsize;
-    PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
-
-    uint gshift, gsize;
-    PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
-
-    uint bshift, bsize;
-    PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
-
-    uint ashift, asize;
-    PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
-
-    uint byteCount = (bitcount + 7) / 8;
-
-#pragma NV_MESSAGE("TODO: Support floating point linear images and other FOURCC codes.")
-
-    // Read linear RGB images.
-    for (uint z = 0; z < d; z++)
-    {
-        for (uint y = 0; y < h; y++)
-        {
-            for (uint x = 0; x < w; x++)
-            {
-                uint c = 0;
-                stream->serialize(&c, byteCount);
-
-                Color32 pixel(0, 0, 0, 0xFF);
-                pixel.r = PixelFormat::convert((c & rmask) >> rshift, rsize, 8);
-                pixel.g = PixelFormat::convert((c & gmask) >> gshift, gsize, 8);
-                pixel.b = PixelFormat::convert((c & bmask) >> bshift, bsize, 8);
-                pixel.a = PixelFormat::convert((c & amask) >> ashift, asize, 8);
-
-                img->pixel(x, y, z) = pixel;
-            }
-        }
-    }
-}
-
-void DirectDrawSurface::readBlockImage(Image * img)
-{
-    nvDebugCheck(stream != NULL);
-    nvDebugCheck(img != NULL);
-
-    const uint w = img->width();
-    const uint h = img->height();
-
-    const uint bw = (w + 3) / 4;
-    const uint bh = (h + 3) / 4;
-
-    for (uint by = 0; by < bh; by++)
-    {
-        for (uint bx = 0; bx < bw; bx++)
-        {
-            ColorBlock block;
-
-            // Read color block.
-            readBlock(&block);
-
-            // Write color block.
-            for (uint y = 0; y < min(4U, h-4*by); y++)
-            {
-                for (uint x = 0; x < min(4U, w-4*bx); x++)
-                {
-                    img->pixel(4*bx+x, 4*by+y) = block.color(x, y);
-                }
-            }
-        }
-    }
-}
-
-static Color32 buildNormal(uint8 x, uint8 y)
-{
-    float nx = 2 * (x / 255.0f) - 1;
-    float ny = 2 * (y / 255.0f) - 1;
-    float nz = 0.0f;
-    if (1 - nx*nx - ny*ny > 0) nz = sqrtf(1 - nx*nx - ny*ny);
-    uint8 z = clamp(int(255.0f * (nz + 1) / 2.0f), 0, 255);
-
-    return Color32(x, y, z);
-}
-
-
-void DirectDrawSurface::readBlock(ColorBlock * rgba)
-{
-    nvDebugCheck(stream != NULL);
-    nvDebugCheck(rgba != NULL);
-
-    uint fourcc = header.pf.fourcc;
-
-    // Map DX10 block formats to fourcc codes.
-    if (header.hasDX10Header())
-    {
-        if (header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM) fourcc = FOURCC_DXT1;
-        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM) fourcc = FOURCC_DXT3;
-        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM) fourcc = FOURCC_DXT5;
-        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC4_UNORM) fourcc = FOURCC_ATI1;
-        else if (header.header10.dxgiFormat == DXGI_FORMAT_BC5_UNORM) fourcc = FOURCC_ATI2;
-    }
-
-    if (fourcc == FOURCC_DXT1)
-    {
-        BlockDXT1 block;
-        *stream << block;
-        block.decodeBlock(rgba);
-    }
-    else if (fourcc == FOURCC_DXT2 || fourcc == FOURCC_DXT3)
-    {
-        BlockDXT3 block;
-        *stream << block;
-        block.decodeBlock(rgba);
-    }
-    else if (fourcc == FOURCC_DXT4 || fourcc == FOURCC_DXT5 || fourcc == FOURCC_RXGB)
-    {
-        BlockDXT5 block;
-        *stream << block;
-        block.decodeBlock(rgba);
-
-        if (fourcc == FOURCC_RXGB)
-        {
-            // Swap R & A.
-            for (int i = 0; i < 16; i++)
-            {
-                Color32 & c = rgba->color(i);
-                uint tmp = c.r;
-                c.r = c.a;
-                c.a = tmp;
-            }
-        }
-    }
-    else if (fourcc == FOURCC_ATI1)
-    {
-        BlockATI1 block;
-        *stream << block;
-        block.decodeBlock(rgba);
-    }
-    else if (fourcc == FOURCC_ATI2)
-    {
-        BlockATI2 block;
-        *stream << block;
-        block.decodeBlock(rgba);
-    }
-    else if (header.hasDX10Header() && header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16)
-    {
-        BlockBC6 block;
-        *stream << block;
-        Vector4 colors[16];
-        block.decodeBlock(colors);
-
-        // Clamp to [0, 1] and round to 8-bit
-        for (int y = 0; y < 4; ++y)
-        {
-            for (int x = 0; x < 4; ++x)
-            {
-                Vector4 px = colors[y*4 + x];
-                rgba->color(x, y).setRGBA(
-                                    ftoi_round(clamp(px.x, 0.0f, 1.0f) * 255.0f),
-                                    ftoi_round(clamp(px.y, 0.0f, 1.0f) * 255.0f),
-                                    ftoi_round(clamp(px.z, 0.0f, 1.0f) * 255.0f),
-                                    0xFF);
-            }
-        }
-    }
-    else if (header.hasDX10Header() && header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM)
-    {
-        BlockBC7 block;
-        *stream << block;
-        block.decodeBlock(rgba);
-    }
-    else
-    {
-        nvDebugCheck(false);
-    }
-
-    // If normal flag set, convert to normal.
-    if (header.pf.flags & DDPF_NORMAL)
-    {
-        if (fourcc == FOURCC_ATI2)
-        {
-            for (int i = 0; i < 16; i++)
-            {
-                Color32 & c = rgba->color(i);
-                c = buildNormal(c.r, c.g);
-            }
-        }
-        else if (fourcc == FOURCC_DXT5)
-        {
-            for (int i = 0; i < 16; i++)
-            {
-                Color32 & c = rgba->color(i);
-                c = buildNormal(c.a, c.g);
-            }
-        }
-    }
-}
-
-
 static uint mipmapExtent(uint mipmap, uint x)
 {
     for (uint m = 0; m < mipmap; m++) {
@@ -1554,7 +1299,7 @@ uint DirectDrawSurface::faceSize() const
     return size;
 }
 
-uint DirectDrawSurface::offset(const uint face, const uint mipmap)
+uint DirectDrawSurface::offset(uint face, uint mipmap)
 {
     uint size = 128; // sizeof(DDSHeader);
 
@@ -1575,6 +1320,17 @@ uint DirectDrawSurface::offset(const uint face, const uint mipmap)
 
     return size;
 }
+
+bool DirectDrawSurface::readSurface(uint face, uint mipmap, void * data, uint size)
+{
+    if (size != surfaceSize(mipmap)) return false;
+
+    stream->seek(offset(face, mipmap));
+    if (stream->isError()) return false;
+
+    return stream->serialize(data, size) == size;
+}
+
 
 
 void DirectDrawSurface::printInfo() const
@@ -1689,3 +1445,345 @@ void DirectDrawSurface::printInfo() const
     }
 }
 
+
+static bool readLinearImage(Image * img, uint8 * data, uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+{
+    nvDebugCheck(img != NULL);
+    nvDebugCheck(data != NULL);
+
+    const uint w = img->width;
+    const uint h = img->height;
+    const uint d = img->depth;
+
+    uint rshift, rsize;
+    PixelFormat::maskShiftAndSize(rmask, &rshift, &rsize);
+
+    uint gshift, gsize;
+    PixelFormat::maskShiftAndSize(gmask, &gshift, &gsize);
+
+    uint bshift, bsize;
+    PixelFormat::maskShiftAndSize(bmask, &bshift, &bsize);
+
+    uint ashift, asize;
+    PixelFormat::maskShiftAndSize(amask, &ashift, &asize);
+
+    uint byteCount = (bitcount + 7) / 8;
+
+    // Read linear RGB images.
+    for (uint z = 0; z < d; z++)
+    {
+        for (uint y = 0; y < h; y++)
+        {
+            for (uint x = 0; x < w; x++)
+            {
+                uint c;
+                memcpy(&c, data, byteCount);
+                data += byteCount;
+
+                Color32 pixel(0, 0, 0, 0xFF);
+                pixel.r = PixelFormat::convert((c & rmask) >> rshift, rsize, 8);
+                pixel.g = PixelFormat::convert((c & gmask) >> gshift, gsize, 8);
+                pixel.b = PixelFormat::convert((c & bmask) >> bshift, bsize, 8);
+                pixel.a = PixelFormat::convert((c & amask) >> ashift, asize, 8);
+
+                img->pixel(x, y, z) = pixel;
+            }
+        }
+    }
+
+    return true;
+}
+
+
+static void readBlock(ColorBlock * rgba, uint8 * data, uint dxgiFormat, bool isNormalMap, bool swapRA)
+{
+    nvDebugCheck(rgba != NULL);
+    nvDebugCheck(data != NULL);
+
+    if (dxgiFormat == DXGI_FORMAT_BC1_UNORM)
+    {
+        BlockDXT1 * block = (BlockDXT1 *)data;
+        block->decodeBlock(rgba);
+    }
+    else if (dxgiFormat == DXGI_FORMAT_BC2_UNORM)
+    {
+        BlockDXT3 * block = (BlockDXT3 *)data;
+        block->decodeBlock(rgba);
+    }
+    else if (dxgiFormat == DXGI_FORMAT_BC3_UNORM)
+    {
+        BlockDXT5 * block = (BlockDXT5 *)data;
+        block->decodeBlock(rgba);
+
+        if (swapRA) {
+            // Swap R & A.
+            for (int i = 0; i < 16; i++)
+            {
+                Color32 & c = rgba->color(i);
+                uint tmp = c.r;
+                c.r = c.a;
+                c.a = tmp;
+            }
+        }
+    }
+    else if (DXGI_FORMAT_BC4_UNORM)
+    {
+        BlockATI1 * block = (BlockATI1 *)data;
+        block->decodeBlock(rgba);
+    }
+    else if (DXGI_FORMAT_BC5_UNORM)
+    {
+        BlockATI2 * block = (BlockATI2 *)data;
+        block->decodeBlock(rgba);
+    }
+    else if (dxgiFormat == DXGI_FORMAT_BC6H_UF16)
+    {
+        BlockBC6 * block = (BlockBC6 *)data;
+        Vector4 colors[16];
+        block->decodeBlock(colors);
+
+        // Clamp to [0, 1] and round to 8-bit
+        for (int y = 0; y < 4; ++y)
+        {
+            for (int x = 0; x < 4; ++x)
+            {
+                Vector4 px = colors[y * 4 + x];
+                rgba->color(x, y).setRGBA(
+                    ftoi_round(clamp(px.x, 0.0f, 1.0f) * 255.0f),
+                    ftoi_round(clamp(px.y, 0.0f, 1.0f) * 255.0f),
+                    ftoi_round(clamp(px.z, 0.0f, 1.0f) * 255.0f),
+                    0xFF);
+            }
+        }
+    }
+    else if (dxgiFormat == DXGI_FORMAT_BC7_UNORM)
+    {
+        BlockBC7 * block = (BlockBC7 *)data;
+        block->decodeBlock(rgba);
+    }
+    else
+    {
+        nvDebugCheck(false);
+    }
+
+    // If normal flag set, reconstruct Z from XY.
+    if (isNormalMap)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            Color32 & c = rgba->color(i);
+
+            float nx = 2 * (c.r / 255.0f) - 1;
+            float ny = 2 * (c.g / 255.0f) - 1;
+            float nz = 0.0f;
+            if (1 - nx * nx - ny * ny > 0) nz = sqrtf(1 - nx * nx - ny * ny);
+            c.b = clamp(int(255.0f * (nz + 1) / 2.0f), 0, 255);
+        }
+    }
+}
+
+
+static bool readBlockImage(Image * img, uint8 * data, uint dxgiFormat, bool isNormalMap, bool swapRA)
+{
+    nvDebugCheck(img != NULL);
+    nvDebugCheck(data != NULL);
+
+    switch (dxgiFormat) {
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+            dxgiFormat = DXGI_FORMAT_BC1_UNORM;
+            break;
+        case DXGI_FORMAT_BC2_TYPELESS:
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+            dxgiFormat = DXGI_FORMAT_BC2_UNORM;
+            break;
+        case DXGI_FORMAT_BC3_TYPELESS:
+        case DXGI_FORMAT_BC3_UNORM:
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+            dxgiFormat = DXGI_FORMAT_BC3_UNORM;
+            break;
+        case DXGI_FORMAT_BC4_TYPELESS:
+        case DXGI_FORMAT_BC4_UNORM:
+        //case DXGI_FORMAT_BC4_SNORM; // Not supported.
+            dxgiFormat = DXGI_FORMAT_BC4_UNORM;
+            break;
+        case DXGI_FORMAT_BC5_TYPELESS:
+        case DXGI_FORMAT_BC5_UNORM:
+        //case DXGI_FORMAT_BC5_SNORM: // Not supported.
+            dxgiFormat = DXGI_FORMAT_BC5_UNORM;
+            break;
+        case DXGI_FORMAT_BC6H_TYPELESS:
+        case DXGI_FORMAT_BC6H_UF16:
+        case DXGI_FORMAT_BC6H_SF16:
+            dxgiFormat = DXGI_FORMAT_BC6H_UF16;
+            break;
+        case DXGI_FORMAT_BC7_TYPELESS:
+        case DXGI_FORMAT_BC7_UNORM:
+        case DXGI_FORMAT_BC7_UNORM_SRGB:
+            dxgiFormat = DXGI_FORMAT_BC7_UNORM;
+            break;
+        default:
+            return false;
+    }
+
+    const uint w = img->width;
+    const uint h = img->height;
+    const uint d = img->depth;
+
+    const uint bw = (w + 3) / 4;
+    const uint bh = (h + 3) / 4;
+
+    for (uint z = 0; z < d; z++)
+    {
+        for (uint by = 0; by < bh; by++)
+        {
+            for (uint bx = 0; bx < bw; bx++)
+            {
+                ColorBlock block;
+
+                // Read color block.
+                readBlock(&block, data, dxgiFormat, isNormalMap, swapRA);
+
+                // Write color block.
+                for (uint y = 0; y < min(4U, h - 4 * by); y++)
+                {
+                    for (uint x = 0; x < min(4U, w - 4 * bx); x++)
+                    {
+                        img->pixel(4 * bx + x, 4 * by + y) = block.color(x, y);
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+
+bool nv::imageFromDDS(Image * img, DirectDrawSurface & dds, uint face, uint mipmap)
+{
+    if (!dds.isValid()) return false;
+
+    uint size = dds.surfaceSize(mipmap);
+    uint8 * data = malloc<uint8>(size);
+    defer { free(data); };
+
+    if (!dds.readSurface(face, mipmap, data, size)) {
+        return false;
+    }
+
+    uint w = dds.surfaceWidth(mipmap);
+    uint h = dds.surfaceHeight(mipmap);
+    uint d = dds.surfaceDepth(mipmap);
+    
+    img->allocate(w, h, d);
+
+    if (dds.hasAlpha())
+    {
+        img->format = Image::Format_ARGB;
+    }
+    else
+    {
+        img->format = Image::Format_XRGB;
+    }
+
+    img->sRGB = dds.isColorsRGB();
+
+    if (dds.header.isBlockFormat())
+    {
+        bool isNormalMap = false;
+        bool swapRA = false;
+        uint dxgiFormat = DXGI_FORMAT_UNKNOWN;
+        if (dds.header.hasDX10Header()) {
+            dxgiFormat = dds.header.header10.dxgiFormat;
+        }
+        else {
+            switch (dds.header.pf.fourcc) {
+                case FOURCC_DXT1: dxgiFormat = DXGI_FORMAT_BC1_UNORM; break;
+                case FOURCC_DXT3: dxgiFormat = DXGI_FORMAT_BC2_UNORM; break;
+                case FOURCC_DXT5: dxgiFormat = DXGI_FORMAT_BC3_UNORM; break;
+                case FOURCC_ATI1: dxgiFormat = DXGI_FORMAT_BC4_UNORM; break;
+                case FOURCC_ATI2: dxgiFormat = DXGI_FORMAT_BC5_UNORM; break;
+                case FOURCC_RXGB: dxgiFormat = DXGI_FORMAT_BC3_UNORM; swapRA = true; break;
+            }
+        }
+        if (dds.header.pf.flags & DDPF_NORMAL) isNormalMap = true;
+
+        return readBlockImage(img, data, dxgiFormat, isNormalMap, swapRA);
+    }
+    else 
+    {
+        if (dds.header.hasDX10Header())
+        {
+            if (const RGBAPixelFormat *format = findDXGIPixelFormat(dds.header.header10.dxgiFormat)) {
+                return readLinearImage(img, data, format->bitcount, format->rmask, format->gmask, format->bmask, format->amask);
+            }
+        }
+        else 
+        {
+            if (dds.header.pf.flags & DDPF_RGB)
+            {
+                return readLinearImage(img, data, dds.header.pf.bitcount, dds.header.pf.rmask, dds.header.pf.gmask, dds.header.pf.bmask, dds.header.pf.amask);
+            }
+            else if (dds.header.pf.flags & DDPF_FOURCC)
+            {
+                if (const RGBAPixelFormat *format = findD3D9PixelFormat(dds.header.pf.fourcc)) {
+                    return readLinearImage(img, data, format->bitcount, format->rmask, format->gmask, format->bmask, format->amask);
+                }
+            }
+        }
+    }
+
+    return false; // Not supported.
+}
+
+bool nv::imageFromDDS(FloatImage * img, DirectDrawSurface & dds, uint face, uint mipmap)
+{
+    if (!dds.isValid()) return false;
+
+    uint size = dds.surfaceSize(mipmap);
+    uint8 * data = malloc<uint8>(size);
+    defer{ free(data); };
+
+    if (!dds.readSurface(face, mipmap, data, size)) {
+        return false;
+    }
+
+    uint w = dds.surfaceWidth(mipmap);
+    uint h = dds.surfaceHeight(mipmap);
+    uint d = dds.surfaceDepth(mipmap);
+
+    // @@
+
+    return false;
+}
+
+
+
+
+
+// Copyright NVIDIA Corporation 2007 -- Ignacio Castano <icastano@nvidia.com>
+// Copyright (c) 2008-2020 -- Ignacio Castano <castano@gmail.com>
+// 
+// Permission is hereby granted, free of charge, to any person
+// obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without
+// restriction, including without limitation the rights to use,
+// copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the
+// Software is furnished to do so, subject to the following
+// conditions:
+// 
+// The above copyright notice and this permission notice shall be
+// included in all copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+// OTHER DEALINGS IN THE SOFTWARE.

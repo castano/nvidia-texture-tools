@@ -55,12 +55,15 @@ extern "C" {
 #endif
 
 #if defined(NV_HAVE_STBIMAGE)
+#   define STB_IMAGE_STATIC         // To avoid conflicts with users importing stb_image on their own.
 #   define STB_IMAGE_IMPLEMENTATION
 #   define STBI_NO_STDIO
-#   pragma warning(push)
-#   pragma warning(disable: 4312)
-#   include <stb_image.h>
-#   pragma warning(pop)
+#   include "stb_image.h"
+
+//#   define STB_IMAGE_WRITE_STATIC
+//#   define STB_IMAGE_WRITE_IMPLEMENTATION
+//#   define STBI_WRITE_NO_STDIO
+//#   include "stb_image_write.h"
 #endif
 
 
@@ -68,7 +71,7 @@ using namespace nv;
 
 
 
-struct Color555 {
+/*struct Color555 {
     uint16 b : 5;
     uint16 g : 5;
     uint16 r : 5;
@@ -198,7 +201,7 @@ static Image * loadTGA(Stream & s)
         }
     }
     else if( grey ) {
-        img->setFormat(Image::Format_ARGB);
+        img->format = Image::Format_ARGB;
 
         for( int y = 0; y < tga.height; y++ ) {
             for( int x = 0; x < tga.width; x++ ) {
@@ -233,7 +236,7 @@ static Image * loadTGA(Stream & s)
             }
         }
         else if( tga.pixel_size == 32 ) {
-            img->setFormat(Image::Format_ARGB);
+            img->format = Image::Format_ARGB;
 
             for( int y = 0; y < tga.height; y++ ) {
                 for( int x = 0; x < tga.width; x++ ) {
@@ -250,6 +253,7 @@ static Image * loadTGA(Stream & s)
 
     return img.release();
 }
+*/
 
 // Save TGA image.
 static bool saveTGA(Stream & s, const Image * img)
@@ -269,9 +273,9 @@ static bool saveTGA(Stream & s, const Image * img)
 
     tga.head.x_origin = 0;
     tga.head.y_origin = 0;
-    tga.head.width = img->width();
-    tga.head.height = img->height();
-    if(img->format() == Image::Format_ARGB) {
+    tga.head.width = img->width;
+    tga.head.height = img->height;
+    if(img->format == Image::Format_ARGB) {
         tga.head.pixel_size = 32;
         tga.head.flags = TGA_ORIGIN_UPPER | TGA_HAS_ALPHA;
     }
@@ -283,8 +287,8 @@ static bool saveTGA(Stream & s, const Image * img)
     // @@ Serialize directly.
     tga.allocate();
 
-    const uint n = img->width() * img->height();
-    if(img->format() == Image::Format_ARGB) {
+    const uint n = img->width * img->height;
+    if(img->format == Image::Format_ARGB) {
         for(uint i = 0; i < n; i++) {
             Color32 color = img->pixel(i);
             tga.mem[4 * i + 0] = color.b;
@@ -309,13 +313,13 @@ static bool saveTGA(Stream & s, const Image * img)
     return true;
 }
 
-#pragma optimize("", off)
+/*#pragma optimize("", off)
 
 // Save BMP image.
 static bool saveBMP(Stream & s, const Image * img)
 {
-    int w = img->width();
-    int h = img->height();
+    int w = img->width;
+    int h = img->height;
     int image_size = w * h * 3;
 
     BmpFileHeader header;
@@ -352,7 +356,7 @@ static bool saveBMP(Stream & s, const Image * img)
     }
 
     return true;
-}
+}*/
 
 /*static Image * loadPPM(Stream & s)
 {
@@ -366,8 +370,8 @@ static bool savePPM(Stream & s, const Image * img)
     //if (img->depth() != 1) return false;
     //if (img->format() == Image::Format_ARGB) return false;
 
-    uint w = img->width();
-    uint h = img->height();
+    uint w = img->width;
+    uint h = img->height;
 
     TextWriter writer(&s);
     writer.format("P6\n");
@@ -396,7 +400,7 @@ static bool savePPM(Stream & s, const Image * img)
 }*/
 
 // Load PSD image.
-static Image * loadPSD(Stream & s)
+/*static Image * loadPSD(Stream & s)
 {
     nvCheck(!s.isError());
     nvCheck(s.isLoading());
@@ -457,7 +461,7 @@ static Image * loadPSD(Stream & s)
     else
     {
         // Enable alpha.
-        img->setFormat(Image::Format_ARGB);
+        img->format = Image::Format_ARGB;
 
         // Ignore remaining channels.
         channel_num = 4;
@@ -545,7 +549,7 @@ static Image * loadPSD(Stream & s)
     }
 
     return img.release();
-}
+}*/
 
 static FloatImage * loadFloatDDS(Stream & s)
 {
@@ -1766,7 +1770,7 @@ static Image * loadSTB(Stream & s)
     if (data != NULL) {
         Image * img = new Image;
         img->acquire((Color32 *)data, w, h);
-        img->setFormat(n == 4 ? Image::Format_ARGB : Image::Format_RGB);
+        img->format = (n == 4) ? Image::Format_ARGB : Image::Format_XRGB;
 
         int count = w * h;
         for (int i = 0; i < count; ++i) {
@@ -1840,13 +1844,13 @@ Image * nv::ImageIO::load(const char * fileName, Stream & s)
 
     const char * extension = Path::extension(fileName);
 
-    if (strCaseDiff(extension, ".tga") == 0) {
+    /*if (strCaseDiff(extension, ".tga") == 0) {
         return loadTGA(s);
-    }
+    }*/
 
-    if (strCaseDiff(extension, ".psd") == 0) {
+    /*if (strCaseDiff(extension, ".psd") == 0) {
         return loadPSD(s);
-    }
+    }*/
 
     /*if (strCaseDiff(extension, ".ppm") == 0) {
         return loadPPM(s);
@@ -1887,9 +1891,9 @@ bool nv::ImageIO::save(const char * fileName, Stream & s, const Image * img, con
 
     const char * extension = Path::extension(fileName);
 
-    if (strCaseDiff(extension, ".bmp") == 0) {
+    /*if (strCaseDiff(extension, ".bmp") == 0) {
         return saveBMP(s, img);
-    }
+    }*/
 
     if (strCaseDiff(extension, ".tga") == 0) {
         return saveTGA(s, img);
@@ -2030,7 +2034,7 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
         if (componentCount == 1)
         {
             Color32 * c = image->pixels();
-            const uint count = image->width() * image->height();
+            const uint count = image->width * image->height;
             for (uint i = 0; i < count; i++)
             {
                 c[i].b = c[i].g = c[i].r;
@@ -2039,7 +2043,7 @@ bool nv::ImageIO::saveFloat(const char * fileName, Stream & s, const FloatImage 
 
         if (componentCount == 4)
         {
-            image->setFormat(Image::Format_ARGB);
+            image->format = Image::Format_ARGB;
         }
 
         return ImageIO::save(fileName, s, image.ptr());
