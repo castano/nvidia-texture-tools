@@ -239,14 +239,14 @@ static unsigned int stb__MatchColorsBlock(unsigned char *block, unsigned char *c
    // but it's very close and a lot faster.
    // http://cbloomrants.blogspot.com/2008/12/12-08-08-dxtc-summary.html
 
-   c0Point   = (stops[1] + stops[3]) >> 1;
-   halfPoint = (stops[3] + stops[2]) >> 1;
-   c3Point   = (stops[2] + stops[0]) >> 1;
+   c0Point   = (stops[1] + stops[3]);
+   halfPoint = (stops[3] + stops[2]);
+   c3Point   = (stops[2] + stops[0]);
 
    if(!dither) {
       // the version without dithering is straightforward
       for (i=15;i>=0;i--) {
-         int dot = dots[i];
+         int dot = 2 * dots[i];
          mask <<= 2;
 
          if(dot < halfPoint)
