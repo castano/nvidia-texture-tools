@@ -96,12 +96,12 @@ namespace nv
 
 
     /// 16 bit 565 BGR color.
-    class NVMATH_CLASS Color16
+    struct NVMATH_CLASS Color16
     {
-    public:
         Color16() { }
         Color16(const Color16 & c) : u(c.u) { }
         explicit Color16(uint16 U) : u(U) { }
+        Color16(uint8 r, uint8 g, uint8 b) : r(r), g(g), b(b) { }
 
         union {
             struct {

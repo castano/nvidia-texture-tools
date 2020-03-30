@@ -3,12 +3,12 @@
 #include "Fitting.h"
 #include "Vector.inl"
 #include "Plane.inl"
+#include "Matrix.inl"
 
 #include "nvcore/Array.inl"
 #include "nvcore/Utils.h" // max, swap
 
 #include <float.h> // FLT_MAX
-//#include <vector>
 #include <string.h>
 
 using namespace nv;
@@ -668,7 +668,7 @@ bool nv::Fit::eigenSolveSymmetric4(const float matrix[10], float eigenValues[4],
     return true;
 }
 
-#include "nvmath/Matrix.inl"
+
 
 inline float signNonzero(float x)
 {

@@ -1,8 +1,5 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
-
 #pragma once
-#ifndef NV_MATH_FITTING_H
-#define NV_MATH_FITTING_H
 
 #include "Vector.h"
 #include "Plane.h"
@@ -46,5 +43,3 @@ namespace nv
     }
 
 } // nv namespace
-
-#endif // NV_MATH_FITTING_H

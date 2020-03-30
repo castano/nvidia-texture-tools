@@ -22,9 +22,7 @@
 	SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 	
    -------------------------------------------------------------------------- */
-   
-#ifndef NV_SIMD_VECTOR_SSE_H
-#define NV_SIMD_VECTOR_SSE_H
+#pragma once   
 
 #include "nvcore/Memory.h"
 
@@ -212,5 +210,3 @@ namespace nv {
     }
 
 } // namespace nv
-
-#endif // NV_SIMD_VECTOR_SSE_H

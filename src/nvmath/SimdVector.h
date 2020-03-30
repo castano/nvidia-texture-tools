@@ -1,7 +1,7 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
+#pragma once
 
 #include "Vector.h" // Vector3, Vector4
-
 
 #if NV_USE_ALTIVEC
 #   include "SimdVector_VE.h"
