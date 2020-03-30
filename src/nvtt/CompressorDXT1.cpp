@@ -1048,77 +1048,79 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
         compress_dxt1_cluster_fit(input_colors, colors, weights, count, color_weights, three_color_mode, &cluster_fit_output);
 
         float cluster_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &cluster_fit_output);
-        
+
         if (cluster_fit_error < error) {
             *output = cluster_fit_output;
             error = cluster_fit_error;
+        }
 
-            /*if (hq && cluster_fit_output.isFourColorMode()) {
-                
-                // Refine color for the selected indices.
-                Vector3 c0, c1;
-                if (optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
-                    BlockDXT1 box_fit_output;
-                    output_block4(input_colors, color_weights, c0, c1, &box_fit_output);
+        if (hq) {
+            // TODO:
+            // - Optimize palette evaluation when updating only one channel.
+            // - try all diagonals.
 
-                    float box_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &box_fit_output);
-                    if (box_fit_error < error) {
-                        error = box_fit_error;
-                        *output = box_fit_output;
-                    }
-                }
-            }*/
+            // Things that don't help:
+            // - Alternate endpoint updates.
+            // - Randomize order.
+            // - If one direction does not improve, test opposite direction next.
 
-            if (hq) {
-                int8 deltas[16][3] = {
-                    {1,0,0},
-                    {0,1,0},
-                    {0,0,1},
+            static const int8 deltas[16][3] = {
+                {1,0,0},
+                {0,1,0},
+                {0,0,1},
 
-                    {-1,0,0},
-                    {0,-1,0},
-                    {0,0,-1},
+                {-1,0,0},
+                {0,-1,0},
+                {0,0,-1},
 
-                    {1,1,0},
-                    {1,0,1},
-                    {0,1,1},
+                {1,1,0},
+                {1,0,1},
+                {0,1,1},
 
-                    {-1,-1,0},
-                    {-1,0,-1},
-                    {0,-1,-1},
+                {-1,-1,0},
+                {-1,0,-1},
+                {0,-1,-1},
 
-                    {-1,1,0},
-                    //{-1,0,1},
+                {-1,1,0},
+                //{-1,0,1},
 
-                    {1,-1,0},
-                    {0,-1,1},
+                {1,-1,0},
+                {0,-1,1},
 
-                    //{1,0,-1},
-                    {0,1,-1},
-                };
+                //{1,0,-1},
+                {0,1,-1},
+            };
 
+            int lastImprovement = 0;
+            for (int i = 0; i < 256; i++) {
                 BlockDXT1 refined = *output;
-                for (int i = 0; i < 10000; i++) {
-                    int rnd = i * 2654435761;
-                    int8 delta[3] = { deltas[rnd % 16][0], deltas[rnd % 16][1], deltas[rnd % 16][2] };
+                int8 delta[3] = { deltas[i % 16][0], deltas[i % 16][1], deltas[i % 16][2] };
 
-                    if ((rnd / 16) & 1) {
-                        refined.col0.r += delta[0];
-                        refined.col0.g += delta[1];
-                        refined.col0.b += delta[2];
-                    }
-                    else {
-                        refined.col1.r += delta[0];
-                        refined.col1.g += delta[1];
-                        refined.col1.b += delta[2];
-                    }
-
-                    float refined_error = evaluate_mse(input_colors, input_weights, color_weights, &refined);
-                    if (refined_error < error) {
-                        *output = refined;
-                        error = refined_error;
-                    }
+                if ((i / 16) & 1) {
+                    refined.col0.r += delta[0];
+                    refined.col0.g += delta[1];
+                    refined.col0.b += delta[2];
                 }
+                else {
+                    refined.col1.r += delta[0];
+                    refined.col1.g += delta[1];
+                    refined.col1.b += delta[2];
+                }
+
+                Vector3 palette[4];
+                evaluate_palette(output->col0, output->col1, palette);
+
+                refined.indices = compute_indices(input_colors, color_weights, palette);
+
+                float refined_error = evaluate_mse(input_colors, input_weights, color_weights, &refined);
+                if (refined_error < error) {
+                    *output = refined;
+                    error = refined_error;
+                    lastImprovement = i;
+                }
+
+                // Early out if the last 32 steps didn't improve error.
+                if (i - lastImprovement > 32) break;
             }
         }
     }
