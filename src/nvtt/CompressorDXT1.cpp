@@ -52,6 +52,7 @@ static const float midpoints6[64] = {
 }*/
 
 static Color16 vector3_to_color16(const Vector3 & v) {
+
     // Truncate.
     uint r = ftoi_trunc(clamp(v.x * 31.0f, 0.0f, 31.0f));
 	uint g = ftoi_trunc(clamp(v.y * 63.0f, 0.0f, 63.0f));
@@ -64,6 +65,7 @@ static Color16 vector3_to_color16(const Vector3 & v) {
 
     return Color16((r << 11) | (g << 5) | b);
 }
+
 
 
 static Color32 bitexpand_color16_to_color32(Color16 c16) {
@@ -80,36 +82,9 @@ static Color32 bitexpand_color16_to_color32(Color16 c16) {
     return c32;
 }
 
-/*static Color32 bitexpand_color16_to_color32(int r, int g, int b) {
-    Color32 c32;
-    c32.b = (b << 3) | (b >> 2);
-    c32.g = (g << 2) | (g >> 4);
-    c32.r = (r << 3) | (r >> 2);
-    c32.a = 0xFF;
-    return c32;
-}*/
-
-static Color16 truncate_color32_to_color16(Color32 c32) {
-    Color16 c16;
-    c16.b = (c32.b >> 3);
-    c16.g = (c32.g >> 2);
-    c16.r = (c32.r >> 3);
-    return c16;
-}
-
-/*inline Vector3 r5g6b5_to_vector3(int r, int g, int b)
-{
-    Vector3 c;
-    c.x = float((r << 3) | (r >> 2));
-    c.y = float((g << 2) | (g >> 4));
-    c.z = float((b << 3) | (b >> 2));
-    return c;
-}*/
-
 inline Vector3 color_to_vector3(Color32 c)
 {
-    const float scale = 1.0f / 255.0f;
-    return Vector3(c.r * scale, c.g * scale, c.b * scale);
+    return Vector3(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f);
 }
 
 inline Color32 vector3_to_color(Vector3 v)
@@ -126,17 +101,17 @@ inline Color32 vector3_to_color(Vector3 v)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Input block processing.
 
-inline static void color_block_to_vector_block(const ColorBlock & rgba, Vector3 block[16])
+/*inline static void color_block_to_vector_block(const ColorBlock & rgba, Vector3 block[16])
 {
 	for (int i = 0; i < 16; i++)
 	{
 		const Color32 c = rgba.color(i);
 		block[i] = Vector3(c.r, c.g, c.b);
 	}
-}
+}*/
 
 // Find first valid color.
-static bool find_valid_color_rgb(const Vector3 * colors, const float * weights, int count, Vector3 * valid_color)
+/*static bool find_valid_color_rgb(const Vector3 * colors, const float * weights, int count, Vector3 * valid_color)
 {
     for (int i = 0; i < count; i++) {
         if (weights[i] > 0.0f) {
@@ -147,9 +122,9 @@ static bool find_valid_color_rgb(const Vector3 * colors, const float * weights, 
 
     // No valid colors.
     return false;
-}
+}*/
 
-static bool is_single_color_rgb(const Vector3 * colors, const float * weights, int count, Vector3 color)
+/*static bool is_single_color_rgb(const Vector3 * colors, const float * weights, int count, Vector3 color)
 {
     for (int i = 0; i < count; i++) {
         if (weights[i] > 0.0f) {
@@ -158,7 +133,7 @@ static bool is_single_color_rgb(const Vector3 * colors, const float * weights, i
     }
 
     return true;
-}
+}*/
 
 // Find similar colors and combine them together.
 static int reduce_colors(const Vector4 * input_colors, const float * input_weights, Vector3 * colors, float * weights)
@@ -193,22 +168,55 @@ static int reduce_colors(const Vector4 * input_colors, const float * input_weigh
     return n;
 }
 
+static int reduce_colors(const uint8 * input_colors, Vector3 * colors, float * weights)
+{
+    int n = 0;
+    for (int i = 0; i < 16; i++)
+    {
+        Vector3 ci;
+        ci.x = float(input_colors[4 * i + 0]);
+        ci.y = float(input_colors[4 * i + 1]);
+        ci.z = float(input_colors[4 * i + 2]);
+
+        // Find matching color.
+        int j;
+        for (j = 0; j < n; j++) {
+            if (equal(colors[j].x, ci.x) && equal(colors[j].y, ci.y) && equal(colors[j].z, ci.z)) {
+                weights[j] += 1.0f;
+                break;
+            }
+        }
+
+        // No match found. Add new color.
+        if (j == n) {
+            colors[n] = ci;
+            weights[n] = 1.0f;
+            n++;
+        }
+    }
+
+    nvDebugCheck(n <= 16);
+
+    return n;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Error evaluation.
 
 // Different ways of estimating the error.
-/*static float evaluate_mse(const Vector3 & p, const Vector3 & c) {
-    //return (square(p.x-c.x) * w2.x + square(p.y-c.y) * w2.y + square(p.z-c.z) * w2.z);
-    Vector3 d = (p - c);
-    return dot(d, d);
-}*/
 
 static float evaluate_mse(const Vector3 & p, const Vector3 & c, const Vector3 & w) {
-    //return (square(p.x-c.x) * w2.x + square(p.y-c.y) * w2.y + square(p.z-c.z) * w2.z);
-    Vector3 d = (p - c) * w;
+    Vector3 d = (p * 255 - c * 255) * w;
     return dot(d, d);
 }
+
+static float evaluate_mse(const Color32 & p, const Vector3 & c, const Vector3 & w) {
+    Vector3 d = (Vector3(p.r, p.g, p.b) - c * 255) * w;
+    return dot(d, d);
+}
+
 
 /*static float evaluate_mse(const Vector3 & p, const Vector3 & c, const Vector3 & w) {
     return ww.x * square(p.x-c.x) + ww.y * square(p.y-c.y) + ww.z * square(p.z-c.z);
@@ -237,7 +245,8 @@ static int evaluate_mse(const Color32 palette[4], const Color32 & c) {
 // Returns MSE error in [0-255] range.
 static int evaluate_mse(const BlockDXT1 * output, Color32 color, int index) {
     Color32 palette[4];
-    output->evaluatePalette(palette, /*d3d9=*/false);
+    //output->evaluatePalette(palette, /*d3d9=*/false);
+    output->evaluatePaletteNV5x(palette);
 
     return evaluate_mse(palette[index], color);
 }
@@ -248,6 +257,16 @@ static float evaluate_palette_error(Color32 palette[4], const Color32 * colors, 
     float total = 0.0f;
     for (int i = 0; i < count; i++) {
         total += weights[i] * evaluate_mse(palette, colors[i]);
+    }
+
+    return total;
+}
+
+static float evaluate_palette_error(Color32 palette[4], const Color32 * colors, int count) {
+
+    float total = 0.0f;
+    for (int i = 0; i < count; i++) {
+        total += evaluate_mse(palette, colors[i]);
     }
 
     return total;
@@ -278,18 +297,38 @@ static float evaluate_mse(const BlockDXT1 * output, const Vector3 colors[16]) {
 static float evaluate_mse(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, const BlockDXT1 * output) {
     Color32 palette[4];
     output->evaluatePalette(palette, /*d3d9=*/false);
+    //output->evaluatePaletteNV5x(palette);
 
     // convert palette to float.
-    Vector3 vector_palette[4];
+    /*Vector3 vector_palette[4];
     for (int i = 0; i < 4; i++) {
         vector_palette[i] = color_to_vector3(palette[i]);
-    }
+    }*/
 
     // evaluate error for each index.
     float error = 0.0f;
     for (int i = 0; i < 16; i++) {
         int index = (output->indices >> (2 * i)) & 3;
-        error += input_weights[i] * evaluate_mse(vector_palette[index], input_colors[i].xyz(), color_weights);
+        error += input_weights[i] * evaluate_mse(palette[index], input_colors[i].xyz(), color_weights);
+    }
+    return error;
+}
+
+float nv::evaluate_dxt1_error(const uint8 rgba_block[16*4], const BlockDXT1 * block, int decoder) {
+    Color32 palette[4];
+    if (decoder == 2) {
+        block->evaluatePaletteNV5x(palette);
+    }
+    else {
+        block->evaluatePalette(palette, /*d3d9=*/decoder);
+    }
+
+    // evaluate error for each index.
+    float error = 0.0f;
+    for (int i = 0; i < 16; i++) {
+        int index = (block->indices >> (2 * i)) & 3;
+        Color32 c(rgba_block[4 * i + 0], rgba_block[4 * i + 1], rgba_block[4 * i + 2]);
+        error += evaluate_mse(palette[index], c);
     }
     return error;
 }
@@ -299,19 +338,45 @@ static float evaluate_mse(const Vector4 input_colors[16], const float input_weig
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Palette evaluation.
 
-static void evaluate_palette4(Color32 palette[4]) {
+#define DECODER 0
+
+inline void evaluate_palette4(Color16 c0, Color16 c1, Color32 palette[4]) {
+#if DECODER == 0
     palette[2].r = (2 * palette[0].r + palette[1].r) / 3;
     palette[2].g = (2 * palette[0].g + palette[1].g) / 3;
     palette[2].b = (2 * palette[0].b + palette[1].b) / 3;
     palette[3].r = (2 * palette[1].r + palette[0].r) / 3;
     palette[3].g = (2 * palette[1].g + palette[0].g) / 3;
     palette[3].b = (2 * palette[1].b + palette[0].b) / 3;
+#elif DECODER == 1
+    palette[2].r = (2 * palette[0].r + palette[1].r + 1) / 3;
+    palette[2].g = (2 * palette[0].g + palette[1].g + 1) / 3;
+    palette[2].b = (2 * palette[0].b + palette[1].b + 1) / 3;
+    palette[3].r = (2 * palette[1].r + palette[0].r + 1) / 3;
+    palette[3].g = (2 * palette[1].g + palette[0].g + 1) / 3;
+    palette[3].b = (2 * palette[1].b + palette[0].b + 1) / 3;
+#else
+    int dg = palette[1].g - palette[0].g;
+    palette[2].r = ((2 * c0.r + c1.r) * 22) / 8;
+    palette[2].g = (256 * palette[0].g + dg * 80 + dg / 4 + 128) / 256;
+    palette[2].b = ((2 * c0.b + c1.b) * 22) / 8;
+    palette[3].r = ((2 * c1.r + c0.r) * 22) / 8;
+    palette[3].g = (256 * palette[1].g - dg * 80 - dg / 4 + 128) / 256;
+    palette[3].b = ((2 * c1.b + c0.b) * 22) / 8;
+#endif
 }
 
-static void evaluate_palette3(Color32 palette[4]) {
+inline void evaluate_palette3(Color16 c0, Color16 c1, Color32 palette[4]) {
+#if DECODER == 0 || DECODER == 1
     palette[2].r = (palette[0].r + palette[1].r) / 2;
     palette[2].g = (palette[0].g + palette[1].g) / 2;
     palette[2].b = (palette[0].b + palette[1].b) / 2;
+#else
+    int dg = palette[1].g - palette[0].g;
+    palette[2].r = ((c0.r + c1.r) * 33) / 8;
+    palette[2].g = (256 * palette[0].g + dg * 128 + dg / 4 + 128) / 256;
+    palette[2].b = ((c0.b + c1.b) * 33) / 8;
+#endif
     palette[3].r = 0;
     palette[3].g = 0;
     palette[3].b = 0;
@@ -321,10 +386,10 @@ static void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4]) {
     palette[0] = bitexpand_color16_to_color32(c0);
     palette[1] = bitexpand_color16_to_color32(c1);
     if (c0.u > c1.u) {
-        evaluate_palette4(palette);
+        evaluate_palette4(c0, c1, palette);
     }
     else {
-        evaluate_palette3(palette);
+        evaluate_palette3(c0, c1, palette);
     }
 }
 
@@ -360,6 +425,32 @@ static uint compute_indices4(const Vector4 input_colors[16], const Vector3 & col
         float d1 = evaluate_mse(palette[1], input_colors[i].xyz(), color_weights);
         float d2 = evaluate_mse(palette[2], input_colors[i].xyz(), color_weights);
         float d3 = evaluate_mse(palette[3], input_colors[i].xyz(), color_weights);
+
+        uint b0 = d0 > d3;
+        uint b1 = d1 > d2;
+        uint b2 = d0 > d2;
+        uint b3 = d1 > d3;
+        uint b4 = d2 > d3;
+
+        uint x0 = b1 & b2;
+        uint x1 = b0 & b3;
+        uint x2 = b0 & b4;
+
+        indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
+    }
+
+    return indices;
+}
+
+
+static uint compute_indices4(const Vector3 input_colors[16], const Vector3 palette[4]) {
+
+    uint indices = 0;
+    for (int i = 0; i < 16; i++) {
+        float d0 = evaluate_mse(palette[0], input_colors[i], Vector3(1));
+        float d1 = evaluate_mse(palette[1], input_colors[i], Vector3(1));
+        float d2 = evaluate_mse(palette[2], input_colors[i], Vector3(1));
+        float d3 = evaluate_mse(palette[3], input_colors[i], Vector3(1));
 
         uint b0 = d0 > d3;
         uint b1 = d1 > d2;
@@ -435,7 +526,186 @@ static void output_block4(const Vector4 input_colors[16], const Vector3 & color_
 }
 
 
+static void output_block4(const Vector3 input_colors[16], const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
+{
+    Color16 color0 = vector3_to_color16(v0);
+    Color16 color1 = vector3_to_color16(v1);
 
+    if (color0.u < color1.u) {
+        swap(color0, color1);
+    }
+
+    Vector3 palette[4];
+    evaluate_palette(color0, color1, palette);
+
+    block->col0 = color0;
+    block->col1 = color1;
+    block->indices = compute_indices4(input_colors, palette);
+}
+
+// Least squares fitting of color end points for the given indices. @@ Take weights into account.
+static bool optimize_end_points4(uint indices, const Vector4 * colors, /*const float * weights,*/ int count, Vector3 * a, Vector3 * b)
+{
+    float alpha2_sum = 0.0f;
+    float beta2_sum = 0.0f;
+    float alphabeta_sum = 0.0f;
+    Vector3 alphax_sum(0.0f);
+    Vector3 betax_sum(0.0f);
+
+    for (int i = 0; i < count; i++)
+    {
+        const uint bits = indices >> (2 * i);
+
+        float beta = float(bits & 1);
+        if (bits & 2) beta = (1 + beta) / 3.0f;
+        float alpha = 1.0f - beta;
+
+        alpha2_sum += alpha * alpha;
+        beta2_sum += beta * beta;
+        alphabeta_sum += alpha * beta;
+        alphax_sum += alpha * colors[i].xyz();
+        betax_sum += beta * colors[i].xyz();
+    }
+
+    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
+    if (equal(denom, 0.0f)) return false;
+
+    float factor = 1.0f / denom;
+
+    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
+    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
+
+    return true;
+}
+
+static bool optimize_end_points4(uint indices, const Vector3 * colors, int count, Vector3 * a, Vector3 * b)
+{
+    float alpha2_sum = 0.0f;
+    float beta2_sum = 0.0f;
+    float alphabeta_sum = 0.0f;
+    Vector3 alphax_sum(0.0f);
+    Vector3 betax_sum(0.0f);
+
+    for (int i = 0; i < count; i++)
+    {
+        const uint bits = indices >> (2 * i);
+
+        float beta = float(bits & 1);
+        if (bits & 2) beta = (1 + beta) / 3.0f;
+        float alpha = 1.0f - beta;
+
+        alpha2_sum += alpha * alpha;
+        beta2_sum += beta * beta;
+        alphabeta_sum += alpha * beta;
+        alphax_sum += alpha * colors[i];
+        betax_sum += beta * colors[i];
+    }
+
+    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
+    if (equal(denom, 0.0f)) return false;
+
+    float factor = 1.0f / denom;
+
+    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
+    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
+
+    return true;
+}
+
+
+// Least squares fitting of color end points for the given indices. @@ This does not support black/transparent index. @@ Take weights into account.
+static bool optimize_end_points3(uint indices, const Vector3 * colors, /*const float * weights,*/ int count, Vector3 * a, Vector3 * b)
+{
+    float alpha2_sum = 0.0f;
+    float beta2_sum = 0.0f;
+    float alphabeta_sum = 0.0f;
+    Vector3 alphax_sum(0.0f);
+    Vector3 betax_sum(0.0f);
+
+    for (int i = 0; i < count; i++)
+    {
+        const uint bits = indices >> (2 * i);
+
+        float beta = float(bits & 1);
+        if (bits & 2) beta = 0.5f;
+        float alpha = 1.0f - beta;
+
+        alpha2_sum += alpha * alpha;
+        beta2_sum += beta * beta;
+        alphabeta_sum += alpha * beta;
+        alphax_sum += alpha * colors[i];
+        betax_sum += beta * colors[i];
+    }
+
+    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
+    if (equal(denom, 0.0f)) return false;
+
+    float factor = 1.0f / denom;
+
+    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
+    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
+
+    return true;
+}
+
+// @@ After optimization we need to round end points. Round in all possible directions, and pick best.
+
+
+
+// find minimum and maximum colors based on bounding box in color space
+inline static void fit_colors_bbox(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
+{
+    *c0 = Vector3(0);
+    *c1 = Vector3(1);
+
+    for (int i = 0; i < count; i++) {
+        *c0 = max(*c0, colors[i]);
+        *c1 = min(*c1, colors[i]);
+    }
+}
+
+inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
+{
+    Vector3 center = (*c0 + *c1) * 0.5f;
+
+    /*Vector3 center = colors[0];
+    for (int i = 1; i < count; i++) {
+        center = center * float(i-1) / i + colors[i] / i;
+    }*/
+    /*Vector3 center = colors[0];
+    for (int i = 1; i < count; i++) {
+        center += colors[i];
+    }
+    center /= count;*/
+
+    Vector2 covariance = Vector2(0);
+    for (int i = 0; i < count; i++) {
+        Vector3 t = colors[i] - center;
+        covariance += t.xy() * t.z;
+    }
+
+    float x0 = c0->x;
+    float y0 = c0->y;
+    float x1 = c1->x;
+    float y1 = c1->y;
+
+    if (covariance.x < 0) {
+        swap(x0, x1);
+    }
+    if (covariance.y < 0) {
+        swap(y0, y1);
+    }
+
+    c0->set(x0, y0, c0->z);
+    c1->set(x1, y1, c1->z);
+}
+
+inline static void inset_bbox(Vector3 * restrict c0, Vector3 * restrict c1)
+{
+    Vector3 inset = (*c0 - *c1) / 16.0f - (8.0f / 255.0f) / 16.0f;
+    *c0 = saturate(*c0 - inset);
+    *c1 = saturate(*c1 + inset);
+}
 
 
 // Single color compressor, based on:
@@ -503,16 +773,6 @@ float nv::compress_dxt1_single_color(const Vector3 * colors, const float * weigh
     }
     return error;
 }
-
-
-/* @@ Not implemented yet.
-// Low quality baseline compressor.
-float nv::compress_dxt1_least_squares_fit(const Vector3 * input_colors, const Vector3 * colors, const float * weights, int count, BlockDXT1 * output)
-{
-    // @@ Iterative best end point fit.
-
-    return FLT_MAX;
-}*/
 
 
 float nv::compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, int max_volume, BlockDXT1 * output)
@@ -583,12 +843,12 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], 
 
             if (c0.u > c1.u) {
                 // Evaluate error in 4 color mode.
-                evaluate_palette4(palette);
+                evaluate_palette4(c0, c1, palette);
             }
             else {
                 if (three_color_mode) {
                     // Evaluate error in 3 color mode.
-                    evaluate_palette3(palette);
+                    evaluate_palette3(c0, c1, palette);
                 }
                 else {
                     // Skip 3 color mode.
@@ -637,9 +897,65 @@ void nv::compress_dxt1_cluster_fit(const Vector4 input_colors[16], const Vector3
 }
 
 
+/*static unsigned int stb__MatchColorsBlock(uint8 *block, uint8 *color)
+{
+    uint mask = 0;
+    int dir[3];
+    dir[0] = color[0 * 4 + 0] - color[1 * 4 + 0];
+    dir[1] = color[0 * 4 + 1] - color[1 * 4 + 1];
+    dir[2] = color[0 * 4 + 2] - color[1 * 4 + 2];
+    int dots[16];
+    int stops[4];
+    int i;
+
+    for (i = 0;i < 16;i++)
+        dots[i] = block[i * 4 + 0] * dir[0] + block[i * 4 + 1] * dir[1] + block[i * 4 + 2] * dir[2];
+
+    for (i = 0;i < 4;i++)
+        stops[i] = color[i * 4 + 0] * dir[0] + color[i * 4 + 1] * dir[1] + color[i * 4 + 2] * dir[2];
+
+    // think of the colors as arranged on a line; project point onto that line, then choose
+    // next color out of available ones. we compute the crossover points for "best color in top
+    // half"/"best in bottom half" and then the same inside that subinterval.
+    //
+    // relying on this 1d approximation isn't always optimal in terms of euclidean distance,
+    // but it's very close and a lot faster.
+    // http://cbloomrants.blogspot.com/2008/12/12-08-08-dxtc-summary.html
+
+    int c0Point = (stops[1] + stops[3]);
+    int halfPoint = (stops[3] + stops[2]);
+    int c3Point = (stops[2] + stops[0]);
+
+    for (i = 15;i >= 0;i--) {
+        int dot = 2 * dots[i];
+        mask <<= 2;
+
+        uint sel;
+        if (dot < halfPoint)
+            sel = (dot < c0Point) ? 1 : 3;
+        else
+            sel = (dot < c3Point) ? 2 : 0;
+
+        mask |= sel;
+    }
+
+    return mask;
+}*/
 
 
-float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool three_color_mode, BlockDXT1 * output)
+inline uint32 mod3(uint32 a) {
+    a = (a >> 16) + (a & 0xFFFF);   /* sum base 2**16 digits    a <= 0x1FFFE */
+    a = (a >> 8) + (a & 0xFF);      /* sum base 2**8 digits     a <= 0x2FD */
+    a = (a >> 4) + (a & 0xF);       /* sum base 2**4 digits     a <= 0x3C; worst case 0x3B */
+    a = (a >> 2) + (a & 0x3);       /* sum base 2**2 digits     a <= 0x1D; worst case 0x1B */
+    a = (a >> 2) + (a & 0x3);       /* sum base 2**2 digits     a <= 0x9; worst case 0x7 */
+    a = (a >> 2) + (a & 0x3);       /* sum base 2**2 digits     a <= 0x4 */
+    if (a > 2) a = a - 3;
+    return a;
+}
+
+
+float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool three_color_mode, bool hq, BlockDXT1 * output)
 {
     Vector3 colors[16];
     float weights[16];
@@ -658,7 +974,7 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
 
     // Sometimes the single color compressor produces better results than the exhaustive. This introduces discontinuities between blocks that
     // use different compressors. For this reason, this is not enabled by default.
-    if (1) {
+    if (0) {
         error = compress_dxt1_single_color(colors, weights, count, color_weights, output);
 
         if (error == 0.0f || count == 1) {
@@ -686,16 +1002,48 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
         }
     }
 
-    // @@ TODO.
-    // This is pretty fast and in some cases can produces better quality than cluster fit.
-    //error = compress_dxt1_least_squares_fit(colors, weigths, error, output);
-
     // Cluster fit cannot handle single color blocks, so encode them optimally if we haven't encoded them already.
     if (error == FLT_MAX && count == 1) {
         error = compress_dxt1_single_color_optimal(colors[0], output);
     }
 
     if (count > 1) {
+        // Fast box fit encoding:
+        {
+            BlockDXT1 box_fit_output;
+
+            Vector3 colors[16];
+            for (int i = 0; i < 16; i++) {
+                colors[i] = input_colors[i].xyz();
+            }
+            int count = 16;
+
+            // Quick end point selection.
+            Vector3 c0, c1;
+            fit_colors_bbox(colors, count, &c0, &c1);
+            inset_bbox(&c0, &c1);
+            select_diagonal(colors, count, &c0, &c1);
+            output_block4(input_colors, color_weights, c0, c1, &box_fit_output);
+
+            float box_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &box_fit_output);
+            if (box_fit_error < error) {
+                error = box_fit_error;
+                *output = box_fit_output;
+
+                // Refine color for the selected indices.
+                if (optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
+                    output_block4(input_colors, color_weights, c0, c1, &box_fit_output);
+
+                    box_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &box_fit_output);
+                    if (box_fit_error < error) {
+                        error = box_fit_error;
+                        *output = box_fit_output;
+                    }
+                }
+            }
+        }
+
+        // Try cluster fit.
         BlockDXT1 cluster_fit_output;
         compress_dxt1_cluster_fit(input_colors, colors, weights, count, color_weights, three_color_mode, &cluster_fit_output);
 
@@ -704,6 +1052,74 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
         if (cluster_fit_error < error) {
             *output = cluster_fit_output;
             error = cluster_fit_error;
+
+            /*if (hq && cluster_fit_output.isFourColorMode()) {
+                
+                // Refine color for the selected indices.
+                Vector3 c0, c1;
+                if (optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
+                    BlockDXT1 box_fit_output;
+                    output_block4(input_colors, color_weights, c0, c1, &box_fit_output);
+
+                    float box_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &box_fit_output);
+                    if (box_fit_error < error) {
+                        error = box_fit_error;
+                        *output = box_fit_output;
+                    }
+                }
+            }*/
+
+            if (hq) {
+                int8 deltas[16][3] = {
+                    {1,0,0},
+                    {0,1,0},
+                    {0,0,1},
+
+                    {-1,0,0},
+                    {0,-1,0},
+                    {0,0,-1},
+
+                    {1,1,0},
+                    {1,0,1},
+                    {0,1,1},
+
+                    {-1,-1,0},
+                    {-1,0,-1},
+                    {0,-1,-1},
+
+                    {-1,1,0},
+                    //{-1,0,1},
+
+                    {1,-1,0},
+                    {0,-1,1},
+
+                    //{1,0,-1},
+                    {0,1,-1},
+                };
+
+                BlockDXT1 refined = *output;
+                for (int i = 0; i < 10000; i++) {
+                    int rnd = i * 2654435761;
+                    int8 delta[3] = { deltas[rnd % 16][0], deltas[rnd % 16][1], deltas[rnd % 16][2] };
+
+                    if ((rnd / 16) & 1) {
+                        refined.col0.r += delta[0];
+                        refined.col0.g += delta[1];
+                        refined.col0.b += delta[2];
+                    }
+                    else {
+                        refined.col1.r += delta[0];
+                        refined.col1.g += delta[1];
+                        refined.col1.b += delta[2];
+                    }
+
+                    float refined_error = evaluate_mse(input_colors, input_weights, color_weights, &refined);
+                    if (refined_error < error) {
+                        *output = refined;
+                        error = refined_error;
+                    }
+                }
+            }
         }
     }
 
@@ -720,156 +1136,32 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
 // @@ How do we do the initial index/cluster assignment? Use standard cluster fit.
 
 
-// Least squares fitting of color end points for the given indices. @@ Take weights into account.
-static bool optimize_end_points4(uint indices, const Vector4 * colors, /*const float * weights,*/ int count, Vector3 * a, Vector3 * b)
-{
-    float alpha2_sum = 0.0f;
-    float beta2_sum = 0.0f;
-    float alphabeta_sum = 0.0f;
-    Vector3 alphax_sum(0.0f);
-    Vector3 betax_sum(0.0f);
-
-    for (int i = 0; i < count; i++)
-    {
-        const uint bits = indices >> (2 * i);
-
-        float beta = float(bits & 1);
-        if (bits & 2) beta = (1 + beta) / 3.0f;
-        float alpha = 1.0f - beta;
-
-        alpha2_sum += alpha * alpha;
-        beta2_sum += beta * beta;
-        alphabeta_sum += alpha * beta;
-        alphax_sum += alpha * colors[i].xyz();
-        betax_sum += beta * colors[i].xyz();
-    }
-
-    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
-    if (equal(denom, 0.0f)) return false;
-
-    float factor = 1.0f / denom;
-
-    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
-    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
-
-    return true;
-}
-
-
-// Least squares fitting of color end points for the given indices. @@ This does not support black/transparent index. @@ Take weights into account.
-static bool optimize_end_points3(uint indices, const Vector3 * colors, /*const float * weights,*/ int count, Vector3 * a, Vector3 * b)
-{
-    float alpha2_sum = 0.0f;
-    float beta2_sum = 0.0f;
-    float alphabeta_sum = 0.0f;
-    Vector3 alphax_sum(0.0f);
-    Vector3 betax_sum(0.0f);
-
-    for (int i = 0; i < count; i++)
-    {
-        const uint bits = indices >> (2 * i);
-
-        float beta = float(bits & 1);
-        if (bits & 2) beta = 0.5f;
-        float alpha = 1.0f - beta;
-
-        alpha2_sum += alpha * alpha;
-        beta2_sum += beta * beta;
-        alphabeta_sum += alpha * beta;
-        alphax_sum += alpha * colors[i];
-        betax_sum += beta * colors[i];
-    }
-
-    float denom = alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum;
-    if (equal(denom, 0.0f)) return false;
-
-    float factor = 1.0f / denom;
-
-    *a = saturate((alphax_sum * beta2_sum - betax_sum * alphabeta_sum) * factor);
-    *b = saturate((betax_sum * alpha2_sum - alphax_sum * alphabeta_sum) * factor);
-
-    return true;
-}
-
-// @@ After optimization we need to round end points. Round in all possible directions, and pick best.
-
-
-
-// find minimum and maximum colors based on bounding box in color space
-inline static void fit_colors_bbox(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
-{
-    *c0 = Vector3(0);
-    *c1 = Vector3(255);
-
-    for (int i = 0; i < count; i++) {
-        *c0 = max(*c0, colors[i]);
-        *c1 = min(*c1, colors[i]);
-    }
-}
-
-inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
-{
-    Vector3 center = (*c0 + *c1) * 0.5f;
-
-    Vector2 covariance = Vector2(0);
-    for (int i = 0; i < count; i++) {
-        Vector3 t = colors[i] - center;
-        covariance += t.xy() * t.z;
-    }
-
-    float x0 = c0->x;
-    float y0 = c0->y;
-    float x1 = c1->x;
-    float y1 = c1->y;
-
-    if (covariance.x < 0) {
-        swap(x0, x1);
-    }
-    if (covariance.y < 0) {
-        swap(y0, y1);
-    }
-
-    c0->set(x0, y0, c0->z);
-    c1->set(x1, y1, c1->z);
-}
-
-inline static void inset_bbox(Vector3 * restrict c0, Vector3 * restrict c1)
-{
-    Vector3 inset = (*c0 - *c1) / 16.0f - (8.0f / 255.0f) / 16.0f;
-    *c0 = clamp(*c0 - inset, 0.0f, 255.0f);
-    *c1 = clamp(*c1 + inset, 0.0f, 255.0f);
-}
-
-
 
 float nv::compress_dxt1_fast(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, BlockDXT1 * output)
 {
     Vector3 colors[16];
-    float weights[16];
-    int count = reduce_colors(input_colors, input_weights, colors, weights);
-
-    if (count == 0) {
-        // Output trivial block.
-        output->col0.u = 0;
-        output->col1.u = 0;
-        output->indices = 0;
-        return 0;
+    for (int i = 0; i < 16; i++) {
+        colors[i] = input_colors[i].xyz();
     }
+    int count = 16;
 
-
-    float error = FLT_MAX;
-    error = compress_dxt1_single_color(colors, weights, count, color_weights, output);
+    /*float error = FLT_MAX;
+    error = compress_dxt1_single_color(colors, input_weights, count, color_weights, output);
 
     if (error == 0.0f || count == 1) {
         // Early out.
         return error;
-    }
+    }*/
 
     // Quick end point selection.
     Vector3 c0, c1;
     fit_colors_bbox(colors, count, &c0, &c1);
-    select_diagonal(colors, count, &c0, &c1);
+    if (c0 == c1) {
+        ::compress_dxt1_single_color_optimal(vector3_to_color(c0), output);
+        return evaluate_mse(input_colors, input_weights, color_weights, output);
+    }
     inset_bbox(&c0, &c1);
+    select_diagonal(colors, count, &c0, &c1);
     output_block4(input_colors, color_weights, c0, c1, output);
 
     // Refine color for the selected indices.
@@ -881,4 +1173,352 @@ float nv::compress_dxt1_fast(const Vector4 input_colors[16], const float input_w
 }
 
 
+void nv::compress_dxt1_fast2(const uint8 input_colors[16*4], BlockDXT1 * output) {
+    /*Vector3 colors[16];
+    float weights[16];
+    int count = reduce_colors(input_colors, colors, weights);
 
+    if (count == 0) {
+        // Output trivial block.
+        output->col0.u = 0;
+        output->col1.u = 0;
+        output->indices = 0;
+        return;
+    }
+
+
+    float error = FLT_MAX;
+    error = compress_dxt1_single_color(colors, weights, count, Vector3(1.0f), output);
+
+    if (error == 0.0f || count == 1) {
+        // Early out.
+        return;
+    }*/
+
+    Vector3 vec_colors[16];
+    for (int i = 0; i < 16; i++) {
+        vec_colors[i] = Vector3(input_colors[4 * i + 0] / 255.0f, input_colors[4 * i + 1] / 255.0f, input_colors[4 * i + 2] / 255.0f);
+    }
+
+    // Quick end point selection.
+    Vector3 c0, c1;
+    //fit_colors_bbox(colors, count, &c0, &c1);
+    //select_diagonal(colors, count, &c0, &c1);
+    fit_colors_bbox(vec_colors, 16, &c0, &c1);
+    if (c0 == c1) {
+        ::compress_dxt1_single_color_optimal(vector3_to_color(c0), output);
+        return;
+    }
+    inset_bbox(&c0, &c1);
+    select_diagonal(vec_colors, 16, &c0, &c1);
+    output_block4(vec_colors, c0, c1, output);
+
+    // Refine color for the selected indices.
+    if (optimize_end_points4(output->indices, vec_colors, 16, &c0, &c1)) {
+        output_block4(vec_colors, c0, c1, output);
+    }
+}
+
+
+static int Mul8Bit(int a, int b)
+{
+    int t = a * b + 128;
+    return (t + (t >> 8)) >> 8;
+}
+
+static bool compute_least_squares_endpoints(const uint8 *block, uint32 mask, Vector3 *pmax, Vector3 *pmin)
+{
+    static const int w1Tab[4] = { 3,0,2,1 };
+    static const int prods[4] = { 0x090000,0x000900,0x040102,0x010402 };
+    // ^some magic to save a lot of multiplies in the accumulating loop...
+    // (precomputed products of weights for least squares system, accumulated inside one 32-bit register)
+
+    int akku = 0;
+    int At1_r, At1_g, At1_b;
+    int At2_r, At2_g, At2_b;
+    unsigned int cm = mask;
+
+    if ((mask ^ (mask << 2)) < 4) // all pixels have the same index?
+    {
+        return false;
+    }
+    else {
+        At1_r = At1_g = At1_b = 0;
+        At2_r = At2_g = At2_b = 0;
+        for (int i = 0;i < 16;++i, cm >>= 2) {
+            int step = cm & 3;
+            int w1 = w1Tab[step];
+            int r = block[i * 4 + 0];
+            int g = block[i * 4 + 1];
+            int b = block[i * 4 + 2];
+
+            akku += prods[step];
+            At1_r += w1 * r;
+            At1_g += w1 * g;
+            At1_b += w1 * b;
+            At2_r += r;
+            At2_g += g;
+            At2_b += b;
+        }
+
+        At2_r = 3 * At2_r - At1_r;
+        At2_g = 3 * At2_g - At1_g;
+        At2_b = 3 * At2_b - At1_b;
+
+        // extract solutions and decide solvability
+        int xx = akku >> 16;
+        int yy = (akku >> 8) & 0xff;
+        int xy = (akku >> 0) & 0xff;
+
+        float f = 3.0f / 255.0f / (xx*yy - xy * xy);
+
+        // solve.
+        pmax->x = (At1_r*yy - At2_r * xy) * f;
+        pmax->y = (At1_r*yy - At2_r * xy) * f;
+        pmax->z = (At1_r*yy - At2_r * xy) * f;
+
+        pmin->x = (At2_r*xx - At1_r * xy) * f;
+        pmin->y = (At2_r*xx - At1_r * xy) * f;
+        pmin->z = (At2_r*xx - At1_r * xy) * f;
+
+        return true;
+    }
+}
+
+
+static uint32 bc1_find_sels(const uint8 *input_colors, uint32_t lr, uint32_t lg, uint32_t lb, uint32_t hr, uint32_t hg, uint32_t hb)
+{
+    uint32_t block_r[4], block_g[4], block_b[4];
+
+    block_r[0] = (lr << 3) | (lr >> 2); block_g[0] = (lg << 2) | (lg >> 4); block_b[0] = (lb << 3) | (lb >> 2);
+    block_r[3] = (hr << 3) | (hr >> 2); block_g[3] = (hg << 2) | (hg >> 4); block_b[3] = (hb << 3) | (hb >> 2);
+    block_r[1] = (block_r[0] * 2 + block_r[3]) / 3; block_g[1] = (block_g[0] * 2 + block_g[3]) / 3; block_b[1] = (block_b[0] * 2 + block_b[3]) / 3;
+    block_r[2] = (block_r[3] * 2 + block_r[0]) / 3; block_g[2] = (block_g[3] * 2 + block_g[0]) / 3; block_b[2] = (block_b[3] * 2 + block_b[0]) / 3;
+
+    int ar = block_r[3] - block_r[0], ag = block_g[3] - block_g[0], ab = block_b[3] - block_b[0];
+
+    int dots[4];
+    for (uint32_t i = 0; i < 4; i++)
+        dots[i] = (int)block_r[i] * ar + (int)block_g[i] * ag + (int)block_b[i] * ab;
+
+    int t0 = dots[0] + dots[1], t1 = dots[1] + dots[2], t2 = dots[2] + dots[3];
+
+    ar *= 2; ag *= 2; ab *= 2;
+
+    uint sels = 0;
+    for (uint32_t i = 0; i < 16; i++)
+    {
+        const int d = input_colors[4*i+0] * ar + input_colors[4*i+1] * ag + input_colors[4*i+2] * ab;
+        static const uint8_t s_sels[4] = { 3, 2, 1, 0 };
+
+        // Rounding matters here!
+        // d <= t0: <=, not <, to the later LS step "sees" a wider range of selectors. It matters for quality.
+        sels |= s_sels[(d <= t0) + (d < t1) + (d < t2)] << (2 * i);
+    }
+    return sels;
+}
+
+
+void nv::compress_dxt1_fast_geld(const uint8 input_colors[16 * 4], BlockDXT1 * block) {
+
+    int fr = input_colors[0];
+    int fg = input_colors[1];
+    int fb = input_colors[2];
+
+    int total_r = fr, total_g = fg, total_b = fb;
+    int max_r = fr, max_g = fg, max_b = fb;
+    int min_r = fr, min_g = fg, min_b = fb;
+    uint32 grayscale_flag = (fr == fg) && (fr == fb);
+    for (uint32 i = 1; i < 16; i++)
+    {
+        const int r = input_colors[4*i+0], g = input_colors[4 * i + 1], b = input_colors[4 * i + 2];
+        grayscale_flag &= ((r == g) && (r == b));
+        max_r = max(max_r, r); max_g = max(max_g, g); max_b = max(max_b, b);
+        min_r = min(min_r, r); min_g = min(min_g, g); min_b = min(min_b, b);
+        total_r += r; total_g += g; total_b += b;
+    }
+
+    int lr, lg, lb;
+    int hr, hg, hb;
+
+    if (grayscale_flag) {
+        // Grayscale blocks are a common enough case to specialize.
+        lr = lb = Mul8Bit(min_r, 31);
+        lg = Mul8Bit(min_r, 63);
+
+        hr = hb = Mul8Bit(max_r, 31);
+        hg = Mul8Bit(max_r, 63);
+    }
+    else {
+        int avg_r = (total_r + 8) >> 4, avg_g = (total_g + 8) >> 4, avg_b = (total_b + 8) >> 4;
+
+        // Find the shortest vector from a AABB corner to the block's average color.
+        // This is to help avoid outliers.
+
+        uint32_t dist[3][2];
+        dist[0][0] = square(min_r - avg_r) << 3; dist[0][1] = square(max_r - avg_r) << 3;
+        dist[1][0] = square(min_g - avg_g) << 3; dist[1][1] = square(max_g - avg_g) << 3;
+        dist[2][0] = square(min_b - avg_b) << 3; dist[2][1] = square(max_b - avg_b) << 3;
+
+        uint32_t min_d0 = (dist[0][0] + dist[1][0] + dist[2][0]);
+        uint32_t d4 = (dist[0][0] + dist[1][0] + dist[2][1]) | 4;
+        min_d0 = min(min_d0, d4);
+
+        uint32_t min_d1 = (dist[0][1] + dist[1][0] + dist[2][0]) | 1;
+        uint32_t d5 = (dist[0][1] + dist[1][0] + dist[2][1]) | 5;
+        min_d1 = min(min_d1, d5);
+
+        uint32_t d2 = (dist[0][0] + dist[1][1] + dist[2][0]) | 2;
+        min_d0 = min(min_d0, d2);
+
+        uint32_t d3 = (dist[0][1] + dist[1][1] + dist[2][0]) | 3;
+        min_d1 = min(min_d1, d3);
+
+        uint32_t d6 = (dist[0][0] + dist[1][1] + dist[2][1]) | 6;
+        min_d0 = min(min_d0, d6);
+
+        uint32_t d7 = (dist[0][1] + dist[1][1] + dist[2][1]) | 7;
+        min_d1 = min(min_d1, d7);
+
+        uint32_t min_d = min(min_d0, min_d1);
+        uint32_t best_i = min_d & 7;
+
+        const int delta_r = (best_i & 1) ? (max_r - avg_r) : (avg_r - min_r);
+        const int delta_g = (best_i & 2) ? (max_g - avg_g) : (avg_g - min_g);
+        const int delta_b = (best_i & 4) ? (max_b - avg_b) : (avg_b - min_b);
+
+        // Now we have a smaller AABB going from the block's average color to a cornerpoint of the larger AABB.
+        // Project all pixels colors along the 4 vectors going from a smaller AABB cornerpoint to the opposite cornerpoint, find largest projection.
+        // One of these vectors will be a decent approximation of the block's PCA.
+        const int saxis0_r = delta_r, saxis0_g = delta_g, saxis0_b = delta_b;
+
+        int low_dot0 = INT_MAX, high_dot0 = INT_MIN;
+        int low_dot1 = INT_MAX, high_dot1 = INT_MIN;
+        int low_dot2 = INT_MAX, high_dot2 = INT_MIN;
+        int low_dot3 = INT_MAX, high_dot3 = INT_MIN;
+
+        int low_c0, low_c1, low_c2, low_c3;
+        int high_c0, high_c1, high_c2, high_c3;
+
+        for (uint32_t i = 0; i < 16; i++)
+        {
+            const int dotx = input_colors[4*i+0] * saxis0_r;
+            const int doty = input_colors[4*i+1] * saxis0_g;
+            const int dotz = input_colors[4*i+2] * saxis0_b;
+
+            const int dot0 = ((dotz + dotx + doty) << 4) + i;
+            const int dot1 = ((dotz - dotx - doty) << 4) + i;
+            const int dot2 = ((dotz - dotx + doty) << 4) + i;
+            const int dot3 = ((dotz + dotx - doty) << 4) + i;
+
+            if (dot0 < low_dot0)
+            {
+                low_dot0 = dot0;
+                low_c0 = i;
+            }
+            if ((dot0 ^ 15) > high_dot0)
+            {
+                high_dot0 = dot0 ^ 15;
+                high_c0 = i;
+            }
+
+            if (dot1 < low_dot1)
+            {
+                low_dot1 = dot1;
+                low_c1 = i;
+            }
+            if ((dot1 ^ 15) > high_dot1)
+            {
+                high_dot1 = dot1 ^ 15;
+                high_c1 = i;
+            }
+
+            if (dot2 < low_dot2)
+            {
+                low_dot2 = dot2;
+                low_c2 = i;
+            }
+            if ((dot2 ^ 15) > high_dot2)
+            {
+                high_dot2 = dot2 ^ 15;
+                high_c2 = i;
+            }
+
+            if (dot3 < low_dot3)
+            {
+                low_dot3 = dot3;
+                low_c3 = i;
+            }
+            if ((dot3 ^ 15) > high_dot3)
+            {
+                high_dot3 = dot3 ^ 15;
+                high_c3 = i;
+            }
+        }
+
+
+        uint32_t low_c = low_dot0 & 15, high_c = ~high_dot0 & 15, r = (high_dot0 & ~15) - (low_dot0 & ~15);
+
+        uint32_t tr = (high_dot1 & ~15) - (low_dot1 & ~15);
+        if (tr > r)
+            low_c = low_dot1 & 15, high_c = ~high_dot1 & 15, r = tr;
+
+        tr = (high_dot2 & ~15) - (low_dot2 & ~15);
+        if (tr > r)
+            low_c = low_dot2 & 15, high_c = ~high_dot2 & 15, r = tr;
+
+        tr = (high_dot3 & ~15) - (low_dot3 & ~15);
+        if (tr > r)
+            low_c = low_dot3 & 15, high_c = ~high_dot3 & 15;
+
+        lr = Mul8Bit(input_colors[low_c*4+0], 31);
+        lg = Mul8Bit(input_colors[low_c*4+1], 63);
+        lb = Mul8Bit(input_colors[low_c*4+2], 31);
+
+        hr = Mul8Bit(input_colors[high_c*4+0], 31);
+        hg = Mul8Bit(input_colors[high_c*4+1], 63);
+        hb = Mul8Bit(input_colors[high_c*4+2], 31);
+    }
+
+    uint32 selectors = bc1_find_sels(input_colors, lr, lg, lb, hr, hg, hb);
+
+    Vector3 c0, c1;
+    if (!compute_least_squares_endpoints(input_colors, selectors, &c0, &c1)) {
+        // @@ Single color compressor.
+        Color32 c(lr, lg, lb);
+        ::compress_dxt1_single_color_optimal(c, block);
+    }
+    else {
+        Color16 color0 = vector3_to_color16(c0);
+        Color16 color1 = vector3_to_color16(c1);
+
+        if (color0.u < color1.u) {
+            swap(color0, color1);
+        }
+
+        Color32 palette[4];
+        evaluate_palette(color0, color1, palette);
+
+        block->col0 = color0;
+        block->col1 = color1;
+        block->indices = bc1_find_sels(input_colors, color0.r, color0.g, color0.b, color1.r, color1.g, color1.b);
+    }
+
+    /*// Quick end point selection.
+    Vector3 c0, c1;
+    //fit_colors_bbox(colors, count, &c0, &c1);
+    //select_diagonal(colors, count, &c0, &c1);
+    fit_colors_bbox(vec_colors, 16, &c0, &c1);
+    if (c0 == c1) {
+        ::compress_dxt1_single_color_optimal(vector3_to_color(c0), output);
+        return;
+    }
+    inset_bbox(&c0, &c1);
+    select_diagonal(vec_colors, 16, &c0, &c1);
+    output_block4(vec_colors, c0, c1, output);
+
+    // Refine color for the selected indices.
+    if (optimize_end_points4(output->indices, vec_colors, 16, &c0, &c1)) {
+        output_block4(vec_colors, c0, c1, output);
+    }*/
+}

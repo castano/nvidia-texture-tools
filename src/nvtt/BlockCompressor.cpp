@@ -214,7 +214,7 @@ void FastCompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], co
 }
 void CompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], const CompressionOptions::Private & compressionOptions, void * output)
 {
-    compress_dxt1(colors, weights, compressionOptions.colorWeight.xyz(), /*three_color_mode*/true, (BlockDXT1 *)output);
+    compress_dxt1(colors, weights, compressionOptions.colorWeight.xyz(), /*three_color_mode*/true, false, (BlockDXT1 *)output);
 }
 
 
