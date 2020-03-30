@@ -81,11 +81,11 @@ bool FileSystem::copyFile(const char * src, const char * dst) {
 
     FILE * fsrc = fileOpen(src, "rb");
     if (fsrc == NULL) return false;
-    NV_ON_RETURN(fclose(fsrc));
+    defer{ fclose(fsrc); };
 
     FILE * fdst = fileOpen(dst, "wb");
     if (fdst == NULL) return false;
-    NV_ON_RETURN(fclose(fdst));
+    defer{ fclose(fdst); };
     
     char buffer[1024];
     size_t n;

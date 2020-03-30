@@ -326,14 +326,13 @@ namespace nv {
         F f;
     };
 
-    template <typename F>
-    ScopeExit<F> MakeScopeExit(F f) {
-        return ScopeExit<F>(f);
+    struct ExitScopeHelp {
+        template<typename T>
+        ScopeExit<T> operator+(T t) { return t; }
     };
 }
 
-#define NV_ON_RETURN(code) \
-    auto NV_STRING_JOIN2(scope_exit_, __LINE__) = nv::MakeScopeExit([=](){code;})
+#define defer const auto& __attribute__((unused)) NV_STRING_JOIN2(defer__, __LINE__) = nv::ExitScopeHelp() + [&]()
 
 
 // Indicate the compiler that the parameter is not used to suppress compier warnings.
