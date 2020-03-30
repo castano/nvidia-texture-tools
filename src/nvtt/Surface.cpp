@@ -44,6 +44,7 @@
 #include "nvthread/ParallelFor.h"
 
 #include "nvcore/Array.inl"
+#include "nvcore/StrLib.h"
 
 #include <float.h>
 #include <string.h> // memset, memcpy
@@ -569,77 +570,80 @@ bool Surface::load(const char * fileName, bool * hasAlpha/*= NULL*/)
     AutoPtr<FloatImage> img(ImageIO::loadFloat(fileName));
     if (img == NULL) {
         // Try loading as DDS.
-        if (nv::strEqual(nv::Path::extension(fileName), ".dds")) {
-            nv::DirectDrawSurface dds;
-            if (dds.load(fileName)) {
-                if (dds.header.isBlockFormat()) {
-                    int w = dds.surfaceWidth(0);
-                    int h = dds.surfaceHeight(0);
-                    uint size = dds.surfaceSize(0);
-
-                    void * data = malloc(size);
-                    dds.readSurface(0, 0, data, size);
-
-                    // @@ Handle all formats! @@ Get nvtt format from dds.surfaceFormat() ?
-
-                    if (dds.header.hasDX10Header()) {
-                        if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM_SRGB) {
-                            this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM_SRGB) {
-                            this->setImage2D(nvtt::Format_BC2, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM_SRGB) {
-                            this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16) {
-                            this->setImage2D(nvtt::Format_BC6, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM_SRGB) {
-                            this->setImage2D(nvtt::Format_BC7, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else {
-                            // @@
-                            nvCheck(false && "Format not handled with DDS10 header.");
-                        }
-                    }
-                    else {
-                        uint fourcc = dds.header.pf.fourcc;
-                        if (fourcc == FOURCC_DXT1) {
-                            this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else if (fourcc == FOURCC_DXT3) {
-                            this->setImage2D(nvtt::Format_BC2, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else if (fourcc == FOURCC_DXT5) {
-                            this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
-                        }
-                        else {
-                            // @@ 
-                            nvCheck(false && "Format not handled with DDS9 header.");
-                        }
-                    }
-
-                    free(data);
-                }
-                else {
-                    Image img;
-                    dds.mipmap(&img, /*face=*/0, /*mipmap=*/0);
-
-                    int w = img.width();
-                    int h = img.height();
-                    int d = img.depth();
-
-                    // @@ Add support for all pixel formats.
-
-                    this->setImage(nvtt::InputFormat_BGRA_8UB, w, h, d, img.pixels());
-                }
-
-                return true;
-            }
+        if (!nv::strEqual(nv::Path::extension(fileName), ".dds")) {
+            return false;
         }
 
-        return false;
+        nv::DirectDrawSurface dds;
+        if (!dds.load(fileName)) {
+            return false;
+        }
+
+        if (dds.header.isBlockFormat()) {
+            int w = dds.surfaceWidth(0);
+            int h = dds.surfaceHeight(0);
+            uint size = dds.surfaceSize(0);
+
+            void * data = malloc(size);
+            dds.readSurface(0, 0, data, size);
+
+            // @@ Handle all formats! @@ Get nvtt format from dds.surfaceFormat() ?
+
+            if (dds.header.hasDX10Header()) {
+                if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC1_UNORM_SRGB) {
+                    this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC2_UNORM_SRGB) {
+                    this->setImage2D(nvtt::Format_BC2, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC3_UNORM_SRGB) {
+                    this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC6H_UF16) {
+                    this->setImage2D(nvtt::Format_BC6, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else if (dds.header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM || dds.header.header10.dxgiFormat == DXGI_FORMAT_BC7_UNORM_SRGB) {
+                    this->setImage2D(nvtt::Format_BC7, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else {
+                    // @@
+                    nvCheck(false && "Format not handled with DDS10 header.");
+                }
+            }
+            else {
+                uint fourcc = dds.header.pf.fourcc;
+                if (fourcc == FOURCC_DXT1) {
+                    this->setImage2D(nvtt::Format_BC1, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else if (fourcc == FOURCC_DXT3) {
+                    this->setImage2D(nvtt::Format_BC2, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else if (fourcc == FOURCC_DXT5) {
+                    this->setImage2D(nvtt::Format_BC3, nvtt::Decoder_D3D10, w, h, data);
+                }
+                else {
+                    // @@ 
+                    nvCheck(false && "Format not handled with DDS9 header.");
+                }
+            }
+
+            free(data);
+        }
+        else {
+            // @@ Separate image decoder from dds reader.
+            Image img;
+            imageFromDDS(&img, dds, /*face=*/0, /*mipmap=*/0);
+
+            int w = img.width;
+            int h = img.height;
+            int d = img.depth;
+
+            // @@ Add support for all pixel formats.
+
+            this->setImage(nvtt::InputFormat_BGRA_8UB, w, h, d, img.pixels());
+        }
+
+        return true;
     }
 
     detach();
@@ -672,7 +676,7 @@ bool Surface::save(const char * fileName, bool hasAlpha/*=0*/, bool hdr/*=0*/) c
         nvCheck(image != NULL);
 
         if (hasAlpha) {
-            image->setFormat(Image::Format_ARGB);
+            image->format = Image::Format_ARGB;
         }
 
         return ImageIO::save(fileName, image.ptr());

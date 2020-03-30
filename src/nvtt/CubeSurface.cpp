@@ -303,7 +303,10 @@ const Surface & CubeSurface::face(int f) const
 bool CubeSurface::load(const char * fileName, int mipmap)
 {
     if (strEqual(Path::extension(fileName), ".dds")) {
-        nv::DirectDrawSurface dds(fileName);
+        nv::DirectDrawSurface dds;
+        if (!dds.load(fileName)) {
+            return false;
+        }
 
         if (!dds.isValid()/* || !dds.isSupported()*/) {
             return false;

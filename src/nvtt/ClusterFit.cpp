@@ -1,82 +1,13 @@
-/* -----------------------------------------------------------------------------
-
-    Copyright (c) 2006 Simon Brown                          si@sjbrown.co.uk
-    Copyright (c) 2006 Ignacio Castano                      icastano@nvidia.com
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to	deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-   -------------------------------------------------------------------------- */
+// MIT license see full LICENSE text at end of file
 
 #include "ClusterFit.h"
 #include "nvmath/Fitting.h"
 #include "nvmath/Vector.inl"
-#include "nvmath/ftoi.h"
-#include "nvimage/ColorBlock.h"
 
 #include <float.h> // FLT_MAX
 
 using namespace nv;
 
-ClusterFit::ClusterFit()
-{
-}
-
-/*
-// find minimum and maximum colors based on bounding box in color space
-inline static void fit_colors_bbox(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
-{
-    *c0 = Vector3(0);
-    *c1 = Vector3(1);
-
-    for (int i = 0; i < count; i++) {
-        *c0 = max(*c0, colors[i]);
-        *c1 = min(*c1, colors[i]);
-    }
-}
-
-inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * restrict c0, Vector3 * restrict c1)
-{
-    Vector3 center = (*c0 + *c1) * 0.5f;
-
-    Vector2 covariance = Vector2(0);
-    for (int i = 0; i < count; i++) {
-        Vector3 t = colors[i] - center;
-        covariance += t.xy() * t.z;
-    }
-
-    float x0 = c0->x;
-    float y0 = c0->y;
-    float x1 = c1->x;
-    float y1 = c1->y;
-
-    if (covariance.x < 0) {
-        swap(x0, x1);
-    }
-    if (covariance.y < 0) {
-        swap(y0, y1);
-    }
-
-    c0->set(x0, y0, c0->z);
-    c1->set(x1, y1, c1->z);
-}
-*/
 
 void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count)
 {
@@ -91,16 +22,9 @@ void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int 
 
     m_count = count;
 
+    // I've tried using a lower quality approximation of the principal direction, but the best fit line seems to produce best results.
     Vector3 principal = Fit::computePrincipalComponent_PowerMethod(count, colors, weights, metric);
     //Vector3 principal = Fit::computePrincipalComponent_EigenSolver(count, colors, weights, metric);
-
-    /*// This approximation produces slightly lower quality:
-    Vector3 c0, c1;
-    fit_colors_bbox(colors, count, &c0, &c1);
-    select_diagonal(colors, count, &c0, &c1);
-    if (c0 != c1) {
-        principal = normalize(c1 - c0);
-    }*/
 
     // build the list of values
     int order[16];
@@ -194,11 +118,11 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
     SimdVector x0 = zero;
 
     // check all possible clusters for this total order
-    for( int c0 = 0; c0 <= count; c0++)
+    for (int c0 = 0; c0 <= count; c0++)
     {
         SimdVector x1 = zero;
 
-        for( int c1 = 0; c1 <= count-c0; c1++)
+        for (int c1 = 0; c1 <= count-c0; c1++)
         {
             const SimdVector x2 = m_xsum - x1 - x0;
 
@@ -238,7 +162,7 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
             SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
 
             // keep the solution if it wins
-            if( compareAnyLessThan( error, besterror ) )
+            if (compareAnyLessThan(error, besterror))
             {
                 besterror = error;
                 beststart = a;
@@ -252,9 +176,8 @@ bool ClusterFit::compress3( Vector3 * start, Vector3 * end )
     }
 
     // save the block if necessary
-    if( compareAnyLessThan( besterror, m_besterror ) )
+    if (compareAnyLessThan(besterror, m_besterror))
     {
-
         *start = beststart.toVector3();
         *end = bestend.toVector3();
 
@@ -288,15 +211,15 @@ bool ClusterFit::compress4( Vector3 * start, Vector3 * end )
     SimdVector x0 = zero;
 
     // check all possible clusters for this total order
-    for( int c0 = 0; c0 <= count; c0++)
+    for (int c0 = 0; c0 <= count; c0++)
     {
         SimdVector x1 = zero;
 
-        for( int c1 = 0; c1 <= count-c0; c1++)
+        for (int c1 = 0; c1 <= count-c0; c1++)
         {
             SimdVector x2 = zero;
 
-            for( int c2 = 0; c2 <= count-c0-c1; c2++)
+            for (int c2 = 0; c2 <= count-c0-c1; c2++)
             {
                 const SimdVector x3 = m_xsum - x2 - x1 - x0;
 
@@ -469,7 +392,7 @@ bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
     }
 
     // save the block if necessary
-    if( besterror < m_besterror )
+    if (besterror < m_besterror)
     {
 
         *start = beststart;
@@ -582,3 +505,25 @@ bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
 }
 
 #endif // NVTT_USE_SIMD
+
+//  Copyright (c) 2006-2020 Ignacio Castano                 icastano@nvidia.com
+//  Copyright (c) 2006 Simon Brown                          si@sjbrown.co.uk
+//
+//  Permission is hereby granted, free of charge, to any person obtaining
+//  a copy of this software and associated documentation files (the
+//  "Software"), to	deal in the Software without restriction, including
+//  without limitation the rights to use, copy, modify, merge, publish,
+//  distribute, sublicense, and/or sell copies of the Software, and to
+//  permit persons to whom the Software is furnished to do so, subject to
+//  the following conditions:
+//
+//  The above copyright notice and this permission notice shall be included
+//  in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+//  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+//  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
