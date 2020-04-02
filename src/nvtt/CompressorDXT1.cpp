@@ -15,7 +15,7 @@
 
 #include <string.h> // memset
 #include <float.h> // FLT_MAX
-
+#include <limits.h> // INT_MAX, INT_MIN
 
 using namespace nv;
 
