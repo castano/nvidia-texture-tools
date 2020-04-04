@@ -10,6 +10,9 @@
 #define STB_DXT_IMPLEMENTATION
 #include "stb_dxt.h"
 
+#define RGBCX_IMPLEMENTATION
+#include "../extern/rg/rgbcx.h"
+
 #include "../extern/libsquish-1.15/squish.h"
 
 #include "../extern/CMP_Core/source/CMP_Core.h"
@@ -31,15 +34,16 @@ typedef unsigned int u32;
 #define TEST_STB 1
 #define TEST_STB_HQ 1
 
+#define TEST_RGBCX 1
+
 #define TEST_NVTT_FAST 1
-#define TEST_NVTT_GELD 0
 #define TEST_NVTT 1
 #define TEST_NVTT_HQ 1
 
-#define TEST_SQUISH 0
-#define TEST_SQUISH_HQ 0
+#define TEST_SQUISH 1
+#define TEST_SQUISH_HQ 1
 
-#define TEST_AMD_CMP 0
+#define TEST_AMD_CMP 1
 
 
 
@@ -151,7 +155,7 @@ bool output_dxt_dds (u32 w, u32 h, const u8* data, const char * filename) {
 
     dds.width = w;
     dds.height = h;
-    dds.pitch = 8 * ((w+3)/4 * (h+3)/4); // linear size
+    dds.pitch = 8 * (((w+3)/4) * ((h+3)/4)); // linear size
 
     FILE * fp = fopen(filename, "wb");
     if (fp == nullptr) return false;
@@ -242,13 +246,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("stb_dxt \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
 
-        //output_dxt_dds(bw, bh, block_data, "stb_dxt.dds");
-        stats->compressorName = "stb";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        if (stats) {
+            stats->compressorName = "stb";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "stb_dxt.dds");
+        }
     }
 
     if (TEST_STB_HQ) {
@@ -263,13 +270,42 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("stb_dxt hq \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
+        
+        if (stats) {
+            stats->compressorName = "stb-hq";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "stb_dxt_hq.dds");
+        }
+    }
 
-        //output_dxt_dds(bw, bh, block_data, "stb_dxt_hq.dds");
-        stats->compressorName = "stb-hq";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+    if (TEST_RGBCX) {
+        memset(block_data, 0, block_count * 8);
+
+        rgbcx::encode_bc1_init();
+
+        timer.start();
+        for (int i = 0; i < repeat_count; i++) {
+            for (int b = 0; b < block_count; b++) {
+                rgbcx::encode_bc1((block_data + b * 8), rgba_block_data + b * 4 * 4 * 4, rgbcx::LEVEL2_OPTIONS, rgbcx::DEFAULT_TOTAL_ORDERINGS_TO_TRY);
+            }
+        }
+        timer.stop();
+
+        float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
+
+        if (stats) {
+            stats->compressorName = "rgbcx";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "rgbcx.dds");
+        }
     }
 
     if (TEST_NVTT_FAST) {
@@ -295,35 +331,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("nvtt fast \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
-
-        //output_dxt_dds(bw, bh, block_data, "nvtt_fast.dds");
-        stats->compressorName = "nvtt-fast";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
-    }
-
-    if (TEST_NVTT_GELD) {
-        memset(block_data, 0, block_count * 8);
-
-        timer.start();
-        for (int i = 0; i < repeat_count; i++) {
-            for (int b = 0; b < block_count; b++) {
-                //compress_dxt1_fast2(rgba_block_data + b * 4 * 4 * 4, (BlockDXT1*)(block_data + b * 8));
-                compress_dxt1_fast_geld(rgba_block_data + b * 4 * 4 * 4, (BlockDXT1*)(block_data + b * 8));
-            }
+        
+        if (stats) {
+            stats->compressorName = "nvtt-fast";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
         }
-        timer.stop();
-
-        float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("nvtt fast2 \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
-
-        //output_dxt_dds(bw, bh, block_data, "nvtt_fast2.dds");
-        stats->compressorName = "nvtt-geld";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        else {
+            output_dxt_dds(bw, bh, block_data, "nvtt_fast.dds");
+        }
     }
 
     if (TEST_NVTT) {
@@ -349,13 +366,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("nvtt hq  \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
 
-        //output_dxt_dds(bw, bh, block_data, "nvtt_hq.dds");
-        stats->compressorName = "nvtt";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        if (stats) {
+            stats->compressorName = "nvtt";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "nvtt.dds");
+        }
     }
 
     if (TEST_NVTT_HQ) {
@@ -381,13 +401,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("nvtt hq  \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
 
-        //output_dxt_dds(bw, bh, block_data, "nvtt_hq.dds");
-        stats->compressorName = "nvtt-hq";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        if (stats) {
+            stats->compressorName = "nvtt-hq";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "nvtt_hq.dds");
+        }
     }
 
     if (TEST_SQUISH) {
@@ -402,13 +425,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("squish   \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
 
-        //output_dxt_dds(bw, bh, block_data, "squish.dds");
-        stats->compressorName = "squish";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        if (stats) {
+            stats->compressorName = "squish";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "squish.dds");
+        }
     }
 
     if (TEST_SQUISH_HQ) {
@@ -423,13 +449,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("squish hq\t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
 
-        //output_dxt_dds(bw, bh, block_data, "squish_hq.dds");
-        stats->compressorName = "squish-hq";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        if (stats) {
+            stats->compressorName = "squish-hq";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "squish_hq.dds");
+        }
     }
 
     if (TEST_AMD_CMP) {
@@ -444,13 +473,16 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-        //printf("squish   \t%f\t-> %f %f\n", timer.elapsed(), sqrt(mse), mse_to_psnr(mse));
 
-        //output_dxt_dds(bw, bh, block_data, "squish.dds");
-        stats->compressorName = "cmp";
-        stats->mseArray[index] = mse;
-        stats->timeArray[index] = timer.elapsed();
-        stats++;
+        if (stats) {
+            stats->compressorName = "cmp";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed();
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "squish.dds");
+        }
     }
 
     return false;
@@ -621,6 +653,7 @@ const char * image_set[] = {
     "testsuite/waterloo/sail.png",
     "testsuite/waterloo/serrano.png",
     "testsuite/waterloo/tulips.png",
+    //"testsuite/artificial.png",
 };
 
 const char * roblox_set[] = {
@@ -667,19 +700,21 @@ const char * roblox_set[] = {
 
 int main(int argc, char *argv[])
 {
-    const char * inputFileName = "testsuite/kodak/kodim14.png";
+    const char * inputFileName = "testsuite/artificial.png";
+    //const char * inputFileName = "testsuite/kodak/kodim14.png";
     //const char * inputFileName = "testsuite/kodak/kodim18.png";
     //const char * inputFileName = "testsuite/kodak/kodim15.png";
     //const char * inputFileName = "testsuite/waterloo/frymire.png";
+    //const char * inputFileName = "Roblox/leafygrass_top/diffuse.tga";
     
-    //test_bc1(inputFileName, 0);
-    analyze_bc1(inputFileName);
+    test_bc1(inputFileName, 0, NULL);
+    //analyze_bc1(inputFileName);
 
-    //const char ** set = roblox_set;
-    //int count = sizeof(roblox_set) / sizeof(char*);
+    const char ** set = roblox_set;
+    int count = sizeof(roblox_set) / sizeof(char*);
 
-    const char ** set = image_set;
-    int count = sizeof(image_set) / sizeof(char*);
+    //const char ** set = image_set;
+    //int count = sizeof(image_set) / sizeof(char*);
 
     const int MAX_COMPRESSOR_COUNT = 16;
     Stats stats[MAX_COMPRESSOR_COUNT];
