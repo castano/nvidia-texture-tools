@@ -1,8 +1,6 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #include "ColorBlock.h"
-#include "Image.h"
-#include "FloatImage.h"
 
 #include "nvmath/Box.h"
 #include "nvmath/Vector.inl"
@@ -52,17 +50,6 @@ ColorBlock::ColorBlock(const ColorBlock & block)
     }
 }
 
-
-/// Initialize this color block.
-ColorBlock::ColorBlock(const Image * img, uint x, uint y)
-{
-    init(img, x, y);
-}
-
-void ColorBlock::init(const Image * img, uint x, uint y)
-{
-    init(img->width, img->height, (const uint *)img->pixels(), x, y);
-}
 
 void ColorBlock::init(uint w, uint h, const uint * data, uint x, uint y)
 {

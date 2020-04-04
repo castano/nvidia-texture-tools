@@ -2,7 +2,6 @@
 namespace nv {
 
     class Color32;
-    struct ColorBlock;
     struct BlockDXT1;
     class Vector3;
     class Vector4;
