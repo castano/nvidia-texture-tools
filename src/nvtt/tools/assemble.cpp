@@ -143,16 +143,16 @@ int main(int argc, char *argv[])
 		
 		if (i == 0)
 		{
-			w = images[i].width();
-			h = images[i].height();
+			w = images[i].width;
+			h = images[i].height;
 		}
-		else if (images[i].width() != w || images[i].height() != h)
+		else if (images[i].width != w || images[i].height != h)
 		{
 			printf("*** error, size of image '%s' does not match\n", files[i].str());
 			return 1;
 		}
 		
-		if (images[i].format() == nv::Image::Format_ARGB)
+		if (images[i].format == nv::Image::Format_ARGB)
 		{
 			hasAlpha = true;
 		}

@@ -43,8 +43,8 @@ int main(int argc, char *argv[])
 	}
 
 	// Load surface.
-	nv::DirectDrawSurface dds(argv[1]);
-	if (!dds.isValid())
+	nv::DirectDrawSurface dds;
+    if (!dds.load(argv[1]) || !dds.isValid())
 	{
 		printf("The file '%s' is not a valid DDS file.\n", argv[1]);
 		return 1;

@@ -166,8 +166,8 @@ int main(int argc, char *argv[])
 	    // Load surface.
 	    // !!! DirectDrawSurface API doesn't support float images, so BC6 will be converted to 8-bit on load.
 	    // Should use nvtt::Surface instead.
-	    nv::DirectDrawSurface dds(input.str());
-	    if (!dds.isValid())
+        nv::DirectDrawSurface dds;
+        if (!dds.load(input.str()) || !dds.isValid())
 	    {
 		    fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
 		    return 1;
@@ -219,7 +219,8 @@ int main(int argc, char *argv[])
 	    {
 		    for (uint m = 0; m < mipmapCount; m++)
 		    {
-			    dds.mipmap(&mipmap, f, m);
+                if (!imageFromDDS(&mipmap, dds, f, m))
+                    continue;
     	
 			    // set output filename, if we are doing faces and/or mipmaps
 			    name.copy(output);

@@ -42,14 +42,14 @@ static bool loadImage(nv::Image & image, const char * fileName)
 {
 	if (nv::strCaseDiff(nv::Path::extension(fileName), ".dds") == 0)
 	{
-		nv::DirectDrawSurface dds(fileName);
-		if (!dds.isValid())
+		nv::DirectDrawSurface dds;
+        if (!dds.load(fileName) || !dds.isValid())
 		{
 			printf("The file '%s' is not a valid DDS file.\n", fileName);
 			return false;
 		}
 		
-		dds.mipmap(&image, 0, 0); // get first image
+        return imageFromDDS(&image, dds, 0, 0); // get first image
 	}
 	else
 	{
@@ -59,9 +59,9 @@ static bool loadImage(nv::Image & image, const char * fileName)
 			printf("The file '%s' is not a supported image type.\n", fileName);
 			return false;
 		}
+        
+        return true;
 	}
-
-	return true;
 }
 
 
@@ -174,10 +174,10 @@ int main(int argc, char *argv[])
 	fimage.toLinear(0, 3, gamma);
 
 #if 1
-	nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(*filter, uint(image.width() * scale), uint(image.height() * scale), wrapMode));
+	nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(*filter, uint(image.width * scale), uint(image.height * scale), wrapMode));
 	
 	nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
-	result->setFormat(nv::Image::Format_ARGB);
+	result->format = nv::Image::Format_ARGB;
 
 	nv::StdOutputStream stream(output.str());
 	nv::ImageIO::save(output.str(), stream, result.ptr());

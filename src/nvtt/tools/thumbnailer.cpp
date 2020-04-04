@@ -43,14 +43,14 @@ static bool loadImage(nv::Image & image, const char * fileName)
 {
     if (nv::strCaseDiff(nv::Path::extension(fileName), ".dds") == 0)
     {
-        nv::DirectDrawSurface dds(fileName);
-        if (!dds.isValid())
+        nv::DirectDrawSurface dds;
+        if (!dds.load(fileName) || !dds.isValid())
         {
             fprintf(stderr, "The file '%s' is not a valid DDS file.\n", fileName);
             return false;
         }
 
-        dds.mipmap(&image, 0, 0); // get first image
+        return imageFromDDS(&image, dds, 0, 0); // get first image
     }
     else
     {
@@ -60,9 +60,9 @@ static bool loadImage(nv::Image & image, const char * fileName)
                 fprintf(stderr, "The file '%s' is not a supported image type.\n", fileName);
                 return false;
         }
-    }
 
-    return true;
+        return true;
+    }
 }
 
 
@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
     if (!loadImage(image, input.str())) return 1;
 
     nv::StringBuilder widthString;
-    widthString.number(image.width());
+    widthString.number(image.width);
     nv::StringBuilder heightString;
-    heightString.number(image.height());
+    heightString.number(image.height);
 
     nv::Array<const char *> metaData;
     metaData.append("Thumb::Image::Width");
@@ -131,26 +131,26 @@ int main(int argc, char *argv[])
     metaData.append(NULL);
     metaData.append(NULL);
 
-    if ((image.width() > size) || (image.height() > size))
+    if ((image.width > size) || (image.height > size))
     {
         nv::FloatImage fimage(&image);
         fimage.toLinear(0, 3, gamma);
 
         uint thumbW, thumbH;
-        if (image.width() > image.height())
+        if (image.width > image.height)
         {
             thumbW = size;
-            thumbH = uint ((float (image.height()) / float (image.width())) * size);
+            thumbH = uint ((float (image.height) / float (image.width)) * size);
         }
         else
         {
-            thumbW = uint ((float (image.width()) / float (image.height())) * size);
+            thumbW = uint ((float (image.width) / float (image.height)) * size);
             thumbH = size;
         }
         nv::AutoPtr<nv::FloatImage> fresult(fimage.resize(nv::BoxFilter(), thumbW, thumbH, nv::FloatImage::WrapMode_Clamp));
 
         nv::AutoPtr<nv::Image> result(fresult->createImageGammaCorrect(gamma));
-        result->setFormat(nv::Image::Format_ARGB);
+        result->format = nv::Image::Format_ARGB;
 
         nv::StdOutputStream stream(output.str());
         nv::ImageIO::save(output.str(), stream, result.ptr(), metaData.buffer());

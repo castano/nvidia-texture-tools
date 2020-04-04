@@ -506,8 +506,8 @@ int main(int argc, char *argv[])
         if (nv::strCaseDiff(input.extension(), ".dds") == 0)
         {
             // Load surface.
-            nv::DirectDrawSurface dds(input.str());
-            if (!dds.isValid())
+            nv::DirectDrawSurface dds;
+            if (!dds.load(input.str()) || !dds.isValid())
             {
                 fprintf(stderr, "The file '%s' is not a valid DDS file.\n", input.str());
                 return EXIT_FAILURE;
@@ -550,9 +550,8 @@ int main(int argc, char *argv[])
             {
                 for (uint m = 0; m < mipmapCount; m++)
                 {
-                    dds.mipmap(&mipmap, f, m); // @@ Load as float.
-
-                    inputOptions.setMipmapData(mipmap.pixels(), mipmap.width(), mipmap.height(), mipmap.depth(), f, m);
+                    if (imageFromDDS(&mipmap, dds, f, m)) // @@ Load as float.
+                        inputOptions.setMipmapData(mipmap.pixels(), mipmap.width, mipmap.height, mipmap.depth, f, m);
                 }
             }
         }
@@ -591,8 +590,8 @@ int main(int argc, char *argv[])
                     return 1;
                 }
 
-                inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width(), image.height());
-                inputOptions.setMipmapData(image.pixels(), image.width(), image.height());
+                inputOptions.setTextureLayout(nvtt::TextureType_2D, image.width, image.height);
+                inputOptions.setMipmapData(image.pixels(), image.width, image.height);
             }
         }
 
