@@ -32,8 +32,8 @@ void nv::Quantize::BinaryAlpha( Image * image, int alpha_threshold /*= 127*/ )
 {
 	nvCheck(image != NULL);
 	
-	const uint w = image->width();
-	const uint h = image->height();
+	const uint w = image->width;
+	const uint h = image->height;
 	
 	for(uint y = 0; y < h; y++) {
 		for(uint x = 0; x < w; x++) {
@@ -76,8 +76,8 @@ void nv::Quantize::FloydSteinberg_BinaryAlpha( Image * image, int alpha_threshol
 {
 	nvCheck(image != NULL);
 	
-	const uint w = image->width();
-	const uint h = image->height();
+	const uint w = image->width;
+	const uint h = image->height;
 	
 	// @@ Use fixed point?
 	float * row0 = new float[(w+2)];
@@ -130,8 +130,8 @@ void nv::Quantize::Truncate(Image * image, uint rsize, uint gsize, uint bsize, u
 {
 	nvCheck(image != NULL);
 	
-	const uint w = image->width();
-	const uint h = image->height();
+	const uint w = image->width;
+	const uint h = image->height;
 	
 	for(uint y = 0; y < h; y++) {
 		for(uint x = 0; x < w; x++) {
@@ -163,8 +163,8 @@ void nv::Quantize::FloydSteinberg(Image * image, uint rsize, uint gsize, uint bs
 {
 	nvCheck(image != NULL);
 	
-	const uint w = image->width();
-	const uint h = image->height();
+	const uint w = image->width;
+	const uint h = image->height;
 	
 	Vector4 * row0 = new Vector4[w+2];
 	Vector4 * row1 = new Vector4[w+2];
