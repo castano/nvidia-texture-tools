@@ -62,17 +62,17 @@ namespace nv
         };
     };
 
-    NVMATH_API Vector3 rgb9e5_to_vector3(FloatRGB9E5 v);
-    NVMATH_API FloatRGB9E5 vector3_to_rgb9e5(const Vector3 & v);
+    Vector3 rgb9e5_to_vector3(FloatRGB9E5 v);
+    FloatRGB9E5 vector3_to_rgb9e5(const Vector3 & v);
 
-    NVMATH_API float float11_to_float32(uint v);
-    NVMATH_API float float10_to_float32(uint v);
+    float float11_to_float32(uint v);
+    float float10_to_float32(uint v);
 
-    NVMATH_API Vector3 r11g11b10_to_vector3(FloatR11G11B10 v);
-    NVMATH_API FloatR11G11B10 vector3_to_r11g11b10(const Vector3 & v);
+    Vector3 r11g11b10_to_vector3(FloatR11G11B10 v);
+    FloatR11G11B10 vector3_to_r11g11b10(const Vector3 & v);
 
-    NVMATH_API Vector3 rgbe8_to_vector3(FloatRGBE8 v);
-    NVMATH_API FloatRGBE8 vector3_to_rgbe8(const Vector3 & v);
+    Vector3 rgbe8_to_vector3(FloatRGBE8 v);
+    FloatRGBE8 vector3_to_rgbe8(const Vector3 & v);
 
 } // nv
 

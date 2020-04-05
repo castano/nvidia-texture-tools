@@ -1,17 +1,8 @@
 
 #include "CompressorDXT1.h"
-#include "SingleColorLookup.h"
 #include "ClusterFit.h"
 
-#include "nvimage/ColorBlock.h"
-#include "nvimage/BlockDXT.h"
-
-#include "nvmath/Color.inl"
-#include "nvmath/Vector.inl"
-#include "nvmath/Fitting.h"
-#include "nvmath/ftoi.h"
-
-#include "nvcore/Utils.h" // swap
+#include "nvmath/nvmath.h"
 
 #include <string.h> // memset
 #include <float.h> // FLT_MAX
@@ -19,6 +10,104 @@
 
 using namespace nv;
 
+/// Swap two values.
+/*template <typename T>
+inline void swap(T & a, T & b)
+{
+    T temp(a);
+    a = b;
+    b = temp;
+}*/
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Basic Types
+
+struct Color16 {
+    union {
+        struct {
+            uint16 b : 5;
+            uint16 g : 6;
+            uint16 r : 5;
+        };
+        uint16 u;
+    };
+};
+
+struct Color32 {
+    union {
+        struct {
+            uint8 b, g, r, a;
+        };
+        uint32 u;
+    };
+};
+
+namespace nv {
+    struct BlockDXT1 {
+        Color16 col0;
+        Color16 col1;
+        uint32 indices;
+    };
+
+
+    /*struct Vector3 {
+        float x, y, z;
+    };*/
+
+    inline Vector3 operator*(Vector3 v, float s) {
+        return { v.x * s, v.y * s, v.z * s };
+    }
+
+    inline Vector3 operator*(float s, Vector3 v) {
+        return { v.x * s, v.y * s, v.z * s };
+    }
+
+    inline Vector3 operator*(Vector3 a, Vector3 b) {
+        return { a.x * b.x, a.y * b.y, a.z * b.z };
+    }
+
+    inline float dot(Vector3 a, Vector3 b) {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+
+    inline Vector3 operator+(Vector3 a, Vector3 b) {
+        return { a.x + b.x, a.y + b.y, a.z + b.z };
+    }
+
+    inline Vector3 operator-(Vector3 a, Vector3 b) {
+        return { a.x - b.x, a.y - b.y, a.z - b.z };
+    }
+
+    inline Vector3 operator/(Vector3 v, float s) {
+        return { v.x / s, v.y / s, v.z / s };
+    }
+
+    /*inline float saturate(float x) {
+        return x < 0 ? 0 : (x > 1 ? 1 : x);
+    }*/
+
+    inline Vector3 saturate(Vector3 v) {
+        return { saturate(v.x), saturate(v.y), saturate(v.z) };
+    }
+
+    inline Vector3 min(Vector3 a, Vector3 b) {
+        return { min(a.x, b.x), min(a.y, b.y), min(a.z, b.z) };
+    }
+
+    inline Vector3 max(Vector3 a, Vector3 b) {
+        return { max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) };
+    }
+
+    inline bool operator==(const Vector3 & a, const Vector3 & b) {
+        return memcmp(&a, &b, sizeof(Vector3));
+    }
+
+    inline void Vector3::set(float x, float y, float z) {
+        this->x = x; this->y = y; this->z = z;
+    }
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Color conversion functions.
@@ -54,16 +143,18 @@ static const float midpoints6[64] = {
 static Color16 vector3_to_color16(const Vector3 & v) {
 
     // Truncate.
-    uint r = ftoi_trunc(clamp(v.x * 31.0f, 0.0f, 31.0f));
-	uint g = ftoi_trunc(clamp(v.y * 63.0f, 0.0f, 63.0f));
-	uint b = ftoi_trunc(clamp(v.z * 31.0f, 0.0f, 31.0f));
+    uint r = uint(clamp(v.x * 31.0f, 0.0f, 31.0f));
+	uint g = uint(clamp(v.y * 63.0f, 0.0f, 63.0f));
+	uint b = uint(clamp(v.z * 31.0f, 0.0f, 31.0f));
 
     // Round exactly according to 565 bit-expansion.
     r += (v.x > midpoints5[r]);
     g += (v.y > midpoints6[g]);
     b += (v.z > midpoints5[b]);
 
-    return Color16((r << 11) | (g << 5) | b);
+    Color16 c;
+    c.u = (r << 11) | (g << 5) | b;
+    return c;
 }
 
 
@@ -87,12 +178,12 @@ inline Vector3 color_to_vector3(Color32 c)
     return Vector3(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f);
 }
 
-inline Color32 vector3_to_color(Vector3 v)
+inline Color32 vector3_to_color32(Vector3 v)
 {
     Color32 color;
-    color.r = U8(ftoi_round(saturate(v.x) * 255));
-    color.g = U8(ftoi_round(saturate(v.y) * 255));
-    color.b = U8(ftoi_round(saturate(v.z) * 255));
+    color.r = uint8(saturate(v.x) * 255 + 0.5f);
+    color.g = uint8(saturate(v.y) * 255 + 0.5f);
+    color.b = uint8(saturate(v.z) * 255 + 0.5f);
     color.a = 255;
     return color;
 }
@@ -100,15 +191,6 @@ inline Color32 vector3_to_color(Vector3 v)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Input block processing.
-
-/*inline static void color_block_to_vector_block(const ColorBlock & rgba, Vector3 block[16])
-{
-	for (int i = 0; i < 16; i++)
-	{
-		const Color32 c = rgba.color(i);
-		block[i] = Vector3(c.r, c.g, c.b);
-	}
-}*/
 
 // Find first valid color.
 /*static bool find_valid_color_rgb(const Vector3 * colors, const float * weights, int count, Vector3 * valid_color)
@@ -201,6 +283,107 @@ static int reduce_colors(const uint8 * input_colors, Vector3 * colors, float * w
 }
 
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Palette evaluation.
+
+#define DECODER 0
+
+inline void evaluate_palette4(Color16 c0, Color16 c1, Color32 palette[4], bool d3d9_bias) {
+#if DECODER == 0 || DECODER == 1
+    palette[2].r = (2 * palette[0].r + palette[1].r + d3d9_bias) / 3;
+    palette[2].g = (2 * palette[0].g + palette[1].g + d3d9_bias) / 3;
+    palette[2].b = (2 * palette[0].b + palette[1].b + d3d9_bias) / 3;
+    palette[3].r = (2 * palette[1].r + palette[0].r + d3d9_bias) / 3;
+    palette[3].g = (2 * palette[1].g + palette[0].g + d3d9_bias) / 3;
+    palette[3].b = (2 * palette[1].b + palette[0].b + d3d9_bias) / 3;
+#else
+    int dg = palette[1].g - palette[0].g;
+    palette[2].r = ((2 * c0.r + c1.r) * 22) / 8;
+    palette[2].g = (256 * palette[0].g + dg * 80 + dg / 4 + 128) / 256;
+    palette[2].b = ((2 * c0.b + c1.b) * 22) / 8;
+    palette[3].r = ((2 * c1.r + c0.r) * 22) / 8;
+    palette[3].g = (256 * palette[1].g - dg * 80 - dg / 4 + 128) / 256;
+    palette[3].b = ((2 * c1.b + c0.b) * 22) / 8;
+#endif
+}
+
+inline void evaluate_palette3(Color16 c0, Color16 c1, Color32 palette[4]) {
+#if DECODER == 0 || DECODER == 1
+    palette[2].r = (palette[0].r + palette[1].r) / 2;
+    palette[2].g = (palette[0].g + palette[1].g) / 2;
+    palette[2].b = (palette[0].b + palette[1].b) / 2;
+#else
+    int dg = palette[1].g - palette[0].g;
+    palette[2].r = ((c0.r + c1.r) * 33) / 8;
+    palette[2].g = (256 * palette[0].g + dg * 128 + dg / 4 + 128) / 256;
+    palette[2].b = ((c0.b + c1.b) * 33) / 8;
+#endif
+    palette[3].r = 0;
+    palette[3].g = 0;
+    palette[3].b = 0;
+}
+
+static void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4], bool d3d9_bias) {
+    palette[0] = bitexpand_color16_to_color32(c0);
+    palette[1] = bitexpand_color16_to_color32(c1);
+    if (c0.u > c1.u) {
+        evaluate_palette4(c0, c1, palette, d3d9_bias);
+    }
+    else {
+        evaluate_palette3(c0, c1, palette);
+    }
+}
+
+static void evaluate_palette_nv(Color16 c0, Color16 c1, Color32 palette[4]) {
+    palette[0].r = (3 * c0.r * 22) / 8;
+    palette[0].g = (c0.g << 2) | (c0.g >> 4);
+    palette[0].b = (3 * c0.b * 22) / 8;
+    palette[1].a = 255;
+    palette[1].r = (3 * c1.r * 22) / 8;
+    palette[1].g = (c1.g << 2) | (c1.g >> 4);
+    palette[1].b = (3 * c1.b * 22) / 8;
+    palette[1].a = 255;
+
+    int gdiff = palette[1].g - palette[0].g;
+    if (c0.u > c1.u) {
+        palette[2].r = ((2 * c0.r + c1.r) * 22) / 8;
+        palette[2].g = (256 * palette[0].g + gdiff / 4 + 128 + gdiff * 80) / 256;
+        palette[2].b = ((2 * c0.b + c1.b) * 22) / 8;
+        palette[2].a = 0xFF;
+
+        palette[3].r = ((2 * c1.r + c0.r) * 22) / 8;
+        palette[3].g = (256 * palette[1].g - gdiff / 4 + 128 - gdiff * 80) / 256;
+        palette[3].b = ((2 * c1.b + c0.b) * 22) / 8;
+        palette[3].a = 0xFF;
+    }
+    else {
+        palette[2].r = ((c0.r + c1.r) * 33) / 8;
+        palette[2].g = (256 * palette[0].g + gdiff / 4 + 128 + gdiff * 128) / 256;
+        palette[2].b = ((c0.b + c1.b) * 33) / 8;
+        palette[2].a = 0xFF;
+        palette[3].u = 0;
+    }
+}
+
+static void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4]) {
+#if DECODER == 0
+    evaluate_palette(c0, c1, palette, false);
+#elif DECODER == 1
+    evaluate_palette(c0, c1, palette, true);
+#elif DECODER == 2
+    evaluate_palette_nv(c0, c1, palette);
+#endif
+}
+
+static void evaluate_palette(Color16 c0, Color16 c1, Vector3 palette[4]) {
+    Color32 palette32[4];
+    evaluate_palette(c0, c1, palette32);
+
+    for (int i = 0; i < 4; i++) {
+        palette[i] = color_to_vector3(palette32[i]);
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Error evaluation.
@@ -245,8 +428,8 @@ static int evaluate_mse(const Color32 palette[4], const Color32 & c) {
 // Returns MSE error in [0-255] range.
 static int evaluate_mse(const BlockDXT1 * output, Color32 color, int index) {
     Color32 palette[4];
-    //output->evaluatePalette(palette, /*d3d9=*/false);
-    output->evaluatePaletteNV5x(palette);
+    evaluate_palette(output->col0, output->col1, palette);
+    //evaluate_palette_nv(output->col0, output->col1, palette);
 
     return evaluate_mse(palette[index], color);
 }
@@ -296,8 +479,8 @@ static float evaluate_mse(const BlockDXT1 * output, const Vector3 colors[16]) {
 
 static float evaluate_mse(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, const BlockDXT1 * output) {
     Color32 palette[4];
-    output->evaluatePalette(palette, /*d3d9=*/false);
-    //output->evaluatePaletteNV5x(palette);
+    evaluate_palette(output->col0, output->col1, palette);
+    //evaluate_palette_nv5x(output->col0, output->col1, palette);
 
     // convert palette to float.
     /*Vector3 vector_palette[4];
@@ -317,105 +500,30 @@ static float evaluate_mse(const Vector4 input_colors[16], const float input_weig
 float nv::evaluate_dxt1_error(const uint8 rgba_block[16*4], const BlockDXT1 * block, int decoder) {
     Color32 palette[4];
     if (decoder == 2) {
-        block->evaluatePaletteNV5x(palette);
+        evaluate_palette_nv(block->col0, block->col1, palette);
+
     }
     else {
-        block->evaluatePalette(palette, /*d3d9=*/decoder);
+        evaluate_palette(block->col0, block->col1, palette, /*d3d9=*/decoder);
     }
 
     // evaluate error for each index.
     float error = 0.0f;
     for (int i = 0; i < 16; i++) {
         int index = (block->indices >> (2 * i)) & 3;
-        Color32 c(rgba_block[4 * i + 0], rgba_block[4 * i + 1], rgba_block[4 * i + 2]);
+        Color32 c;
+        c.r = rgba_block[4 * i + 0];
+        c.g = rgba_block[4 * i + 1];
+        c.b = rgba_block[4 * i + 2];
+        c.a = 255;
         error += evaluate_mse(palette[index], c);
     }
     return error;
 }
 
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Palette evaluation.
-
-#define DECODER 0
-
-inline void evaluate_palette4(Color16 c0, Color16 c1, Color32 palette[4]) {
-#if DECODER == 0
-    palette[2].r = (2 * palette[0].r + palette[1].r) / 3;
-    palette[2].g = (2 * palette[0].g + palette[1].g) / 3;
-    palette[2].b = (2 * palette[0].b + palette[1].b) / 3;
-    palette[3].r = (2 * palette[1].r + palette[0].r) / 3;
-    palette[3].g = (2 * palette[1].g + palette[0].g) / 3;
-    palette[3].b = (2 * palette[1].b + palette[0].b) / 3;
-#elif DECODER == 1
-    palette[2].r = (2 * palette[0].r + palette[1].r + 1) / 3;
-    palette[2].g = (2 * palette[0].g + palette[1].g + 1) / 3;
-    palette[2].b = (2 * palette[0].b + palette[1].b + 1) / 3;
-    palette[3].r = (2 * palette[1].r + palette[0].r + 1) / 3;
-    palette[3].g = (2 * palette[1].g + palette[0].g + 1) / 3;
-    palette[3].b = (2 * palette[1].b + palette[0].b + 1) / 3;
-#else
-    int dg = palette[1].g - palette[0].g;
-    palette[2].r = ((2 * c0.r + c1.r) * 22) / 8;
-    palette[2].g = (256 * palette[0].g + dg * 80 + dg / 4 + 128) / 256;
-    palette[2].b = ((2 * c0.b + c1.b) * 22) / 8;
-    palette[3].r = ((2 * c1.r + c0.r) * 22) / 8;
-    palette[3].g = (256 * palette[1].g - dg * 80 - dg / 4 + 128) / 256;
-    palette[3].b = ((2 * c1.b + c0.b) * 22) / 8;
-#endif
-}
-
-inline void evaluate_palette3(Color16 c0, Color16 c1, Color32 palette[4]) {
-#if DECODER == 0 || DECODER == 1
-    palette[2].r = (palette[0].r + palette[1].r) / 2;
-    palette[2].g = (palette[0].g + palette[1].g) / 2;
-    palette[2].b = (palette[0].b + palette[1].b) / 2;
-#else
-    int dg = palette[1].g - palette[0].g;
-    palette[2].r = ((c0.r + c1.r) * 33) / 8;
-    palette[2].g = (256 * palette[0].g + dg * 128 + dg / 4 + 128) / 256;
-    palette[2].b = ((c0.b + c1.b) * 33) / 8;
-#endif
-    palette[3].r = 0;
-    palette[3].g = 0;
-    palette[3].b = 0;
-}
-
-static void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4]) {
-    palette[0] = bitexpand_color16_to_color32(c0);
-    palette[1] = bitexpand_color16_to_color32(c1);
-    if (c0.u > c1.u) {
-        evaluate_palette4(c0, c1, palette);
-    }
-    else {
-        evaluate_palette3(c0, c1, palette);
-    }
-}
-
-static void evaluate_palette(Color16 c0, Color16 c1, Vector3 palette[4]) {
-    Color32 palette32[4];
-    evaluate_palette(c0, c1, palette32);
-
-    for (int i = 0; i < 4; i++) {
-        palette[i] = color_to_vector3(palette32[i]);
-    }
-}
-
-/*static void evaluate_palette3(Color16 c0, Color16 c1, Vector3 palette[4]) {
-    nvDebugCheck(c0.u > c1.u);
-
-    Color32 palette32[4];
-    evaluate_palette(c0, c1, palette32);
-
-    for (int i = 0; i < 4; i++) {
-        palette[i] = color_to_vector3(palette32[i]);
-    }
-}*/
-
-
-
-
+// Index selection
 
 static uint compute_indices4(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
     
@@ -678,10 +786,12 @@ inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * 
     }
     center /= count;*/
 
-    Vector2 covariance = Vector2(0);
+    float cov_xz = 0.0f;
+    float cov_yz = 0.0f;
     for (int i = 0; i < count; i++) {
         Vector3 t = colors[i] - center;
-        covariance += t.xy() * t.z;
+        cov_xz += t.x * t.z;
+        cov_yz += t.y * t.z;
     }
 
     float x0 = c0->x;
@@ -689,10 +799,10 @@ inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * 
     float x1 = c1->x;
     float y1 = c1->y;
 
-    if (covariance.x < 0) {
+    if (cov_xz < 0) {
         swap(x0, x1);
     }
-    if (covariance.y < 0) {
+    if (cov_yz < 0) {
         swap(y0, y1);
     }
 
@@ -702,22 +812,89 @@ inline static void select_diagonal(const Vector3 * colors, int count, Vector3 * 
 
 inline static void inset_bbox(Vector3 * restrict c0, Vector3 * restrict c1)
 {
-    Vector3 inset = (*c0 - *c1) / 16.0f - (8.0f / 255.0f) / 16.0f;
+    Vector3 inset = (*c0 - *c1) / 16.0f - Vector3((8.0f / 255.0f) / 16.0f);
     *c0 = saturate(*c0 - inset);
     *c1 = saturate(*c1 + inset);
 }
 
 
+
+// Single color lookup tables from:
+// https://github.com/nothings/stb/blob/master/stb_dxt.h
+static uint8 match5[256][2];
+static uint8 match6[256][2];
+
+static int Mul8Bit(int a, int b)
+{
+    int t = a * b + 128;
+    return (t + (t >> 8)) >> 8;
+}
+
+static inline int Lerp13(int a, int b)
+{
+#ifdef DXT_USE_ROUNDING_BIAS
+    // with rounding bias
+    return a + Mul8Bit(b - a, 0x55);
+#else
+    // without rounding bias
+    // replace "/ 3" by "* 0xaaab) >> 17" if your compiler sucks or you really need every ounce of speed.
+    return (a * 2 + b) / 3;
+#endif
+}
+
+static void PrepareOptTable(uint8 * table, const uint8 * expand, int size)
+{
+    for (int i = 0; i < 256; i++) {
+        int bestErr = 256 * 100;
+
+        for (int min = 0; min < size; min++) {
+            for (int max = 0; max < size; max++) {
+                int mine = expand[min];
+                int maxe = expand[max];
+
+                int err = abs(Lerp13(maxe, mine) - i) * 100;
+
+                // DX10 spec says that interpolation must be within 3% of "correct" result,
+                // add this as error term. (normally we'd expect a random distribution of
+                // +-1.5% error, but nowhere in the spec does it say that the error has to be
+                // unbiased - better safe than sorry).
+                err += abs(max - min) * 3;
+
+                if (err < bestErr) {
+                    bestErr = err;
+                    table[i * 2 + 0] = max;
+                    table[i * 2 + 1] = min;
+                }
+            }
+        }
+    }
+}
+
+// @@ Make this explicit.
+NV_AT_STARTUP(nv::init_dxt1());
+
+void nv::init_dxt1()
+{
+    // Prepare single color lookup tables.
+    uint8 expand5[32];
+    uint8 expand6[64];
+    for (int i = 0; i < 32; i++) expand5[i] = (i << 3) | (i >> 2);
+    for (int i = 0; i < 64; i++) expand6[i] = (i << 2) | (i >> 4);
+
+    PrepareOptTable(&match5[0][0], expand5, 32);
+    PrepareOptTable(&match6[0][0], expand6, 64);
+}
+
 // Single color compressor, based on:
 // https://mollyrocket.com/forums/viewtopic.php?t=392
 static void compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
 {
-    output->col0.r = OMatch5[c.r][0];
-    output->col0.g = OMatch6[c.g][0];
-    output->col0.b = OMatch5[c.b][0];
-    output->col1.r = OMatch5[c.r][1];
-    output->col1.g = OMatch6[c.g][1];
-    output->col1.b = OMatch5[c.b][1];
+    output->col0.r = match5[c.r][0];
+    output->col0.g = match6[c.g][0];
+    output->col0.b = match5[c.b][0];
+    output->col1.r = match5[c.r][1];
+    output->col1.g = match6[c.g][1];
+    output->col1.b = match5[c.b][1];
     output->indices = 0xaaaaaaaa;
     
     if (output->col0.u < output->col1.u)
@@ -728,24 +905,23 @@ static void compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
 }
 
 
-float nv::compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
+/*float nv::compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
 {
     ::compress_dxt1_single_color_optimal(c, output);
 
     // Multiply by 16^2, the weight associated to a single color.
     // Divide by 255*255 to covert error to [0-1] range.
     return (256.0f / (255*255)) * evaluate_mse(output, c, output->indices & 3);
-}
+}*/
 
-
-float nv::compress_dxt1_single_color_optimal(const Vector3 & color, BlockDXT1 * output)
+/*float nv::compress_dxt1_single_color_optimal(const Vector3 & color, BlockDXT1 * output)
 {
-    return compress_dxt1_single_color_optimal(vector3_to_color(color), output);
-}
+    return compress_dxt1_single_color_optimal(vector3_to_color32(color), output);
+}*/
 
 
 // Compress block using the average color.
-float nv::compress_dxt1_single_color(const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, BlockDXT1 * output)
+float nv::compress_dxt1_single_color(const nv::Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, BlockDXT1 * output)
 {
     // Compute block average.
     Vector3 color_sum(0);
@@ -757,7 +933,7 @@ float nv::compress_dxt1_single_color(const Vector3 * colors, const float * weigh
     }
 
     // Compress optimally.
-    ::compress_dxt1_single_color_optimal(vector3_to_color(color_sum / weight_sum), output);
+    ::compress_dxt1_single_color_optimal(vector3_to_color32(color_sum / weight_sum), output);
 
     // Decompress block color.
     Color32 palette[4];
@@ -787,12 +963,12 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], 
     }
 
     // Convert to 5:6:5
-    int min_r = ftoi_floor(31 * min_color.x);
-    int min_g = ftoi_floor(63 * min_color.y);
-    int min_b = ftoi_floor(31 * min_color.z);
-    int max_r = ftoi_ceil(31 * max_color.x);
-    int max_g = ftoi_ceil(63 * max_color.y);
-    int max_b = ftoi_ceil(31 * max_color.z);
+    int min_r = int(31 * min_color.x);
+    int min_g = int(63 * min_color.y);
+    int min_b = int(31 * min_color.z);
+    int max_r = int(31 * max_color.x + 1);
+    int max_g = int(63 * max_color.y + 1);
+    int max_b = int(31 * max_color.z + 1);
 
     // Expand the box.
     int range_r = max_r - min_r;
@@ -818,7 +994,7 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], 
     // @@ Convert to fixed point before building box?
     Color32 colors32[16];
     for (int i = 0; i < count; i++) {
-        colors32[i] = toColor32(Vector4(colors[i], 1));
+        colors32[i] = vector3_to_color32(colors[i]);
     }
 
     float best_error = FLT_MAX;
@@ -843,7 +1019,7 @@ float nv::compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], 
 
             if (c0.u > c1.u) {
                 // Evaluate error in 4 color mode.
-                evaluate_palette4(c0, c1, palette);
+                evaluate_palette4(c0, c1, palette, false);
             }
             else {
                 if (three_color_mode) {
@@ -942,19 +1118,6 @@ void nv::compress_dxt1_cluster_fit(const Vector4 input_colors[16], const Vector3
     return mask;
 }*/
 
-
-inline uint32 mod3(uint32 a) {
-    a = (a >> 16) + (a & 0xFFFF);   /* sum base 2**16 digits    a <= 0x1FFFE */
-    a = (a >> 8) + (a & 0xFF);      /* sum base 2**8 digits     a <= 0x2FD */
-    a = (a >> 4) + (a & 0xF);       /* sum base 2**4 digits     a <= 0x3C; worst case 0x3B */
-    a = (a >> 2) + (a & 0x3);       /* sum base 2**2 digits     a <= 0x1D; worst case 0x1B */
-    a = (a >> 2) + (a & 0x3);       /* sum base 2**2 digits     a <= 0x9; worst case 0x7 */
-    a = (a >> 2) + (a & 0x3);       /* sum base 2**2 digits     a <= 0x4 */
-    if (a > 2) a = a - 3;
-    return a;
-}
-
-
 float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool three_color_mode, bool hq, BlockDXT1 * output)
 {
     Vector3 colors[16];
@@ -1004,7 +1167,8 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
 
     // Cluster fit cannot handle single color blocks, so encode them optimally if we haven't encoded them already.
     if (error == FLT_MAX && count == 1) {
-        error = compress_dxt1_single_color_optimal(colors[0], output);
+        ::compress_dxt1_single_color_optimal(vector3_to_color32(colors[0]), output);
+        return evaluate_mse(input_colors, input_weights, color_weights, output);
     }
 
     if (count > 1) {
@@ -1107,6 +1271,11 @@ float nv::compress_dxt1(const Vector4 input_colors[16], const float input_weight
                     refined.col1.b += delta[2];
                 }
 
+                if (!three_color_mode) {
+                    if (refined.col0.u == refined.col1.u) refined.col1.g += 1;
+                    if (refined.col0.u < refined.col1.u) swap(refined.col0.u, refined.col1.u);
+                }
+
                 Vector3 palette[4];
                 evaluate_palette(output->col0, output->col1, palette);
 
@@ -1159,7 +1328,7 @@ float nv::compress_dxt1_fast(const Vector4 input_colors[16], const float input_w
     Vector3 c0, c1;
     fit_colors_bbox(colors, count, &c0, &c1);
     if (c0 == c1) {
-        ::compress_dxt1_single_color_optimal(vector3_to_color(c0), output);
+        ::compress_dxt1_single_color_optimal(vector3_to_color32(c0), output);
         return evaluate_mse(input_colors, input_weights, color_weights, output);
     }
     inset_bbox(&c0, &c1);
@@ -1208,7 +1377,7 @@ void nv::compress_dxt1_fast2(const uint8 input_colors[16*4], BlockDXT1 * output)
     //select_diagonal(colors, count, &c0, &c1);
     fit_colors_bbox(vec_colors, 16, &c0, &c1);
     if (c0 == c1) {
-        ::compress_dxt1_single_color_optimal(vector3_to_color(c0), output);
+        ::compress_dxt1_single_color_optimal(vector3_to_color32(c0), output);
         return;
     }
     inset_bbox(&c0, &c1);
@@ -1222,11 +1391,11 @@ void nv::compress_dxt1_fast2(const uint8 input_colors[16*4], BlockDXT1 * output)
 }
 
 
-static int Mul8Bit(int a, int b)
+/*static int Mul8Bit(int a, int b)
 {
     int t = a * b + 128;
     return (t + (t >> 8)) >> 8;
-}
+}*/
 
 static bool compute_least_squares_endpoints(const uint8 *block, uint32 mask, Vector3 *pmax, Vector3 *pmin)
 {
@@ -1487,7 +1656,10 @@ void nv::compress_dxt1_fast_geld(const uint8 input_colors[16 * 4], BlockDXT1 * b
     Vector3 c0, c1;
     if (!compute_least_squares_endpoints(input_colors, selectors, &c0, &c1)) {
         // @@ Single color compressor.
-        Color32 c(lr, lg, lb);
+        Color32 c;
+        c.r = lr;
+        c.g = lg;
+        c.b = lb;
         ::compress_dxt1_single_color_optimal(c, block);
     }
     else {
@@ -1512,7 +1684,7 @@ void nv::compress_dxt1_fast_geld(const uint8 input_colors[16 * 4], BlockDXT1 * b
     //select_diagonal(colors, count, &c0, &c1);
     fit_colors_bbox(vec_colors, 16, &c0, &c1);
     if (c0 == c1) {
-        ::compress_dxt1_single_color_optimal(vector3_to_color(c0), output);
+        ::compress_dxt1_single_color_optimal(vector3_to_color32(c0), output);
         return;
     }
     inset_bbox(&c0, &c1);

@@ -1,13 +1,102 @@
 // MIT license see full LICENSE text at end of file
 
 #include "ClusterFit.h"
-#include "nvmath/Fitting.h"
 #include "nvmath/Vector.inl"
 
 #include <float.h> // FLT_MAX
 
 using namespace nv;
 
+
+static Vector3 computeCentroid(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
+{
+    Vector3 centroid(0.0f);
+    float total = 0.0f;
+
+    for (int i = 0; i < n; i++)
+    {
+        total += weights[i];
+        centroid += weights[i] * points[i];
+    }
+    centroid *= (1.0f / total);
+
+    return centroid;
+}
+
+static Vector3 computeCovariance(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric, float *__restrict covariance)
+{
+    // compute the centroid
+    Vector3 centroid = computeCentroid(n, points, weights, metric);
+
+    // compute covariance matrix
+    for (int i = 0; i < 6; i++)
+    {
+        covariance[i] = 0.0f;
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        Vector3 a = (points[i] - centroid) * metric;    // @@ I think weight should be squared, but that seems to increase the error slightly.
+        Vector3 b = weights[i] * a;
+
+        covariance[0] += a.x * b.x;
+        covariance[1] += a.x * b.y;
+        covariance[2] += a.x * b.z;
+        covariance[3] += a.y * b.y;
+        covariance[4] += a.y * b.z;
+        covariance[5] += a.z * b.z;
+    }
+
+    return centroid;
+}
+
+// @@ We should be able to do something cheaper...
+static Vector3 estimatePrincipalComponent(const float * __restrict matrix)
+{
+    const Vector3 row0(matrix[0], matrix[1], matrix[2]);
+    const Vector3 row1(matrix[1], matrix[3], matrix[4]);
+    const Vector3 row2(matrix[2], matrix[4], matrix[5]);
+
+    float r0 = lengthSquared(row0);
+    float r1 = lengthSquared(row1);
+    float r2 = lengthSquared(row2);
+
+    if (r0 > r1 && r0 > r2) return row0;
+    if (r1 > r2) return row1;
+    return row2;
+}
+
+static inline Vector3 firstEigenVector_PowerMethod(const float *__restrict matrix)
+{
+    if (matrix[0] == 0 && matrix[3] == 0 && matrix[5] == 0)
+    {
+        return Vector3(0.0f);
+    }
+
+    Vector3 v = estimatePrincipalComponent(matrix);
+
+    const int NUM = 8;
+    for (int i = 0; i < NUM; i++)
+    {
+        float x = v.x * matrix[0] + v.y * matrix[1] + v.z * matrix[2];
+        float y = v.x * matrix[1] + v.y * matrix[3] + v.z * matrix[4];
+        float z = v.x * matrix[2] + v.y * matrix[4] + v.z * matrix[5];
+
+        float norm = max(max(x, y), z);
+
+        v = Vector3(x, y, z) * (1.0f / norm);
+    }
+
+    return v;
+}
+
+static Vector3 computePrincipalComponent_PowerMethod(int n, const Vector3 *__restrict points, const float *__restrict weights, Vector3::Arg metric)
+{
+    float matrix[6];
+    computeCovariance(n, points, weights, metric, matrix);
+
+    return firstEigenVector_PowerMethod(matrix);
+}
 
 void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count)
 {
@@ -23,8 +112,7 @@ void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int 
     m_count = count;
 
     // I've tried using a lower quality approximation of the principal direction, but the best fit line seems to produce best results.
-    Vector3 principal = Fit::computePrincipalComponent_PowerMethod(count, colors, weights, metric);
-    //Vector3 principal = Fit::computePrincipalComponent_EigenSolver(count, colors, weights, metric);
+    Vector3 principal = computePrincipalComponent_PowerMethod(count, colors, weights, metric);
 
     // build the list of values
     int order[16];

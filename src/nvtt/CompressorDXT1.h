@@ -1,15 +1,13 @@
 
 namespace nv {
 
-    class Color32;
     struct BlockDXT1;
     class Vector3;
     class Vector4;
 
-    // All these functions return MSE.
+    void init_dxt1();
 
-    float compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output);
-    float compress_dxt1_single_color_optimal(const Vector3 & color, BlockDXT1 * output);
+    // All these functions return MSE.
 
     float compress_dxt1_single_color(const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, BlockDXT1 * output);
     //float compress_dxt1_least_squares_fit(const Vector4 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, BlockDXT1 * output);

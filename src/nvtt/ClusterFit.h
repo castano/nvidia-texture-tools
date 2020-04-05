@@ -3,15 +3,25 @@
 
 #include "nvmath/SimdVector.h"
 #include "nvmath/Vector.h"
-#include "nvcore/Memory.h"
 
 // Use SIMD version if altivec or SSE are available.
 #define NVTT_USE_SIMD (NV_USE_ALTIVEC || NV_USE_SSE)
 //#define NVTT_USE_SIMD 0
 
-namespace nv {
+#include <xmmintrin.h>
+#if (NV_USE_SSE > 1)
+#include <emmintrin.h>
+#endif
 
-    struct ColorSet;
+#ifndef NV_ALIGN_16
+#if NV_CC_GNUC
+#   define NV_ALIGN_16 __attribute__ ((__aligned__ (16)))
+#else
+#   define NV_ALIGN_16 __declspec(align(16))
+#endif
+#endif
+
+namespace nv {
 
     class ClusterFit
     {
