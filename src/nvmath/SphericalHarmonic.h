@@ -14,11 +14,11 @@ namespace nv
     class Vector3;
     class Matrix;
 
-    NVMATH_API float legendrePolynomial( int l, int m, float x ) NV_CONST;
-    NVMATH_API float shBasis( int l, int m, float theta, float phi ) NV_CONST;
-    NVMATH_API float shBasis( int l, int m, const Vector3 & v ) NV_CONST;
-    NVMATH_API float hshBasis( int l, int m, float theta, float phi ) NV_CONST;
-    NVMATH_API float hshBasis( int l, int m, const Vector3 & v ) NV_CONST;
+    float legendrePolynomial( int l, int m, float x ) NV_CONST;
+    float shBasis( int l, int m, float theta, float phi ) NV_CONST;
+    float shBasis( int l, int m, const Vector3 & v ) NV_CONST;
+    float hshBasis( int l, int m, float theta, float phi ) NV_CONST;
+    float hshBasis( int l, int m, const Vector3 & v ) NV_CONST;
 
     class Sh;
     float dot(const Sh & a, const Sh & b) NV_CONST;
@@ -395,10 +395,10 @@ namespace nv
         }*/
 
 
-        NVMATH_API void multiply( const ShMatrix &A, const ShMatrix &B );
-        NVMATH_API void rotation( const Matrix & m );
-        NVMATH_API void rotation( int axis, float angles );
-        NVMATH_API void print();
+        void multiply( const ShMatrix &A, const ShMatrix &B );
+        void rotation( const Matrix & m );
+        void rotation( int axis, float angles );
+        void print();
 
 
     private:

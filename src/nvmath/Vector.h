@@ -1,14 +1,12 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #pragma once
-#ifndef NV_MATH_VECTOR_H
-#define NV_MATH_VECTOR_H
 
-#include "nvmath.h"
+#include "nvcore/nvcore.h"
 
 namespace nv
 {
-    class NVMATH_CLASS Vector2
+    class Vector2
     {
     public:
         typedef Vector2 const & Arg;
@@ -33,9 +31,6 @@ namespace nv
         void operator*=(float s);
         void operator*=(Vector2::Arg v);
 
-        friend bool operator==(Vector2::Arg a, Vector2::Arg b);
-        friend bool operator!=(Vector2::Arg a, Vector2::Arg b);
-
         union {
             struct {
                 float x, y;
@@ -44,7 +39,7 @@ namespace nv
         };
     };
 
-    class NVMATH_CLASS Vector3
+    class Vector3
     {
     public:
         typedef Vector3 const & Arg;
@@ -75,9 +70,6 @@ namespace nv
         void operator*=(Vector3::Arg v);
         void operator/=(Vector3::Arg v);
 
-        friend bool operator==(Vector3::Arg a, Vector3::Arg b);
-        friend bool operator!=(Vector3::Arg a, Vector3::Arg b);
-
         union {
             struct {
                 float x, y, z;
@@ -86,7 +78,7 @@ namespace nv
         };
     };
 
-    class NVMATH_CLASS Vector4
+    class Vector4
     {
     public:
         typedef Vector4 const & Arg;
@@ -121,9 +113,6 @@ namespace nv
         void operator*=(Vector4::Arg v);
         void operator/=(Vector4::Arg v);
 
-        friend bool operator==(Vector4::Arg a, Vector4::Arg b);
-        friend bool operator!=(Vector4::Arg a, Vector4::Arg b);
-
         union {
             struct {
                 float x, y, z, w;
@@ -146,4 +135,3 @@ template <typename T> T to(const nv::Vector2 & v) { NV_COMPILER_CHECK(sizeof(T) 
 template <typename T> T to(const nv::Vector3 & v) { NV_COMPILER_CHECK(sizeof(T) == sizeof(nv::Vector3)); return T(v.x, v.y, v.z); }
 template <typename T> T to(const nv::Vector4 & v) { NV_COMPILER_CHECK(sizeof(T) == sizeof(nv::Vector4)); return T(v.x, v.y, v.z, v.w); }
 
-#endif // NV_MATH_VECTOR_H

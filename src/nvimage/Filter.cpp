@@ -35,7 +35,9 @@
 
 #include "Filter.h"
 
+#include "nvmath/nvmath.h"
 #include "nvmath/Vector.h" // Vector4
+
 #include "nvcore/Utils.h" // swap
 
 #include <string.h> // memset

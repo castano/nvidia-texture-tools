@@ -87,12 +87,12 @@ namespace nv {
             return Vector3( c[0], c[1], c[2] );
         }
 
-        NV_SIMD_INLINE Vector4 toVector4() const
+        /*NV_SIMD_INLINE Vector4 toVector4() const
         {
             NV_ALIGN_16 float c[4];
             _mm_store_ps( c, vec );
             return Vector4( c[0], c[1], c[2], c[3] );
-        }
+        }*/
 
 #define SSE_SPLAT( a ) ((a) | ((a) << 2) | ((a) << 4) | ((a) << 6))
         NV_SIMD_NATIVE SimdVector splatX() const { return SimdVector( _mm_shuffle_ps( vec, vec, SSE_SPLAT( 0 ) ) ); }

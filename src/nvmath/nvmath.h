@@ -1,8 +1,6 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #pragma once
-#ifndef NV_MATH_H
-#define NV_MATH_H
 
 #include "nvcore/nvcore.h"
 #include "nvcore/Debug.h"   // nvDebugCheck
@@ -13,21 +11,6 @@
 #if NV_OS_WIN32 || NV_OS_XBOX
 #include <float.h>  // finite, isnan
 #endif
-
-
-// Function linkage
-#if NVMATH_SHARED
-#ifdef NVMATH_EXPORTS
-#define NVMATH_API DLL_EXPORT
-#define NVMATH_CLASS DLL_EXPORT_CLASS
-#else
-#define NVMATH_API DLL_IMPORT
-#define NVMATH_CLASS DLL_IMPORT
-#endif
-#else // NVMATH_SHARED
-#define NVMATH_API
-#define NVMATH_CLASS
-#endif // NVMATH_SHARED
 
 // Set some reasonable defaults.
 #ifndef NV_USE_ALTIVEC
@@ -51,10 +34,6 @@
         // Otherwise we assume no SSE.
 #       define NV_USE_SSE 0
 #   endif
-#endif
-
-#if NV_USE_SSE
-    #include <xmmintrin.h>
 #endif
 
 // Internally set NV_USE_SIMD when either altivec or sse is available.
@@ -331,5 +310,3 @@ namespace nv
 
 
 } // nv
-
-#endif // NV_MATH_H

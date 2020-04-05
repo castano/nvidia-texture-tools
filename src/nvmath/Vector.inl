@@ -1,26 +1,15 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #pragma once
-#ifndef NV_MATH_VECTOR_INL
-#define NV_MATH_VECTOR_INL
 
 #include "Vector.h"
+#include "nvmath.h"
+
 #include "nvcore/Utils.h" // min, max
 #include "nvcore/Hash.h" // hash
 
 namespace nv
 {
-
-    // Helpers to convert vector types. Assume T has x,y members and 2 argument constructor.
-    //template <typename T> T to(Vector2::Arg v) { return T(v.x, v.y); }
-
-    // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
-    //template <typename T> T to(Vector3::Arg v) { return T(v.x, v.y, v.z); }
-
-    // Helpers to convert vector types. Assume T has x,y,z members and 3 argument constructor.
-    //template <typename T> T to(Vector4::Arg v) { return T(v.x, v.y, v.z, v.w); }
-
-
     // Vector2
     inline Vector2::Vector2() {}
     inline Vector2::Vector2(float f) : x(f), y(f) {}
@@ -537,7 +526,8 @@ namespace nv
 
     inline Vector3 operator/(Vector3::Arg v, float s)
     {
-        return scale(v, 1.0f/s);
+        //return scale(v, 1.0f/s);
+        return Vector3(v.x / s, v.y / s, v.z / s);
     }
 
     /*inline Vector3 add_scaled(Vector3::Arg a, Vector3::Arg b, float s)
@@ -915,5 +905,3 @@ namespace nv
 #endif //NV_OS_IOS
 
 } // nv namespace
-
-#endif // NV_MATH_VECTOR_INL

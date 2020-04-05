@@ -67,18 +67,15 @@ uint BlockDXT1::evaluatePalette(Color32 color_array[4], bool d3d9/*= false*/) co
     //	color_array[1].u = c.u;
 
     if( col0.u > col1.u ) {
-        int bias = 0;
-        if (d3d9) bias = 1;
-
         // Four-color block: derive the other two colors.
-        color_array[2].r = (2 * color_array[0].r + color_array[1].r + bias) / 3;
-        color_array[2].g = (2 * color_array[0].g + color_array[1].g + bias) / 3;
-        color_array[2].b = (2 * color_array[0].b + color_array[1].b + bias) / 3;
+        color_array[2].r = (2 * color_array[0].r + color_array[1].r + d3d9) / 3;
+        color_array[2].g = (2 * color_array[0].g + color_array[1].g + d3d9) / 3;
+        color_array[2].b = (2 * color_array[0].b + color_array[1].b + d3d9) / 3;
         color_array[2].a = 0xFF;
 
-        color_array[3].r = (2 * color_array[1].r + color_array[0].r + bias) / 3;
-        color_array[3].g = (2 * color_array[1].g + color_array[0].g + bias) / 3;
-        color_array[3].b = (2 * color_array[1].b + color_array[0].b + bias) / 3;
+        color_array[3].r = (2 * color_array[1].r + color_array[0].r + d3d9) / 3;
+        color_array[3].g = (2 * color_array[1].g + color_array[0].g + d3d9) / 3;
+        color_array[3].b = (2 * color_array[1].b + color_array[0].b + d3d9) / 3;
         color_array[3].a = 0xFF;
 
         return 4;

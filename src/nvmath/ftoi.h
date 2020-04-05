@@ -1,10 +1,12 @@
 // This code is in the public domain -- castano@gmail.com
 
 #pragma once
-#ifndef NV_MATH_FTOI_H
-#define NV_MATH_FTOI_H
 
 #include "nvmath/nvmath.h"
+
+#if NV_USE_SSE
+    #include <xmmintrin.h>
+#endif
 
 #include <math.h>
 
@@ -246,5 +248,3 @@ namespace nv
 
 
 } // nv
-
-#endif // NV_MATH_FTOI_H

@@ -1,6 +1,7 @@
 // This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
 #pragma once
 
+#include "nvmath.h" // NV_EPSILON
 #include "Vector.h"
 #include "Plane.h"
 

@@ -1,10 +1,9 @@
 // This code is in the public domain -- castanyo@yahoo.es
 
 #pragma once
-#ifndef NV_MATH_MATRIX_INL
-#define NV_MATH_MATRIX_INL
 
 #include "Matrix.h"
+#include "nvmath.h"
 
 namespace nv
 {
@@ -1462,6 +1461,3 @@ public:
 
 };
 #endif
-
-
-#endif // NV_MATH_MATRIX_INL
