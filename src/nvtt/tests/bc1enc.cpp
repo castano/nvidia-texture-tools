@@ -46,6 +46,11 @@ typedef unsigned int u32;
 #define TEST_AMD_CMP 1
 
 
+namespace nv
+{
+    inline Vector3::Vector3(float f) : x(f), y(f), z(f) {}
+    inline Vector4::Vector4() {}
+}
 
 static float mse_to_psnr(float mse) {
     float rms = sqrtf(mse);

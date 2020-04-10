@@ -5,6 +5,7 @@
 #include "nvmath/nvmath.h"
 
 #include <string.h> // memset
+#include <limits.h> // INT_MAX
 #include <float.h> // FLT_MAX
 
 
@@ -54,6 +55,26 @@ namespace nv {
     /*struct Vector3 {
         float x, y, z;
     };*/
+
+    inline Vector3::Vector3() {}
+    inline Vector3::Vector3(float f) : x(f), y(f), z(f) {}
+    inline Vector3::Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
+    inline Vector3::Vector3(Vector3::Arg v) : x(v.x), y(v.y), z(v.z) {}
+
+    inline const Vector3 & Vector3::operator=(Vector3::Arg v)
+    {
+        x = v.x;
+        y = v.y;
+        z = v.z;
+        return *this;
+    }
+
+    inline void Vector3::operator+=(Vector3::Arg v)
+    {
+        x += v.x;
+        y += v.y;
+        z += v.z;
+    }
 
     inline Vector3 operator*(Vector3 v, float s) {
         return { v.x * s, v.y * s, v.z * s };
@@ -105,6 +126,13 @@ namespace nv {
 
     inline void Vector3::set(float x, float y, float z) {
         this->x = x; this->y = y; this->z = z;
+    }
+
+    inline Vector4::Vector4(Vector3::Arg v, float w) : x(v.x), y(v.y), z(v.z), w(w) {}
+
+    inline Vector3 Vector4::xyz() const
+    {
+        return Vector3(x, y, z);
     }
 
 }
