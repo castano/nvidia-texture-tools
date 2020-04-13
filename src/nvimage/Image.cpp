@@ -44,13 +44,13 @@ void Image::allocate(uint w, uint h, uint d/*= 1*/)
     data = realloc<Color32>(data, w * h * d);
 }
 
-void Image::acquire(Color32 * data, uint w, uint h, uint d/*= 1*/)
+void Image::acquire(Color32 * rawdata, uint w, uint h, uint d/*= 1*/)
 {
     free();
     width = w;
     height = h;
     depth = d;
-    data = data;
+    data = rawdata;
 }
 
 void Image::free()
