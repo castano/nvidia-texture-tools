@@ -1,4 +1,4 @@
-// This code is in the public domain -- Ignacio Castaño <castano@gmail.com>
+// This code is in the public domain -- Ignacio Castano <castano@gmail.com>
 #pragma once
 
 #include "nvmath.h"

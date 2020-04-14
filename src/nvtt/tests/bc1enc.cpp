@@ -1,6 +1,5 @@
 
 #define  _CRT_SECURE_NO_WARNINGS
-#include <assert.h>
 #include <stdlib.h>
 
 //#define STBI_ASSERT(x)
@@ -13,11 +12,12 @@
 #define RGBCX_IMPLEMENTATION
 #include "../extern/rg/rgbcx.h"
 
+#define ICBC_IMPLEMENTATION
+#include "nvtt/icbc.h"
+
 #include "../extern/libsquish-1.15/squish.h"
 
 #include "../extern/CMP_Core/source/CMP_Core.h"
-
-#include "nvtt/CompressorDXT1.h"
 
 #include "nvmath/Vector.h"
 #include "nvmath/Color.h"
@@ -37,73 +37,23 @@ typedef unsigned int u32;
 #define TEST_RGBCX 1
 
 #define TEST_NVTT_FAST 1
+#define TEST_NVTT_TEST 1
 #define TEST_NVTT 1
-#define TEST_NVTT_HQ 1
+#define TEST_NVTT_HQ 0
 
-#define TEST_SQUISH 1
-#define TEST_SQUISH_HQ 1
+#define TEST_SQUISH 0
+#define TEST_SQUISH_HQ 0
 
-#define TEST_AMD_CMP 1
+#define TEST_AMD_CMP 0
 
 
 
-static float mse_to_psnr(float mse) {
-    float rms = sqrtf(mse);
-    float psnr = rms ? (float)clamp(log10(255.0 / rms) * 20.0, 0.0, 300.0) : 1e+10f;
-    return psnr;
-}
-
-/*
-void image_metrics::calc(const image &a, const image &b, uint32_t first_chan, uint32_t total_chans, bool avg_comp_error, bool use_601_luma)
-{
-    //assert((first_chan < 4U) && (first_chan + total_chans <= 4U));
-
-    const uint32_t width = std::min(a.get_width(), b.get_width());
-    const uint32_t height = std::min(a.get_height(), b.get_height());
-
-    double hist[256];
-    memset(hist, 0, sizeof(hist));
-
-    for (uint32_t y = 0; y < height; y++)
-    {
-        for (uint32_t x = 0; x < width; x++)
-        {
-            const color_rgba &ca = a(x, y), &cb = b(x, y);
-
-            for (uint32_t c = 0; c < 3; c++)
-                hist[iabs(ca[first_chan + c] - cb[first_chan + c])]++;
-        }
-    }
-
-    m_max = 0;
-    double sum = 0.0f, sum2 = 0.0f;
-    for (uint32_t i = 0; i < 256; i++)
-    {
-        if (hist[i])
-        {
-            m_max = std::max<float>(m_max, (float)i);
-            double v = i * hist[i];
-            sum += v;
-            sum2 += i * v;
-        }
-    }
-
-    double total_values = (double)width * (double)height;
-    if (avg_comp_error)
-        total_values *= (double)clamp<uint32_t>(total_chans, 1, 4);
-
-    m_mean = (float)clamp<double>(sum / total_values, 0.0f, 255.0);
-    m_mean_squared = (float)clamp<double>(sum2 / total_values, 0.0f, 255.0 * 255.0);
-    m_rms = (float)sqrt(m_mean_squared);
-    m_psnr = m_rms ? (float)clamp<double>(log10(255.0 / m_rms) * 20.0, 0.0f, 300.0f) : 1e+10f;
-}
-*/
 
 // Returns mse.
-float evaluate_dxt1_mse(uint8 * rgba, uint8 * block, int block_count, int decoder = 0) {
+float evaluate_dxt1_mse(uint8 * rgba, uint8 * block, int block_count, icbc::Decoder decoder = icbc::Decoder_D3D10) {
     double total = 0.0f;
     for (int b = 0; b < block_count; b++) {
-        total += nv::evaluate_dxt1_error(rgba, (BlockDXT1 *)block, decoder);
+        total += icbc::evaluate_dxt1_error(rgba, block, decoder);
         rgba += 4 * 4 * 4;
         block += 8;
     }
@@ -250,7 +200,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "stb";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -274,7 +224,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "stb-hq";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -300,7 +250,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "rgbcx";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -310,22 +260,22 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
 
     if (TEST_NVTT_FAST) {
         memset(block_data, 0, block_count * 8);
-        Vector3 color_weights(1);
+        float color_weights[3] = { 1, 1, 1 };
 
         timer.start();
         for (int i = 0; i < repeat_count; i++) {
             for (int b = 0; b < block_count; b++) {
-                Vector4 input_colors[16];
+                float input_colors[16*4];
                 float input_weights[16];
                 for (int j = 0; j < 16; j++) {
-                    input_colors[j].x = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
-                    input_colors[j].y = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
-                    input_colors[j].z = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
-                    input_colors[j].w = 255.0f;
+                    input_colors[4*j+0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                    input_colors[4*j+1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                    input_colors[4*j+2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                    input_colors[4*j+3] = 1.0f;
                     input_weights[j] = 1.0f;
                 }
 
-                compress_dxt1_fast(input_colors, input_weights, color_weights, (BlockDXT1*)(block_data + b * 8));
+                icbc::compress_dxt1_fast(input_colors, input_weights, color_weights, (block_data + b * 8));
             }
         }
         timer.stop();
@@ -335,7 +285,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "nvtt-fast";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -343,24 +293,59 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         }
     }
 
-    if (TEST_NVTT) {
+    if (TEST_NVTT_TEST) {
         memset(block_data, 0, block_count * 8);
-        Vector3 color_weights(1);
+        float color_weights[3] = { 1, 1, 1 };
 
         timer.start();
         for (int i = 0; i < repeat_count; i++) {
             for (int b = 0; b < block_count; b++) {
-                Vector4 input_colors[16];
+                float input_colors[16 * 4];
                 float input_weights[16];
                 for (int j = 0; j < 16; j++) {
-                    input_colors[j].x = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
-                    input_colors[j].y = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
-                    input_colors[j].z = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
-                    input_colors[j].w = 1.0f;
+                    input_colors[4 * j + 0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                    input_colors[4 * j + 1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                    input_colors[4 * j + 2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                    input_colors[4 * j + 3] = 1.0f;
                     input_weights[j] = 1.0f;
                 }
 
-                compress_dxt1(input_colors, input_weights, color_weights, false, false, (BlockDXT1*)(block_data + b * 8));
+                icbc::compress_dxt1_test(input_colors, input_weights, color_weights, (block_data + b * 8));
+            }
+        }
+        timer.stop();
+
+        float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
+
+        if (stats) {
+            stats->compressorName = "nvtt-test";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
+            stats++;
+        }
+        else {
+            output_dxt_dds(bw, bh, block_data, "nvtt_test.dds");
+        }
+    }
+
+    if (TEST_NVTT) {
+        memset(block_data, 0, block_count * 8);
+        float color_weights[3] = { 1, 1, 1 };
+
+        timer.start();
+        for (int i = 0; i < repeat_count; i++) {
+            for (int b = 0; b < block_count; b++) {
+                float input_colors[16*4];
+                float input_weights[16];
+                for (int j = 0; j < 16; j++) {
+                    input_colors[4*j+0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                    input_colors[4*j+1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                    input_colors[4*j+2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                    input_colors[4*j+3] = 1.0f;
+                    input_weights[j] = 1.0f;
+                }
+
+                icbc::compress_dxt1(input_colors, input_weights, color_weights, false, false, (block_data + b * 8));
             }
         }
         timer.stop();
@@ -370,7 +355,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "nvtt";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -380,22 +365,22 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
 
     if (TEST_NVTT_HQ) {
         memset(block_data, 0, block_count * 8);
-        Vector3 color_weights(1);
+        float color_weights[3] = { 1, 1, 1 };
 
         timer.start();
         for (int i = 0; i < repeat_count; i++) {
             for (int b = 0; b < block_count; b++) {
-                Vector4 input_colors[16];
+                float input_colors[16 * 4];
                 float input_weights[16];
                 for (int j = 0; j < 16; j++) {
-                    input_colors[j].x = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
-                    input_colors[j].y = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
-                    input_colors[j].z = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
-                    input_colors[j].w = 1.0f;
+                    input_colors[4 * j + 0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                    input_colors[4 * j + 1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                    input_colors[4 * j + 2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                    input_colors[4 * j + 3] = 1.0f;
                     input_weights[j] = 1.0f;
                 }
 
-                compress_dxt1(input_colors, input_weights, color_weights, true, true, (BlockDXT1*)(block_data + b * 8));
+                icbc::compress_dxt1(input_colors, input_weights, color_weights, true, true, (block_data + b * 8));
             }
         }
         timer.stop();
@@ -405,7 +390,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "nvtt-hq";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -429,7 +414,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "squish";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -453,7 +438,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "squish-hq";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -477,7 +462,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         if (stats) {
             stats->compressorName = "cmp";
             stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed();
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
@@ -545,51 +530,51 @@ bool analyze_bc1(const char * inputFileName) {
     int this_should_never_happen = 0;
     int this_should_never_happen_either = 0;
         
-    Vector3 color_weights(1);
+    float color_weights[3] = { 1, 1, 1 };
 
     for (int b = 0; b < block_count; b++) {
 
         uint8 * rgba_block = rgba_block_data + b * 4 * 4 * 4;
         uint8 * dxt_block = block_data + b * 8;
 
-        Vector4 input_colors[16];
+        float input_colors[16*4];
         float input_weights[16];
         for (int j = 0; j < 16; j++) {
-            input_colors[j].x = rgba_block[j * 4 + 0] / 255.0f;
-            input_colors[j].y = rgba_block[j * 4 + 1] / 255.0f;
-            input_colors[j].z = rgba_block[j * 4 + 2] / 255.0f;
-            input_colors[j].w = 255.0f;
+            input_colors[4*j+0] = rgba_block[j * 4 + 0] / 255.0f;
+            input_colors[4*j+1] = rgba_block[j * 4 + 1] / 255.0f;
+            input_colors[4*j+2] = rgba_block[j * 4 + 2] / 255.0f;
+            input_colors[4*j+3] = 255.0f;
             input_weights[j] = 1.0f;
         }
 
         // Compare all the different modes on the same block:
 
         stb_compress_dxt_block(dxt_block, rgba_block, 0, STB_DXT_NORMAL);
-        float mse_stb = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        float mse_stb = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
         stb_compress_dxt_block(dxt_block, rgba_block, 0, STB_DXT_HIGHQUAL);
-        float mse_stb_hq = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        float mse_stb_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        compress_dxt1_fast(input_colors, input_weights, color_weights, (BlockDXT1*)dxt_block);
-        float mse_nvtt_fast = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        icbc::compress_dxt1_fast(input_colors, input_weights, color_weights, dxt_block);
+        float mse_nvtt_fast = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        compress_dxt1_fast2(rgba_block, (BlockDXT1*)dxt_block);
-        float mse_nvtt_fast2 = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        icbc::compress_dxt1_fast(rgba_block, dxt_block);
+        float mse_nvtt_fast2 = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        compress_dxt1_fast_geld(rgba_block, (BlockDXT1*)dxt_block);
-        float mse_nvtt_geld = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        icbc::compress_dxt1_test(input_colors, input_weights, color_weights, dxt_block);
+        float mse_nvtt_test = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        compress_dxt1(input_colors, input_weights, color_weights, true, false, (BlockDXT1*)dxt_block);
-        float mse_nvtt = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        icbc::compress_dxt1(input_colors, input_weights, color_weights, true, false, dxt_block);
+        float mse_nvtt = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        compress_dxt1(input_colors, input_weights, color_weights, true, true, (BlockDXT1*)dxt_block);
-        float mse_nvtt_hq = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        icbc::compress_dxt1(input_colors, input_weights, color_weights, true, true, dxt_block);
+        float mse_nvtt_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
         squish::Compress(rgba_block, dxt_block, squish::kDxt1);
-        float mse_squish = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        float mse_squish = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
         squish::Compress(rgba_block, dxt_block, squish::kDxt1 | squish::kColourIterativeClusterFit);
-        float mse_squish_hq = nv::evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block);
+        float mse_squish_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
         if (mse_stb < mse_nvtt_fast) {
             stb_better_than_nvtt_fast++;
@@ -602,6 +587,9 @@ bool analyze_bc1(const char * inputFileName) {
         }
         if (mse_nvtt_hq < mse_nvtt) {
             nvtt_hq_wins++;
+        }
+        if (mse_nvtt < mse_nvtt_test) {
+            int k = 1;
         }
         if (mse_squish < mse_nvtt_hq) {
             squish_better_than_nvtt_hq++;
@@ -618,6 +606,12 @@ bool analyze_bc1(const char * inputFileName) {
 }
 
 
+
+static float mse_to_psnr(float mse) {
+    float rms = sqrtf(mse);
+    float psnr = rms ? (float)clamp(log10(255.0 / rms) * 20.0, 0.0, 300.0) : 1e+10f;
+    return psnr;
+}
 
 
 const char * image_set[] = {
@@ -696,25 +690,26 @@ const char * roblox_set[] = {
 };
 
 
-
-
 int main(int argc, char *argv[])
 {
-    const char * inputFileName = "testsuite/artificial.png";
-    //const char * inputFileName = "testsuite/kodak/kodim14.png";
+    //const char * inputFileName = "testsuite/artificial.png";
+    const char * inputFileName = "testsuite/kodak/kodim14.png";
     //const char * inputFileName = "testsuite/kodak/kodim18.png";
     //const char * inputFileName = "testsuite/kodak/kodim15.png";
     //const char * inputFileName = "testsuite/waterloo/frymire.png";
     //const char * inputFileName = "Roblox/leafygrass_top/diffuse.tga";
-    
+
+    icbc::init();
+    rgbcx::encode_bc1_init();
+
     test_bc1(inputFileName, 0, NULL);
     //analyze_bc1(inputFileName);
 
-    const char ** set = roblox_set;
-    int count = sizeof(roblox_set) / sizeof(char*);
+    //const char ** set = roblox_set;
+    //int count = sizeof(roblox_set) / sizeof(char*);
 
-    //const char ** set = image_set;
-    //int count = sizeof(image_set) / sizeof(char*);
+    const char ** set = image_set;
+    int count = sizeof(image_set) / sizeof(char*);
 
     const int MAX_COMPRESSOR_COUNT = 16;
     Stats stats[MAX_COMPRESSOR_COUNT];

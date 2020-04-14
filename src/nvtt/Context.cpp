@@ -30,6 +30,7 @@
 #include "CompressionOptions.h"
 #include "OutputOptions.h"
 #include "Surface.h"
+#include "icbc.h"
 
 #include "CompressorDX9.h"
 #include "CompressorDX10.h"
@@ -67,6 +68,8 @@ Compressor::Compressor() : m(*new Compressor::Private())
     enableCudaAcceleration(m.cudaSupported);
 
     m.dispatcher = &m.defaultDispatcher;
+
+    icbc::init();
 }
 
 Compressor::~Compressor()

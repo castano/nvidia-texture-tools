@@ -29,7 +29,7 @@ ADD_EXECUTABLE(nvhdrtest hdrtest.cpp)
 TARGET_LINK_LIBRARIES(nvhdrtest nvcore nvimage nvtt bc6h nvmath)
 
 ADD_EXECUTABLE(bc1enc bc1enc.cpp)
-TARGET_LINK_LIBRARIES(bc1enc nvcore nvimage nvmath nvtt squish CMP_Core)
+TARGET_LINK_LIBRARIES(bc1enc nvcore nvimage nvmath squish CMP_Core)
 
 INSTALL(TARGETS nvtestsuite nvhdrtest DESTINATION bin)
  

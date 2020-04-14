@@ -11,7 +11,7 @@ SET(NVTT_SRCS
     CompressorDX9.h CompressorDX9.cpp
     CompressorDX10.h CompressorDX10.cpp
     CompressorDX11.h CompressorDX11.cpp
-    CompressorDXT1.h CompressorDXT1.cpp
+    icbc.h icbc.cpp
     CompressorDXT5_RGBM.h CompressorDXT5_RGBM.cpp
     CompressorETC.h CompressorETC.cpp
     CompressorRGB.h CompressorRGB.cpp

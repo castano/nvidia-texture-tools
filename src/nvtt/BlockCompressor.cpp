@@ -206,15 +206,16 @@ void FloatColorCompressor::compress(AlphaMode alphaMode, uint w, uint h, uint d,
 
 
 // BC1
-#include "CompressorDXT1.h"
+#include "icbc.h"
 
 void FastCompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], const CompressionOptions::Private & compressionOptions, void * output)
 {
-    compress_dxt1_fast(colors, weights, compressionOptions.colorWeight.xyz(), (BlockDXT1 *)output);
+    icbc::compress_dxt1_fast((float*)colors, weights, compressionOptions.colorWeight.component, output);
 }
 void CompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], const CompressionOptions::Private & compressionOptions, void * output)
 {
-    compress_dxt1(colors, weights, compressionOptions.colorWeight.xyz(), /*three_color_mode*/true, false, (BlockDXT1 *)output);
+    bool hq = compressionOptions.quality > Quality_Normal;
+    icbc::compress_dxt1((float*)colors, weights, compressionOptions.colorWeight.component, /*three_color_mode*/true, hq, output);
 }
 
 
