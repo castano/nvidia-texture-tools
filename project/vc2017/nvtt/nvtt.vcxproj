@@ -421,9 +421,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\nvtt\BlockCompressor.h" />
-    <ClInclude Include="..\..\..\src\nvtt\CompressorDXT1.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.h" />
     <ClInclude Include="..\..\..\src\nvtt\CubeSurface.h" />
+    <ClInclude Include="..\..\..\src\nvtt\icbc.h" />
     <ClInclude Include="..\..\..\src\nvtt\SingleColorLookup.h" />
     <ClInclude Include="..\..\..\src\nvtt\Surface.h" />
     <ClInclude Include="resource.h" />
@@ -461,7 +461,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\nvtt\BlockCompressor.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\CompressorDXT1.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorETC.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CubeSurface.cpp" />
@@ -474,6 +473,7 @@
     <ClCompile Include="..\..\..\src\nvtt\CompressorDX9.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorRGB.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\Context.cpp" />
+    <ClCompile Include="..\..\..\src\nvtt\icbc.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\InputOptions.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\nvtt.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\nvtt_wrapper.cpp" />

@@ -46,8 +46,8 @@
     <ClInclude Include="..\..\..\src\nvtt\BlockCompressor.h" />
     <ClInclude Include="..\..\..\src\nvtt\SingleColorLookup.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressorDX11.h" />
-    <ClInclude Include="..\..\..\src\nvtt\CompressorDXT1.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.h" />
+    <ClInclude Include="..\..\..\src\nvtt\icbc.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\nvtt\cuda\CudaCompressorDXT.cpp">
@@ -74,9 +74,9 @@
     <ClCompile Include="..\..\..\src\nvtt\Surface.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\BlockCompressor.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\TaskDispatcher.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\CompressorDXT1.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorETC.cpp" />
+    <ClCompile Include="..\..\..\src\nvtt\icbc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\..\..\src\nvtt\cuda\ConvolveKernel.cu">
