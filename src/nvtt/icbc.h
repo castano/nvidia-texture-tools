@@ -44,6 +44,11 @@ namespace icbc {
 #include <assert.h>
 #endif
 
+#if ICBC_USE_SIMD
+#include <xmmintrin.h>
+#include <emmintrin.h>
+#endif
+
 namespace icbc {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -223,11 +228,13 @@ inline bool equal(Vector3 a, Vector3 b, float epsilon) {
 
 #if ICBC_USE_SIMD
 
-#include <xmmintrin.h>
-#include <emmintrin.h>
-
 #define SIMD_INLINE inline
-#define SIMD_NATIVE __forceinline
+#if __GNUC__
+// Also need "inline" to avoid "function body can be overwritten at link time" errors.
+#   define SIMD_NATIVE __attribute__((always_inline)) inline
+#else // _MSC_VER
+#   define SIMD_NATIVE __forceinline
+#endif
 
 class SimdVector
 {
