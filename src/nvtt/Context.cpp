@@ -69,7 +69,7 @@ Compressor::Compressor() : m(*new Compressor::Private())
 
     m.dispatcher = &m.defaultDispatcher;
 
-    icbc::init();
+    icbc::init_dxt1();
 }
 
 Compressor::~Compressor()

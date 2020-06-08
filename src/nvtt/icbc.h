@@ -1,12 +1,38 @@
+// icbc.h v1.03
+// A High Quality SIMD BC1 Encoder by Ignacio Castano <castano@gmail.com>.
+//
+// LICENSE:
+//  MIT license at the end of this file.
 
+#ifndef ICBC_H
+#define ICBC_H
 
 namespace icbc {
 
-    void init();
+    void init_dxt1();
 
-    float compress_dxt1(const float input_colors[16 * 4], const float input_weights[16], const float color_weights[3], bool three_color_mode, bool hq, void * output);
+    enum Quality {
+        Quality_Level1,  // Box fit + least squares fit.
+        Quality_Level2,  // Cluster fit 4, threshold = 24.
+        Quality_Level3,  // Cluster fit 4, threshold = 32.
+        Quality_Level4,  // Cluster fit 4, threshold = 48.
+        Quality_Level5,  // Cluster fit 4, threshold = 64.
+        Quality_Level6,  // Cluster fit 4, threshold = 96.
+        Quality_Level7,  // Cluster fit 4, threshold = 128.
+        Quality_Level8,  // Cluster fit 4+3, threshold = 256.
+        Quality_Level9,  // Cluster fit 4+3, threshold = 256 + Refinement.
+
+        Quality_Fast = Quality_Level1,
+        Quality_Default = Quality_Level8,
+        Quality_Max = Quality_Level9,
+    };
+
+    float compress_dxt1(Quality level, const float * input_colors, const float * input_weights, const float color_weights[3], bool three_color_mode, bool three_color_black, void * output);
+
+    // @@ Is there any difference between this and compress_dxt1(Quality_Level0) ?
     float compress_dxt1_fast(const float input_colors[16 * 4], const float input_weights[16], const float color_weights[3], void * output);
     void compress_dxt1_fast(const unsigned char input_colors[16 * 4], void * output);
+
 
     enum Decoder {
         Decoder_D3D10 = 0,
@@ -14,34 +40,109 @@ namespace icbc {
         Decoder_AMD = 2
     };
 
+    void decode_dxt1(const void * block, unsigned char rgba_block[16 * 4], Decoder decoder = Decoder_D3D10);
     float evaluate_dxt1_error(const unsigned char rgba_block[16 * 4], const void * block, Decoder decoder = Decoder_D3D10);
 
 }
 
+#endif // ICBC_H
+
 #ifdef ICBC_IMPLEMENTATION
 
-#ifndef ICBC_USE_SSE
-#define ICBC_USE_SSE 2
+// Instruction level support must be chosen at compile time setting ICBC_SIMD to one of these values:
+#define ICBC_FLOAT  0
+#define ICBC_SSE2   1
+#define ICBC_SSE41  2
+#define ICBC_AVX1   3
+#define ICBC_AVX2   4
+#define ICBC_AVX512 5
+#define ICBC_NEON   -1
+#define ICBC_VMX    -2
+
+// SIMD version. (FLOAT=0, SSE2=1, SSE41=2, AVX1=3, AVX2=4, AVX512=5, NEON=-1, VMX=-2)
+#ifndef ICBC_SIMD
+#if _M_ARM
+#define ICBC_SIMD -1
+#else
+#define ICBC_SIMD 4
 #endif
+#endif
+
+// AVX1 does not require FMA, and depending on whether it's Intel or AMD you may have FMA3 or FMA4. What a mess.
+#ifndef ICBC_USE_FMA
+//#define ICBC_USE_FMA 3
+//#define ICBC_USE_FMA 4
+#endif
+
+#if ICBC_SIMD >= ICBC_AVX2
+#define ICBC_BMI2 1
+#endif
+
+// Apparently rcp is not deterministic (different precision on Intel and AMD), enable if you don't care about that for a small performance boost.
+//#define ICBC_USE_RCP 1
+
+#if ICBC_SIMD == ICBC_AVX2
+#define ICBC_USE_AVX2_PERMUTE2 1    // Using permutevar8x32 and bitops.
+#endif
+
+#if ICBC_SIMD == ICBC_AVX512
+#define ICBC_USE_AVX512_PERMUTE 1
+#endif
+
+#if ICBC_SIMD == ICBC_NEON
+#define ICBC_USE_NEON_VTL 0         // Not tested.
+#endif
+
 
 #ifndef ICBC_DECODER
-#define ICBC_DECODER 0       // 0 = d3d10, 1 = d3d9, 2 = nvidia, 3 = amd
+#define ICBC_DECODER 0       // 0 = d3d10, 1 = nvidia, 2 = amd
 #endif
 
-#define ICBC_USE_SIMD ICBC_USE_SSE
+// Some experimental knobs:
+#define ICBC_PERFECT_ROUND 0        // Enable perfect rounding to compute cluster fit residual.
 
-// Some testing knobs:
-#define ICBC_FAST_CLUSTER_FIT 0     // This ignores input weights for a moderate speedup.
-#define ICBC_PERFECT_ROUND 0        // Enable perfect rounding in scalar code path only.
+
+#if ICBC_SIMD >= ICBC_SSE2
+#include <emmintrin.h>
+#endif
+
+#if ICBC_SIMD >= ICBC_SSE41
+#include <smmintrin.h>
+#endif
+
+#if ICBC_SIMD >= ICBC_AVX1
+#include <immintrin.h>
+#endif
+
+#if ICBC_SIMD >= ICBC_AVX512 && _MSC_VER
+#include <zmmintrin.h>
+#endif
+
+#if ICBC_SIMD == ICBC_NEON
+#include <arm_neon.h>
+#endif
+
+#if ICBC_SIMD == ICBC_VMX
+#include <altivec.h>
+#endif
+
+#if _MSC_VER
+#include <intrin.h> // _BitScanReverse
+#endif
 
 #include <stdint.h>
+#include <stdlib.h> // abs
 #include <string.h> // memset
 #include <math.h>   // floorf
 #include <float.h>  // FLT_MAX
 
 #ifndef ICBC_ASSERT
+#if _DEBUG
 #define ICBC_ASSERT assert
 #include <assert.h>
+#else
+#define ICBC_ASSERT(x)
+#endif
 #endif
 
 namespace icbc {
@@ -221,172 +322,1185 @@ inline bool equal(Vector3 a, Vector3 b, float epsilon) {
 #endif
 #endif
 
-#if ICBC_USE_SIMD
-
-#include <xmmintrin.h>
-#include <emmintrin.h>
-
-#define SIMD_INLINE inline
-#define SIMD_NATIVE __forceinline
-
-class SimdVector
-{
-public:
-    __m128 vec;
-
-    typedef SimdVector const& Arg;
-
-    SIMD_NATIVE SimdVector() {}
-
-    SIMD_NATIVE explicit SimdVector(__m128 v) : vec(v) {}
-
-    SIMD_NATIVE explicit SimdVector(float f) {
-        vec = _mm_set1_ps(f);
-    }
-
-    SIMD_NATIVE explicit SimdVector(const float * v)
-    {
-        vec = _mm_load_ps(v);
-    }
-
-    SIMD_NATIVE SimdVector(float x, float y, float z, float w)
-    {
-        vec = _mm_setr_ps(x, y, z, w);
-    }
-
-    SIMD_NATIVE SimdVector(const SimdVector & arg) : vec(arg.vec) {}
-
-    SIMD_NATIVE SimdVector & operator=(const SimdVector & arg)
-    {
-        vec = arg.vec;
-        return *this;
-    }
-
-    SIMD_INLINE float toFloat() const
-    {
-        ICBC_ALIGN_16 float f;
-        _mm_store_ss(&f, vec);
-        return f;
-    }
-
-    SIMD_INLINE Vector3 toVector3() const
-    {
-        ICBC_ALIGN_16 float c[4];
-        _mm_store_ps(c, vec);
-        return { c[0], c[1], c[2] };
-    }
-
-#define SSE_SPLAT( a ) ((a) | ((a) << 2) | ((a) << 4) | ((a) << 6))
-    SIMD_NATIVE SimdVector splatX() const { return SimdVector(_mm_shuffle_ps(vec, vec, SSE_SPLAT(0))); }
-    SIMD_NATIVE SimdVector splatY() const { return SimdVector(_mm_shuffle_ps(vec, vec, SSE_SPLAT(1))); }
-    SIMD_NATIVE SimdVector splatZ() const { return SimdVector(_mm_shuffle_ps(vec, vec, SSE_SPLAT(2))); }
-    SIMD_NATIVE SimdVector splatW() const { return SimdVector(_mm_shuffle_ps(vec, vec, SSE_SPLAT(3))); }
-#undef SSE_SPLAT
-
-    SIMD_NATIVE SimdVector& operator+=(Arg v)
-    {
-        vec = _mm_add_ps(vec, v.vec);
-        return *this;
-    }
-
-    SIMD_NATIVE SimdVector& operator-=(Arg v)
-    {
-        vec = _mm_sub_ps(vec, v.vec);
-        return *this;
-    }
-
-    SIMD_NATIVE SimdVector& operator*=(Arg v)
-    {
-        vec = _mm_mul_ps(vec, v.vec);
-        return *this;
-    }
-};
-
-
-SIMD_NATIVE SimdVector operator+(SimdVector::Arg left, SimdVector::Arg right)
-{
-    return SimdVector(_mm_add_ps(left.vec, right.vec));
-}
-
-SIMD_NATIVE SimdVector operator-(SimdVector::Arg left, SimdVector::Arg right)
-{
-    return SimdVector(_mm_sub_ps(left.vec, right.vec));
-}
-
-SIMD_NATIVE SimdVector operator*(SimdVector::Arg left, SimdVector::Arg right)
-{
-    return SimdVector(_mm_mul_ps(left.vec, right.vec));
-}
-
-// Returns a*b + c
-SIMD_INLINE SimdVector multiplyAdd(SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c)
-{
-    return SimdVector(_mm_add_ps(_mm_mul_ps(a.vec, b.vec), c.vec));
-}
-
-// Returns -( a*b - c )
-SIMD_INLINE SimdVector negativeMultiplySubtract(SimdVector::Arg a, SimdVector::Arg b, SimdVector::Arg c)
-{
-    return SimdVector(_mm_sub_ps(c.vec, _mm_mul_ps(a.vec, b.vec)));
-}
-
-SIMD_INLINE SimdVector reciprocal(SimdVector::Arg v)
-{
-    // get the reciprocal estimate
-    __m128 estimate = _mm_rcp_ps(v.vec);
-
-    // one round of Newton-Rhaphson refinement
-    __m128 diff = _mm_sub_ps(_mm_set1_ps(1.0f), _mm_mul_ps(estimate, v.vec));
-    return SimdVector(_mm_add_ps(_mm_mul_ps(diff, estimate), estimate));
-}
-
-SIMD_NATIVE SimdVector min(SimdVector::Arg left, SimdVector::Arg right)
-{
-    return SimdVector(_mm_min_ps(left.vec, right.vec));
-}
-
-SIMD_NATIVE SimdVector max(SimdVector::Arg left, SimdVector::Arg right)
-{
-    return SimdVector(_mm_max_ps(left.vec, right.vec));
-}
-
-SIMD_INLINE SimdVector truncate(SimdVector::Arg v)
-{
-#if (ICBC_USE_SSE == 1)
-    // convert to ints
-    __m128 input = v.vec;
-    __m64 lo = _mm_cvttps_pi32(input);
-    __m64 hi = _mm_cvttps_pi32(_mm_movehl_ps(input, input));
-
-    // convert to floats
-    __m128 part = _mm_movelh_ps(input, _mm_cvtpi32_ps(input, hi));
-    __m128 truncated = _mm_cvtpi32_ps(part, lo);
-
-    // clear out the MMX multimedia state to allow FP calls later
-    _mm_empty();
-    return SimdVector(truncated);
+#if __GNUC__
+#define ICBC_FORCEINLINE inline __attribute__((always_inline))
 #else
-    // use SSE2 instructions
-    return SimdVector(_mm_cvtepi32_ps(_mm_cvttps_epi32(v.vec)));
+#define ICBC_FORCEINLINE __forceinline
+#endif
+
+
+// Count trailing zeros (BSR).
+ICBC_FORCEINLINE int ctz(uint mask) {
+#if __GNUC__
+    return __builtin_ctz(mask);
+#else
+    unsigned long index;
+    _BitScanReverse(&index, mask);
+    return (int)index;
 #endif
 }
 
-SIMD_INLINE SimdVector select(SimdVector::Arg off, SimdVector::Arg on, SimdVector::Arg bits)
-{
-    __m128 a = _mm_andnot_ps(bits.vec, off.vec);
-    __m128 b = _mm_and_ps(bits.vec, on.vec);
 
-    return SimdVector(_mm_or_ps(a, b));
+#if ICBC_SIMD == ICBC_FLOAT  // Purely scalar version.
+
+#define VEC_SIZE 1
+
+using VFloat = float;
+using VMask = bool;
+
+ICBC_FORCEINLINE float & lane(VFloat & v, int i) { return v; }
+ICBC_FORCEINLINE VFloat vzero() { return 0.0f; }
+ICBC_FORCEINLINE VFloat vbroadcast(float x) { return x; }
+ICBC_FORCEINLINE VFloat vload(const float * ptr) { return *ptr; }
+ICBC_FORCEINLINE VFloat vrcp(VFloat a) { return 1.0f / a; }
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, VFloat b, VFloat c) { return a * b + c; }
+ICBC_FORCEINLINE VFloat vmsub(VFloat a, VFloat b, VFloat c) { return a * b - c; }
+ICBC_FORCEINLINE VFloat vm2sub(VFloat a, VFloat b, VFloat c, VFloat d) { return a * b - c * d; }
+ICBC_FORCEINLINE VFloat vsaturate(VFloat a) { return min(max(a, 0.0f), 1.0f); }
+ICBC_FORCEINLINE VFloat vround01(VFloat a) { return float(int(a + 0.5f)); }
+ICBC_FORCEINLINE VFloat lane_id() { return 0; }
+ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) { return mask ? b : a; }
+ICBC_FORCEINLINE bool all(VMask m) { return m; }
+ICBC_FORCEINLINE bool any(VMask m) { return m; }
+ICBC_FORCEINLINE uint mask(VMask m) { return (uint)m; }
+ICBC_FORCEINLINE int reduce_min_index(VFloat v) { return 0; }
+ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d) {}
+
+#elif ICBC_SIMD == ICBC_SSE2 || ICBC_SIMD == ICBC_SSE41
+
+#define VEC_SIZE 4
+
+#if __GNUC__
+union VFloat {
+    __m128 v;
+    float m128_f32[VEC_SIZE];
+
+    VFloat() {}
+    VFloat(__m128 v) : v(v) {}
+    operator __m128 & () { return v; }
+};
+union VMask {
+    __m128 m;
+
+    VMask() {}
+    VMask(__m128 m) : m(m) {}
+    operator __m128 & () { return m; }
+};
+#else
+using VFloat = __m128;
+using VMask = __m128;
+#endif
+
+ICBC_FORCEINLINE float & lane(VFloat & v, int i) {
+    return v.m128_f32[i];
 }
 
-SIMD_INLINE bool compareAnyLessThan(SimdVector::Arg left, SimdVector::Arg right)
-{
-    __m128 bits = _mm_cmplt_ps(left.vec, right.vec);
-    int value = _mm_movemask_ps(bits);
+ICBC_FORCEINLINE VFloat vzero() {
+    return _mm_setzero_ps();
+}
+
+ICBC_FORCEINLINE VFloat vbroadcast(float x) {
+    return _mm_set1_ps(x);
+}
+
+ICBC_FORCEINLINE VFloat vload(const float * ptr) {
+    return _mm_load_ps(ptr);
+}
+
+ICBC_FORCEINLINE VFloat vgather(const float * base, VFloat index) {
+    VFloat v;
+    for (int i = 0; i < VEC_SIZE; i++) {
+        lane(v, i) = base[int(lane(index, i))];
+    }
+    return v;
+}
+
+ICBC_FORCEINLINE VFloat operator+(VFloat a, VFloat b) {
+    return _mm_add_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator-(VFloat a, VFloat b) {
+    return _mm_sub_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator*(VFloat a, VFloat b) {
+    return _mm_mul_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat vrcp(VFloat a) {
+#if ICBC_USE_RCP
+    VFloat r = _mm_rcp_ps(a);
+    return _mm_mul_ps(r, _mm_sub_ps(vbroadcast(2.0f), _mm_mul_ps(r, a)));   // r * (2 - r * a)
+#else
+    return _mm_div_ps(vbroadcast(1.0f), a);
+#endif
+}
+
+// a*b+c
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, VFloat b, VFloat c) {
+    return a * b + c;
+}
+
+ICBC_FORCEINLINE VFloat vmsub(VFloat a, VFloat b, VFloat c) {
+    return a * b - c;
+}
+
+ICBC_FORCEINLINE VFloat vm2sub(VFloat a, VFloat b, VFloat c, VFloat d) {
+    return a * b - c * d;
+}
+
+ICBC_FORCEINLINE VFloat vsaturate(VFloat a) {
+    auto zero = _mm_setzero_ps();
+    auto one = _mm_set1_ps(1.0f);
+    return _mm_min_ps(_mm_max_ps(a, zero), one);
+}
+
+ICBC_FORCEINLINE VFloat vround01(VFloat a) {
+#if ICBC_SIMD == ICBC_SSE41
+    return _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+#else
+    // @@ Assumes a is positive and small.
+    return _mm_cvtepi32_ps(_mm_cvttps_epi32(a + vbroadcast(0.5f)));
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vtruncate(VFloat a) {
+#if ICBC_SIMD == ICBC_SSE41
+    return _mm_round_ps(a, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+#else
+    return _mm_cvtepi32_ps(_mm_cvttps_epi32(a));
+#endif
+}
+
+ICBC_FORCEINLINE VFloat lane_id() {
+    return _mm_set_ps(3, 2, 1, 0);
+}
+
+ICBC_FORCEINLINE VMask operator> (VFloat A, VFloat B) { return _mm_cmpgt_ps(A, B); }
+ICBC_FORCEINLINE VMask operator>=(VFloat A, VFloat B) { return _mm_cmpge_ps(A, B); }
+ICBC_FORCEINLINE VMask operator< (VFloat A, VFloat B) { return _mm_cmplt_ps(A, B); }
+ICBC_FORCEINLINE VMask operator<=(VFloat A, VFloat B) { return _mm_cmple_ps(A, B); }
+
+ICBC_FORCEINLINE VMask operator| (VMask A, VMask B) { return _mm_or_ps(A, B); }
+ICBC_FORCEINLINE VMask operator& (VMask A, VMask B) { return _mm_and_ps(A, B); }
+ICBC_FORCEINLINE VMask operator^ (VMask A, VMask B) { return _mm_xor_ps(A, B); }
+
+// mask ? b : a
+ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
+#if ICBC_SIMD == ICBC_SSE41
+    return _mm_blendv_ps(a, b, mask);
+#else
+    return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
+#endif
+}
+
+ICBC_FORCEINLINE bool all(VMask m) {
+    int value = _mm_movemask_ps(m);
+    return value == 0x7;
+}
+
+ICBC_FORCEINLINE bool any(VMask m) {
+    int value = _mm_movemask_ps(m);
     return value != 0;
 }
 
-#endif // ICBC_USE_SIMD
+ICBC_FORCEINLINE uint mask(VMask m) {
+    return (uint)_mm_movemask_ps(m);
+}
+
+ICBC_FORCEINLINE int reduce_min_index(VFloat v) {
+
+    // First do an horizontal reduction.                            // v = [ D C | B A ]
+    VFloat shuf = _mm_shuffle_ps(v, v, _MM_SHUFFLE(2, 3, 0, 1));    //     [ C D | A B ]
+    VFloat mins = _mm_min_ps(v, shuf);                              // mins = [ D+C C+D | B+A A+B ]
+    shuf        = _mm_movehl_ps(shuf, mins);                        //        [   C   D | D+C C+D ]  // let the compiler avoid a mov by reusing shuf
+    mins        = _mm_min_ss(mins, shuf);
+    mins =      _mm_shuffle_ps(mins, mins, _MM_SHUFFLE(0, 0, 0, 0));
+
+    // Then find the index.
+    uint mask = _mm_movemask_ps(v <= mins);
+    return ctz(mask);
+}
+
+// https://gcc.gnu.org/legacy-ml/gcc-patches/2005-10/msg00324.html
+ICBC_FORCEINLINE void vtranspose4(VFloat & r0, VFloat & r1, VFloat & r2, VFloat & r3) {
+    VFloat t0 = _mm_unpacklo_ps(r0, r1);
+    VFloat t1 = _mm_unpacklo_ps(r2, r3);
+    VFloat t2 = _mm_unpackhi_ps(r0, r1);
+    VFloat t3 = _mm_unpackhi_ps(r2, r3);
+    r0 = _mm_movelh_ps(t0, t1);
+    r1 = _mm_movehl_ps(t1, t0);
+    r2 = _mm_movelh_ps(t2, t3);
+    r3 = _mm_movehl_ps(t3, t2);
+}
+
+
+#elif ICBC_SIMD == ICBC_AVX1 || ICBC_SIMD == ICBC_AVX2
+
+#define VEC_SIZE 8
+
+#if __GNUC__
+union VFloat {
+    __m256 v;
+    float m256_f32[VEC_SIZE];
+
+    VFloat() {}
+    VFloat(__m256 v) : v(v) {}
+    operator __m256 & () { return v; }
+};
+union VInt {
+    __m256i v;
+    int m256_i32[VEC_SIZE];
+
+    VInt() {}
+    VInt(__m256i v) : v(v) {}
+    operator __m256i & () { return v; }
+};
+union VMask {
+    __m256 m;
+
+    VMask() {}
+    VMask(__m256 m) : m(m) {}
+    operator __m256 & () { return m; }
+};
+#else
+using VFloat = __m256;
+using VInt = __m256i;
+using VMask = __m256;   // Emulate mask vector using packed float.
+#endif
+
+ICBC_FORCEINLINE float & lane(VFloat & v, int i) {
+    return v.m256_f32[i];
+}
+
+ICBC_FORCEINLINE VFloat vzero() {
+    return _mm256_setzero_ps();
+}
+
+ICBC_FORCEINLINE VFloat vbroadcast(float a) {
+    return _mm256_set1_ps(a);
+}
+
+ICBC_FORCEINLINE VFloat vload(const float * ptr) {
+    return _mm256_load_ps(ptr);
+}
+
+ICBC_FORCEINLINE VFloat vgather(const float * base, VFloat index) {
+#if ICBC_SIMD == ICBC_AVX2
+    return _mm256_i32gather_ps(base, _mm256_cvtps_epi32(index), 4);
+#else
+    VFloat v;
+    for (int i = 0; i < VEC_SIZE; i++) {
+        lane(v, i) = base[int(lane(index, i))];
+    }
+    return v;
+#endif
+}
+
+ICBC_FORCEINLINE VFloat operator+(VFloat a, VFloat b) {
+    return _mm256_add_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator-(VFloat a, VFloat b) {
+    return _mm256_sub_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator*(VFloat a, VFloat b) {
+    return _mm256_mul_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat vrcp(VFloat a) {
+#if ICBC_USE_RCP
+    #if ICBC_SIMD == ICBC_AVX512
+        VFloat r = _mm256_rcp14_ps(a);
+    #else
+        VFloat r = _mm256_rcp_ps(a);
+    #endif
+
+    // r = r * (2 - r * a)
+    #if ICBC_USE_FMA == 3 || ICBC_AVX2
+        return _mm256_mul_ps(r, _mm256_fnmadd_ps(r, a, vbroadcast(2.0f)));
+    #else
+        return _mm256_mul_ps(r, _mm256_sub_ps(vbroadcast(2.0f), _mm256_mul_ps(r, a)));
+    #endif
+#else
+    return _mm256_div_ps(vbroadcast(1.0f), a);
+#endif
+}
+
+// a*b+c
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, VFloat b, VFloat c) {
+#if ICBC_USE_FMA == 3 || ICBC_SIMD == ICBC_AVX2
+    return _mm256_fmadd_ps(a, b, c);
+#elif ICBC_USE_FMA == 4
+    return _mm256_macc_ps(a, b, c);
+#else
+    return ((a * b) + c);
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vmsub(VFloat a, VFloat b, VFloat c) {
+#if ICBC_USE_FMA == 3 || ICBC_SIMD == ICBC_AVX2
+    return _mm256_fmsub_ps(a, b, c);
+#elif ICBC_USE_FMA == 4
+    return _mm256_msub_ps(a, b, c);
+#else
+    return ((a * b) - c);
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vm2sub(VFloat a, VFloat b, VFloat c, VFloat d) {
+    return vmsub(a, b, c * d);
+}
+
+ICBC_FORCEINLINE VFloat vsaturate(VFloat a) {
+    __m256 zero = _mm256_setzero_ps();
+    __m256 one = _mm256_set1_ps(1.0f);
+    return _mm256_min_ps(_mm256_max_ps(a, zero), one);
+}
+
+ICBC_FORCEINLINE VFloat vround01(VFloat a) {
+    return _mm256_round_ps(a, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+}
+
+ICBC_FORCEINLINE VFloat vtruncate(VFloat a) {
+    return _mm256_round_ps(a, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+}
+
+ICBC_FORCEINLINE VFloat lane_id() {
+    return _mm256_set_ps(7, 6, 5, 4, 3, 2, 1, 0);
+}
+
+ICBC_FORCEINLINE VMask operator> (VFloat A, VFloat B) { return _mm256_cmp_ps(A, B, _CMP_GT_OQ); }
+ICBC_FORCEINLINE VMask operator>=(VFloat A, VFloat B) { return _mm256_cmp_ps(A, B, _CMP_GE_OQ); }
+ICBC_FORCEINLINE VMask operator< (VFloat A, VFloat B) { return _mm256_cmp_ps(A, B, _CMP_LT_OQ); }
+ICBC_FORCEINLINE VMask operator<=(VFloat A, VFloat B) { return _mm256_cmp_ps(A, B, _CMP_LE_OQ); }
+
+ICBC_FORCEINLINE VMask operator| (VMask A, VMask B) { return _mm256_or_ps(A, B); }
+ICBC_FORCEINLINE VMask operator& (VMask A, VMask B) { return _mm256_and_ps(A, B); }
+ICBC_FORCEINLINE VMask operator^ (VMask A, VMask B) { return _mm256_xor_ps(A, B); }
+
+// mask ? b : a
+ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
+    return _mm256_blendv_ps(a, b, mask);
+}
+
+ICBC_FORCEINLINE bool all(VMask m) {
+    __m256 zero = _mm256_setzero_ps();
+    return _mm256_testc_ps(_mm256_cmp_ps(zero, zero, _CMP_EQ_UQ), m) == 0;
+}
+
+ICBC_FORCEINLINE bool any(VMask m) {
+    return _mm256_testz_ps(m, m) == 0;
+}
+
+ICBC_FORCEINLINE uint mask(VMask m) {
+    return (uint)_mm256_movemask_ps(m);
+}
+
+ICBC_FORCEINLINE int reduce_min_index(VFloat v) {
+
+    __m128 vlow  = _mm256_castps256_ps128(v);
+    __m128 vhigh = _mm256_extractf128_ps(v, 1);
+           vlow  = _mm_min_ps(vlow, vhigh);
+
+    // First do an horizontal reduction.                                // v = [ D C | B A ]
+    __m128 shuf = _mm_shuffle_ps(vlow, vlow, _MM_SHUFFLE(2, 3, 0, 1));  //     [ C D | A B ]
+    __m128 mins = _mm_min_ps(vlow, shuf);                            // mins = [ D+C C+D | B+A A+B ]
+    shuf        = _mm_movehl_ps(shuf, mins);                         //        [   C   D | D+C C+D ]
+    mins        = _mm_min_ss(mins, shuf);
+
+    VFloat vmin = _mm256_permute_ps(_mm256_set_m128(mins, mins), 0); // _MM256_PERMUTE(0, 0, 0, 0, 0, 0, 0, 0)
+
+    // Then find the index.
+    uint mask = _mm256_movemask_ps(v <= vmin);
+    return ctz(mask);
+}
+
+// AoS to SoA
+ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d) {
+    VFloat r0 = _mm256_unpacklo_ps(a, b);
+    VFloat r1 = _mm256_unpacklo_ps(c, d);
+    VFloat r2 = _mm256_permute2f128_ps(r0, r1, 0x20);
+    VFloat r3 = _mm256_permute2f128_ps(r0, r1, 0x31);
+    r0 = _mm256_unpackhi_ps(a, b);
+    r1 = _mm256_unpackhi_ps(c, d);
+    a = _mm256_unpacklo_ps(r2, r3);
+    b = _mm256_unpackhi_ps(r2, r3);
+    r2 = _mm256_permute2f128_ps(r0, r1, 0x20);
+    r3 = _mm256_permute2f128_ps(r0, r1, 0x31);
+    c = _mm256_unpacklo_ps(r2, r3);
+    d = _mm256_unpackhi_ps(r2, r3);
+}
+
+ICBC_FORCEINLINE int lane(VInt v, int i) {
+    //return _mm256_extract_epi32(v, i);
+    return v.m256_i32[i];
+}
+
+ICBC_FORCEINLINE VInt vzeroi() {
+    return _mm256_setzero_si256();
+}
+
+ICBC_FORCEINLINE VInt vbroadcast(int a) {
+    return _mm256_set1_epi32(a);
+}
+
+ICBC_FORCEINLINE VInt vload(const int * ptr) {
+    return _mm256_load_si256((const __m256i*)ptr);
+}
+
+ICBC_FORCEINLINE VInt operator- (VInt A, int b) { return _mm256_sub_epi32(A, _mm256_set1_epi32(b)); }
+ICBC_FORCEINLINE VInt operator& (VInt A, int b) { return _mm256_and_si256(A, _mm256_set1_epi32(b)); }
+ICBC_FORCEINLINE VInt operator>> (VInt A, int b) { return _mm256_srli_epi32(A, b); }
+
+ICBC_FORCEINLINE VMask operator> (VInt A, int b) { return _mm256_castsi256_ps(_mm256_cmpgt_epi32(A, _mm256_set1_epi32(b))); }
+ICBC_FORCEINLINE VMask operator== (VInt A, int b) { return _mm256_castsi256_ps(_mm256_cmpeq_epi32(A, _mm256_set1_epi32(b))); }
+
+// mask ? v[idx] : 0
+ICBC_FORCEINLINE VFloat vpermuteif(VMask mask, VFloat v, VInt idx) {
+    return _mm256_and_ps(_mm256_permutevar8x32_ps(v, idx), mask);
+}
+
+// mask ? (idx > 8 ? vhi[idx] : vlo[idx]) : 0
+ICBC_FORCEINLINE VFloat vpermute2if(VMask mask, VFloat vlo, VFloat vhi, VInt idx) {
+#if 0
+    VMask mhi = idx > 7;
+    vlo = _mm256_permutevar8x32_ps(vlo, idx);
+    vhi = _mm256_permutevar8x32_ps(vhi, idx);
+    VFloat v = _mm256_blendv_ps(vlo, vhi, mhi);
+    return _mm256_and_ps(v, mask);
+#else
+    // Fabian Giesen says not to mix _mm256_blendv_ps and _mm256_permutevar8x32_ps since they contend for the same gates and instead suggests the following:
+    vhi = _mm256_xor_ps(vhi, vlo);
+    VFloat v = _mm256_permutevar8x32_ps(vlo, idx);
+    VMask mhi = idx > 7;
+    v = _mm256_xor_ps(v, _mm256_and_ps(_mm256_permutevar8x32_ps(vhi, idx), mhi));
+    return _mm256_and_ps(v, mask);
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vgatherifpositive(const float * base, VInt vidx) {
+    VFloat v = vzero();
+    for (int i = 0; i < VEC_SIZE; i++) {
+        int idx = lane(vidx, i);
+        if (idx >= 0) lane(v, i) = base[idx];
+    }
+    return v;
+}
+
+ICBC_FORCEINLINE VFloat vmask_gather(VMask mask, const float * base, VInt vidx) {
+#if 1//ICBC_SIMD == ICBC_AVX2
+    VFloat v = vzero();
+    return _mm256_mask_i32gather_ps(v, base, vidx, mask, 4);
+#else
+    VFloat v = vzero();
+    for (int i = 0; i < VEC_SIZE; i++) {
+        int idx = lane(vidx, i);
+        if (idx >= 0) lane(v, i) = base[idx];
+    }
+    return v;
+#endif
+}
+
+
+#elif ICBC_SIMD == ICBC_AVX512
+
+#define VEC_SIZE 16
+
+#if __GNUC__
+union VFloat {
+    __m512 v;
+    float m512_f32[VEC_SIZE];
+
+    VFloat() {}
+    VFloat(__m512 v) : v(v) {}
+    operator __m512 & () { return v; }
+};
+union VInt {
+    __m512i v;
+    int m512_i32[VEC_SIZE];
+
+    VInt() {}
+    VInt(__m512i v) : v(v) {}
+    operator __m512i & () { return v; }
+};
+#else
+using VFloat = __m512;
+using VInt = __m512i;
+#endif
+struct VMask { __mmask16 m; };
+
+ICBC_FORCEINLINE float & lane(VFloat & v, int i) {
+    return v.m512_f32[i];
+}
+
+ICBC_FORCEINLINE VFloat vzero() {
+    return _mm512_setzero_ps();
+}
+
+ICBC_FORCEINLINE VFloat vbroadcast(float a) {
+    return _mm512_set1_ps(a);
+}
+
+ICBC_FORCEINLINE VFloat vload(const float * ptr) {
+    return _mm512_load_ps(ptr);
+}
+
+ICBC_FORCEINLINE VFloat vload(VMask mask, const float * ptr) {
+    return _mm512_mask_load_ps(_mm512_undefined(), mask.m, ptr);
+}
+
+ICBC_FORCEINLINE VFloat vload(VMask mask, const float * ptr, float fallback) {
+    return _mm512_mask_load_ps(_mm512_set1_ps(fallback), mask.m, ptr);
+}
+
+ICBC_FORCEINLINE VFloat vgather(const float * base, VFloat index) {
+    return _mm512_i32gather_ps(_mm512_cvtps_epi32(index), base, 4);
+}
+
+ICBC_FORCEINLINE VFloat operator+(VFloat a, VFloat b) {
+    return _mm512_add_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator-(VFloat a, VFloat b) {
+    return _mm512_sub_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator*(VFloat a, VFloat b) {
+    return _mm512_mul_ps(a, b);
+}
+
+ICBC_FORCEINLINE VFloat vrcp(VFloat a) {
+#if ICBC_USE_RCP
+    VFloat r = _mm512_rcp14_ps(a);
+
+    // r = r * (2 - r * a)
+    return _mm512_mul_ps(r, _mm512_fnmadd_ps(r, a, vbroadcast(2.0f)));
+#else
+    return _mm512_div_ps(vbroadcast(1.0f), a);
+#endif
+}
+
+// a*b+c
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, VFloat b, VFloat c) {
+    return _mm512_fmadd_ps(a, b, c);
+}
+
+ICBC_FORCEINLINE VFloat vmsub(VFloat a, VFloat b, VFloat c) {
+    return _mm512_fmsub_ps(a, b, c);
+}
+
+ICBC_FORCEINLINE VFloat vm2sub(VFloat a, VFloat b, VFloat c, VFloat d) {
+    return vmsub(a, b, c * d);
+}
+
+ICBC_FORCEINLINE VFloat vsaturate(VFloat a) {
+    auto zero = _mm512_setzero_ps();
+    auto one = _mm512_set1_ps(1.0f);
+    return _mm512_min_ps(_mm512_max_ps(a, zero), one);
+}
+
+ICBC_FORCEINLINE VFloat vround01(VFloat a) {
+    return _mm512_roundscale_ps(a, _MM_FROUND_TO_NEAREST_INT);
+}
+
+ICBC_FORCEINLINE VFloat vtruncate(VFloat a) {
+    return _mm512_roundscale_ps(a, _MM_FROUND_TO_ZERO);
+}
+
+ICBC_FORCEINLINE VFloat lane_id() {
+    return _mm512_set_ps(15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+}
+
+ICBC_FORCEINLINE VMask operator> (VFloat A, VFloat B) { return { _mm512_cmp_ps_mask(A, B, _CMP_GT_OQ) }; }
+ICBC_FORCEINLINE VMask operator>=(VFloat A, VFloat B) { return { _mm512_cmp_ps_mask(A, B, _CMP_GE_OQ) }; }
+ICBC_FORCEINLINE VMask operator< (VFloat A, VFloat B) { return { _mm512_cmp_ps_mask(A, B, _CMP_LT_OQ) }; }
+ICBC_FORCEINLINE VMask operator<=(VFloat A, VFloat B) { return { _mm512_cmp_ps_mask(A, B, _CMP_LE_OQ) }; }
+
+ICBC_FORCEINLINE VMask operator! (VMask A) { return { _mm512_knot(A.m) }; }
+ICBC_FORCEINLINE VMask operator| (VMask A, VMask B) { return { _mm512_kor(A.m, B.m) }; }
+ICBC_FORCEINLINE VMask operator& (VMask A, VMask B) { return { _mm512_kand(A.m, B.m) }; }
+ICBC_FORCEINLINE VMask operator^ (VMask A, VMask B) { return { _mm512_kxor(A.m, B.m) }; }
+
+// mask ? b : a
+ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
+    return _mm512_mask_blend_ps(mask.m, a, b);
+}
+
+ICBC_FORCEINLINE bool all(VMask mask) {
+    return mask.m == 0xFFFFFFFF;
+}
+
+ICBC_FORCEINLINE bool any(VMask mask) {
+    return mask.m != 0;
+}
+
+ICBC_FORCEINLINE uint mask(VMask mask) {
+    return mask.m;
+}
+
+ICBC_FORCEINLINE int reduce_min_index(VFloat v) {
+
+    // First do an horizontal reduction.
+    VFloat vmin = vbroadcast(_mm512_reduce_min_ps(v));
+
+    // Then find the index.
+    VMask mask = (v <= vmin);
+    return ctz(mask.m);
+}
+
+//ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d); // @@
+
+ICBC_FORCEINLINE int lane(VInt v, int i) {
+    //return _mm256_extract_epi32(v, i);
+    return v.m512_i32[i];
+}
+
+ICBC_FORCEINLINE VInt vzeroi() {
+    return _mm512_setzero_epi32();
+}
+
+ICBC_FORCEINLINE VInt vbroadcast(int a) {
+    return _mm512_set1_epi32(a);
+}
+
+ICBC_FORCEINLINE VInt vload(const int * ptr) {
+    return _mm512_load_epi32(ptr);
+}
+
+ICBC_FORCEINLINE VInt operator- (VInt A, int b) { return _mm512_sub_epi32(A, vbroadcast(b)); }
+ICBC_FORCEINLINE VInt operator& (VInt A, int b) { return _mm512_and_si256(A, vbroadcast(b)); }
+ICBC_FORCEINLINE VInt operator>> (VInt A, int b) { return _mm512_srli_epi32(A, b); }
+
+ICBC_FORCEINLINE VMask operator> (VInt A, int b) { return _mm512_cmpgt_epi32_mask(A, vbroadcast(b)); }
+ICBC_FORCEINLINE VMask operator== (VInt A, int b) { return _mm512_cmpeq_epi32_mask(A, vbroadcast(b)); }
+
+// mask ? v[idx] : 0
+ICBC_FORCEINLINE VFloat vpermuteif(VMask mask, VFloat v, VInt idx) {
+    return _mm256_maskz_permutexvar_ps(mask, idx, v);
+}
+
+
+#elif ICBC_SIMD == ICBC_NEON
+
+#define VEC_SIZE 4
+
+#if __GNUC__
+union VFloat {
+    float32x4_t v;
+    float e[4];
+    VFloat() {}
+    VFloat(float32x4_t v) : v(v) {}
+    operator float32x4_t & () { return v; }
+};
+struct VMask {
+    uint32x4_t v;
+    VMask() {}
+    VMask(uint32x4_t v) : v(v) {}
+    operator uint32x4_t & () { return v; }
+};
+#else
+using VFloat = float32x4_t;
+using VMask = uint32x4_t;
+#endif
+
+ICBC_FORCEINLINE float & lane(VFloat & v, int i) {
+#if defined(__clang__)
+    return v.e[i];
+#elif defined(_MSC_VER)
+    return v.n128_f32[i];
+#else
+    return v.v[i];
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vzero() {
+    return vdupq_n_f32(0.0f);
+}
+
+ICBC_FORCEINLINE VFloat vbroadcast(float a) {
+    return vdupq_n_f32(a);
+}
+
+ICBC_FORCEINLINE VFloat vload(const float * ptr) {
+    return vld1q_f32(ptr);
+}
+
+ICBC_FORCEINLINE VFloat operator+(VFloat a, VFloat b) {
+    return vaddq_f32(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator-(VFloat a, VFloat b) {
+    return vsubq_f32(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator*(VFloat a, VFloat b) {
+    return vmulq_f32(a, b);
+}
+
+ICBC_FORCEINLINE VFloat vrcp(VFloat a) {
+//#if ICBC_USE_RCP
+    VFloat rcp = vrecpeq_f32(a);
+    //return rcp;
+    return vmulq_f32(vrecpsq_f32(a, rcp), rcp);
+//#else
+//    return vdiv_f32(vbroadcast(1.0f), a);    // @@ ARMv8 only?
+//#endif
+}
+
+// a*b+c
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, VFloat b, VFloat c) {
+    return vmlaq_f32(c, a, b);
+}
+
+ICBC_FORCEINLINE VFloat vmsub(VFloat a, VFloat b, VFloat c) {
+    return a * b - c;
+}
+
+ICBC_FORCEINLINE VFloat vm2sub(VFloat a, VFloat b, VFloat c, VFloat d) {
+    // vmlsq_f32(a, b, c) == a - (b * c)
+    return vmlsq_f32(a * b, c, d);
+}
+
+ICBC_FORCEINLINE VFloat vsaturate(VFloat a) {
+    return vminq_f32(vmaxq_f32(a, vzero()), vbroadcast(1));
+}
+
+ICBC_FORCEINLINE VFloat vround01(VFloat a) {
+#if __ARM_RACH >= 8
+    return vrndqn_f32(a);   // Round to integral (to nearest, ties to even)
+#else
+    // @@ Assumes a is positive and ~small
+    return vcvtq_f32_s32(vcvtq_s32_f32(a + vbroadcast(0.5)));
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vtruncate(VFloat a) {
+#if __ARM_RACH >= 8
+    return vrndq_f32(a);
+#else
+    return vcvtq_f32_s32(vcvtq_s32_f32(a));
+#endif
+}
+
+ICBC_FORCEINLINE VFloat lane_id() {
+    ICBC_ALIGN_16 float data[4] = { 0, 1, 2, 3 };
+	return vld1q_f32(data);
+}
+
+ICBC_FORCEINLINE VMask operator> (VFloat A, VFloat B) { return { vcgtq_f32(A, B) }; }
+ICBC_FORCEINLINE VMask operator>=(VFloat A, VFloat B) { return { vcgeq_f32(A, B) }; }
+ICBC_FORCEINLINE VMask operator< (VFloat A, VFloat B) { return { vcltq_f32(A, B) }; }
+ICBC_FORCEINLINE VMask operator<=(VFloat A, VFloat B) { return { vcleq_f32(A, B) }; }
+
+ICBC_FORCEINLINE VMask operator| (VMask A, VMask B) { return { vorrq_u32(A, B) }; }
+ICBC_FORCEINLINE VMask operator& (VMask A, VMask B) { return { vandq_u32(A, B) }; }
+ICBC_FORCEINLINE VMask operator^ (VMask A, VMask B) { return { veorq_u32(A, B) }; }
+
+// mask ? b : a
+ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
+    return vbslq_f32(mask, b, a);
+}
+
+ICBC_FORCEINLINE bool all(VMask mask) {
+    uint32x2_t m2 = vpmin_u32(vget_low_u32(mask), vget_high_u32(mask));
+    uint32x2_t m1 = vpmin_u32(m2, m2);
+#if defined(_MSC_VER)
+    return m1.n64_u32[0] != 0;
+#else
+    return m1[0] != 0;
+#endif
+}
+
+ICBC_FORCEINLINE bool any(VMask mask) {
+    uint32x2_t m2 = vpmax_u32(vget_low_u32(mask), vget_high_u32(mask));
+    uint32x2_t m1 = vpmax_u32(m2, m2);
+#if defined(_MSC_VER)
+    return m1.n64_u32[0] != 0;
+#else
+    return m1[0] != 0;
+#endif
+}
+
+// @@ Is this the best we can do?
+// From: https://github.com/jratcliff63367/sse2neon/blob/master/SSE2NEON.h
+ICBC_FORCEINLINE uint mask(VMask mask) {
+	static const uint32x4_t movemask = { 1, 2, 4, 8 };
+	static const uint32x4_t highbit = { 0x80000000, 0x80000000, 0x80000000, 0x80000000 };
+	uint32x4_t t1 = vtstq_u32(mask, highbit);
+	uint32x4_t t2 = vandq_u32(t1, movemask);
+	uint32x2_t t3 = vorr_u32(vget_low_u32(t2), vget_high_u32(t2));
+	return vget_lane_u32(t3, 0) | vget_lane_u32(t3, 1);
+}
+
+inline int reduce_min_index(VFloat v) {
+#if 0
+    float32x2_t m2 = vpmin_f32(vget_low_u32(V), vget_high_u32(v));
+    float32x2_t m1 = vpmin_f32(m2, m2);
+    float min_value = vget_lane_f32(m1, 0);
+    VFloat vmin = vbroadcast(min_value);
+
+    // (v <= vmin)
+
+    // @@ Find the lane that contains minValue?
+#endif
+
+    // @@ Is there a better way to do this reduction?
+    int min_idx = 0;
+    float min_value = lane(v, 0);
+
+    for (int i = 1; i < VEC_SIZE; i++) {
+        float value = lane(v, i);
+        if (value < min_value) {
+            min_value = value;
+            min_idx = i;
+        }
+    }
+
+    return min_idx;
+}
+
+// https://github.com/Maratyszcza/NNPACK/blob/master/src/neon/transpose.h
+ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d) {
+    // row0 = ( x00 x01 x02 x03 )
+    // row1 = ( x10 x11 x12 x13 )
+    // row2 = ( x20 x21 x22 x23 )
+    // row3 = ( x30 x31 x32 x33 )
+
+    // row01 = ( x00 x10 x02 x12 ), ( x01 x11 x03, x13 )
+    // row23 = ( x20 x30 x22 x32 ), ( x21 x31 x23, x33 )
+    float32x4x2_t row01 = vtrnq_f32(a, b);
+    float32x4x2_t row23 = vtrnq_f32(c, d);
+
+    // row0 = ( x00 x10 x20 x30 )
+    // row1 = ( x01 x11 x21 x31 )
+    // row2 = ( x02 x12 x22 x32 )
+    // row3 = ( x03 x13 x23 x33 )
+    a = vcombine_f32(vget_low_f32(row01.val[0]), vget_low_f32(row23.val[0]));
+    b = vcombine_f32(vget_low_f32(row01.val[1]), vget_low_f32(row23.val[1]));
+    c = vcombine_f32(vget_high_f32(row01.val[0]), vget_high_f32(row23.val[0]));
+    d = vcombine_f32(vget_high_f32(row01.val[1]), vget_high_f32(row23.val[1]));
+}
+
+#elif ICBC_SIMD == ICBC_VMX
+
+#define VEC_SIZE 4
+
+union VFloat {
+    vectro float v;
+    float e[4];
+    VFloat() {}
+    VFloat(vector float v) : v(v) {}
+    operator vector float & () { return v; }
+};
+struct VMask {
+    vector unsigned int v;
+    VMask() {}
+    VMask(vector unsigned int v) : v(v) {}
+    operator vector unsigned int & () { return v; }
+};
+
+ICBC_FORCEINLINE float & lane(VFloat & v, int i) {
+    return v.e[i];
+}
+
+ICBC_FORCEINLINE VFloat vzero() {
+    return vec_splats(0.0f);
+}
+
+ICBC_FORCEINLINE VFloat vbroadcast(float a) {
+    return vec_splats(a);
+}
+
+ICBC_FORCEINLINE VFloat vload(const float * ptr) {
+    return vec_ld(ptr)
+}
+
+ICBC_FORCEINLINE VFloat operator+(VFloat a, VFloat b) {
+    return vec_add(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator-(VFloat a, VFloat b) {
+    return vec_sub(a, b);
+}
+
+ICBC_FORCEINLINE VFloat operator*(VFloat a, VFloat b) {
+    return vec_madd(a, b, vec_splats(-0.0f));
+}
+
+ICBC_FORCEINLINE VFloat vrcp(VFloat a) {
+#if ICBC_USE_RCP
+    // get the reciprocal estimate
+    vector float estimate = vec_re( v.vec );
+
+    // one round of Newton-Rhaphson refinement
+    vector float diff = vec_nmsub( estimate, v.vec, vec_splats( 1.0f ) );
+    return vec_madd(diff, estimate, estimate );
+#else
+    return vec_div(vec_splats(1),a);
+#endif
+}
+
+// a*b+c
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, VFloat b, VFloat c) {
+    return vec_madd(a, b, c);
+}
+
+ICBC_FORCEINLINE VFloat vmsub(VFloat a, VFloat b, VFloat c) {
+    return vec_msub(a, b, c); // @@ Is this right?
+}
+
+ICBC_FORCEINLINE VFloat vm2sub(VFloat a, VFloat b, VFloat c, VFloat d) {
+    return vmsub(a, b, c * d);
+}
+
+ICBC_FORCEINLINE VFloat vsaturate(VFloat a) {
+    return vec_min(vec_max(a, vzero()), vbroadcast(1));
+}
+
+ICBC_FORCEINLINE VFloat vround01(VFloat a) {
+    // @@ Assumes a is positive and ~small
+    return vec_trunc(a + vbroadcast(0.5));
+}
+
+ICBC_FORCEINLINE VFloat vtruncate(VFloat a) {
+    return vec_trunc(a);
+}
+
+ICBC_FORCEINLINE VFloat lane_id() {
+    return (VFloat){ 0, 1, 2, 3 };
+}
+
+ICBC_FORCEINLINE VMask operator> (VFloat A, VFloat B) { return { vec_cmpgt(A, B) }; }
+ICBC_FORCEINLINE VMask operator>=(VFloat A, VFloat B) { return { vec_cmpge(A, B) }; }
+ICBC_FORCEINLINE VMask operator< (VFloat A, VFloat B) { return { vec_cmplt(A, B) }; }
+ICBC_FORCEINLINE VMask operator<=(VFloat A, VFloat B) { return { vec_cmple(A, B) }; }
+
+ICBC_FORCEINLINE VMask operator| (VMask A, VMask B) { return { vec_or(A, B) }; }
+ICBC_FORCEINLINE VMask operator& (VMask A, VMask B) { return { vec_and(A, B) }; }
+ICBC_FORCEINLINE VMask operator^ (VMask A, VMask B) { return { vec_xor(A, B) }; }
+
+// mask ? b : a
+ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
+    return vec_sel(a, b, mask);
+}
+
+ICBC_FORCEINLINE int reduce_min_index(VFloat v) {
+
+    //VFloat vmin =  //@@ Horizontal min?
+    //return vec_cmpeq_idx(v, vmin);
+
+    // @@ Is there a better way to do this reduction?
+    int min_idx = 0;
+    float min_value = lane(v, 0);
+
+    for (int i = 1; i < VEC_SIZE; i++) {
+        float value = lane(v, i);
+        if (value < min_value) {
+            min_value = value;
+            min_idx = i;
+        }
+    }
+
+    return min_idx;
+}
+
+ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d) {
+    VFloat t1 = vec_mergeh(a, c);
+    VFloat t2 = vec_mergel(a, c);
+    VFloat t3 = vec_mergeh(b, d);
+    VFloat t4 = vec_mergel(b, d);
+    a = vec_mergeh(t1, t3);
+    b = vec_mergel(t1, t3);
+    c = vec_mergeh(t2, t4);
+    d = vec_mergel(t2, t4);
+}
+
+#endif // ICBC_SIMD == *
+
+#if ICBC_SIMD != ICBC_FLOAT
+ICBC_FORCEINLINE VFloat vmadd(VFloat a, float b, VFloat c) {
+    VFloat vb = vbroadcast(b);
+    return vmadd(a, vb, c);
+}
+#endif
+
+struct VVector3 {
+    VFloat x;
+    VFloat y;
+    VFloat z;
+};
+
+ICBC_FORCEINLINE VVector3 vbroadcast(Vector3 v) {
+    VVector3 v8;
+
+    v8.x = vbroadcast(v.x);
+    v8.y = vbroadcast(v.y);
+    v8.z = vbroadcast(v.z);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 vbroadcast(float x, float y, float z) {
+    VVector3 v8;
+    v8.x = vbroadcast(x);
+    v8.y = vbroadcast(y);
+    v8.z = vbroadcast(z);
+    return v8;
+}
+
+/*ICBC_FORCEINLINE VVector3 vload(const Vector3 * v) {
+    // @@ See this for a 8x3 transpose: https://software.intel.com/content/www/us/en/develop/articles/3d-vector-normalization-using-256-bit-intel-advanced-vector-extensions-intel-avx.html
+}*/
+
+ICBC_FORCEINLINE VVector3 vload(const Vector4 * ptr) {
+#if ICBC_SIMD == ICBC_AVX512
+
+    // @@ AVX512 transpose not implemented.
+    __m512i vindex = _mm512_set_epi32(4 * 15, 4 * 14, 4 * 13, 4 * 12, 4 * 11, 4 * 10, 4 * 9, 4 * 8, 4 * 7, 4 * 6, 4 * 5, 4 * 4, 4 * 3, 4 * 2, 4 * 1, 0);
+
+    VVector3 v;
+    v.x = _mm512_i32gather_ps(vindex, &ptr->x, 4);
+    v.y = _mm512_i32gather_ps(vindex, &ptr->y, 4);
+    v.z = _mm512_i32gather_ps(vindex, &ptr->z, 4);
+    return v;
+
+#else
+
+    VVector3 v;
+    v.x = vload(&ptr->x + 0 * VEC_SIZE);
+    v.y = vload(&ptr->x + 1 * VEC_SIZE);
+    v.z = vload(&ptr->x + 2 * VEC_SIZE);
+    VFloat tmp = vload(&ptr->x + 3 * VEC_SIZE);
+
+    vtranspose4(v.x, v.y, v.z, tmp);
+
+    return v;
+#endif
+}
+
+
+ICBC_FORCEINLINE VVector3 operator+(VVector3 a, VVector3 b) {
+    VVector3 v;
+    v.x = (a.x + b.x);
+    v.y = (a.y + b.y);
+    v.z = (a.z + b.z);
+    return v;
+}
+
+ICBC_FORCEINLINE VVector3 operator-(VVector3 a, VVector3 b) {
+    VVector3 v8;
+    v8.x = (a.x - b.x);
+    v8.y = (a.y - b.y);
+    v8.z = (a.z - b.z);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 operator*(VVector3 a, VVector3 b) {
+    VVector3 v8;
+    v8.x = (a.x * b.x);
+    v8.y = (a.y * b.y);
+    v8.z = (a.z * b.z);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 operator*(VVector3 a, VFloat b) {
+    VVector3 v8;
+    v8.x = (a.x * b);
+    v8.y = (a.y * b);
+    v8.z = (a.z * b);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 vmadd(VVector3 a, VVector3 b, VVector3 c) {
+    VVector3 v8;
+    v8.x = vmadd(a.x, b.x, c.x);
+    v8.y = vmadd(a.y, b.y, c.y);
+    v8.z = vmadd(a.z, b.z, c.z);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 vmadd(VVector3 a, VFloat b, VVector3 c) {
+    VVector3 v8;
+    v8.x = vmadd(a.x, b, c.x);
+    v8.y = vmadd(a.y, b, c.y);
+    v8.z = vmadd(a.z, b, c.z);
+    return v8;
+}
+
+#if ICBC_SIMD != ICBC_FLOAT
+ICBC_FORCEINLINE VVector3 vmadd(VVector3 a, float b, VVector3 c) {
+    VVector3 v8;
+    VFloat vb = vbroadcast(b);
+    v8.x = vmadd(a.x, vb, c.x);
+    v8.y = vmadd(a.y, vb, c.y);
+    v8.z = vmadd(a.z, vb, c.z);
+    return v8;
+}
+#endif
+
+ICBC_FORCEINLINE VVector3 vmsub(VVector3 a, VFloat b, VFloat c) {
+    VVector3 v8;
+    v8.x = vmsub(a.x, b, c);
+    v8.y = vmsub(a.y, b, c);
+    v8.z = vmsub(a.z, b, c);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 vmsub(VVector3 a, VFloat b, VVector3 c) {
+    VVector3 v8;
+    v8.x = vmsub(a.x, b, c.x);
+    v8.y = vmsub(a.y, b, c.y);
+    v8.z = vmsub(a.z, b, c.z);
+    return v8;
+}
+
+ICBC_FORCEINLINE VVector3 vm2sub(VVector3 a, VFloat b, VVector3 c, VFloat d) {
+    VVector3 v;
+    v.x = vm2sub(a.x, b, c.x, d);
+    v.y = vm2sub(a.y, b, c.y, d);
+    v.z = vm2sub(a.z, b, c.z, d);
+    return v;
+}
+
+ICBC_FORCEINLINE VVector3 vm2sub(VVector3 a, VVector3 b, VVector3 c, VFloat d) {
+    VVector3 v;
+    v.x = vm2sub(a.x, b.x, c.x, d);
+    v.y = vm2sub(a.y, b.y, c.y, d);
+    v.z = vm2sub(a.z, b.z, c.z, d);
+    return v;
+}
+
+ICBC_FORCEINLINE VVector3 vm2sub(VVector3 a, VVector3 b, VVector3 c, VVector3 d) {
+    VVector3 v;
+    v.x = vm2sub(a.x, b.x, c.x, d.x);
+    v.y = vm2sub(a.y, b.y, c.y, d.y);
+    v.z = vm2sub(a.z, b.z, c.z, d.z);
+    return v;
+}
+
+ICBC_FORCEINLINE VFloat vdot(VVector3 a, VVector3 b) {
+    VFloat r;
+    r = a.x * b.x + a.y * b.y + a.z * b.z;
+    return r;
+}
+
+// Length squared.
+ICBC_FORCEINLINE VFloat vlen2(VVector3 v) {
+    return vdot(v, v);
+}
+
+
+// mask ? b : a
+ICBC_FORCEINLINE VVector3 vselect(VMask mask, VVector3 a, VVector3 b) {
+    VVector3 r;
+    r.x = vselect(mask, a.x, b.x);
+    r.y = vselect(mask, a.y, b.y);
+    r.z = vselect(mask, a.z, b.z);
+    return r;
+}
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -394,14 +1508,14 @@ SIMD_INLINE bool compareAnyLessThan(SimdVector::Arg left, SimdVector::Arg right)
 
 static const float midpoints5[32] = {
     0.015686f, 0.047059f, 0.078431f, 0.111765f, 0.145098f, 0.176471f, 0.207843f, 0.241176f, 0.274510f, 0.305882f, 0.337255f, 0.370588f, 0.403922f, 0.435294f, 0.466667f, 0.5f,
-    0.533333f, 0.564706f, 0.596078f, 0.629412f, 0.662745f, 0.694118f, 0.725490f, 0.758824f, 0.792157f, 0.823529f, 0.854902f, 0.888235f, 0.921569f, 0.952941f, 0.984314f, 1.0f
+    0.533333f, 0.564706f, 0.596078f, 0.629412f, 0.662745f, 0.694118f, 0.725490f, 0.758824f, 0.792157f, 0.823529f, 0.854902f, 0.888235f, 0.921569f, 0.952941f, 0.984314f, FLT_MAX
 };
 
 static const float midpoints6[64] = {
-    0.007843f, 0.023529f, 0.039216f, 0.054902f, 0.070588f, 0.086275f, 0.101961f, 0.117647f, 0.133333f, 0.149020f, 0.164706f, 0.180392f, 0.196078f, 0.211765f, 0.227451f, 0.245098f, 
-    0.262745f, 0.278431f, 0.294118f, 0.309804f, 0.325490f, 0.341176f, 0.356863f, 0.372549f, 0.388235f, 0.403922f, 0.419608f, 0.435294f, 0.450980f, 0.466667f, 0.482353f, 0.500000f, 
-    0.517647f, 0.533333f, 0.549020f, 0.564706f, 0.580392f, 0.596078f, 0.611765f, 0.627451f, 0.643137f, 0.658824f, 0.674510f, 0.690196f, 0.705882f, 0.721569f, 0.737255f, 0.754902f, 
-    0.772549f, 0.788235f, 0.803922f, 0.819608f, 0.835294f, 0.850980f, 0.866667f, 0.882353f, 0.898039f, 0.913725f, 0.929412f, 0.945098f, 0.960784f, 0.976471f, 0.992157f, 1.0f
+    0.007843f, 0.023529f, 0.039216f, 0.054902f, 0.070588f, 0.086275f, 0.101961f, 0.117647f, 0.133333f, 0.149020f, 0.164706f, 0.180392f, 0.196078f, 0.211765f, 0.227451f, 0.245098f,
+    0.262745f, 0.278431f, 0.294118f, 0.309804f, 0.325490f, 0.341176f, 0.356863f, 0.372549f, 0.388235f, 0.403922f, 0.419608f, 0.435294f, 0.450980f, 0.466667f, 0.482353f, 0.500000f,
+    0.517647f, 0.533333f, 0.549020f, 0.564706f, 0.580392f, 0.596078f, 0.611765f, 0.627451f, 0.643137f, 0.658824f, 0.674510f, 0.690196f, 0.705882f, 0.721569f, 0.737255f, 0.754902f,
+    0.772549f, 0.788235f, 0.803922f, 0.819608f, 0.835294f, 0.850980f, 0.866667f, 0.882353f, 0.898039f, 0.913725f, 0.929412f, 0.945098f, 0.960784f, 0.976471f, 0.992157f, FLT_MAX
 };
 
 /*void init_tables() {
@@ -410,15 +1524,51 @@ static const float midpoints6[64] = {
         float f1 = float(((i+1) << 3) | ((i+1) >> 2)) / 255.0f;
         midpoints5[i] = (f0 + f1) * 0.5;
     }
-    midpoints5[31] = 1.0f;
+    midpoints5[31] = FLT_MAX;
 
     for (int i = 0; i < 63; i++) {
         float f0 = float(((i+0) << 2) | ((i+0) >> 4)) / 255.0f;
         float f1 = float(((i+1) << 2) | ((i+1) >> 4)) / 255.0f;
         midpoints6[i] = (f0 + f1) * 0.5;
     }
-    midpoints6[63] = 1.0f;
+    midpoints6[63] = FLT_MAX;
 }*/
+
+ICBC_FORCEINLINE VFloat vround5(VFloat x) {
+    const VFloat rb_scale = vbroadcast(31.0f);
+    const VFloat rb_inv_scale = vbroadcast(1.0f / 31.0f);
+
+#if ICBC_PERFECT_ROUND
+    VFloat q = vtruncate(x * rb_scale);
+    VFloat mp = vgather(midpoints5, q);
+    //return (q + (vbroadcast(1.0f) & (x > mp))) * rb_inv_scale;
+    return (q + vselect(x > mp, vzero(), vbroadcast(1))) * rb_inv_scale;
+#else
+    return vround01(x * rb_scale) * rb_inv_scale;
+#endif
+}
+
+ICBC_FORCEINLINE VFloat vround6(VFloat x) {
+    const VFloat g_scale = vbroadcast(63.0f);
+    const VFloat g_inv_scale = vbroadcast(1.0f / 63.0f);
+
+#if ICBC_PERFECT_ROUND
+    VFloat q = vtruncate(x * g_scale);
+    VFloat mp = vgather(midpoints6, q);
+    //return (q + (vbroadcast(1) & (x > mp))) * g_inv_scale;
+    return (q + vselect(x > mp, vzero(), vbroadcast(1))) * g_inv_scale;
+#else
+    return vround01(x * g_scale) * g_inv_scale;
+#endif
+}
+
+ICBC_FORCEINLINE VVector3 vround_ept(VVector3 v) {
+    VVector3 r;
+    r.x = vround5(vsaturate(v.x));
+    r.y = vround6(vsaturate(v.y));
+    r.z = vround5(vsaturate(v.z));
+    return r;
+}
 
 static Color16 vector3_to_color16(const Vector3 & v) {
 
@@ -468,8 +1618,17 @@ inline Color32 vector3_to_color32(Vector3 v) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Input block processing.
 
+inline bool is_black(Vector3 c) {
+    // This large threshold seems to improve compression. This is not forcing these texels to be black, just
+    // causes them to be ignored during PCA.
+    // @@ We may want to adjust this based on the quality level, since this increases the number of blocks that try cluster-3 fitting.
+    //return c.x < midpoints5[0] && c.y < midpoints6[0] && c.z < midpoints5[0];
+    //return c.x < 1.0f / 32 && c.y < 1.0f / 32 && c.z < 1.0f / 32;
+    return c.x < 1.0f / 8 && c.y < 1.0f / 8 && c.z < 1.0f / 8;
+}
+
 // Find similar colors and combine them together.
-static int reduce_colors(const Vector4 * input_colors, const float * input_weights, Vector3 * colors, float * weights)
+static int reduce_colors(const Vector4 * input_colors, const float * input_weights, int count, float threshold, Vector3 * colors, float * weights, bool * any_black)
 {
 #if 0
     for (int i = 0; i < 16; i++) {
@@ -478,19 +1637,20 @@ static int reduce_colors(const Vector4 * input_colors, const float * input_weigh
     }
     return 16;
 #else
+    *any_black = false;
+
     int n = 0;
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < count; i++)
     {
         Vector3 ci = input_colors[i].xyz;
         float wi = input_weights[i];
-
-        float threshold = 1.0 / 256;
 
         if (wi > 0) {
             // Find matching color.
             int j;
             for (j = 0; j < n; j++) {
                 if (equal(colors[j], ci, threshold)) {
+                    colors[j] = (colors[j] * weights[j] + ci * wi) / (weights[j] + wi);
                     weights[j] += wi;
                     break;
                 }
@@ -502,97 +1662,43 @@ static int reduce_colors(const Vector4 * input_colors, const float * input_weigh
                 weights[n] = wi;
                 n++;
             }
+
+            if (is_black(ci)) {
+                *any_black = true;
+            }
         }
     }
 
-    ICBC_ASSERT(n <= 16);
+    ICBC_ASSERT(n <= count);
 
     return n;
 #endif
 }
 
-static int reduce_colors(const uint8 * input_colors, Vector3 * colors, float * weights)
+static int skip_blacks(const Vector3 * input_colors, const float * input_weights, int count, Vector3 * colors, float * weights)
 {
     int n = 0;
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < count; i++)
     {
-        Vector3 ci;
-        ci.x = float(input_colors[4 * i + 0]);
-        ci.y = float(input_colors[4 * i + 1]);
-        ci.z = float(input_colors[4 * i + 2]);
+        Vector3 ci = input_colors[i];
+        float wi = input_weights[i];
 
-        float threshold = 1.0 / 256;
-
-        // Find matching color.
-        int j;
-        for (j = 0; j < n; j++) {
-            if (equal(colors[j], ci, threshold)) {
-                weights[j] += 1.0f;
-                break;
-            }
+        if (is_black(ci)) {
+            continue;
         }
 
-        // No match found. Add new color.
-        if (j == n) {
-            colors[n] = ci;
-            weights[n] = 1.0f;
-            n++;
-        }
+        colors[n] = ci;
+        weights[n] = wi;
+        n += 1;
     }
-
-    ICBC_ASSERT(n <= 16);
 
     return n;
 }
-
 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Cluster Fit
-
-class ClusterFit
-{
-public:
-    ClusterFit() {}
-
-    void setErrorMetric(const Vector3 & metric);
-
-    void setColorSet(const Vector3 * colors, const float * weights, int count, const Vector3 & metric);
-    void setColorSet(const Vector4 * colors, const Vector3 & metric);
-
-    float bestError() const;
-
-    bool compress3(Vector3 * start, Vector3 * end);
-    bool compress4(Vector3 * start, Vector3 * end);
-
-    bool fastCompress3(Vector3 * start, Vector3 * end);
-    bool fastCompress4(Vector3 * start, Vector3 * end);
-
-
-private:
-
-    uint m_count;
-
-#if ICBC_USE_SIMD
-    ICBC_ALIGN_16 SimdVector m_weighted[16]; // color | weight
-    SimdVector m_metric;                // vec3
-    SimdVector m_metricSqr;             // vec3
-    SimdVector m_xxsum;                 // color | weight
-    SimdVector m_xsum;                  // color | weight (wsum)
-    SimdVector m_besterror;             // scalar
-#else
-    Vector3 m_weighted[16];
-    float m_weights[16];
-    Vector3 m_metric;
-    Vector3 m_metricSqr;
-    Vector3 m_xxsum;
-    Vector3 m_xsum;
-    float m_wsum;
-    float m_besterror;
-#endif
-};
-
+// PCA
 
 static Vector3 computeCentroid(int n, const Vector3 *__restrict points, const float *__restrict weights)
 {
@@ -686,2032 +1792,795 @@ static Vector3 computePrincipalComponent_PowerMethod(int n, const Vector3 *__res
 }
 
 
-void ClusterFit::setErrorMetric(const Vector3 & metric)
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// SAT
+
+struct SummedAreaTable {
+    ICBC_ALIGN_16 float r[16];
+    ICBC_ALIGN_16 float g[16];
+    ICBC_ALIGN_16 float b[16];
+    ICBC_ALIGN_16 float w[16];
+};
+
+int compute_sat(const Vector3 * colors, const float * weights, int count, SummedAreaTable * sat)
 {
-#if ICBC_USE_SIMD
-    ICBC_ALIGN_16 Vector4 tmp;
-    tmp.xyz = metric;
-    tmp.w = 1;
-    m_metric = SimdVector(&tmp.x);
-#else
-    m_metric = metric;
-#endif
-    m_metricSqr = m_metric * m_metric;
-}
-
-void ClusterFit::setColorSet(const Vector3 * colors, const float * weights, int count, const Vector3 & metric)
-{
-    setErrorMetric(metric);
-
-    // initialise the best error
-#if ICBC_USE_SIMD
-    m_besterror = SimdVector(FLT_MAX);
-#else
-    m_besterror = FLT_MAX;
-#endif
-
-    m_count = count;
-
     // I've tried using a lower quality approximation of the principal direction, but the best fit line seems to produce best results.
     Vector3 principal = computePrincipalComponent_PowerMethod(count, colors, weights);
 
     // build the list of values
     int order[16];
     float dps[16];
-    for (uint i = 0; i < m_count; ++i)
+    for (int i = 0; i < count; ++i)
     {
         order[i] = i;
         dps[i] = dot(colors[i], principal);
     }
 
     // stable sort
-    for (uint i = 0; i < m_count; ++i)
+    for (int i = 0; i < count; ++i)
     {
-        for (uint j = i; j > 0 && dps[j] < dps[j - 1]; --j)
+        for (int j = i; j > 0 && dps[j] < dps[j - 1]; --j)
         {
             swap(dps[j], dps[j - 1]);
             swap(order[j], order[j - 1]);
         }
     }
 
-    // weight all the points
-#if ICBC_USE_SIMD
-    m_xxsum = SimdVector(0.0f);
-    m_xsum = SimdVector(0.0f);
-#else
-    m_xxsum = { 0.0f };
-    m_xsum = { 0.0f };
-    m_wsum = 0.0f;
-#endif
+    float w = weights[order[0]];
+    sat->r[0] = colors[order[0]].x * w;
+    sat->g[0] = colors[order[0]].y * w;
+    sat->b[0] = colors[order[0]].z * w;
+    sat->w[0] = w;
 
-    for (uint i = 0; i < m_count; ++i)
-    {
-        int p = order[i];
-#if ICBC_USE_SIMD
-        ICBC_ALIGN_16 Vector4 tmp;
-        tmp.xyz = colors[p];
-        tmp.w = 1;
-        m_weighted[i] = SimdVector(&tmp.x) * SimdVector(weights[p]);
-        m_xxsum += m_weighted[i] * m_weighted[i];
-        m_xsum += m_weighted[i];
-#else
-        m_weighted[i] = colors[p] * weights[p];
-        m_xxsum += m_weighted[i] * m_weighted[i];
-        m_xsum += m_weighted[i];
-        m_weights[i] = weights[p];
-        m_wsum += m_weights[i];
-#endif
-    }
-}
-
-void ClusterFit::setColorSet(const Vector4 * colors, const Vector3 & metric)
-{
-    setErrorMetric(metric);
-
-    // initialise the best error
-#if ICBC_USE_SIMD
-    m_besterror = SimdVector(FLT_MAX);
-#else
-    m_besterror = FLT_MAX;
-#endif
-
-    m_count = 16;
-
-    static const float weights[16] = {1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1};
-    Vector3 vc[16];
-    for (int i = 0; i < 16; i++) vc[i] = colors[i].xyz;
-
-    // I've tried using a lower quality approximation of the principal direction, but the best fit line seems to produce best results.
-    Vector3 principal = computePrincipalComponent_PowerMethod(16, vc, weights);
-
-    // build the list of values
-    int order[16];
-    float dps[16];
-    for (uint i = 0; i < m_count; ++i)
-    {
-        order[i] = i;
-        dps[i] = dot(colors[i].xyz, principal);
+    for (int i = 1; i < count; i++) {
+        float w = weights[order[i]];
+        sat->r[i] = sat->r[i - 1] + colors[order[i]].x * w;
+        sat->g[i] = sat->g[i - 1] + colors[order[i]].y * w;
+        sat->b[i] = sat->b[i - 1] + colors[order[i]].z * w;
+        sat->w[i] = sat->w[i - 1] + w;
     }
 
-    // stable sort
-    for (uint i = 0; i < m_count; ++i)
+    // Try incremental decimation:
+    /*if (count > 4)
     {
-        for (uint j = i; j > 0 && dps[j] < dps[j - 1]; --j)
+        float threshold = 1.0f / 4;
+
+        for (uint i = 1; i < count; ++i)
         {
-            swap(dps[j], dps[j - 1]);
-            swap(order[j], order[j - 1]);
+            if (sat->r[i] - sat->r[i - 1] < threshold &&
+                sat->g[i] - sat->g[i - 1] < threshold &&
+                sat->b[i] - sat->b[i - 1] < threshold)
+            {
+                for (int j = i+1; j < count; j++) {
+                    sat->r[j - 1] = sat->r[j];
+                    sat->g[j - 1] = sat->g[j];
+                    sat->b[j - 1] = sat->b[j];
+                    sat->w[j - 1] = sat->w[j];
+                }
+                count -= 1;
+                i -= 1;
+                if (count == 4) break;
+            }
         }
+    }*/
+
+    for (int i = count; i < 16; i++) {
+        sat->r[i] = FLT_MAX;
+        sat->g[i] = FLT_MAX;
+        sat->b[i] = FLT_MAX;
+        sat->w[i] = FLT_MAX;
     }
 
-    // weight all the points
-#if ICBC_USE_SIMD
-    m_xxsum = SimdVector(0.0f);
-    m_xsum = SimdVector(0.0f);
-#else
-    m_xxsum = { 0.0f };
-    m_xsum = { 0.0f };
-    m_wsum = 0.0f;
-#endif
-
-    for (uint i = 0; i < 16; ++i)
-    {
-        int p = order[i];
-#if ICBC_USE_SIMD
-        ICBC_ALIGN_16 Vector4 tmp;
-        tmp.xyz = colors[p].xyz;
-        tmp.w = 1;
-        m_weighted[i] = SimdVector(&tmp.x);
-        m_xxsum += m_weighted[i] * m_weighted[i];
-        m_xsum += m_weighted[i];
-#else
-        m_weighted[i] = colors[p].xyz;
-        m_xxsum += m_weighted[i] * m_weighted[i];
-        m_xsum += m_weighted[i];
-        m_weights[i] = 1.0f;
-        m_wsum += m_weights[i];
-#endif
-    }
+    return count;
 }
 
-float ClusterFit::bestError() const
-{
-#if ICBC_USE_SIMD
-    SimdVector x = m_xxsum * m_metricSqr;
-    SimdVector error = m_besterror + x.splatX() + x.splatY() + x.splatZ();
-    return error.toFloat();
-#else
-    return m_besterror + dot(m_xxsum, m_metricSqr);
-#endif
-}
 
-struct Precomp {
-    float alpha2_sum;
-    float beta2_sum;
-    float alphabeta_sum;
-    float factor;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Cluster Fit
+
+struct Combinations {
+    uint8 c0, c1, c2, pad;
 };
 
-static const ICBC_ALIGN_16 Precomp s_threeElement[153] = {
-    { 0.000000f, 16.000000f, 0.000000f, FLT_MAX }, // 0 (0 0 16)
-    { 0.250000f, 15.250000f, 0.250000f, 0.266667f }, // 1 (0 1 15)
-    { 0.500000f, 14.500000f, 0.500000f, 0.142857f }, // 2 (0 2 14)
-    { 0.750000f, 13.750000f, 0.750000f, 0.102564f }, // 3 (0 3 13)
-    { 1.000000f, 13.000000f, 1.000000f, 0.083333f }, // 4 (0 4 12)
-    { 1.250000f, 12.250000f, 1.250000f, 0.072727f }, // 5 (0 5 11)
-    { 1.500000f, 11.500000f, 1.500000f, 0.066667f }, // 6 (0 6 10)
-    { 1.750000f, 10.750000f, 1.750000f, 0.063492f }, // 7 (0 7 9)
-    { 2.000000f, 10.000000f, 2.000000f, 0.062500f }, // 8 (0 8 8)
-    { 2.250000f, 9.250000f, 2.250000f, 0.063492f }, // 9 (0 9 7)
-    { 2.500000f, 8.500000f, 2.500000f, 0.066667f }, // 10 (0 10 6)
-    { 2.750000f, 7.750000f, 2.750000f, 0.072727f }, // 11 (0 11 5)
-    { 3.000000f, 7.000000f, 3.000000f, 0.083333f }, // 12 (0 12 4)
-    { 3.250000f, 6.250000f, 3.250000f, 0.102564f }, // 13 (0 13 3)
-    { 3.500000f, 5.500000f, 3.500000f, 0.142857f }, // 14 (0 14 2)
-    { 3.750000f, 4.750000f, 3.750000f, 0.266667f }, // 15 (0 15 1)
-    { 4.000000f, 4.000000f, 4.000000f, FLT_MAX }, // 16 (0 16 0)
-    { 1.000000f, 15.000000f, 0.000000f, 0.066667f }, // 17 (1 0 15)
-    { 1.250000f, 14.250000f, 0.250000f, 0.056338f }, // 18 (1 1 14)
-    { 1.500000f, 13.500000f, 0.500000f, 0.050000f }, // 19 (1 2 13)
-    { 1.750000f, 12.750000f, 0.750000f, 0.045977f }, // 20 (1 3 12)
-    { 2.000000f, 12.000000f, 1.000000f, 0.043478f }, // 21 (1 4 11)
-    { 2.250000f, 11.250000f, 1.250000f, 0.042105f }, // 22 (1 5 10)
-    { 2.500000f, 10.500000f, 1.500000f, 0.041667f }, // 23 (1 6 9)
-    { 2.750000f, 9.750000f, 1.750000f, 0.042105f }, // 24 (1 7 8)
-    { 3.000000f, 9.000000f, 2.000000f, 0.043478f }, // 25 (1 8 7)
-    { 3.250000f, 8.250000f, 2.250000f, 0.045977f }, // 26 (1 9 6)
-    { 3.500000f, 7.500000f, 2.500000f, 0.050000f }, // 27 (1 10 5)
-    { 3.750000f, 6.750000f, 2.750000f, 0.056338f }, // 28 (1 11 4)
-    { 4.000000f, 6.000000f, 3.000000f, 0.066667f }, // 29 (1 12 3)
-    { 4.250000f, 5.250000f, 3.250000f, 0.085106f }, // 30 (1 13 2)
-    { 4.500000f, 4.500000f, 3.500000f, 0.125000f }, // 31 (1 14 1)
-    { 4.750000f, 3.750000f, 3.750000f, 0.266667f }, // 32 (1 15 0)
-    { 2.000000f, 14.000000f, 0.000000f, 0.035714f }, // 33 (2 0 14)
-    { 2.250000f, 13.250000f, 0.250000f, 0.033613f }, // 34 (2 1 13)
-    { 2.500000f, 12.500000f, 0.500000f, 0.032258f }, // 35 (2 2 12)
-    { 2.750000f, 11.750000f, 0.750000f, 0.031496f }, // 36 (2 3 11)
-    { 3.000000f, 11.000000f, 1.000000f, 0.031250f }, // 37 (2 4 10)
-    { 3.250000f, 10.250000f, 1.250000f, 0.031496f }, // 38 (2 5 9)
-    { 3.500000f, 9.500000f, 1.500000f, 0.032258f }, // 39 (2 6 8)
-    { 3.750000f, 8.750000f, 1.750000f, 0.033613f }, // 40 (2 7 7)
-    { 4.000000f, 8.000000f, 2.000000f, 0.035714f }, // 41 (2 8 6)
-    { 4.250000f, 7.250000f, 2.250000f, 0.038835f }, // 42 (2 9 5)
-    { 4.500000f, 6.500000f, 2.500000f, 0.043478f }, // 43 (2 10 4)
-    { 4.750000f, 5.750000f, 2.750000f, 0.050633f }, // 44 (2 11 3)
-    { 5.000000f, 5.000000f, 3.000000f, 0.062500f }, // 45 (2 12 2)
-    { 5.250000f, 4.250000f, 3.250000f, 0.085106f }, // 46 (2 13 1)
-    { 5.500000f, 3.500000f, 3.500000f, 0.142857f }, // 47 (2 14 0)
-    { 3.000000f, 13.000000f, 0.000000f, 0.025641f }, // 48 (3 0 13)
-    { 3.250000f, 12.250000f, 0.250000f, 0.025157f }, // 49 (3 1 12)
-    { 3.500000f, 11.500000f, 0.500000f, 0.025000f }, // 50 (3 2 11)
-    { 3.750000f, 10.750000f, 0.750000f, 0.025157f }, // 51 (3 3 10)
-    { 4.000000f, 10.000000f, 1.000000f, 0.025641f }, // 52 (3 4 9)
-    { 4.250000f, 9.250000f, 1.250000f, 0.026490f }, // 53 (3 5 8)
-    { 4.500000f, 8.500000f, 1.500000f, 0.027778f }, // 54 (3 6 7)
-    { 4.750000f, 7.750000f, 1.750000f, 0.029630f }, // 55 (3 7 6)
-    { 5.000000f, 7.000000f, 2.000000f, 0.032258f }, // 56 (3 8 5)
-    { 5.250000f, 6.250000f, 2.250000f, 0.036036f }, // 57 (3 9 4)
-    { 5.500000f, 5.500000f, 2.500000f, 0.041667f }, // 58 (3 10 3)
-    { 5.750000f, 4.750000f, 2.750000f, 0.050633f }, // 59 (3 11 2)
-    { 6.000000f, 4.000000f, 3.000000f, 0.066667f }, // 60 (3 12 1)
-    { 6.250000f, 3.250000f, 3.250000f, 0.102564f }, // 61 (3 13 0)
-    { 4.000000f, 12.000000f, 0.000000f, 0.020833f }, // 62 (4 0 12)
-    { 4.250000f, 11.250000f, 0.250000f, 0.020942f }, // 63 (4 1 11)
-    { 4.500000f, 10.500000f, 0.500000f, 0.021277f }, // 64 (4 2 10)
-    { 4.750000f, 9.750000f, 0.750000f, 0.021858f }, // 65 (4 3 9)
-    { 5.000000f, 9.000000f, 1.000000f, 0.022727f }, // 66 (4 4 8)
-    { 5.250000f, 8.250000f, 1.250000f, 0.023952f }, // 67 (4 5 7)
-    { 5.500000f, 7.500000f, 1.500000f, 0.025641f }, // 68 (4 6 6)
-    { 5.750000f, 6.750000f, 1.750000f, 0.027972f }, // 69 (4 7 5)
-    { 6.000000f, 6.000000f, 2.000000f, 0.031250f }, // 70 (4 8 4)
-    { 6.250000f, 5.250000f, 2.250000f, 0.036036f }, // 71 (4 9 3)
-    { 6.500000f, 4.500000f, 2.500000f, 0.043478f }, // 72 (4 10 2)
-    { 6.750000f, 3.750000f, 2.750000f, 0.056338f }, // 73 (4 11 1)
-    { 7.000000f, 3.000000f, 3.000000f, 0.083333f }, // 74 (4 12 0)
-    { 5.000000f, 11.000000f, 0.000000f, 0.018182f }, // 75 (5 0 11)
-    { 5.250000f, 10.250000f, 0.250000f, 0.018605f }, // 76 (5 1 10)
-    { 5.500000f, 9.500000f, 0.500000f, 0.019231f }, // 77 (5 2 9)
-    { 5.750000f, 8.750000f, 0.750000f, 0.020101f }, // 78 (5 3 8)
-    { 6.000000f, 8.000000f, 1.000000f, 0.021277f }, // 79 (5 4 7)
-    { 6.250000f, 7.250000f, 1.250000f, 0.022857f }, // 80 (5 5 6)
-    { 6.500000f, 6.500000f, 1.500000f, 0.025000f }, // 81 (5 6 5)
-    { 6.750000f, 5.750000f, 1.750000f, 0.027972f }, // 82 (5 7 4)
-    { 7.000000f, 5.000000f, 2.000000f, 0.032258f }, // 83 (5 8 3)
-    { 7.250000f, 4.250000f, 2.250000f, 0.038835f }, // 84 (5 9 2)
-    { 7.500000f, 3.500000f, 2.500000f, 0.050000f }, // 85 (5 10 1)
-    { 7.750000f, 2.750000f, 2.750000f, 0.072727f }, // 86 (5 11 0)
-    { 6.000000f, 10.000000f, 0.000000f, 0.016667f }, // 87 (6 0 10)
-    { 6.250000f, 9.250000f, 0.250000f, 0.017316f }, // 88 (6 1 9)
-    { 6.500000f, 8.500000f, 0.500000f, 0.018182f }, // 89 (6 2 8)
-    { 6.750000f, 7.750000f, 0.750000f, 0.019324f }, // 90 (6 3 7)
-    { 7.000000f, 7.000000f, 1.000000f, 0.020833f }, // 91 (6 4 6)
-    { 7.250000f, 6.250000f, 1.250000f, 0.022857f }, // 92 (6 5 5)
-    { 7.500000f, 5.500000f, 1.500000f, 0.025641f }, // 93 (6 6 4)
-    { 7.750000f, 4.750000f, 1.750000f, 0.029630f }, // 94 (6 7 3)
-    { 8.000000f, 4.000000f, 2.000000f, 0.035714f }, // 95 (6 8 2)
-    { 8.250000f, 3.250000f, 2.250000f, 0.045977f }, // 96 (6 9 1)
-    { 8.500000f, 2.500000f, 2.500000f, 0.066667f }, // 97 (6 10 0)
-    { 7.000000f, 9.000000f, 0.000000f, 0.015873f }, // 98 (7 0 9)
-    { 7.250000f, 8.250000f, 0.250000f, 0.016736f }, // 99 (7 1 8)
-    { 7.500000f, 7.500000f, 0.500000f, 0.017857f }, // 100 (7 2 7)
-    { 7.750000f, 6.750000f, 0.750000f, 0.019324f }, // 101 (7 3 6)
-    { 8.000000f, 6.000000f, 1.000000f, 0.021277f }, // 102 (7 4 5)
-    { 8.250000f, 5.250000f, 1.250000f, 0.023952f }, // 103 (7 5 4)
-    { 8.500000f, 4.500000f, 1.500000f, 0.027778f }, // 104 (7 6 3)
-    { 8.750000f, 3.750000f, 1.750000f, 0.033613f }, // 105 (7 7 2)
-    { 9.000000f, 3.000000f, 2.000000f, 0.043478f }, // 106 (7 8 1)
-    { 9.250000f, 2.250000f, 2.250000f, 0.063492f }, // 107 (7 9 0)
-    { 8.000000f, 8.000000f, 0.000000f, 0.015625f }, // 108 (8 0 8)
-    { 8.250000f, 7.250000f, 0.250000f, 0.016736f }, // 109 (8 1 7)
-    { 8.500000f, 6.500000f, 0.500000f, 0.018182f }, // 110 (8 2 6)
-    { 8.750000f, 5.750000f, 0.750000f, 0.020101f }, // 111 (8 3 5)
-    { 9.000000f, 5.000000f, 1.000000f, 0.022727f }, // 112 (8 4 4)
-    { 9.250000f, 4.250000f, 1.250000f, 0.026490f }, // 113 (8 5 3)
-    { 9.500000f, 3.500000f, 1.500000f, 0.032258f }, // 114 (8 6 2)
-    { 9.750000f, 2.750000f, 1.750000f, 0.042105f }, // 115 (8 7 1)
-    { 10.000000f, 2.000000f, 2.000000f, 0.062500f }, // 116 (8 8 0)
-    { 9.000000f, 7.000000f, 0.000000f, 0.015873f }, // 117 (9 0 7)
-    { 9.250000f, 6.250000f, 0.250000f, 0.017316f }, // 118 (9 1 6)
-    { 9.500000f, 5.500000f, 0.500000f, 0.019231f }, // 119 (9 2 5)
-    { 9.750000f, 4.750000f, 0.750000f, 0.021858f }, // 120 (9 3 4)
-    { 10.000000f, 4.000000f, 1.000000f, 0.025641f }, // 121 (9 4 3)
-    { 10.250000f, 3.250000f, 1.250000f, 0.031496f }, // 122 (9 5 2)
-    { 10.500000f, 2.500000f, 1.500000f, 0.041667f }, // 123 (9 6 1)
-    { 10.750000f, 1.750000f, 1.750000f, 0.063492f }, // 124 (9 7 0)
-    { 10.000000f, 6.000000f, 0.000000f, 0.016667f }, // 125 (10 0 6)
-    { 10.250000f, 5.250000f, 0.250000f, 0.018605f }, // 126 (10 1 5)
-    { 10.500000f, 4.500000f, 0.500000f, 0.021277f }, // 127 (10 2 4)
-    { 10.750000f, 3.750000f, 0.750000f, 0.025157f }, // 128 (10 3 3)
-    { 11.000000f, 3.000000f, 1.000000f, 0.031250f }, // 129 (10 4 2)
-    { 11.250000f, 2.250000f, 1.250000f, 0.042105f }, // 130 (10 5 1)
-    { 11.500000f, 1.500000f, 1.500000f, 0.066667f }, // 131 (10 6 0)
-    { 11.000000f, 5.000000f, 0.000000f, 0.018182f }, // 132 (11 0 5)
-    { 11.250000f, 4.250000f, 0.250000f, 0.020942f }, // 133 (11 1 4)
-    { 11.500000f, 3.500000f, 0.500000f, 0.025000f }, // 134 (11 2 3)
-    { 11.750000f, 2.750000f, 0.750000f, 0.031496f }, // 135 (11 3 2)
-    { 12.000000f, 2.000000f, 1.000000f, 0.043478f }, // 136 (11 4 1)
-    { 12.250000f, 1.250000f, 1.250000f, 0.072727f }, // 137 (11 5 0)
-    { 12.000000f, 4.000000f, 0.000000f, 0.020833f }, // 138 (12 0 4)
-    { 12.250000f, 3.250000f, 0.250000f, 0.025157f }, // 139 (12 1 3)
-    { 12.500000f, 2.500000f, 0.500000f, 0.032258f }, // 140 (12 2 2)
-    { 12.750000f, 1.750000f, 0.750000f, 0.045977f }, // 141 (12 3 1)
-    { 13.000000f, 1.000000f, 1.000000f, 0.083333f }, // 142 (12 4 0)
-    { 13.000000f, 3.000000f, 0.000000f, 0.025641f }, // 143 (13 0 3)
-    { 13.250000f, 2.250000f, 0.250000f, 0.033613f }, // 144 (13 1 2)
-    { 13.500000f, 1.500000f, 0.500000f, 0.050000f }, // 145 (13 2 1)
-    { 13.750000f, 0.750000f, 0.750000f, 0.102564f }, // 146 (13 3 0)
-    { 14.000000f, 2.000000f, 0.000000f, 0.035714f }, // 147 (14 0 2)
-    { 14.250000f, 1.250000f, 0.250000f, 0.056338f }, // 148 (14 1 1)
-    { 14.500000f, 0.500000f, 0.500000f, 0.142857f }, // 149 (14 2 0)
-    { 15.000000f, 1.000000f, 0.000000f, 0.066667f }, // 150 (15 0 1)
-    { 15.250000f, 0.250000f, 0.250000f, 0.266667f }, // 151 (15 1 0)
-    { 16.000000f, 0.000000f, 0.000000f, FLT_MAX }, // 152 (16 0 0)
-}; // 153 three cluster elements
-
-static const ICBC_ALIGN_16 Precomp s_fourElement[969] = {
-    { 0.000000f, 16.000000f, 0.000000f, FLT_MAX }, // 0 (0 0 0 16)
-    { 0.111111f, 15.444445f, 0.222222f, 0.600000f }, // 1 (0 0 1 15)
-    { 0.222222f, 14.888889f, 0.444444f, 0.321429f }, // 2 (0 0 2 14)
-    { 0.333333f, 14.333333f, 0.666667f, 0.230769f }, // 3 (0 0 3 13)
-    { 0.444444f, 13.777778f, 0.888889f, 0.187500f }, // 4 (0 0 4 12)
-    { 0.555556f, 13.222222f, 1.111111f, 0.163636f }, // 5 (0 0 5 11)
-    { 0.666667f, 12.666667f, 1.333333f, 0.150000f }, // 6 (0 0 6 10)
-    { 0.777778f, 12.111111f, 1.555556f, 0.142857f }, // 7 (0 0 7 9)
-    { 0.888889f, 11.555555f, 1.777778f, 0.140625f }, // 8 (0 0 8 8)
-    { 1.000000f, 11.000000f, 2.000000f, 0.142857f }, // 9 (0 0 9 7)
-    { 1.111111f, 10.444445f, 2.222222f, 0.150000f }, // 10 (0 0 10 6)
-    { 1.222222f, 9.888889f, 2.444444f, 0.163636f }, // 11 (0 0 11 5)
-    { 1.333333f, 9.333333f, 2.666667f, 0.187500f }, // 12 (0 0 12 4)
-    { 1.444444f, 8.777778f, 2.888889f, 0.230769f }, // 13 (0 0 13 3)
-    { 1.555556f, 8.222222f, 3.111111f, 0.321429f }, // 14 (0 0 14 2)
-    { 1.666667f, 7.666667f, 3.333333f, 0.600000f }, // 15 (0 0 15 1)
-    { 1.777778f, 7.111111f, 3.555556f, FLT_MAX }, // 16 (0 0 16 0)
-    { 0.444444f, 15.111111f, 0.222222f, 0.150000f }, // 17 (0 1 0 15)
-    { 0.555556f, 14.555555f, 0.444444f, 0.126761f }, // 18 (0 1 1 14)
-    { 0.666667f, 14.000000f, 0.666667f, 0.112500f }, // 19 (0 1 2 13)
-    { 0.777778f, 13.444445f, 0.888889f, 0.103448f }, // 20 (0 1 3 12)
-    { 0.888889f, 12.888889f, 1.111111f, 0.097826f }, // 21 (0 1 4 11)
-    { 1.000000f, 12.333333f, 1.333333f, 0.094737f }, // 22 (0 1 5 10)
-    { 1.111111f, 11.777778f, 1.555556f, 0.093750f }, // 23 (0 1 6 9)
-    { 1.222222f, 11.222222f, 1.777778f, 0.094737f }, // 24 (0 1 7 8)
-    { 1.333333f, 10.666667f, 2.000000f, 0.097826f }, // 25 (0 1 8 7)
-    { 1.444444f, 10.111111f, 2.222222f, 0.103448f }, // 26 (0 1 9 6)
-    { 1.555556f, 9.555555f, 2.444444f, 0.112500f }, // 27 (0 1 10 5)
-    { 1.666667f, 9.000000f, 2.666667f, 0.126761f }, // 28 (0 1 11 4)
-    { 1.777778f, 8.444445f, 2.888889f, 0.150000f }, // 29 (0 1 12 3)
-    { 1.888889f, 7.888889f, 3.111111f, 0.191489f }, // 30 (0 1 13 2)
-    { 2.000000f, 7.333333f, 3.333333f, 0.281250f }, // 31 (0 1 14 1)
-    { 2.111111f, 6.777778f, 3.555556f, 0.600000f }, // 32 (0 1 15 0)
-    { 0.888889f, 14.222222f, 0.444444f, 0.080357f }, // 33 (0 2 0 14)
-    { 1.000000f, 13.666667f, 0.666667f, 0.075630f }, // 34 (0 2 1 13)
-    { 1.111111f, 13.111111f, 0.888889f, 0.072581f }, // 35 (0 2 2 12)
-    { 1.222222f, 12.555555f, 1.111111f, 0.070866f }, // 36 (0 2 3 11)
-    { 1.333333f, 12.000000f, 1.333333f, 0.070313f }, // 37 (0 2 4 10)
-    { 1.444444f, 11.444445f, 1.555556f, 0.070866f }, // 38 (0 2 5 9)
-    { 1.555556f, 10.888889f, 1.777778f, 0.072581f }, // 39 (0 2 6 8)
-    { 1.666667f, 10.333333f, 2.000000f, 0.075630f }, // 40 (0 2 7 7)
-    { 1.777778f, 9.777778f, 2.222222f, 0.080357f }, // 41 (0 2 8 6)
-    { 1.888889f, 9.222222f, 2.444444f, 0.087379f }, // 42 (0 2 9 5)
-    { 2.000000f, 8.666667f, 2.666667f, 0.097826f }, // 43 (0 2 10 4)
-    { 2.111111f, 8.111111f, 2.888889f, 0.113924f }, // 44 (0 2 11 3)
-    { 2.222222f, 7.555556f, 3.111111f, 0.140625f }, // 45 (0 2 12 2)
-    { 2.333333f, 7.000000f, 3.333333f, 0.191489f }, // 46 (0 2 13 1)
-    { 2.444444f, 6.444445f, 3.555556f, 0.321429f }, // 47 (0 2 14 0)
-    { 1.333333f, 13.333333f, 0.666667f, 0.057692f }, // 48 (0 3 0 13)
-    { 1.444444f, 12.777778f, 0.888889f, 0.056604f }, // 49 (0 3 1 12)
-    { 1.555556f, 12.222222f, 1.111111f, 0.056250f }, // 50 (0 3 2 11)
-    { 1.666667f, 11.666667f, 1.333333f, 0.056604f }, // 51 (0 3 3 10)
-    { 1.777778f, 11.111111f, 1.555556f, 0.057692f }, // 52 (0 3 4 9)
-    { 1.888889f, 10.555555f, 1.777778f, 0.059603f }, // 53 (0 3 5 8)
-    { 2.000000f, 10.000000f, 2.000000f, 0.062500f }, // 54 (0 3 6 7)
-    { 2.111111f, 9.444445f, 2.222222f, 0.066667f }, // 55 (0 3 7 6)
-    { 2.222222f, 8.888889f, 2.444444f, 0.072581f }, // 56 (0 3 8 5)
-    { 2.333333f, 8.333333f, 2.666667f, 0.081081f }, // 57 (0 3 9 4)
-    { 2.444444f, 7.777778f, 2.888889f, 0.093750f }, // 58 (0 3 10 3)
-    { 2.555556f, 7.222222f, 3.111111f, 0.113924f }, // 59 (0 3 11 2)
-    { 2.666667f, 6.666667f, 3.333333f, 0.150000f }, // 60 (0 3 12 1)
-    { 2.777778f, 6.111111f, 3.555556f, 0.230769f }, // 61 (0 3 13 0)
-    { 1.777778f, 12.444445f, 0.888889f, 0.046875f }, // 62 (0 4 0 12)
-    { 1.888889f, 11.888889f, 1.111111f, 0.047120f }, // 63 (0 4 1 11)
-    { 2.000000f, 11.333333f, 1.333333f, 0.047872f }, // 64 (0 4 2 10)
-    { 2.111111f, 10.777778f, 1.555556f, 0.049180f }, // 65 (0 4 3 9)
-    { 2.222222f, 10.222222f, 1.777778f, 0.051136f }, // 66 (0 4 4 8)
-    { 2.333333f, 9.666667f, 2.000000f, 0.053892f }, // 67 (0 4 5 7)
-    { 2.444444f, 9.111111f, 2.222222f, 0.057692f }, // 68 (0 4 6 6)
-    { 2.555556f, 8.555555f, 2.444444f, 0.062937f }, // 69 (0 4 7 5)
-    { 2.666667f, 8.000000f, 2.666667f, 0.070313f }, // 70 (0 4 8 4)
-    { 2.777778f, 7.444445f, 2.888889f, 0.081081f }, // 71 (0 4 9 3)
-    { 2.888889f, 6.888889f, 3.111111f, 0.097826f }, // 72 (0 4 10 2)
-    { 3.000000f, 6.333333f, 3.333333f, 0.126761f }, // 73 (0 4 11 1)
-    { 3.111111f, 5.777778f, 3.555556f, 0.187500f }, // 74 (0 4 12 0)
-    { 2.222222f, 11.555555f, 1.111111f, 0.040909f }, // 75 (0 5 0 11)
-    { 2.333333f, 11.000000f, 1.333333f, 0.041860f }, // 76 (0 5 1 10)
-    { 2.444444f, 10.444445f, 1.555556f, 0.043269f }, // 77 (0 5 2 9)
-    { 2.555556f, 9.888889f, 1.777778f, 0.045226f }, // 78 (0 5 3 8)
-    { 2.666667f, 9.333333f, 2.000000f, 0.047872f }, // 79 (0 5 4 7)
-    { 2.777778f, 8.777778f, 2.222222f, 0.051429f }, // 80 (0 5 5 6)
-    { 2.888889f, 8.222222f, 2.444444f, 0.056250f }, // 81 (0 5 6 5)
-    { 3.000000f, 7.666667f, 2.666667f, 0.062937f }, // 82 (0 5 7 4)
-    { 3.111111f, 7.111111f, 2.888889f, 0.072581f }, // 83 (0 5 8 3)
-    { 3.222222f, 6.555556f, 3.111111f, 0.087379f }, // 84 (0 5 9 2)
-    { 3.333333f, 6.000000f, 3.333333f, 0.112500f }, // 85 (0 5 10 1)
-    { 3.444444f, 5.444445f, 3.555556f, 0.163636f }, // 86 (0 5 11 0)
-    { 2.666667f, 10.666667f, 1.333333f, 0.037500f }, // 87 (0 6 0 10)
-    { 2.777778f, 10.111111f, 1.555556f, 0.038961f }, // 88 (0 6 1 9)
-    { 2.888889f, 9.555555f, 1.777778f, 0.040909f }, // 89 (0 6 2 8)
-    { 3.000000f, 9.000000f, 2.000000f, 0.043478f }, // 90 (0 6 3 7)
-    { 3.111111f, 8.444445f, 2.222222f, 0.046875f }, // 91 (0 6 4 6)
-    { 3.222222f, 7.888889f, 2.444444f, 0.051429f }, // 92 (0 6 5 5)
-    { 3.333333f, 7.333333f, 2.666667f, 0.057692f }, // 93 (0 6 6 4)
-    { 3.444444f, 6.777778f, 2.888889f, 0.066667f }, // 94 (0 6 7 3)
-    { 3.555556f, 6.222222f, 3.111111f, 0.080357f }, // 95 (0 6 8 2)
-    { 3.666667f, 5.666667f, 3.333333f, 0.103448f }, // 96 (0 6 9 1)
-    { 3.777778f, 5.111111f, 3.555556f, 0.150000f }, // 97 (0 6 10 0)
-    { 3.111111f, 9.777778f, 1.555556f, 0.035714f }, // 98 (0 7 0 9)
-    { 3.222222f, 9.222222f, 1.777778f, 0.037657f }, // 99 (0 7 1 8)
-    { 3.333333f, 8.666667f, 2.000000f, 0.040179f }, // 100 (0 7 2 7)
-    { 3.444444f, 8.111111f, 2.222222f, 0.043478f }, // 101 (0 7 3 6)
-    { 3.555556f, 7.555555f, 2.444444f, 0.047872f }, // 102 (0 7 4 5)
-    { 3.666667f, 7.000000f, 2.666667f, 0.053892f }, // 103 (0 7 5 4)
-    { 3.777778f, 6.444445f, 2.888889f, 0.062500f }, // 104 (0 7 6 3)
-    { 3.888889f, 5.888889f, 3.111111f, 0.075630f }, // 105 (0 7 7 2)
-    { 4.000000f, 5.333333f, 3.333333f, 0.097826f }, // 106 (0 7 8 1)
-    { 4.111111f, 4.777778f, 3.555556f, 0.142857f }, // 107 (0 7 9 0)
-    { 3.555556f, 8.888889f, 1.777778f, 0.035156f }, // 108 (0 8 0 8)
-    { 3.666667f, 8.333333f, 2.000000f, 0.037657f }, // 109 (0 8 1 7)
-    { 3.777778f, 7.777778f, 2.222222f, 0.040909f }, // 110 (0 8 2 6)
-    { 3.888889f, 7.222222f, 2.444444f, 0.045226f }, // 111 (0 8 3 5)
-    { 4.000000f, 6.666667f, 2.666667f, 0.051136f }, // 112 (0 8 4 4)
-    { 4.111111f, 6.111111f, 2.888889f, 0.059603f }, // 113 (0 8 5 3)
-    { 4.222222f, 5.555555f, 3.111111f, 0.072581f }, // 114 (0 8 6 2)
-    { 4.333333f, 5.000000f, 3.333333f, 0.094737f }, // 115 (0 8 7 1)
-    { 4.444445f, 4.444445f, 3.555556f, 0.140625f }, // 116 (0 8 8 0)
-    { 4.000000f, 8.000000f, 2.000000f, 0.035714f }, // 117 (0 9 0 7)
-    { 4.111111f, 7.444445f, 2.222222f, 0.038961f }, // 118 (0 9 1 6)
-    { 4.222222f, 6.888889f, 2.444444f, 0.043269f }, // 119 (0 9 2 5)
-    { 4.333333f, 6.333333f, 2.666667f, 0.049180f }, // 120 (0 9 3 4)
-    { 4.444445f, 5.777778f, 2.888889f, 0.057692f }, // 121 (0 9 4 3)
-    { 4.555556f, 5.222222f, 3.111111f, 0.070866f }, // 122 (0 9 5 2)
-    { 4.666667f, 4.666667f, 3.333333f, 0.093750f }, // 123 (0 9 6 1)
-    { 4.777778f, 4.111111f, 3.555556f, 0.142857f }, // 124 (0 9 7 0)
-    { 4.444445f, 7.111111f, 2.222222f, 0.037500f }, // 125 (0 10 0 6)
-    { 4.555556f, 6.555555f, 2.444444f, 0.041860f }, // 126 (0 10 1 5)
-    { 4.666667f, 6.000000f, 2.666667f, 0.047872f }, // 127 (0 10 2 4)
-    { 4.777778f, 5.444445f, 2.888889f, 0.056604f }, // 128 (0 10 3 3)
-    { 4.888889f, 4.888889f, 3.111111f, 0.070313f }, // 129 (0 10 4 2)
-    { 5.000000f, 4.333333f, 3.333333f, 0.094737f }, // 130 (0 10 5 1)
-    { 5.111111f, 3.777778f, 3.555556f, 0.150000f }, // 131 (0 10 6 0)
-    { 4.888889f, 6.222222f, 2.444444f, 0.040909f }, // 132 (0 11 0 5)
-    { 5.000000f, 5.666667f, 2.666667f, 0.047120f }, // 133 (0 11 1 4)
-    { 5.111111f, 5.111111f, 2.888889f, 0.056250f }, // 134 (0 11 2 3)
-    { 5.222222f, 4.555555f, 3.111111f, 0.070866f }, // 135 (0 11 3 2)
-    { 5.333333f, 4.000000f, 3.333333f, 0.097826f }, // 136 (0 11 4 1)
-    { 5.444445f, 3.444444f, 3.555556f, 0.163636f }, // 137 (0 11 5 0)
-    { 5.333333f, 5.333333f, 2.666667f, 0.046875f }, // 138 (0 12 0 4)
-    { 5.444445f, 4.777778f, 2.888889f, 0.056604f }, // 139 (0 12 1 3)
-    { 5.555556f, 4.222222f, 3.111111f, 0.072581f }, // 140 (0 12 2 2)
-    { 5.666667f, 3.666667f, 3.333333f, 0.103448f }, // 141 (0 12 3 1)
-    { 5.777778f, 3.111111f, 3.555556f, 0.187500f }, // 142 (0 12 4 0)
-    { 5.777778f, 4.444445f, 2.888889f, 0.057692f }, // 143 (0 13 0 3)
-    { 5.888889f, 3.888889f, 3.111111f, 0.075630f }, // 144 (0 13 1 2)
-    { 6.000000f, 3.333333f, 3.333333f, 0.112500f }, // 145 (0 13 2 1)
-    { 6.111111f, 2.777778f, 3.555556f, 0.230769f }, // 146 (0 13 3 0)
-    { 6.222222f, 3.555556f, 3.111111f, 0.080357f }, // 147 (0 14 0 2)
-    { 6.333333f, 3.000000f, 3.333333f, 0.126761f }, // 148 (0 14 1 1)
-    { 6.444445f, 2.444444f, 3.555556f, 0.321429f }, // 149 (0 14 2 0)
-    { 6.666667f, 2.666667f, 3.333333f, 0.150000f }, // 150 (0 15 0 1)
-    { 6.777778f, 2.111111f, 3.555556f, 0.600000f }, // 151 (0 15 1 0)
-    { 7.111111f, 1.777778f, 3.555556f, FLT_MAX }, // 152 (0 16 0 0)
-    { 1.000000f, 15.000000f, 0.000000f, 0.066667f }, // 153 (1 0 0 15)
-    { 1.111111f, 14.444445f, 0.222222f, 0.062500f }, // 154 (1 0 1 14)
-    { 1.222222f, 13.888889f, 0.444444f, 0.059603f }, // 155 (1 0 2 13)
-    { 1.333333f, 13.333333f, 0.666667f, 0.057692f }, // 156 (1 0 3 12)
-    { 1.444444f, 12.777778f, 0.888889f, 0.056604f }, // 157 (1 0 4 11)
-    { 1.555556f, 12.222222f, 1.111111f, 0.056250f }, // 158 (1 0 5 10)
-    { 1.666667f, 11.666667f, 1.333333f, 0.056604f }, // 159 (1 0 6 9)
-    { 1.777778f, 11.111111f, 1.555556f, 0.057692f }, // 160 (1 0 7 8)
-    { 1.888889f, 10.555555f, 1.777778f, 0.059603f }, // 161 (1 0 8 7)
-    { 2.000000f, 10.000000f, 2.000000f, 0.062500f }, // 162 (1 0 9 6)
-    { 2.111111f, 9.444445f, 2.222222f, 0.066667f }, // 163 (1 0 10 5)
-    { 2.222222f, 8.888889f, 2.444444f, 0.072581f }, // 164 (1 0 11 4)
-    { 2.333333f, 8.333333f, 2.666667f, 0.081081f }, // 165 (1 0 12 3)
-    { 2.444444f, 7.777778f, 2.888889f, 0.093750f }, // 166 (1 0 13 2)
-    { 2.555556f, 7.222222f, 3.111111f, 0.113924f }, // 167 (1 0 14 1)
-    { 2.666667f, 6.666667f, 3.333333f, 0.150000f }, // 168 (1 0 15 0)
-    { 1.444444f, 14.111111f, 0.222222f, 0.049180f }, // 169 (1 1 0 14)
-    { 1.555556f, 13.555555f, 0.444444f, 0.047872f }, // 170 (1 1 1 13)
-    { 1.666667f, 13.000000f, 0.666667f, 0.047120f }, // 171 (1 1 2 12)
-    { 1.777778f, 12.444445f, 0.888889f, 0.046875f }, // 172 (1 1 3 11)
-    { 1.888889f, 11.888889f, 1.111111f, 0.047120f }, // 173 (1 1 4 10)
-    { 2.000000f, 11.333333f, 1.333333f, 0.047872f }, // 174 (1 1 5 9)
-    { 2.111111f, 10.777778f, 1.555556f, 0.049180f }, // 175 (1 1 6 8)
-    { 2.222222f, 10.222222f, 1.777778f, 0.051136f }, // 176 (1 1 7 7)
-    { 2.333333f, 9.666667f, 2.000000f, 0.053892f }, // 177 (1 1 8 6)
-    { 2.444444f, 9.111111f, 2.222222f, 0.057692f }, // 178 (1 1 9 5)
-    { 2.555556f, 8.555555f, 2.444444f, 0.062937f }, // 179 (1 1 10 4)
-    { 2.666667f, 8.000000f, 2.666667f, 0.070313f }, // 180 (1 1 11 3)
-    { 2.777778f, 7.444445f, 2.888889f, 0.081081f }, // 181 (1 1 12 2)
-    { 2.888889f, 6.888889f, 3.111111f, 0.097826f }, // 182 (1 1 13 1)
-    { 3.000000f, 6.333333f, 3.333333f, 0.126761f }, // 183 (1 1 14 0)
-    { 1.888889f, 13.222222f, 0.444444f, 0.040359f }, // 184 (1 2 0 13)
-    { 2.000000f, 12.666667f, 0.666667f, 0.040179f }, // 185 (1 2 1 12)
-    { 2.111111f, 12.111111f, 0.888889f, 0.040359f }, // 186 (1 2 2 11)
-    { 2.222222f, 11.555555f, 1.111111f, 0.040909f }, // 187 (1 2 3 10)
-    { 2.333333f, 11.000000f, 1.333333f, 0.041860f }, // 188 (1 2 4 9)
-    { 2.444444f, 10.444445f, 1.555556f, 0.043269f }, // 189 (1 2 5 8)
-    { 2.555556f, 9.888889f, 1.777778f, 0.045226f }, // 190 (1 2 6 7)
-    { 2.666667f, 9.333333f, 2.000000f, 0.047872f }, // 191 (1 2 7 6)
-    { 2.777778f, 8.777778f, 2.222222f, 0.051429f }, // 192 (1 2 8 5)
-    { 2.888889f, 8.222222f, 2.444444f, 0.056250f }, // 193 (1 2 9 4)
-    { 3.000000f, 7.666667f, 2.666667f, 0.062937f }, // 194 (1 2 10 3)
-    { 3.111111f, 7.111111f, 2.888889f, 0.072581f }, // 195 (1 2 11 2)
-    { 3.222222f, 6.555556f, 3.111111f, 0.087379f }, // 196 (1 2 12 1)
-    { 3.333333f, 6.000000f, 3.333333f, 0.112500f }, // 197 (1 2 13 0)
-    { 2.333333f, 12.333333f, 0.666667f, 0.035294f }, // 198 (1 3 0 12)
-    { 2.444444f, 11.777778f, 0.888889f, 0.035714f }, // 199 (1 3 1 11)
-    { 2.555556f, 11.222222f, 1.111111f, 0.036437f }, // 200 (1 3 2 10)
-    { 2.666667f, 10.666667f, 1.333333f, 0.037500f }, // 201 (1 3 3 9)
-    { 2.777778f, 10.111111f, 1.555556f, 0.038961f }, // 202 (1 3 4 8)
-    { 2.888889f, 9.555555f, 1.777778f, 0.040909f }, // 203 (1 3 5 7)
-    { 3.000000f, 9.000000f, 2.000000f, 0.043478f }, // 204 (1 3 6 6)
-    { 3.111111f, 8.444445f, 2.222222f, 0.046875f }, // 205 (1 3 7 5)
-    { 3.222222f, 7.888889f, 2.444444f, 0.051429f }, // 206 (1 3 8 4)
-    { 3.333333f, 7.333333f, 2.666667f, 0.057692f }, // 207 (1 3 9 3)
-    { 3.444444f, 6.777778f, 2.888889f, 0.066667f }, // 208 (1 3 10 2)
-    { 3.555556f, 6.222222f, 3.111111f, 0.080357f }, // 209 (1 3 11 1)
-    { 3.666667f, 5.666667f, 3.333333f, 0.103448f }, // 210 (1 3 12 0)
-    { 2.777778f, 11.444445f, 0.888889f, 0.032258f }, // 211 (1 4 0 11)
-    { 2.888889f, 10.888889f, 1.111111f, 0.033088f }, // 212 (1 4 1 10)
-    { 3.000000f, 10.333333f, 1.333333f, 0.034221f }, // 213 (1 4 2 9)
-    { 3.111111f, 9.777778f, 1.555556f, 0.035714f }, // 214 (1 4 3 8)
-    { 3.222222f, 9.222222f, 1.777778f, 0.037657f }, // 215 (1 4 4 7)
-    { 3.333333f, 8.666667f, 2.000000f, 0.040179f }, // 216 (1 4 5 6)
-    { 3.444444f, 8.111111f, 2.222222f, 0.043478f }, // 217 (1 4 6 5)
-    { 3.555556f, 7.555555f, 2.444444f, 0.047872f }, // 218 (1 4 7 4)
-    { 3.666667f, 7.000000f, 2.666667f, 0.053892f }, // 219 (1 4 8 3)
-    { 3.777778f, 6.444445f, 2.888889f, 0.062500f }, // 220 (1 4 9 2)
-    { 3.888889f, 5.888889f, 3.111111f, 0.075630f }, // 221 (1 4 10 1)
-    { 4.000000f, 5.333333f, 3.333333f, 0.097826f }, // 222 (1 4 11 0)
-    { 3.222222f, 10.555555f, 1.111111f, 0.030508f }, // 223 (1 5 0 10)
-    { 3.333333f, 10.000000f, 1.333333f, 0.031690f }, // 224 (1 5 1 9)
-    { 3.444444f, 9.444445f, 1.555556f, 0.033210f }, // 225 (1 5 2 8)
-    { 3.555556f, 8.888889f, 1.777778f, 0.035156f }, // 226 (1 5 3 7)
-    { 3.666667f, 8.333333f, 2.000000f, 0.037657f }, // 227 (1 5 4 6)
-    { 3.777778f, 7.777778f, 2.222222f, 0.040909f }, // 228 (1 5 5 5)
-    { 3.888889f, 7.222222f, 2.444444f, 0.045226f }, // 229 (1 5 6 4)
-    { 4.000000f, 6.666667f, 2.666667f, 0.051136f }, // 230 (1 5 7 3)
-    { 4.111111f, 6.111111f, 2.888889f, 0.059603f }, // 231 (1 5 8 2)
-    { 4.222222f, 5.555556f, 3.111111f, 0.072581f }, // 232 (1 5 9 1)
-    { 4.333333f, 5.000000f, 3.333333f, 0.094737f }, // 233 (1 5 10 0)
-    { 3.666667f, 9.666667f, 1.333333f, 0.029703f }, // 234 (1 6 0 9)
-    { 3.777778f, 9.111111f, 1.555556f, 0.031250f }, // 235 (1 6 1 8)
-    { 3.888889f, 8.555555f, 1.777778f, 0.033210f }, // 236 (1 6 2 7)
-    { 4.000000f, 8.000000f, 2.000000f, 0.035714f }, // 237 (1 6 3 6)
-    { 4.111111f, 7.444445f, 2.222222f, 0.038961f }, // 238 (1 6 4 5)
-    { 4.222222f, 6.888889f, 2.444444f, 0.043269f }, // 239 (1 6 5 4)
-    { 4.333333f, 6.333333f, 2.666667f, 0.049180f }, // 240 (1 6 6 3)
-    { 4.444445f, 5.777778f, 2.888889f, 0.057692f }, // 241 (1 6 7 2)
-    { 4.555555f, 5.222222f, 3.111111f, 0.070866f }, // 242 (1 6 8 1)
-    { 4.666667f, 4.666667f, 3.333333f, 0.093750f }, // 243 (1 6 9 0)
-    { 4.111111f, 8.777778f, 1.555556f, 0.029703f }, // 244 (1 7 0 8)
-    { 4.222222f, 8.222222f, 1.777778f, 0.031690f }, // 245 (1 7 1 7)
-    { 4.333333f, 7.666667f, 2.000000f, 0.034221f }, // 246 (1 7 2 6)
-    { 4.444445f, 7.111111f, 2.222222f, 0.037500f }, // 247 (1 7 3 5)
-    { 4.555555f, 6.555555f, 2.444444f, 0.041860f }, // 248 (1 7 4 4)
-    { 4.666667f, 6.000000f, 2.666667f, 0.047872f }, // 249 (1 7 5 3)
-    { 4.777778f, 5.444445f, 2.888889f, 0.056604f }, // 250 (1 7 6 2)
-    { 4.888889f, 4.888889f, 3.111111f, 0.070313f }, // 251 (1 7 7 1)
-    { 5.000000f, 4.333333f, 3.333333f, 0.094737f }, // 252 (1 7 8 0)
-    { 4.555555f, 7.888889f, 1.777778f, 0.030508f }, // 253 (1 8 0 7)
-    { 4.666667f, 7.333333f, 2.000000f, 0.033088f }, // 254 (1 8 1 6)
-    { 4.777778f, 6.777778f, 2.222222f, 0.036437f }, // 255 (1 8 2 5)
-    { 4.888889f, 6.222222f, 2.444444f, 0.040909f }, // 256 (1 8 3 4)
-    { 5.000000f, 5.666667f, 2.666667f, 0.047120f }, // 257 (1 8 4 3)
-    { 5.111111f, 5.111111f, 2.888889f, 0.056250f }, // 258 (1 8 5 2)
-    { 5.222222f, 4.555555f, 3.111111f, 0.070866f }, // 259 (1 8 6 1)
-    { 5.333333f, 4.000000f, 3.333333f, 0.097826f }, // 260 (1 8 7 0)
-    { 5.000000f, 7.000000f, 2.000000f, 0.032258f }, // 261 (1 9 0 6)
-    { 5.111111f, 6.444445f, 2.222222f, 0.035714f }, // 262 (1 9 1 5)
-    { 5.222222f, 5.888889f, 2.444444f, 0.040359f }, // 263 (1 9 2 4)
-    { 5.333333f, 5.333333f, 2.666667f, 0.046875f }, // 264 (1 9 3 3)
-    { 5.444445f, 4.777778f, 2.888889f, 0.056604f }, // 265 (1 9 4 2)
-    { 5.555556f, 4.222222f, 3.111111f, 0.072581f }, // 266 (1 9 5 1)
-    { 5.666667f, 3.666667f, 3.333333f, 0.103448f }, // 267 (1 9 6 0)
-    { 5.444445f, 6.111111f, 2.222222f, 0.035294f }, // 268 (1 10 0 5)
-    { 5.555556f, 5.555555f, 2.444444f, 0.040179f }, // 269 (1 10 1 4)
-    { 5.666667f, 5.000000f, 2.666667f, 0.047120f }, // 270 (1 10 2 3)
-    { 5.777778f, 4.444445f, 2.888889f, 0.057692f }, // 271 (1 10 3 2)
-    { 5.888889f, 3.888889f, 3.111111f, 0.075630f }, // 272 (1 10 4 1)
-    { 6.000000f, 3.333333f, 3.333333f, 0.112500f }, // 273 (1 10 5 0)
-    { 5.888889f, 5.222222f, 2.444444f, 0.040359f }, // 274 (1 11 0 4)
-    { 6.000000f, 4.666667f, 2.666667f, 0.047872f }, // 275 (1 11 1 3)
-    { 6.111111f, 4.111111f, 2.888889f, 0.059603f }, // 276 (1 11 2 2)
-    { 6.222222f, 3.555556f, 3.111111f, 0.080357f }, // 277 (1 11 3 1)
-    { 6.333333f, 3.000000f, 3.333333f, 0.126761f }, // 278 (1 11 4 0)
-    { 6.333333f, 4.333333f, 2.666667f, 0.049180f }, // 279 (1 12 0 3)
-    { 6.444445f, 3.777778f, 2.888889f, 0.062500f }, // 280 (1 12 1 2)
-    { 6.555556f, 3.222222f, 3.111111f, 0.087379f }, // 281 (1 12 2 1)
-    { 6.666667f, 2.666667f, 3.333333f, 0.150000f }, // 282 (1 12 3 0)
-    { 6.777778f, 3.444444f, 2.888889f, 0.066667f }, // 283 (1 13 0 2)
-    { 6.888889f, 2.888889f, 3.111111f, 0.097826f }, // 284 (1 13 1 1)
-    { 7.000000f, 2.333333f, 3.333333f, 0.191489f }, // 285 (1 13 2 0)
-    { 7.222222f, 2.555556f, 3.111111f, 0.113924f }, // 286 (1 14 0 1)
-    { 7.333333f, 2.000000f, 3.333333f, 0.281250f }, // 287 (1 14 1 0)
-    { 7.666667f, 1.666667f, 3.333333f, 0.600000f }, // 288 (1 15 0 0)
-    { 2.000000f, 14.000000f, 0.000000f, 0.035714f }, // 289 (2 0 0 14)
-    { 2.111111f, 13.444445f, 0.222222f, 0.035294f }, // 290 (2 0 1 13)
-    { 2.222222f, 12.888889f, 0.444444f, 0.035156f }, // 291 (2 0 2 12)
-    { 2.333333f, 12.333333f, 0.666667f, 0.035294f }, // 292 (2 0 3 11)
-    { 2.444444f, 11.777778f, 0.888889f, 0.035714f }, // 293 (2 0 4 10)
-    { 2.555556f, 11.222222f, 1.111111f, 0.036437f }, // 294 (2 0 5 9)
-    { 2.666667f, 10.666667f, 1.333333f, 0.037500f }, // 295 (2 0 6 8)
-    { 2.777778f, 10.111111f, 1.555556f, 0.038961f }, // 296 (2 0 7 7)
-    { 2.888889f, 9.555555f, 1.777778f, 0.040909f }, // 297 (2 0 8 6)
-    { 3.000000f, 9.000000f, 2.000000f, 0.043478f }, // 298 (2 0 9 5)
-    { 3.111111f, 8.444445f, 2.222222f, 0.046875f }, // 299 (2 0 10 4)
-    { 3.222222f, 7.888889f, 2.444444f, 0.051429f }, // 300 (2 0 11 3)
-    { 3.333333f, 7.333333f, 2.666667f, 0.057692f }, // 301 (2 0 12 2)
-    { 3.444444f, 6.777778f, 2.888889f, 0.066667f }, // 302 (2 0 13 1)
-    { 3.555556f, 6.222222f, 3.111111f, 0.080357f }, // 303 (2 0 14 0)
-    { 2.444444f, 13.111111f, 0.222222f, 0.031250f }, // 304 (2 1 0 13)
-    { 2.555556f, 12.555555f, 0.444444f, 0.031359f }, // 305 (2 1 1 12)
-    { 2.666667f, 12.000000f, 0.666667f, 0.031690f }, // 306 (2 1 2 11)
-    { 2.777778f, 11.444445f, 0.888889f, 0.032258f }, // 307 (2 1 3 10)
-    { 2.888889f, 10.888889f, 1.111111f, 0.033088f }, // 308 (2 1 4 9)
-    { 3.000000f, 10.333333f, 1.333333f, 0.034221f }, // 309 (2 1 5 8)
-    { 3.111111f, 9.777778f, 1.555556f, 0.035714f }, // 310 (2 1 6 7)
-    { 3.222222f, 9.222222f, 1.777778f, 0.037657f }, // 311 (2 1 7 6)
-    { 3.333333f, 8.666667f, 2.000000f, 0.040179f }, // 312 (2 1 8 5)
-    { 3.444444f, 8.111111f, 2.222222f, 0.043478f }, // 313 (2 1 9 4)
-    { 3.555556f, 7.555556f, 2.444444f, 0.047872f }, // 314 (2 1 10 3)
-    { 3.666667f, 7.000000f, 2.666667f, 0.053892f }, // 315 (2 1 11 2)
-    { 3.777778f, 6.444445f, 2.888889f, 0.062500f }, // 316 (2 1 12 1)
-    { 3.888889f, 5.888889f, 3.111111f, 0.075630f }, // 317 (2 1 13 0)
-    { 2.888889f, 12.222222f, 0.444444f, 0.028481f }, // 318 (2 2 0 12)
-    { 3.000000f, 11.666667f, 0.666667f, 0.028939f }, // 319 (2 2 1 11)
-    { 3.111111f, 11.111111f, 0.888889f, 0.029605f }, // 320 (2 2 2 10)
-    { 3.222222f, 10.555555f, 1.111111f, 0.030508f }, // 321 (2 2 3 9)
-    { 3.333333f, 10.000000f, 1.333333f, 0.031690f }, // 322 (2 2 4 8)
-    { 3.444444f, 9.444445f, 1.555556f, 0.033210f }, // 323 (2 2 5 7)
-    { 3.555556f, 8.888889f, 1.777778f, 0.035156f }, // 324 (2 2 6 6)
-    { 3.666667f, 8.333333f, 2.000000f, 0.037657f }, // 325 (2 2 7 5)
-    { 3.777778f, 7.777778f, 2.222222f, 0.040909f }, // 326 (2 2 8 4)
-    { 3.888889f, 7.222222f, 2.444444f, 0.045226f }, // 327 (2 2 9 3)
-    { 4.000000f, 6.666667f, 2.666667f, 0.051136f }, // 328 (2 2 10 2)
-    { 4.111111f, 6.111111f, 2.888889f, 0.059603f }, // 329 (2 2 11 1)
-    { 4.222222f, 5.555556f, 3.111111f, 0.072581f }, // 330 (2 2 12 0)
-    { 3.333333f, 11.333333f, 0.666667f, 0.026786f }, // 331 (2 3 0 11)
-    { 3.444444f, 10.777778f, 0.888889f, 0.027523f }, // 332 (2 3 1 10)
-    { 3.555556f, 10.222222f, 1.111111f, 0.028481f }, // 333 (2 3 2 9)
-    { 3.666667f, 9.666667f, 1.333333f, 0.029703f }, // 334 (2 3 3 8)
-    { 3.777778f, 9.111111f, 1.555556f, 0.031250f }, // 335 (2 3 4 7)
-    { 3.888889f, 8.555555f, 1.777778f, 0.033210f }, // 336 (2 3 5 6)
-    { 4.000000f, 8.000000f, 2.000000f, 0.035714f }, // 337 (2 3 6 5)
-    { 4.111111f, 7.444445f, 2.222222f, 0.038961f }, // 338 (2 3 7 4)
-    { 4.222222f, 6.888889f, 2.444444f, 0.043269f }, // 339 (2 3 8 3)
-    { 4.333333f, 6.333333f, 2.666667f, 0.049180f }, // 340 (2 3 9 2)
-    { 4.444445f, 5.777778f, 2.888889f, 0.057692f }, // 341 (2 3 10 1)
-    { 4.555555f, 5.222222f, 3.111111f, 0.070866f }, // 342 (2 3 11 0)
-    { 3.777778f, 10.444445f, 0.888889f, 0.025862f }, // 343 (2 4 0 10)
-    { 3.888889f, 9.888889f, 1.111111f, 0.026866f }, // 344 (2 4 1 9)
-    { 4.000000f, 9.333333f, 1.333333f, 0.028125f }, // 345 (2 4 2 8)
-    { 4.111111f, 8.777778f, 1.555556f, 0.029703f }, // 346 (2 4 3 7)
-    { 4.222222f, 8.222222f, 1.777778f, 0.031690f }, // 347 (2 4 4 6)
-    { 4.333333f, 7.666667f, 2.000000f, 0.034221f }, // 348 (2 4 5 5)
-    { 4.444445f, 7.111111f, 2.222222f, 0.037500f }, // 349 (2 4 6 4)
-    { 4.555555f, 6.555555f, 2.444444f, 0.041860f }, // 350 (2 4 7 3)
-    { 4.666667f, 6.000000f, 2.666667f, 0.047872f }, // 351 (2 4 8 2)
-    { 4.777778f, 5.444445f, 2.888889f, 0.056604f }, // 352 (2 4 9 1)
-    { 4.888889f, 4.888889f, 3.111111f, 0.070313f }, // 353 (2 4 10 0)
-    { 4.222222f, 9.555555f, 1.111111f, 0.025568f }, // 354 (2 5 0 9)
-    { 4.333333f, 9.000000f, 1.333333f, 0.026866f }, // 355 (2 5 1 8)
-    { 4.444445f, 8.444445f, 1.555556f, 0.028481f }, // 356 (2 5 2 7)
-    { 4.555555f, 7.888889f, 1.777778f, 0.030508f }, // 357 (2 5 3 6)
-    { 4.666667f, 7.333333f, 2.000000f, 0.033088f }, // 358 (2 5 4 5)
-    { 4.777778f, 6.777778f, 2.222222f, 0.036437f }, // 359 (2 5 5 4)
-    { 4.888889f, 6.222222f, 2.444444f, 0.040909f }, // 360 (2 5 6 3)
-    { 5.000000f, 5.666667f, 2.666667f, 0.047120f }, // 361 (2 5 7 2)
-    { 5.111111f, 5.111111f, 2.888889f, 0.056250f }, // 362 (2 5 8 1)
-    { 5.222222f, 4.555556f, 3.111111f, 0.070866f }, // 363 (2 5 9 0)
-    { 4.666667f, 8.666667f, 1.333333f, 0.025862f }, // 364 (2 6 0 8)
-    { 4.777778f, 8.111111f, 1.555556f, 0.027523f }, // 365 (2 6 1 7)
-    { 4.888889f, 7.555555f, 1.777778f, 0.029605f }, // 366 (2 6 2 6)
-    { 5.000000f, 7.000000f, 2.000000f, 0.032258f }, // 367 (2 6 3 5)
-    { 5.111111f, 6.444445f, 2.222222f, 0.035714f }, // 368 (2 6 4 4)
-    { 5.222222f, 5.888889f, 2.444444f, 0.040359f }, // 369 (2 6 5 3)
-    { 5.333333f, 5.333333f, 2.666667f, 0.046875f }, // 370 (2 6 6 2)
-    { 5.444445f, 4.777778f, 2.888889f, 0.056604f }, // 371 (2 6 7 1)
-    { 5.555555f, 4.222222f, 3.111111f, 0.072581f }, // 372 (2 6 8 0)
-    { 5.111111f, 7.777778f, 1.555556f, 0.026786f }, // 373 (2 7 0 7)
-    { 5.222222f, 7.222222f, 1.777778f, 0.028939f }, // 374 (2 7 1 6)
-    { 5.333333f, 6.666667f, 2.000000f, 0.031690f }, // 375 (2 7 2 5)
-    { 5.444445f, 6.111111f, 2.222222f, 0.035294f }, // 376 (2 7 3 4)
-    { 5.555555f, 5.555555f, 2.444444f, 0.040179f }, // 377 (2 7 4 3)
-    { 5.666667f, 5.000000f, 2.666667f, 0.047120f }, // 378 (2 7 5 2)
-    { 5.777778f, 4.444445f, 2.888889f, 0.057692f }, // 379 (2 7 6 1)
-    { 5.888889f, 3.888889f, 3.111111f, 0.075630f }, // 380 (2 7 7 0)
-    { 5.555555f, 6.888889f, 1.777778f, 0.028481f }, // 381 (2 8 0 6)
-    { 5.666667f, 6.333333f, 2.000000f, 0.031359f }, // 382 (2 8 1 5)
-    { 5.777778f, 5.777778f, 2.222222f, 0.035156f }, // 383 (2 8 2 4)
-    { 5.888889f, 5.222222f, 2.444444f, 0.040359f }, // 384 (2 8 3 3)
-    { 6.000000f, 4.666667f, 2.666667f, 0.047872f }, // 385 (2 8 4 2)
-    { 6.111111f, 4.111111f, 2.888889f, 0.059603f }, // 386 (2 8 5 1)
-    { 6.222222f, 3.555556f, 3.111111f, 0.080357f }, // 387 (2 8 6 0)
-    { 6.000000f, 6.000000f, 2.000000f, 0.031250f }, // 388 (2 9 0 5)
-    { 6.111111f, 5.444445f, 2.222222f, 0.035294f }, // 389 (2 9 1 4)
-    { 6.222222f, 4.888889f, 2.444444f, 0.040909f }, // 390 (2 9 2 3)
-    { 6.333333f, 4.333333f, 2.666667f, 0.049180f }, // 391 (2 9 3 2)
-    { 6.444445f, 3.777778f, 2.888889f, 0.062500f }, // 392 (2 9 4 1)
-    { 6.555556f, 3.222222f, 3.111111f, 0.087379f }, // 393 (2 9 5 0)
-    { 6.444445f, 5.111111f, 2.222222f, 0.035714f }, // 394 (2 10 0 4)
-    { 6.555556f, 4.555555f, 2.444444f, 0.041860f }, // 395 (2 10 1 3)
-    { 6.666667f, 4.000000f, 2.666667f, 0.051136f }, // 396 (2 10 2 2)
-    { 6.777778f, 3.444444f, 2.888889f, 0.066667f }, // 397 (2 10 3 1)
-    { 6.888889f, 2.888889f, 3.111111f, 0.097826f }, // 398 (2 10 4 0)
-    { 6.888889f, 4.222222f, 2.444444f, 0.043269f }, // 399 (2 11 0 3)
-    { 7.000000f, 3.666667f, 2.666667f, 0.053892f }, // 400 (2 11 1 2)
-    { 7.111111f, 3.111111f, 2.888889f, 0.072581f }, // 401 (2 11 2 1)
-    { 7.222222f, 2.555556f, 3.111111f, 0.113924f }, // 402 (2 11 3 0)
-    { 7.333333f, 3.333333f, 2.666667f, 0.057692f }, // 403 (2 12 0 2)
-    { 7.444445f, 2.777778f, 2.888889f, 0.081081f }, // 404 (2 12 1 1)
-    { 7.555556f, 2.222222f, 3.111111f, 0.140625f }, // 405 (2 12 2 0)
-    { 7.777778f, 2.444444f, 2.888889f, 0.093750f }, // 406 (2 13 0 1)
-    { 7.888889f, 1.888889f, 3.111111f, 0.191489f }, // 407 (2 13 1 0)
-    { 8.222222f, 1.555556f, 3.111111f, 0.321429f }, // 408 (2 14 0 0)
-    { 3.000000f, 13.000000f, 0.000000f, 0.025641f }, // 409 (3 0 0 13)
-    { 3.111111f, 12.444445f, 0.222222f, 0.025862f }, // 410 (3 0 1 12)
-    { 3.222222f, 11.888889f, 0.444444f, 0.026239f }, // 411 (3 0 2 11)
-    { 3.333333f, 11.333333f, 0.666667f, 0.026786f }, // 412 (3 0 3 10)
-    { 3.444444f, 10.777778f, 0.888889f, 0.027523f }, // 413 (3 0 4 9)
-    { 3.555556f, 10.222222f, 1.111111f, 0.028481f }, // 414 (3 0 5 8)
-    { 3.666667f, 9.666667f, 1.333333f, 0.029703f }, // 415 (3 0 6 7)
-    { 3.777778f, 9.111111f, 1.555556f, 0.031250f }, // 416 (3 0 7 6)
-    { 3.888889f, 8.555555f, 1.777778f, 0.033210f }, // 417 (3 0 8 5)
-    { 4.000000f, 8.000000f, 2.000000f, 0.035714f }, // 418 (3 0 9 4)
-    { 4.111111f, 7.444445f, 2.222222f, 0.038961f }, // 419 (3 0 10 3)
-    { 4.222222f, 6.888889f, 2.444444f, 0.043269f }, // 420 (3 0 11 2)
-    { 4.333333f, 6.333333f, 2.666667f, 0.049180f }, // 421 (3 0 12 1)
-    { 4.444445f, 5.777778f, 2.888889f, 0.057692f }, // 422 (3 0 13 0)
-    { 3.444444f, 12.111111f, 0.222222f, 0.024000f }, // 423 (3 1 0 12)
-    { 3.555556f, 11.555555f, 0.444444f, 0.024457f }, // 424 (3 1 1 11)
-    { 3.666667f, 11.000000f, 0.666667f, 0.025070f }, // 425 (3 1 2 10)
-    { 3.777778f, 10.444445f, 0.888889f, 0.025862f }, // 426 (3 1 3 9)
-    { 3.888889f, 9.888889f, 1.111111f, 0.026866f }, // 427 (3 1 4 8)
-    { 4.000000f, 9.333333f, 1.333333f, 0.028125f }, // 428 (3 1 5 7)
-    { 4.111111f, 8.777778f, 1.555556f, 0.029703f }, // 429 (3 1 6 6)
-    { 4.222222f, 8.222222f, 1.777778f, 0.031690f }, // 430 (3 1 7 5)
-    { 4.333333f, 7.666667f, 2.000000f, 0.034221f }, // 431 (3 1 8 4)
-    { 4.444445f, 7.111111f, 2.222222f, 0.037500f }, // 432 (3 1 9 3)
-    { 4.555555f, 6.555556f, 2.444444f, 0.041860f }, // 433 (3 1 10 2)
-    { 4.666667f, 6.000000f, 2.666667f, 0.047872f }, // 434 (3 1 11 1)
-    { 4.777778f, 5.444445f, 2.888889f, 0.056604f }, // 435 (3 1 12 0)
-    { 3.888889f, 11.222222f, 0.444444f, 0.023018f }, // 436 (3 2 0 11)
-    { 4.000000f, 10.666667f, 0.666667f, 0.023684f }, // 437 (3 2 1 10)
-    { 4.111111f, 10.111111f, 0.888889f, 0.024523f }, // 438 (3 2 2 9)
-    { 4.222222f, 9.555555f, 1.111111f, 0.025568f }, // 439 (3 2 3 8)
-    { 4.333333f, 9.000000f, 1.333333f, 0.026866f }, // 440 (3 2 4 7)
-    { 4.444445f, 8.444445f, 1.555556f, 0.028481f }, // 441 (3 2 5 6)
-    { 4.555555f, 7.888889f, 1.777778f, 0.030508f }, // 442 (3 2 6 5)
-    { 4.666667f, 7.333333f, 2.000000f, 0.033088f }, // 443 (3 2 7 4)
-    { 4.777778f, 6.777778f, 2.222222f, 0.036437f }, // 444 (3 2 8 3)
-    { 4.888889f, 6.222222f, 2.444444f, 0.040909f }, // 445 (3 2 9 2)
-    { 5.000000f, 5.666667f, 2.666667f, 0.047120f }, // 446 (3 2 10 1)
-    { 5.111111f, 5.111111f, 2.888889f, 0.056250f }, // 447 (3 2 11 0)
-    { 4.333333f, 10.333333f, 0.666667f, 0.022556f }, // 448 (3 3 0 10)
-    { 4.444445f, 9.777778f, 0.888889f, 0.023438f }, // 449 (3 3 1 9)
-    { 4.555555f, 9.222222f, 1.111111f, 0.024523f }, // 450 (3 3 2 8)
-    { 4.666667f, 8.666667f, 1.333333f, 0.025862f }, // 451 (3 3 3 7)
-    { 4.777778f, 8.111111f, 1.555556f, 0.027523f }, // 452 (3 3 4 6)
-    { 4.888889f, 7.555555f, 1.777778f, 0.029605f }, // 453 (3 3 5 5)
-    { 5.000000f, 7.000000f, 2.000000f, 0.032258f }, // 454 (3 3 6 4)
-    { 5.111111f, 6.444445f, 2.222222f, 0.035714f }, // 455 (3 3 7 3)
-    { 5.222222f, 5.888889f, 2.444444f, 0.040359f }, // 456 (3 3 8 2)
-    { 5.333333f, 5.333333f, 2.666667f, 0.046875f }, // 457 (3 3 9 1)
-    { 5.444445f, 4.777778f, 2.888889f, 0.056604f }, // 458 (3 3 10 0)
-    { 4.777778f, 9.444445f, 0.888889f, 0.022556f }, // 459 (3 4 0 9)
-    { 4.888889f, 8.888889f, 1.111111f, 0.023684f }, // 460 (3 4 1 8)
-    { 5.000000f, 8.333333f, 1.333333f, 0.025070f }, // 461 (3 4 2 7)
-    { 5.111111f, 7.777778f, 1.555556f, 0.026786f }, // 462 (3 4 3 6)
-    { 5.222222f, 7.222222f, 1.777778f, 0.028939f }, // 463 (3 4 4 5)
-    { 5.333333f, 6.666667f, 2.000000f, 0.031690f }, // 464 (3 4 5 4)
-    { 5.444445f, 6.111111f, 2.222222f, 0.035294f }, // 465 (3 4 6 3)
-    { 5.555555f, 5.555555f, 2.444444f, 0.040179f }, // 466 (3 4 7 2)
-    { 5.666667f, 5.000000f, 2.666667f, 0.047120f }, // 467 (3 4 8 1)
-    { 5.777778f, 4.444445f, 2.888889f, 0.057692f }, // 468 (3 4 9 0)
-    { 5.222222f, 8.555555f, 1.111111f, 0.023018f }, // 469 (3 5 0 8)
-    { 5.333333f, 8.000000f, 1.333333f, 0.024457f }, // 470 (3 5 1 7)
-    { 5.444445f, 7.444445f, 1.555556f, 0.026239f }, // 471 (3 5 2 6)
-    { 5.555555f, 6.888889f, 1.777778f, 0.028481f }, // 472 (3 5 3 5)
-    { 5.666667f, 6.333333f, 2.000000f, 0.031359f }, // 473 (3 5 4 4)
-    { 5.777778f, 5.777778f, 2.222222f, 0.035156f }, // 474 (3 5 5 3)
-    { 5.888889f, 5.222222f, 2.444444f, 0.040359f }, // 475 (3 5 6 2)
-    { 6.000000f, 4.666667f, 2.666667f, 0.047872f }, // 476 (3 5 7 1)
-    { 6.111111f, 4.111111f, 2.888889f, 0.059603f }, // 477 (3 5 8 0)
-    { 5.666667f, 7.666667f, 1.333333f, 0.024000f }, // 478 (3 6 0 7)
-    { 5.777778f, 7.111111f, 1.555556f, 0.025862f }, // 479 (3 6 1 6)
-    { 5.888889f, 6.555555f, 1.777778f, 0.028213f }, // 480 (3 6 2 5)
-    { 6.000000f, 6.000000f, 2.000000f, 0.031250f }, // 481 (3 6 3 4)
-    { 6.111111f, 5.444445f, 2.222222f, 0.035294f }, // 482 (3 6 4 3)
-    { 6.222222f, 4.888889f, 2.444444f, 0.040909f }, // 483 (3 6 5 2)
-    { 6.333333f, 4.333333f, 2.666667f, 0.049180f }, // 484 (3 6 6 1)
-    { 6.444445f, 3.777778f, 2.888889f, 0.062500f }, // 485 (3 6 7 0)
-    { 6.111111f, 6.777778f, 1.555556f, 0.025641f }, // 486 (3 7 0 6)
-    { 6.222222f, 6.222222f, 1.777778f, 0.028125f }, // 487 (3 7 1 5)
-    { 6.333333f, 5.666667f, 2.000000f, 0.031359f }, // 488 (3 7 2 4)
-    { 6.444445f, 5.111111f, 2.222222f, 0.035714f }, // 489 (3 7 3 3)
-    { 6.555555f, 4.555555f, 2.444444f, 0.041860f }, // 490 (3 7 4 2)
-    { 6.666667f, 4.000000f, 2.666667f, 0.051136f }, // 491 (3 7 5 1)
-    { 6.777778f, 3.444444f, 2.888889f, 0.066667f }, // 492 (3 7 6 0)
-    { 6.555555f, 5.888889f, 1.777778f, 0.028213f }, // 493 (3 8 0 5)
-    { 6.666667f, 5.333333f, 2.000000f, 0.031690f }, // 494 (3 8 1 4)
-    { 6.777778f, 4.777778f, 2.222222f, 0.036437f }, // 495 (3 8 2 3)
-    { 6.888889f, 4.222222f, 2.444444f, 0.043269f }, // 496 (3 8 3 2)
-    { 7.000000f, 3.666667f, 2.666667f, 0.053892f }, // 497 (3 8 4 1)
-    { 7.111111f, 3.111111f, 2.888889f, 0.072581f }, // 498 (3 8 5 0)
-    { 7.000000f, 5.000000f, 2.000000f, 0.032258f }, // 499 (3 9 0 4)
-    { 7.111111f, 4.444445f, 2.222222f, 0.037500f }, // 500 (3 9 1 3)
-    { 7.222222f, 3.888889f, 2.444444f, 0.045226f }, // 501 (3 9 2 2)
-    { 7.333333f, 3.333333f, 2.666667f, 0.057692f }, // 502 (3 9 3 1)
-    { 7.444445f, 2.777778f, 2.888889f, 0.081081f }, // 503 (3 9 4 0)
-    { 7.444445f, 4.111111f, 2.222222f, 0.038961f }, // 504 (3 10 0 3)
-    { 7.555556f, 3.555556f, 2.444444f, 0.047872f }, // 505 (3 10 1 2)
-    { 7.666667f, 3.000000f, 2.666667f, 0.062937f }, // 506 (3 10 2 1)
-    { 7.777778f, 2.444444f, 2.888889f, 0.093750f }, // 507 (3 10 3 0)
-    { 7.888889f, 3.222222f, 2.444444f, 0.051429f }, // 508 (3 11 0 2)
-    { 8.000000f, 2.666667f, 2.666667f, 0.070313f }, // 509 (3 11 1 1)
-    { 8.111111f, 2.111111f, 2.888889f, 0.113924f }, // 510 (3 11 2 0)
-    { 8.333333f, 2.333333f, 2.666667f, 0.081081f }, // 511 (3 12 0 1)
-    { 8.444445f, 1.777778f, 2.888889f, 0.150000f }, // 512 (3 12 1 0)
-    { 8.777778f, 1.444444f, 2.888889f, 0.230769f }, // 513 (3 13 0 0)
-    { 4.000000f, 12.000000f, 0.000000f, 0.020833f }, // 514 (4 0 0 12)
-    { 4.111111f, 11.444445f, 0.222222f, 0.021277f }, // 515 (4 0 1 11)
-    { 4.222222f, 10.888889f, 0.444444f, 0.021845f }, // 516 (4 0 2 10)
-    { 4.333333f, 10.333333f, 0.666667f, 0.022556f }, // 517 (4 0 3 9)
-    { 4.444445f, 9.777778f, 0.888889f, 0.023438f }, // 518 (4 0 4 8)
-    { 4.555555f, 9.222222f, 1.111111f, 0.024523f }, // 519 (4 0 5 7)
-    { 4.666667f, 8.666667f, 1.333333f, 0.025862f }, // 520 (4 0 6 6)
-    { 4.777778f, 8.111111f, 1.555556f, 0.027523f }, // 521 (4 0 7 5)
-    { 4.888889f, 7.555555f, 1.777778f, 0.029605f }, // 522 (4 0 8 4)
-    { 5.000000f, 7.000000f, 2.000000f, 0.032258f }, // 523 (4 0 9 3)
-    { 5.111111f, 6.444445f, 2.222222f, 0.035714f }, // 524 (4 0 10 2)
-    { 5.222222f, 5.888889f, 2.444444f, 0.040359f }, // 525 (4 0 11 1)
-    { 5.333333f, 5.333333f, 2.666667f, 0.046875f }, // 526 (4 0 12 0)
-    { 4.444445f, 11.111111f, 0.222222f, 0.020270f }, // 527 (4 1 0 11)
-    { 4.555555f, 10.555555f, 0.444444f, 0.020882f }, // 528 (4 1 1 10)
-    { 4.666667f, 10.000000f, 0.666667f, 0.021635f }, // 529 (4 1 2 9)
-    { 4.777778f, 9.444445f, 0.888889f, 0.022556f }, // 530 (4 1 3 8)
-    { 4.888889f, 8.888889f, 1.111111f, 0.023684f }, // 531 (4 1 4 7)
-    { 5.000000f, 8.333333f, 1.333333f, 0.025070f }, // 532 (4 1 5 6)
-    { 5.111111f, 7.777778f, 1.555556f, 0.026786f }, // 533 (4 1 6 5)
-    { 5.222222f, 7.222222f, 1.777778f, 0.028939f }, // 534 (4 1 7 4)
-    { 5.333333f, 6.666667f, 2.000000f, 0.031690f }, // 535 (4 1 8 3)
-    { 5.444445f, 6.111111f, 2.222222f, 0.035294f }, // 536 (4 1 9 2)
-    { 5.555555f, 5.555556f, 2.444444f, 0.040179f }, // 537 (4 1 10 1)
-    { 5.666667f, 5.000000f, 2.666667f, 0.047120f }, // 538 (4 1 11 0)
-    { 4.888889f, 10.222222f, 0.444444f, 0.020089f }, // 539 (4 2 0 10)
-    { 5.000000f, 9.666667f, 0.666667f, 0.020882f }, // 540 (4 2 1 9)
-    { 5.111111f, 9.111111f, 0.888889f, 0.021845f }, // 541 (4 2 2 8)
-    { 5.222222f, 8.555555f, 1.111111f, 0.023018f }, // 542 (4 2 3 7)
-    { 5.333333f, 8.000000f, 1.333333f, 0.024457f }, // 543 (4 2 4 6)
-    { 5.444445f, 7.444445f, 1.555556f, 0.026239f }, // 544 (4 2 5 5)
-    { 5.555555f, 6.888889f, 1.777778f, 0.028481f }, // 545 (4 2 6 4)
-    { 5.666667f, 6.333333f, 2.000000f, 0.031359f }, // 546 (4 2 7 3)
-    { 5.777778f, 5.777778f, 2.222222f, 0.035156f }, // 547 (4 2 8 2)
-    { 5.888889f, 5.222222f, 2.444444f, 0.040359f }, // 548 (4 2 9 1)
-    { 6.000000f, 4.666667f, 2.666667f, 0.047872f }, // 549 (4 2 10 0)
-    { 5.333333f, 9.333333f, 0.666667f, 0.020270f }, // 550 (4 3 0 9)
-    { 5.444445f, 8.777778f, 0.888889f, 0.021277f }, // 551 (4 3 1 8)
-    { 5.555555f, 8.222222f, 1.111111f, 0.022500f }, // 552 (4 3 2 7)
-    { 5.666667f, 7.666667f, 1.333333f, 0.024000f }, // 553 (4 3 3 6)
-    { 5.777778f, 7.111111f, 1.555556f, 0.025862f }, // 554 (4 3 4 5)
-    { 5.888889f, 6.555555f, 1.777778f, 0.028213f }, // 555 (4 3 5 4)
-    { 6.000000f, 6.000000f, 2.000000f, 0.031250f }, // 556 (4 3 6 3)
-    { 6.111111f, 5.444445f, 2.222222f, 0.035294f }, // 557 (4 3 7 2)
-    { 6.222222f, 4.888889f, 2.444444f, 0.040909f }, // 558 (4 3 8 1)
-    { 6.333333f, 4.333333f, 2.666667f, 0.049180f }, // 559 (4 3 9 0)
-    { 5.777778f, 8.444445f, 0.888889f, 0.020833f }, // 560 (4 4 0 8)
-    { 5.888889f, 7.888889f, 1.111111f, 0.022113f }, // 561 (4 4 1 7)
-    { 6.000000f, 7.333333f, 1.333333f, 0.023684f }, // 562 (4 4 2 6)
-    { 6.111111f, 6.777778f, 1.555556f, 0.025641f }, // 563 (4 4 3 5)
-    { 6.222222f, 6.222222f, 1.777778f, 0.028125f }, // 564 (4 4 4 4)
-    { 6.333333f, 5.666667f, 2.000000f, 0.031359f }, // 565 (4 4 5 3)
-    { 6.444445f, 5.111111f, 2.222222f, 0.035714f }, // 566 (4 4 6 2)
-    { 6.555555f, 4.555555f, 2.444444f, 0.041860f }, // 567 (4 4 7 1)
-    { 6.666667f, 4.000000f, 2.666667f, 0.051136f }, // 568 (4 4 8 0)
-    { 6.222222f, 7.555555f, 1.111111f, 0.021845f }, // 569 (4 5 0 7)
-    { 6.333333f, 7.000000f, 1.333333f, 0.023499f }, // 570 (4 5 1 6)
-    { 6.444445f, 6.444445f, 1.555556f, 0.025568f }, // 571 (4 5 2 5)
-    { 6.555555f, 5.888889f, 1.777778f, 0.028213f }, // 572 (4 5 3 4)
-    { 6.666667f, 5.333333f, 2.000000f, 0.031690f }, // 573 (4 5 4 3)
-    { 6.777778f, 4.777778f, 2.222222f, 0.036437f }, // 574 (4 5 5 2)
-    { 6.888889f, 4.222222f, 2.444444f, 0.043269f }, // 575 (4 5 6 1)
-    { 7.000000f, 3.666667f, 2.666667f, 0.053892f }, // 576 (4 5 7 0)
-    { 6.666667f, 6.666667f, 1.333333f, 0.023438f }, // 577 (4 6 0 6)
-    { 6.777778f, 6.111111f, 1.555556f, 0.025641f }, // 578 (4 6 1 5)
-    { 6.888889f, 5.555555f, 1.777778f, 0.028481f }, // 579 (4 6 2 4)
-    { 7.000000f, 5.000000f, 2.000000f, 0.032258f }, // 580 (4 6 3 3)
-    { 7.111111f, 4.444445f, 2.222222f, 0.037500f }, // 581 (4 6 4 2)
-    { 7.222222f, 3.888889f, 2.444444f, 0.045226f }, // 582 (4 6 5 1)
-    { 7.333333f, 3.333333f, 2.666667f, 0.057692f }, // 583 (4 6 6 0)
-    { 7.111111f, 5.777778f, 1.555556f, 0.025862f }, // 584 (4 7 0 5)
-    { 7.222222f, 5.222222f, 1.777778f, 0.028939f }, // 585 (4 7 1 4)
-    { 7.333333f, 4.666667f, 2.000000f, 0.033088f }, // 586 (4 7 2 3)
-    { 7.444445f, 4.111111f, 2.222222f, 0.038961f }, // 587 (4 7 3 2)
-    { 7.555555f, 3.555556f, 2.444444f, 0.047872f }, // 588 (4 7 4 1)
-    { 7.666667f, 3.000000f, 2.666667f, 0.062937f }, // 589 (4 7 5 0)
-    { 7.555555f, 4.888889f, 1.777778f, 0.029605f }, // 590 (4 8 0 4)
-    { 7.666667f, 4.333333f, 2.000000f, 0.034221f }, // 591 (4 8 1 3)
-    { 7.777778f, 3.777778f, 2.222222f, 0.040909f }, // 592 (4 8 2 2)
-    { 7.888889f, 3.222222f, 2.444444f, 0.051429f }, // 593 (4 8 3 1)
-    { 8.000000f, 2.666667f, 2.666667f, 0.070313f }, // 594 (4 8 4 0)
-    { 8.000000f, 4.000000f, 2.000000f, 0.035714f }, // 595 (4 9 0 3)
-    { 8.111111f, 3.444444f, 2.222222f, 0.043478f }, // 596 (4 9 1 2)
-    { 8.222222f, 2.888889f, 2.444444f, 0.056250f }, // 597 (4 9 2 1)
-    { 8.333333f, 2.333333f, 2.666667f, 0.081081f }, // 598 (4 9 3 0)
-    { 8.444445f, 3.111111f, 2.222222f, 0.046875f }, // 599 (4 10 0 2)
-    { 8.555555f, 2.555556f, 2.444444f, 0.062937f }, // 600 (4 10 1 1)
-    { 8.666667f, 2.000000f, 2.666667f, 0.097826f }, // 601 (4 10 2 0)
-    { 8.888889f, 2.222222f, 2.444444f, 0.072581f }, // 602 (4 11 0 1)
-    { 9.000000f, 1.666667f, 2.666667f, 0.126761f }, // 603 (4 11 1 0)
-    { 9.333333f, 1.333333f, 2.666667f, 0.187500f }, // 604 (4 12 0 0)
-    { 5.000000f, 11.000000f, 0.000000f, 0.018182f }, // 605 (5 0 0 11)
-    { 5.111111f, 10.444445f, 0.222222f, 0.018750f }, // 606 (5 0 1 10)
-    { 5.222222f, 9.888889f, 0.444444f, 0.019438f }, // 607 (5 0 2 9)
-    { 5.333333f, 9.333333f, 0.666667f, 0.020270f }, // 608 (5 0 3 8)
-    { 5.444445f, 8.777778f, 0.888889f, 0.021277f }, // 609 (5 0 4 7)
-    { 5.555555f, 8.222222f, 1.111111f, 0.022500f }, // 610 (5 0 5 6)
-    { 5.666667f, 7.666667f, 1.333333f, 0.024000f }, // 611 (5 0 6 5)
-    { 5.777778f, 7.111111f, 1.555556f, 0.025862f }, // 612 (5 0 7 4)
-    { 5.888889f, 6.555555f, 1.777778f, 0.028213f }, // 613 (5 0 8 3)
-    { 6.000000f, 6.000000f, 2.000000f, 0.031250f }, // 614 (5 0 9 2)
-    { 6.111111f, 5.444445f, 2.222222f, 0.035294f }, // 615 (5 0 10 1)
-    { 6.222222f, 4.888889f, 2.444444f, 0.040909f }, // 616 (5 0 11 0)
-    { 5.444445f, 10.111111f, 0.222222f, 0.018182f }, // 617 (5 1 0 10)
-    { 5.555555f, 9.555555f, 0.444444f, 0.018908f }, // 618 (5 1 1 9)
-    { 5.666667f, 9.000000f, 0.666667f, 0.019780f }, // 619 (5 1 2 8)
-    { 5.777778f, 8.444445f, 0.888889f, 0.020833f }, // 620 (5 1 3 7)
-    { 5.888889f, 7.888889f, 1.111111f, 0.022113f }, // 621 (5 1 4 6)
-    { 6.000000f, 7.333333f, 1.333333f, 0.023684f }, // 622 (5 1 5 5)
-    { 6.111111f, 6.777778f, 1.555556f, 0.025641f }, // 623 (5 1 6 4)
-    { 6.222222f, 6.222222f, 1.777778f, 0.028125f }, // 624 (5 1 7 3)
-    { 6.333333f, 5.666667f, 2.000000f, 0.031359f }, // 625 (5 1 8 2)
-    { 6.444445f, 5.111111f, 2.222222f, 0.035714f }, // 626 (5 1 9 1)
-    { 6.555555f, 4.555556f, 2.444444f, 0.041860f }, // 627 (5 1 10 0)
-    { 5.888889f, 9.222222f, 0.444444f, 0.018480f }, // 628 (5 2 0 9)
-    { 6.000000f, 8.666667f, 0.666667f, 0.019397f }, // 629 (5 2 1 8)
-    { 6.111111f, 8.111111f, 0.888889f, 0.020501f }, // 630 (5 2 2 7)
-    { 6.222222f, 7.555555f, 1.111111f, 0.021845f }, // 631 (5 2 3 6)
-    { 6.333333f, 7.000000f, 1.333333f, 0.023499f }, // 632 (5 2 4 5)
-    { 6.444445f, 6.444445f, 1.555556f, 0.025568f }, // 633 (5 2 5 4)
-    { 6.555555f, 5.888889f, 1.777778f, 0.028213f }, // 634 (5 2 6 3)
-    { 6.666667f, 5.333333f, 2.000000f, 0.031690f }, // 635 (5 2 7 2)
-    { 6.777778f, 4.777778f, 2.222222f, 0.036437f }, // 636 (5 2 8 1)
-    { 6.888889f, 4.222222f, 2.444444f, 0.043269f }, // 637 (5 2 9 0)
-    { 6.333333f, 8.333333f, 0.666667f, 0.019108f }, // 638 (5 3 0 8)
-    { 6.444445f, 7.777778f, 0.888889f, 0.020270f }, // 639 (5 3 1 7)
-    { 6.555555f, 7.222222f, 1.111111f, 0.021687f }, // 640 (5 3 2 6)
-    { 6.666667f, 6.666667f, 1.333333f, 0.023438f }, // 641 (5 3 3 5)
-    { 6.777778f, 6.111111f, 1.555556f, 0.025641f }, // 642 (5 3 4 4)
-    { 6.888889f, 5.555555f, 1.777778f, 0.028481f }, // 643 (5 3 5 3)
-    { 7.000000f, 5.000000f, 2.000000f, 0.032258f }, // 644 (5 3 6 2)
-    { 7.111111f, 4.444445f, 2.222222f, 0.037500f }, // 645 (5 3 7 1)
-    { 7.222222f, 3.888889f, 2.444444f, 0.045226f }, // 646 (5 3 8 0)
-    { 6.777778f, 7.444445f, 0.888889f, 0.020134f }, // 647 (5 4 0 7)
-    { 6.888889f, 6.888889f, 1.111111f, 0.021635f }, // 648 (5 4 1 6)
-    { 7.000000f, 6.333333f, 1.333333f, 0.023499f }, // 649 (5 4 2 5)
-    { 7.111111f, 5.777778f, 1.555556f, 0.025862f }, // 650 (5 4 3 4)
-    { 7.222222f, 5.222222f, 1.777778f, 0.028939f }, // 651 (5 4 4 3)
-    { 7.333333f, 4.666667f, 2.000000f, 0.033088f }, // 652 (5 4 5 2)
-    { 7.444445f, 4.111111f, 2.222222f, 0.038961f }, // 653 (5 4 6 1)
-    { 7.555555f, 3.555556f, 2.444444f, 0.047872f }, // 654 (5 4 7 0)
-    { 7.222222f, 6.555555f, 1.111111f, 0.021687f }, // 655 (5 5 0 6)
-    { 7.333333f, 6.000000f, 1.333333f, 0.023684f }, // 656 (5 5 1 5)
-    { 7.444445f, 5.444445f, 1.555556f, 0.026239f }, // 657 (5 5 2 4)
-    { 7.555555f, 4.888889f, 1.777778f, 0.029605f }, // 658 (5 5 3 3)
-    { 7.666667f, 4.333333f, 2.000000f, 0.034221f }, // 659 (5 5 4 2)
-    { 7.777778f, 3.777778f, 2.222222f, 0.040909f }, // 660 (5 5 5 1)
-    { 7.888889f, 3.222222f, 2.444444f, 0.051429f }, // 661 (5 5 6 0)
-    { 7.666667f, 5.666667f, 1.333333f, 0.024000f }, // 662 (5 6 0 5)
-    { 7.777778f, 5.111111f, 1.555556f, 0.026786f }, // 663 (5 6 1 4)
-    { 7.888889f, 4.555555f, 1.777778f, 0.030508f }, // 664 (5 6 2 3)
-    { 8.000000f, 4.000000f, 2.000000f, 0.035714f }, // 665 (5 6 3 2)
-    { 8.111111f, 3.444444f, 2.222222f, 0.043478f }, // 666 (5 6 4 1)
-    { 8.222222f, 2.888889f, 2.444444f, 0.056250f }, // 667 (5 6 5 0)
-    { 8.111111f, 4.777778f, 1.555556f, 0.027523f }, // 668 (5 7 0 4)
-    { 8.222222f, 4.222222f, 1.777778f, 0.031690f }, // 669 (5 7 1 3)
-    { 8.333333f, 3.666667f, 2.000000f, 0.037657f }, // 670 (5 7 2 2)
-    { 8.444445f, 3.111111f, 2.222222f, 0.046875f }, // 671 (5 7 3 1)
-    { 8.555555f, 2.555556f, 2.444444f, 0.062937f }, // 672 (5 7 4 0)
-    { 8.555555f, 3.888889f, 1.777778f, 0.033210f }, // 673 (5 8 0 3)
-    { 8.666667f, 3.333333f, 2.000000f, 0.040179f }, // 674 (5 8 1 2)
-    { 8.777778f, 2.777778f, 2.222222f, 0.051429f }, // 675 (5 8 2 1)
-    { 8.888889f, 2.222222f, 2.444444f, 0.072581f }, // 676 (5 8 3 0)
-    { 9.000000f, 3.000000f, 2.000000f, 0.043478f }, // 677 (5 9 0 2)
-    { 9.111111f, 2.444444f, 2.222222f, 0.057692f }, // 678 (5 9 1 1)
-    { 9.222222f, 1.888889f, 2.444444f, 0.087379f }, // 679 (5 9 2 0)
-    { 9.444445f, 2.111111f, 2.222222f, 0.066667f }, // 680 (5 10 0 1)
-    { 9.555555f, 1.555556f, 2.444444f, 0.112500f }, // 681 (5 10 1 0)
-    { 9.888889f, 1.222222f, 2.444444f, 0.163636f }, // 682 (5 11 0 0)
-    { 6.000000f, 10.000000f, 0.000000f, 0.016667f }, // 683 (6 0 0 10)
-    { 6.111111f, 9.444445f, 0.222222f, 0.017341f }, // 684 (6 0 1 9)
-    { 6.222222f, 8.888889f, 0.444444f, 0.018145f }, // 685 (6 0 2 8)
-    { 6.333333f, 8.333333f, 0.666667f, 0.019108f }, // 686 (6 0 3 7)
-    { 6.444445f, 7.777778f, 0.888889f, 0.020270f }, // 687 (6 0 4 6)
-    { 6.555555f, 7.222222f, 1.111111f, 0.021687f }, // 688 (6 0 5 5)
-    { 6.666667f, 6.666667f, 1.333333f, 0.023438f }, // 689 (6 0 6 4)
-    { 6.777778f, 6.111111f, 1.555556f, 0.025641f }, // 690 (6 0 7 3)
-    { 6.888889f, 5.555555f, 1.777778f, 0.028481f }, // 691 (6 0 8 2)
-    { 7.000000f, 5.000000f, 2.000000f, 0.032258f }, // 692 (6 0 9 1)
-    { 7.111111f, 4.444445f, 2.222222f, 0.037500f }, // 693 (6 0 10 0)
-    { 6.444445f, 9.111111f, 0.222222f, 0.017045f }, // 694 (6 1 0 9)
-    { 6.555555f, 8.555555f, 0.444444f, 0.017893f }, // 695 (6 1 1 8)
-    { 6.666667f, 8.000000f, 0.666667f, 0.018908f }, // 696 (6 1 2 7)
-    { 6.777778f, 7.444445f, 0.888889f, 0.020134f }, // 697 (6 1 3 6)
-    { 6.888889f, 6.888889f, 1.111111f, 0.021635f }, // 698 (6 1 4 5)
-    { 7.000000f, 6.333333f, 1.333333f, 0.023499f }, // 699 (6 1 5 4)
-    { 7.111111f, 5.777778f, 1.555556f, 0.025862f }, // 700 (6 1 6 3)
-    { 7.222222f, 5.222222f, 1.777778f, 0.028939f }, // 701 (6 1 7 2)
-    { 7.333333f, 4.666667f, 2.000000f, 0.033088f }, // 702 (6 1 8 1)
-    { 7.444445f, 4.111111f, 2.222222f, 0.038961f }, // 703 (6 1 9 0)
-    { 6.888889f, 8.222222f, 0.444444f, 0.017717f }, // 704 (6 2 0 8)
-    { 7.000000f, 7.666667f, 0.666667f, 0.018789f }, // 705 (6 2 1 7)
-    { 7.111111f, 7.111111f, 0.888889f, 0.020089f }, // 706 (6 2 2 6)
-    { 7.222222f, 6.555555f, 1.111111f, 0.021687f }, // 707 (6 2 3 5)
-    { 7.333333f, 6.000000f, 1.333333f, 0.023684f }, // 708 (6 2 4 4)
-    { 7.444445f, 5.444445f, 1.555556f, 0.026239f }, // 709 (6 2 5 3)
-    { 7.555555f, 4.888889f, 1.777778f, 0.029605f }, // 710 (6 2 6 2)
-    { 7.666667f, 4.333333f, 2.000000f, 0.034221f }, // 711 (6 2 7 1)
-    { 7.777778f, 3.777778f, 2.222222f, 0.040909f }, // 712 (6 2 8 0)
-    { 7.333333f, 7.333333f, 0.666667f, 0.018750f }, // 713 (6 3 0 7)
-    { 7.444445f, 6.777778f, 0.888889f, 0.020134f }, // 714 (6 3 1 6)
-    { 7.555555f, 6.222222f, 1.111111f, 0.021845f }, // 715 (6 3 2 5)
-    { 7.666667f, 5.666667f, 1.333333f, 0.024000f }, // 716 (6 3 3 4)
-    { 7.777778f, 5.111111f, 1.555556f, 0.026786f }, // 717 (6 3 4 3)
-    { 7.888889f, 4.555555f, 1.777778f, 0.030508f }, // 718 (6 3 5 2)
-    { 8.000000f, 4.000000f, 2.000000f, 0.035714f }, // 719 (6 3 6 1)
-    { 8.111111f, 3.444444f, 2.222222f, 0.043478f }, // 720 (6 3 7 0)
-    { 7.777778f, 6.444445f, 0.888889f, 0.020270f }, // 721 (6 4 0 6)
-    { 7.888889f, 5.888889f, 1.111111f, 0.022113f }, // 722 (6 4 1 5)
-    { 8.000000f, 5.333333f, 1.333333f, 0.024457f }, // 723 (6 4 2 4)
-    { 8.111111f, 4.777778f, 1.555556f, 0.027523f }, // 724 (6 4 3 3)
-    { 8.222222f, 4.222222f, 1.777778f, 0.031690f }, // 725 (6 4 4 2)
-    { 8.333333f, 3.666667f, 2.000000f, 0.037657f }, // 726 (6 4 5 1)
-    { 8.444445f, 3.111111f, 2.222222f, 0.046875f }, // 727 (6 4 6 0)
-    { 8.222222f, 5.555555f, 1.111111f, 0.022500f }, // 728 (6 5 0 5)
-    { 8.333333f, 5.000000f, 1.333333f, 0.025070f }, // 729 (6 5 1 4)
-    { 8.444445f, 4.444445f, 1.555556f, 0.028481f }, // 730 (6 5 2 3)
-    { 8.555555f, 3.888889f, 1.777778f, 0.033210f }, // 731 (6 5 3 2)
-    { 8.666667f, 3.333333f, 2.000000f, 0.040179f }, // 732 (6 5 4 1)
-    { 8.777778f, 2.777778f, 2.222222f, 0.051429f }, // 733 (6 5 5 0)
-    { 8.666667f, 4.666667f, 1.333333f, 0.025862f }, // 734 (6 6 0 4)
-    { 8.777778f, 4.111111f, 1.555556f, 0.029703f }, // 735 (6 6 1 3)
-    { 8.888889f, 3.555556f, 1.777778f, 0.035156f }, // 736 (6 6 2 2)
-    { 9.000000f, 3.000000f, 2.000000f, 0.043478f }, // 737 (6 6 3 1)
-    { 9.111111f, 2.444444f, 2.222222f, 0.057692f }, // 738 (6 6 4 0)
-    { 9.111111f, 3.777778f, 1.555556f, 0.031250f }, // 739 (6 7 0 3)
-    { 9.222222f, 3.222222f, 1.777778f, 0.037657f }, // 740 (6 7 1 2)
-    { 9.333333f, 2.666667f, 2.000000f, 0.047872f }, // 741 (6 7 2 1)
-    { 9.444445f, 2.111111f, 2.222222f, 0.066667f }, // 742 (6 7 3 0)
-    { 9.555555f, 2.888889f, 1.777778f, 0.040909f }, // 743 (6 8 0 2)
-    { 9.666667f, 2.333333f, 2.000000f, 0.053892f }, // 744 (6 8 1 1)
-    { 9.777778f, 1.777778f, 2.222222f, 0.080357f }, // 745 (6 8 2 0)
-    { 10.000000f, 2.000000f, 2.000000f, 0.062500f }, // 746 (6 9 0 1)
-    { 10.111111f, 1.444444f, 2.222222f, 0.103448f }, // 747 (6 9 1 0)
-    { 10.444445f, 1.111111f, 2.222222f, 0.150000f }, // 748 (6 10 0 0)
-    { 7.000000f, 9.000000f, 0.000000f, 0.015873f }, // 749 (7 0 0 9)
-    { 7.111111f, 8.444445f, 0.222222f, 0.016667f }, // 750 (7 0 1 8)
-    { 7.222222f, 7.888889f, 0.444444f, 0.017613f }, // 751 (7 0 2 7)
-    { 7.333333f, 7.333333f, 0.666667f, 0.018750f }, // 752 (7 0 3 6)
-    { 7.444445f, 6.777778f, 0.888889f, 0.020134f }, // 753 (7 0 4 5)
-    { 7.555555f, 6.222222f, 1.111111f, 0.021845f }, // 754 (7 0 5 4)
-    { 7.666667f, 5.666667f, 1.333333f, 0.024000f }, // 755 (7 0 6 3)
-    { 7.777778f, 5.111111f, 1.555556f, 0.026786f }, // 756 (7 0 7 2)
-    { 7.888889f, 4.555555f, 1.777778f, 0.030508f }, // 757 (7 0 8 1)
-    { 8.000000f, 4.000000f, 2.000000f, 0.035714f }, // 758 (7 0 9 0)
-    { 7.444445f, 8.111111f, 0.222222f, 0.016575f }, // 759 (7 1 0 8)
-    { 7.555555f, 7.555555f, 0.444444f, 0.017578f }, // 760 (7 1 1 7)
-    { 7.666667f, 7.000000f, 0.666667f, 0.018789f }, // 761 (7 1 2 6)
-    { 7.777778f, 6.444445f, 0.888889f, 0.020270f }, // 762 (7 1 3 5)
-    { 7.888889f, 5.888889f, 1.111111f, 0.022113f }, // 763 (7 1 4 4)
-    { 8.000000f, 5.333333f, 1.333333f, 0.024457f }, // 764 (7 1 5 3)
-    { 8.111111f, 4.777778f, 1.555556f, 0.027523f }, // 765 (7 1 6 2)
-    { 8.222222f, 4.222222f, 1.777778f, 0.031690f }, // 766 (7 1 7 1)
-    { 8.333333f, 3.666667f, 2.000000f, 0.037657f }, // 767 (7 1 8 0)
-    { 7.888889f, 7.222222f, 0.444444f, 0.017613f }, // 768 (7 2 0 7)
-    { 8.000000f, 6.666667f, 0.666667f, 0.018908f }, // 769 (7 2 1 6)
-    { 8.111111f, 6.111111f, 0.888889f, 0.020501f }, // 770 (7 2 2 5)
-    { 8.222222f, 5.555555f, 1.111111f, 0.022500f }, // 771 (7 2 3 4)
-    { 8.333333f, 5.000000f, 1.333333f, 0.025070f }, // 772 (7 2 4 3)
-    { 8.444445f, 4.444445f, 1.555556f, 0.028481f }, // 773 (7 2 5 2)
-    { 8.555555f, 3.888889f, 1.777778f, 0.033210f }, // 774 (7 2 6 1)
-    { 8.666667f, 3.333333f, 2.000000f, 0.040179f }, // 775 (7 2 7 0)
-    { 8.333333f, 6.333333f, 0.666667f, 0.019108f }, // 776 (7 3 0 6)
-    { 8.444445f, 5.777778f, 0.888889f, 0.020833f }, // 777 (7 3 1 5)
-    { 8.555555f, 5.222222f, 1.111111f, 0.023018f }, // 778 (7 3 2 4)
-    { 8.666667f, 4.666667f, 1.333333f, 0.025862f }, // 779 (7 3 3 3)
-    { 8.777778f, 4.111111f, 1.555556f, 0.029703f }, // 780 (7 3 4 2)
-    { 8.888889f, 3.555556f, 1.777778f, 0.035156f }, // 781 (7 3 5 1)
-    { 9.000000f, 3.000000f, 2.000000f, 0.043478f }, // 782 (7 3 6 0)
-    { 8.777778f, 5.444445f, 0.888889f, 0.021277f }, // 783 (7 4 0 5)
-    { 8.888889f, 4.888889f, 1.111111f, 0.023684f }, // 784 (7 4 1 4)
-    { 9.000000f, 4.333333f, 1.333333f, 0.026866f }, // 785 (7 4 2 3)
-    { 9.111111f, 3.777778f, 1.555556f, 0.031250f }, // 786 (7 4 3 2)
-    { 9.222222f, 3.222222f, 1.777778f, 0.037657f }, // 787 (7 4 4 1)
-    { 9.333333f, 2.666667f, 2.000000f, 0.047872f }, // 788 (7 4 5 0)
-    { 9.222222f, 4.555555f, 1.111111f, 0.024523f }, // 789 (7 5 0 4)
-    { 9.333333f, 4.000000f, 1.333333f, 0.028125f }, // 790 (7 5 1 3)
-    { 9.444445f, 3.444444f, 1.555556f, 0.033210f }, // 791 (7 5 2 2)
-    { 9.555555f, 2.888889f, 1.777778f, 0.040909f }, // 792 (7 5 3 1)
-    { 9.666667f, 2.333333f, 2.000000f, 0.053892f }, // 793 (7 5 4 0)
-    { 9.666667f, 3.666667f, 1.333333f, 0.029703f }, // 794 (7 6 0 3)
-    { 9.777778f, 3.111111f, 1.555556f, 0.035714f }, // 795 (7 6 1 2)
-    { 9.888889f, 2.555556f, 1.777778f, 0.045226f }, // 796 (7 6 2 1)
-    { 10.000000f, 2.000000f, 2.000000f, 0.062500f }, // 797 (7 6 3 0)
-    { 10.111111f, 2.777778f, 1.555556f, 0.038961f }, // 798 (7 7 0 2)
-    { 10.222222f, 2.222222f, 1.777778f, 0.051136f }, // 799 (7 7 1 1)
-    { 10.333333f, 1.666667f, 2.000000f, 0.075630f }, // 800 (7 7 2 0)
-    { 10.555555f, 1.888889f, 1.777778f, 0.059603f }, // 801 (7 8 0 1)
-    { 10.666667f, 1.333333f, 2.000000f, 0.097826f }, // 802 (7 8 1 0)
-    { 11.000000f, 1.000000f, 2.000000f, 0.142857f }, // 803 (7 9 0 0)
-    { 8.000000f, 8.000000f, 0.000000f, 0.015625f }, // 804 (8 0 0 8)
-    { 8.111111f, 7.444445f, 0.222222f, 0.016575f }, // 805 (8 0 1 7)
-    { 8.222222f, 6.888889f, 0.444444f, 0.017717f }, // 806 (8 0 2 6)
-    { 8.333333f, 6.333333f, 0.666667f, 0.019108f }, // 807 (8 0 3 5)
-    { 8.444445f, 5.777778f, 0.888889f, 0.020833f }, // 808 (8 0 4 4)
-    { 8.555555f, 5.222222f, 1.111111f, 0.023018f }, // 809 (8 0 5 3)
-    { 8.666667f, 4.666667f, 1.333333f, 0.025862f }, // 810 (8 0 6 2)
-    { 8.777778f, 4.111111f, 1.555556f, 0.029703f }, // 811 (8 0 7 1)
-    { 8.888889f, 3.555556f, 1.777778f, 0.035156f }, // 812 (8 0 8 0)
-    { 8.444445f, 7.111111f, 0.222222f, 0.016667f }, // 813 (8 1 0 7)
-    { 8.555555f, 6.555555f, 0.444444f, 0.017893f }, // 814 (8 1 1 6)
-    { 8.666667f, 6.000000f, 0.666667f, 0.019397f }, // 815 (8 1 2 5)
-    { 8.777778f, 5.444445f, 0.888889f, 0.021277f }, // 816 (8 1 3 4)
-    { 8.888889f, 4.888889f, 1.111111f, 0.023684f }, // 817 (8 1 4 3)
-    { 9.000000f, 4.333333f, 1.333333f, 0.026866f }, // 818 (8 1 5 2)
-    { 9.111111f, 3.777778f, 1.555556f, 0.031250f }, // 819 (8 1 6 1)
-    { 9.222222f, 3.222222f, 1.777778f, 0.037657f }, // 820 (8 1 7 0)
-    { 8.888889f, 6.222222f, 0.444444f, 0.018145f }, // 821 (8 2 0 6)
-    { 9.000000f, 5.666667f, 0.666667f, 0.019780f }, // 822 (8 2 1 5)
-    { 9.111111f, 5.111111f, 0.888889f, 0.021845f }, // 823 (8 2 2 4)
-    { 9.222222f, 4.555555f, 1.111111f, 0.024523f }, // 824 (8 2 3 3)
-    { 9.333333f, 4.000000f, 1.333333f, 0.028125f }, // 825 (8 2 4 2)
-    { 9.444445f, 3.444444f, 1.555556f, 0.033210f }, // 826 (8 2 5 1)
-    { 9.555555f, 2.888889f, 1.777778f, 0.040909f }, // 827 (8 2 6 0)
-    { 9.333333f, 5.333333f, 0.666667f, 0.020270f }, // 828 (8 3 0 5)
-    { 9.444445f, 4.777778f, 0.888889f, 0.022556f }, // 829 (8 3 1 4)
-    { 9.555555f, 4.222222f, 1.111111f, 0.025568f }, // 830 (8 3 2 3)
-    { 9.666667f, 3.666667f, 1.333333f, 0.029703f }, // 831 (8 3 3 2)
-    { 9.777778f, 3.111111f, 1.555556f, 0.035714f }, // 832 (8 3 4 1)
-    { 9.888889f, 2.555556f, 1.777778f, 0.045226f }, // 833 (8 3 5 0)
-    { 9.777778f, 4.444445f, 0.888889f, 0.023438f }, // 834 (8 4 0 4)
-    { 9.888889f, 3.888889f, 1.111111f, 0.026866f }, // 835 (8 4 1 3)
-    { 10.000000f, 3.333333f, 1.333333f, 0.031690f }, // 836 (8 4 2 2)
-    { 10.111111f, 2.777778f, 1.555556f, 0.038961f }, // 837 (8 4 3 1)
-    { 10.222222f, 2.222222f, 1.777778f, 0.051136f }, // 838 (8 4 4 0)
-    { 10.222222f, 3.555556f, 1.111111f, 0.028481f }, // 839 (8 5 0 3)
-    { 10.333333f, 3.000000f, 1.333333f, 0.034221f }, // 840 (8 5 1 2)
-    { 10.444445f, 2.444444f, 1.555556f, 0.043269f }, // 841 (8 5 2 1)
-    { 10.555555f, 1.888889f, 1.777778f, 0.059603f }, // 842 (8 5 3 0)
-    { 10.666667f, 2.666667f, 1.333333f, 0.037500f }, // 843 (8 6 0 2)
-    { 10.777778f, 2.111111f, 1.555556f, 0.049180f }, // 844 (8 6 1 1)
-    { 10.888889f, 1.555556f, 1.777778f, 0.072581f }, // 845 (8 6 2 0)
-    { 11.111111f, 1.777778f, 1.555556f, 0.057692f }, // 846 (8 7 0 1)
-    { 11.222222f, 1.222222f, 1.777778f, 0.094737f }, // 847 (8 7 1 0)
-    { 11.555555f, 0.888889f, 1.777778f, 0.140625f }, // 848 (8 8 0 0)
-    { 9.000000f, 7.000000f, 0.000000f, 0.015873f }, // 849 (9 0 0 7)
-    { 9.111111f, 6.444445f, 0.222222f, 0.017045f }, // 850 (9 0 1 6)
-    { 9.222222f, 5.888889f, 0.444444f, 0.018480f }, // 851 (9 0 2 5)
-    { 9.333333f, 5.333333f, 0.666667f, 0.020270f }, // 852 (9 0 3 4)
-    { 9.444445f, 4.777778f, 0.888889f, 0.022556f }, // 853 (9 0 4 3)
-    { 9.555555f, 4.222222f, 1.111111f, 0.025568f }, // 854 (9 0 5 2)
-    { 9.666667f, 3.666667f, 1.333333f, 0.029703f }, // 855 (9 0 6 1)
-    { 9.777778f, 3.111111f, 1.555556f, 0.035714f }, // 856 (9 0 7 0)
-    { 9.444445f, 6.111111f, 0.222222f, 0.017341f }, // 857 (9 1 0 6)
-    { 9.555555f, 5.555555f, 0.444444f, 0.018908f }, // 858 (9 1 1 5)
-    { 9.666667f, 5.000000f, 0.666667f, 0.020882f }, // 859 (9 1 2 4)
-    { 9.777778f, 4.444445f, 0.888889f, 0.023438f }, // 860 (9 1 3 3)
-    { 9.888889f, 3.888889f, 1.111111f, 0.026866f }, // 861 (9 1 4 2)
-    { 10.000000f, 3.333333f, 1.333333f, 0.031690f }, // 862 (9 1 5 1)
-    { 10.111111f, 2.777778f, 1.555556f, 0.038961f }, // 863 (9 1 6 0)
-    { 9.888889f, 5.222222f, 0.444444f, 0.019438f }, // 864 (9 2 0 5)
-    { 10.000000f, 4.666667f, 0.666667f, 0.021635f }, // 865 (9 2 1 4)
-    { 10.111111f, 4.111111f, 0.888889f, 0.024523f }, // 866 (9 2 2 3)
-    { 10.222222f, 3.555556f, 1.111111f, 0.028481f }, // 867 (9 2 3 2)
-    { 10.333333f, 3.000000f, 1.333333f, 0.034221f }, // 868 (9 2 4 1)
-    { 10.444445f, 2.444444f, 1.555556f, 0.043269f }, // 869 (9 2 5 0)
-    { 10.333333f, 4.333333f, 0.666667f, 0.022556f }, // 870 (9 3 0 4)
-    { 10.444445f, 3.777778f, 0.888889f, 0.025862f }, // 871 (9 3 1 3)
-    { 10.555555f, 3.222222f, 1.111111f, 0.030508f }, // 872 (9 3 2 2)
-    { 10.666667f, 2.666667f, 1.333333f, 0.037500f }, // 873 (9 3 3 1)
-    { 10.777778f, 2.111111f, 1.555556f, 0.049180f }, // 874 (9 3 4 0)
-    { 10.777778f, 3.444444f, 0.888889f, 0.027523f }, // 875 (9 4 0 3)
-    { 10.888889f, 2.888889f, 1.111111f, 0.033088f }, // 876 (9 4 1 2)
-    { 11.000000f, 2.333333f, 1.333333f, 0.041860f }, // 877 (9 4 2 1)
-    { 11.111111f, 1.777778f, 1.555556f, 0.057692f }, // 878 (9 4 3 0)
-    { 11.222222f, 2.555556f, 1.111111f, 0.036437f }, // 879 (9 5 0 2)
-    { 11.333333f, 2.000000f, 1.333333f, 0.047872f }, // 880 (9 5 1 1)
-    { 11.444445f, 1.444444f, 1.555556f, 0.070866f }, // 881 (9 5 2 0)
-    { 11.666667f, 1.666667f, 1.333333f, 0.056604f }, // 882 (9 6 0 1)
-    { 11.777778f, 1.111111f, 1.555556f, 0.093750f }, // 883 (9 6 1 0)
-    { 12.111111f, 0.777778f, 1.555556f, 0.142857f }, // 884 (9 7 0 0)
-    { 10.000000f, 6.000000f, 0.000000f, 0.016667f }, // 885 (10 0 0 6)
-    { 10.111111f, 5.444445f, 0.222222f, 0.018182f }, // 886 (10 0 1 5)
-    { 10.222222f, 4.888889f, 0.444444f, 0.020089f }, // 887 (10 0 2 4)
-    { 10.333333f, 4.333333f, 0.666667f, 0.022556f }, // 888 (10 0 3 3)
-    { 10.444445f, 3.777778f, 0.888889f, 0.025862f }, // 889 (10 0 4 2)
-    { 10.555555f, 3.222222f, 1.111111f, 0.030508f }, // 890 (10 0 5 1)
-    { 10.666667f, 2.666667f, 1.333333f, 0.037500f }, // 891 (10 0 6 0)
-    { 10.444445f, 5.111111f, 0.222222f, 0.018750f }, // 892 (10 1 0 5)
-    { 10.555555f, 4.555555f, 0.444444f, 0.020882f }, // 893 (10 1 1 4)
-    { 10.666667f, 4.000000f, 0.666667f, 0.023684f }, // 894 (10 1 2 3)
-    { 10.777778f, 3.444444f, 0.888889f, 0.027523f }, // 895 (10 1 3 2)
-    { 10.888889f, 2.888889f, 1.111111f, 0.033088f }, // 896 (10 1 4 1)
-    { 11.000000f, 2.333333f, 1.333333f, 0.041860f }, // 897 (10 1 5 0)
-    { 10.888889f, 4.222222f, 0.444444f, 0.021845f }, // 898 (10 2 0 4)
-    { 11.000000f, 3.666667f, 0.666667f, 0.025070f }, // 899 (10 2 1 3)
-    { 11.111111f, 3.111111f, 0.888889f, 0.029605f }, // 900 (10 2 2 2)
-    { 11.222222f, 2.555556f, 1.111111f, 0.036437f }, // 901 (10 2 3 1)
-    { 11.333333f, 2.000000f, 1.333333f, 0.047872f }, // 902 (10 2 4 0)
-    { 11.333333f, 3.333333f, 0.666667f, 0.026786f }, // 903 (10 3 0 3)
-    { 11.444445f, 2.777778f, 0.888889f, 0.032258f }, // 904 (10 3 1 2)
-    { 11.555555f, 2.222222f, 1.111111f, 0.040909f }, // 905 (10 3 2 1)
-    { 11.666667f, 1.666667f, 1.333333f, 0.056604f }, // 906 (10 3 3 0)
-    { 11.777778f, 2.444444f, 0.888889f, 0.035714f }, // 907 (10 4 0 2)
-    { 11.888889f, 1.888889f, 1.111111f, 0.047120f }, // 908 (10 4 1 1)
-    { 12.000000f, 1.333333f, 1.333333f, 0.070313f }, // 909 (10 4 2 0)
-    { 12.222222f, 1.555556f, 1.111111f, 0.056250f }, // 910 (10 5 0 1)
-    { 12.333333f, 1.000000f, 1.333333f, 0.094737f }, // 911 (10 5 1 0)
-    { 12.666667f, 0.666667f, 1.333333f, 0.150000f }, // 912 (10 6 0 0)
-    { 11.000000f, 5.000000f, 0.000000f, 0.018182f }, // 913 (11 0 0 5)
-    { 11.111111f, 4.444445f, 0.222222f, 0.020270f }, // 914 (11 0 1 4)
-    { 11.222222f, 3.888889f, 0.444444f, 0.023018f }, // 915 (11 0 2 3)
-    { 11.333333f, 3.333333f, 0.666667f, 0.026786f }, // 916 (11 0 3 2)
-    { 11.444445f, 2.777778f, 0.888889f, 0.032258f }, // 917 (11 0 4 1)
-    { 11.555555f, 2.222222f, 1.111111f, 0.040909f }, // 918 (11 0 5 0)
-    { 11.444445f, 4.111111f, 0.222222f, 0.021277f }, // 919 (11 1 0 4)
-    { 11.555555f, 3.555556f, 0.444444f, 0.024457f }, // 920 (11 1 1 3)
-    { 11.666667f, 3.000000f, 0.666667f, 0.028939f }, // 921 (11 1 2 2)
-    { 11.777778f, 2.444444f, 0.888889f, 0.035714f }, // 922 (11 1 3 1)
-    { 11.888889f, 1.888889f, 1.111111f, 0.047120f }, // 923 (11 1 4 0)
-    { 11.888889f, 3.222222f, 0.444444f, 0.026239f }, // 924 (11 2 0 3)
-    { 12.000000f, 2.666667f, 0.666667f, 0.031690f }, // 925 (11 2 1 2)
-    { 12.111111f, 2.111111f, 0.888889f, 0.040359f }, // 926 (11 2 2 1)
-    { 12.222222f, 1.555556f, 1.111111f, 0.056250f }, // 927 (11 2 3 0)
-    { 12.333333f, 2.333333f, 0.666667f, 0.035294f }, // 928 (11 3 0 2)
-    { 12.444445f, 1.777778f, 0.888889f, 0.046875f }, // 929 (11 3 1 1)
-    { 12.555555f, 1.222222f, 1.111111f, 0.070866f }, // 930 (11 3 2 0)
-    { 12.777778f, 1.444444f, 0.888889f, 0.056604f }, // 931 (11 4 0 1)
-    { 12.888889f, 0.888889f, 1.111111f, 0.097826f }, // 932 (11 4 1 0)
-    { 13.222222f, 0.555556f, 1.111111f, 0.163636f }, // 933 (11 5 0 0)
-    { 12.000000f, 4.000000f, 0.000000f, 0.020833f }, // 934 (12 0 0 4)
-    { 12.111111f, 3.444444f, 0.222222f, 0.024000f }, // 935 (12 0 1 3)
-    { 12.222222f, 2.888889f, 0.444444f, 0.028481f }, // 936 (12 0 2 2)
-    { 12.333333f, 2.333333f, 0.666667f, 0.035294f }, // 937 (12 0 3 1)
-    { 12.444445f, 1.777778f, 0.888889f, 0.046875f }, // 938 (12 0 4 0)
-    { 12.444445f, 3.111111f, 0.222222f, 0.025862f }, // 939 (12 1 0 3)
-    { 12.555555f, 2.555556f, 0.444444f, 0.031359f }, // 940 (12 1 1 2)
-    { 12.666667f, 2.000000f, 0.666667f, 0.040179f }, // 941 (12 1 2 1)
-    { 12.777778f, 1.444444f, 0.888889f, 0.056604f }, // 942 (12 1 3 0)
-    { 12.888889f, 2.222222f, 0.444444f, 0.035156f }, // 943 (12 2 0 2)
-    { 13.000000f, 1.666667f, 0.666667f, 0.047120f }, // 944 (12 2 1 1)
-    { 13.111111f, 1.111111f, 0.888889f, 0.072581f }, // 945 (12 2 2 0)
-    { 13.333333f, 1.333333f, 0.666667f, 0.057692f }, // 946 (12 3 0 1)
-    { 13.444445f, 0.777778f, 0.888889f, 0.103448f }, // 947 (12 3 1 0)
-    { 13.777778f, 0.444444f, 0.888889f, 0.187500f }, // 948 (12 4 0 0)
-    { 13.000000f, 3.000000f, 0.000000f, 0.025641f }, // 949 (13 0 0 3)
-    { 13.111111f, 2.444444f, 0.222222f, 0.031250f }, // 950 (13 0 1 2)
-    { 13.222222f, 1.888889f, 0.444444f, 0.040359f }, // 951 (13 0 2 1)
-    { 13.333333f, 1.333333f, 0.666667f, 0.057692f }, // 952 (13 0 3 0)
-    { 13.444445f, 2.111111f, 0.222222f, 0.035294f }, // 953 (13 1 0 2)
-    { 13.555555f, 1.555556f, 0.444444f, 0.047872f }, // 954 (13 1 1 1)
-    { 13.666667f, 1.000000f, 0.666667f, 0.075630f }, // 955 (13 1 2 0)
-    { 13.888889f, 1.222222f, 0.444444f, 0.059603f }, // 956 (13 2 0 1)
-    { 14.000000f, 0.666667f, 0.666667f, 0.112500f }, // 957 (13 2 1 0)
-    { 14.333333f, 0.333333f, 0.666667f, 0.230769f }, // 958 (13 3 0 0)
-    { 14.000000f, 2.000000f, 0.000000f, 0.035714f }, // 959 (14 0 0 2)
-    { 14.111111f, 1.444444f, 0.222222f, 0.049180f }, // 960 (14 0 1 1)
-    { 14.222222f, 0.888889f, 0.444444f, 0.080357f }, // 961 (14 0 2 0)
-    { 14.444445f, 1.111111f, 0.222222f, 0.062500f }, // 962 (14 1 0 1)
-    { 14.555555f, 0.555556f, 0.444444f, 0.126761f }, // 963 (14 1 1 0)
-    { 14.888889f, 0.222222f, 0.444444f, 0.321429f }, // 964 (14 2 0 0)
-    { 15.000000f, 1.000000f, 0.000000f, 0.066667f }, // 965 (15 0 0 1)
-    { 15.111111f, 0.444444f, 0.222222f, 0.150000f }, // 966 (15 0 1 0)
-    { 15.444445f, 0.111111f, 0.222222f, 0.600000f }, // 967 (15 1 0 0)
-    { 16.000000f, 0.000000f, 0.000000f, FLT_MAX }, // 968 (16 0 0 0)
-}; // 969 four cluster elements
-
-#if ICBC_USE_SIMD
-
-bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
-{
-    const int count = m_count;
-    const SimdVector one = SimdVector(1.0f);
-    const SimdVector zero = SimdVector(0.0f);
-    const SimdVector half(0.5f, 0.5f, 0.5f, 0.25f);
-    const SimdVector two = SimdVector(2.0);
-    const SimdVector grid(31.0f, 63.0f, 31.0f, 0.0f);
-    const SimdVector gridrcp(1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f, 0.0f);
-
-    // declare variables
-    SimdVector beststart = SimdVector(0.0f);
-    SimdVector bestend = SimdVector(0.0f);
-    SimdVector besterror = SimdVector(FLT_MAX);
-
-    SimdVector x0 = zero;
-
-    // check all possible clusters for this total order
-    for (int c0 = 0; c0 <= count; c0++)
-    {
-        SimdVector x1 = zero;
-
-        for (int c1 = 0; c1 <= count - c0; c1++)
-        {
-            const SimdVector x2 = m_xsum - x1 - x0;
-
-            //Vector3 alphax_sum = x0 + x1 * 0.5f;
-            //float alpha2_sum = w0 + w1 * 0.25f;
-            const SimdVector alphax_sum = multiplyAdd(x1, half, x0); // alphax_sum, alpha2_sum
-            const SimdVector alpha2_sum = alphax_sum.splatW();
-
-            //const Vector3 betax_sum = x2 + x1 * 0.5f;
-            //const float beta2_sum = w2 + w1 * 0.25f;
-            const SimdVector betax_sum = multiplyAdd(x1, half, x2); // betax_sum, beta2_sum
-            const SimdVector beta2_sum = betax_sum.splatW();
-
-            //const float alphabeta_sum = w1 * 0.25f;
-            const SimdVector alphabeta_sum = (x1 * half).splatW(); // alphabeta_sum
-
-            // const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-            const SimdVector factor = reciprocal(negativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum));
-
-            SimdVector a = negativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
-            SimdVector b = negativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
-
-            // clamp to the grid
-            a = min(one, max(zero, a));
-            b = min(one, max(zero, b));
-            a = truncate(multiplyAdd(grid, a, half)) * gridrcp;
-            b = truncate(multiplyAdd(grid, b, half)) * gridrcp;
-
-            // compute the error (we skip the constant xxsum)
-            SimdVector e1 = multiplyAdd(a*a, alpha2_sum, b*b*beta2_sum);
-            SimdVector e2 = negativeMultiplySubtract(a, alphax_sum, a*b*alphabeta_sum);
-            SimdVector e3 = negativeMultiplySubtract(b, betax_sum, e2);
-            SimdVector e4 = multiplyAdd(two, e3, e1);
-
-            // apply the metric to the error term
-            SimdVector e5 = e4 * m_metricSqr;
-            SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
-
-            // keep the solution if it wins
-            if (compareAnyLessThan(error, besterror))
-            {
-                besterror = error;
-                beststart = a;
-                bestend = b;
-            }
-
-            x1 += m_weighted[c0 + c1];
-        }
-
-        x0 += m_weighted[c0];
-    }
-
-    // save the block if necessary
-    if (compareAnyLessThan(besterror, m_besterror))
-    {
-        *start = beststart.toVector3();
-        *end = bestend.toVector3();
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
-{
-    const int count = m_count;
-    const SimdVector one = SimdVector(1.0f);
-    const SimdVector zero = SimdVector(0.0f);
-    const SimdVector half = SimdVector(0.5f);
-    const SimdVector two = SimdVector(2.0);
-    const SimdVector onethird(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 9.0f);
-    const SimdVector twothirds(2.0f / 3.0f, 2.0f / 3.0f, 2.0f / 3.0f, 4.0f / 9.0f);
-    const SimdVector twonineths = SimdVector(2.0f / 9.0f);
-    const SimdVector grid(31.0f, 63.0f, 31.0f, 0.0f);
-    const SimdVector gridrcp(1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f, 0.0f);
-
-    // declare variables
-    SimdVector beststart = SimdVector(0.0f);
-    SimdVector bestend = SimdVector(0.0f);
-    SimdVector besterror = SimdVector(FLT_MAX);
-
-    SimdVector x0 = zero;
-
-    // check all possible clusters for this total order
-    for (int c0 = 0; c0 <= count; c0++)
-    {
-        SimdVector x1 = zero;
-
-        for (int c1 = 0; c1 <= count - c0; c1++)
-        {
-            SimdVector x2 = zero;
-
-            for (int c2 = 0; c2 <= count - c0 - c1; c2++)
-            {
-                const SimdVector x3 = m_xsum - x2 - x1 - x0;
-
-                //const Vector3 alphax_sum = x0 + x1 * (2.0f / 3.0f) + x2 * (1.0f / 3.0f);
-                //const float alpha2_sum = w0 + w1 * (4.0f/9.0f) + w2 * (1.0f/9.0f);
-                const SimdVector alphax_sum = multiplyAdd(x2, onethird, multiplyAdd(x1, twothirds, x0)); // alphax_sum, alpha2_sum
-                const SimdVector alpha2_sum = alphax_sum.splatW();
-
-                //const Vector3 betax_sum = x3 + x2 * (2.0f / 3.0f) + x1 * (1.0f / 3.0f);
-                //const float beta2_sum = w3 + w2 * (4.0f/9.0f) + w1 * (1.0f/9.0f);
-                const SimdVector betax_sum = multiplyAdd(x2, twothirds, multiplyAdd(x1, onethird, x3)); // betax_sum, beta2_sum
-                const SimdVector beta2_sum = betax_sum.splatW();
-
-                //const float alphabeta_sum = (w1 + w2) * (2.0f/9.0f);
-                const SimdVector alphabeta_sum = twonineths * (x1 + x2).splatW(); // alphabeta_sum
-
-                //const float factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-                const SimdVector factor = reciprocal(negativeMultiplySubtract(alphabeta_sum, alphabeta_sum, alpha2_sum*beta2_sum));
-
-                SimdVector a = negativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
-                SimdVector b = negativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
-
-                // clamp to the grid
-                a = min(one, max(zero, a));
-                b = min(one, max(zero, b));
-                a = truncate(multiplyAdd(grid, a, half)) * gridrcp;
-                b = truncate(multiplyAdd(grid, b, half)) * gridrcp;
-
-                // compute the error (we skip the constant xxsum)
-                // error = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
-                SimdVector e1 = multiplyAdd(a*a, alpha2_sum, b*b*beta2_sum);
-                SimdVector e2 = negativeMultiplySubtract(a, alphax_sum, a*b*alphabeta_sum);
-                SimdVector e3 = negativeMultiplySubtract(b, betax_sum, e2);
-                SimdVector e4 = multiplyAdd(two, e3, e1);
-
-                // apply the metric to the error term
-                SimdVector e5 = e4 * m_metricSqr;
-                SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
-
-                // keep the solution if it wins
-                if (compareAnyLessThan(error, besterror))
-                {
-                    besterror = error;
-                    beststart = a;
-                    bestend = b;
-                }
-
-                x2 += m_weighted[c0 + c1 + c2];
-            }
-
-            x1 += m_weighted[c0 + c1];
-        }
-
-        x0 += m_weighted[c0];
-    }
-
-    // save the block if necessary
-    if (compareAnyLessThan(besterror, m_besterror))
-    {
-        *start = beststart.toVector3();
-        *end = bestend.toVector3();
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ClusterFit::fastCompress3(Vector3 * start, Vector3 * end)
-{
-    const int count = m_count;
-    const SimdVector one = SimdVector(1.0f);
-    const SimdVector zero = SimdVector(0.0f);
-    const SimdVector half(0.5f, 0.5f, 0.5f, 0.25f);
-    const SimdVector two = SimdVector(2.0);
-    const SimdVector grid(31.0f, 63.0f, 31.0f, 0.0f);
-    const SimdVector gridrcp(1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f, 0.0f);
-
-    // declare variables
-    SimdVector beststart = SimdVector(0.0f);
-    SimdVector bestend = SimdVector(0.0f);
-    SimdVector besterror = SimdVector(FLT_MAX);
-
-    SimdVector x0 = zero;
-
-    // check all possible clusters for this total order
-    for (int c0 = 0, i = 0; c0 <= count; c0++)
-    {
-        SimdVector x1 = zero;
-
-        for (int c1 = 0; c1 <= count - c0; c1++, i++)
-        {
-            const SimdVector constants = SimdVector((const float *)&s_threeElement[i]);
-
-            const SimdVector alpha2_sum = constants.splatX();
-            const SimdVector beta2_sum = constants.splatY();
-            const SimdVector alphabeta_sum = constants.splatZ();
-            const SimdVector factor = constants.splatW();
-
-            const SimdVector alphax_sum = multiplyAdd(x1, half, x0);
-            const SimdVector betax_sum = m_xsum - alphax_sum;
-
-            SimdVector a = negativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
-            SimdVector b = negativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
-
-            // clamp to the grid
-            a = min(one, max(zero, a));
-            b = min(one, max(zero, b));
-            a = truncate(multiplyAdd(grid, a, half)) * gridrcp;
-            b = truncate(multiplyAdd(grid, b, half)) * gridrcp;
-
-            // compute the error (we skip the constant xxsum)
-            SimdVector e1 = multiplyAdd(a*a, alpha2_sum, b*b*beta2_sum);
-            SimdVector e2 = negativeMultiplySubtract(a, alphax_sum, a*b*alphabeta_sum);
-            SimdVector e3 = negativeMultiplySubtract(b, betax_sum, e2);
-            SimdVector e4 = multiplyAdd(two, e3, e1);
-
-            // apply the metric to the error term
-            SimdVector e5 = e4 * m_metricSqr;
-            SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
-
-            // keep the solution if it wins
-            if (compareAnyLessThan(error, besterror))
-            {
-                besterror = error;
-                beststart = a;
-                bestend = b;
-            }
-
-            x1 += m_weighted[c0 + c1];
-        }
-
-        x0 += m_weighted[c0];
-    }
-
-    // save the block if necessary
-    if (compareAnyLessThan(besterror, m_besterror))
-    {
-        *start = beststart.toVector3();
-        *end = bestend.toVector3();
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ClusterFit::fastCompress4(Vector3 * start, Vector3 * end)
-{
-    const SimdVector one = SimdVector(1.0f);
-    const SimdVector zero = SimdVector(0.0f);
-    const SimdVector half = SimdVector(0.5f);
-    const SimdVector two = SimdVector(2.0);
-    const SimdVector onethird(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 9.0f);
-    const SimdVector twothirds(2.0f / 3.0f, 2.0f / 3.0f, 2.0f / 3.0f, 4.0f / 9.0f);
-    const SimdVector grid(31.0f, 63.0f, 31.0f, 0.0f);
-    const SimdVector gridrcp(1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f, 0.0f);
-
-    // declare variables
-    SimdVector beststart = SimdVector(0.0f);
-    SimdVector bestend = SimdVector(0.0f);
-    SimdVector besterror = SimdVector(FLT_MAX);
-
-    SimdVector x0 = zero;
-
-    // check all possible clusters for this total order
-    for (int c0 = 0, i = 0; c0 <= 16; c0++)
-    {
-        SimdVector x1 = zero;
-
-        for (int c1 = 0; c1 <= 16 - c0; c1++)
-        {
-            SimdVector x2 = zero;
-
-            for (int c2 = 0; c2 <= 16 - c0 - c1; c2++, i++)
-            {
-                const SimdVector constants = SimdVector((const float *)&s_fourElement[i]); 
-
-                const SimdVector alpha2_sum = constants.splatX();
-                const SimdVector beta2_sum = constants.splatY();
-                const SimdVector alphabeta_sum = constants.splatZ();
-                const SimdVector factor = constants.splatW();
-                
-                const SimdVector alphax_sum = multiplyAdd(x2, onethird, multiplyAdd(x1, twothirds, x0));
-                const SimdVector betax_sum = m_xsum - alphax_sum;
-
-                SimdVector a = negativeMultiplySubtract(betax_sum, alphabeta_sum, alphax_sum*beta2_sum) * factor;
-                SimdVector b = negativeMultiplySubtract(alphax_sum, alphabeta_sum, betax_sum*alpha2_sum) * factor;
-
-                // clamp to the grid
-                a = min(one, max(zero, a));
-                b = min(one, max(zero, b));
-                a = truncate(multiplyAdd(grid, a, half)) * gridrcp;
-                b = truncate(multiplyAdd(grid, b, half)) * gridrcp;
-
-                // compute the error (we skip the constant xxsum)
-                // error = a*a*alpha2_sum + b*b*beta2_sum + 2.0f*( a*b*alphabeta_sum - a*alphax_sum - b*betax_sum );
-                SimdVector e1 = multiplyAdd(a*a, alpha2_sum, b*b*beta2_sum);
-                SimdVector e2 = negativeMultiplySubtract(a, alphax_sum, a*b*alphabeta_sum);
-                SimdVector e3 = negativeMultiplySubtract(b, betax_sum, e2);
-                SimdVector e4 = multiplyAdd(two, e3, e1);
-
-                // apply the metric to the error term
-                SimdVector e5 = e4 * m_metricSqr;
-                SimdVector error = e5.splatX() + e5.splatY() + e5.splatZ();
-
-                // keep the solution if it wins
-                if (compareAnyLessThan(error, besterror))
-                {
-                    besterror = error;
-                    beststart = a;
-                    bestend = b;
-                }
-
-                x2 += m_weighted[c0 + c1 + c2];
-            }
-
-            x1 += m_weighted[c0 + c1];
-        }
-
-        x0 += m_weighted[c0];
-    }
-
-    // save the block if necessary
-    if (compareAnyLessThan(besterror, m_besterror))
-    {
-        *start = beststart.toVector3();
-        *end = bestend.toVector3();
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
-    }
-
-    return false;
-}
-
-#else
-
-// This is the ideal way to round, but it's too expensive to do this in the inner loop.
-inline Vector3 round565(const Vector3 & v) {
-    static const Vector3 grid = { 31.0f, 63.0f, 31.0f };
-    static const Vector3 gridrcp = { 1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f };
-
-    Vector3 q = floor(grid * v);
-    q.x += (v.x > midpoints5[int(q.x)]);
-    q.y += (v.y > midpoints6[int(q.y)]);
-    q.z += (v.z > midpoints5[int(q.z)]);
-    q *= gridrcp;
-    return q;
-}
-
-bool ClusterFit::compress3(Vector3 * start, Vector3 * end)
-{
-    const uint count = m_count;
-    const Vector3 grid = { 31.0f, 63.0f, 31.0f };
-    const Vector3 gridrcp = { 1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f };
-
-    // declare variables
-    Vector3 beststart = { 0.0f };
-    Vector3 bestend = { 0.0f };
-    float besterror = FLT_MAX;
-
-    Vector3 x0 = { 0.0f };
-    float w0 = 0.0f;
-
-    // check all possible clusters for this total order
-    for (uint c0 = 0; c0 <= count; c0++)
-    {
-        Vector3 x1 = { 0.0f };
-        float w1 = 0.0f;
-
-        for (uint c1 = 0; c1 <= count - c0; c1++)
-        {
-            float w2 = m_wsum - w0 - w1;
-
-            // These factors could be entirely precomputed.
-            float const alpha2_sum = w0 + w1 * 0.25f;
-            float const beta2_sum = w2 + w1 * 0.25f;
-            float const alphabeta_sum = w1 * 0.25f;
-            float const factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-
-            Vector3 const alphax_sum = x0 + x1 * 0.5f;
-            Vector3 const betax_sum = m_xsum - alphax_sum;
-
-            Vector3 a = (alphax_sum*beta2_sum - betax_sum * alphabeta_sum) * factor;
-            Vector3 b = (betax_sum*alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-
-            // clamp to the grid
-            a = saturate(a);
-            b = saturate(b);
-#if ICBC_PERFECT_ROUND
-            a = round565(a);
-            b = round565(b);
-#else
-            a = round(grid * a) * gridrcp;
-            b = round(grid * b) * gridrcp;
+static ICBC_ALIGN_16 int s_fourClusterTotal[16];
+static ICBC_ALIGN_16 int s_threeClusterTotal[16];
+static ICBC_ALIGN_16 Combinations s_fourCluster[968 + 8];
+static ICBC_ALIGN_16 Combinations s_threeCluster[152 + 8];
+
+#if ICBC_USE_NEON_VTL
+static uint8 s_neon_vtl_index0_4[4 * 968];
+static uint8 s_neon_vtl_index1_4[4 * 968];
+static uint8 s_neon_vtl_index2_4[4 * 968];
+
+static uint8 s_neon_vtl_index0_3[4 * 152];
+static uint8 s_neon_vtl_index1_3[4 * 152];
 #endif
 
-            // compute the error
-            Vector3 e1 = a * a*alpha2_sum + b * b*beta2_sum + 2.0f*(a*b*alphabeta_sum - a * alphax_sum - b * betax_sum);
+static void init_cluster_tables() {
 
-            // apply the metric to the error term
-            float error = dot(e1, m_metricSqr);
+    for (int t = 1, i = 0; t <= 16; t++) {
+        for (int c0 = 0; c0 <= t; c0++) {
+            for (int c1 = 0; c1 <= t - c0; c1++) {
+                for (int c2 = 0; c2 <= t - c0 - c1; c2++) {
 
-            // keep the solution if it wins
-            if (error < besterror)
-            {
-                besterror = error;
-                beststart = a;
-                bestend = b;
+                    // Skip this cluster so that the total is a multiple of 8
+                    if (c0 == 0 && c1 == 0 && c2 == 0) continue;
+
+                    bool found = false;
+                    if (t > 1) {
+                        for (int j = 0; j < s_fourClusterTotal[t-2]; j++) {
+                            if (s_fourCluster[j].c0 == c0 && s_fourCluster[j].c1 == c0+c1 && s_fourCluster[j].c2 == c0+c1+c2) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!found) {
+                        s_fourCluster[i].c0 = c0;
+                        s_fourCluster[i].c1 = c0+c1;
+                        s_fourCluster[i].c2 = c0+c1+c2;
+                        i++;
+                    }
+                }
             }
-
-            x1 += m_weighted[c0 + c1];
-            w1 += m_weights[c0 + c1];
         }
 
-        x0 += m_weighted[c0];
-        w0 += m_weights[c0];
+        s_fourClusterTotal[t - 1] = i;
     }
 
-    // save the block if necessary
-    if (besterror < m_besterror)
-    {
-
-        *start = beststart;
-        *end = bestend;
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
+    // Replicate last entry.
+    for (int i = 0; i < 8; i++) {
+        s_fourCluster[968 + i] = s_fourCluster[968-1];
     }
 
-    return false;
-}
+    for (int t = 1, i = 0; t <= 16; t++) {
+        for (int c0 = 0; c0 <= t; c0++) {
+            for (int c1 = 0; c1 <= t - c0; c1++) {
 
-bool ClusterFit::compress4(Vector3 * start, Vector3 * end)
-{
-    const uint count = m_count;
-    const Vector3 grid = { 31.0f, 63.0f, 31.0f };
-    const Vector3 gridrcp = { 1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f };
+                // Skip this cluster so that the total is a multiple of 8
+                if (c0 == 0 && c1 == 0) continue;
 
-    // declare variables
-    Vector3 beststart = { 0.0f };
-    Vector3 bestend = { 0.0f };
-    float besterror = FLT_MAX;
-
-    Vector3 x0 = { 0.0f };
-    float w0 = 0.0f;
-
-    // check all possible clusters for this total order
-    for (uint c0 = 0; c0 <= count; c0++)
-    {
-        Vector3 x1 = { 0.0f };
-        float w1 = 0.0f;
-
-        for (uint c1 = 0; c1 <= count - c0; c1++)
-        {
-            Vector3 x2 = { 0.0f };
-            float w2 = 0.0f;
-
-            for (uint c2 = 0; c2 <= count - c0 - c1; c2++)
-            {
-                float w3 = m_wsum - w0 - w1 - w2;
-
-                float const alpha2_sum = w0 + w1 * (4.0f / 9.0f) + w2 * (1.0f / 9.0f);
-                float const beta2_sum = w3 + w2 * (4.0f / 9.0f) + w1 * (1.0f / 9.0f);
-                float const alphabeta_sum = (w1 + w2) * (2.0f / 9.0f);
-                float const factor = 1.0f / (alpha2_sum * beta2_sum - alphabeta_sum * alphabeta_sum);
-
-                Vector3 const alphax_sum = x0 + x1 * (2.0f / 3.0f) + x2 * (1.0f / 3.0f);
-                Vector3 const betax_sum = m_xsum - alphax_sum;
-
-                Vector3 a = (alphax_sum*beta2_sum - betax_sum * alphabeta_sum)*factor;
-                Vector3 b = (betax_sum*alpha2_sum - alphax_sum * alphabeta_sum)*factor;
-
-                // clamp to the grid
-                a = saturate(a);
-                b = saturate(b);
-#if ICBC_PERFECT_ROUND
-                a = round565(a);
-                b = round565(b);
-#else
-                a = round(grid * a) * gridrcp;
-                b = round(grid * b) * gridrcp;
-#endif
-                // @@ It would be much more accurate to evaluate the error exactly. 
-
-                // compute the error
-                Vector3 e1 = a * a*alpha2_sum + b * b*beta2_sum + 2.0f*(a*b*alphabeta_sum - a * alphax_sum - b * betax_sum);
-
-                // apply the metric to the error term
-                float error = dot(e1, m_metricSqr);
-
-                // keep the solution if it wins
-                if (error < besterror)
-                {
-                    besterror = error;
-                    beststart = a;
-                    bestend = b;
+                bool found = false;
+                if (t > 1) {
+                    for (int j = 0; j < s_threeClusterTotal[t - 2]; j++) {
+                        if (s_threeCluster[j].c0 == c0 && s_threeCluster[j].c1 == c0+c1) {
+                            found = true;
+                            break;
+                        }
+                    }
                 }
 
-                x2 += m_weighted[c0 + c1 + c2];
-                w2 += m_weights[c0 + c1 + c2];
-            }
-
-            x1 += m_weighted[c0 + c1];
-            w1 += m_weights[c0 + c1];
-        }
-
-        x0 += m_weighted[c0];
-        w0 += m_weights[c0];
-    }
-
-    // save the block if necessary
-    if (besterror < m_besterror)
-    {
-        *start = beststart;
-        *end = bestend;
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ClusterFit::fastCompress3(Vector3 * start, Vector3 * end)
-{
-    const uint count = m_count;
-    const Vector3 grid = { 31.0f, 63.0f, 31.0f };
-    const Vector3 gridrcp = { 1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f };
-
-    // declare variables
-    Vector3 beststart = { 0.0f };
-    Vector3 bestend = { 0.0f };
-    float besterror = FLT_MAX;
-
-    Vector3 x0 = { 0.0f };
-    float w0 = 0.0f;
-
-    // check all possible clusters for this total order
-    for (uint c0 = 0, i = 0; c0 <= count; c0++)
-    {
-        Vector3 x1 = { 0.0f };
-        float w1 = 0.0f;
-
-        for (uint c1 = 0; c1 <= count - c0; c1++, i++)
-        {
-            float const alpha2_sum = s_threeElement[i].alpha2_sum;
-            float const beta2_sum = s_threeElement[i].beta2_sum;
-            float const alphabeta_sum = s_threeElement[i].alphabeta_sum;
-            float const factor = s_threeElement[i].factor;
-
-            Vector3 const alphax_sum = x0 + x1 * 0.5f;
-            Vector3 const betax_sum = m_xsum - alphax_sum;
-
-            Vector3 a = (alphax_sum*beta2_sum - betax_sum * alphabeta_sum) * factor;
-            Vector3 b = (betax_sum*alpha2_sum - alphax_sum * alphabeta_sum) * factor;
-
-            // clamp to the grid
-            a = saturate(a);
-            b = saturate(b);
-#if ICBC_PERFECT_ROUND
-            a = round565(a);
-            b = round565(b);
-#else
-            a = round(grid * a) * gridrcp;
-            b = round(grid * b) * gridrcp;
-#endif
-
-            // compute the error
-            Vector3 e1 = a * a*alpha2_sum + b * b*beta2_sum + 2.0f*(a*b*alphabeta_sum - a * alphax_sum - b * betax_sum);
-
-            // apply the metric to the error term
-            float error = dot(e1, m_metricSqr);
-
-            // keep the solution if it wins
-            if (error < besterror)
-            {
-                besterror = error;
-                beststart = a;
-                bestend = b;
-            }
-
-            x1 += m_weighted[c0 + c1];
-            w1 += m_weights[c0 + c1];
-        }
-
-        x0 += m_weighted[c0];
-        w0 += m_weights[c0];
-    }
-
-    // save the block if necessary
-    if (besterror < m_besterror)
-    {
-
-        *start = beststart;
-        *end = bestend;
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ClusterFit::fastCompress4(Vector3 * start, Vector3 * end)
-{
-    const uint count = m_count;
-    const Vector3 grid = { 31.0f, 63.0f, 31.0f };
-    const Vector3 gridrcp = { 1.0f / 31.0f, 1.0f / 63.0f, 1.0f / 31.0f };
-
-    // declare variables
-    Vector3 beststart = { 0.0f };
-    Vector3 bestend = { 0.0f };
-    float besterror = FLT_MAX;
-
-    Vector3 x0 = { 0.0f };
-    float w0 = 0.0f;
-
-    // check all possible clusters for this total order
-    for (uint c0 = 0, i = 0; c0 <= count; c0++)
-    {
-        Vector3 x1 = { 0.0f };
-        float w1 = 0.0f;
-
-        for (uint c1 = 0; c1 <= count - c0; c1++)
-        {
-            Vector3 x2 = { 0.0f };
-            float w2 = 0.0f;
-
-            for (uint c2 = 0; c2 <= count - c0 - c1; c2++, i++)
-            {
-                float const alpha2_sum = s_fourElement[i].alpha2_sum;
-                float const beta2_sum = s_fourElement[i].beta2_sum;
-                float const alphabeta_sum = s_fourElement[i].alphabeta_sum;
-                float const factor = s_fourElement[i].factor;
-
-                Vector3 const alphax_sum = x0 + x1 * (2.0f / 3.0f) + x2 * (1.0f / 3.0f);
-                Vector3 const betax_sum = m_xsum - alphax_sum;
-
-                Vector3 a = (alphax_sum*beta2_sum - betax_sum * alphabeta_sum)*factor;
-                Vector3 b = (betax_sum*alpha2_sum - alphax_sum * alphabeta_sum)*factor;
-
-                // clamp to the grid
-                a = saturate(a);
-                b = saturate(b);
-#if ICBC_PERFECT_ROUND
-                a = round565(a);
-                b = round565(b);
-#else
-                a = round(grid * a) * gridrcp;
-                b = round(grid * b) * gridrcp;
-#endif
-                // @@ It would be much more accurate to evaluate the error exactly. 
-
-                // compute the error
-                Vector3 e1 = a * a*alpha2_sum + b * b*beta2_sum + 2.0f*(a*b*alphabeta_sum - a * alphax_sum - b * betax_sum);
-
-                // apply the metric to the error term
-                float error = dot(e1, m_metricSqr);
-
-                // keep the solution if it wins
-                if (error < besterror)
-                {
-                    besterror = error;
-                    beststart = a;
-                    bestend = b;
+                if (!found) {
+                    s_threeCluster[i].c0 = c0;
+                    s_threeCluster[i].c1 = c0 + c1;
+                    i++;
                 }
-
-                x2 += m_weighted[c0 + c1 + c2];
-                w2 += m_weights[c0 + c1 + c2];
             }
-
-            x1 += m_weighted[c0 + c1];
-            w1 += m_weights[c0 + c1];
         }
 
-        x0 += m_weighted[c0];
-        w0 += m_weights[c0];
+        s_threeClusterTotal[t - 1] = i;
     }
 
-    // save the block if necessary
-    if (besterror < m_besterror)
-    {
-        *start = beststart;
-        *end = bestend;
-
-        // save the error
-        m_besterror = besterror;
-
-        return true;
+    // Replicate last entry.
+    for (int i = 0; i < 8; i++) {
+        s_threeCluster[152 + i] = s_threeCluster[152 - 1];
     }
 
-    return false;
+#if ICBC_USE_NEON_VTL
+    for (int i = 0; i < 968; i++) {
+        int c0 = (s_fourCluster[i].c0) - 1;
+        s_neon_vtl_index0_4[4 * i + 0] = uint8(c0 * 4 + 0);
+        s_neon_vtl_index0_4[4 * i + 1] = uint8(c0 * 4 + 1);
+        s_neon_vtl_index0_4[4 * i + 2] = uint8(c0 * 4 + 2);
+        s_neon_vtl_index0_4[4 * i + 3] = uint8(c0 * 4 + 3);
+
+        int c1 = (s_fourCluster[i].c1) - 1;
+        s_neon_vtl_index1_4[4 * i + 0] = uint8(c1 * 4 + 0);
+        s_neon_vtl_index1_4[4 * i + 1] = uint8(c1 * 4 + 1);
+        s_neon_vtl_index1_4[4 * i + 2] = uint8(c1 * 4 + 2);
+        s_neon_vtl_index1_4[4 * i + 3] = uint8(c1 * 4 + 3);
+
+        int c2 = (s_fourCluster[i].c2) - 1;
+        s_neon_vtl_index2_4[4 * i + 0] = uint8(c2 * 4 + 0);
+        s_neon_vtl_index2_4[4 * i + 1] = uint8(c2 * 4 + 1);
+        s_neon_vtl_index2_4[4 * i + 2] = uint8(c2 * 4 + 2);
+        s_neon_vtl_index2_4[4 * i + 3] = uint8(c2 * 4 + 3);
+    }
+
+    for (int i = 0; i < 152; i++) {
+        int c0 = (s_threeCluster[i].c0) - 1;
+        s_neon_vtl_index0_3[4 * i + 0] = uint8(c0 * 4 + 0);
+        s_neon_vtl_index0_3[4 * i + 1] = uint8(c0 * 4 + 1);
+        s_neon_vtl_index0_3[4 * i + 2] = uint8(c0 * 4 + 2);
+        s_neon_vtl_index0_3[4 * i + 3] = uint8(c0 * 4 + 3);
+
+        int c1 = (s_threeCluster[i].c1) - 1;
+        s_neon_vtl_index1_3[4 * i + 0] = uint8(c1 * 4 + 0);
+        s_neon_vtl_index1_3[4 * i + 1] = uint8(c1 * 4 + 1);
+        s_neon_vtl_index1_3[4 * i + 2] = uint8(c1 * 4 + 2);
+        s_neon_vtl_index1_3[4 * i + 3] = uint8(c1 * 4 + 3);
+    }
+#endif
 }
 
-#endif // ICBC_USE_SIMD
+
+
+static void cluster_fit_three(const SummedAreaTable & sat, int count, Vector3 metric_sqr, Vector3 * start, Vector3 * end)
+{
+    const float r_sum = sat.r[count-1];
+    const float g_sum = sat.g[count-1];
+    const float b_sum = sat.b[count-1];
+    const float w_sum = sat.w[count-1];
+
+    VFloat vbesterror = vbroadcast(FLT_MAX);
+    VVector3 vbeststart = { vzero(), vzero(), vzero() };
+    VVector3 vbestend = { vzero(), vzero(), vzero() };
+
+    // check all possible clusters for this total order
+    const int total_order_count = s_threeClusterTotal[count - 1];
+
+    for (int i = 0; i < total_order_count; i += VEC_SIZE)
+    {
+        VVector3 x0, x1;
+        VFloat w0, w1;
+
+#if ICBC_USE_AVX512_PERMUTE
+
+        auto loadmask = lane_id() < vbroadcast(float(count));
+
+        // Load sat in one register:
+        VFloat vrsat = vload(loadmask, sat.r, FLT_MAX);
+        VFloat vgsat = vload(loadmask, sat.g, FLT_MAX);
+        VFloat vbsat = vload(loadmask, sat.b, FLT_MAX);
+        VFloat vwsat = vload(loadmask, sat.w, FLT_MAX);
+
+        // Load 4 uint8 per lane.
+        __m512i packedClusterIndex = _mm512_load_si512((__m512i *)&s_threeCluster[i]);
+
+        // Load index and decrement.
+        auto c0 = _mm512_and_epi32(packedClusterIndex, _mm512_set1_epi32(0xFF));
+        auto c0mask = _mm512_cmpgt_epi32_mask(c0, _mm512_setzero_si512());
+        c0 = _mm512_sub_epi32(c0, _mm512_set1_epi32(1));
+
+        // @@ Avoid blend_ps?
+        // if upper bit set, zero, otherwise load sat entry.
+        x0.x = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vrsat));
+        x0.y = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vgsat));
+        x0.z = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vbsat));
+        w0 = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vwsat));
+
+        auto c1 = _mm512_and_epi32(_mm512_srli_epi32(packedClusterIndex, 8), _mm512_set1_epi32(0xFF));
+        auto c1mask = _mm512_cmpgt_epi32_mask(c1, _mm512_setzero_si512());
+        c1 = _mm512_sub_epi32(c1, _mm512_set1_epi32(1));
+
+        x1.x = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vrsat));
+        x1.y = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vgsat));
+        x1.z = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vbsat));
+        w1 = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vwsat));
+
+#elif ICBC_USE_AVX2_PERMUTE2
+
+        // Load 4 uint8 per lane. @@ Ideally I should pack this better and load only 2.
+        VInt packedClusterIndex = vload((int *)&s_threeCluster[i]);
+
+        VInt c0 = (packedClusterIndex & 0xFF);
+        VInt c1 = ((packedClusterIndex >> 8)); // No need for & 0xFF
+
+        if (count <= 8) {
+            // Load sat.r in one register:
+            VFloat rLo = vload(sat.r);
+            VFloat gLo = vload(sat.g);
+            VFloat bLo = vload(sat.b);
+            VFloat wLo = vload(sat.w);
+
+            x0.x = vpermuteif(c0>0, rLo, c0-1);
+            x0.y = vpermuteif(c0>0, gLo, c0-1);
+            x0.z = vpermuteif(c0>0, bLo, c0-1);
+            w0   = vpermuteif(c0>0, wLo, c0-1);
+
+            x1.x = vpermuteif(c1>0, rLo, c1-1);
+            x1.y = vpermuteif(c1>0, gLo, c1-1);
+            x1.z = vpermuteif(c1>0, bLo, c1-1);
+            w1   = vpermuteif(c1>0, wLo, c1-1);
+        }
+        else {
+            // Load sat.r in two registers:
+            VFloat rLo = vload(sat.r); VFloat rHi = vload(sat.r + 8);
+            VFloat gLo = vload(sat.g); VFloat gHi = vload(sat.g + 8);
+            VFloat bLo = vload(sat.b); VFloat bHi = vload(sat.b + 8);
+            VFloat wLo = vload(sat.w); VFloat wHi = vload(sat.w + 8);
+
+            x0.x = vpermute2if(c0>0, rLo, rHi, c0-1);
+            x0.y = vpermute2if(c0>0, gLo, gHi, c0-1);
+            x0.z = vpermute2if(c0>0, bLo, bHi, c0-1);
+            w0   = vpermute2if(c0>0, wLo, wHi, c0-1);
+
+            x1.x = vpermute2if(c1>0, rLo, rHi, c1-1);
+            x1.y = vpermute2if(c1>0, gLo, gHi, c1-1);
+            x1.z = vpermute2if(c1>0, bLo, bHi, c1-1);
+            w1   = vpermute2if(c1>0, wLo, wHi, c1-1);
+        }
+
+#elif ICBC_USE_NEON_VTL
+
+        uint8x16_t idx0 = (uint8x16_t &)s_neon_vtl_index0_3[4*i];
+        uint8x16_t idx1 = (uint8x16_t &)s_neon_vtl_index1_3[4*i];
+
+        if (count <= 4) {
+            uint8x16_t rsat1 = vld1q_u8((uint8*)sat.r);
+            uint8x16_t gsat1 = vld1q_u8((uint8*)sat.g);
+            uint8x16_t bsat1 = vld1q_u8((uint8*)sat.b);
+            uint8x16_t wsat1 = vld1q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl1q_u8(rsat1, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl1q_u8(gsat1, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl1q_u8(bsat1, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl1q_u8(wsat1, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl1q_u8(rsat1, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl1q_u8(gsat1, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl1q_u8(bsat1, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl1q_u8(wsat1, idx1));
+        }
+        else if (count <= 8) {
+            uint8x16x2_t rsat2 = vld2q_u8((uint8*)sat.r);
+            uint8x16x2_t gsat2 = vld2q_u8((uint8*)sat.g);
+            uint8x16x2_t bsat2 = vld2q_u8((uint8*)sat.b);
+            uint8x16x2_t wsat2 = vld2q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl2q_u8(rsat2, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl2q_u8(gsat2, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl2q_u8(bsat2, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl2q_u8(wsat2, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl2q_u8(rsat2, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl2q_u8(gsat2, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl2q_u8(bsat2, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl2q_u8(wsat2, idx1));
+        }
+        else if (count <= 12) {
+            uint8x16x3_t rsat3 = vld3q_u8((uint8*)sat.r);
+            uint8x16x3_t gsat3 = vld3q_u8((uint8*)sat.g);
+            uint8x16x3_t bsat3 = vld3q_u8((uint8*)sat.b);
+            uint8x16x3_t wsat3 = vld3q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl3q_u8(rsat3, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl3q_u8(gsat3, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl3q_u8(bsat3, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl3q_u8(wsat3, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl3q_u8(rsat3, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl3q_u8(gsat3, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl3q_u8(bsat3, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl3q_u8(wsat3, idx1));
+        }
+        else {
+            // Load SAT.
+            uint8x16x4_t rsat4 = vld4q_u8((uint8*)sat.r);
+            uint8x16x4_t gsat4 = vld4q_u8((uint8*)sat.g);
+            uint8x16x4_t bsat4 = vld4q_u8((uint8*)sat.b);
+            uint8x16x4_t wsat4 = vld4q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl4q_u8(rsat4, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl4q_u8(gsat4, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl4q_u8(bsat4, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl4q_u8(wsat4, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl4q_u8(rsat4, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl4q_u8(gsat4, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl4q_u8(bsat4, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl4q_u8(wsat4, idx1));
+        }
+
+#else
+        // Scalar path
+        x0.x = vzero(); x0.y = vzero(); x0.z = vzero(); w0 = vzero();
+        x1.x = vzero(); x1.y = vzero(); x1.z = vzero(); w1 = vzero();
+
+        for (int l = 0; l < VEC_SIZE; l++) {
+            int c0 = s_threeCluster[i + l].c0 - 1;
+            if (c0 >= 0) {
+                lane(x0.x, l) = sat.r[c0];
+                lane(x0.y, l) = sat.g[c0];
+                lane(x0.z, l) = sat.b[c0];
+                lane(w0, l) = sat.w[c0];
+            }
+
+            int c1 = s_threeCluster[i + l].c1 - 1;
+            if (c1 >= 0) {
+                lane(x1.x, l) = sat.r[c1];
+                lane(x1.y, l) = sat.g[c1];
+                lane(x1.z, l) = sat.b[c1];
+                lane(w1, l) = sat.w[c1];
+            }
+        }
+#endif
+
+        VFloat w2 = vbroadcast(w_sum) - w1;
+        x1 = x1 - x0;
+        w1 = w1 - w0;
+
+        VFloat alphabeta_sum = w1 * vbroadcast(0.25f);
+        VFloat alpha2_sum = w0 + alphabeta_sum;
+        VFloat beta2_sum = w2 + alphabeta_sum;
+        VFloat factor = vrcp(vm2sub(alpha2_sum, beta2_sum, alphabeta_sum, alphabeta_sum));
+
+        VVector3 alphax_sum = x0 + x1 * vbroadcast(0.5f);
+        VVector3 betax_sum = vbroadcast(r_sum, g_sum, b_sum) - alphax_sum;
+
+        VVector3 a = vm2sub(alphax_sum, beta2_sum, betax_sum, alphabeta_sum) * factor;
+        VVector3 b = vm2sub(betax_sum, alpha2_sum, alphax_sum, alphabeta_sum) * factor;
+
+        // snap to the grid
+        a = vround_ept(a);
+        b = vround_ept(b);
+
+        // compute the error
+        VVector3 e2 = vm2sub(a, vmsub(b, alphabeta_sum, alphax_sum), b, betax_sum) * vbroadcast(2.0f);
+        VVector3 e1 = vmadd(a * a, alpha2_sum, vmadd(b * b, beta2_sum, e2));
+
+        // apply the metric to the error term
+        VFloat error = vdot(e1, vbroadcast(metric_sqr));
+
+
+        // keep the solution if it wins
+        auto mask = (error < vbesterror);
+
+        // I could mask the unused lanes here, but instead I set the invalid SAT entries to FLT_MAX.
+        //mask = (mask & (vbroadcast(total_order_count) >= tid8(i))); // This doesn't seem to help. Is it OK to consider elements out of bounds?
+
+        vbesterror = vselect(mask, vbesterror, error);
+        vbeststart = vselect(mask, vbeststart, a);
+        vbestend = vselect(mask, vbestend, b);
+    }
+
+    int bestindex = reduce_min_index(vbesterror);
+
+    start->x = lane(vbeststart.x, bestindex);
+    start->y = lane(vbeststart.y, bestindex);
+    start->z = lane(vbeststart.z, bestindex);
+    end->x = lane(vbestend.x, bestindex);
+    end->y = lane(vbestend.y, bestindex);
+    end->z = lane(vbestend.z, bestindex);
+}
+
+
+static void cluster_fit_four(const SummedAreaTable & sat, int count, Vector3 metric_sqr, Vector3 * start, Vector3 * end)
+{
+    const float r_sum = sat.r[count-1];
+    const float g_sum = sat.g[count-1];
+    const float b_sum = sat.b[count-1];
+    const float w_sum = sat.w[count-1];
+
+    VFloat vbesterror = vbroadcast(FLT_MAX);
+    VVector3 vbeststart = { vzero(), vzero(), vzero() };
+    VVector3 vbestend = { vzero(), vzero(), vzero() };
+
+    // check all possible clusters for this total order
+    const int total_order_count = s_fourClusterTotal[count - 1];
+
+    for (int i = 0; i < total_order_count; i += VEC_SIZE)
+    {
+        VVector3 x0, x1, x2;
+        VFloat w0, w1, w2;
+
+        /*
+        // Another approach would be to load and broadcast one color at a time like I do in my old CUDA implementation.
+        uint akku = 0;
+
+        // Compute alpha & beta for this permutation.
+        #pragma unroll
+        for (int i = 0; i < 16; i++)
+        {
+            const uint bits = permutation >> (2*i);
+
+            alphax_sum += alphaTable4[bits & 3] * colors[i];
+            akku += prods4[bits & 3];
+        }
+
+        float alpha2_sum = float(akku >> 16);
+        float beta2_sum = float((akku >> 8) & 0xff);
+        float alphabeta_sum = float(akku & 0xff);
+        float3 betax_sum = 9.0f * color_sum - alphax_sum;
+        */
+
+#if ICBC_USE_AVX512_PERMUTE
+
+        auto loadmask = lane_id() < vbroadcast(float(count));
+
+        // Load sat in one register:
+        VFloat vrsat = vload(loadmask, sat.r, FLT_MAX);
+        VFloat vgsat = vload(loadmask, sat.g, FLT_MAX);
+        VFloat vbsat = vload(loadmask, sat.b, FLT_MAX);
+        VFloat vwsat = vload(loadmask, sat.w, FLT_MAX);
+
+#if 0
+        // Load 4 uint8 per lane.
+        VInt packedClusterIndex = vload((int *)&s_fourCluster[i]);
+
+        VInt c0 = (packedClusterIndex & 0xFF) - 1;
+        VInt c1 = ((packedClusterIndex >> 8) & 0xFF) - 1;
+        VInt c2 = ((packedClusterIndex >> 16)) - 1; // @@ No need for &
+
+        x0.x = vpermuteif(c0 >= 0, vrsat, c0);
+        x0.y = vpermuteif(c0 >= 0, vgsat, c0);
+        x0.z = vpermuteif(c0 >= 0, vbsat, c0);
+        w0   = vpermuteif(c0 >= 0, vwsat, c0);
+
+        x1.x = vpermuteif(c1 >= 0, vrsat, c1);
+        x1.y = vpermuteif(c1 >= 0, vgsat, c1);
+        x1.z = vpermuteif(c1 >= 0, vbsat, c1);
+        w1   = vpermuteif(c1 >= 0, vwsat, c1);
+
+        x2.x = vpermuteif(c2 >= 0, vrsat, c2);
+        x2.y = vpermuteif(c2 >= 0, vgsat, c2);
+        x2.z = vpermuteif(c2 >= 0, vbsat, c2);
+        w2   = vpermuteif(c2 >= 0, vwsat, c2);
+#else
+
+        // Load 4 uint8 per lane.
+        __m512i packedClusterIndex = _mm512_load_si512((__m512i *)&s_fourCluster[i]);
+
+        // Load index and decrement.
+        auto c0 = _mm512_and_epi32(packedClusterIndex, _mm512_set1_epi32(0xFF));
+        auto c0mask = _mm512_cmpgt_epi32_mask(c0, _mm512_setzero_si512());
+        c0 = _mm512_sub_epi32(c0, _mm512_set1_epi32(1));
+
+        // if upper bit set, zero, otherwise load sat entry.
+        x0.x = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vrsat));
+        x0.y = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vgsat));
+        x0.z = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vbsat));
+        w0 = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vwsat));
+
+        auto c1 = _mm512_and_epi32(_mm512_srli_epi32(packedClusterIndex, 8), _mm512_set1_epi32(0xFF));
+        auto c1mask = _mm512_cmpgt_epi32_mask(c1, _mm512_setzero_si512());
+        c1 = _mm512_sub_epi32(c1, _mm512_set1_epi32(1));
+
+        x1.x = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vrsat));
+        x1.y = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vgsat));
+        x1.z = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vbsat));
+        w1 = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vwsat));
+
+        auto c2 = _mm512_and_epi32(_mm512_srli_epi32(packedClusterIndex, 16), _mm512_set1_epi32(0xFF));
+        auto c2mask = _mm512_cmpgt_epi32_mask(c2, _mm512_setzero_si512());
+        c2 = _mm512_sub_epi32(c2, _mm512_set1_epi32(1));
+
+        x2.x = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vrsat));
+        x2.y = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vgsat));
+        x2.z = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vbsat));
+        w2 = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vwsat));
+#endif
+
+#elif ICBC_USE_AVX2_PERMUTE2
+
+        // Load 4 uint8 per lane.
+        VInt packedClusterIndex = vload((int *)&s_fourCluster[i]);
+
+        VInt c0 = (packedClusterIndex & 0xFF);
+        VInt c1 = ((packedClusterIndex >> 8) & 0xFF);
+        VInt c2 = ((packedClusterIndex >> 16)); // @@ No need for &
+
+        if (count <= 8) {
+            // Load sat.r in one register:
+            VFloat rLo = vload(sat.r);
+            VFloat gLo = vload(sat.g);
+            VFloat bLo = vload(sat.b);
+            VFloat wLo = vload(sat.w);
+
+            x0.x = vpermuteif(c0>0, rLo, c0-1);
+            x0.y = vpermuteif(c0>0, gLo, c0-1);
+            x0.z = vpermuteif(c0>0, bLo, c0-1);
+            w0   = vpermuteif(c0>0, wLo, c0-1);
+
+            x1.x = vpermuteif(c1>0, rLo, c1-1);
+            x1.y = vpermuteif(c1>0, gLo, c1-1);
+            x1.z = vpermuteif(c1>0, bLo, c1-1);
+            w1   = vpermuteif(c1>0, wLo, c1-1);
+
+            x2.x = vpermuteif(c2>0, rLo, c2-1);
+            x2.y = vpermuteif(c2>0, gLo, c2-1);
+            x2.z = vpermuteif(c2>0, bLo, c2-1);
+            w2   = vpermuteif(c2>0, wLo, c2-1);
+        }
+        else {
+            // Load sat.r in two registers:
+            VFloat rLo = vload(sat.r); VFloat rHi = vload(sat.r + 8);
+            VFloat gLo = vload(sat.g); VFloat gHi = vload(sat.g + 8);
+            VFloat bLo = vload(sat.b); VFloat bHi = vload(sat.b + 8);
+            VFloat wLo = vload(sat.w); VFloat wHi = vload(sat.w + 8);
+
+            x0.x = vpermute2if(c0>0, rLo, rHi, c0-1);
+            x0.y = vpermute2if(c0>0, gLo, gHi, c0-1);
+            x0.z = vpermute2if(c0>0, bLo, bHi, c0-1);
+            w0   = vpermute2if(c0>0, wLo, wHi, c0-1);
+
+            x1.x = vpermute2if(c1>0, rLo, rHi, c1-1);
+            x1.y = vpermute2if(c1>0, gLo, gHi, c1-1);
+            x1.z = vpermute2if(c1>0, bLo, bHi, c1-1);
+            w1   = vpermute2if(c1>0, wLo, wHi, c1-1);
+
+            x2.x = vpermute2if(c2>0, rLo, rHi, c2-1);
+            x2.y = vpermute2if(c2>0, gLo, gHi, c2-1);
+            x2.z = vpermute2if(c2>0, bLo, bHi, c2-1);
+            w2   = vpermute2if(c2>0, wLo, wHi, c2-1);
+        }
+
+#elif ICBC_USE_NEON_VTL
+
+        uint8x16_t idx0 = (uint8x16_t &)s_neon_vtl_index0_4[4*i];
+        uint8x16_t idx1 = (uint8x16_t &)s_neon_vtl_index1_4[4*i];
+        uint8x16_t idx2 = (uint8x16_t &)s_neon_vtl_index2_4[4*i];
+
+        if (count <= 4) {
+            uint8x16_t rsat1 = vld1q_u8((uint8*)sat.r);
+            uint8x16_t gsat1 = vld1q_u8((uint8*)sat.g);
+            uint8x16_t bsat1 = vld1q_u8((uint8*)sat.b);
+            uint8x16_t wsat1 = vld1q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl1q_u8(rsat1, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl1q_u8(gsat1, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl1q_u8(bsat1, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl1q_u8(wsat1, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl1q_u8(rsat1, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl1q_u8(gsat1, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl1q_u8(bsat1, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl1q_u8(wsat1, idx1));
+
+            x2.x = vreinterpretq_f32_u8(vqtbl1q_u8(rsat1, idx2));
+            x2.y = vreinterpretq_f32_u8(vqtbl1q_u8(gsat1, idx2));
+            x2.z = vreinterpretq_f32_u8(vqtbl1q_u8(bsat1, idx2));
+            w2   = vreinterpretq_f32_u8(vqtbl1q_u8(wsat1, idx2));
+        }
+        else if (count <= 8) {
+            uint8x16x2_t rsat2 = vld2q_u8((uint8*)sat.r);
+            uint8x16x2_t gsat2 = vld2q_u8((uint8*)sat.g);
+            uint8x16x2_t bsat2 = vld2q_u8((uint8*)sat.b);
+            uint8x16x2_t wsat2 = vld2q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl2q_u8(rsat2, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl2q_u8(gsat2, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl2q_u8(bsat2, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl2q_u8(wsat2, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl2q_u8(rsat2, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl2q_u8(gsat2, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl2q_u8(bsat2, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl2q_u8(wsat2, idx1));
+
+            x2.x = vreinterpretq_f32_u8(vqtbl2q_u8(rsat2, idx2));
+            x2.y = vreinterpretq_f32_u8(vqtbl2q_u8(gsat2, idx2));
+            x2.z = vreinterpretq_f32_u8(vqtbl2q_u8(bsat2, idx2));
+            w2   = vreinterpretq_f32_u8(vqtbl2q_u8(wsat2, idx2));
+        }
+        else if (count <= 12) {
+            uint8x16x3_t rsat3 = vld3q_u8((uint8*)sat.r);
+            uint8x16x3_t gsat3 = vld3q_u8((uint8*)sat.g);
+            uint8x16x3_t bsat3 = vld3q_u8((uint8*)sat.b);
+            uint8x16x3_t wsat3 = vld3q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl3q_u8(rsat3, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl3q_u8(gsat3, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl3q_u8(bsat3, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl3q_u8(wsat3, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl3q_u8(rsat3, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl3q_u8(gsat3, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl3q_u8(bsat3, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl3q_u8(wsat3, idx1));
+
+            x2.x = vreinterpretq_f32_u8(vqtbl3q_u8(rsat3, idx2));
+            x2.y = vreinterpretq_f32_u8(vqtbl3q_u8(gsat3, idx2));
+            x2.z = vreinterpretq_f32_u8(vqtbl3q_u8(bsat3, idx2));
+            w2   = vreinterpretq_f32_u8(vqtbl3q_u8(wsat3, idx2));
+        }
+        else {
+            uint8x16x4_t rsat4 = vld4q_u8((uint8*)sat.r);
+            uint8x16x4_t gsat4 = vld4q_u8((uint8*)sat.g);
+            uint8x16x4_t bsat4 = vld4q_u8((uint8*)sat.b);
+            uint8x16x4_t wsat4 = vld4q_u8((uint8*)sat.w);
+
+            x0.x = vreinterpretq_f32_u8(vqtbl4q_u8(rsat4, idx0));
+            x0.y = vreinterpretq_f32_u8(vqtbl4q_u8(gsat4, idx0));
+            x0.z = vreinterpretq_f32_u8(vqtbl4q_u8(bsat4, idx0));
+            w0   = vreinterpretq_f32_u8(vqtbl4q_u8(wsat4, idx0));
+
+            x1.x = vreinterpretq_f32_u8(vqtbl4q_u8(rsat4, idx1));
+            x1.y = vreinterpretq_f32_u8(vqtbl4q_u8(gsat4, idx1));
+            x1.z = vreinterpretq_f32_u8(vqtbl4q_u8(bsat4, idx1));
+            w1   = vreinterpretq_f32_u8(vqtbl4q_u8(wsat4, idx1));
+
+            x2.x = vreinterpretq_f32_u8(vqtbl4q_u8(rsat4, idx2));
+            x2.y = vreinterpretq_f32_u8(vqtbl4q_u8(gsat4, idx2));
+            x2.z = vreinterpretq_f32_u8(vqtbl4q_u8(bsat4, idx2));
+            w2   = vreinterpretq_f32_u8(vqtbl4q_u8(wsat4, idx2));
+        }
+
+#else
+
+        // Scalar path
+        x0.x = vzero(); x0.y = vzero(); x0.z = vzero(); w0 = vzero();
+        x1.x = vzero(); x1.y = vzero(); x1.z = vzero(); w1 = vzero();
+        x2.x = vzero(); x2.y = vzero(); x2.z = vzero(); w2 = vzero();
+
+        for (int l = 0; l < VEC_SIZE; l++) {
+            int c0 = s_fourCluster[i + l].c0 - 1;
+            if (c0 >= 0) {
+                lane(x0.x, l) = sat.r[c0];
+                lane(x0.y, l) = sat.g[c0];
+                lane(x0.z, l) = sat.b[c0];
+                lane(w0, l) = sat.w[c0];
+            }
+
+            int c1 = s_fourCluster[i + l].c1 - 1;
+            if (c1 >= 0) {
+                lane(x1.x, l) = sat.r[c1];
+                lane(x1.y, l) = sat.g[c1];
+                lane(x1.z, l) = sat.b[c1];
+                lane(w1, l) = sat.w[c1];
+            }
+
+            int c2 = s_fourCluster[i + l].c2 - 1;
+            if (c2 >= 0) {
+                lane(x2.x, l) = sat.r[c2];
+                lane(x2.y, l) = sat.g[c2];
+                lane(x2.z, l) = sat.b[c2];
+                lane(w2, l) = sat.w[c2];
+            }
+        }
+
+#endif
+
+        VFloat w3 = vbroadcast(w_sum) - w2;
+        x2 = x2 - x1;
+        x1 = x1 - x0;
+        w2 = w2 - w1;
+        w1 = w1 - w0;
+
+        VFloat alpha2_sum = vmadd(w2, (1.0f / 9.0f), vmadd(w1, (4.0f / 9.0f), w0));
+        VFloat beta2_sum  = vmadd(w1, (1.0f / 9.0f), vmadd(w2, (4.0f / 9.0f), w3));
+
+        VFloat alphabeta_sum = (w1 + w2) * vbroadcast(2.0f / 9.0f);
+        VFloat factor = vrcp(vm2sub(alpha2_sum, beta2_sum, alphabeta_sum, alphabeta_sum));
+
+        VVector3 alphax_sum = vmadd(x2, (1.0f / 3.0f), vmadd(x1, (2.0f / 3.0f), x0));
+        VVector3 betax_sum = vbroadcast(r_sum, g_sum, b_sum) - alphax_sum;
+
+        VVector3 a = vm2sub(alphax_sum, beta2_sum, betax_sum, alphabeta_sum) * factor;
+        VVector3 b = vm2sub(betax_sum, alpha2_sum, alphax_sum, alphabeta_sum) * factor;
+
+        // snap to the grid
+        a = vround_ept(a);
+        b = vround_ept(b);
+
+        // compute the error
+        VVector3 e2 = vm2sub(a, vmsub(b, alphabeta_sum, alphax_sum), b, betax_sum) * vbroadcast(2.0f);
+        VVector3 e1 = vmadd(a * a, alpha2_sum, vmadd(b * b, beta2_sum, e2));
+
+        // apply the metric to the error term
+        VFloat error = vdot(e1, vbroadcast(metric_sqr));
+
+        // keep the solution if it wins
+        auto mask = (error < vbesterror);
+
+        // We could mask the unused lanes here, but instead set the invalid SAT entries to FLT_MAX.
+        //mask = (mask & (vbroadcast(total_order_count) >= tid8(i))); // This doesn't seem to help. Is it OK to consider elements out of bounds?
+
+        vbesterror = vselect(mask, vbesterror, error);
+        vbeststart = vselect(mask, vbeststart, a);
+        vbestend = vselect(mask, vbestend, b);
+    }
+
+    int bestindex = reduce_min_index(vbesterror);
+
+    start->x = lane(vbeststart.x, bestindex);
+    start->y = lane(vbeststart.y, bestindex);
+    start->z = lane(vbeststart.z, bestindex);
+    end->x = lane(vbestend.x, bestindex);
+    end->y = lane(vbestend.y, bestindex);
+    end->z = lane(vbestend.z, bestindex);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2849,6 +2718,29 @@ static void evaluate_palette(Color16 c0, Color16 c1, Vector3 palette[4]) {
     }
 }
 
+static void decode_dxt1(const BlockDXT1 * block, unsigned char rgba_block[16 * 4], Decoder decoder)
+{
+    Color32 palette[4];
+    if (decoder == Decoder_NVIDIA) {
+        evaluate_palette_nv(block->col0, block->col1, palette);
+    }
+    else if (decoder == Decoder_AMD) {
+        evaluate_palette_amd(block->col0, block->col1, palette);
+    }
+    else {
+        evaluate_palette(block->col0, block->col1, palette);
+    }
+
+    for (int i = 0; i < 16; i++) {
+        int index = (block->indices >> (2 * i)) & 3;
+        Color32 c = palette[index];
+        rgba_block[4 * i + 0] = c.r;
+        rgba_block[4 * i + 1] = c.g;
+        rgba_block[4 * i + 2] = c.b;
+        rgba_block[4 * i + 3] = c.a;
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Error evaluation.
@@ -2900,7 +2792,7 @@ static int evaluate_mse(const BlockDXT1 * output, Color32 color, int index) {
 
 // Returns weighted MSE error in [0-255] range.
 static float evaluate_palette_error(Color32 palette[4], const Color32 * colors, const float * weights, int count) {
-    
+
     float total = 0.0f;
     for (int i = 0; i < count; i++) {
         total += weights[i] * evaluate_mse(palette, colors[i]);
@@ -2919,37 +2811,9 @@ static float evaluate_palette_error(Color32 palette[4], const Color32 * colors, 
     return total;
 }
 
-#if 0
-static float evaluate_mse(const BlockDXT1 * output, const Vector3 colors[16]) {
-    Color32 palette[4];
-    output->evaluatePalette(palette, /*d3d9=*/false);
-
-    // convert palette to float.
-    Vector3 vector_palette[4];
-    for (int i = 0; i < 4; i++) {
-        vector_palette[i] = color_to_vector3(palette[i]);
-    }
-
-    // evaluate error for each index.
-    float error = 0.0f;
-    for (int i = 0; i < 16; i++) {
-        int index = (output->indices >> (2*i)) & 3;
-        error += evaluate_mse(vector_palette[index], colors[i]);
-    }
-
-    return error;
-}
-#endif
-
 static float evaluate_mse(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, const BlockDXT1 * output) {
     Color32 palette[4];
     evaluate_palette(output->col0, output->col1, palette);
-
-    // convert palette to float.
-    /*Vector3 vector_palette[4];
-    for (int i = 0; i < 4; i++) {
-        vector_palette[i] = color_to_vector3(palette[i]);
-    }*/
 
     // evaluate error for each index.
     float error = 0.0f;
@@ -2990,66 +2854,75 @@ float evaluate_dxt1_error(const uint8 rgba_block[16*4], const BlockDXT1 * block,
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Index selection
 
+// @@ Can we interleave the two uint16 at once?
+inline uint32 interleave_uint16_with_zeros(uint32 input)  {
+    uint32 word = input;
+    word = (word ^ (word << 8 )) & 0x00ff00ff;
+    word = (word ^ (word << 4 )) & 0x0f0f0f0f;
+    word = (word ^ (word << 2 )) & 0x33333333;
+    word = (word ^ (word << 1 )) & 0x55555555;
+    return word;
+}
+
+// Interleave the bits. https://lemire.me/blog/2018/01/08/how-fast-can-you-bit-interleave-32-bit-integers/
+ICBC_FORCEINLINE uint32 interleave(uint32 a, uint32 b) {
+#if ICBC_BMI2
+    return _pdep_u32(a, 0x55555555) | _pdep_u32(b, 0xaaaaaaaa);
+#else
+    return interleave_uint16_with_zeros(a) | (interleave_uint16_with_zeros(b) << 1);
+#endif
+}
+
 static uint compute_indices4(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
-    
-    uint indices = 0;
-    for (int i = 0; i < 16; i++) {
-        float d0 = evaluate_mse(palette[0], input_colors[i].xyz, color_weights);
-        float d1 = evaluate_mse(palette[1], input_colors[i].xyz, color_weights);
-        float d2 = evaluate_mse(palette[2], input_colors[i].xyz, color_weights);
-        float d3 = evaluate_mse(palette[3], input_colors[i].xyz, color_weights);
+    uint indices0 = 0;
+    uint indices1 = 0;
 
-        uint b0 = d0 > d3;
-        uint b1 = d1 > d2;
-        uint b2 = d0 > d2;
-        uint b3 = d1 > d3;
-        uint b4 = d2 > d3;
+    VVector3 vw = vbroadcast(color_weights);
+    VVector3 vp0 = vbroadcast(palette[0]) * vw;
+    VVector3 vp1 = vbroadcast(palette[1]) * vw;
+    VVector3 vp2 = vbroadcast(palette[2]) * vw;
+    VVector3 vp3 = vbroadcast(palette[3]) * vw;
 
-        uint x0 = b1 & b2;
-        uint x1 = b0 & b3;
-        uint x2 = b0 & b4;
+    for (int i = 0; i < 16; i += VEC_SIZE) {
+        VVector3 vc = vload(&input_colors[i]) * vw;
 
-        indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
+        VFloat d0 = vlen2(vc - vp0);
+        VFloat d1 = vlen2(vc - vp1);
+        VFloat d2 = vlen2(vc - vp2);
+        VFloat d3 = vlen2(vc - vp3);
+
+        VMask b1 = d1 > d2;
+        VMask b2 = d0 > d2;
+        VMask x0 = b1 & b2;
+
+        VMask b0 = d0 > d3;
+        VMask b3 = d1 > d3;
+        x0 = x0 | (b0 & b3);
+
+        VMask b4 = d2 > d3;
+        VMask x1 = b0 & b4;
+
+        indices0 |= mask(x0) << i;
+        indices1 |= mask(x1) << i;
     }
 
-    return indices;
+    return interleave(indices1, indices0);
 }
 
-
-static uint compute_indices4(const Vector3 input_colors[16], const Vector3 palette[4]) {
+static uint compute_indices3(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
+#if 0
+    Vector3 p0 = palette[0] * color_weights;
+    Vector3 p1 = palette[1] * color_weights;
+    Vector3 p2 = palette[2] * color_weights;
+    Vector3 p3 = palette[3] * color_weights;
 
     uint indices = 0;
     for (int i = 0; i < 16; i++) {
-        float d0 = evaluate_mse(palette[0], input_colors[i], {1,1,1});
-        float d1 = evaluate_mse(palette[1], input_colors[i], {1,1,1});
-        float d2 = evaluate_mse(palette[2], input_colors[i], {1,1,1});
-        float d3 = evaluate_mse(palette[3], input_colors[i], {1,1,1});
-
-        uint b0 = d0 > d3;
-        uint b1 = d1 > d2;
-        uint b2 = d0 > d2;
-        uint b3 = d1 > d3;
-        uint b4 = d2 > d3;
-
-        uint x0 = b1 & b2;
-        uint x1 = b0 & b3;
-        uint x2 = b0 & b4;
-
-        indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
-    }
-
-    return indices;
-}
-
-
-static uint compute_indices(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
-    
-    uint indices = 0;
-    for (int i = 0; i < 16; i++) {
-        float d0 = evaluate_mse(palette[0], input_colors[i].xyz, color_weights);
-        float d1 = evaluate_mse(palette[1], input_colors[i].xyz, color_weights);
-        float d2 = evaluate_mse(palette[2], input_colors[i].xyz, color_weights);
-        float d3 = evaluate_mse(palette[3], input_colors[i].xyz, color_weights);
+        Vector3 ci = input_colors[i].xyz * color_weights;
+        float d0 = lengthSquared(p0 - ci);
+        float d1 = lengthSquared(p1 - ci);
+        float d2 = lengthSquared(p2 - ci);
+        float d3 = lengthSquared(p3 - ci);
 
         uint index;
         if (d0 < d1 && d0 < d2 && d0 < d3) index = 0;
@@ -3057,10 +2930,162 @@ static uint compute_indices(const Vector4 input_colors[16], const Vector3 & colo
         else if (d2 < d3) index = 2;
         else index = 3;
 
-		indices |= index << (2 * i);
-	}
+        indices |= index << (2 * i);
+    }
 
-	return indices;
+    return indices;
+#else
+    uint indices0 = 0;
+    uint indices1 = 0;
+
+    VVector3 vw = vbroadcast(color_weights);
+    VVector3 vp0 = vbroadcast(palette[0]) * vw;
+    VVector3 vp1 = vbroadcast(palette[1]) * vw;
+    VVector3 vp2 = vbroadcast(palette[2]) * vw;
+
+    for (int i = 0; i < 16; i += VEC_SIZE) {
+        VVector3 vc = vload(&input_colors[i]) * vw;
+
+        VFloat d0 = vlen2(vc - vp0);
+        VFloat d1 = vlen2(vc - vp1);
+        VFloat d2 = vlen2(vc - vp2);
+        VFloat d3 = vdot(vc, vc);
+
+        // @@ simplify i1 & i2
+        //VMask i0 = (d0 < d1) & (d0 < d2) & (d0 < d3); // 0
+        VMask i1 = (d1 <= d0) & (d1 < d2) & (d1 < d3); // 1
+        VMask i2 = (d2 <= d0) & (d2 <= d1) & (d2 < d3); // 2
+        VMask i3 = (d3 <= d0) & (d3 <= d1) & (d3 <= d2); // 3
+        //VFloat vindex = vselect(i0, vselect(i1, vselect(i2, vbroadcast(3), vbroadcast(2)), vbroadcast(1)), vbroadcast(0));
+
+        indices0 |= mask(i2 | i3) << i;
+        indices1 |= mask(i1 | i3) << i;
+    }
+
+    uint indices = interleave(indices1, indices0);
+    return indices;
+#endif
+}
+
+
+
+static uint compute_indices4(const Vector3 input_colors[16], const Vector3 palette[4]) {
+#if 0
+    uint indices0 = 0;
+    uint indices1 = 0;
+
+    VVector3 vp0 = vbroadcast(palette[0]);
+    VVector3 vp1 = vbroadcast(palette[1]);
+    VVector3 vp2 = vbroadcast(palette[2]);
+    VVector3 vp3 = vbroadcast(palette[3]);
+
+    for (int i = 0; i < 16; i += VEC_SIZE) {
+        VVector3 vc = vload(&input_colors[i]);
+
+        VFloat d0 = vlen2(vc - vp0);
+        VFloat d1 = vlen2(vc - vp1);
+        VFloat d2 = vlen2(vc - vp2);
+        VFloat d3 = vlen2(vc - vp3);
+
+        VMask b1 = d1 > d2;
+        VMask b2 = d0 > d2;
+        VMask x0 = b1 & b2;
+
+        VMask b0 = d0 > d3;
+        VMask b3 = d1 > d3;
+        x0 = x0 | (b0 & b3);
+
+        VMask b4 = d2 > d3;
+        VMask x1 = b0 & b4;
+
+        indices0 |= mask(x0) << i;
+        indices1 |= mask(x1) << i;
+    }
+
+    return interleave(indices1, indices0);
+#else
+    uint indices = 0;
+    for (int i = 0; i < 16; i++) {
+        Vector3 ci = input_colors[i];
+        float d0 = lengthSquared(palette[0] - ci);
+        float d1 = lengthSquared(palette[1] - ci);
+        float d2 = lengthSquared(palette[2] - ci);
+        float d3 = lengthSquared(palette[3] - ci);
+
+        uint b0 = d0 > d3;
+        uint b1 = d1 > d2;
+        uint b2 = d0 > d2;
+        uint b3 = d1 > d3;
+        uint b4 = d2 > d3;
+
+        uint x0 = b1 & b2;
+        uint x1 = b0 & b3;
+        uint x2 = b0 & b4;
+
+        indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
+    }
+
+    return indices;
+#endif
+}
+
+
+static uint compute_indices(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
+#if 0
+    Vector3 p0 = palette[0] * color_weights;
+    Vector3 p1 = palette[1] * color_weights;
+    Vector3 p2 = palette[2] * color_weights;
+    Vector3 p3 = palette[3] * color_weights;
+
+    uint indices = 0;
+    for (int i = 0; i < 16; i++) {
+        Vector3 ci = input_colors[i].xyz * color_weights;
+        float d0 = lengthSquared(p0 - ci);
+        float d1 = lengthSquared(p1 - ci);
+        float d2 = lengthSquared(p2 - ci);
+        float d3 = lengthSquared(p3 - ci);
+
+        uint index;
+        if (d0 < d1 && d0 < d2 && d0 < d3) index = 0;
+        else if (d1 < d2 && d1 < d3) index = 1;
+        else if (d2 < d3) index = 2;
+        else index = 3;
+
+        indices |= index << (2 * i);
+    }
+
+    return indices;
+#else
+    uint indices0 = 0;
+    uint indices1 = 0;
+
+    VVector3 vw = vbroadcast(color_weights);
+    VVector3 vp0 = vbroadcast(palette[0]) * vw;
+    VVector3 vp1 = vbroadcast(palette[1]) * vw;
+    VVector3 vp2 = vbroadcast(palette[2]) * vw;
+    VVector3 vp3 = vbroadcast(palette[3]) * vw;
+
+    for (int i = 0; i < 16; i += VEC_SIZE) {
+        VVector3 vc = vload(&input_colors[i]) * vw;
+
+        VFloat d0 = vlen2(vc - vp0);
+        VFloat d1 = vlen2(vc - vp1);
+        VFloat d2 = vlen2(vc - vp2);
+        VFloat d3 = vlen2(vc - vp3);
+
+        //VMask i0 = (d0 < d1) & (d0 < d2) & (d0 < d3);
+        VMask i1 = (d1 <= d0) & (d1 < d2) & (d1 < d3);
+        VMask i2 = (d2 <= d0) & (d2 <= d1) & (d2 < d3);
+        VMask i3 = (d3 <= d0) & (d3 <= d1) & (d3 <= d2);
+        //VFloat vindex = vselect(i0, vselect(i1, vselect(i2, vbroadcast(3), vbroadcast(2)), vbroadcast(1)), vbroadcast(0));
+
+        indices0 |= mask(i2 | i3) << i;
+        indices1 |= mask(i1 | i3) << i;
+    }
+
+    uint indices = interleave(indices1, indices0);
+    return indices;
+#endif
 }
 
 
@@ -3290,8 +3315,8 @@ inline static void inset_bbox(Vector3 * __restrict c0, Vector3 * __restrict c1)
 
 // Single color lookup tables from:
 // https://github.com/nothings/stb/blob/master/stb_dxt.h
-static uint8 match5[256][2];
-static uint8 match6[256][2];
+static uint8 s_match5[256][2];
+static uint8 s_match6[256][2];
 
 static inline int Lerp13(int a, int b)
 {
@@ -3327,7 +3352,7 @@ static void PrepareOptTable(uint8 * table, const uint8 * expand, int size)
     }
 }
 
-static void init_dxt1_tables()
+static void init_single_color_tables()
 {
     // Prepare single color lookup tables.
     uint8 expand5[32];
@@ -3335,22 +3360,22 @@ static void init_dxt1_tables()
     for (int i = 0; i < 32; i++) expand5[i] = (i << 3) | (i >> 2);
     for (int i = 0; i < 64; i++) expand6[i] = (i << 2) | (i >> 4);
 
-    PrepareOptTable(&match5[0][0], expand5, 32);
-    PrepareOptTable(&match6[0][0], expand6, 64);
+    PrepareOptTable(&s_match5[0][0], expand5, 32);
+    PrepareOptTable(&s_match6[0][0], expand6, 64);
 }
 
 // Single color compressor, based on:
 // https://mollyrocket.com/forums/viewtopic.php?t=392
 static void compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
 {
-    output->col0.r = match5[c.r][0];
-    output->col0.g = match6[c.g][0];
-    output->col0.b = match5[c.b][0];
-    output->col1.r = match5[c.r][1];
-    output->col1.g = match6[c.g][1];
-    output->col1.b = match5[c.b][1];
+    output->col0.r = s_match5[c.r][0];
+    output->col0.g = s_match6[c.g][0];
+    output->col0.b = s_match5[c.b][0];
+    output->col1.r = s_match5[c.r][1];
+    output->col1.g = s_match6[c.g][1];
+    output->col1.b = s_match5[c.b][1];
     output->indices = 0xaaaaaaaa;
-    
+
     if (output->col0.u < output->col1.u)
     {
         swap(output->col0.u, output->col1.u);
@@ -3388,145 +3413,49 @@ static float compress_dxt1_single_color(const Vector3 * colors, const float * we
     return error;
 }
 
-
-static float compress_dxt1_bounding_box_exhaustive(const Vector4 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, int max_volume, BlockDXT1 * output)
+static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const float input_weights[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, bool use_transparent_black, BlockDXT1 * output)
 {
-    // Compute bounding box.
-    Vector3 min_color = { 1,1,1 };
-    Vector3 max_color = { 0,0,0 };
+    Vector3 metric_sqr = color_weights * color_weights;
 
-    for (int i = 0; i < count; i++) {
-        min_color = min(min_color, colors[i]);
-        max_color = max(max_color, colors[i]);
-    }
+    SummedAreaTable sat;
+    int sat_count = compute_sat(colors, weights, count, &sat);
 
-    // Convert to 5:6:5
-    int min_r = int(31 * min_color.x);
-    int min_g = int(63 * min_color.y);
-    int min_b = int(31 * min_color.z);
-    int max_r = int(31 * max_color.x + 1);
-    int max_g = int(63 * max_color.y + 1);
-    int max_b = int(31 * max_color.z + 1);
-
-    // Expand the box.
-    int range_r = max_r - min_r;
-    int range_g = max_g - min_g;
-    int range_b = max_b - min_b;
-
-    min_r = max(0, min_r - range_r / 2 - 2);
-    min_g = max(0, min_g - range_g / 2 - 2);
-    min_b = max(0, min_b - range_b / 2 - 2);
-
-    max_r = min(31, max_r + range_r / 2 + 2);
-    max_g = min(63, max_g + range_g / 2 + 2);
-    max_b = min(31, max_b + range_b / 2 + 2);
-
-    // Estimate size of search space.
-    int volume = (max_r-min_r+1) * (max_g-min_g+1) * (max_b-min_b+1);
-
-    // if size under search_limit, then proceed. Note that search_volume is sqrt of number of evaluations.
-    if (volume > max_volume) {
-        return FLT_MAX;
-    }
-
-    // @@ Convert to fixed point before building box?
-    Color32 colors32[16];
-    for (int i = 0; i < count; i++) {
-        colors32[i] = vector3_to_color32(colors[i]);
-    }
-
-    float best_error = FLT_MAX;
-    Color16 best0, best1;           // @@ Record endpoints as Color16?
-
-    Color16 c0, c1;
-    Color32 palette[4];
-
-    for(int r0 = min_r; r0 <= max_r; r0++)
-    for(int g0 = min_g; g0 <= max_g; g0++)
-    for(int b0 = min_b; b0 <= max_b; b0++)
-    {
-        c0.r = r0; c0.g = g0; c0.b = b0;
-        palette[0] = bitexpand_color16_to_color32(c0);
-
-        for(int r1 = min_r; r1 <= max_r; r1++)
-        for(int g1 = min_g; g1 <= max_g; g1++)
-        for(int b1 = min_b; b1 <= max_b; b1++)
-        {
-            c1.r = r1; c1.g = g1; c1.b = b1;
-            palette[1] = bitexpand_color16_to_color32(c1);
-
-            if (c0.u > c1.u) {
-                // Evaluate error in 4 color mode.
-                evaluate_palette4(c0, c1, palette);
-            }
-            else {
-                if (three_color_mode) {
-                    // Evaluate error in 3 color mode.
-                    evaluate_palette3(c0, c1, palette);
-                }
-                else {
-                    // Skip 3 color mode.
-                    continue;
-                }
-            }
-
-            float error = evaluate_palette_error(palette, colors32, weights, count);
-
-            if (error < best_error) {
-                best_error = error;
-                best0 = c0;
-                best1 = c1;
-            }
-        }
-    }
-
-    output->col0 = best0;
-    output->col1 = best1;
-
-    Vector3 vector_palette[4];
-    evaluate_palette(output->col0, output->col1, vector_palette);
-
-    output->indices = compute_indices(input_colors, color_weights, vector_palette);
-
-    return best_error / (255 * 255);
-}
-
-
-static void compress_dxt1_cluster_fit(const Vector4 input_colors[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, BlockDXT1 * output)
-{
-    ClusterFit fit;
-    
+    Vector3 start, end;
 #if ICBC_FAST_CLUSTER_FIT
-    if (count > 15) {
-        fit.setColorSet(input_colors, color_weights);
-
-        // start & end are in [0, 1] range.
-        Vector3 start, end;
-        fit.fastCompress4(&start, &end);
-
-        if (three_color_mode && fit.fastCompress3(&start, &end)) {
-            output_block3(input_colors, color_weights, start, end, output);
-        }
-        else {
-            output_block4(input_colors, color_weights, start, end, output);
-        }
-    }
-    else 
+    if (sat_count == 16) fast_cluster_fit_four(sat, metric_sqr, &start, &end);
+    else cluster_fit_four(sat, sat_count, metric_sqr, &start, &end);
+#else
+    cluster_fit_four(sat, sat_count, metric_sqr, &start, &end);
 #endif
-    {
-        fit.setColorSet(colors, weights, count, color_weights);
 
-        // start & end are in [0, 1] range.
-        Vector3 start, end;
-        fit.compress4(&start, &end);
+    output_block4(input_colors, color_weights, start, end, output);
 
-        if (three_color_mode && fit.compress3(&start, &end)) {
-            output_block3(input_colors, color_weights, start, end, output);
+    float best_error = evaluate_mse(input_colors, input_weights, color_weights, output);
+
+    if (three_color_mode) {
+        if (use_transparent_black) {
+            Vector3 tmp_colors[16];
+            float tmp_weights[16];
+            int tmp_count = skip_blacks(colors, weights, count, tmp_colors, tmp_weights);
+            if (!tmp_count) return best_error;
+
+            sat_count = compute_sat(tmp_colors, tmp_weights, tmp_count, &sat);
         }
-        else {
-            output_block4(input_colors, color_weights, start, end, output);
+
+        cluster_fit_three(sat, sat_count, metric_sqr, &start, &end);
+
+        BlockDXT1 three_color_block;
+        output_block3(input_colors, color_weights, start, end, &three_color_block);
+
+        float three_color_error = evaluate_mse(input_colors, input_weights, color_weights, &three_color_block);
+
+        if (three_color_error < best_error) {
+            best_error = three_color_error;
+            *output = three_color_block;
         }
     }
+
+    return best_error;
 }
 
 
@@ -3609,12 +3538,100 @@ static float refine_endpoints(const Vector4 input_colors[16], const float input_
     return best_error;
 }
 
+struct Options {
+    float threshold = 0.0f;
+    bool box_fit = false;
+    bool least_squares_fit = false;
+    bool cluster_fit = false;
+    bool cluster_fit_3 = false;
+    bool cluster_fit_3_black_only = false;
+    bool endpoint_refinement = false;
+};
 
-static float compress_dxt1(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool three_color_mode, bool hq, BlockDXT1 * output)
+static Options setup_options(Quality level, bool enable_three_color_mode, bool enable_transparent_black) {
+    Options opt;
+
+    switch (level) {
+        case Quality_Level1:            // Box fit + least squares fit.
+            opt.box_fit = true;
+            opt.least_squares_fit = true;
+            opt.threshold = 1.0f / 256;
+            break;
+
+        case Quality_Level2:            // Cluster fit 4, threshold = 24.
+            opt.box_fit = true;
+            opt.least_squares_fit = true;
+            opt.cluster_fit = true;
+            opt.cluster_fit_3_black_only = enable_three_color_mode && enable_transparent_black;
+            opt.threshold = 1.0f / 24;
+            break;
+
+        case Quality_Level3:            // Cluster fit 4, threshold = 32.
+            opt.box_fit = true;
+            opt.cluster_fit = true;
+            opt.cluster_fit_3_black_only = enable_three_color_mode && enable_transparent_black;
+            opt.threshold = 1.0f / 32;
+            break;
+
+        case Quality_Level4:            // Cluster fit 3+4, threshold = 48.
+            opt.cluster_fit = true;
+            opt.cluster_fit_3_black_only = enable_three_color_mode && enable_transparent_black;
+            opt.threshold = 1.0f / 48;
+            break;
+
+        case Quality_Level5:            // Cluster fit 3+4, threshold = 64.
+            opt.cluster_fit = true;
+            opt.cluster_fit_3_black_only = enable_three_color_mode && enable_transparent_black;
+            opt.threshold = 1.0f / 64;
+            break;
+
+        case Quality_Level6:            // Cluster fit 3+4, threshold = 96.
+            opt.cluster_fit = true;
+            opt.cluster_fit_3_black_only = enable_three_color_mode && enable_transparent_black;
+            opt.threshold = 1.0f / 96;
+            break;
+
+        case Quality_Level7:            // Cluster fit 3+4, threshold = 128.
+            opt.cluster_fit = true;
+            opt.cluster_fit_3_black_only = enable_three_color_mode && enable_transparent_black;
+            opt.threshold = 1.0f / 128;
+            break;
+
+        case Quality_Level8:            // Cluster fit 3+4, threshold = 256.
+            opt.cluster_fit = true;
+            opt.cluster_fit_3 = enable_three_color_mode;
+            opt.threshold = 1.0f / 256;
+            break;
+
+        case Quality_Level9:           // Cluster fit 3+4, threshold = 256 + Refinement.
+            opt.cluster_fit = true;
+            opt.cluster_fit_3 = enable_three_color_mode;
+            opt.threshold = 1.0f / 256;
+            opt.endpoint_refinement = true;
+            break;
+    }
+
+    return opt;
+}
+
+
+static float compress_dxt1(Quality level, const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool three_color_mode, bool three_color_black, BlockDXT1 * output)
 {
+    Options opt = setup_options(level, three_color_mode, three_color_black);
+
     Vector3 colors[16];
     float weights[16];
-    int count = reduce_colors(input_colors, input_weights, colors, weights);
+    bool any_black = false;
+    int count;
+    if (opt.cluster_fit) {
+        count = reduce_colors(input_colors, input_weights, 16, opt.threshold, colors, weights, &any_black);
+    }
+    else {
+        for (int i = 0; i < 16; i++) {
+            colors[i] = input_colors[i].xyz;
+        }
+        count = 16;
+    }
 
     if (count == 0) {
         // Output trivial block.
@@ -3630,204 +3647,52 @@ static float compress_dxt1(const Vector4 input_colors[16], const float input_wei
         return evaluate_mse(input_colors, input_weights, color_weights, output);
     }
 
+    float error = FLT_MAX;
+
     // Quick end point selection.
-    Vector3 c0, c1;
-    fit_colors_bbox(colors, count, &c0, &c1);
-    inset_bbox(&c0, &c1);
-    select_diagonal(colors, count, &c0, &c1);
-    output_block4(input_colors, color_weights, c0, c1, output);
+    if (opt.box_fit) {
+        Vector3 c0, c1;
+        fit_colors_bbox(colors, count, &c0, &c1);
+        inset_bbox(&c0, &c1);
+        select_diagonal(colors, count, &c0, &c1);
+        output_block4(input_colors, color_weights, c0, c1, output);
 
-    float error = evaluate_mse(input_colors, input_weights, color_weights, output);
+        error = evaluate_mse(input_colors, input_weights, color_weights, output);
 
-    // Refine color for the selected indices.
-    if (optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
-        BlockDXT1 optimized_block;
-        output_block4(input_colors, color_weights, c0, c1, &optimized_block);
+        // Refine color for the selected indices.
+        if (opt.least_squares_fit && optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
+            BlockDXT1 optimized_block;
+            output_block4(input_colors, color_weights, c0, c1, &optimized_block);
 
-        float optimized_error = evaluate_mse(input_colors, input_weights, color_weights, &optimized_block);
-        if (optimized_error < error) {
-            error = optimized_error;
-            *output = optimized_block;
+            float optimized_error = evaluate_mse(input_colors, input_weights, color_weights, &optimized_block);
+            if (optimized_error < error) {
+                error = optimized_error;
+                *output = optimized_block;
+            }
         }
     }
 
-    // @@ Use current endpoints as input for initial PCA approximation?
+    if (opt.cluster_fit) {
+        // @@ Use current endpoints as input for initial PCA approximation?
 
-    // Try cluster fit.
-    BlockDXT1 cluster_fit_output;
-    compress_dxt1_cluster_fit(input_colors, colors, weights, count, color_weights, three_color_mode, &cluster_fit_output);
+        bool use_three_color_black = any_black && three_color_black;
+        bool use_three_color_mode = opt.cluster_fit_3 || (use_three_color_black && opt.cluster_fit_3_black_only);
 
-    float cluster_fit_error = evaluate_mse(input_colors, input_weights, color_weights, &cluster_fit_output);
-    if (cluster_fit_error < error) {
-        *output = cluster_fit_output;
-        error = cluster_fit_error;
+        // Try cluster fit.
+        BlockDXT1 cluster_fit_output;
+        float cluster_fit_error = compress_dxt1_cluster_fit(input_colors, input_weights, colors, weights, count, color_weights, use_three_color_mode, use_three_color_black, &cluster_fit_output);
+        if (cluster_fit_error < error) {
+            *output = cluster_fit_output;
+            error = cluster_fit_error;
+        }
     }
 
-    if (hq) {
+    if (opt.endpoint_refinement) {
         error = refine_endpoints(input_colors, input_weights, color_weights, three_color_mode, error, output);
     }
 
     return error;
 }
-
-
-// 
-static bool centroid_end_points(uint indices, const Vector3 * colors, /*const float * weights,*/ float factor[4], Vector3 * c0, Vector3 * c1) {
-
-    *c0 = { 0,0,0 };
-    *c1 = { 0,0,0 };
-    float w0_sum = 0;
-    float w1_sum = 0;
-
-    for (int i = 0; i < 16; i++) {
-        int idx = (indices >> (2 * i)) & 3;
-        float w0 = factor[idx];// * weights[i];
-        float w1 = (1 - factor[idx]);// * weights[i];
-
-        *c0 += colors[i] * w0;   w0_sum += w0;
-        *c1 += colors[i] * w1;   w1_sum += w1;
-    }
-
-    *c0 *= (1.0f / w0_sum);
-    *c1 *= (1.0f / w1_sum);
-
-    return true;
-}
-
-
-
-static float compress_dxt1_test(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, BlockDXT1 * output)
-{
-    Vector3 colors[16];
-    for (int i = 0; i < 16; i++) {
-        colors[i] = input_colors[i].xyz;
-    }
-    int count = 16;
-
-    // Quick end point selection.
-    Vector3 c0, c1;
-    fit_colors_bbox(colors, count, &c0, &c1);
-    if (c0 == c1) {
-        compress_dxt1_single_color_optimal(vector3_to_color32(c0), output);
-        return evaluate_mse(input_colors, input_weights, color_weights, output);
-    }
-    inset_bbox(&c0, &c1);
-    select_diagonal(colors, count, &c0, &c1);
-
-    output_block4(colors, c0, c1, output);
-    float best_error = evaluate_mse(input_colors, input_weights, color_weights, output);
-
-
-    // Given an index assignment, we can compute end points in two different ways:
-    // - least squares optimization.
-    // - centroid.
-    // Are these different? The first finds the end points that minimize the least squares error.
-    // The second averages the input colors
-
-    while (true) {
-        float last_error = best_error;
-        uint last_indices = output->indices;
-
-        int cluster_counts[4] = { 0, 0, 0, 0 };
-        for (int i = 0; i < 16; i++) {
-            int idx = (output->indices >> (2 * i)) & 3;
-            cluster_counts[idx] += 1;
-        }
-        int n = 0;
-        for (int i = 0; i < 4; i++) n += int(cluster_counts[i] != 0);
-
-        if (n == 4) {
-            float factors[4] = { 1.0f, 0.0f, 2.0f / 3, 1.0f / 3 };
-            if (optimize_end_points4(last_indices, colors, 16, factors, &c0, &c1)) {
-                BlockDXT1 refined_block;
-                output_block4(colors, c0, c1, &refined_block);
-                float new_error = evaluate_mse(input_colors, input_weights, color_weights, &refined_block);
-                if (new_error < best_error) {
-                    best_error = new_error;
-                    *output = refined_block;
-                }
-            }
-        }
-        else if (n == 3) {
-            // 4 options:
-            static const float tables[4][3] = {
-                { 0, 2.f/3, 1.f/3 },    // 0, 1/3, 2/3
-                { 1, 0,     1.f/3 },    // 0, 1/3, 1
-                { 1, 0,     2.f/3 },    // 0, 2/3, 1
-                { 1, 2.f/3, 1.f/3 },    // 1/2, 2/3, 1
-            };
-
-            for (int k = 0; k < 4; k++) {
-                // Remap tables:
-                float factors[4];
-                for (int i = 0, j = 0; i < 4; i++) {
-                    factors[i] = tables[k][j];
-                    if (cluster_counts[i] != 0) j += 1;
-                }
-                if (optimize_end_points4(last_indices, colors, 16, factors, &c0, &c1)) {
-                    BlockDXT1 refined_block;
-                    output_block4(colors, c0, c1, &refined_block);
-                    float new_error = evaluate_mse(input_colors, input_weights, color_weights, &refined_block);
-                    if (new_error < best_error) {
-                        best_error = new_error;
-                        *output = refined_block;
-                    }
-                }
-            }
-
-            // @@ And 1 3-color block:
-            // 0, 1/2, 1
-        }
-        else if (n == 2) {
-
-            // 6 options:
-            static const float tables[6][2] = {
-                { 0, 1.f/3 },       // 0, 1/3
-                { 0, 2.f/3 },       // 0, 2/3
-                { 1, 0 },           // 0, 1
-                { 2.f/3, 1.f/3 },   // 1/3, 2/3
-                { 1, 1.f/3 },       // 1/3, 1
-                { 1, 2.f/3 },       // 2/3, 1
-            };
-
-            for (int k = 0; k < 6; k++) {
-                // Remap tables:
-                float factors[4];
-                for (int i = 0, j = 0; i < 4; i++) {
-                    factors[i] = tables[k][j];
-                    if (cluster_counts[i] != 0) j += 1;
-                }
-                if (optimize_end_points4(last_indices, colors, 16, factors, &c0, &c1)) {
-                    BlockDXT1 refined_block;
-                    output_block4(colors, c0, c1, &refined_block);
-                    float new_error = evaluate_mse(input_colors, input_weights, color_weights, &refined_block);
-                    if (new_error < best_error) {
-                        best_error = new_error;
-                        *output = refined_block;
-                    }
-                }
-            }
-
-            // @@ And 2 3-color blocks:
-            // 0, 0.5
-            // 0.5, 1
-            // 0, 1     // This is equivalent to the 4 color mode.
-        }
-
-        // If error has not improved, stop.
-        //if (best_error == last_error) break;
-
-        // If error has not improved or indices haven't changed, stop.
-        if (output->indices == last_indices || best_error < last_error) break;
-    }
-
-    if (false) {
-        best_error = refine_endpoints(input_colors, input_weights, color_weights, false, best_error, output);
-    }
-
-    return best_error;
-}
-
 
 
 static float compress_dxt1_fast(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, BlockDXT1 * output)
@@ -3894,12 +3759,13 @@ static void compress_dxt1_fast(const uint8 input_colors[16*4], BlockDXT1 * outpu
 
 // Public API
 
-void init() {
-    init_dxt1_tables();
+void init_dxt1() {
+    init_single_color_tables();
+    init_cluster_tables();
 }
 
-float compress_dxt1(const float input_colors[16 * 4], const float input_weights[16], const float rgb[3], bool three_color_mode, bool hq, void * output) {
-    return compress_dxt1((Vector4*)input_colors, input_weights, { rgb[0], rgb[1], rgb[2] }, three_color_mode, hq, (BlockDXT1*)output);
+float compress_dxt1(Quality level, const float * input_colors, const float * input_weights, const float rgb[3], bool three_color_mode, bool three_color_black, void * output) {
+    return compress_dxt1(level, (Vector4*)input_colors, input_weights, { rgb[0], rgb[1], rgb[2] }, three_color_mode, three_color_black, (BlockDXT1*)output);
 }
 
 float compress_dxt1_fast(const float input_colors[16 * 4], const float input_weights[16], const float rgb[3], void * output) {
@@ -3910,13 +3776,64 @@ void compress_dxt1_fast(const unsigned char input_colors[16 * 4], void * output)
     compress_dxt1_fast(input_colors, (BlockDXT1*)output);
 }
 
-void compress_dxt1_test(const float input_colors[16 * 4], const float input_weights[16], const float rgb[3], void * output) {
-    compress_dxt1_test((Vector4*)input_colors, input_weights, { rgb[0], rgb[1], rgb[2] }, (BlockDXT1*)output);
+void decode_dxt1(const void * block, unsigned char rgba_block[16 * 4], Decoder decoder/*=Decoder_D3D10*/) {
+    decode_dxt1((const BlockDXT1 *)block, rgba_block, decoder);
 }
 
 float evaluate_dxt1_error(const unsigned char rgba_block[16 * 4], const void * dxt_block, Decoder decoder/*=Decoder_D3D10*/) {
-    return evaluate_dxt1_error(rgba_block, (BlockDXT1 *)dxt_block, decoder);
+    return evaluate_dxt1_error(rgba_block, (const BlockDXT1 *)dxt_block, decoder);
 }
 
 } // icbc
+
+// // Do not polute preprocessor definitions.
+// #undef ICBC_DECODER
+// #undef ICBC_SIMD
+// #undef ICBC_ASSERT
+
+// #undef ICBC_FLOAT
+// #undef ICBC_SSE2
+// #undef ICBC_SSE41
+// #undef ICBC_AVX1
+// #undef ICBC_AVX2
+// #undef ICBC_AVX512
+// #undef ICBC_NEON
+// #undef ICBC_VMX
+
+// #undef ICBC_USE_FMA
+// #undef ICBC_USE_AVX2_PERMUTE2
+// #undef ICBC_USE_AVX512_PERMUTE
+// #undef ICBC_USE_NEON_VTL
+
+// #undef ICBC_FAST_CLUSTER_FIT
+// #undef ICBC_PERFECT_ROUND
+// #undef ICBC_USE_SAT
+
 #endif // ICBC_IMPLEMENTATION
+
+// Version History:
+// v1.00 - Initial release.
+// v1.01 - Added SPMD code path with AVX support.
+// v1.02 - Removed SIMD code path.
+// v1.03 - Quality levels. AVX512, Neon, Altivec, vectorized reduction and index selection.
+
+// Copyright (c) 2020 Ignacio Castano <castano@gmail.com>
+//
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the
+// "Software"), to	deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to
+// permit persons to whom the Software is furnished to do so, subject to
+// the following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+// IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+// CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+// TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

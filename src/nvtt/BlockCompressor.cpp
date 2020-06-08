@@ -214,8 +214,8 @@ void FastCompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], co
 }
 void CompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], const CompressionOptions::Private & compressionOptions, void * output)
 {
-    bool hq = compressionOptions.quality > Quality_Normal;
-    icbc::compress_dxt1((float*)colors, weights, compressionOptions.colorWeight.component, /*three_color_mode*/true, hq, output);
+    auto quality_level = compressionOptions.quality > Quality_Normal ? icbc::Quality_Max : icbc::Quality_Default;
+    icbc::compress_dxt1(quality_level, (float*)colors, weights, compressionOptions.colorWeight.component, /*three_color_mode*/true, /*three_color_black*/true, output);
 }
 
 

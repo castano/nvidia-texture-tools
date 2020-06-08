@@ -61,7 +61,7 @@ float nv::compress_dxt5_rgbm(const Vector4 input_colors[16], const float input_w
     float color_weights[3] = { 1.0f,1.0f,1.0f };
 
     // Compress RGB.
-    icbc::compress_dxt1((float *)input_colors_rgbm, rgb_weights, color_weights, /*three_color_mode=*/false, /*hq=*/false, &output->color);
+    icbc::compress_dxt1(icbc::Quality_Default, (float *)input_colors_rgbm, rgb_weights, color_weights, /*three_color_mode=*/false, /*hq=*/false, &output->color);
 
     // Decompress RGB/M block.
     nv::ColorBlock RGB;
