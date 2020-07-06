@@ -4,6 +4,5 @@
 	<PropertyGroup Label="UserMacros">
 		<SrcDir>$(SolutionDir)..\..\src</SrcDir>
 		<ExternDir>$(SolutionDir)..\..\extern</ExternDir>
-		<GnuWinDir>$(ExternDir)\gnuwin32</GnuWinDir>
 	</PropertyGroup>
 </Project>

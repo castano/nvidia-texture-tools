@@ -13,3 +13,4 @@
 *.sdf
 *.suo
 build
+.vs

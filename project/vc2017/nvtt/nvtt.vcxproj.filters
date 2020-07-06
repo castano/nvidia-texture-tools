@@ -27,7 +27,6 @@
     <ClInclude Include="..\..\..\src\nvtt\cuda\CudaUtils.h">
       <Filter>cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\nvtt\ClusterFit.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressionOptions.h" />
     <ClInclude Include="..\..\..\src\nvtt\Compressor.h" />
     <ClInclude Include="..\..\..\src\nvtt\CompressorDX10.h" />
@@ -56,7 +55,6 @@
     <ClCompile Include="..\..\..\src\nvtt\cuda\CudaUtils.cpp">
       <Filter>cuda</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\nvtt\ClusterFit.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressionOptions.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorDX10.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorDX11.cpp" />
@@ -73,7 +71,6 @@
     <ClCompile Include="..\..\..\src\nvtt\CubeSurface.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\Surface.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\BlockCompressor.cpp" />
-    <ClCompile Include="..\..\..\src\nvtt\TaskDispatcher.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorDXT5_RGBM.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\CompressorETC.cpp" />
     <ClCompile Include="..\..\..\src\nvtt\icbc.cpp" />
