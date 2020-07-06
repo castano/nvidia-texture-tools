@@ -201,6 +201,7 @@ enum Mode {
     Mode_ETC2_EtcLib,
     Mode_ETC1_RgEtc,
     Mode_ETC1_Intel,
+    Mode_ETC1_Ericson,
     Mode_ETC2_RGBM,
     Mode_PVR,
     Mode_Count
@@ -228,6 +229,7 @@ static const char * s_modeNames[] = {
     "ETC2-EtcLib",
     "ETC1-RgEtc",
     "ETC1-Intel",
+    "ETC1-Ericson",
     "ETC2-RGBM",
     "PVR",
 };
