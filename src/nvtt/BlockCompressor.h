@@ -157,6 +157,20 @@ namespace nv
     };
 #endif
 
+#if defined(HAVE_ETCPACK)
+    struct EtcPackCompressor : public CompressorInterface
+    {
+        virtual void compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+    };
+#endif
+
+#if defined(HAVE_ETCINTEL)
+    struct EtcIntelCompressor : public CompressorInterface
+    {
+        virtual void compress(nvtt::AlphaMode alphaMode, uint w, uint h, uint d, const float * data, nvtt::TaskDispatcher * dispatcher, const nvtt::CompressionOptions::Private & compressionOptions, const nvtt::OutputOptions::Private & outputOptions);
+    };
+#endif
+
 #if defined(HAVE_PVRTEXTOOL)
     struct CompressorPVR : public CompressorInterface
     {

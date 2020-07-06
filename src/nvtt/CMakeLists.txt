@@ -27,7 +27,10 @@ SET(NVTT_SRCS
     cuda/CudaUtils.h cuda/CudaUtils.cpp
     cuda/CudaMath.h
     cuda/BitmapTable.h
-    cuda/CudaCompressorDXT.h cuda/CudaCompressorDXT.cpp)
+    cuda/CudaCompressorDXT.h cuda/CudaCompressorDXT.cpp
+    ${NV_SOURCE_DIR}/extern/rg_etc1_v104/rg_etc1.h ${NV_SOURCE_DIR}/extern/rg_etc1_v104/rg_etc1.cpp
+    ${NV_SOURCE_DIR}/extern/etcpack/etcpack.cxx ${NV_SOURCE_DIR}/extern/etcpack/etcdec.cxx
+    )
 
 IF (CUDA_FOUND)
     ADD_DEFINITIONS(-DHAVE_CUDA)
@@ -41,6 +44,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${NV_SOURCE_DIR}/extern/rg_etc1_v104)
 
 ADD_DEFINITIONS(-DNVTT_EXPORTS)
+ADD_DEFINITIONS(-DHAVE_RGETC)
+#ADD_DEFINITIONS(-DHAVE_ETCPACK)
 
 IF(NVTT_SHARED)	
     ADD_LIBRARY(nvtt SHARED ${NVTT_SRCS})

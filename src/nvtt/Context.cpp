@@ -1058,6 +1058,12 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
 #if defined(HAVE_ETCLIB)
         if (compressionOptions.externalCompressor == "etclib") return new EtcLibCompressor;
 #endif
+#if defined(HAVE_ETCPACK)
+        if (compressionOptions.format == Format_ETC1 && compressionOptions.externalCompressor == "etcpack") return new EtcPackCompressor;
+#endif
+#if defined(HAVE_ETCINTEL)
+        if (compressionOptions.format == Format_ETC1 && compressionOptions.externalCompressor == "intel") return new EtcIntelCompressor;
+#endif
         if (compressionOptions.format == Format_ETC1) return new CompressorETC1;
         else if (compressionOptions.format == Format_ETC2_R) return new CompressorETC2_R;
         //else if (compressionOptions.format == Format_ETC2_RG) return new CompressorETC2_RG;

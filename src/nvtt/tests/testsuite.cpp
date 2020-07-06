@@ -200,6 +200,7 @@ enum Mode {
     Mode_ETC1_EtcLib,
     Mode_ETC2_EtcLib,
     Mode_ETC1_RgEtc,
+    Mode_ETC1_Intel,
     Mode_ETC2_RGBM,
     Mode_PVR,
     Mode_Count
@@ -226,6 +227,7 @@ static const char * s_modeNames[] = {
     "ETC1-EtcLib",
     "ETC2-EtcLib",
     "ETC1-RgEtc",
+    "ETC1-Intel",
     "ETC2-RGBM",
     "PVR",
 };
@@ -665,6 +667,16 @@ int main(int argc, char *argv[])
         {
             format = nvtt::Format_ETC1;
             compressor_name = "rg_etc";
+        }
+        else if (mode == Mode_ETC1_Ericson)
+        {
+            format = nvtt::Format_ETC1;
+            compressor_name = "etcpack";
+        }
+        else if (mode == Mode_ETC1_Intel)
+        {
+            format = nvtt::Format_ETC1;
+            compressor_name = "intel";
         }
         else if (mode == Mode_ETC2_RGBM)
         {
