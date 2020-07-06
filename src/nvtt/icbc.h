@@ -1,4 +1,4 @@
-// icbc.h v1.03
+// icbc.h v1.04
 // A High Quality SIMD BC1 Encoder by Ignacio Castano <castano@gmail.com>.
 //
 // LICENSE:
@@ -9,7 +9,13 @@
 
 namespace icbc {
 
-    void init_dxt1();
+    enum Decoder {
+        Decoder_D3D10 = 0,
+        Decoder_NVIDIA = 1,
+        Decoder_AMD = 2
+    };
+
+    void init_dxt1(Decoder decoder = Decoder_D3D10);
 
     enum Quality {
         Quality_Level1,  // Box fit + least squares fit.
@@ -27,22 +33,10 @@ namespace icbc {
         Quality_Max = Quality_Level9,
     };
 
-    float compress_dxt1(Quality level, const float * input_colors, const float * input_weights, const float color_weights[3], bool three_color_mode, bool three_color_black, void * output);
-
-    // @@ Is there any difference between this and compress_dxt1(Quality_Level0) ?
-    float compress_dxt1_fast(const float input_colors[16 * 4], const float input_weights[16], const float color_weights[3], void * output);
-    void compress_dxt1_fast(const unsigned char input_colors[16 * 4], void * output);
-
-
-    enum Decoder {
-        Decoder_D3D10 = 0,
-        Decoder_NVIDIA = 1,
-        Decoder_AMD = 2
-    };
-
     void decode_dxt1(const void * block, unsigned char rgba_block[16 * 4], Decoder decoder = Decoder_D3D10);
     float evaluate_dxt1_error(const unsigned char rgba_block[16 * 4], const void * block, Decoder decoder = Decoder_D3D10);
 
+    float compress_dxt1(Quality level, const float * input_colors, const float * input_weights, const float color_weights[3], bool three_color_mode, bool three_color_black, void * output);
 }
 
 #endif // ICBC_H
@@ -50,7 +44,7 @@ namespace icbc {
 #ifdef ICBC_IMPLEMENTATION
 
 // Instruction level support must be chosen at compile time setting ICBC_SIMD to one of these values:
-#define ICBC_FLOAT  0
+#define ICBC_SCALAR 0
 #define ICBC_SSE2   1
 #define ICBC_SSE41  2
 #define ICBC_AVX1   3
@@ -59,13 +53,47 @@ namespace icbc {
 #define ICBC_NEON   -1
 #define ICBC_VMX    -2
 
-// SIMD version. (FLOAT=0, SSE2=1, SSE41=2, AVX1=3, AVX2=4, AVX512=5, NEON=-1, VMX=-2)
-#ifndef ICBC_SIMD
-#if _M_ARM
-#define ICBC_SIMD -1
-#else
-#define ICBC_SIMD 4
+#if defined(__i386__) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64)
+    #define ICBC_X86 1
 #endif
+
+#if (defined(__arm__) || defined(_M_ARM))
+    #define ICBC_ARM 1
+#endif
+
+#if (defined(__PPC__) || defined(_M_PPC))
+    #define ICBC_PPC 1
+#endif
+
+// SIMD version.
+#ifndef ICBC_SIMD
+    #if ICBC_X86
+        #if __AVX512F__
+            #define ICBC_SIMD ICBC_AVX512
+        #elif __AVX2__
+            #define ICBC_SIMD ICBC_AVX2
+        #elif __AVX__
+            #define ICBC_SIMD ICBC_AVX1
+        #elif __SSE4_1__
+            #define ICBC_SIMD ICBC_SSE41
+        #elif __SSE2__
+            #define ICBC_SIMD ICBC_SSE2
+        #else
+            #define ICBC_SIMD ICBC_SCALAR
+        #endif
+    #endif
+
+    #if ICBC_ARM
+        #if __ARM_NEON__
+            #define ICBC_SIMD ICBC_NEON
+        #else
+            #define ICBC_SIMD ICBC_SCALAR
+        #endif
+    #endif
+
+    #if ICBC_PPC
+        #define ICBC_SIMD ICBC_VMX
+    #endif
 #endif
 
 // AVX1 does not require FMA, and depending on whether it's Intel or AMD you may have FMA3 or FMA4. What a mess.
@@ -93,10 +121,6 @@ namespace icbc {
 #define ICBC_USE_NEON_VTL 0         // Not tested.
 #endif
 
-
-#ifndef ICBC_DECODER
-#define ICBC_DECODER 0       // 0 = d3d10, 1 = nvidia, 2 = amd
-#endif
 
 // Some experimental knobs:
 #define ICBC_PERFECT_ROUND 0        // Enable perfect rounding to compute cluster fit residual.
@@ -133,7 +157,7 @@ namespace icbc {
 #include <stdint.h>
 #include <stdlib.h> // abs
 #include <string.h> // memset
-#include <math.h>   // floorf
+#include <math.h>   // fabsf
 #include <float.h>  // FLT_MAX
 
 #ifndef ICBC_ASSERT
@@ -280,14 +304,6 @@ inline Vector3 max(Vector3 a, Vector3 b) {
     return { max(a.x, b.x), max(a.y, b.y), max(a.z, b.z) };
 }
 
-inline Vector3 round(Vector3 v) {
-    return { floorf(v.x+0.5f), floorf(v.y + 0.5f), floorf(v.z + 0.5f) };
-}
-
-inline Vector3 floor(Vector3 v) {
-    return { floorf(v.x), floorf(v.y), floorf(v.z) };
-}
-
 inline bool operator==(const Vector3 & a, const Vector3 & b) {
     return a.x == b.x && a.y == b.y && a.z == b.z;
 }
@@ -341,9 +357,9 @@ ICBC_FORCEINLINE int ctz(uint mask) {
 }
 
 
-#if ICBC_SIMD == ICBC_FLOAT  // Purely scalar version.
+#if ICBC_SIMD == ICBC_SCALAR  // Purely scalar version.
 
-#define VEC_SIZE 1
+constexpr int VEC_SIZE = 1;
 
 using VFloat = float;
 using VMask = bool;
@@ -368,9 +384,10 @@ ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d
 
 #elif ICBC_SIMD == ICBC_SSE2 || ICBC_SIMD == ICBC_SSE41
 
-#define VEC_SIZE 4
+constexpr int VEC_SIZE = 4;
 
 #if __GNUC__
+// GCC needs a struct so that we can overload operators.
 union VFloat {
     __m128 v;
     float m128_f32[VEC_SIZE];
@@ -455,11 +472,11 @@ ICBC_FORCEINLINE VFloat vsaturate(VFloat a) {
     return _mm_min_ps(_mm_max_ps(a, zero), one);
 }
 
+// Assumes a is in [0, 1] range.
 ICBC_FORCEINLINE VFloat vround01(VFloat a) {
 #if ICBC_SIMD == ICBC_SSE41
     return _mm_round_ps(a, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
 #else
-    // @@ Assumes a is positive and small.
     return _mm_cvtepi32_ps(_mm_cvttps_epi32(a + vbroadcast(0.5f)));
 #endif
 }
@@ -537,7 +554,7 @@ ICBC_FORCEINLINE void vtranspose4(VFloat & r0, VFloat & r1, VFloat & r2, VFloat 
 
 #elif ICBC_SIMD == ICBC_AVX1 || ICBC_SIMD == ICBC_AVX2
 
-#define VEC_SIZE 8
+constexpr int VEC_SIZE = 8;
 
 #if __GNUC__
 union VFloat {
@@ -733,11 +750,6 @@ ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d
     d = _mm256_unpackhi_ps(r2, r3);
 }
 
-ICBC_FORCEINLINE int lane(VInt v, int i) {
-    //return _mm256_extract_epi32(v, i);
-    return v.m256_i32[i];
-}
-
 ICBC_FORCEINLINE VInt vzeroi() {
     return _mm256_setzero_si256();
 }
@@ -780,33 +792,10 @@ ICBC_FORCEINLINE VFloat vpermute2if(VMask mask, VFloat vlo, VFloat vhi, VInt idx
 #endif
 }
 
-ICBC_FORCEINLINE VFloat vgatherifpositive(const float * base, VInt vidx) {
-    VFloat v = vzero();
-    for (int i = 0; i < VEC_SIZE; i++) {
-        int idx = lane(vidx, i);
-        if (idx >= 0) lane(v, i) = base[idx];
-    }
-    return v;
-}
-
-ICBC_FORCEINLINE VFloat vmask_gather(VMask mask, const float * base, VInt vidx) {
-#if 1//ICBC_SIMD == ICBC_AVX2
-    VFloat v = vzero();
-    return _mm256_mask_i32gather_ps(v, base, vidx, mask, 4);
-#else
-    VFloat v = vzero();
-    for (int i = 0; i < VEC_SIZE; i++) {
-        int idx = lane(vidx, i);
-        if (idx >= 0) lane(v, i) = base[idx];
-    }
-    return v;
-#endif
-}
-
 
 #elif ICBC_SIMD == ICBC_AVX512
 
-#define VEC_SIZE 16
+constexpr int VEC_SIZE = 16;
 
 #if __GNUC__
 union VFloat {
@@ -819,7 +808,7 @@ union VFloat {
 };
 union VInt {
     __m512i v;
-    int m512_i32[VEC_SIZE];
+    int m512i_i32[VEC_SIZE];
 
     VInt() {}
     VInt(__m512i v) : v(v) {}
@@ -954,7 +943,7 @@ ICBC_FORCEINLINE int reduce_min_index(VFloat v) {
 
 ICBC_FORCEINLINE int lane(VInt v, int i) {
     //return _mm256_extract_epi32(v, i);
-    return v.m512_i32[i];
+    return v.m512i_i32[i];
 }
 
 ICBC_FORCEINLINE VInt vzeroi() {
@@ -970,21 +959,22 @@ ICBC_FORCEINLINE VInt vload(const int * ptr) {
 }
 
 ICBC_FORCEINLINE VInt operator- (VInt A, int b) { return _mm512_sub_epi32(A, vbroadcast(b)); }
-ICBC_FORCEINLINE VInt operator& (VInt A, int b) { return _mm512_and_si256(A, vbroadcast(b)); }
+ICBC_FORCEINLINE VInt operator& (VInt A, int b) { return _mm512_and_epi32(A, vbroadcast(b)); }
 ICBC_FORCEINLINE VInt operator>> (VInt A, int b) { return _mm512_srli_epi32(A, b); }
 
-ICBC_FORCEINLINE VMask operator> (VInt A, int b) { return _mm512_cmpgt_epi32_mask(A, vbroadcast(b)); }
-ICBC_FORCEINLINE VMask operator== (VInt A, int b) { return _mm512_cmpeq_epi32_mask(A, vbroadcast(b)); }
+ICBC_FORCEINLINE VMask operator> (VInt A, int b) { return { _mm512_cmpgt_epi32_mask(A, vbroadcast(b)) }; }
+ICBC_FORCEINLINE VMask operator>=(VInt A, int b) { return { _mm512_cmpge_epi32_mask(A, vbroadcast(b)) }; }
+ICBC_FORCEINLINE VMask operator== (VInt A, int b) { return { _mm512_cmpeq_epi32_mask(A, vbroadcast(b)) }; }
 
 // mask ? v[idx] : 0
 ICBC_FORCEINLINE VFloat vpermuteif(VMask mask, VFloat v, VInt idx) {
-    return _mm256_maskz_permutexvar_ps(mask, idx, v);
+    return _mm512_maskz_permutexvar_ps(mask.m, idx, v);
 }
 
 
 #elif ICBC_SIMD == ICBC_NEON
 
-#define VEC_SIZE 4
+constexpr int VEC_SIZE = 4;
 
 #if __GNUC__
 union VFloat {
@@ -1071,7 +1061,6 @@ ICBC_FORCEINLINE VFloat vround01(VFloat a) {
 #if __ARM_RACH >= 8
     return vrndqn_f32(a);   // Round to integral (to nearest, ties to even)
 #else
-    // @@ Assumes a is positive and ~small
     return vcvtq_f32_s32(vcvtq_s32_f32(a + vbroadcast(0.5)));
 #endif
 }
@@ -1185,7 +1174,7 @@ ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d
 
 #elif ICBC_SIMD == ICBC_VMX
 
-#define VEC_SIZE 4
+constexpr int VEC_SIZE = 4;
 
 union VFloat {
     vectro float v;
@@ -1319,7 +1308,7 @@ ICBC_FORCEINLINE void vtranspose4(VFloat & a, VFloat & b, VFloat & c, VFloat & d
 
 #endif // ICBC_SIMD == *
 
-#if ICBC_SIMD != ICBC_FLOAT
+#if ICBC_SIMD != ICBC_SCALAR
 ICBC_FORCEINLINE VFloat vmadd(VFloat a, float b, VFloat c) {
     VFloat vb = vbroadcast(b);
     return vmadd(a, vb, c);
@@ -1428,7 +1417,7 @@ ICBC_FORCEINLINE VVector3 vmadd(VVector3 a, VFloat b, VVector3 c) {
     return v8;
 }
 
-#if ICBC_SIMD != ICBC_FLOAT
+#if ICBC_SIMD != ICBC_SCALAR
 ICBC_FORCEINLINE VVector3 vmadd(VVector3 a, float b, VVector3 c) {
     VVector3 v8;
     VFloat vb = vbroadcast(b);
@@ -2036,28 +2025,21 @@ static void cluster_fit_three(const SummedAreaTable & sat, int count, Vector3 me
         VFloat vwsat = vload(loadmask, sat.w, FLT_MAX);
 
         // Load 4 uint8 per lane.
-        __m512i packedClusterIndex = _mm512_load_si512((__m512i *)&s_threeCluster[i]);
+        VInt packedClusterIndex = vload((int *)&s_threeCluster[i]);
 
-        // Load index and decrement.
-        auto c0 = _mm512_and_epi32(packedClusterIndex, _mm512_set1_epi32(0xFF));
-        auto c0mask = _mm512_cmpgt_epi32_mask(c0, _mm512_setzero_si512());
-        c0 = _mm512_sub_epi32(c0, _mm512_set1_epi32(1));
+        VInt c0 = (packedClusterIndex & 0xFF) - 1;
+        VInt c1 = (packedClusterIndex >> 8) - 1;
 
-        // @@ Avoid blend_ps?
-        // if upper bit set, zero, otherwise load sat entry.
-        x0.x = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vrsat));
-        x0.y = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vgsat));
-        x0.z = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vbsat));
-        w0 = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vwsat));
+        x0.x = vpermuteif(c0 >= 0, vrsat, c0);
+        x0.y = vpermuteif(c0 >= 0, vgsat, c0);
+        x0.z = vpermuteif(c0 >= 0, vbsat, c0);
+        w0   = vpermuteif(c0 >= 0, vwsat, c0);
 
-        auto c1 = _mm512_and_epi32(_mm512_srli_epi32(packedClusterIndex, 8), _mm512_set1_epi32(0xFF));
-        auto c1mask = _mm512_cmpgt_epi32_mask(c1, _mm512_setzero_si512());
-        c1 = _mm512_sub_epi32(c1, _mm512_set1_epi32(1));
+        x1.x = vpermuteif(c1 >= 0, vrsat, c1);
+        x1.y = vpermuteif(c1 >= 0, vgsat, c1);
+        x1.z = vpermuteif(c1 >= 0, vbsat, c1);
+        w1   = vpermuteif(c1 >= 0, vwsat, c1);
 
-        x1.x = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vrsat));
-        x1.y = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vgsat));
-        x1.z = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vbsat));
-        w1 = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vwsat));
 
 #elif ICBC_USE_AVX2_PERMUTE2
 
@@ -2295,7 +2277,6 @@ static void cluster_fit_four(const SummedAreaTable & sat, int count, Vector3 met
         VFloat vbsat = vload(loadmask, sat.b, FLT_MAX);
         VFloat vwsat = vload(loadmask, sat.w, FLT_MAX);
 
-#if 0
         // Load 4 uint8 per lane.
         VInt packedClusterIndex = vload((int *)&s_fourCluster[i]);
 
@@ -2317,40 +2298,6 @@ static void cluster_fit_four(const SummedAreaTable & sat, int count, Vector3 met
         x2.y = vpermuteif(c2 >= 0, vgsat, c2);
         x2.z = vpermuteif(c2 >= 0, vbsat, c2);
         w2   = vpermuteif(c2 >= 0, vwsat, c2);
-#else
-
-        // Load 4 uint8 per lane.
-        __m512i packedClusterIndex = _mm512_load_si512((__m512i *)&s_fourCluster[i]);
-
-        // Load index and decrement.
-        auto c0 = _mm512_and_epi32(packedClusterIndex, _mm512_set1_epi32(0xFF));
-        auto c0mask = _mm512_cmpgt_epi32_mask(c0, _mm512_setzero_si512());
-        c0 = _mm512_sub_epi32(c0, _mm512_set1_epi32(1));
-
-        // if upper bit set, zero, otherwise load sat entry.
-        x0.x = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vrsat));
-        x0.y = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vgsat));
-        x0.z = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vbsat));
-        w0 = _mm512_mask_blend_ps(c0mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c0, vwsat));
-
-        auto c1 = _mm512_and_epi32(_mm512_srli_epi32(packedClusterIndex, 8), _mm512_set1_epi32(0xFF));
-        auto c1mask = _mm512_cmpgt_epi32_mask(c1, _mm512_setzero_si512());
-        c1 = _mm512_sub_epi32(c1, _mm512_set1_epi32(1));
-
-        x1.x = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vrsat));
-        x1.y = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vgsat));
-        x1.z = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vbsat));
-        w1 = _mm512_mask_blend_ps(c1mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c1, vwsat));
-
-        auto c2 = _mm512_and_epi32(_mm512_srli_epi32(packedClusterIndex, 16), _mm512_set1_epi32(0xFF));
-        auto c2mask = _mm512_cmpgt_epi32_mask(c2, _mm512_setzero_si512());
-        c2 = _mm512_sub_epi32(c2, _mm512_set1_epi32(1));
-
-        x2.x = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vrsat));
-        x2.y = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vgsat));
-        x2.z = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vbsat));
-        w2 = _mm512_mask_blend_ps(c2mask, _mm512_setzero_ps(), _mm512_permutexvar_ps(c2, vwsat));
-#endif
 
 #elif ICBC_USE_AVX2_PERMUTE2
 
@@ -2586,6 +2533,8 @@ static void cluster_fit_four(const SummedAreaTable & sat, int count, Vector3 met
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Palette evaluation.
 
+Decoder s_decoder = Decoder_D3D10;
+
 // D3D10
 inline void evaluate_palette4_d3d10(Color16 c0, Color16 c1, Color32 palette[4]) {
     palette[2].r = (2 * palette[0].r + palette[1].r) / 3;
@@ -2651,20 +2600,20 @@ static void evaluate_palette_nv(Color16 c0, Color16 c1, Color32 palette[4]) {
 
 // AMD
 inline void evaluate_palette4_amd(Color16 c0, Color16 c1, Color32 palette[4]) {
-    palette[2].r = (43 * palette[0].r + 21 * palette[1].r + 32) / 8;
-    palette[2].g = (43 * palette[0].g + 21 * palette[1].g + 32) / 8;
-    palette[2].b = (43 * palette[0].b + 21 * palette[1].b + 32) / 8;
+    palette[2].r = (43 * palette[0].r + 21 * palette[1].r + 32) >> 6;
+    palette[2].g = (43 * palette[0].g + 21 * palette[1].g + 32) >> 6;
+    palette[2].b = (43 * palette[0].b + 21 * palette[1].b + 32) >> 6;
     palette[2].a = 0xFF;
 
-    palette[3].r = (43 * palette[1].r + 21 * palette[0].r + 32) / 8;
-    palette[3].g = (43 * palette[1].g + 21 * palette[0].g + 32) / 8;
-    palette[3].b = (43 * palette[1].b + 21 * palette[0].b + 32) / 8;
+    palette[3].r = (43 * palette[1].r + 21 * palette[0].r + 32) >> 6;
+    palette[3].g = (43 * palette[1].g + 21 * palette[0].g + 32) >> 6;
+    palette[3].b = (43 * palette[1].b + 21 * palette[0].b + 32) >> 6;
     palette[3].a = 0xFF;
 }
 inline void evaluate_palette3_amd(Color16 c0, Color16 c1, Color32 palette[4]) {
-    palette[2].r = (c0.r + c1.r + 1) / 2;
-    palette[2].g = (c0.g + c1.g + 1) / 2;
-    palette[2].b = (c0.b + c1.b + 1) / 2;
+    palette[2].r = (palette[0].r + palette[1].r + 1) / 2;
+    palette[2].g = (palette[0].g + palette[1].g + 1) / 2;
+    palette[2].b = (palette[0].b + palette[1].b + 1) / 2;
     palette[2].a = 0xFF;
     palette[3].u = 0;
 }
@@ -2680,33 +2629,20 @@ static void evaluate_palette_amd(Color16 c0, Color16 c1, Color32 palette[4]) {
     }
 }
 
-// Use ICBC_DECODER to determine decoder used.
 inline void evaluate_palette4(Color16 c0, Color16 c1, Color32 palette[4]) {
-#if ICBC_DECODER == Decoder_D3D10
-    evaluate_palette4_d3d10(c0, c1, palette);
-#elif ICBC_DECODER == Decoder_NVIDIA
-    evaluate_palette4_nv(c0, c1, palette);
-#elif ICBC_DECODER == Decoder_AMD
-    evaluate_palette4_amd(c0, c1, palette);
-#endif
+    if (s_decoder == Decoder_D3D10)         evaluate_palette4_d3d10(c0, c1, palette);    
+    else if (s_decoder == Decoder_NVIDIA)   evaluate_palette4_nv(c0, c1, palette);
+    else if (s_decoder == Decoder_AMD)      evaluate_palette4_amd(c0, c1, palette);
 }
 inline void evaluate_palette3(Color16 c0, Color16 c1, Color32 palette[4]) {
-#if ICBC_DECODER == Decoder_D3D10
-    evaluate_palette3_d3d10(c0, c1, palette);
-#elif ICBC_DECODER == Decoder_NVIDIA
-    evaluate_palette3_nv(c0, c1, palette);
-#elif ICBC_DECODER == Decoder_AMD
-    evaluate_palette3_amd(c0, c1, palette);
-#endif
+    if (s_decoder == Decoder_D3D10)         evaluate_palette3_d3d10(c0, c1, palette);
+    else if (s_decoder == Decoder_NVIDIA)   evaluate_palette3_nv(c0, c1, palette);
+    else if (s_decoder == Decoder_AMD)      evaluate_palette3_amd(c0, c1, palette);
 }
 inline void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4]) {
-#if ICBC_DECODER == Decoder_D3D10
-    evaluate_palette_d3d10(c0, c1, palette);
-#elif ICBC_DECODER == Decoder_NVIDIA
-    evaluate_palette_nv(c0, c1, palette);
-#elif ICBC_DECODER == Decoder_AMD
-    evaluate_palette_amd(c0, c1, palette);
-#endif
+    if (s_decoder == Decoder_D3D10)         evaluate_palette_d3d10(c0, c1, palette);
+    else if (s_decoder == Decoder_NVIDIA)   evaluate_palette_nv(c0, c1, palette);
+    else if (s_decoder == Decoder_AMD)      evaluate_palette_amd(c0, c1, palette);
 }
 
 static void evaluate_palette(Color16 c0, Color16 c1, Vector3 palette[4]) {
@@ -3324,44 +3260,110 @@ static inline int Lerp13(int a, int b)
     return (a * 2 + b) / 3;
 }
 
-static void PrepareOptTable(uint8 * table, const uint8 * expand, int size)
+static void PrepareOptTable5(uint8 * table, Decoder decoder)
 {
+    uint8 expand[32];
+    for (int i = 0; i < 32; i++) expand[i] = (i << 3) | (i >> 2);
+
     for (int i = 0; i < 256; i++) {
         int bestErr = 256 * 100;
 
-        for (int min = 0; min < size; min++) {
-            for (int max = 0; max < size; max++) {
-                int mine = expand[min];
-                int maxe = expand[max];
+        for (int mn = 0; mn < 32; mn++) {
+            for (int mx = 0; mx < 32; mx++) {
+                int mine = expand[mn];
+                int maxe = expand[mx];
 
-                int err = abs(Lerp13(maxe, mine) - i) * 100;
+                int err;
 
-                // DX10 spec says that interpolation must be within 3% of "correct" result,
-                // add this as error term. (normally we'd expect a random distribution of
-                // +-1.5% error, but nowhere in the spec does it say that the error has to be
-                // unbiased - better safe than sorry).
-                err += abs(max - min) * 3;
+                int amd_r = (43 * maxe + 21 * mine + 32) >> 6;
+                int amd_err = abs(amd_r - i);
+
+                int nv_r = ((2 * mx + mn) * 22) / 8;
+                int nv_err = abs(nv_r - i);
+
+                if (decoder == Decoder_D3D10) {
+                    // DX10 spec says that interpolation must be within 3% of "correct" result,
+                    // add this as error term. (normally we'd expect a random distribution of
+                    // +-1.5% error, but nowhere in the spec does it say that the error has to be
+                    // unbiased - better safe than sorry).
+                    int r = (maxe * 2 + mine) / 3;
+                    err = abs(r - i) * 100 + abs(mx - mn) * 3;
+
+                    // Another approach is to consider the worst of AMD and NVIDIA errors.
+                    err = max(amd_err, nv_err);                    
+                }
+                else if (decoder == Decoder_AMD) {
+                    err = amd_err;
+                }
+                else if (decoder == Decoder_NVIDIA) {
+                    err = nv_err;
+                }
 
                 if (err < bestErr) {
                     bestErr = err;
-                    table[i * 2 + 0] = max;
-                    table[i * 2 + 1] = min;
+                    table[i * 2 + 0] = mx;
+                    table[i * 2 + 1] = mn;
                 }
             }
         }
     }
 }
 
-static void init_single_color_tables()
+static void PrepareOptTable6(uint8 * table, Decoder decoder)
+{
+    uint8 expand[64];
+    for (int i = 0; i < 64; i++) expand[i] = (i << 2) | (i >> 4);
+
+    for (int i = 0; i < 256; i++) {
+        int bestErr = 256 * 100;
+
+        for (int mn = 0; mn < 64; mn++) {
+            for (int mx = 0; mx < 64; mx++) {
+                int mine = expand[mn];
+                int maxe = expand[mx];
+
+                int err;
+
+                int amd_g = (43 * maxe + 21 * mine + 32) >> 6;
+                int amd_err = abs(amd_g - i);
+
+                int nv_g = (256 * mine + (maxe - mine) / 4 + 128 + (maxe - mine) * 80) / 256;
+                int nv_err = abs(nv_g - i);
+
+                if (decoder == Decoder_D3D10) {
+                    // DX10 spec says that interpolation must be within 3% of "correct" result,
+                    // add this as error term. (normally we'd expect a random distribution of
+                    // +-1.5% error, but nowhere in the spec does it say that the error has to be
+                    // unbiased - better safe than sorry).
+                    int g = (maxe * 2 + mine) / 3;
+                    err = abs(g - i) * 100 + abs(mx - mn) * 3;
+
+                    // Another approach is to consider the worst of AMD and NVIDIA errors.
+                    err = max(amd_err, nv_err);
+                }
+                else if (decoder == Decoder_AMD) {
+                    err = amd_err;
+                }
+                else if (decoder == Decoder_NVIDIA) {
+                    err = nv_err;
+                }
+
+                if (err < bestErr) {
+                    bestErr = err;
+                    table[i * 2 + 0] = mx;
+                    table[i * 2 + 1] = mn;
+                }
+            }
+        }
+    }
+}
+
+
+static void init_single_color_tables(Decoder decoder)
 {
     // Prepare single color lookup tables.
-    uint8 expand5[32];
-    uint8 expand6[64];
-    for (int i = 0; i < 32; i++) expand5[i] = (i << 3) | (i >> 2);
-    for (int i = 0; i < 64; i++) expand6[i] = (i << 2) | (i >> 4);
-
-    PrepareOptTable(&s_match5[0][0], expand5, 32);
-    PrepareOptTable(&s_match6[0][0], expand6, 64);
+    PrepareOptTable5(&s_match5[0][0], decoder);
+    PrepareOptTable6(&s_match6[0][0], decoder);
 }
 
 // Single color compressor, based on:
@@ -3384,35 +3386,6 @@ static void compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
 }
 
 
-// Compress block using the average color.
-static float compress_dxt1_single_color(const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, BlockDXT1 * output)
-{
-    // Compute block average.
-    Vector3 color_sum = { 0,0,0 };
-    float weight_sum = 0;
-
-    for (int i = 0; i < count; i++) {
-        color_sum += colors[i] * weights[i];
-        weight_sum += weights[i];
-    }
-
-    // Compress optimally.
-    compress_dxt1_single_color_optimal(vector3_to_color32(color_sum / weight_sum), output);
-
-    // Decompress block color.
-    Color32 palette[4];
-    evaluate_palette(output->col0, output->col1, palette);
-
-    Vector3 block_color = color_to_vector3(palette[output->indices & 0x3]);
-
-    // Evaluate error.
-    float error = 0;
-    for (int i = 0; i < count; i++) {
-        error += weights[i] * evaluate_mse(block_color, colors[i], color_weights);
-    }
-    return error;
-}
-
 static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const float input_weights[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, bool use_transparent_black, BlockDXT1 * output)
 {
     Vector3 metric_sqr = color_weights * color_weights;
@@ -3421,12 +3394,7 @@ static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const flo
     int sat_count = compute_sat(colors, weights, count, &sat);
 
     Vector3 start, end;
-#if ICBC_FAST_CLUSTER_FIT
-    if (sat_count == 16) fast_cluster_fit_four(sat, metric_sqr, &start, &end);
-    else cluster_fit_four(sat, sat_count, metric_sqr, &start, &end);
-#else
     cluster_fit_four(sat, sat_count, metric_sqr, &start, &end);
-#endif
 
     output_block4(input_colors, color_weights, start, end, output);
 
@@ -3695,85 +3663,12 @@ static float compress_dxt1(Quality level, const Vector4 input_colors[16], const 
 }
 
 
-static float compress_dxt1_fast(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, BlockDXT1 * output)
-{
-    Vector3 colors[16];
-    for (int i = 0; i < 16; i++) {
-        colors[i] = input_colors[i].xyz;
-    }
-    int count = 16;
-
-    /*float error = FLT_MAX;
-    error = compress_dxt1_single_color(colors, input_weights, count, color_weights, output);
-
-    if (error == 0.0f || count == 1) {
-        // Early out.
-        return error;
-    }*/
-
-    // Quick end point selection.
-    Vector3 c0, c1;
-    fit_colors_bbox(colors, count, &c0, &c1);
-    if (c0 == c1) {
-        compress_dxt1_single_color_optimal(vector3_to_color32(c0), output);
-        return evaluate_mse(input_colors, input_weights, color_weights, output);
-    }
-    inset_bbox(&c0, &c1);
-    select_diagonal(colors, count, &c0, &c1);
-    output_block4(input_colors, color_weights, c0, c1, output);
-
-    // Refine color for the selected indices.
-    if (optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
-        output_block4(input_colors, color_weights, c0, c1, output);
-    }
-
-    return evaluate_mse(input_colors, input_weights, color_weights, output);
-}
-
-
-static void compress_dxt1_fast(const uint8 input_colors[16*4], BlockDXT1 * output) {
-
-    Vector3 vec_colors[16];
-    for (int i = 0; i < 16; i++) {
-        vec_colors[i] = { input_colors[4 * i + 0] / 255.0f, input_colors[4 * i + 1] / 255.0f, input_colors[4 * i + 2] / 255.0f };
-    }
-
-    // Quick end point selection.
-    Vector3 c0, c1;
-    //fit_colors_bbox(colors, count, &c0, &c1);
-    //select_diagonal(colors, count, &c0, &c1);
-    fit_colors_bbox(vec_colors, 16, &c0, &c1);
-    if (c0 == c1) {
-        compress_dxt1_single_color_optimal(vector3_to_color32(c0), output);
-        return;
-    }
-    inset_bbox(&c0, &c1);
-    select_diagonal(vec_colors, 16, &c0, &c1);
-    output_block4(vec_colors, c0, c1, output);
-
-    // Refine color for the selected indices.
-    if (optimize_end_points4(output->indices, vec_colors, 16, &c0, &c1)) {
-        output_block4(vec_colors, c0, c1, output);
-    }
-}
-
 // Public API
 
-void init_dxt1() {
-    init_single_color_tables();
+void init_dxt1(Decoder decoder) {
+    s_decoder = decoder;
+    init_single_color_tables(decoder);
     init_cluster_tables();
-}
-
-float compress_dxt1(Quality level, const float * input_colors, const float * input_weights, const float rgb[3], bool three_color_mode, bool three_color_black, void * output) {
-    return compress_dxt1(level, (Vector4*)input_colors, input_weights, { rgb[0], rgb[1], rgb[2] }, three_color_mode, three_color_black, (BlockDXT1*)output);
-}
-
-float compress_dxt1_fast(const float input_colors[16 * 4], const float input_weights[16], const float rgb[3], void * output) {
-    return compress_dxt1_fast((Vector4*)input_colors, input_weights, { rgb[0], rgb[1], rgb[2] }, (BlockDXT1*)output);
-}
-
-void compress_dxt1_fast(const unsigned char input_colors[16 * 4], void * output) {
-    compress_dxt1_fast(input_colors, (BlockDXT1*)output);
 }
 
 void decode_dxt1(const void * block, unsigned char rgba_block[16 * 4], Decoder decoder/*=Decoder_D3D10*/) {
@@ -3784,14 +3679,17 @@ float evaluate_dxt1_error(const unsigned char rgba_block[16 * 4], const void * d
     return evaluate_dxt1_error(rgba_block, (const BlockDXT1 *)dxt_block, decoder);
 }
 
+float compress_dxt1(Quality level, const float * input_colors, const float * input_weights, const float rgb[3], bool three_color_mode, bool three_color_black, void * output) {
+    return compress_dxt1(level, (Vector4*)input_colors, input_weights, { rgb[0], rgb[1], rgb[2] }, three_color_mode, three_color_black, (BlockDXT1*)output);
+}
+
 } // icbc
 
 // // Do not polute preprocessor definitions.
-// #undef ICBC_DECODER
 // #undef ICBC_SIMD
 // #undef ICBC_ASSERT
 
-// #undef ICBC_FLOAT
+// #undef ICBC_SCALAR
 // #undef ICBC_SSE2
 // #undef ICBC_SSE41
 // #undef ICBC_AVX1
@@ -3805,9 +3703,7 @@ float evaluate_dxt1_error(const unsigned char rgba_block[16 * 4], const void * d
 // #undef ICBC_USE_AVX512_PERMUTE
 // #undef ICBC_USE_NEON_VTL
 
-// #undef ICBC_FAST_CLUSTER_FIT
 // #undef ICBC_PERFECT_ROUND
-// #undef ICBC_USE_SAT
 
 #endif // ICBC_IMPLEMENTATION
 
@@ -3816,6 +3712,7 @@ float evaluate_dxt1_error(const unsigned char rgba_block[16 * 4], const void * d
 // v1.01 - Added SPMD code path with AVX support.
 // v1.02 - Removed SIMD code path.
 // v1.03 - Quality levels. AVX512, Neon, Altivec, vectorized reduction and index selection.
+// v1.04 - Automatic compile-time SIMD selection. Specify hw decoder at runtime. More optimizations.
 
 // Copyright (c) 2020 Ignacio Castano <castano@gmail.com>
 //
