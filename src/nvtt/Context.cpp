@@ -853,7 +853,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             header.glTypeSize = 1;
             header.glFormat = 0;
             
-            if (compressionOptions.format == Format_DXT1) {
+            if (compressionOptions.format == Format_DXT1 || compressionOptions.format == Format_DXT1n) {
                 header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_S3TC_DXT1 : KTX_INTERNAL_COMPRESSED_RGB_S3TC_DXT1;
                 header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGB;
             }
@@ -865,7 +865,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                 header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3 : KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT3;
                 header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGBA;
             }
-            else if (compressionOptions.format == Format_DXT5 || compressionOptions.format == Format_BC3_RGBM) {
+            else if (compressionOptions.format == Format_DXT5 || compressionOptions.format == Format_DXT5n || compressionOptions.format == Format_BC3_RGBM) {
                 header.glInternalFormat = outputOptions.srgb ? KTX_INTERNAL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5 : KTX_INTERNAL_COMPRESSED_RGBA_S3TC_DXT5;
                 header.glBaseInternalFormat = KTX_BASE_INTERNAL_RGBA;
             }
@@ -909,8 +909,6 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
             else {
                 supported = false;
             }
-
-            //TODO compressionOptions.format == Format_DXT1n, Format_DXT5n ? There seems to be no way to indicate a normal map using ktx. Maybe via key value data?
         }
         
         if (!supported)
