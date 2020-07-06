@@ -50,7 +50,7 @@ void Image::acquire(Color32 * data, uint w, uint h, uint d/*= 1*/)
     width = w;
     height = h;
     depth = d;
-    data = data;
+    this->data = data;
 }
 
 void Image::free()
