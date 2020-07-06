@@ -6,6 +6,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #define STB_DXT_IMPLEMENTATION
 #include "stb_dxt.h"
 
@@ -14,6 +17,17 @@
 
 #define ICBC_IMPLEMENTATION
 #include "nvtt/icbc.h"
+
+#define ICETC_IMPLEMENTATION
+#include "nvtt/icetc.h"
+
+#define GOOFYTC_IMPLEMENTATION
+#include "../extern/goofy_tc.h"
+
+#include "../extern/rg_etc1_v104/rg_etc1.h"
+#include "../extern/rg_etc1_v104/rg_etc1.cpp"
+
+
 
 #include "../extern/libsquish-1.15/squish.h"
 
@@ -31,20 +45,26 @@ typedef unsigned char u8;
 typedef unsigned int u32;
 
 
-#define TEST_STB 1
-#define TEST_STB_HQ 1
+#define TEST_STB 0
+#define TEST_STB_HQ 0
 
-#define TEST_RGBCX 1
+#define TEST_GOOFY 0
 
-#define TEST_NVTT_FAST 1
-#define TEST_NVTT_TEST 1
-#define TEST_NVTT 1
-#define TEST_NVTT_HQ 0
+#define TEST_RGBCX_FAST 0  // Level 0-3
+#define TEST_RGBCX_ALL 0
 
-#define TEST_SQUISH 0
+#define TEST_ICBC_FAST 1
+#define TEST_ICBC 0
+#define TEST_ICBC_HQ 0
+#define TEST_ICBC_ALL 0
+
+#define TEST_IC_ETC 0
+#define TEST_RG_ETC 0
+
+#define TEST_SQUISH 1
 #define TEST_SQUISH_HQ 0
 
-#define TEST_AMD_CMP 0
+#define TEST_AMD_CMP 1
 
 
 
@@ -59,6 +79,17 @@ float evaluate_dxt1_mse(uint8 * rgba, uint8 * block, int block_count, icbc::Deco
     }
     return float(total / (16 * block_count));
 }
+
+float evaluate_etc2_mse(uint8 * rgba, uint8 * block, int block_count) {
+    double total = 0.0f;
+    for (int b = 0; b < block_count; b++) {
+        total += icetc::evaluate_etc2_error(rgba, block);
+        rgba += 4 * 4 * 4;
+        block += 8;
+    }
+    return float(total / (16 * block_count));
+}
+
 
 #define MAKEFOURCC(str) (uint(str[0]) | (uint(str[1]) << 8) | (uint(str[2]) << 16) | (uint(str[3]) << 24 ))
 
@@ -120,6 +151,34 @@ bool output_dxt_dds (u32 w, u32 h, const u8* data, const char * filename) {
 
     return true;
 }
+
+bool output_etc(u32 bw, u32 bh, const u8* block_data, const char *filename) {
+
+    u8 * rgba_data = (u8 *)malloc(bw * bh * 4);
+
+    for (u32 by = 0; by < bh; by += 4) {
+        for (u32 bx = 0; bx < bw; bx += 4) {
+
+            u8 rgba_block[64];
+            icetc::decompress_etc(block_data, rgba_block);
+
+            block_data += 8;
+
+            for (u32 y = 0; y < 4; y++) {
+                for (u32 x = 0; x < 4; x++) {
+                    u32 idx = ((by + y) * bw + (bx + x)) * 4;
+                    rgba_data[idx + 0] = rgba_block[4 * (4 * y + x) + 0];
+                    rgba_data[idx + 1] = rgba_block[4 * (4 * y + x) + 1];
+                    rgba_data[idx + 2] = rgba_block[4 * (4 * y + x) + 2];
+                    rgba_data[idx + 3] = rgba_block[4 * (4 * y + x) + 3];
+                }
+            }
+        }
+    }
+
+    return stbi_write_png(filename, bw, bh, 4, rgba_data, bw * 4) != 0;
+}
+
 
 struct Stats {
     const char * compressorName;
@@ -232,33 +291,106 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         }
     }
 
-    if (TEST_RGBCX) {
+    if (TEST_GOOFY) {
         memset(block_data, 0, block_count * 8);
-
-        rgbcx::encode_bc1_init();
 
         timer.start();
         for (int i = 0; i < repeat_count; i++) {
-            for (int b = 0; b < block_count; b++) {
-                rgbcx::encode_bc1((block_data + b * 8), rgba_block_data + b * 4 * 4 * 4, rgbcx::LEVEL2_OPTIONS, rgbcx::DEFAULT_TOTAL_ORDERINGS_TO_TRY);
-            }
+            goofy::compressDXT1(block_data, input_data, w, h, w * 4);
         }
         timer.stop();
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
 
         if (stats) {
-            stats->compressorName = "rgbcx";
+            stats->compressorName = "goofy-dxt";
             stats->mseArray[index] = mse;
             stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
-            output_dxt_dds(bw, bh, block_data, "rgbcx.dds");
+            output_dxt_dds(bw, bh, block_data, "goofy_dxt.dds");
+        }
+
+        timer.start();
+        for (int i = 0; i < repeat_count; i++) {
+            goofy::compressETC1(block_data, input_data, w, h, w * 4);
+        }
+        timer.stop();
+
+        mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
+
+        if (stats) {
+            stats->compressorName = "goofy-etc";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
+            stats++;
+        }
+        else {
+            output_etc(bw, bh, block_data, "goofy_etc.png");
         }
     }
 
-    if (TEST_NVTT_FAST) {
+    if (TEST_RGBCX_FAST) {
+        memset(block_data, 0, block_count * 8);
+
+        rgbcx::init();
+
+        for (int l = 0; l < 4; l++) {
+            timer.start();
+            for (int i = 0; i < repeat_count; i++) {
+                for (int b = 0; b < block_count; b++) {
+                    rgbcx::encode_bc1(l, (block_data + b * 8), rgba_block_data + b * 4 * 4 * 4, /*allow_3color=*/true, /*use_transparent_texels_for_black=*/true);
+                }
+            }
+            timer.stop();
+
+            float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
+
+            if (stats) {
+                stats->compressorName = "rgbcx";
+                stats->mseArray[index] = mse;
+                stats->timeArray[index] = timer.elapsed() / repeat_count;
+                stats++;
+            }
+            else {
+                output_dxt_dds(bw, bh, block_data, "rgbcx.dds");
+            }
+        }
+    }
+
+    if (TEST_RGBCX_ALL) {
+        memset(block_data, 0, block_count * 8);
+
+        rgbcx::init();
+
+        for (int l = 0; l < 19; l++) {
+            timer.start();
+            for (int i = 0; i < repeat_count; i++) {
+                for (int b = 0; b < block_count; b++) {
+                    rgbcx::encode_bc1(l, (block_data + b * 8), rgba_block_data + b * 4 * 4 * 4, /*allow_3color=*/true, /*use_transparent_texels_for_black=*/true);
+                }
+            }
+            timer.stop();
+
+            float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
+
+            if (stats) {
+                stats->compressorName = "rgbcx";
+                stats->mseArray[index] = mse;
+                stats->timeArray[index] = timer.elapsed() / repeat_count;
+                stats++;
+            }
+            else {
+                output_dxt_dds(bw, bh, block_data, "rgbcx.dds");
+            }
+        }
+    }
+
+    bool three_color_mode = true;
+    bool three_color_black = true;
+
+    if (TEST_ICBC_FAST) {
         memset(block_data, 0, block_count * 8);
         float color_weights[3] = { 1, 1, 1 };
 
@@ -275,7 +407,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
                     input_weights[j] = 1.0f;
                 }
 
-                icbc::compress_dxt1_fast(input_colors, input_weights, color_weights, (block_data + b * 8));
+                icbc::compress_dxt1(icbc::Quality_Fast, input_colors, input_weights, color_weights, three_color_mode, three_color_black, (block_data + b * 8));
             }
         }
         timer.stop();
@@ -283,52 +415,17 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
         
         if (stats) {
-            stats->compressorName = "nvtt-fast";
+            stats->compressorName = "icbc-fast";
             stats->mseArray[index] = mse;
             stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
-            output_dxt_dds(bw, bh, block_data, "nvtt_fast.dds");
+            output_dxt_dds(bw, bh, block_data, "icbc_fast.dds");
         }
     }
 
-    if (TEST_NVTT_TEST) {
-        memset(block_data, 0, block_count * 8);
-        float color_weights[3] = { 1, 1, 1 };
-
-        timer.start();
-        for (int i = 0; i < repeat_count; i++) {
-            for (int b = 0; b < block_count; b++) {
-                float input_colors[16 * 4];
-                float input_weights[16];
-                for (int j = 0; j < 16; j++) {
-                    input_colors[4 * j + 0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
-                    input_colors[4 * j + 1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
-                    input_colors[4 * j + 2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
-                    input_colors[4 * j + 3] = 1.0f;
-                    input_weights[j] = 1.0f;
-                }
-
-                icbc::compress_dxt1_test(input_colors, input_weights, color_weights, (block_data + b * 8));
-            }
-        }
-        timer.stop();
-
-        float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
-
-        if (stats) {
-            stats->compressorName = "nvtt-test";
-            stats->mseArray[index] = mse;
-            stats->timeArray[index] = timer.elapsed() / repeat_count;
-            stats++;
-        }
-        else {
-            output_dxt_dds(bw, bh, block_data, "nvtt_test.dds");
-        }
-    }
-
-    if (TEST_NVTT) {
+    if (TEST_ICBC) {
         memset(block_data, 0, block_count * 8);
         float color_weights[3] = { 1, 1, 1 };
 
@@ -345,7 +442,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
                     input_weights[j] = 1.0f;
                 }
 
-                icbc::compress_dxt1(input_colors, input_weights, color_weights, false, false, (block_data + b * 8));
+                icbc::compress_dxt1(icbc::Quality_Default, input_colors, input_weights, color_weights, three_color_mode, three_color_black, (block_data + b * 8));
             }
         }
         timer.stop();
@@ -353,17 +450,17 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
 
         if (stats) {
-            stats->compressorName = "nvtt";
+            stats->compressorName = "icbc";
             stats->mseArray[index] = mse;
             stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
-            output_dxt_dds(bw, bh, block_data, "nvtt.dds");
+            output_dxt_dds(bw, bh, block_data, "icbc.dds");
         }
     }
 
-    if (TEST_NVTT_HQ) {
+    if (TEST_ICBC_HQ) {
         memset(block_data, 0, block_count * 8);
         float color_weights[3] = { 1, 1, 1 };
 
@@ -380,7 +477,7 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
                     input_weights[j] = 1.0f;
                 }
 
-                icbc::compress_dxt1(input_colors, input_weights, color_weights, true, true, (block_data + b * 8));
+                icbc::compress_dxt1(icbc::Quality_Max, input_colors, input_weights, color_weights, three_color_mode, three_color_black, (block_data + b * 8));
             }
         }
         timer.stop();
@@ -388,13 +485,129 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
 
         if (stats) {
-            stats->compressorName = "nvtt-hq";
+            stats->compressorName = "icbc-hq";
             stats->mseArray[index] = mse;
             stats->timeArray[index] = timer.elapsed() / repeat_count;
             stats++;
         }
         else {
-            output_dxt_dds(bw, bh, block_data, "nvtt_hq.dds");
+            output_dxt_dds(bw, bh, block_data, "icbc_hq.dds");
+        }
+    }
+
+    if (TEST_ICBC_ALL) {
+        memset(block_data, 0, block_count * 8);
+        float color_weights[3] = { 1, 1, 1 };
+
+        for (int l = 0; l <= icbc::Quality_Max; l++) {
+            timer.start();
+            for (int i = 0; i < repeat_count; i++) {
+                for (int b = 0; b < block_count; b++) {
+                    float input_colors[16 * 4];
+                    float input_weights[16];
+                    for (int j = 0; j < 16; j++) {
+                        input_colors[4 * j + 0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                        input_colors[4 * j + 1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                        input_colors[4 * j + 2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                        input_colors[4 * j + 3] = 1.0f;
+                        input_weights[j] = 1.0f;
+                    }
+
+                    icbc::compress_dxt1((icbc::Quality)l, input_colors, input_weights, color_weights, true, true, (block_data + b * 8));
+                }
+            }
+            timer.stop();
+
+            float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
+
+            if (stats) {
+                stats->compressorName = "icbc";
+                stats->mseArray[index] = mse;
+                stats->timeArray[index] = timer.elapsed() / repeat_count;
+                stats++;
+            }
+            else {
+                output_dxt_dds(bw, bh, block_data, "icbc.dds");
+            }
+        }
+    }
+
+    if (TEST_IC_ETC) {
+        memset(block_data, 0, block_count * 8);
+        float color_weights[3] = { 1, 1, 1 };
+
+        //int b_stop = (1132 / 4) * (bw / 4) + 1028 / 4;
+
+        timer.start();
+        for (int i = 0; i < repeat_count; i++) {
+            for (int b = 0; b < block_count; b++) {
+                float input_colors[16 * 4];
+                float input_weights[16];
+                for (int j = 0; j < 16; j++) {
+                    input_colors[4 * j + 0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                    input_colors[4 * j + 1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                    input_colors[4 * j + 2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                    input_colors[4 * j + 3] = 1.0f;
+                    input_weights[j] = 1.0f;
+                }
+
+                icetc::compress_etc2(input_colors, input_weights, color_weights, (block_data + b * 8));
+            }
+        }
+        timer.stop();
+
+        float mse = evaluate_etc2_mse(rgba_block_data, block_data, block_count);
+
+        if (stats) {
+            stats->compressorName = "ic_etc";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
+            stats++;
+        }
+        else {
+            output_etc(bw, bh, block_data, "ic_etc.png");
+        }
+    }
+
+    if (TEST_RG_ETC) {
+        memset(block_data, 0, block_count * 8);
+        float color_weights[3] = { 1, 1, 1 };
+
+        rg_etc1::etc1_pack_params pack_params;
+        pack_params.m_quality = rg_etc1::cLowQuality;
+        //pack_params.m_quality = rg_etc1::cMediumQuality;
+        //pack_params.m_quality = rg_etc1::cHighQuality;
+
+        //int b_stop = (1132 / 4) * (bw / 4) + 1028 / 4;
+
+        timer.start();
+        for (int i = 0; i < repeat_count; i++) {
+            for (int b = 0; b < block_count; b++) {
+                float input_colors[16 * 4];
+                float input_weights[16];
+                for (int j = 0; j < 16; j++) {
+                    input_colors[4 * j + 0] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 0] / 255.0f;
+                    input_colors[4 * j + 1] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 1] / 255.0f;
+                    input_colors[4 * j + 2] = rgba_block_data[b * 4 * 4 * 4 + j * 4 + 2] / 255.0f;
+                    input_colors[4 * j + 3] = 1.0f;
+                    input_weights[j] = 1.0f;
+                }
+
+                rg_etc1::pack_etc1_block((block_data + b * 8), (const uint*)rgba_block_data + b * 4 * 4, pack_params);
+            }
+        }
+        timer.stop();
+
+        float mse = evaluate_etc2_mse(rgba_block_data, block_data, block_count);
+
+        if (stats) {
+            stats->compressorName = "rg_etc";
+            stats->mseArray[index] = mse;
+            stats->timeArray[index] = timer.elapsed() / repeat_count;
+            stats++;
+        }
+        else {
+            output_etc(bw, bh, block_data, "rg_etc.png");
         }
     }
 
@@ -449,13 +662,19 @@ bool test_bc1(const char * inputFileName, int index, Stats * stats) {
     if (TEST_AMD_CMP) {
         memset(block_data, 0, block_count * 8);
 
+        void *options;
+        CreateOptionsBC1(&options);
+        SetQualityBC1(options, 1.0); // It seems AMD has only two compressors for 0.0 and 1.0 values.
+
         timer.start();
         for (int i = 0; i < repeat_count; i++) {
             for (int b = 0; b < block_count; b++) {
-                CompressBlockBC1(rgba_block_data + b * 4 * 4 * 4, 16, block_data + b * 8, nullptr);
+                CompressBlockBC1(rgba_block_data + b * 4 * 4 * 4, 16, block_data + b * 8, options);
             }
         }
         timer.stop();
+
+        DestroyOptionsBC1(options);
 
         float mse = evaluate_dxt1_mse(rgba_block_data, block_data, block_count);
 
@@ -520,15 +739,14 @@ bool analyze_bc1(const char * inputFileName) {
 
     Timer timer;
 
-    int stb_better_than_nvtt_fast = 0;
-    int stb_better_than_nvtt = 0;
-    int stb_better_than_nvtt_hq = 0;
-    int squish_better_than_nvtt_hq = 0;
+    int stb_better_than_icbc_fast = 0;
+    int stb_better_than_icbc = 0;
+    int stb_better_than_icbc_hq = 0;
+    int squish_better_than_icbc_hq = 0;
 
-    int nvtt_hq_wins = 0;
+    int icbc_hq_wins = 0;
 
     int this_should_never_happen = 0;
-    int this_should_never_happen_either = 0;
         
     float color_weights[3] = { 1, 1, 1 };
 
@@ -555,20 +773,14 @@ bool analyze_bc1(const char * inputFileName) {
         stb_compress_dxt_block(dxt_block, rgba_block, 0, STB_DXT_HIGHQUAL);
         float mse_stb_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        icbc::compress_dxt1_fast(input_colors, input_weights, color_weights, dxt_block);
-        float mse_nvtt_fast = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
+        icbc::compress_dxt1(icbc::Quality_Fast, input_colors, input_weights, color_weights, true, true, dxt_block);
+        float mse_icbc_fast = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        icbc::compress_dxt1_fast(rgba_block, dxt_block);
-        float mse_nvtt_fast2 = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
+        icbc::compress_dxt1(icbc::Quality_Default, input_colors, input_weights, color_weights, true, true, dxt_block);
+        float mse_icbc = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        icbc::compress_dxt1_test(input_colors, input_weights, color_weights, dxt_block);
-        float mse_nvtt_test = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
-
-        icbc::compress_dxt1(input_colors, input_weights, color_weights, true, false, dxt_block);
-        float mse_nvtt = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
-
-        icbc::compress_dxt1(input_colors, input_weights, color_weights, true, true, dxt_block);
-        float mse_nvtt_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
+        icbc::compress_dxt1(icbc::Quality_Max, input_colors, input_weights, color_weights, true, true, dxt_block);
+        float mse_icbc_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
         squish::Compress(rgba_block, dxt_block, squish::kDxt1);
         float mse_squish = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
@@ -576,29 +788,23 @@ bool analyze_bc1(const char * inputFileName) {
         squish::Compress(rgba_block, dxt_block, squish::kDxt1 | squish::kColourIterativeClusterFit);
         float mse_squish_hq = icbc::evaluate_dxt1_error(rgba_block, dxt_block);
 
-        if (mse_stb < mse_nvtt_fast) {
-            stb_better_than_nvtt_fast++;
+        if (mse_stb < mse_icbc_fast) {
+            stb_better_than_icbc_fast++;
         }
-        if (mse_stb < mse_nvtt) {
-            stb_better_than_nvtt++;
+        if (mse_stb < mse_icbc) {
+            stb_better_than_icbc++;
         }
-        if (mse_stb < mse_nvtt_hq) {
-            stb_better_than_nvtt_hq++;
+        if (mse_stb < mse_icbc_hq) {
+            stb_better_than_icbc_hq++;
         }
-        if (mse_nvtt_hq < mse_nvtt) {
-            nvtt_hq_wins++;
+        if (mse_icbc_hq < mse_icbc) {
+            icbc_hq_wins++;
         }
-        if (mse_nvtt < mse_nvtt_test) {
-            int k = 1;
+        if (mse_squish < mse_icbc_hq) {
+            squish_better_than_icbc_hq++;
         }
-        if (mse_squish < mse_nvtt_hq) {
-            squish_better_than_nvtt_hq++;
-        }
-        if (mse_nvtt_fast < mse_nvtt_hq) {
+        if (mse_icbc_fast < mse_icbc_hq) {
             this_should_never_happen++;
-        }
-        if (mse_nvtt_fast2 < mse_nvtt_fast) {
-            this_should_never_happen_either++;
         }
     }
 
@@ -693,16 +899,18 @@ const char * roblox_set[] = {
 int main(int argc, char *argv[])
 {
     //const char * inputFileName = "testsuite/artificial.png";
-    const char * inputFileName = "testsuite/kodak/kodim14.png";
-    //const char * inputFileName = "testsuite/kodak/kodim18.png";
+    //const char * inputFileName = "testsuite/kodak/kodim14.png";
+    const char * inputFileName = "testsuite/kodak/kodim18.png";
     //const char * inputFileName = "testsuite/kodak/kodim15.png";
     //const char * inputFileName = "testsuite/waterloo/frymire.png";
     //const char * inputFileName = "Roblox/leafygrass_top/diffuse.tga";
 
-    icbc::init();
-    rgbcx::encode_bc1_init();
+    icbc::init_dxt1();
+    icetc::init();
+    rgbcx::init();
+    rg_etc1::pack_etc1_block_init();
 
-    test_bc1(inputFileName, 0, NULL);
+    //test_bc1(inputFileName, 0, NULL);
     //analyze_bc1(inputFileName);
 
     //const char ** set = roblox_set;
@@ -711,7 +919,7 @@ int main(int argc, char *argv[])
     const char ** set = image_set;
     int count = sizeof(image_set) / sizeof(char*);
 
-    const int MAX_COMPRESSOR_COUNT = 16;
+    const int MAX_COMPRESSOR_COUNT = 64;
     Stats stats[MAX_COMPRESSOR_COUNT];
 
     for (int i = 0; i < MAX_COMPRESSOR_COUNT; i++) {
@@ -750,6 +958,52 @@ int main(int argc, char *argv[])
             printf("%-16s %f\t%f\t%f\n", stats[c].compressorName, sqrtf(sum), mse_to_psnr(sum), time);
         }
     }
+
+    for (int i = 0; i < 16; i++) {
+        printf("%d, ", icbc::s_fourClusterTotal[i]);
+    }
+    printf("\n");
+
+    for (int i = 0; i < 16; i++) {
+        printf("%d, ", icbc::s_threeClusterTotal[i]);
+    }
+    printf("\n\n");
+
+    /*
+    for (int i = 0; i < 968; i++) {
+        printf("%lld, ", icbc::s_fourClusterHistogram[i]);
+    } printf("\n\n");
+
+    for (int i = 0; i < 968; i++) {
+        printf("%d, ", icbc::s_fourCluster[i].c0);
+    } printf("\n\n");
+    
+    for (int i = 0; i < 968; i++) {
+        printf("%d, ", icbc::s_fourCluster[i].c1 - icbc::s_fourCluster[i].c0);
+    } printf("\n\n");
+    
+    for (int i = 0; i < 968; i++) {
+        printf("%d, ", icbc::s_fourCluster[i].c2 - icbc::s_fourCluster[i].c1);
+    }
+    */
+    printf("\n");
+
+
+    /*for (int c = 0; c < MAX_COMPRESSOR_COUNT; c++) {
+        if (stats[c].compressorName) {
+            printf("%s:\n", stats[c].compressorName);
+            for (int i = 0; i < count; i++) {
+                printf("%f, ", mse_to_psnr(stats[c].mseArray[i]));
+            }
+            puts("\n");
+            
+            for (int i = 0; i < count; i++) {
+                printf("%f, ", stats[c].timeArray[i]);
+            }
+            puts("\n");
+        }
+    }*/
+
 
     return EXIT_SUCCESS;
 }
