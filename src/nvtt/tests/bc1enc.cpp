@@ -33,7 +33,7 @@
 
 #include "../extern/CMP_Core/source/CMP_Core.h"
 
-#include "nvmath/Vector.h"
+#include "nvmath/Vector.inl"
 #include "nvmath/Color.h"
 
 #include "nvcore/Timer.h"
