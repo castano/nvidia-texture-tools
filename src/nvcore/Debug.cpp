@@ -1015,10 +1015,11 @@ void debug::dumpInfo()
 #endif
 }
 
-static void getEmptyVAList(va_list& list, ...)
+static va_list getEmptyVAList(va_list list, ...)
 {
     va_start(list, list);
     va_end(list);
+    return list;
 }
 
 /// Dump callstack using the specified handler.
@@ -1034,7 +1035,7 @@ void debug::dumpCallstack(MessageHandler *messageHandler, int callstackLevelsToS
         writeStackTrace(trace, size, callstackLevelsToSkip + 1, lines);     // + 1 to skip the call to dumpCallstack
 
         va_list empty;
-        getEmptyVAList(empty);
+        empty = getEmptyVAList(empty);
 
         for (uint i = 0; i < lines.count(); i++) {
             messageHandler->log(lines[i], empty);
