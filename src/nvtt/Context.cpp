@@ -947,7 +947,7 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
                     }
                 }
             }
-		}
+        }
         else
         {
             header.glType = 0;
