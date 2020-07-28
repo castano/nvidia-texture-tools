@@ -542,63 +542,63 @@ void Compressor::Private::quantize(Surface & img, const CompressionOptions::Priv
 
 namespace
 {
-	enum
-	{
-		// internal format
-		GL_RGB8 = 0x8051,
-		GL_RGBA8 = 0x8058,
-		GL_R16 = 0x822A,
-		GL_RGBA16F = 0x881A,
-		GL_R11F_G11F_B10F = 0x8C3A,
+    enum
+    {
+        // internal format
+        GL_RGB8 = 0x8051,
+        GL_RGBA8 = 0x8058,
+        GL_R16 = 0x822A,
+        GL_RGBA16F = 0x881A,
+        GL_R11F_G11F_B10F = 0x8C3A,
+        
+        // type
+        GL_UNSIGNED_BYTE = 0x1401,
+        GL_HALF_FLOAT = 0x140B,
+        GL_UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B,
+        GL_UNSIGNED_SHORT = 0x1403,
+        
+        // format
+        GL_RED = 0x1903,
+        GL_RGB = 0x1907,
+        GL_RGBA = 0x1908,
+        GL_BGR = 0x80E0,
+        GL_BGRA = 0x80E1,
+    };
 
-		// type
-		GL_UNSIGNED_BYTE = 0x1401,
-		GL_HALF_FLOAT = 0x140B,
-		GL_UNSIGNED_INT_10F_11F_11F_REV = 0x8C3B,
-		GL_UNSIGNED_SHORT = 0x1403,
+    struct GLFormatDescriptor
+    {
+        uint glFormat; // for uncompressed texture glBaseInternalFormat == glFormat
+        uint glInternalFormat;
+        uint glType;
+        uint glTypeSize;
+        RGBAPixelFormat pixelFormat;
+    };
 
-		// format
-		GL_RED = 0x1903,
-		GL_RGB = 0x1907,
-		GL_RGBA = 0x1908,
-		GL_BGR = 0x80E0,
-		GL_BGRA = 0x80E1,
-	};
+    static const GLFormatDescriptor s_glFormats[] =
+    {
+        { GL_BGR,  GL_RGB8,  GL_UNSIGNED_BYTE, 1, { 24, 0xFF0000,   0xFF00,     0xFF,       0 } },
+        { GL_BGRA, GL_RGBA8, GL_UNSIGNED_BYTE, 1, { 32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 } },
+        { GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, 1, { 32, 0xFF,       0xFF00,     0xFF0000,   0xFF000000 } },
+    };
 
-	struct GLFormatDescriptor
-	{
-		uint glFormat; // for uncompressed texture glBaseInternalFormat == glFormat
-		uint glInternalFormat;
-		uint glType;
-		uint glTypeSize;
-		RGBAPixelFormat pixelFormat;
-	};
+    static const uint s_glFormatCount = NV_ARRAY_SIZE(s_glFormats);
 
-	static const GLFormatDescriptor s_glFormats[] =
-	{
-		{ GL_BGR,  GL_RGB8,  GL_UNSIGNED_BYTE, 1, { 24, 0xFF0000,   0xFF00,     0xFF,       0 } },
-		{ GL_BGRA, GL_RGBA8, GL_UNSIGNED_BYTE, 1, { 32, 0xFF0000,   0xFF00,     0xFF,       0xFF000000 } },
-		{ GL_RGBA, GL_RGBA8, GL_UNSIGNED_BYTE, 1, { 32, 0xFF,       0xFF00,     0xFF0000,   0xFF000000 } },
-	};
-
-	static const uint s_glFormatCount = NV_ARRAY_SIZE(s_glFormats);
-
-	static const GLFormatDescriptor* findGLFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
-	{
-		for (int i = 0; i < s_glFormatCount; i++)
-		{
-			if (s_glFormats[i].pixelFormat.bitcount == bitcount &&
-				s_glFormats[i].pixelFormat.rmask == rmask &&
-				s_glFormats[i].pixelFormat.gmask == gmask &&
-				s_glFormats[i].pixelFormat.bmask == bmask &&
-				s_glFormats[i].pixelFormat.amask == amask)
-			{
-				return &s_glFormats[i];
-			}
-		}
-
-		return nullptr;
-	}
+    static const GLFormatDescriptor* findGLFormat(uint bitcount, uint rmask, uint gmask, uint bmask, uint amask)
+    {
+        for (int i = 0; i < s_glFormatCount; i++)
+        {
+            if (s_glFormats[i].pixelFormat.bitcount == bitcount &&
+            	s_glFormats[i].pixelFormat.rmask == rmask &&
+            	s_glFormats[i].pixelFormat.gmask == gmask &&
+            	s_glFormats[i].pixelFormat.bmask == bmask &&
+            	s_glFormats[i].pixelFormat.amask == amask)
+            {
+                return &s_glFormats[i];
+            }
+        }
+        
+        return nullptr;
+    }
 }
 
 bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int h, int d, int arraySize, int mipmapCount, bool isNormalMap, const CompressionOptions::Private & compressionOptions, const OutputOptions::Private & outputOptions) const
@@ -903,51 +903,50 @@ bool Compressor::Private::outputHeader(nvtt::TextureType textureType, int w, int
 
         if (compressionOptions.format == Format_RGBA)
         {
-			const uint bitcount = compressionOptions.getBitCount();
-
-			if (compressionOptions.pixelType == PixelType_Float) {
-				if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16) {
-					header.glType = GL_HALF_FLOAT;
-					header.glTypeSize = 2;
-					header.glFormat = GL_RGBA;
-					header.glInternalFormat = GL_RGBA16F;
-					header.glBaseInternalFormat = GL_RGBA;
-
-				}
-				else if (compressionOptions.rsize == 11 && compressionOptions.gsize == 11 && compressionOptions.bsize == 10 && compressionOptions.asize == 0) {
-					header.glType = GL_UNSIGNED_INT_10F_11F_11F_REV;
-					header.glTypeSize = 4;
-					header.glFormat = GL_RGB;
-					header.glInternalFormat = GL_R11F_G11F_B10F;
-					header.glBaseInternalFormat = GL_RGB;
-				}
-				else {
-					supported = false;
-				}
-			}
-			else {
-				if (bitcount == 16 && compressionOptions.rsize == 16) {
-					header.glType = GL_UNSIGNED_SHORT;
-					header.glTypeSize = 2;
-					header.glFormat = GL_RED;
-					header.glInternalFormat = GL_R16;
-					header.glBaseInternalFormat = GL_RED;
-				}
-				else {
-					const GLFormatDescriptor* glFormatDesc = findGLFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
-
-					if (glFormatDesc) {
-						header.glType = glFormatDesc->glType;
-						header.glTypeSize = glFormatDesc->glTypeSize;
-						header.glFormat = glFormatDesc->glFormat;
-						header.glInternalFormat = glFormatDesc->glInternalFormat;
-						header.glBaseInternalFormat = header.glFormat;
-					}
-					else {
-						supported = false;
-					}
-				}
-			}
+            const uint bitcount = compressionOptions.getBitCount();
+            
+            if (compressionOptions.pixelType == PixelType_Float) {
+                if (compressionOptions.rsize == 16 && compressionOptions.gsize == 16 && compressionOptions.bsize == 16 && compressionOptions.asize == 16) {
+                    header.glType = GL_HALF_FLOAT;
+                    header.glTypeSize = 2;
+                    header.glFormat = GL_RGBA;
+                    header.glInternalFormat = GL_RGBA16F;
+                    header.glBaseInternalFormat = GL_RGBA;
+                }
+                else if (compressionOptions.rsize == 11 && compressionOptions.gsize == 11 && compressionOptions.bsize == 10 && compressionOptions.asize == 0) {
+                    header.glType = GL_UNSIGNED_INT_10F_11F_11F_REV;
+                    header.glTypeSize = 4;
+                    header.glFormat = GL_RGB;
+                    header.glInternalFormat = GL_R11F_G11F_B10F;
+                    header.glBaseInternalFormat = GL_RGB;
+                }
+                else {
+                    supported = false;
+                }
+            }
+            else {
+                if (bitcount == 16 && compressionOptions.rsize == 16) {
+                    header.glType = GL_UNSIGNED_SHORT;
+                    header.glTypeSize = 2;
+                    header.glFormat = GL_RED;
+                    header.glInternalFormat = GL_R16;
+                    header.glBaseInternalFormat = GL_RED;
+                }
+                else {
+                    const GLFormatDescriptor* glFormatDesc = findGLFormat(compressionOptions.bitcount, compressionOptions.rmask, compressionOptions.gmask, compressionOptions.bmask, compressionOptions.amask);
+                    
+                    if (glFormatDesc) {
+                        header.glType = glFormatDesc->glType;
+                        header.glTypeSize = glFormatDesc->glTypeSize;
+                        header.glFormat = glFormatDesc->glFormat;
+                        header.glInternalFormat = glFormatDesc->glInternalFormat;
+                        header.glBaseInternalFormat = header.glFormat;
+                    }
+                    else {
+                        supported = false;
+                    }
+                }
+            }
 		}
         else
         {
