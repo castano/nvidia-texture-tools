@@ -1015,15 +1015,7 @@ void debug::dumpInfo()
 #endif
 }
 
-static va_list getEmptyVAList(va_list list, ...)
-{
-    va_start(list, list);
-    va_end(list);
-    return list;
-}
-
-/// Dump callstack using the specified handler.
-void debug::dumpCallstack(MessageHandler *messageHandler, int callstackLevelsToSkip /*= 0*/)
+static void dumpCallstackImpl(MessageHandler *messageHandler, int callstackLevelsToSkip, ...)
 {
 #if (NV_OS_WIN32 && NV_CC_MSVC) || (defined(HAVE_SIGNAL_H) && defined(HAVE_EXECINFO_H))
     if (hasStackTrace())
@@ -1035,7 +1027,8 @@ void debug::dumpCallstack(MessageHandler *messageHandler, int callstackLevelsToS
         writeStackTrace(trace, size, callstackLevelsToSkip + 1, lines);     // + 1 to skip the call to dumpCallstack
 
         va_list empty;
-        empty = getEmptyVAList(empty);
+        va_start(empty, callstackLevelsToSkip);
+        va_end(empty);
 
         for (uint i = 0; i < lines.count(); i++) {
             messageHandler->log(lines[i], empty);
@@ -1043,6 +1036,12 @@ void debug::dumpCallstack(MessageHandler *messageHandler, int callstackLevelsToS
         }
     }
 #endif
+}
+
+/// Dump callstack using the specified handler.
+void debug::dumpCallstack(MessageHandler *messageHandler, int callstackLevelsToSkip /*= 0*/)
+{
+    dumpCallstackImpl(messageHandler, callstackLevelsToSkip);
 }
 
 
