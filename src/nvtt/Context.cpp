@@ -1043,22 +1043,12 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     }
     else if (compressionOptions.format == Format_DXT1)
     {
-#if defined(HAVE_ATITC)
-        if (compressionOptions.externalCompressor == "ati") return new AtiCompressorDXT1;
-        else
-#endif
-
-#if defined(HAVE_SQUISH)
-        if (compressionOptions.externalCompressor == "squish") return new SquishCompressorDXT1;
-        else
-#endif
-
 #if defined(HAVE_D3DX)
         if (compressionOptions.externalCompressor == "d3dx") return new D3DXCompressorDXT1;
         else
 #endif
 
-#if defined(HAVE_D3DX)
+#if defined(HAVE_STB)
         if (compressionOptions.externalCompressor == "stb") return new StbCompressorDXT1;
         else
 #endif
@@ -1094,11 +1084,6 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
     }
     else if (compressionOptions.format == Format_DXT5)
     {
-#if defined(HAVE_ATITC)
-        if (compressionOptions.externalCompressor == "ati") return new AtiCompressorDXT5;
-        else
-#endif
-
         if (compressionOptions.quality == Quality_Fastest)
         {
             return new FastCompressorDXT5;

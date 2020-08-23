@@ -21,8 +21,8 @@
 #define ICETC_IMPLEMENTATION
 #include "nvtt/icetc.h"
 
-#define GOOFYTC_IMPLEMENTATION
-#include "../extern/goofy_tc.h"
+//#define GOOFYTC_IMPLEMENTATION
+//#include "../extern/goofy_tc.h"
 
 #include "../extern/rg_etc1_v104/rg_etc1.h"
 #include "../extern/rg_etc1_v104/rg_etc1.cpp"
