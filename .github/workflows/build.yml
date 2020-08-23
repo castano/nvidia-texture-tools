@@ -12,6 +12,10 @@ jobs:
       run: msbuild .\project\vc2017\nvtt.sln /property:Configuration=Debug /property:Platform=x64
     - name: Build Debug/Win32
       run: msbuild .\project\vc2017\nvtt.sln /property:Configuration=Debug /property:Platform=Win32
+    - name: Build Release/x64
+      run: msbuild .\project\vc2017\nvtt.sln /property:Configuration=Release /property:Platform=x64
+    - name: Build Release/Win32
+      run: msbuild .\project\vc2017\nvtt.sln /property:Configuration=Release /property:Platform=Win32
       
   unix:
     strategy:
