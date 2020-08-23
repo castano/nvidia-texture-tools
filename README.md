@@ -32,13 +32,13 @@ $ sudo make install
 To use the NVIDIA Texture Tools in your own applications you just have to
 include the following header file:
 
-src/nvtt/nvtt.h
+[src/nvtt/nvtt.h](https://github.com/castano/nvidia-texture-tools/blob/master/src/nvtt/nvtt.h)
 
 And include the nvtt library in your projects. 
 
 The following file contains a simple example that shows how to use the library:
 
-src/nvtt/tools/compress.cpp
+[src/nvtt/tools/compress.cpp](https://github.com/castano/nvidia-texture-tools/blob/master/src/nvtt/tools/compress.cpp)
 
 Detailed documentation of the API can be found at:
 
