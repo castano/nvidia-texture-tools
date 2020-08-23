@@ -11,9 +11,7 @@ conversion, and DXT compression.
 
 ### How to build (Windows)
 
-Open `project/vc12/thekla.sln` using Visual Studio.
-
-Solutions for previous versions are also available, but they may not be up to date.
+Use the provided Visual Studio 2017 solution `project/vc2017/thekla.sln`.
 
 
 ### How to build (Linux/OSX)
