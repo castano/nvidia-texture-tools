@@ -1027,21 +1027,6 @@ CubeSurface CubeSurface::fastResample(int size, EdgeFixup fixupMethod) const
     return resampledCube;
 }
 
-
-void CubeSurface::_irradianceFilter(int size, EdgeFixup fixupMethod) {
-    *this = irradianceFilter(size, fixupMethod);
-}
-
-void CubeSurface::_cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod) {
-    *this = cosinePowerFilter(size, cosinePower, fixupMethod);
-}
-
-void CubeSurface::_fastResample(int size, EdgeFixup fixupMethod) {
-    *this = fastResample(size, fixupMethod);
-}
-
-
-
 void CubeSurface::toLinear(float gamma)
 {
     if (isNull()) return;
