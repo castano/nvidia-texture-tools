@@ -49,7 +49,7 @@
 #  define NVTT_API
 #endif
 
-#define NVTT_VERSION 20100
+#define NVTT_VERSION 20101
 
 #define NVTT_FORBID_COPY(Class) \
     private: \
@@ -463,8 +463,8 @@ namespace nvtt
         ToneMapper_Lightmap,
     };
 
-    // Transform the given x,y coordinates.
-    typedef void WarpFunction(float & x, float & y, float & d);
+    // Transform the given x,y,z coordinates.
+    typedef void WarpFunction(float & x, float & y, float & z);
 
 
     // A surface is one level of a 2D or 3D texture. (New in NVTT 2.1)
@@ -663,11 +663,6 @@ namespace nvtt
         NVTT_API CubeSurface cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod) const;
 
         NVTT_API CubeSurface fastResample(int size, EdgeFixup fixupMethod) const;
-
-        // Jai doesn't support non-pod structs as return types, so expose some other function to do the same, but operate in place:
-        NVTT_API void _irradianceFilter(int size, EdgeFixup fixupMethod);
-        NVTT_API void _cosinePowerFilter(int size, float cosinePower, EdgeFixup fixupMethod);
-        NVTT_API void _fastResample(int size, EdgeFixup fixupMethod);
 
         // Spherical Harmonics:
         NVTT_API void computeLuminanceIrradianceSH3(float sh[9]) const;

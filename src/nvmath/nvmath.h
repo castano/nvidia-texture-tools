@@ -6,6 +6,8 @@
 #include "nvcore/Debug.h"   // nvDebugCheck
 #include "nvcore/Utils.h"   // max, clamp
 
+// Both cmath and math for C++11 and C function definitions.
+#include <cmath>
 #include <math.h>
 
 #if NV_OS_WIN32 || NV_OS_XBOX
@@ -81,7 +83,7 @@ inline float sqrtf_assert(const float f)
     return sqrtf(f);
 }
 
-extern "C" inline double acos_assert(const double f) 
+extern "C" inline double acos_assert(const double f)
 {
     nvDebugCheck(f >= -1.0f && f <= 1.0f);
     return acos(f);
@@ -162,7 +164,9 @@ namespace nv
 
     inline bool isNan(const float f)
     {
-#if NV_OS_WIN32 || NV_OS_XBOX
+#if __cplusplus >= 199711L
+       return std::isnan(f);
+#elif NV_OS_WIN32 || NV_OS_XBOX
         return _isnan(f) != 0;
 #elif NV_OS_DARWIN || NV_OS_FREEBSD || NV_OS_NETBSD || NV_OS_OPENBSD || NV_OS_ORBIS || NV_OS_LINUX
         return isnan(f);
@@ -227,7 +231,7 @@ namespace nv
     }
 
     inline float smoothstep(float edge0, float edge1, float x) {
-        x = linearstep(edge0, edge1, x); 
+        x = linearstep(edge0, edge1, x);
 
         // Evaluate polynomial
         return x*x*(3 - 2*x);

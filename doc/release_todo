@@ -1,4 +1,4 @@
+Update version number in nvtt/nvtt.h
 Update version number in nvimage/DirectDrawSurface.cpp
 Update version number in CMakeLists.txt
 Update version number in VERSION
-Update version number in NVIDIA_Texture_Tools_README.txt
