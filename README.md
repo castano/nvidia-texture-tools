@@ -1,5 +1,4 @@
-NVIDIA Texture Tools
-====================
+# NVIDIA Texture Tools [![Actions Status](https://github.com/castano/nvidia-texture-tools/workflows/build/badge.svg)](https://github.com/castano/nvidia-texture-tools/actions) ![MIT](https://img.shields.io/badge/license-MIT-blue.svg) [![GitHub](https://img.shields.io/badge/repo-github-green.svg)](https://github.com/castano/nvidia-texture-tools)
 
 The NVIDIA Texture Tools is a collection of image processing and texture 
 manipulation tools, designed to be integrated in game tools and asset 
