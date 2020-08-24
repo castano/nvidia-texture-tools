@@ -14,3 +14,4 @@
 *.suo
 build
 .vs
+project/nvtt.sublime-workspace
