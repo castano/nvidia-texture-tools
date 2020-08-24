@@ -48,7 +48,7 @@
 #	define NVTT_API
 #endif
 
-#define NVTT_VERSION 20100
+#define NVTT_VERSION 20101
 
 #ifdef __cplusplus
 typedef struct nvtt::InputOptions NvttInputOptions;
