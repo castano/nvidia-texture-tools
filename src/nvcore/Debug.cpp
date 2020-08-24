@@ -604,10 +604,7 @@ namespace
 #    elif NV_CPU_X86
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext->__ss.__eip;
-#    elif NV_CPU_ARM
-        ucontext_t * ucp = (ucontext_t *)secret;
-        return (void *) ucp->uc_mcontext->__ss.__pc;
-#    elif NV_CPU_AARCH64
+#    elif NV_CPU_ARM || NV_CPU_AARCH64
         ucontext_t * ucp = (ucontext_t *)secret;
         return (void *) ucp->uc_mcontext->__ss.__pc;
 #    else
