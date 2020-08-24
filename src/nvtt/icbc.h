@@ -1,4 +1,4 @@
-// icbc.h v1.04
+// icbc.h v1.05
 // A High Quality SIMD BC1 Encoder by Ignacio Castano <castano@gmail.com>.
 //
 // LICENSE:
@@ -376,6 +376,7 @@ ICBC_FORCEINLINE VFloat vsaturate(VFloat a) { return min(max(a, 0.0f), 1.0f); }
 ICBC_FORCEINLINE VFloat vround01(VFloat a) { return float(int(a + 0.5f)); }
 ICBC_FORCEINLINE VFloat lane_id() { return 0; }
 ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) { return mask ? b : a; }
+ICBC_FORCEINLINE VMask vbroadcast(bool b) { return b; }
 ICBC_FORCEINLINE bool all(VMask m) { return m; }
 ICBC_FORCEINLINE bool any(VMask m) { return m; }
 ICBC_FORCEINLINE uint mask(VMask m) { return (uint)m; }
@@ -509,6 +510,10 @@ ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
 #else
     return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, b));
 #endif
+}
+
+ICBC_FORCEINLINE VMask vbroadcast(bool b) { 
+    return _mm_castsi128_ps(_mm_set1_epi32(-int32_t(b)));
 }
 
 ICBC_FORCEINLINE bool all(VMask m) {
@@ -702,6 +707,10 @@ ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
     return _mm256_blendv_ps(a, b, mask);
 }
 
+ICBC_FORCEINLINE VMask vbroadcast(bool b) { 
+    return _mm256_castsi256_ps(_mm256_set1_epi32(-int32_t(b)));
+}
+
 ICBC_FORCEINLINE bool all(VMask m) {
     __m256 zero = _mm256_setzero_ps();
     return _mm256_testc_ps(_mm256_cmp_ps(zero, zero, _CMP_EQ_UQ), m) == 0;
@@ -714,6 +723,11 @@ ICBC_FORCEINLINE bool any(VMask m) {
 ICBC_FORCEINLINE uint mask(VMask m) {
     return (uint)_mm256_movemask_ps(m);
 }
+
+// This is missing on some GCC versions.
+#if !defined _mm256_set_m128
+#define _mm256_set_m128(hi, lo) _mm256_insertf128_ps(_mm256_castps128_ps256(lo), (hi), 0x1)
+#endif
 
 ICBC_FORCEINLINE int reduce_min_index(VFloat v) {
 
@@ -915,6 +929,10 @@ ICBC_FORCEINLINE VMask operator^ (VMask A, VMask B) { return { _mm512_kxor(A.m, 
 // mask ? b : a
 ICBC_FORCEINLINE VFloat vselect(VMask mask, VFloat a, VFloat b) {
     return _mm512_mask_blend_ps(mask.m, a, b);
+}
+
+ICBC_FORCEINLINE VMask vbroadcast(bool b) { 
+    return { __mmask16(-int16_t(b)) };
 }
 
 ICBC_FORCEINLINE bool all(VMask mask) {
@@ -1572,7 +1590,7 @@ static Color16 vector3_to_color16(const Vector3 & v) {
     b += (v.z > midpoints5[b]);
 
     Color16 c;
-    c.u = (r << 11) | (g << 5) | b;
+    c.u = uint16((r << 11) | (g << 5) | b);
     return c;
 }
 
@@ -1822,7 +1840,7 @@ int compute_sat(const Vector3 * colors, const float * weights, int count, Summed
     sat->w[0] = w;
 
     for (int i = 1; i < count; i++) {
-        float w = weights[order[i]];
+        w = weights[order[i]];
         sat->r[i] = sat->r[i - 1] + colors[order[i]].x * w;
         sat->g[i] = sat->g[i - 1] + colors[order[i]].y * w;
         sat->b[i] = sat->b[i - 1] + colors[order[i]].z * w;
@@ -1906,9 +1924,9 @@ static void init_cluster_tables() {
                     }
 
                     if (!found) {
-                        s_fourCluster[i].c0 = c0;
-                        s_fourCluster[i].c1 = c0+c1;
-                        s_fourCluster[i].c2 = c0+c1+c2;
+                        s_fourCluster[i].c0 = uint8(c0);
+                        s_fourCluster[i].c1 = uint8(c0+c1);
+                        s_fourCluster[i].c2 = uint8(c0+c1+c2);
                         i++;
                     }
                 }
@@ -1941,8 +1959,8 @@ static void init_cluster_tables() {
                 }
 
                 if (!found) {
-                    s_threeCluster[i].c0 = c0;
-                    s_threeCluster[i].c1 = c0 + c1;
+                    s_threeCluster[i].c0 = uint8(c0);
+                    s_threeCluster[i].c1 = uint8(c0 + c1);
                     i++;
                 }
             }
@@ -2039,7 +2057,6 @@ static void cluster_fit_three(const SummedAreaTable & sat, int count, Vector3 me
         x1.y = vpermuteif(c1 >= 0, vgsat, c1);
         x1.z = vpermuteif(c1 >= 0, vbsat, c1);
         w1   = vpermuteif(c1 >= 0, vwsat, c1);
-
 
 #elif ICBC_USE_AVX2_PERMUTE2
 
@@ -2156,6 +2173,7 @@ static void cluster_fit_three(const SummedAreaTable & sat, int count, Vector3 me
         }
 
 #else
+
         // Scalar path
         x0.x = vzero(); x0.y = vzero(); x0.z = vzero(); w0 = vzero();
         x1.x = vzero(); x1.y = vzero(); x1.z = vzero(); w1 = vzero();
@@ -2177,6 +2195,7 @@ static void cluster_fit_three(const SummedAreaTable & sat, int count, Vector3 me
                 lane(w1, l) = sat.w[c1];
             }
         }
+
 #endif
 
         VFloat w2 = vbroadcast(w_sum) - w1;
@@ -2536,7 +2555,7 @@ static void cluster_fit_four(const SummedAreaTable & sat, int count, Vector3 met
 Decoder s_decoder = Decoder_D3D10;
 
 // D3D10
-inline void evaluate_palette4_d3d10(Color16 c0, Color16 c1, Color32 palette[4]) {
+inline void evaluate_palette4_d3d10(Color32 palette[4]) {
     palette[2].r = (2 * palette[0].r + palette[1].r) / 3;
     palette[2].g = (2 * palette[0].g + palette[1].g) / 3;
     palette[2].b = (2 * palette[0].b + palette[1].b) / 3;
@@ -2547,7 +2566,7 @@ inline void evaluate_palette4_d3d10(Color16 c0, Color16 c1, Color32 palette[4]) 
     palette[3].b = (2 * palette[1].b + palette[0].b) / 3;
     palette[3].a = 0xFF;
 }
-inline void evaluate_palette3_d3d10(Color16 c0, Color16 c1, Color32 palette[4]) {
+inline void evaluate_palette3_d3d10(Color32 palette[4]) {
     palette[2].r = (palette[0].r + palette[1].r) / 2;
     palette[2].g = (palette[0].g + palette[1].g) / 2;
     palette[2].b = (palette[0].b + palette[1].b) / 2;
@@ -2558,31 +2577,31 @@ static void evaluate_palette_d3d10(Color16 c0, Color16 c1, Color32 palette[4]) {
     palette[0] = bitexpand_color16_to_color32(c0);
     palette[1] = bitexpand_color16_to_color32(c1);
     if (c0.u > c1.u) {
-        evaluate_palette4_d3d10(c0, c1, palette);
+        evaluate_palette4_d3d10(palette);
     }
     else {
-        evaluate_palette3_d3d10(c0, c1, palette);
+        evaluate_palette3_d3d10(palette);
     }
 }
 
 // NV
 inline void evaluate_palette4_nv(Color16 c0, Color16 c1, Color32 palette[4]) {
     int gdiff = palette[1].g - palette[0].g;
-    palette[2].r = ((2 * c0.r + c1.r) * 22) / 8;
-    palette[2].g = (256 * palette[0].g + gdiff / 4 + 128 + gdiff * 80) / 256;
-    palette[2].b = ((2 * c0.b + c1.b) * 22) / 8;
+    palette[2].r = uint8(((2 * c0.r + c1.r) * 22) / 8);
+    palette[2].g = uint8((256 * palette[0].g + gdiff / 4 + 128 + gdiff * 80) / 256);
+    palette[2].b = uint8(((2 * c0.b + c1.b) * 22) / 8);
     palette[2].a = 0xFF;
 
-    palette[3].r = ((2 * c1.r + c0.r) * 22) / 8;
-    palette[3].g = (256 * palette[1].g - gdiff / 4 + 128 - gdiff * 80) / 256;
-    palette[3].b = ((2 * c1.b + c0.b) * 22) / 8;
+    palette[3].r = uint8(((2 * c1.r + c0.r) * 22) / 8);
+    palette[3].g = uint8((256 * palette[1].g - gdiff / 4 + 128 - gdiff * 80) / 256);
+    palette[3].b = uint8(((2 * c1.b + c0.b) * 22) / 8);
     palette[3].a = 0xFF;
 }
 inline void evaluate_palette3_nv(Color16 c0, Color16 c1, Color32 palette[4]) {
     int gdiff = palette[1].g - palette[0].g;
-    palette[2].r = ((c0.r + c1.r) * 33) / 8;
-    palette[2].g = (256 * palette[0].g + gdiff / 4 + 128 + gdiff * 128) / 256;
-    palette[2].b = ((c0.b + c1.b) * 33) / 8;
+    palette[2].r = uint8(((c0.r + c1.r) * 33) / 8);
+    palette[2].g = uint8((256 * palette[0].g + gdiff / 4 + 128 + gdiff * 128) / 256);
+    palette[2].b = uint8(((c0.b + c1.b) * 33) / 8);
     palette[2].a = 0xFF;
     palette[3].u = 0;
 }
@@ -2599,21 +2618,21 @@ static void evaluate_palette_nv(Color16 c0, Color16 c1, Color32 palette[4]) {
 }
 
 // AMD
-inline void evaluate_palette4_amd(Color16 c0, Color16 c1, Color32 palette[4]) {
-    palette[2].r = (43 * palette[0].r + 21 * palette[1].r + 32) >> 6;
-    palette[2].g = (43 * palette[0].g + 21 * palette[1].g + 32) >> 6;
-    palette[2].b = (43 * palette[0].b + 21 * palette[1].b + 32) >> 6;
+inline void evaluate_palette4_amd(Color32 palette[4]) {
+    palette[2].r = uint8((43 * palette[0].r + 21 * palette[1].r + 32) >> 6);
+    palette[2].g = uint8((43 * palette[0].g + 21 * palette[1].g + 32) >> 6);
+    palette[2].b = uint8((43 * palette[0].b + 21 * palette[1].b + 32) >> 6);
     palette[2].a = 0xFF;
 
-    palette[3].r = (43 * palette[1].r + 21 * palette[0].r + 32) >> 6;
-    palette[3].g = (43 * palette[1].g + 21 * palette[0].g + 32) >> 6;
-    palette[3].b = (43 * palette[1].b + 21 * palette[0].b + 32) >> 6;
+    palette[3].r = uint8((43 * palette[1].r + 21 * palette[0].r + 32) >> 6);
+    palette[3].g = uint8((43 * palette[1].g + 21 * palette[0].g + 32) >> 6);
+    palette[3].b = uint8((43 * palette[1].b + 21 * palette[0].b + 32) >> 6);
     palette[3].a = 0xFF;
 }
-inline void evaluate_palette3_amd(Color16 c0, Color16 c1, Color32 palette[4]) {
-    palette[2].r = (palette[0].r + palette[1].r + 1) / 2;
-    palette[2].g = (palette[0].g + palette[1].g + 1) / 2;
-    palette[2].b = (palette[0].b + palette[1].b + 1) / 2;
+inline void evaluate_palette3_amd(Color32 palette[4]) {
+    palette[2].r = uint8((palette[0].r + palette[1].r + 1) / 2);
+    palette[2].g = uint8((palette[0].g + palette[1].g + 1) / 2);
+    palette[2].b = uint8((palette[0].b + palette[1].b + 1) / 2);
     palette[2].a = 0xFF;
     palette[3].u = 0;
 }
@@ -2622,27 +2641,17 @@ static void evaluate_palette_amd(Color16 c0, Color16 c1, Color32 palette[4]) {
     palette[1] = bitexpand_color16_to_color32(c1);
 
     if (c0.u > c1.u) {
-        evaluate_palette4_amd(c0, c1, palette);
+        evaluate_palette4_amd(palette);
     }
     else {
-        evaluate_palette3_amd(c0, c1, palette);
+        evaluate_palette3_amd(palette);
     }
 }
 
-inline void evaluate_palette4(Color16 c0, Color16 c1, Color32 palette[4]) {
-    if (s_decoder == Decoder_D3D10)         evaluate_palette4_d3d10(c0, c1, palette);    
-    else if (s_decoder == Decoder_NVIDIA)   evaluate_palette4_nv(c0, c1, palette);
-    else if (s_decoder == Decoder_AMD)      evaluate_palette4_amd(c0, c1, palette);
-}
-inline void evaluate_palette3(Color16 c0, Color16 c1, Color32 palette[4]) {
-    if (s_decoder == Decoder_D3D10)         evaluate_palette3_d3d10(c0, c1, palette);
-    else if (s_decoder == Decoder_NVIDIA)   evaluate_palette3_nv(c0, c1, palette);
-    else if (s_decoder == Decoder_AMD)      evaluate_palette3_amd(c0, c1, palette);
-}
-inline void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4]) {
-    if (s_decoder == Decoder_D3D10)         evaluate_palette_d3d10(c0, c1, palette);
-    else if (s_decoder == Decoder_NVIDIA)   evaluate_palette_nv(c0, c1, palette);
-    else if (s_decoder == Decoder_AMD)      evaluate_palette_amd(c0, c1, palette);
+inline void evaluate_palette(Color16 c0, Color16 c1, Color32 palette[4], Decoder decoder = s_decoder) {
+    if (decoder == Decoder_D3D10)         evaluate_palette_d3d10(c0, c1, palette);
+    else if (decoder == Decoder_NVIDIA)   evaluate_palette_nv(c0, c1, palette);
+    else if (decoder == Decoder_AMD)      evaluate_palette_amd(c0, c1, palette);
 }
 
 static void evaluate_palette(Color16 c0, Color16 c1, Vector3 palette[4]) {
@@ -2657,15 +2666,7 @@ static void evaluate_palette(Color16 c0, Color16 c1, Vector3 palette[4]) {
 static void decode_dxt1(const BlockDXT1 * block, unsigned char rgba_block[16 * 4], Decoder decoder)
 {
     Color32 palette[4];
-    if (decoder == Decoder_NVIDIA) {
-        evaluate_palette_nv(block->col0, block->col1, palette);
-    }
-    else if (decoder == Decoder_AMD) {
-        evaluate_palette_amd(block->col0, block->col1, palette);
-    }
-    else {
-        evaluate_palette(block->col0, block->col1, palette);
-    }
+    evaluate_palette(block->col0, block->col1, palette, decoder);
 
     for (int i = 0; i < 16; i++) {
         int index = (block->indices >> (2 * i)) & 3;
@@ -2693,22 +2694,9 @@ static float evaluate_mse(const Color32 & p, const Vector3 & c, const Vector3 & 
     return dot(d, d);
 }
 
-
-/*static float evaluate_mse(const Vector3 & p, const Vector3 & c, const Vector3 & w) {
-    return ww.x * square(p.x-c.x) + ww.y * square(p.y-c.y) + ww.z * square(p.z-c.z);
-}*/
-
 static int evaluate_mse(const Color32 & p, const Color32 & c) {
     return (square(int(p.r)-c.r) + square(int(p.g)-c.g) + square(int(p.b)-c.b));
 }
-
-/*static float evaluate_mse(const Vector3 palette[4], const Vector3 & c, const Vector3 & w) {
-    float e0 = evaluate_mse(palette[0], c, w);
-    float e1 = evaluate_mse(palette[1], c, w);
-    float e2 = evaluate_mse(palette[2], c, w);
-    float e3 = evaluate_mse(palette[3], c, w);
-    return min(min(e0, e1), min(e2, e3));
-}*/
 
 static int evaluate_mse(const Color32 palette[4], const Color32 & c) {
     int e0 = evaluate_mse(palette[0], c);
@@ -2760,17 +2748,20 @@ static float evaluate_mse(const Vector4 input_colors[16], const float input_weig
     return error;
 }
 
+static float evaluate_mse(const Vector4 input_colors[16], const float input_weights[16], const Vector3& color_weights, Vector3 palette[4], uint32 indices) {
+
+    // evaluate error for each index.
+    float error = 0.0f;
+    for (int i = 0; i < 16; i++) {
+        int index = (indices >> (2 * i)) & 3;
+        error += input_weights[i] * evaluate_mse(palette[index], input_colors[i].xyz, color_weights);
+    }
+    return error;
+}
+
 float evaluate_dxt1_error(const uint8 rgba_block[16*4], const BlockDXT1 * block, Decoder decoder) {
     Color32 palette[4];
-    if (decoder == Decoder_NVIDIA) {
-        evaluate_palette_nv(block->col0, block->col1, palette);
-    }
-    else if (decoder == Decoder_AMD) {
-        evaluate_palette_amd(block->col0, block->col1, palette);
-    }
-    else {
-        evaluate_palette(block->col0, block->col1, palette);
-    }
+    evaluate_palette(block->col0, block->col1, palette, decoder);
 
     // evaluate error for each index.
     float error = 0.0f;
@@ -2845,32 +2836,7 @@ static uint compute_indices4(const Vector4 input_colors[16], const Vector3 & col
     return interleave(indices1, indices0);
 }
 
-static uint compute_indices3(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 palette[4]) {
-#if 0
-    Vector3 p0 = palette[0] * color_weights;
-    Vector3 p1 = palette[1] * color_weights;
-    Vector3 p2 = palette[2] * color_weights;
-    Vector3 p3 = palette[3] * color_weights;
-
-    uint indices = 0;
-    for (int i = 0; i < 16; i++) {
-        Vector3 ci = input_colors[i].xyz * color_weights;
-        float d0 = lengthSquared(p0 - ci);
-        float d1 = lengthSquared(p1 - ci);
-        float d2 = lengthSquared(p2 - ci);
-        float d3 = lengthSquared(p3 - ci);
-
-        uint index;
-        if (d0 < d1 && d0 < d2 && d0 < d3) index = 0;
-        else if (d1 < d2 && d1 < d3) index = 1;
-        else if (d2 < d3) index = 2;
-        else index = 3;
-
-        indices |= index << (2 * i);
-    }
-
-    return indices;
-#else
+static uint compute_indices3(const Vector4 input_colors[16], const Vector3 & color_weights, bool allow_transparent_black, const Vector3 palette[4]) {
     uint indices0 = 0;
     uint indices1 = 0;
 
@@ -2879,90 +2845,40 @@ static uint compute_indices3(const Vector4 input_colors[16], const Vector3 & col
     VVector3 vp1 = vbroadcast(palette[1]) * vw;
     VVector3 vp2 = vbroadcast(palette[2]) * vw;
 
-    for (int i = 0; i < 16; i += VEC_SIZE) {
-        VVector3 vc = vload(&input_colors[i]) * vw;
+    if (allow_transparent_black) {
+        for (int i = 0; i < 16; i += VEC_SIZE) {
+            VVector3 vc = vload(&input_colors[i]) * vw;
 
-        VFloat d0 = vlen2(vc - vp0);
-        VFloat d1 = vlen2(vc - vp1);
-        VFloat d2 = vlen2(vc - vp2);
-        VFloat d3 = vdot(vc, vc);
+            VFloat d0 = vlen2(vp0 - vc);
+            VFloat d1 = vlen2(vp1 - vc);
+            VFloat d2 = vlen2(vp2 - vc);
+            VFloat d3 = vdot(vc, vc);
 
-        // @@ simplify i1 & i2
-        //VMask i0 = (d0 < d1) & (d0 < d2) & (d0 < d3); // 0
-        VMask i1 = (d1 <= d0) & (d1 < d2) & (d1 < d3); // 1
-        VMask i2 = (d2 <= d0) & (d2 <= d1) & (d2 < d3); // 2
-        VMask i3 = (d3 <= d0) & (d3 <= d1) & (d3 <= d2); // 3
-        //VFloat vindex = vselect(i0, vselect(i1, vselect(i2, vbroadcast(3), vbroadcast(2)), vbroadcast(1)), vbroadcast(0));
+            VMask i1 = (d1 < d2);
+            VMask i2 = (d2 <= d0) & (d2 <= d1);
+            VMask i3 = (d3 <= d0) & (d3 <= d1) & (d3 <= d2);
 
-        indices0 |= mask(i2 | i3) << i;
-        indices1 |= mask(i1 | i3) << i;
+            indices0 |= mask(i2 | i3) << i;
+            indices1 |= mask(i1 | i3) << i;
+        }
     }
+    else {
+        for (int i = 0; i < 16; i += VEC_SIZE) {
+            VVector3 vc = vload(&input_colors[i]) * vw;
 
-    uint indices = interleave(indices1, indices0);
-    return indices;
-#endif
-}
+            VFloat d0 = vlen2(vc - vp0);
+            VFloat d1 = vlen2(vc - vp1);
+            VFloat d2 = vlen2(vc - vp2);
 
+            VMask i1 = (d1 < d2);
+            VMask i2 = (d2 <= d0) & (d2 <= d1);
 
-
-static uint compute_indices4(const Vector3 input_colors[16], const Vector3 palette[4]) {
-#if 0
-    uint indices0 = 0;
-    uint indices1 = 0;
-
-    VVector3 vp0 = vbroadcast(palette[0]);
-    VVector3 vp1 = vbroadcast(palette[1]);
-    VVector3 vp2 = vbroadcast(palette[2]);
-    VVector3 vp3 = vbroadcast(palette[3]);
-
-    for (int i = 0; i < 16; i += VEC_SIZE) {
-        VVector3 vc = vload(&input_colors[i]);
-
-        VFloat d0 = vlen2(vc - vp0);
-        VFloat d1 = vlen2(vc - vp1);
-        VFloat d2 = vlen2(vc - vp2);
-        VFloat d3 = vlen2(vc - vp3);
-
-        VMask b1 = d1 > d2;
-        VMask b2 = d0 > d2;
-        VMask x0 = b1 & b2;
-
-        VMask b0 = d0 > d3;
-        VMask b3 = d1 > d3;
-        x0 = x0 | (b0 & b3);
-
-        VMask b4 = d2 > d3;
-        VMask x1 = b0 & b4;
-
-        indices0 |= mask(x0) << i;
-        indices1 |= mask(x1) << i;
+            indices0 |= mask(i2) << i;
+            indices1 |= mask(i1) << i;
+        }
     }
 
     return interleave(indices1, indices0);
-#else
-    uint indices = 0;
-    for (int i = 0; i < 16; i++) {
-        Vector3 ci = input_colors[i];
-        float d0 = lengthSquared(palette[0] - ci);
-        float d1 = lengthSquared(palette[1] - ci);
-        float d2 = lengthSquared(palette[2] - ci);
-        float d3 = lengthSquared(palette[3] - ci);
-
-        uint b0 = d0 > d3;
-        uint b1 = d1 > d2;
-        uint b2 = d0 > d2;
-        uint b3 = d1 > d3;
-        uint b4 = d2 > d3;
-
-        uint x0 = b1 & b2;
-        uint x1 = b0 & b3;
-        uint x2 = b0 & b4;
-
-        indices |= (x2 | ((x0 | x1) << 1)) << (2 * i);
-    }
-
-    return indices;
-#endif
 }
 
 
@@ -3025,7 +2941,7 @@ static uint compute_indices(const Vector4 input_colors[16], const Vector3 & colo
 }
 
 
-static void output_block3(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
+static float output_block3(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, bool allow_transparent_black, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
 {
     Color16 color0 = vector3_to_color16(v0);
     Color16 color1 = vector3_to_color16(v1);
@@ -3039,10 +2955,12 @@ static void output_block3(const Vector4 input_colors[16], const Vector3 & color_
 
     block->col0 = color0;
     block->col1 = color1;
-    block->indices = compute_indices(input_colors, color_weights, palette);
+    block->indices = compute_indices3(input_colors, color_weights, allow_transparent_black, palette);
+
+    return evaluate_mse(input_colors, input_weights, color_weights, palette, block->indices);
 }
 
-static void output_block4(const Vector4 input_colors[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
+static float output_block4(const Vector4 input_colors[16], const float input_weights[16], const Vector3 & color_weights, const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
 {
     Color16 color0 = vector3_to_color16(v0);
     Color16 color1 = vector3_to_color16(v1);
@@ -3057,25 +2975,10 @@ static void output_block4(const Vector4 input_colors[16], const Vector3 & color_
     block->col0 = color0;
     block->col1 = color1;
     block->indices = compute_indices4(input_colors, color_weights, palette);
+
+    return evaluate_mse(input_colors, input_weights, color_weights, palette, block->indices);
 }
 
-
-static void output_block4(const Vector3 input_colors[16], const Vector3 & v0, const Vector3 & v1, BlockDXT1 * block)
-{
-    Color16 color0 = vector3_to_color16(v0);
-    Color16 color1 = vector3_to_color16(v1);
-
-    if (color0.u < color1.u) {
-        swap(color0, color1);
-    }
-
-    Vector3 palette[4];
-    evaluate_palette(color0, color1, palette);
-
-    block->col0 = color0;
-    block->col1 = color1;
-    block->indices = compute_indices4(input_colors, palette);
-}
 
 // Least squares fitting of color end points for the given indices. @@ Take weights into account.
 static bool optimize_end_points4(uint indices, const Vector4 * colors, /*const float * weights,*/ int count, Vector3 * a, Vector3 * b)
@@ -3263,7 +3166,7 @@ static inline int Lerp13(int a, int b)
 static void PrepareOptTable5(uint8 * table, Decoder decoder)
 {
     uint8 expand[32];
-    for (int i = 0; i < 32; i++) expand[i] = (i << 3) | (i >> 2);
+    for (int i = 0; i < 32; i++) expand[i] = uint8((i << 3) | (i >> 2));
 
     for (int i = 0; i < 256; i++) {
         int bestErr = 256 * 100;
@@ -3292,17 +3195,17 @@ static void PrepareOptTable5(uint8 * table, Decoder decoder)
                     // Another approach is to consider the worst of AMD and NVIDIA errors.
                     err = max(amd_err, nv_err);                    
                 }
-                else if (decoder == Decoder_AMD) {
-                    err = amd_err;
-                }
                 else if (decoder == Decoder_NVIDIA) {
                     err = nv_err;
+                }
+                else /*if (decoder == Decoder_AMD)*/ {
+                    err = amd_err;
                 }
 
                 if (err < bestErr) {
                     bestErr = err;
-                    table[i * 2 + 0] = mx;
-                    table[i * 2 + 1] = mn;
+                    table[i * 2 + 0] = uint8(mx);
+                    table[i * 2 + 1] = uint8(mn);
                 }
             }
         }
@@ -3312,7 +3215,7 @@ static void PrepareOptTable5(uint8 * table, Decoder decoder)
 static void PrepareOptTable6(uint8 * table, Decoder decoder)
 {
     uint8 expand[64];
-    for (int i = 0; i < 64; i++) expand[i] = (i << 2) | (i >> 4);
+    for (int i = 0; i < 64; i++) expand[i] = uint8((i << 2) | (i >> 4));
 
     for (int i = 0; i < 256; i++) {
         int bestErr = 256 * 100;
@@ -3341,17 +3244,17 @@ static void PrepareOptTable6(uint8 * table, Decoder decoder)
                     // Another approach is to consider the worst of AMD and NVIDIA errors.
                     err = max(amd_err, nv_err);
                 }
-                else if (decoder == Decoder_AMD) {
-                    err = amd_err;
-                }
                 else if (decoder == Decoder_NVIDIA) {
                     err = nv_err;
+                }
+                else /*if (decoder == Decoder_AMD)*/ {
+                    err = amd_err;
                 }
 
                 if (err < bestErr) {
                     bestErr = err;
-                    table[i * 2 + 0] = mx;
-                    table[i * 2 + 1] = mn;
+                    table[i * 2 + 0] = uint8(mx);
+                    table[i * 2 + 1] = uint8(mn);
                 }
             }
         }
@@ -3386,7 +3289,7 @@ static void compress_dxt1_single_color_optimal(Color32 c, BlockDXT1 * output)
 }
 
 
-static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const float input_weights[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, bool use_transparent_black, BlockDXT1 * output)
+static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const float input_weights[16], const Vector3 * colors, const float * weights, int count, const Vector3 & color_weights, bool three_color_mode, bool try_transparent_black, bool allow_transparent_black, BlockDXT1 * output)
 {
     Vector3 metric_sqr = color_weights * color_weights;
 
@@ -3396,12 +3299,10 @@ static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const flo
     Vector3 start, end;
     cluster_fit_four(sat, sat_count, metric_sqr, &start, &end);
 
-    output_block4(input_colors, color_weights, start, end, output);
-
-    float best_error = evaluate_mse(input_colors, input_weights, color_weights, output);
+    float best_error = output_block4(input_colors, input_weights, color_weights, start, end, output);
 
     if (three_color_mode) {
-        if (use_transparent_black) {
+        if (try_transparent_black) {
             Vector3 tmp_colors[16];
             float tmp_weights[16];
             int tmp_count = skip_blacks(colors, weights, count, tmp_colors, tmp_weights);
@@ -3413,9 +3314,7 @@ static float compress_dxt1_cluster_fit(const Vector4 input_colors[16], const flo
         cluster_fit_three(sat, sat_count, metric_sqr, &start, &end);
 
         BlockDXT1 three_color_block;
-        output_block3(input_colors, color_weights, start, end, &three_color_block);
-
-        float three_color_error = evaluate_mse(input_colors, input_weights, color_weights, &three_color_block);
+        float three_color_error = output_block3(input_colors, input_weights, color_weights, allow_transparent_black, start, end, &three_color_block);
 
         if (three_color_error < best_error) {
             best_error = three_color_error;
@@ -3623,16 +3522,13 @@ static float compress_dxt1(Quality level, const Vector4 input_colors[16], const 
         fit_colors_bbox(colors, count, &c0, &c1);
         inset_bbox(&c0, &c1);
         select_diagonal(colors, count, &c0, &c1);
-        output_block4(input_colors, color_weights, c0, c1, output);
-
-        error = evaluate_mse(input_colors, input_weights, color_weights, output);
+        error = output_block4(input_colors, input_weights, color_weights, c0, c1, output);
 
         // Refine color for the selected indices.
         if (opt.least_squares_fit && optimize_end_points4(output->indices, input_colors, 16, &c0, &c1)) {
             BlockDXT1 optimized_block;
-            output_block4(input_colors, color_weights, c0, c1, &optimized_block);
+            float optimized_error = output_block4(input_colors, input_weights, color_weights, c0, c1, &optimized_block);
 
-            float optimized_error = evaluate_mse(input_colors, input_weights, color_weights, &optimized_block);
             if (optimized_error < error) {
                 error = optimized_error;
                 *output = optimized_block;
@@ -3648,7 +3544,7 @@ static float compress_dxt1(Quality level, const Vector4 input_colors[16], const 
 
         // Try cluster fit.
         BlockDXT1 cluster_fit_output;
-        float cluster_fit_error = compress_dxt1_cluster_fit(input_colors, input_weights, colors, weights, count, color_weights, use_three_color_mode, use_three_color_black, &cluster_fit_output);
+        float cluster_fit_error = compress_dxt1_cluster_fit(input_colors, input_weights, colors, weights, count, color_weights, use_three_color_mode, use_three_color_black, three_color_black, &cluster_fit_output);
         if (cluster_fit_error < error) {
             *output = cluster_fit_output;
             error = cluster_fit_error;
@@ -3713,6 +3609,7 @@ float compress_dxt1(Quality level, const float * input_colors, const float * inp
 // v1.02 - Removed SIMD code path.
 // v1.03 - Quality levels. AVX512, Neon, Altivec, vectorized reduction and index selection.
 // v1.04 - Automatic compile-time SIMD selection. Specify hw decoder at runtime. More optimizations.
+// v1.05 - Bug fixes. Small optimizations.
 
 // Copyright (c) 2020 Ignacio Castano <castano@gmail.com>
 //
