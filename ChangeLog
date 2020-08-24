@@ -1,3 +1,7 @@
+NVIDIA Texture Tools version 2.1.2
+ * Use ICBC as the main BC1 compressor.
+ * Various fixes.
+
 NVIDIA Texture Tools version 2.1.1
  * Various fixes.
 
