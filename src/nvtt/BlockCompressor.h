@@ -26,11 +26,6 @@ namespace nv
 
 
     // BC1
-    struct FastCompressorDXT1 : public FloatColorCompressor
-    {
-        virtual void compressBlock(Vector4 colors[16], float weights[16], const nvtt::CompressionOptions::Private & compressionOptions, void * output);
-        virtual uint blockSize(const nvtt::CompressionOptions::Private &) const { return 8; }
-    };
     struct CompressorDXT1 : public FloatColorCompressor
     {
         virtual void compressBlock(Vector4 colors[16], float weights[16], const nvtt::CompressionOptions::Private & compressionOptions, void * output);

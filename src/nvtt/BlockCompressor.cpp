@@ -208,14 +208,17 @@ void FloatColorCompressor::compress(AlphaMode alphaMode, uint w, uint h, uint d,
 // BC1
 #include "icbc.h"
 
-void FastCompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], const CompressionOptions::Private & compressionOptions, void * output)
-{
-    icbc::compress_dxt1(icbc::Quality_Fast, (float*)colors, weights, compressionOptions.colorWeight.component, /*three_color_mode*/true, /*three_color_black*/true, output);
+inline icbc::Quality qualityLevel(const CompressionOptions::Private & compressionOptions) {
+    if (compressionOptions.quality == Quality_Fastest) 
+        return icbc::Quality_Fast;
+    else if (compressionOptions.quality == Quality_Production) 
+        return icbc::Quality_Max;
+    return icbc::Quality_Default;
 }
+
 void CompressorDXT1::compressBlock(Vector4 colors[16], float weights[16], const CompressionOptions::Private & compressionOptions, void * output)
 {
-    auto quality_level = compressionOptions.quality > Quality_Normal ? icbc::Quality_Max : icbc::Quality_Default;
-    icbc::compress_dxt1(quality_level, (float*)colors, weights, compressionOptions.colorWeight.component, /*three_color_mode*/true, /*three_color_black*/true, output);
+    icbc::compress_dxt1(qualityLevel(compressionOptions), (float*)colors, weights, compressionOptions.colorWeight.component, /*three_color_mode*/true, /*three_color_black*/true, output);
 }
 
 

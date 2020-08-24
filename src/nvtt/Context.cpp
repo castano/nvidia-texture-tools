@@ -1053,11 +1053,6 @@ CompressorInterface * Compressor::Private::chooseCpuCompressor(const Compression
         else
 #endif
 
-        if (compressionOptions.quality == Quality_Fastest)
-        {
-            return new FastCompressorDXT1;
-        }
-
         return new CompressorDXT1;
     }
     else if (compressionOptions.format == Format_DXT1a)
