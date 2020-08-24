@@ -585,7 +585,7 @@ DDSHeader::DDSHeader()
 
     // Store version information on the reserved header attributes.
     this->reserved[9] = FOURCC_NVTT;
-    this->reserved[10] = (2 << 16) | (1 << 8) | (1); // major.minor.revision
+    this->reserved[10] = (2 << 16) | (1 << 8) | (2); // major.minor.revision
 
     this->pf.size = 32;
     this->pf.flags = 0;
