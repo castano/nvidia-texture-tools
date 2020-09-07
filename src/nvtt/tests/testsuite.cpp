@@ -509,6 +509,9 @@ int main(int argc, char *argv[])
     nvtt::Context context;
     context.enableCudaAcceleration(!nocuda);
 
+    if (basePath.length() > 0) {
+        basePath.appendSeparator();
+    }
     basePath.append(set.basePath);
 
     FileSystem::changeDirectory(basePath.str());
