@@ -1,4 +1,4 @@
-After more than 14 years maintaining and updating this library on my spare time, I've decided to officially discontinue it and focus my enery on other projects.
+After more than 14 years maintaining and updating this library on my spare time, I've decided to officially discontinue it and focus my energy on other projects.
 
 When I released NVTT there was very little public information about compression for GPU texture formats. Existing codecs were closed-source, encumbered by patents, and not particularly efficient or high quality. A lot has changed since then. Today most IHVs have their own open source codecs and several companies develop high quality commercial products around texture compression. 
 
