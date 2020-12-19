@@ -17,6 +17,7 @@ If you are looking for alternative texture compression tools and algorithms I re
 * [ARM ASTC Encoder](https://github.com/ARM-software/astc-encoder) is an excellent ASTC encoder.
 * [Dario Manesku's cube map filtering tool](https://github.com/dariomanesku/cmft) seems like a good alternative for the cube map filtering functions in NVTT.
 
+-------------------------------
 
 # NVIDIA Texture Tools [![Actions Status](https://github.com/castano/nvidia-texture-tools/workflows/build/badge.svg)](https://github.com/castano/nvidia-texture-tools/actions) ![MIT](https://img.shields.io/badge/license-MIT-blue.svg) [![GitHub](https://img.shields.io/badge/repo-github-green.svg)](https://github.com/castano/nvidia-texture-tools)
 
