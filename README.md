@@ -1,10 +1,8 @@
 After more than 14 years maintaining and updating this library on my spare time, I've decided to officially discontinue it and focus my energy on other projects.
 
-When I released NVTT there was very little public information about compression for GPU texture formats. Existing codecs were closed-source, encumbered by patents, and not particularly efficient or high quality. A lot has changed since then. Today most IHVs maintain their own open source codecs and several companies develop high quality commercial products around texture compression. 
+When I released NVTT there was very little public information about compression for GPU texture formats. Existing codecs were closed-source, encumbered by patents, and not particularly efficient or high quality. A lot has changed since then. NVTT doesn't support the latest formats anymore, some of its codecs are outdated, and it's source code has aged. Today most IHVs maintain their own open source codecs and several companies develop high quality commercial products around texture compression. 
 
-NVTT doesn't support the latest formats anymore, some of its codecs are outdated, and it's source code has aged. NVIDIA doesn't support my work in any way, but its users have come to expect that support. Officially discontinuing this project will make it clear that this is an unsupported tool.
-
-If you are looking for alternative texture compression tools and algorithms I recommend you check these out:
+If you are looking for alternative texture compression tools and processing algorithms I recommend you check these out:
 
 * I still maintain [A High Quality SIMD BC1 Encoder](https://github.com/castano/icbc).
 * Deano Calver supports [three tiny libraries](https://deanoc.com/2019/09/tiny) that provide support for DDS and KTX file formats, and pixel format conversion.
