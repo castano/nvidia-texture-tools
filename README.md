@@ -9,13 +9,14 @@ If you are looking for alternative texture compression tools and algorithms I re
 * I still maintain [A High Quality SIMD BC1 Encoder](https://github.com/castano/icbc).
 * Deano Calver supports [three tiny libraries](https://deanoc.com/2019/09/tiny) that provide support for DDS and KTX file formats, and pixel format conversion.
 * [stb_image_resize](https://github.com/nothings/stb/blob/master/stb_image_resize.h) provides polyphase image resize filters that are similar to what NVTT supports.
+* [Dario Manesku's cube map filtering tool](https://github.com/dariomanesku/cmft) seems like a good alternative for the cube map filtering functions in NVTT.
 * [Oodle Texture](http://www.radgametools.com/oodletexture.htm) is a suite of commercial RDO texture codecs.
 * [Binomial](https://www.binomial.info/) is an image and texture compression company that develops [Basis a universal texture codec](https://github.com/BinomialLLC/basis_universal) and also has [other source codecs](https://github.com/BinomialLLC).
 * [NVIDIA Texture Tools exporter](https://developer.nvidia.com/nvidia-texture-tools-exporter) is based on a private fork of this project and offers additional GPU accelerated codecs, but it's not open source.
 * [Intel ISPC Texture Compressor](https://github.com/GameTechDev/ISPCTextureCompressor) is a set of set of open source SIMD texture codecs that are very fast, but low quality.
 * [AMD Compressonator](https://gpuopen.com/compressonator/) offers a wide variety of open source compressors.
 * [ARM ASTC Encoder](https://github.com/ARM-software/astc-encoder) is an excellent ASTC encoder.
-* [Dario Manesku's cube map filtering tool](https://github.com/dariomanesku/cmft) seems like a good alternative for the cube map filtering functions in NVTT.
+
 
 -------------------------------
 
