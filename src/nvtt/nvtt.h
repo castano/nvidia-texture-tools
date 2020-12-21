@@ -249,6 +249,17 @@ namespace nvtt
         ResizeFilter_Mitchell,
     };
 
+    // Color transformation.
+    // deprecated since 2.1.0
+    enum ColorTransform
+    {
+        ColorTransform_None,
+        ColorTransform_Linear,
+        ColorTransform_Swizzle,
+        ColorTransform_YCoCg,
+        ColorTransform_ScaledYCoCg,
+    };
+
     // Extents rounding mode.
     enum RoundMode
     {
@@ -290,7 +301,9 @@ namespace nvtt
         NVTT_API void reset();
 
         // Setup input layout.
-        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1, int arraySize = 1);
+        // Overload for ABI compatibility
+        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d = 1 /*, arraysize = 1 */);
+        NVTT_API void setTextureLayout(TextureType type, int w, int h, int d, int arraySize);
         NVTT_API void resetTextureLayout();
 
         // Set mipmap data. Copies the data.
@@ -319,6 +332,10 @@ namespace nvtt
         NVTT_API void setHeightEvaluation(float redScale, float greenScale, float blueScale, float alphaScale);
         NVTT_API void setNormalFilter(float sm, float medium, float big, float large);
         NVTT_API void setNormalizeMipmaps(bool b);
+
+        // Set color transforms.
+        NVTT_API void setColorTransform(ColorTransform t);
+        NVTT_API void setLinearTransform(int channel, float w0, float w1, float w2, float w3);
 
         // Set resizing options.
         NVTT_API void setMaxExtents(int d);

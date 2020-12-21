@@ -104,6 +104,8 @@ void InputOptions::reset()
     m.inputGamma = 2.2f;
     m.outputGamma = 2.2f;
 
+    m.colorTransform = ColorTransform_None;
+
     m.generateMipmaps = true;
     m.maxLevel = -1;
     m.mipmapFilter = MipmapFilter_Box;
@@ -124,7 +126,14 @@ void InputOptions::reset()
 
 
 // Setup the input image.
-void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/, int arraySize /*= 1*/)
+// Overload for ABI compatibility
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth /*= 1*/)
+{
+    setTextureLayout(type, width, height, depth, 1);
+}
+
+// Setup the input image.
+void InputOptions::setTextureLayout(TextureType type, int width, int height, int depth, int arraySize)
 {
     // Validate arguments.
     nvCheck(width >= 0);
@@ -328,6 +337,18 @@ void InputOptions::setNormalFilter(float small, float medium, float big, float l
 void InputOptions::setNormalizeMipmaps(bool normalize)
 {
     m.normalizeMipmaps = normalize;
+}
+
+// Set color transform.
+void InputOptions::setColorTransform(ColorTransform t)
+{
+    m.colorTransform = t;
+}
+
+// Set linear transform for the given channel.
+// Stub for ABI compatibily, never implemented
+void InputOptions::setLinearTransform(int, float, float, float, float)
+{
 }
 
 void InputOptions::setMaxExtents(int e)

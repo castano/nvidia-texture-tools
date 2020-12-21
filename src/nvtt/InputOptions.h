@@ -55,6 +55,9 @@ namespace nvtt
         float inputGamma;
         float outputGamma;
 
+        // Color transform.
+        ColorTransform colorTransform;
+
         // Mipmap generation options.
         bool generateMipmaps;
         int maxLevel;
